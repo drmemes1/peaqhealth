@@ -218,15 +218,15 @@ export interface PeaqScoreResult {
   lifestyleInsights: string[]
   insights:          string[]
   labFreshness:      "fresh" | "aging" | "stale" | "expired" | "none"
-  labAgeDays?:       number
+  labAgeDays?:       number | undefined
 
   derived: {
     ldlHdlRatio:            number
     glycemicBand:           "optimal" | "high-normal" | "prediabetic" | "diabetic" | "unknown"
     missingFields:          string[]
     optionalMarkersPresent: string[]
-    oralDataAge?:           number
-    labCollectionDate?:     string
+    oralDataAge?:           number | undefined
+    labCollectionDate?:     string | undefined
     oralHygieneIndex:       "excellent" | "good" | "fair" | "poor" | "unknown"
   }
 }
