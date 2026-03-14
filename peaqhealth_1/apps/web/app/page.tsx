@@ -1,4 +1,5 @@
 import { WaitlistForm } from "./waitlist-form";
+import { Logo } from "./components/logo";
 
 const panels = [
   { label: "Sleep", pts: 28 },
@@ -11,9 +12,7 @@ export default function Home() {
     <div className="flex min-h-svh flex-col items-center justify-between bg-off-white px-6 py-10 selection:bg-gold selection:text-white">
       {/* ── Logo ── */}
       <header className="w-full max-w-3xl">
-        <span className="font-display text-2xl font-semibold tracking-[0.04em] text-ink">
-          peaq
-        </span>
+        <Logo height={28} />
       </header>
 
       {/* ── Hero ── */}
