@@ -180,7 +180,7 @@ export async function createLabParserJob(pdfBase64: string): Promise<LabParserJo
  */
 export async function getLabParserJob(jobId: string): Promise<LabParserResult> {
   const res = await junctionFetch(`/v3/lab-report-parser/${jobId}`)
-  return res as LabParserResult
+  return res as unknown as LabParserResult
 }
 
 /**
