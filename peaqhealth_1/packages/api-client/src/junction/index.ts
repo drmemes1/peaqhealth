@@ -101,10 +101,12 @@ export function aggregateSleepInputs(
 
   if (valid.length < 7) return null
 
-  const avg = <K extends keyof JunctionSleepSummary>(key: K): number => {
-    const vals = valid
-      .map((s) => s[key])
-      .filter((v): v is number => typeof v === 'number' && v > 0)
+  const avg = (key: keyof JunctionSleepSummary): number => {
+    const vals: number[] = []
+    for (const s of valid) {
+      const v = s[key]
+      if (typeof v === 'number' && v > 0) vals.push(v)
+    }
     return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0
   }
 
