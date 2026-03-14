@@ -1,0 +1,19 @@
+{
+  "name": "@peaq/score-engine",
+  "version": "4.0.0",
+  "private": true,
+  "description": "Peaq scoring engine — sleep, blood, oral, lifestyle panels",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "node --import tsx src/engine.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "*",
+    "tsx": "^4.19.2"
+  }
+}
