@@ -1,14 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { useVitalLink } from "@tryvital/vital-link";
 import type { WearableProvider } from "./types";
-
-const DEVICES: { id: WearableProvider; name: string; icon: string }[] = [
-  { id: "apple_watch", name: "Apple Watch", icon: "⌚" },
-  { id: "oura",        name: "Oura Ring",   icon: "💍" },
-  { id: "whoop",       name: "WHOOP",       icon: "📿" },
-  { id: "garmin",      name: "Garmin",      icon: "⏱" },
-];
 
 interface Props {
   onConnect: (provider: WearableProvider) => void;
@@ -16,13 +10,55 @@ interface Props {
 }
 
 export function StepWearable({ onConnect, onSkip }: Props) {
-  const [selected, setSelected] = useState<WearableProvider | null>(null);
-  const [connecting, setConnecting] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function handleConnect() {
-    if (!selected) return;
-    setConnecting(true);
-    setTimeout(() => onConnect(selected), 800);
+  const onSuccess = useCallback(
+    (metadata: { provider_slug?: string }) => {
+      // Map the Junction provider slug to our WearableProvider type
+      const slug = metadata.provider_slug ?? "";
+      const providerMap: Record<string, WearableProvider> = {
+        apple_health_kit: "apple_watch",
+        oura: "oura",
+        whoop: "whoop",
+        garmin: "garmin",
+      };
+      const provider = providerMap[slug] ?? "oura";
+      onConnect(provider);
+    },
+    [onConnect]
+  );
+
+  const onExit = useCallback(() => {
+    setLoading(false);
+  }, []);
+
+  const onError = useCallback(() => {
+    setError("Connection failed. Please try again.");
+    setLoading(false);
+  }, []);
+
+  const { open, ready } = useVitalLink({
+    onSuccess,
+    onExit,
+    onError,
+    env: (process.env.NEXT_PUBLIC_JUNCTION_ENV as "sandbox" | "production") ?? "sandbox",
+  });
+
+  async function handleConnect() {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/junction/link-token", { method: "POST" });
+      if (!res.ok) throw new Error("Failed to get link token");
+
+      const { link_token } = await res.json();
+      open(link_token);
+    } catch {
+      setError("Could not start wearable connection. Please try again.");
+      setLoading(false);
+    }
   }
 
   return (
@@ -36,41 +72,20 @@ export function StepWearable({ onConnect, onSkip }: Props) {
         </p>
       </div>
 
-      <div className="grid w-full max-w-md grid-cols-2 gap-3">
-        {DEVICES.map((d) => (
-          <button
-            key={d.id}
-            onClick={() => setSelected(d.id)}
-            className={`flex flex-col items-center gap-3 rounded-none border p-6 transition-all ${
-              selected === d.id
-                ? "border-gold bg-gold/5"
-                : "border-ink/10 bg-white hover:border-ink/25"
-            }`}
-          >
-            <span className="text-3xl">{d.icon}</span>
-            <span className="font-body text-sm font-medium text-ink">{d.name}</span>
-            {selected === d.id && (
-              <span className="font-body text-[10px] uppercase tracking-widest text-gold">
-                Selected
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
-
       <div className="flex w-full max-w-md flex-col gap-3">
         <button
           onClick={handleConnect}
-          disabled={!selected || connecting}
+          disabled={loading || !ready}
           className="h-12 bg-ink font-body text-sm font-medium uppercase tracking-[0.15em]
                      text-off-white transition-colors hover:bg-gold disabled:opacity-30"
         >
-          {connecting
-            ? "Connecting..."
-            : selected
-              ? `Connect ${DEVICES.find((d) => d.id === selected)?.name}`
-              : "Select a device"}
+          {loading ? "Opening..." : "Connect a wearable"}
         </button>
+
+        {error && (
+          <p className="font-body text-xs text-red-500 text-center">{error}</p>
+        )}
+
         <button
           onClick={onSkip}
           className="font-body text-xs text-ink/35 uppercase tracking-widest hover:text-ink/60 transition-colors"
