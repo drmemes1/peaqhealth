@@ -12,7 +12,7 @@ export default function Home() {
     <div className="flex min-h-svh flex-col items-center justify-between bg-off-white px-6 py-10 selection:bg-gold selection:text-white">
       {/* ── Logo ── */}
       <header className="w-full max-w-3xl">
-        <Logo height={28} />
+        <Logo height={28} className="mix-blend-multiply" style={{ filter: 'brightness(0)' }} />
       </header>
 
       {/* ── Hero ── */}

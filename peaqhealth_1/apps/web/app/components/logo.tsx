@@ -5,13 +5,14 @@ import Image from "next/image";
 interface LogoProps {
   height?: number;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 /**
  * Peaq logo — uses /peaq.png when available, falls back to text.
  * Replace public/peaq.png with the real logo file.
  */
-export function Logo({ height = 28, className }: LogoProps) {
+export function Logo({ height = 28, className, style }: LogoProps) {
   return (
     <Image
       src="/peaq.png"
@@ -19,7 +20,7 @@ export function Logo({ height = 28, className }: LogoProps) {
       height={height}
       width={Math.round(height * 1)}
       className={className}
-      style={{ height, width: "auto" }}
+      style={{ height, width: "auto", ...style }}
       priority
     />
   );
