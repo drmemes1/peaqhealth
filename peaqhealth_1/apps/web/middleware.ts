@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  createMiddlewareClient,
-  getPostLoginRedirect,
-} from "@/lib/supabase/middleware-utils";
+import { createServerClient } from "@supabase/ssr";
 
 const PUBLIC_ROUTES = ["/", "/login", "/signup"];
 
@@ -10,7 +7,23 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   let response = NextResponse.next({ request });
 
-  const supabase = createMiddlewareClient(request, response);
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            request.cookies.set(name, value);
+            response.cookies.set(name, value, options);
+          });
+        },
+      },
+    }
+  );
 
   const {
     data: { user },
@@ -28,11 +41,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Authenticated user on /login or /signup → redirect to dashboard or onboarding
+  // Authenticated user on /login or /signup → redirect to dashboard
   if (user && (pathname === "/login" || pathname === "/signup")) {
-    const dest = await getPostLoginRedirect(supabase, user.id);
     const url = request.nextUrl.clone();
-    url.pathname = dest;
+    url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }
 
