@@ -1,65 +1,56 @@
-import Image from "next/image";
+import { WaitlistForm } from "./waitlist-form";
+
+const panels = [
+  { label: "Sleep", pts: 28 },
+  { label: "Blood", pts: 28 },
+  { label: "Oral", pts: 25 },
+] as const;
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="flex min-h-svh flex-col items-center justify-between bg-off-white px-6 py-10 selection:bg-gold selection:text-white">
+      {/* ── Logo ── */}
+      <header className="w-full max-w-3xl">
+        <span className="font-display text-2xl font-semibold tracking-[0.04em] text-ink">
+          peaq
+        </span>
+      </header>
+
+      {/* ── Hero ── */}
+      <main className="flex w-full max-w-xl flex-col items-center gap-10 text-center">
+        <div className="flex flex-col items-center gap-5">
+          <h1 className="font-display text-5xl font-light leading-[1.1] tracking-tight text-ink sm:text-6xl md:text-7xl">
+            Your body, measured.
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="max-w-sm font-body text-base leading-relaxed tracking-wide text-ink/55">
+            Sleep&nbsp;&middot;&nbsp;Blood&nbsp;&middot;&nbsp;Oral
+            microbiome&nbsp;&mdash; one score, updated nightly.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+
+        <WaitlistForm />
+
+        <p className="font-body text-xs tracking-widest text-ink/30 uppercase">
+          Launching 2026&ensp;&middot;&ensp;For informational purposes only
+        </p>
       </main>
+
+      {/* ── Panel pills ── */}
+      <footer className="flex w-full max-w-3xl items-center justify-center gap-4 pt-10">
+        {panels.map((p) => (
+          <span
+            key={p.label}
+            className="inline-flex items-center gap-2 border border-ink/10 px-4 py-2
+                       font-body text-xs uppercase tracking-[0.12em] text-ink/50"
+          >
+            {p.label}
+            <span className="font-display text-sm font-medium text-gold">
+              {p.pts}
+              <span className="text-ink/25">pts</span>
+            </span>
+          </span>
+        ))}
+      </footer>
     </div>
   );
 }
