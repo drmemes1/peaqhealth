@@ -11,15 +11,15 @@ export default function Home() {
   return (
     <div className="flex min-h-svh flex-col items-center justify-between bg-off-white px-6 py-10 selection:bg-gold selection:text-white">
       {/* ── Logo ── */}
-      <div className="fixed top-0 left-0 z-50 p-6">
+      <header className="w-full max-w-3xl">
         <Image
           src="/peaq.png"
           alt="Peaq"
           width={80}
           height={28}
-          style={{ filter: 'brightness(0)' }}
+          className="mix-blend-multiply"
         />
-      </div>
+      </header>
 
       {/* ── Hero ── */}
       <main className="flex w-full max-w-xl flex-col items-center gap-10 text-center">
