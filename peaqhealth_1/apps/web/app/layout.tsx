@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Peaq Health — Your body, measured.",
+  title: "Peaq Health — Reach for the peaq.",
   description:
     "Sleep, blood, and oral microbiome — one score, updated nightly. Launching 2026.",
 };

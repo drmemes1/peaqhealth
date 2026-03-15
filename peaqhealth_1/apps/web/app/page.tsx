@@ -19,7 +19,7 @@ export default function Home() {
       <main className="flex w-full max-w-xl flex-col items-center gap-10 text-center">
         <div className="flex flex-col items-center gap-5">
           <h1 className="font-display text-5xl font-light leading-[1.1] tracking-tight text-ink sm:text-6xl md:text-7xl">
-            Your body, measured.
+            Reach for the peaq.
           </h1>
           <p className="max-w-sm font-body text-base leading-relaxed tracking-wide text-ink/55">
             Sleep&nbsp;&middot;&nbsp;Blood&nbsp;&middot;&nbsp;Oral

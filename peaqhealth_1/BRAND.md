@@ -6,7 +6,7 @@ Version 1.0 · March 2026
 ─── BRAND ESSENCE ─────────────────────────────────────────────────
 
 Name:        Peaq Health
-Tagline:     Your body, measured.
+Tagline:     Reach for the peaq.
 Sub-tagline: Sleep · Blood · Oral microbiome — one score, updated nightly.
 
 Voice:       Calm authority. Clinical precision without cold detachment.
@@ -285,7 +285,7 @@ Tone:
   - Direct — no filler words
 
 Headlines:
-  - Short, declarative: "Your body, measured."
+  - Short, declarative: "Reach for the peaq."
   - Use italics (gold) for the key word: "Looking <em>good.</em>"
   - Never use exclamation marks
 

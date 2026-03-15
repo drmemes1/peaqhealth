@@ -11,7 +11,7 @@ export function StepWelcome({ onNext }: Props) {
     <div className="flex flex-col items-center gap-10 text-center">
       <div className="flex flex-col items-center gap-5">
         <h1 className="font-display text-5xl font-light leading-[1.1] tracking-tight text-ink sm:text-6xl">
-          Your body, measured.
+          Reach for the peaq.
         </h1>
         <p className="max-w-sm font-body text-base leading-relaxed text-ink/50">
           We&apos;ll connect your wearable, upload blood labs, and score your
