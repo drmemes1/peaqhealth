@@ -44,7 +44,7 @@ export function LeftPanel({ currentStep, panels }: LeftPanelProps) {
     <div className="sticky top-0 flex h-svh w-full flex-col justify-between bg-ink p-8 lg:w-80 lg:min-w-80">
       {/* Logo */}
       <div>
-        <Logo height={28} dark />
+        <Logo height={40} dark />
       </div>
 
       {/* Step dots */}
