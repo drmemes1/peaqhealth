@@ -7,10 +7,10 @@ import type {
   OnboardingStep,
   OnboardingData,
   PanelStates,
-  DetectedMarker,
   WearableProvider,
   LifestyleAnswers,
 } from "./types";
+import type { BloodMarkers } from "../components/lab-upload";
 import { INITIAL_DATA } from "./types";
 import { LeftPanel } from "./left-panel";
 import { StepWelcome } from "./step-welcome";
@@ -45,28 +45,6 @@ export default function OnboardingPage() {
     lifestyle: data.lifestyleCompleted ? "active" : step === "lifestyle" || step === "welcome" || step === "wearable" || step === "blood" || step === "oral" ? "pending" : "skipped",
   };
 
-  // Persist wearable connection
-  const persistWearable = useCallback(async (provider: WearableProvider) => {
-    if (!userId) return;
-    await supabase.from("wearable_connections").upsert({
-      user_id: userId,
-      provider,
-      access_token: "onboarding_placeholder",
-      refresh_token: "onboarding_placeholder",
-      token_expires_at: new Date(Date.now() + 86400000).toISOString(),
-    }, { onConflict: "user_id,provider" }).select();
-  }, [userId, supabase]);
-
-  // Persist blood markers
-  const persistBlood = useCallback(async (markers: DetectedMarker[]) => {
-    if (!userId) return;
-    await supabase.from("lab_results").insert({
-      user_id: userId,
-      lab_provider: "upload",
-      report_date: new Date().toISOString().slice(0, 10),
-      markers,
-    });
-  }, [userId, supabase]);
 
   // Persist oral kit order
   const persistOral = useCallback(async () => {
@@ -100,9 +78,9 @@ export default function OnboardingPage() {
   }, [userId, supabase, router]);
 
   // Step handlers
-  function handleWearableConnect(provider: WearableProvider) {
-    setData((prev) => ({ ...prev, wearableProvider: provider, wearableConnected: true }));
-    persistWearable(provider);
+  // ConnectWearable already persists via /api/junction/wearable-connected
+  function handleWearableConnect(provider: string, _retroNights: number) {
+    setData((prev) => ({ ...prev, wearableProvider: provider as WearableProvider, wearableConnected: true }));
     setStep("blood");
   }
 
@@ -110,9 +88,9 @@ export default function OnboardingPage() {
     setStep("blood");
   }
 
-  function handleBloodConfirm(markers: DetectedMarker[]) {
-    setData((prev) => ({ ...prev, bloodUploaded: true, bloodMarkers: markers }));
-    persistBlood(markers);
+  // LabUpload already persists via /api/labs/upload + /api/labs/status
+  function handleBloodConfirm(_markers: BloodMarkers, _newScore: number) {
+    setData((prev) => ({ ...prev, bloodUploaded: true }));
     setStep("oral");
   }
 

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Nav } from "../components/nav";
 import { ScoreRing } from "../onboarding/score-ring";
+import { ConnectWearable } from "../components/connect-wearable";
 import type { PeaqScoreResult } from "@peaq/score-engine";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -146,6 +147,7 @@ function InsightCard({ icon, title, body, tag }: { icon: string; title: string; 
 
 export function DashboardClient({ profile, scoreResult, panels, pendingPanels, insights, wearableConnected, provider, lastSyncAt, retroNights }: DashboardProps) {
   const [mounted, setMounted] = useState(false);
+  const [showConnectPanel, setShowConnectPanel] = useState(false);
   useEffect(() => setMounted(true), []);
 
   const initials = [profile.first_name?.[0], profile.last_name?.[0]]
@@ -191,7 +193,7 @@ export function DashboardClient({ profile, scoreResult, panels, pendingPanels, i
               active={panels.sleep.active}
               color={PANEL_COLORS.sleep!}
               badge={wearableConnected && provider
-                ? provider.replace(/_/g, " ")
+                ? `${provider.replace(/_/g, " ")}${lastSyncAt ? " · synced" : ""}`
                 : panels.sleep.active ? panels.sleep.source : undefined}
             />
             <PanelCard
@@ -226,10 +228,44 @@ export function DashboardClient({ profile, scoreResult, panels, pendingPanels, i
             <h3 className="font-body text-[10px] uppercase tracking-widest text-ink/30 mb-1">
               Unlock more points
             </h3>
-            {pendingPanels.includes("sleep") && <PendingBanner text="Connect a wearable" pts={28} />}
-            {pendingPanels.includes("blood") && <PendingBanner text="Upload lab results" pts={28} />}
+            {pendingPanels.includes("sleep") && (
+              <div onClick={() => setShowConnectPanel(true)} className="cursor-pointer">
+                <PendingBanner text="Connect a wearable" pts={28} />
+              </div>
+            )}
+            {pendingPanels.includes("blood") && (
+              <PendingBanner text="Upload lab results" pts={28} href="/settings/labs" />
+            )}
             {pendingPanels.includes("oral") && <PendingBanner text="Order oral kit" pts={25} />}
             {pendingPanels.includes("lifestyle") && <PendingBanner text="Complete lifestyle questions" pts={10} href="/settings/lifestyle" />}
+          </section>
+        )}
+
+        {/* Inline wearable connect panel */}
+        {showConnectPanel && (
+          <section className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-body text-[10px] uppercase tracking-widest" style={{ color: "var(--ink-30)" }}>
+                Connect wearable
+              </h3>
+              <button
+                onClick={() => setShowConnectPanel(false)}
+                className="font-body text-[10px] uppercase tracking-widest"
+                style={{ color: "var(--ink-30)" }}
+              >
+                Close
+              </button>
+            </div>
+            <div className="bg-white p-5" style={{ border: "0.5px solid var(--ink-12)", borderRadius: 4 }}>
+              <ConnectWearable
+                mode="dashboard"
+                onSuccess={(_provider, _retroNights) => {
+                  setShowConnectPanel(false);
+                  window.location.reload();
+                }}
+                onSkip={() => setShowConnectPanel(false)}
+              />
+            </div>
           </section>
         )}
 
