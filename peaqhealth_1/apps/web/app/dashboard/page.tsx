@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "../../lib/supabase/server";
 import { calculatePeaqScore, type LifestyleInputs } from "@peaq/score-engine";
+import { getSleepSummaries, aggregateSleepInputs } from "@peaq/api-client/junction";
+import { mapLabRowToBloodInputs, mapOralRowToOralInputs } from "../../lib/score/recalculate";
 import { DashboardClient } from "./dashboard-client";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -146,13 +148,32 @@ export default async function DashboardPage() {
     ? mapLifestyleRow(lifestyleRes.data as Record<string, unknown>)
     : undefined;
 
+  // Build sleep inputs from wearable
+  let sleepInputs = undefined
+  const wearableData = wearableRes.data?.[0]
+  if (wearableData?.junction_user_id) {
+    try {
+      const summaries = await getSleepSummaries(wearableData.junction_user_id, { days: 14 })
+      sleepInputs = aggregateSleepInputs(summaries) ?? undefined
+    } catch {
+      // wearable fetch failed — proceed without sleep data
+    }
+  }
+
+  // Build blood inputs from latest lab
+  const labRow = labRes.data?.[0]
+  const bloodInputs = labRow?.parser_status === "complete"
+    ? mapLabRowToBloodInputs(labRow as Record<string, unknown>)
+    : undefined
+
+  // Build oral inputs from latest kit
+  const oralRow = oralRes.data?.[0]
+  const oralInputs = oralRow?.status === "results_ready"
+    ? mapOralRowToOralInputs(oralRow as Record<string, unknown>)
+    : undefined
+
   // Calculate score
-  const scoreResult = calculatePeaqScore(
-    undefined, // No real wearable sleep data yet
-    undefined, // No parsed blood inputs yet (we store raw markers)
-    undefined, // No parsed oral inputs yet
-    lifestyleInputs
-  );
+  const scoreResult = calculatePeaqScore(sleepInputs, bloodInputs, oralInputs, lifestyleInputs);
 
   // If no snapshot exists or data changed, save one
   const existingSnapshot = snapshotRes.data?.[0];
@@ -212,6 +233,10 @@ export default async function DashboardPage() {
       panels={panels}
       pendingPanels={pendingPanels}
       insights={insights}
+      wearableConnected={hasWearable}
+      provider={wearableData?.provider ?? ""}
+      lastSyncAt={wearableData?.last_sync_at ?? null}
+      retroNights={wearableData?.retro_nights ?? 0}
     />
   );
 }

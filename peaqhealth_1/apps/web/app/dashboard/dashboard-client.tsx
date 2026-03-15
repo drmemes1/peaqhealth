@@ -28,6 +28,10 @@ interface DashboardProps {
   panels: PanelData;
   pendingPanels: string[];
   insights: { icon: string; title: string; body: string; tag: string }[];
+  wearableConnected?: boolean;
+  provider?: string;
+  lastSyncAt?: string | null;
+  retroNights?: number;
 }
 
 // ─── Category messages ───────────────────────────────────────────────────────
@@ -140,7 +144,7 @@ function InsightCard({ icon, title, body, tag }: { icon: string; title: string; 
 
 // ─── Main Dashboard Client ──────────────────────────────────────────────────
 
-export function DashboardClient({ profile, scoreResult, panels, pendingPanels, insights }: DashboardProps) {
+export function DashboardClient({ profile, scoreResult, panels, pendingPanels, insights, wearableConnected, provider, lastSyncAt, retroNights }: DashboardProps) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -186,7 +190,9 @@ export function DashboardClient({ profile, scoreResult, panels, pendingPanels, i
               max={panels.sleep.max}
               active={panels.sleep.active}
               color={PANEL_COLORS.sleep!}
-              badge={panels.sleep.active ? panels.sleep.source : undefined}
+              badge={wearableConnected && provider
+                ? provider.replace(/_/g, " ")
+                : panels.sleep.active ? panels.sleep.source : undefined}
             />
             <PanelCard
               label="Blood"
