@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { LogoSvg } from "../components/logo-svg";
 import { createClient } from "@/lib/supabase/client";
@@ -59,14 +58,14 @@ export function LoginForm() {
   return (
     <div className="flex min-h-svh">
       {/* Left panel — hero image, hidden on mobile */}
-      <div className="relative hidden md:block md:w-2/5 shrink-0">
-        <Image
-          src="/images/sleep-mask-hero.jpg"
-          alt="Peaq sleep mask"
-          fill
-          priority
-          style={{ objectFit: "cover", objectPosition: "center" }}
-        />
+      <div
+        className="relative hidden md:flex md:w-2/5 shrink-0 flex-col"
+        style={{
+          backgroundImage: "url('/images/sleep-mask-hero.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
         {/* Dark overlay */}
         <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.35)" }} />
 
