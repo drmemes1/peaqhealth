@@ -175,7 +175,7 @@ export function DashboardClient({ profile, scoreResult, panels, pendingPanels, i
       {/* ── Top nav ── */}
       <nav className="sticky top-0 z-50 border-b border-ink/8 bg-off-white/95 backdrop-blur-sm">
         <div className="mx-auto flex h-14 max-w-[680px] items-center justify-between px-6">
-          <Logo height={22} />
+          <Logo height={22} className="mix-blend-multiply" style={{ filter: 'brightness(0)' }} />
           <div className="flex items-center gap-4">
             <span className="hidden sm:block font-body text-[10px] uppercase tracking-widest text-ink/30">
               Last updated: {today}
