@@ -3,8 +3,24 @@
 :root {
   --white: #FFFFFF;
   --off-white: #FAFAF8;
+  --warm-50: #F7F5F0;
+  --warm-100: #EDE9E0;
+  --warm-200: #DDD8CC;
   --ink: #141410;
+  --ink-80: rgba(20,20,16,0.80);
+  --ink-60: rgba(20,20,16,0.60);
+  --ink-30: rgba(20,20,16,0.30);
+  --ink-12: rgba(20,20,16,0.12);
+  --ink-06: rgba(20,20,16,0.06);
   --gold: #B8860B;
+  --gold-dim: rgba(184,134,11,0.15);
+  --gold-light: #F5E6B8;
+  --sleep-c: #4A7FB5;
+  --sleep-bg: #EBF2FA;
+  --blood-c: #C0392B;
+  --blood-bg: #FDECEA;
+  --oral-c: #2D6A4F;
+  --oral-bg: #EAF3DE;
   --font-display: "Cormorant Garamond", Georgia, serif;
   --font-body: "Instrument Sans", system-ui, sans-serif;
 }
@@ -12,8 +28,14 @@
 @theme inline {
   --color-white: var(--white);
   --color-off-white: var(--off-white);
+  --color-warm-50: var(--warm-50);
+  --color-warm-100: var(--warm-100);
+  --color-warm-200: var(--warm-200);
   --color-ink: var(--ink);
   --color-gold: var(--gold);
+  --color-sleep-c: var(--sleep-c);
+  --color-blood-c: var(--blood-c);
+  --color-oral-c: var(--oral-c);
   --font-display: var(--font-display);
   --font-body: var(--font-body);
 }
@@ -27,4 +49,14 @@ body {
 ::selection {
   background: var(--gold);
   color: var(--white);
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-up {
+  animation: fadeUp 0.5s ease forwards;
+  opacity: 0;
 }

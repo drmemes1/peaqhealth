@@ -44,36 +44,38 @@ export function LeftPanel({ currentStep, panels }: LeftPanelProps) {
     <div className="sticky top-0 flex h-svh w-full flex-col justify-between bg-ink p-8 lg:w-80 lg:min-w-80">
       {/* Logo */}
       <div>
-        <Logo height={28} className="brightness-0 invert opacity-90" />
+        <Logo height={28} dark />
       </div>
 
       {/* Step dots */}
-      <nav className="flex flex-col gap-3">
+      <nav className="flex flex-col gap-0">
         {STEPS.map((step, i) => {
           const isCurrent = step === currentStep;
           const isDone = i < currentIndex;
+          const isLast = i === STEPS.length - 1;
           return (
-            <div key={step} className="flex items-center gap-3">
-              <div
-                className={`flex h-2.5 w-2.5 shrink-0 rounded-full transition-all duration-300 ${
-                  isCurrent
-                    ? "scale-125 bg-gold"
-                    : isDone
-                      ? "bg-white/50"
-                      : "bg-white/15"
-                }`}
-              />
-              <span
-                className={`font-body text-xs uppercase tracking-widest transition-colors ${
-                  isCurrent
-                    ? "text-white"
-                    : isDone
-                      ? "text-white/40"
-                      : "text-white/20"
-                }`}
-              >
-                {STEP_LABELS[step]}
-              </span>
+            <div key={step} className="flex flex-col">
+              <div className="flex items-center gap-3">
+                <div className="relative flex items-center justify-center" style={{ width: 12, height: 12 }}>
+                  {isCurrent && (
+                    <div className="absolute inset-0 rounded-full" style={{ border: "1.5px solid var(--gold)" }} />
+                  )}
+                  <div className="rounded-full transition-all duration-300" style={{
+                    width: isCurrent ? 6 : 8,
+                    height: isCurrent ? 6 : 8,
+                    background: isCurrent ? "white" : isDone ? "var(--gold)" : "transparent",
+                    border: isDone ? "none" : isCurrent ? "none" : "0.5px solid rgba(250,250,248,0.3)",
+                  }} />
+                </div>
+                <span className="font-body text-[10px] uppercase tracking-widest transition-colors" style={{
+                  color: isCurrent ? "white" : isDone ? "rgba(250,250,248,0.4)" : "rgba(250,250,248,0.2)"
+                }}>
+                  {STEP_LABELS[step]}
+                </span>
+              </div>
+              {!isLast && (
+                <div className="ml-[5.5px] h-4 w-px" style={{ background: "rgba(250,250,248,0.1)" }} />
+              )}
             </div>
           );
         })}

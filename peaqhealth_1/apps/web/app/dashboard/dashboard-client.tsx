@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Logo } from "../components/logo";
+import { Nav } from "../components/nav";
 import { ScoreRing } from "../onboarding/score-ring";
 import type { PeaqScoreResult } from "@peaq/score-engine";
 
@@ -64,70 +64,55 @@ function ProgressBar({ value, max, color }: { value: number; max: number; color:
 
 // ─── Panel card component ───────────────────────────────────────────────────
 
-function PanelCard({
-  label,
-  pts,
-  max,
-  active,
-  color,
-  badge,
-  link,
-}: {
-  label: string;
-  pts: number;
-  max: number;
-  active: boolean;
-  color: string;
-  badge?: string | undefined;
-  link?: { href: string; text: string } | undefined;
+function PanelCard({ label, pts, max, active, color, badge, link }: {
+  label: string; pts: number; max: number; active: boolean;
+  color: string; badge?: string; link?: { href: string; text: string };
 }) {
   return (
-    <div className={`border p-4 transition-all ${active ? "border-ink/10 bg-white" : "border-ink/5 bg-ink/[0.02]"}`}>
-      <div className="flex items-center justify-between mb-1">
-        <div className="flex items-center gap-2">
-          <div
-            className="h-2 w-2 rounded-full"
-            style={{ backgroundColor: color, opacity: active ? 1 : 0.3 }}
-          />
-          <span className="font-body text-xs font-medium text-ink">{label}</span>
+    <div className="flex flex-col bg-white transition-all duration-150"
+         style={{ border: "0.5px solid var(--ink-12)", borderRadius: 4, borderTop: `2px solid ${color}` }}
+         onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = `2px solid ${color}`; (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
+         onMouseLeave={() => {}}>
+      <div className="p-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: color, opacity: active ? 1 : 0.3 }} />
+            <span className="font-body text-[10px] uppercase tracking-[0.08em]" style={{ color: "var(--ink-60)" }}>{label}</span>
+          </div>
+          {badge && (
+            <span className="font-body text-[9px] uppercase tracking-widest px-1.5 py-0.5"
+                  style={{ background: "var(--ink-06)", color: "var(--ink-30)" }}>{badge}</span>
+          )}
         </div>
-        {badge && (
-          <span className="font-body text-[10px] uppercase tracking-widest text-ink/30 bg-ink/5 px-1.5 py-0.5">
-            {badge}
-          </span>
+        {active ? (
+          <>
+            <span className="font-display text-2xl font-light" style={{ color: "var(--ink)" }}>
+              {pts}<span className="text-sm" style={{ color: "var(--ink-30)" }}>/{max}</span>
+            </span>
+            <ProgressBar value={pts} max={max} color={color} />
+          </>
+        ) : (
+          <span className="font-body text-[10px] uppercase tracking-widest" style={{ color: "var(--ink-30)" }}>Pending</span>
+        )}
+        {link && (
+          <Link href={link.href} className="block mt-3 font-body text-[10px] uppercase tracking-widest transition-colors"
+                style={{ color: "var(--gold)" }}>{link.text}</Link>
         )}
       </div>
-      {active ? (
-        <>
-          <span className="font-display text-2xl font-light text-ink">
-            {pts}<span className="text-ink/30 text-sm">/{max}</span>
-          </span>
-          <ProgressBar value={pts} max={max} color={color} />
-        </>
-      ) : (
-        <span className="font-body text-[10px] uppercase tracking-widest text-ink/25">
-          Locked
-        </span>
-      )}
-      {link && (
-        <Link
-          href={link.href}
-          className="block mt-2 font-body text-[10px] uppercase tracking-widest text-gold hover:text-ink transition-colors"
-        >
-          {link.text}
-        </Link>
-      )}
     </div>
   );
 }
 
 // ─── Pending banner component ───────────────────────────────────────────────
 
-function PendingBanner({ text, href }: { text: string; href?: string }) {
+function PendingBanner({ text, pts, href }: { text: string; pts?: number; href?: string }) {
   const inner = (
-    <div className="flex items-center justify-between border border-gold/20 bg-gold/5 px-4 py-3">
-      <span className="font-body text-sm text-ink/70">{text}</span>
-      <span className="font-body text-[10px] uppercase tracking-widest text-gold">Unlock →</span>
+    <div className="flex items-center justify-between px-4 py-3 transition-colors"
+         style={{ borderLeft: "3px solid var(--gold)", background: "var(--gold-dim)", border: "0.5px solid var(--ink-12)", borderLeftWidth: 3, borderLeftColor: "var(--gold)" }}>
+      <span className="font-body text-sm" style={{ color: "var(--ink-60)" }}>{text}</span>
+      <span className="font-body text-[10px] uppercase tracking-widest" style={{ color: "var(--gold)" }}>
+        {pts ? `Unlock ${pts} pts →` : "Unlock →"}
+      </span>
     </div>
   );
   if (href) return <Link href={href}>{inner}</Link>;
@@ -138,15 +123,15 @@ function PendingBanner({ text, href }: { text: string; href?: string }) {
 
 function InsightCard({ icon, title, body, tag }: { icon: string; title: string; body: string; tag: string }) {
   return (
-    <div className="border border-ink/10 bg-white p-4">
+    <div className="bg-white p-4"
+         style={{ border: "0.5px solid var(--ink-12)", borderLeft: "2px solid var(--gold)", borderRadius: 4 }}>
       <div className="flex items-start gap-3">
-        <span className="text-lg shrink-0">{icon}</span>
+        <span className="text-base shrink-0">{icon}</span>
         <div className="flex flex-col gap-1">
-          <span className="font-body text-sm font-medium text-ink">{title}</span>
-          <p className="font-body text-xs text-ink/50 leading-relaxed">{body}</p>
-          <span className="mt-1 inline-block self-start font-body text-[10px] uppercase tracking-widest text-ink/25 bg-ink/5 px-1.5 py-0.5">
-            {tag}
-          </span>
+          <span className="font-display text-base font-light" style={{ color: "var(--ink)" }}>{title}</span>
+          <p className="font-body text-xs leading-relaxed" style={{ color: "var(--ink-60)" }}>{body}</p>
+          <span className="mt-1 self-start font-body text-[9px] uppercase tracking-widest px-1.5 py-0.5"
+                style={{ background: "var(--ink-06)", color: "var(--ink-30)" }}>{tag}</span>
         </div>
       </div>
     </div>
@@ -164,28 +149,10 @@ export function DashboardClient({ profile, scoreResult, panels, pendingPanels, i
     .join("")
     .toUpperCase() || "?";
 
-  const today = new Date().toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-
   return (
     <div className="min-h-svh bg-off-white">
       {/* ── Top nav ── */}
-      <nav className="sticky top-0 z-50 border-b border-ink/8 bg-off-white/95 backdrop-blur-sm">
-        <div className="mx-auto flex h-14 max-w-[680px] items-center justify-between px-6">
-          <Logo height={22} className="mix-blend-multiply" style={{ filter: 'brightness(0)' }} />
-          <div className="flex items-center gap-4">
-            <span className="hidden sm:block font-body text-[10px] uppercase tracking-widest text-ink/30">
-              Last updated: {today}
-            </span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-ink text-off-white font-body text-xs font-medium">
-              {initials}
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Nav initials={initials} />
 
       {/* ── Content ── */}
       <main className="mx-auto max-w-[680px] px-6 py-10 flex flex-col gap-10">
@@ -200,8 +167,8 @@ export function DashboardClient({ profile, scoreResult, panels, pendingPanels, i
             size={200}
             animate={mounted}
           />
-          <div className="text-center">
-            <p className="font-body text-sm text-ink/50">
+          <div className="text-center mt-2">
+            <p className="font-display text-sm font-light italic" style={{ color: "var(--gold)" }}>
               {CATEGORY_MSG[scoreResult.category] ?? CATEGORY_MSG.moderate}
             </p>
           </div>
@@ -253,21 +220,10 @@ export function DashboardClient({ profile, scoreResult, panels, pendingPanels, i
             <h3 className="font-body text-[10px] uppercase tracking-widest text-ink/30 mb-1">
               Unlock more points
             </h3>
-            {pendingPanels.includes("sleep") && (
-              <PendingBanner text="Connect a wearable → unlock 28 pts" />
-            )}
-            {pendingPanels.includes("blood") && (
-              <PendingBanner text="Upload lab results → unlock 28 pts" />
-            )}
-            {pendingPanels.includes("oral") && (
-              <PendingBanner text="Order oral kit → unlock 25 pts" />
-            )}
-            {pendingPanels.includes("lifestyle") && (
-              <PendingBanner
-                text="Complete lifestyle questions → unlock 10 pts"
-                href="/settings/lifestyle"
-              />
-            )}
+            {pendingPanels.includes("sleep") && <PendingBanner text="Connect a wearable" pts={28} />}
+            {pendingPanels.includes("blood") && <PendingBanner text="Upload lab results" pts={28} />}
+            {pendingPanels.includes("oral") && <PendingBanner text="Order oral kit" pts={25} />}
+            {pendingPanels.includes("lifestyle") && <PendingBanner text="Complete lifestyle questions" pts={10} href="/settings/lifestyle" />}
           </section>
         )}
 
