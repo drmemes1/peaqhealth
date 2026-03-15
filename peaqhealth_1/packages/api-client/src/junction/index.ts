@@ -90,9 +90,13 @@ export async function getSleepSummaries(
  * Compute the SleepInputs the Peaq score engine needs
  * from a rolling window of Junction sleep summaries.
  * Requires at least 7 nights; uses up to 10.
+ *
+ * @param opts.highOsaRisk - Pass true when a sleep_apnea_alert event has been received
+ *                           for this user (stored in wearable_connections.high_osa_risk).
  */
 export function aggregateSleepInputs(
-  summaries: JunctionSleepSummary[]
+  summaries: JunctionSleepSummary[],
+  opts?: { highOsaRisk?: boolean }
 ): import('@peaq/types').SleepInputs | null {
   const valid = summaries
     .filter((s) => s.duration > 0)
@@ -110,18 +114,24 @@ export function aggregateSleepInputs(
     return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0
   }
 
-  const avgDuration       = avg('duration')           // seconds
-  const avgDeepSecs       = avg('deep_sleep_duration')
-  const avgRemSecs        = avg('rem_sleep_duration')
-  const avgAwakeSecs      = avg('awake_duration')
-  const avgEfficiency     = avg('sleep_efficiency')
-  const avgHrv            = avg('hrv_rmssd_evening')
+  const avgDuration   = avg('duration')           // seconds
+  const avgDeepSecs   = avg('deep_sleep_duration')
+  const avgRemSecs    = avg('rem_sleep_duration')
+  const avgEfficiency = avg('sleep_efficiency')
+  const avgHrv        = avg('hrv_rmssd_evening')
 
   // SpO2 dips: estimate from spo2_min — dips/night inferred
-  // A min below 90 is flagged as ≥1 dip; rough approximation until raw data available
   const spo2Dips = valid.filter(
     (s) => s.spo2_min !== null && s.spo2_min < 90
-  ).length / valid.length * 5  // rough scaling
+  ).length / valid.length * 5
+
+  // Average SpO2: use spo2_avg across valid nights that have it (v4.1)
+  const spo2AvgVals = valid
+    .map((s) => s.spo2_avg)
+    .filter((v): v is number => typeof v === 'number' && v > 0)
+  const avgSpo2 = spo2AvgVals.length > 0
+    ? Math.round((spo2AvgVals.reduce((a, b) => a + b, 0) / spo2AvgVals.length) * 10) / 10
+    : undefined
 
   return {
     deepSleepPct:       avgDuration > 0 ? (avgDeepSecs / avgDuration) * 100 : 0,
@@ -129,7 +139,32 @@ export function aggregateSleepInputs(
     spo2DipsPerNight:   Math.round(spo2Dips * 10) / 10,
     remPct:             avgDuration > 0 ? (avgRemSecs / avgDuration) * 100 : 0,
     sleepEfficiencyPct: avgEfficiency * 100,
+    avgSpo2,
+    highOsaRisk:        opts?.highOsaRisk,
   }
+}
+
+/**
+ * Request a historical data pull for a Junction user.
+ * Junction will backfill sleep summaries for the specified date range
+ * and emit a historical.data webhook event when complete.
+ * Docs: POST /v2/user/{user_id}/historical-pulls
+ */
+export async function requestHistoricalPull(
+  junctionUserId: string,
+  opts: { days?: number } = {}
+): Promise<{ pullId: string }> {
+  const days      = opts.days ?? 90
+  const endDate   = new Date().toISOString().slice(0, 10)
+  const startDate = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10)
+
+  const res = await junctionFetch(`/v2/user/${junctionUserId}/historical-pulls`, {
+    method: 'POST',
+    body: JSON.stringify({ start_date: startDate, end_date: endDate }),
+  })
+  // Junction may return pull_id or id depending on API version
+  const pullId = (res.pull_id ?? res.id ?? '') as string
+  return { pullId }
 }
 
 // ─── Lab report parser ────────────────────────────────────────────────────────

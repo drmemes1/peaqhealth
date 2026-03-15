@@ -86,7 +86,9 @@ export async function recalculateScore(
   if (wearableRes.data?.junction_user_id) {
     try {
       const summaries = await getSleepSummaries(wearableRes.data.junction_user_id, { days: 14 })
-      sleepInputs = aggregateSleepInputs(summaries) ?? undefined
+      sleepInputs = aggregateSleepInputs(summaries, {
+        highOsaRisk: wearableRes.data.high_osa_risk === true,
+      }) ?? undefined
     } catch {
       // sleep data unavailable — proceed without it
     }
