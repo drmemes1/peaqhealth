@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { LogoSvg } from "./components/logo-svg";
 import { WaitlistForm } from "./waitlist-form";
 
 const panels = [
@@ -11,15 +11,8 @@ export default function Home() {
   return (
     <div className="relative flex min-h-svh flex-col items-center justify-between bg-off-white px-6 py-10 selection:bg-gold selection:text-white">
       {/* Fixed logo top-left */}
-      <div className="fixed top-0 left-0 z-50 pt-5 pl-6">
-        <Image
-          src="/peaq.png"
-          alt="Peaq"
-          width={80}
-          height={28}
-          style={{ filter: "brightness(0)", width: "auto", height: 28 }}
-          priority
-        />
+      <div className="fixed top-0 left-0 z-50 pt-4 pl-6">
+        <LogoSvg size={56} color="var(--ink)" />
       </div>
 
       {/* Coming soon eyebrow */}

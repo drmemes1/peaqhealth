@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
+import { LogoSvg } from "../components/logo-svg";
 import { createClient } from "@/lib/supabase/client";
 
 export default function SignupPage() {
@@ -76,7 +76,7 @@ export default function SignupPage() {
         style={{ background: "var(--ink)" }}
       >
         <div>
-          <Image src="/peaq.png" alt="Peaq" width={80} height={28} style={{ filter: "brightness(0) invert(1)", width: "auto", height: 28 }} priority />
+          <LogoSvg size={52} color="rgba(250,250,248,0.9)" />
         </div>
         <div className="flex flex-col items-center gap-8 text-center">
           <p className="font-display font-light leading-[1.15]" style={{ fontSize: 36, color: "var(--white)" }}>
@@ -100,7 +100,7 @@ export default function SignupPage() {
       {/* Right panel */}
       <div className="flex flex-1 flex-col items-center justify-center bg-off-white px-8 py-12">
         <div className="mb-8 lg:hidden">
-          <Image src="/peaq.png" alt="Peaq" width={80} height={28} style={{ filter: "brightness(0)", width: "auto", height: 28 }} priority />
+          <LogoSvg size={52} color="var(--ink)" />
         </div>
 
         <div className="w-full max-w-sm">

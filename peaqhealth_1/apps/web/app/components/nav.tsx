@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Logo } from "./logo";
+import { LogoSvg } from "./logo-svg";
 
 interface NavProps {
   initials?: string;
@@ -24,7 +24,7 @@ export function Nav({ initials = "?", cartCount = 0, onCartOpen }: NavProps) {
       <div className="mx-auto flex h-14 max-w-[1200px] items-center justify-between px-6">
         {/* Logo */}
         <Link href="/dashboard">
-          <Logo height={24} />
+          <LogoSvg size={36} color="var(--ink)" />
         </Link>
 
         {/* Center nav links */}

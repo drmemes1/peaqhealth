@@ -1,6 +1,6 @@
 "use client";
 
-import { Logo } from "../components/logo";
+import { LogoSvg } from "../components/logo-svg";
 import { STEPS, STEP_LABELS, type OnboardingStep, type PanelStates, type PanelStatus } from "./types";
 
 const PANEL_CONFIG: { key: keyof PanelStates; label: string; color: string; pts: string }[] = [
@@ -44,7 +44,7 @@ export function LeftPanel({ currentStep, panels }: LeftPanelProps) {
     <div className="sticky top-0 flex h-svh w-full flex-col justify-between bg-ink p-8 lg:w-80 lg:min-w-80">
       {/* Logo */}
       <div>
-        <Logo height={40} dark />
+        <LogoSvg size={48} color="rgba(250,250,248,0.9)" />
       </div>
 
       {/* Step dots */}
