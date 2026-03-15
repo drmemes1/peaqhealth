@@ -12,7 +12,7 @@ export default function Home() {
     <div className="relative flex min-h-svh flex-col items-center justify-between bg-off-white px-6 py-10 selection:bg-gold selection:text-white">
       {/* Fixed logo top-left */}
       <div className="fixed top-0 left-0 z-50 pt-4 pl-6">
-        <LogoSvg size={56} color="var(--ink)" />
+        <LogoSvg size={72} color="var(--ink)" />
       </div>
 
       {/* Coming soon eyebrow */}
