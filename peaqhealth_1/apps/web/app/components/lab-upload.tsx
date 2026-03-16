@@ -28,6 +28,7 @@ interface ParsedMarker {
 interface LabUploadProps {
   onSuccess: (markers: BloodMarkers, newScore: number) => void
   onSkip?: () => void
+  existingLabDate?: string
 }
 
 // ─── Canonical markers ────────────────────────────────────────────────────────

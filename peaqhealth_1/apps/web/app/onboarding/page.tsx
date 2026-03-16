@@ -89,9 +89,9 @@ export default function OnboardingPage() {
   }, [userId, supabase, router]);
 
   // Step handlers
-  function handleWearableConnect(provider: WearableProvider) {
-    setData((prev) => ({ ...prev, wearableProvider: provider, wearableConnected: true }));
-    persistWearable(provider);
+  function handleWearableConnect(provider: string, _retroNights: number) {
+    setData((prev) => ({ ...prev, wearableProvider: provider as WearableProvider, wearableConnected: true }));
+    persistWearable(provider as WearableProvider);
     setStep("blood");
   }
 
