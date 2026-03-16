@@ -74,7 +74,7 @@ export default function SignupPage() {
       {/* Left panel — full-bleed hero image */}
       <div className="relative hidden lg:flex w-2/5 flex-col items-center justify-between overflow-hidden px-10 py-12">
         <Image
-          src="/images/nopeaqing.png"
+          src="/images/peaq_mask.png"
           alt="no peaqing sleep mask"
           fill
           priority
