@@ -282,12 +282,13 @@ export function ScoreWheel({
       </div>
 
       {/* ── PENDING BANNERS ───────────────────────────────────────────────── */}
-      {((!sleepConnected) || (!oralActive) || labFreshness === 'none' || labFreshness === 'expired' || labFreshness === 'stale') && (
+      {((!sleepConnected) || (!oralActive) || labFreshness === 'none' || labFreshness === 'expired' || labFreshness === 'stale' || labFreshness === 'aging') && (
         <div className="flex flex-col gap-2" style={fadeUp("0.04s")}>
           {!sleepConnected && <PendingBanner type="sleep" />}
-          {labFreshness === 'none' && <PendingBanner type="blood" />}
-          {labFreshness === 'expired' && <PendingBanner type="blood" />}
-          {labFreshness === 'stale' && bloodData && <PendingBanner type="blood-stale" monthsOld={bloodData.monthsOld} />}
+          {labFreshness === 'none'    && <PendingBanner type="blood" />}
+          {labFreshness === 'expired' && <PendingBanner type="blood-expired" />}
+          {labFreshness === 'stale'   && bloodData && <PendingBanner type="blood-stale"  monthsOld={bloodData.monthsOld} />}
+          {labFreshness === 'aging'   && bloodData && <PendingBanner type="blood-aging"  monthsOld={bloodData.monthsOld} />}
           {!oralActive && <PendingBanner type="oral" />}
         </div>
       )}

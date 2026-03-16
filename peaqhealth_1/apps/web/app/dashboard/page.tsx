@@ -16,7 +16,7 @@ export default async function DashboardPage() {
     { data: lifestyle },
   ] = await Promise.all([
     supabase.from("score_snapshots").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1).single(),
-    supabase.from("wearable_connections").select("*").eq("user_id", user.id).eq("connected", true).order("connected_at", { ascending: false }).limit(1).single(),
+    supabase.from("wearable_connections").select("*").eq("user_id", user.id).eq("status", "connected").order("connected_at", { ascending: false }).limit(1).single(),
     supabase.from("lab_results").select("*").eq("user_id", user.id).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).single(),
     supabase.from("oral_kit_orders").select("*").eq("user_id", user.id).eq("status", "results_ready").order("created_at", { ascending: false }).limit(1).single(),
     supabase.from("lifestyle_records").select("*").eq("user_id", user.id).single(),
@@ -35,7 +35,7 @@ export default async function DashboardPage() {
     else labFreshness = 'expired'
   }
 
-  const score = snapshot?.total_score ?? 0
+  const score = snapshot?.score ?? 0
   const breakdown = {
     sleepSub:        snapshot?.sleep_sub ?? 0,
     bloodSub:        snapshot?.blood_sub ?? 0,
@@ -61,15 +61,17 @@ export default async function DashboardPage() {
       lastSync:   wearable.last_sync_at ?? "",
     } : undefined,
     bloodData: lab ? {
-      hsCRP:          lab.hs_crp ?? 0,
-      vitaminD:       lab.vitamin_d ?? 0,
-      apoB:           lab.apo_b ?? 0,
-      ldlHdlRatio:    lab.ldl_hdl_ratio ?? 0,
-      hba1c:          lab.hba1c ?? 0,
-      lpa:            lab.lp_a ?? 0,
-      triglycerides:  lab.triglycerides ?? 0,
-      collectionDate: lab.collection_date ?? "",
-      labName:        lab.laboratory ?? "Lab",
+      hsCRP:          (lab.hs_crp_mgl         as number) ?? 0,
+      vitaminD:       (lab.vitamin_d_ngml      as number) ?? 0,
+      apoB:           (lab.apob_mgdl           as number) ?? 0,
+      ldlHdlRatio:    (lab.ldl_mgdl as number) && (lab.hdl_mgdl as number)
+                        ? (lab.ldl_mgdl as number) / (lab.hdl_mgdl as number)
+                        : 0,
+      hba1c:          (lab.hba1c_pct           as number) ?? 0,
+      lpa:            (lab.lpa_mgdl            as number) ?? 0,
+      triglycerides:  (lab.triglycerides_mgdl  as number) ?? 0,
+      collectionDate: (lab.collection_date     as string) ?? "",
+      labName:        (lab.lab_name            as string) ?? "Lab",
       monthsOld,
     } : undefined,
     oralData: oral ? {

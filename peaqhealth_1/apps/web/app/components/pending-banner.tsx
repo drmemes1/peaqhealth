@@ -2,7 +2,7 @@
 import { useRouter } from "next/navigation"
 
 interface PendingBannerProps {
-  type: "sleep" | "blood" | "oral" | "blood-stale"
+  type: "sleep" | "blood" | "oral" | "blood-aging" | "blood-stale" | "blood-expired"
   monthsOld?: number
 }
 
@@ -44,6 +44,23 @@ export function PendingBanner({ type, monthsOld }: PendingBannerProps) {
         </svg>
       ),
     },
+    "blood-aging": {
+      bg:      "rgba(254,243,199,0.6)",
+      border:  "rgba(202,138,4,0.18)",
+      iconBg:  "rgba(202,138,4,0.10)",
+      color:   "var(--amber, #b45309)",
+      subColor:"rgba(146,64,14,0.6)",
+      title:   `Labs are ${monthsOld} months old`,
+      sub:     "Still counting towards your score · Consider retesting soon",
+      href:    "/settings/labs",
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4">
+          <circle cx="8" cy="8" r="5.5"/>
+          <path d="M8 5v3.5"/>
+          <circle cx="8" cy="11" r="0.6" fill="currentColor" stroke="none"/>
+        </svg>
+      ),
+    },
     "blood-stale": {
       bg: "var(--amber-bg)",
       border: "rgba(146,64,14,0.2)",
@@ -57,6 +74,24 @@ export function PendingBanner({ type, monthsOld }: PendingBannerProps) {
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4">
           <path d="M8 2L2 13h12L8 2z"/>
           <path d="M8 7v3M8 11.5v.5"/>
+        </svg>
+      ),
+    },
+    "blood-expired": {
+      bg:      "var(--blood-bg)",
+      border:  "rgba(192,57,43,0.2)",
+      iconBg:  "rgba(192,57,43,0.12)",
+      color:   "var(--blood-c)",
+      subColor:"rgba(192,57,43,0.7)",
+      title:   "Blood panel expired — results over 1 year old",
+      sub:     "Score locked at 0 · Upload new results to unlock 28 pts",
+      href:    "/settings/labs",
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4">
+          <path d="M8 2v7"/>
+          <path d="M5 6l-2 5c-.5 1.5.5 3 2 3h6c1.5 0 2.5-1.5 2-3L11 6"/>
+          <path d="M5.5 4h5"/>
+          <path d="M6 9.5h4"/>
         </svg>
       ),
     },
