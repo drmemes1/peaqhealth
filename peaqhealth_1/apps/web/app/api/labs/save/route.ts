@@ -22,10 +22,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
   }
 
+  if (labDate) {
+    const today      = new Date().toISOString().slice(0, 10)
+    const fiveYrsAgo = new Date(Date.now() - 5 * 365.25 * 24 * 3600 * 1000).toISOString().slice(0, 10)
+    if (labDate > today) {
+      return NextResponse.json({ error: "Lab date cannot be in the future" }, { status: 400 })
+    }
+    if (labDate < fiveYrsAgo) {
+      return NextResponse.json({ error: "Lab date cannot be more than 5 years ago" }, { status: 400 })
+    }
+  }
+
+  const collectionDate = labDate ?? new Date().toISOString().slice(0, 10)
+
   const { error: insertError } = await supabase.from("lab_results").insert({
     user_id:            user.id,
     source,
-    collection_date:    labDate ?? new Date().toISOString().slice(0, 10),
+    collection_date:    collectionDate,
     parser_status:      "complete",
     hs_crp_mgl:         markers.hsCRP_mgL          ?? null,
     vitamin_d_ngml:     markers.vitaminD_ngmL      ?? null,

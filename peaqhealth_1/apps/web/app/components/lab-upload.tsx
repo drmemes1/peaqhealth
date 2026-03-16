@@ -72,7 +72,8 @@ export function LabUpload({ onSuccess, onSkip }: LabUploadProps) {
   const [phase,         setPhase]         = useState<Phase>("idle")
   const [stageIdx,      setStageIdx]      = useState(0)
   const [parsedMarkers, setParsedMarkers] = useState<ParsedMarker[]>([])
-  const [labDate,       setLabDate]       = useState("")
+  const [labDate,       setLabDate]       = useState(new Date().toISOString().slice(0, 10))
+  const [manualLabDate, setManualLabDate] = useState(new Date().toISOString().slice(0, 10))
   const [manualValues,  setManualValues]  = useState<Partial<Record<keyof BloodMarkers, string>>>({})
   const [newScore,      setNewScore]      = useState(0)
   const [dragOver,      setDragOver]      = useState(false)
@@ -90,9 +91,17 @@ export function LabUpload({ onSuccess, onSkip }: LabUploadProps) {
 
   const startPolling = useCallback((jobId: string) => {
     let polls = 0
+    const MAX_POLLS = 45 // 45 × 2s = 90s timeout
     pollRef.current = setInterval(async () => {
       polls++
       if (polls === 3) setStageIdx(2) // advance to "Mapping..."
+
+      if (polls > MAX_POLLS) {
+        clearInterval(pollRef.current!)
+        setError("Lab parsing is taking longer than expected. Try uploading again or enter your values manually.")
+        setPhase("idle")
+        return
+      }
 
       try {
         const res  = await fetch(`/api/labs/status/${jobId}`)
@@ -181,7 +190,7 @@ export function LabUpload({ onSuccess, onSkip }: LabUploadProps) {
   }
 
   function handleManualSave() {
-    const markers: BloodMarkers = { labDate: new Date().toISOString().slice(0, 10) }
+    const markers: BloodMarkers = { labDate: manualLabDate }
     for (const m of MARKERS) {
       const v = parseFloat(manualValues[m.slug] ?? "")
       if (!isNaN(v)) (markers as Record<string, unknown>)[m.slug] = v
@@ -267,11 +276,27 @@ export function LabUpload({ onSuccess, onSkip }: LabUploadProps) {
 
   if (phase === "confirm") {
     const found = parsedMarkers.filter((m) => m.found).length
+    const today = new Date().toISOString().slice(0, 10)
     return (
       <div className="flex flex-col gap-5">
         <p className="font-body text-[10px] uppercase tracking-widest" style={{ color: "var(--ink-30)" }}>
           {found} of {parsedMarkers.length} markers detected
         </p>
+
+        <div
+          className="flex items-center gap-3 px-4 py-3"
+          style={{ border: "0.5px solid var(--ink-12)", borderRadius: 4, background: "white" }}
+        >
+          <span className="font-body text-sm flex-1" style={{ color: "var(--ink)" }}>Date of blood draw</span>
+          <input
+            type="date"
+            max={today}
+            value={labDate}
+            onChange={(e) => setLabDate(e.target.value)}
+            className="font-body text-sm"
+            style={{ color: "var(--ink)", background: "transparent", border: "none", outline: "none" }}
+          />
+        </div>
 
         <div style={{ border: "0.5px solid var(--ink-12)", borderRadius: 4, overflow: "hidden" }}>
           <div
@@ -348,8 +373,24 @@ export function LabUpload({ onSuccess, onSkip }: LabUploadProps) {
   // ── Manual entry ─────────────────────────────────────────────────────────────
 
   if (phase === "manual") {
+    const today = new Date().toISOString().slice(0, 10)
     return (
       <div className="flex flex-col gap-4">
+        <div
+          className="flex items-center gap-3 px-4 py-3"
+          style={{ border: "0.5px solid var(--ink-12)", borderRadius: 4, background: "white" }}
+        >
+          <span className="font-body text-sm flex-1" style={{ color: "var(--ink)" }}>Date of blood draw</span>
+          <input
+            type="date"
+            max={today}
+            value={manualLabDate}
+            onChange={(e) => setManualLabDate(e.target.value)}
+            className="font-body text-sm"
+            style={{ color: "var(--ink)", background: "transparent", border: "none", outline: "none" }}
+          />
+        </div>
+
         <div
           className="grid items-center gap-2 px-1"
           style={{ gridTemplateColumns: "1fr 110px 52px" }}

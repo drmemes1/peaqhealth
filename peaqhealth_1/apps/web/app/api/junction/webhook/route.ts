@@ -52,11 +52,15 @@ export async function POST(request: NextRequest) {
   const body = await request.json()
   const { event_type, data, client_user_id } = body
 
-  // Only process sleep events
-  if (
-    event_type !== "daily.data.sleep.created" &&
-    event_type !== "daily.data.sleep.updated"
-  ) {
+  // Only process sleep and sleep breathing disturbance events
+  const isSleepEvent =
+    event_type === "daily.data.sleep.created" ||
+    event_type === "daily.data.sleep.updated"
+  const isDisturbanceEvent =
+    event_type === "daily.data.sleep_breathing_disturbance.created" ||
+    event_type === "daily.data.sleep_breathing_disturbance.updated"
+
+  if (!isSleepEvent && !isDisturbanceEvent) {
     return NextResponse.json({ status: "ignored" })
   }
 
@@ -77,6 +81,39 @@ export async function POST(request: NextRequest) {
   // The client_user_id is our Supabase user ID (set when creating the Junction user)
   const userId = client_user_id
 
+  // ── Sleep breathing disturbance event ──────────────────────────────────────
+  // Store spo2 dip estimate on wearable_connections so the next sleep event
+  // can read it instead of defaulting to 0.
+  if (isDisturbanceEvent) {
+    const disturbanceCount = (data.disturbance_count as number) ?? 0
+    const spo2Dips =
+      disturbanceCount === 0  ? 0 :
+      disturbanceCount <= 3   ? 1 :
+      disturbanceCount <= 10  ? 3 : 8
+
+    await supabase
+      .from("wearable_connections")
+      .update({ latest_spo2_dips: spo2Dips })
+      .eq("user_id", userId)
+      .eq("status", "connected")
+
+    return NextResponse.json({ status: "processed", spo2Dips })
+  }
+
+  // ── Sleep event ─────────────────────────────────────────────────────────────
+
+  // Read latest_spo2_dips stored from the most recent disturbance event
+  const { data: wearableRow } = await supabase
+    .from("wearable_connections")
+    .select("latest_spo2_dips")
+    .eq("user_id", userId)
+    .eq("status", "connected")
+    .order("connected_at", { ascending: false })
+    .limit(1)
+    .single()
+
+  const spo2DipsPerNight = (wearableRow?.latest_spo2_dips as number) ?? 0
+
   // Map Junction sleep payload → SleepInputs
   const totalSleepSeconds = (data.deep ?? 0) + (data.light ?? 0) + (data.rem ?? 0)
   const sleepInputs: SleepInputs = {
@@ -85,8 +122,7 @@ export async function POST(request: NextRequest) {
         ? ((data.deep ?? 0) / totalSleepSeconds) * 100
         : 0,
     hrv_ms: data.average_hrv ?? 0,
-    // SpO2 dips aren't in the sleep summary — default to 0
-    spo2DipsPerNight: 0,
+    spo2DipsPerNight,
     remPct:
       totalSleepSeconds > 0
         ? ((data.rem ?? 0) / totalSleepSeconds) * 100
