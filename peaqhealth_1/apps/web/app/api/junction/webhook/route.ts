@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { Webhook } from "svix"
 import { createClient } from "@supabase/supabase-js"
 import { recalculateScore } from "../../../../lib/score/recalculate"
 
@@ -14,18 +15,31 @@ const HANDLED_EVENTS = new Set([
 ])
 
 export async function POST(request: NextRequest) {
-  // ── Signature verification ────────────────────────────────────────────────
-  // Junction sends the raw secret in x-vital-webhook-secret.
-  // If JUNCTION_WEBHOOK_SECRET is not set we skip verification (dev mode).
+  // ── Signature verification (Svix) ────────────────────────────────────────
+  // Junction uses Svix to deliver webhooks. Svix signs each request with
+  // three headers: svix-id, svix-timestamp, svix-signature.
   const webhookSecret = process.env.JUNCTION_WEBHOOK_SECRET
+  const payload = await request.text()
+
   if (webhookSecret) {
-    const incoming = request.headers.get("x-vital-webhook-secret")
-    console.log("[webhook] secret check — incoming header present:", !!incoming)
-    if (incoming !== webhookSecret) {
-      console.error("[webhook] secret mismatch — rejecting request")
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    const svixId        = request.headers.get("svix-id")
+    const svixTimestamp = request.headers.get("svix-timestamp")
+    const svixSignature = request.headers.get("svix-signature")
+
+    console.log("[webhook] svix headers — id:", svixId, "timestamp:", svixTimestamp, "signature present:", !!svixSignature)
+
+    const wh = new Webhook(webhookSecret)
+    try {
+      wh.verify(payload, {
+        "svix-id":        svixId        ?? "",
+        "svix-timestamp": svixTimestamp ?? "",
+        "svix-signature": svixSignature ?? "",
+      })
+      console.log("[webhook] Webhook signature verified")
+    } catch {
+      console.error("[webhook] Svix signature verification failed")
+      return NextResponse.json({ error: "Invalid signature" }, { status: 401 })
     }
-    console.log("[webhook] secret verified OK")
   } else {
     console.warn("[webhook] JUNCTION_WEBHOOK_SECRET not set — skipping verification")
   }
@@ -33,7 +47,7 @@ export async function POST(request: NextRequest) {
   // ── Parse body ────────────────────────────────────────────────────────────
   let body: Record<string, unknown>
   try {
-    body = await request.json() as Record<string, unknown>
+    body = JSON.parse(payload) as Record<string, unknown>
   } catch {
     console.error("[webhook] failed to parse JSON body")
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
