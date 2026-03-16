@@ -1,91 +1,58 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
-import { calculatePeaqScore } from "@peaq/score-engine"
-import type { SleepInputs, LifestyleInputs } from "@peaq/score-engine"
+import { recalculateScore } from "../../../../lib/score/recalculate"
 
-/**
- * Map DB lifestyle_records row (snake_case) → engine LifestyleInputs (camelCase enums).
- * Mirrors the mapping in apps/web/app/dashboard/page.tsx.
- */
-function mapLifestyleRow(row: Record<string, unknown>): LifestyleInputs {
-  const brushMap: Record<string, string> = { once: "once", twice: "twice_plus", more: "twice_plus" }
-  const flossMap: Record<string, string> = { never: "rarely_never", sometimes: "sometimes", daily: "daily" }
-  const mouthMap: Record<string, string> = { none: "none", alcohol: "antiseptic", fluoride: "fluoride", natural: "none" }
-  const visitMap: Record<string, string> = { "6mo": "within_6mo", "1yr": "6_to_12mo", "2yr": "over_1yr", more: "over_2yr" }
-  const smokeMap: Record<string, string> = { never: "never", former: "former", current: "current" }
-  const exMap: Record<string, string> = { sedentary: "sedentary", light: "light", moderate: "moderate", active: "active" }
-  const durMap: Record<string, string> = { lt6: "lt_6", "6to7": "6_to_7", "7to8": "7_to_8", gt8: "gte_8" }
-  const latMap: Record<string, string> = { lt10: "lt_15min", "10to20": "15_to_30min", "20to40": "30_to_60min", gt40: "gt_60min" }
-  const qualMap: Record<string, string> = { poor: "poor", fair: "fair", good: "good", excellent: "very_good" }
-  const wakeMap: Record<string, string> = { "0": "never", "1to2": "less_once_wk", "3to5": "once_twice_wk", gt5: "3plus_wk" }
-  const fatMap: Record<string, string> = { none: "never", mild: "sometimes", moderate: "often", severe: "always" }
+const HANDLED_EVENTS = new Set([
+  "daily.data.sleep.created",
+  "daily.data.sleep.updated",
+  "daily.data.sleep_cycle.created",
+  "daily.data.sleep_cycle.updated",
+  "daily.data.sleep_breathing_disturbance.created",
+  "daily.data.sleep_breathing_disturbance.updated",
+  "daily.data.sleep_apnea_alert.created",
+  "historical.data",
+])
 
-  return {
-    exerciseLevel: (exMap[row.exercise_level as string] ?? "sedentary") as LifestyleInputs["exerciseLevel"],
-    brushingFreq: (brushMap[row.brushing_freq as string] ?? "once") as LifestyleInputs["brushingFreq"],
-    flossingFreq: (flossMap[row.flossing_freq as string] ?? "rarely_never") as LifestyleInputs["flossingFreq"],
-    mouthwashType: (mouthMap[row.mouthwash_type as string] ?? "none") as LifestyleInputs["mouthwashType"],
-    lastDentalVisit: (visitMap[row.last_dental_visit as string] ?? "over_1yr") as LifestyleInputs["lastDentalVisit"],
-    smokingStatus: (smokeMap[row.smoking_status as string] ?? "never") as LifestyleInputs["smokingStatus"],
-    knownHypertension: Boolean(row.known_hypertension),
-    knownDiabetes: Boolean(row.known_diabetes),
-    sleepDuration: (durMap[row.sleep_duration as string] ?? "7_to_8") as LifestyleInputs["sleepDuration"],
-    sleepLatency: (latMap[row.sleep_latency as string] ?? "15_to_30min") as LifestyleInputs["sleepLatency"],
-    sleepQualSelf: (qualMap[row.sleep_qual_self as string] ?? "fair") as LifestyleInputs["sleepQualSelf"],
-    daytimeFatigue: (fatMap[row.daytime_fatigue as string] ?? "sometimes") as LifestyleInputs["daytimeFatigue"],
-    nightWakings: (wakeMap[row.night_wakings as string] ?? "less_once_wk") as LifestyleInputs["nightWakings"],
-    sleepMedication: "never",
-  }
-}
-
-/**
- * POST /api/junction/webhook
- *
- * Receives Junction (Vital) webhook events for sleep data updates.
- * On `daily.data.sleep.created` or `daily.data.sleep.updated`:
- *   1. Maps the sleep payload to SleepInputs
- *   2. Loads existing lifestyle data from Supabase
- *   3. Runs calculatePeaqScore
- *   4. Saves a new score_snapshot row
- */
 export async function POST(request: NextRequest) {
-  const body = await request.json()
-  const { event_type, data, client_user_id } = body
+  const webhookSecret = process.env.JUNCTION_WEBHOOK_SECRET
+  if (webhookSecret) {
+    const incoming = request.headers.get("x-vital-webhook-secret")
+    if (incoming !== webhookSecret) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+  }
 
-  // Only process sleep and sleep breathing disturbance events
-  const isSleepEvent =
-    event_type === "daily.data.sleep.created" ||
-    event_type === "daily.data.sleep.updated"
-  const isDisturbanceEvent =
-    event_type === "daily.data.sleep_breathing_disturbance.created" ||
-    event_type === "daily.data.sleep_breathing_disturbance.updated"
+  let body: Record<string, unknown>
+  try {
+    body = await request.json() as Record<string, unknown>
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
+  }
 
-  if (!isSleepEvent && !isDisturbanceEvent) {
+  const { event_type, client_user_id } = body as { event_type: string; client_user_id: string }
+
+  if (!HANDLED_EVENTS.has(event_type)) {
     return NextResponse.json({ status: "ignored" })
   }
 
-  if (!client_user_id || !data) {
-    return NextResponse.json(
-      { error: "Missing client_user_id or data" },
-      { status: 400 }
-    )
+  if (!client_user_id) {
+    return NextResponse.json({ error: "Missing client_user_id" }, { status: 400 })
   }
 
-  // Use service-role client (bypasses RLS) — can't use cookie-based server
-  // client since webhooks are server-to-server calls with no user session
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  // The client_user_id is our Supabase user ID (set when creating the Junction user)
   const userId = client_user_id
 
-  // ── Sleep breathing disturbance event ──────────────────────────────────────
-  // Store spo2 dip estimate on wearable_connections so the next sleep event
-  // can read it instead of defaulting to 0.
-  if (isDisturbanceEvent) {
-    const disturbanceCount = (data.disturbance_count as number) ?? 0
+  // -- sleep_breathing_disturbance: store spo2 dip estimate -----------------
+  if (
+    event_type === "daily.data.sleep_breathing_disturbance.created" ||
+    event_type === "daily.data.sleep_breathing_disturbance.updated"
+  ) {
+    const data = body.data as Record<string, unknown> | undefined
+    const disturbanceCount = (data?.disturbance_count as number) ?? 0
     const spo2Dips =
       disturbanceCount === 0  ? 0 :
       disturbanceCount <= 3   ? 1 :
@@ -93,89 +60,50 @@ export async function POST(request: NextRequest) {
 
     await supabase
       .from("wearable_connections")
-      .update({ latest_spo2_dips: spo2Dips })
+      .update({ latest_spo2_dips: spo2Dips, last_sync_at: new Date().toISOString() })
       .eq("user_id", userId)
       .eq("status", "connected")
 
-    return NextResponse.json({ status: "processed", spo2Dips })
+    return NextResponse.json({ status: "processed", event: "sleep_breathing_disturbance", spo2Dips })
   }
 
-  // ── Sleep event ─────────────────────────────────────────────────────────────
+  // -- sleep_apnea_alert: flag high_osa_risk ---------------------------------
+  if (event_type === "daily.data.sleep_apnea_alert.created") {
+    await supabase
+      .from("wearable_connections")
+      .update({ high_osa_risk: true, last_sync_at: new Date().toISOString() })
+      .eq("user_id", userId)
+      .eq("status", "connected")
 
-  // Read latest_spo2_dips stored from the most recent disturbance event
-  const { data: wearableRow } = await supabase
+    const newScore = await recalculateScore(userId, supabase)
+    return NextResponse.json({ status: "processed", event: "sleep_apnea_alert", score: newScore })
+  }
+
+  // -- historical.data: upsert all sleep records then recalculate once ------
+  if (event_type === "historical.data") {
+    const data = body.data as Record<string, unknown> | undefined
+    const sleepRecords = (data?.sleep ?? []) as Array<Record<string, unknown>>
+
+    if (sleepRecords.length > 0) {
+      const retroNights = sleepRecords.filter(r => (r.duration as number) > 0).length
+      await supabase
+        .from("wearable_connections")
+        .update({ retro_nights: retroNights, last_sync_at: new Date().toISOString() })
+        .eq("user_id", userId)
+        .eq("status", "connected")
+    }
+
+    const newScore = await recalculateScore(userId, supabase)
+    return NextResponse.json({ status: "processed", event: "historical.data", retroNights: sleepRecords.length, score: newScore })
+  }
+
+  // -- All other sleep events: update last_sync_at + recalculate ------------
+  await supabase
     .from("wearable_connections")
-    .select("latest_spo2_dips")
+    .update({ last_sync_at: new Date().toISOString() })
     .eq("user_id", userId)
     .eq("status", "connected")
-    .order("connected_at", { ascending: false })
-    .limit(1)
-    .single()
 
-  const spo2DipsPerNight = (wearableRow?.latest_spo2_dips as number) ?? 0
-
-  // Map Junction sleep payload → SleepInputs
-  const totalSleepSeconds = (data.deep ?? 0) + (data.light ?? 0) + (data.rem ?? 0)
-  const sleepInputs: SleepInputs = {
-    deepSleepPct:
-      totalSleepSeconds > 0
-        ? ((data.deep ?? 0) / totalSleepSeconds) * 100
-        : 0,
-    hrv_ms: data.average_hrv ?? 0,
-    spo2DipsPerNight,
-    remPct:
-      totalSleepSeconds > 0
-        ? ((data.rem ?? 0) / totalSleepSeconds) * 100
-        : 0,
-    sleepEfficiencyPct: (data.efficiency ?? 0) * 100,
-  }
-
-  // Load existing lifestyle data for the user
-  let lifestyle: LifestyleInputs | undefined
-  const { data: lifestyleRow } = await supabase
-    .from("lifestyle_records")
-    .select("*")
-    .eq("user_id", userId)
-    .order("updated_at", { ascending: false })
-    .limit(1)
-    .single()
-
-  if (lifestyleRow) {
-    lifestyle = mapLifestyleRow(lifestyleRow as Record<string, unknown>)
-  }
-
-  // Calculate the Peaq score (sleep + lifestyle — blood/oral loaded separately)
-  const result = calculatePeaqScore(sleepInputs, undefined, undefined, lifestyle)
-
-  // Save the score snapshot
-  const { error: insertError } = await supabase
-    .from("score_snapshots")
-    .insert({
-      user_id: userId,
-      calculated_at: new Date().toISOString(),
-      score: result.score,
-      category: result.category,
-      engine_version: result.version,
-      sleep_sub: result.breakdown.sleepSub,
-      sleep_source: result.breakdown.sleepSource,
-      blood_sub: result.breakdown.bloodSub,
-      oral_sub: result.breakdown.oralSub,
-      lifestyle_sub: result.breakdown.lifestyleSub,
-      interaction_pool: result.breakdown.interactionPool,
-      lab_freshness: result.labFreshness,
-    })
-
-  if (insertError) {
-    console.error("Failed to save score snapshot:", insertError)
-    return NextResponse.json(
-      { error: "Failed to save score snapshot" },
-      { status: 500 }
-    )
-  }
-
-  return NextResponse.json({
-    status: "processed",
-    score: result.score,
-    category: result.category,
-  })
+  const newScore = await recalculateScore(userId, supabase)
+  return NextResponse.json({ status: "processed", score: newScore })
 }

@@ -1,7 +1,13 @@
 /**
- * Peaq Score Engine — v4.0
+ * Peaq Score Engine — v4.1
  *
  * Four-panel architecture: Sleep + Blood + Oral Microbiome + Lifestyle
+ *
+ * Changes from v4.0:
+ *   - SleepInputs: avgSpo2 (avg SpO2 %) and highOsaRisk (device alert flag) added
+ *   - scoreSpo2: penalises sustained low avg SpO2 (<93% or <95%)
+ *   - osaTaxaSpO2 interaction: also fires on device-confirmed OSA alert (highOsaRisk)
+ *   - aggregateSleepInputs: now computes avgSpo2 from Junction summaries
  *
  * Changes from v3.0:
  *   - Lifestyle panel added (10 pts) — always active from questionnaire
@@ -121,6 +127,10 @@ export interface SleepInputs {
   spo2DipsPerNight:   number
   remPct:             number
   sleepEfficiencyPct: number
+  /** Average SpO2 (%) across valid nights. <93% = chronic hypoxemia penalty. v4.1 */
+  avgSpo2?:           number
+  /** True when Junction/wearable has issued a sleep-apnea alert for this user. v4.1 */
+  highOsaRisk?:       boolean
 }
 
 export interface BloodInputs {
@@ -151,7 +161,7 @@ export interface OralInputs {
 // ─── Output types ──────────────────────────────────────────────────────────────
 
 export interface PeaqScoreResult {
-  version: "4.0"
+  version: "4.1"
   score:    number
   category: "optimal" | "good" | "moderate" | "attention"
 
@@ -480,9 +490,16 @@ function scoreHRV(hrv: number): number {
   if (hrv < 50) return 6; if (hrv < 70) return 8
   return 10
 }
-function scoreSpo2(dips: number): number {
-  if (dips > 10) return 0; if (dips > 5) return 1
-  if (dips > 2) return 2; return 4
+function scoreSpo2(dips: number, avgSpo2?: number): number {
+  let score: number
+  if (dips > 10) score = 0
+  else if (dips > 5) score = 1
+  else if (dips > 2) score = 2
+  else score = 4
+  // Sustained low average SpO2 signals chronic hypoxemia (worse than episodic dips)
+  if (avgSpo2 !== undefined && avgSpo2 < 93) score = Math.max(0, score - 2)
+  else if (avgSpo2 !== undefined && avgSpo2 < 95) score = Math.max(0, score - 1)
+  return score
 }
 function scoreREM(pct: number): number {
   if (pct < 12) return 0; if (pct < 18) return 1; return 2
@@ -561,7 +578,9 @@ function checkHrvHomocysteine(hrv: number, hcy?: number): boolean {
 function checkPeriodontCRP(periodontPct: number, crp: number): boolean {
   return periodontPct >= 2 && crp > 1.0
 }
-function checkOsaTaxaSpO2(osaTaxaPct: number, spo2Dips: number): boolean {
+function checkOsaTaxaSpO2(osaTaxaPct: number, spo2Dips: number, highOsaRisk?: boolean): boolean {
+  // Device-confirmed apnea alert fires the penalty regardless of oral taxa
+  if (highOsaRisk) return true
   return osaTaxaPct >= 1 && spo2Dips > 2
 }
 function checkLowNitrateCRP(nitrateReducersPct: number, crp: number): boolean {
@@ -629,7 +648,7 @@ export function calculatePeaqScore(
     sleepSource = "wearable"
     deepSleepScore  = scoreDeepSleep(sleep.deepSleepPct)
     remScore        = scoreREM(sleep.remPct)
-    spo2Score       = scoreSpo2(sleep.spo2DipsPerNight)
+    spo2Score       = scoreSpo2(sleep.spo2DipsPerNight, sleep.avgSpo2)
     const vitD      = blood && !bloodLocked ? blood.vitaminD_ngmL : 30  // neutral if no labs
     vitDSleepPenalty = vitDSleepMultiplier(vitD)
     const ferritin  = blood?.ferritin_ngmL
@@ -707,7 +726,8 @@ export function calculatePeaqScore(
   const dualInflammatory   = !bloodLocked ? checkDualInflammatory(crpVal, blood?.esr_mmhr) : false
   const hrvHomocysteine    = sleep && !bloodLocked ? checkHrvHomocysteine(sleep.hrv_ms, blood?.homocysteine_umolL) : false
   const periodontCRP       = oral && !bloodLocked ? checkPeriodontCRP(oral.periodontopathogenPct, crpVal) : false
-  const osaTaxaSpO2        = oral && sleep ? checkOsaTaxaSpO2(oral.osaTaxaPct, spo2Val) : false
+  const osaTaxaSpO2        = (oral && sleep ? checkOsaTaxaSpO2(oral.osaTaxaPct, spo2Val, sleep.highOsaRisk) : false)
+                          || (sleep?.highOsaRisk === true && !oral) // device alert fires even without oral panel
   const lowNitrateCRP      = oral && !bloodLocked ? checkLowNitrateCRP(oral.nitrateReducersPct, crpVal) : false
   const lowDiversitySleep  = oral && sleep ? checkLowDiversitySleep(oral.shannonDiversity, sleepEff) : false
 
@@ -748,7 +768,7 @@ export function calculatePeaqScore(
   }
 
   return {
-    version: "4.0",
+    version: "4.1",
     score,
     category,
     breakdown: {
