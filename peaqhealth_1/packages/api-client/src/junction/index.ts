@@ -247,6 +247,27 @@ export function mapParserResultToBloodInputs(
   }
 }
 
+// ─── Sandbox test data ────────────────────────────────────────────────────────
+
+/**
+ * Seed synthetic sleep data for a sandbox Junction user.
+ * Only call this in non-production environments.
+ * Junction fires webhook events for each backfilled day.
+ * Docs: POST /v2/user/{user_id}/test_data
+ */
+export async function seedSandboxSleepData(
+  junctionUserId: string,
+  opts: { daysToBackfill?: number } = {}
+): Promise<void> {
+  await junctionFetch(`/v2/user/${junctionUserId}/test_data`, {
+    method: 'POST',
+    body: JSON.stringify({
+      resource: 'sleep',
+      days_to_backfill: opts.daysToBackfill ?? 30,
+    }),
+  })
+}
+
 // ─── Internal fetch helper ────────────────────────────────────────────────────
 
 async function junctionFetch(path: string, init: RequestInit = {}): Promise<Record<string, unknown>> {

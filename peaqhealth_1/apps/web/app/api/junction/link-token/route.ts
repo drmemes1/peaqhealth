@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { createClient } from "../../../../lib/supabase/server"
-import { createJunctionUser, createLinkToken } from "@peaq/api-client/junction"
+import { createJunctionUser, createLinkToken, seedSandboxSleepData } from "@peaq/api-client/junction"
 
 /**
  * POST /api/junction/link-token
@@ -59,6 +59,14 @@ export async function POST() {
       .from("profiles")
       .update({ junction_user_id: junctionUserId })
       .eq("id", user.id)
+
+    // In sandbox: seed 30 days of synthetic sleep data so the full pipeline
+    // can be tested without a real wearable. Fire-and-forget.
+    if (process.env.JUNCTION_ENV !== "production") {
+      seedSandboxSleepData(junctionUserId, { daysToBackfill: 30 }).catch((err) =>
+        console.warn("[link-token] sandbox seed failed (non-fatal):", err)
+      )
+    }
   } else {
     console.log("[link-token] reusing existing Junction user:", junctionUserId)
   }
