@@ -22,6 +22,19 @@ export default async function DashboardPage() {
     supabase.from("lifestyle_records").select("*").eq("user_id", user.id).single(),
   ])
 
+  // Backfill wearable_connections for legacy users who connected before the upsert fix.
+  // If sleep data contributed to their score but no wearable row exists, silently create one.
+  if (!wearable && Number(snapshot?.sleep_sub ?? 0) > 0) {
+    const ts = snapshot!.calculated_at
+    await supabase.from("wearable_connections").upsert({
+      user_id:      user.id,
+      provider:     "unknown",
+      status:       "connected",
+      connected_at: ts,
+      last_sync_at: ts,
+    }, { onConflict: "user_id,provider" })
+  }
+
   // Compute lab freshness
   type LabFreshness = 'fresh' | 'aging' | 'stale' | 'expired' | 'none'
   let labFreshness: LabFreshness = 'none'
