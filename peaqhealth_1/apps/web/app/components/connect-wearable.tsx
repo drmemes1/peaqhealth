@@ -60,12 +60,28 @@ export function ConnectWearable({ onSuccess, onSkip, mode }: ConnectWearableProp
     setError(null)
     try {
       const res = await fetch("/api/junction/link-token", { method: "POST" })
-      if (!res.ok) throw new Error("Failed to get link token")
-      const data = await res.json()
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { detail?: string; error?: string }
+        const detail = body.detail ?? body.error ?? `HTTP ${res.status}`
+        console.error("[ConnectWearable] link-token API error:", body)
+        throw new Error(detail)
+      }
+      const data = await res.json() as { link_token?: string; linkToken?: string }
       const linkToken = data.link_token ?? data.linkToken
+      if (!linkToken) {
+        console.error("[ConnectWearable] no link token in response:", data)
+        throw new Error("No link token returned from server")
+      }
+      if (!ready) {
+        console.error("[ConnectWearable] Vital widget not ready")
+        throw new Error("Wearable widget failed to load — please refresh and try again")
+      }
+      console.log("[ConnectWearable] opening Vital widget")
       openWidget(linkToken)
-    } catch {
-      setError("Could not initialise connection. Please try again.")
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error"
+      console.error("[ConnectWearable] handleConnect failed:", msg)
+      setError(msg)
       setConnecting(false)
     }
   }

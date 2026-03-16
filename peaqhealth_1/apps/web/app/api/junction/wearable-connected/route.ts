@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "../../../../lib/supabase/server"
 import { createClient as createServiceClient } from "@supabase/supabase-js"
-import { getSleepSummaries } from "@peaq/api-client/junction"
+import { getSleepSummaries, requestHistoricalPull } from "@peaq/api-client/junction"
 import { recalculateScore } from "../../../../lib/score/recalculate"
 
 export async function POST(request: NextRequest) {
@@ -52,6 +52,13 @@ export async function POST(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
     newScore = await recalculateScore(user.id, serviceClient)
+  }
+
+  // Request historical data pull (90 days) — Junction will backfill via historical.data webhook
+  try {
+    await requestHistoricalPull(junctionUserId, { days: 90 })
+  } catch {
+    // non-fatal — historical pull can fail silently; webhook will not fire
   }
 
   return NextResponse.json({ connected: true, retroNights, score: newScore })

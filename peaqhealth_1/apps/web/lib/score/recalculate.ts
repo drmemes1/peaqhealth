@@ -66,19 +66,39 @@ export function mapOralRow(row: Record<string, unknown>): OralInputs | undefined
   }
 }
 
+// Aggregate manual sleep entries → SleepInputs
+// quality 1–5 maps to sleep efficiency 58–92% (rough proxy)
+function aggregateManualSleepInputs(
+  rows: Array<{ duration_seconds: number; quality: number }>
+): SleepInputs | null {
+  const valid = rows.filter((r) => r.duration_seconds > 0).slice(0, 10)
+  if (valid.length < 7) return null
+  const avgEffPct =
+    50 + (valid.reduce((s, r) => s + r.quality, 0) / valid.length) * 8.5
+  return {
+    deepSleepPct:       0,
+    hrv_ms:             0,
+    spo2DipsPerNight:   0,
+    remPct:             0,
+    sleepEfficiencyPct: avgEffPct,
+  }
+}
+
 // ─── Shared score recalculator ────────────────────────────────────────────────
 
 export async function recalculateScore(
   userId: string,
   supabase: SupabaseClient
 ): Promise<number> {
-  const [wearableRes, labsRes, oralRes, lifestyleRes] = await Promise.all([
+  const [wearableRes, labsRes, oralRes, lifestyleRes, manualSleepRes] = await Promise.all([
     supabase.from("wearable_connections").select("*").eq("user_id", userId).eq("status", "connected").order("connected_at", { ascending: false }).limit(1).single(),
     supabase.from("lab_results").select("*").eq("user_id", userId).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).single(),
     supabase.from("oral_kit_orders").select("*").eq("user_id", userId).eq("status", "results_ready").order("ordered_at", { ascending: false }).limit(1).single(),
     supabase.from("lifestyle_records").select("*").eq("user_id", userId).order("updated_at", { ascending: false }).limit(1).single(),
+    supabase.from("manual_sleep_entries").select("duration_seconds,quality").eq("user_id", userId).order("date", { ascending: false }).limit(14),
   ])
 
+  // Sleep inputs: prefer Junction API; fall back to manual entries
   let sleepInputs: SleepInputs | undefined
   if (wearableRes.data?.junction_user_id) {
     try {
@@ -88,9 +108,14 @@ export async function recalculateScore(
       // proceed without sleep data
     }
   }
+  if (!sleepInputs && manualSleepRes.data && manualSleepRes.data.length >= 7) {
+    sleepInputs = aggregateManualSleepInputs(
+      manualSleepRes.data as Array<{ duration_seconds: number; quality: number }>
+    ) ?? undefined
+  }
 
-  const bloodInputs     = labsRes.data     ? mapLabRow(labsRes.data as Record<string, unknown>)      : undefined
-  const oralInputs      = oralRes.data     ? mapOralRow(oralRes.data as Record<string, unknown>)     : undefined
+  const bloodInputs     = labsRes.data     ? mapLabRow(labsRes.data as Record<string, unknown>)           : undefined
+  const oralInputs      = oralRes.data     ? mapOralRow(oralRes.data as Record<string, unknown>)          : undefined
   const lifestyleInputs = lifestyleRes.data ? mapLifestyleRow(lifestyleRes.data as Record<string, unknown>) : undefined
 
   const result = calculatePeaqScore(sleepInputs, bloodInputs, oralInputs, lifestyleInputs)
