@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
-import Image from "next/image";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { LogoSvg } from "../components/logo-svg";
 
@@ -507,11 +506,10 @@ export default function SciencePage() {
         {/* Sleep image */}
         <FadeUp delay={80}>
           <div style={{ marginBottom: 32, borderRadius: 4, overflow: "hidden" }}>
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src="/images/peaqsleep.png"
               alt="Peaq Sleep tracking"
-              width={680}
-              height={400}
               style={{ width: "100%", height: "auto", display: "block" }}
             />
           </div>
@@ -668,11 +666,10 @@ export default function SciencePage() {
         {/* Oral kit image */}
         <FadeUp delay={80}>
           <div style={{ marginBottom: 32, borderRadius: 4, overflow: "hidden" }}>
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src="/images/oralkit.png"
               alt="Peaq oral microbiome kit"
-              width={680}
-              height={400}
               style={{ width: "100%", height: "auto", display: "block" }}
             />
           </div>
