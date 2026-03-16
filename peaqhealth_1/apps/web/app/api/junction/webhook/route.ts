@@ -113,13 +113,30 @@ export async function POST(request: NextRequest) {
   const userId = profileRow.id as string
   console.log("[webhook] resolved Supabase userId:", userId, "for junction_user_id:", junctionUserId)
 
-  // ── provider.connection.created: ensure junction_user_id is stamped ───────
+  // ── provider.connection.created: stamp junction_user_id + upsert connection ─
   if (event_type === "provider.connection.created") {
     await supabase
       .from("profiles")
       .update({ junction_user_id: junctionUserId })
       .eq("id", userId)
-    console.log("[webhook] provider.connection.created — confirmed junction_user_id stamp for user:", userId)
+
+    const data = body.data as Record<string, unknown> | undefined
+    const provider = (data?.source ?? data?.provider_slug ?? data?.provider ?? "unknown") as string
+
+    const { error: connErr } = await supabase
+      .from("wearable_connections")
+      .upsert({
+        user_id: userId,
+        provider,
+        junction_user_id: junctionUserId,
+        connected_at: new Date().toISOString(),
+        last_sync_at: new Date().toISOString(),
+        status: "connected",
+      }, { onConflict: "user_id,provider" })
+
+    if (connErr) console.error("[webhook] provider.connection.created — wearable_connections upsert error:", connErr.message)
+    else console.log("[webhook] provider.connection.created — upserted wearable_connections for user:", userId, "provider:", provider)
+
     return NextResponse.json({ received: true })
   }
 
@@ -139,9 +156,8 @@ export async function POST(request: NextRequest) {
 
     const { error: updateErr } = await supabase
       .from("wearable_connections")
-      .update({ latest_spo2_dips: spo2Dips, last_sync_at: new Date().toISOString() })
+      .update({ latest_spo2_dips: spo2Dips, last_sync_at: new Date().toISOString(), status: "connected" })
       .eq("user_id", userId)
-      .eq("status", "connected")
 
     if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
 
@@ -154,9 +170,8 @@ export async function POST(request: NextRequest) {
 
     const { error: updateErr } = await supabase
       .from("wearable_connections")
-      .update({ high_osa_risk: true, last_sync_at: new Date().toISOString() })
+      .update({ high_osa_risk: true, last_sync_at: new Date().toISOString(), status: "connected" })
       .eq("user_id", userId)
-      .eq("status", "connected")
 
     if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
 
@@ -175,9 +190,8 @@ export async function POST(request: NextRequest) {
       const retroNights = sleepRecords.filter(r => (r.duration as number) > 0).length
       const { error: updateErr } = await supabase
         .from("wearable_connections")
-        .update({ retro_nights: retroNights, last_sync_at: new Date().toISOString() })
+        .update({ retro_nights: retroNights, last_sync_at: new Date().toISOString(), status: "connected" })
         .eq("user_id", userId)
-        .eq("status", "connected")
 
       if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
     }
@@ -192,9 +206,8 @@ export async function POST(request: NextRequest) {
 
   const { error: updateErr } = await supabase
     .from("wearable_connections")
-    .update({ last_sync_at: new Date().toISOString() })
+    .update({ last_sync_at: new Date().toISOString(), status: "connected" })
     .eq("user_id", userId)
-    .eq("status", "connected")
 
   if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
 
