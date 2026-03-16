@@ -12,6 +12,7 @@ const HANDLED_EVENTS = new Set([
   "daily.data.sleep_breathing_disturbance.updated",
   "daily.data.sleep_apnea_alert.created",
   "historical.data",
+  "provider.connection.created",
 ])
 
 export async function POST(request: NextRequest) {
@@ -92,14 +93,35 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (profileErr || !profileRow) {
-    console.error("[webhook] no Supabase user found for junction_user_id:", junctionUserId,
-      "| error:", profileErr?.message)
-    // Return 200 so Junction doesn't keep retrying for a user we don't know about
-    return NextResponse.json({ status: "ignored", reason: "user_not_found" })
+    // For provider.connection.created: junction_user_id may not be stamped yet.
+    // Try client_user_id directly as the Supabase UUID (unhashed for this event type).
+    if (event_type === "provider.connection.created" && clientUserIdRaw) {
+      const { error: stampErr } = await supabase
+        .from("profiles")
+        .update({ junction_user_id: junctionUserId })
+        .eq("id", clientUserIdRaw)
+      if (!stampErr) {
+        console.log("[webhook] provider.connection.created — stamped junction_user_id via client_user_id fallback:", clientUserIdRaw)
+      } else {
+        console.error("[webhook] provider.connection.created — fallback stamp failed:", stampErr.message)
+      }
+    }
+    console.error("[webhook] No profile found for junction_user_id:", junctionUserId, "— skipping event")
+    return NextResponse.json({ received: true, skipped: true })
   }
 
   const userId = profileRow.id as string
   console.log("[webhook] resolved Supabase userId:", userId, "for junction_user_id:", junctionUserId)
+
+  // ── provider.connection.created: ensure junction_user_id is stamped ───────
+  if (event_type === "provider.connection.created") {
+    await supabase
+      .from("profiles")
+      .update({ junction_user_id: junctionUserId })
+      .eq("id", userId)
+    console.log("[webhook] provider.connection.created — confirmed junction_user_id stamp for user:", userId)
+    return NextResponse.json({ received: true })
+  }
 
   // ── sleep_breathing_disturbance: store spo2 dip estimate ─────────────────
   if (
