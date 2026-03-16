@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import { LogoSvg } from "../components/logo-svg";
 import { createClient } from "@/lib/supabase/client";
@@ -70,15 +71,22 @@ export default function SignupPage() {
 
   return (
     <div className="flex min-h-svh">
-      {/* Left panel */}
-      <div
-        className="hidden lg:flex w-2/5 flex-col items-center justify-between px-10 py-12"
-        style={{ background: "var(--ink)" }}
-      >
-        <div>
+      {/* Left panel — full-bleed hero image */}
+      <div className="relative hidden lg:flex w-2/5 flex-col items-center justify-between overflow-hidden px-10 py-12">
+        <Image
+          src="/images/nopeaqing.png"
+          alt="no peaqing sleep mask"
+          fill
+          priority
+          style={{ objectFit: "cover", objectPosition: "center" }}
+        />
+        {/* Dark overlay so text stays readable over the photo */}
+        <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.45)" }} />
+
+        <div className="relative z-10">
           <LogoSvg size={52} color="rgba(250,250,248,0.9)" />
         </div>
-        <div className="flex flex-col items-center gap-8 text-center">
+        <div className="relative z-10 flex flex-col items-center gap-8 text-center">
           <p className="font-display font-light leading-[1.15]" style={{ fontSize: 36, color: "var(--white)" }}>
             Your body has a story.<br />
             <em style={{ color: "var(--gold)", fontStyle: "italic" }}>Peaq reads it.</em>
@@ -92,7 +100,7 @@ export default function SignupPage() {
             ))}
           </div>
         </div>
-        <p className="font-body text-[10px] uppercase tracking-widest" style={{ color: "rgba(250,250,248,0.2)" }}>
+        <p className="relative z-10 font-body text-[10px] uppercase tracking-widest" style={{ color: "rgba(250,250,248,0.2)" }}>
           Peaq Health · {new Date().getFullYear()}
         </p>
       </div>

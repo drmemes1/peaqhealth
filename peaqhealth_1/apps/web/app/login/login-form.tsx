@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import { LogoSvg } from "../components/logo-svg";
 import { createClient } from "@/lib/supabase/client";
@@ -58,15 +59,22 @@ export function LoginForm() {
 
   return (
     <div className="flex min-h-svh">
-      {/* Left panel — ink background */}
-      <div
-        className="hidden lg:flex w-2/5 flex-col items-center justify-between px-10 py-12"
-        style={{ background: "var(--ink)" }}
-      >
-        <div className="fade-up" style={{ animationDelay: "0ms" }}>
+      {/* Left panel — full-bleed hero image */}
+      <div className="relative hidden lg:flex w-2/5 flex-col items-center justify-between overflow-hidden px-10 py-12">
+        <Image
+          src="/images/nopeaqing.png"
+          alt="no peaqing sleep mask"
+          fill
+          priority
+          style={{ objectFit: "cover", objectPosition: "center" }}
+        />
+        {/* Dark overlay so text stays readable over the photo */}
+        <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.45)" }} />
+
+        <div className="relative z-10 fade-up" style={{ animationDelay: "0ms" }}>
           <LogoSvg size={52} color="rgba(250,250,248,0.9)" />
         </div>
-        <div className="flex flex-col items-center gap-8 text-center">
+        <div className="relative z-10 flex flex-col items-center gap-8 text-center">
           <p
             className="fade-up font-display font-light leading-[1.15]"
             style={{ fontSize: 36, color: "var(--white)", animationDelay: "100ms" }}
@@ -90,7 +98,7 @@ export function LoginForm() {
             ))}
           </div>
         </div>
-        <p className="font-body text-[10px] uppercase tracking-widest" style={{ color: "rgba(250,250,248,0.2)" }}>
+        <p className="relative z-10 font-body text-[10px] uppercase tracking-widest" style={{ color: "rgba(250,250,248,0.2)" }}>
           Peaq Health · {new Date().getFullYear()}
         </p>
       </div>
