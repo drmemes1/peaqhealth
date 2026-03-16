@@ -1,270 +1,509 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface BloodMarkers {
-  hsCRP_mgL?: number
-  vitaminD_ngmL?: number
-  apoB_mgdL?: number
-  ldl_mgdL?: number
-  hdl_mgdL?: number
+  hsCRP_mgL?:          number
+  vitaminD_ngmL?:      number
+  apoB_mgdL?:          number
+  ldl_mgdL?:           number
+  hdl_mgdL?:           number
   triglycerides_mgdL?: number
-  lpa_mgdL?: number
-  glucose_mgdL?: number
-  hba1c_pct?: number
-  esr_mmhr?: number
-  homocysteine_umolL?: number
-  ferritin_ngmL?: number
-  labCollectionDate?: string
+  lpa_mgdL?:           number
+  glucose_mgdL?:       number
+  hba1c_pct?:          number
+  labDate?:            string
+}
+
+interface ParsedMarker {
+  slug:  keyof BloodMarkers
+  name:  string
+  unit:  string
+  value: number | null
+  found: boolean
 }
 
 interface LabUploadProps {
   onSuccess: (markers: BloodMarkers, newScore: number) => void
   onSkip?: () => void
-  existingLabDate?: string
 }
 
-type UploadState = "idle" | "uploading" | "parsing" | "complete" | "error"
+// ─── Canonical markers ────────────────────────────────────────────────────────
 
-const PARSING_MESSAGES = [
-  "Parsing markers...",
-  "Extracting hsCRP, ApoB...",
-  "Checking lab date...",
-  "Almost done...",
+const MARKERS: Array<{ slug: keyof BloodMarkers; name: string; unit: string; placeholder: string }> = [
+  { slug: "hsCRP_mgL",          name: "hs-CRP",        unit: "mg/L",  placeholder: "0.8"  },
+  { slug: "vitaminD_ngmL",      name: "Vitamin D",     unit: "ng/mL", placeholder: "42"   },
+  { slug: "apoB_mgdL",          name: "ApoB",          unit: "mg/dL", placeholder: "85"   },
+  { slug: "ldl_mgdL",           name: "LDL",           unit: "mg/dL", placeholder: "110"  },
+  { slug: "hdl_mgdL",           name: "HDL",           unit: "mg/dL", placeholder: "58"   },
+  { slug: "triglycerides_mgdL", name: "Triglycerides", unit: "mg/dL", placeholder: "95"   },
+  { slug: "lpa_mgdL",           name: "Lp(a)",         unit: "mg/dL", placeholder: "18"   },
+  { slug: "glucose_mgdL",       name: "Glucose",       unit: "mg/dL", placeholder: "88"   },
+  { slug: "hba1c_pct",          name: "HbA1c",         unit: "%",     placeholder: "5.2"  },
 ]
 
-const MARKER_LABELS: Record<string, string> = {
-  hsCRP_mgL: "hsCRP",
-  vitaminD_ngmL: "Vitamin D",
-  apoB_mgdL: "ApoB",
-  ldl_mgdL: "LDL",
-  hdl_mgdL: "HDL",
-  triglycerides_mgdL: "Triglycerides",
-  lpa_mgdL: "Lp(a)",
-  glucose_mgdL: "Glucose",
-  hba1c_pct: "HbA1c",
-  esr_mmhr: "ESR",
-  homocysteine_umolL: "Homocysteine",
-  ferritin_ngmL: "Ferritin",
+const PARSE_STAGES = [
+  { key: "uploading",  label: "Uploading PDF..."          },
+  { key: "extracting", label: "Reading your lab report..." },
+  { key: "mapping",    label: "Mapping biomarkers..."     },
+]
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = reader.result as string
+      resolve(result.split(",")[1] ?? result)
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
 }
 
-export function LabUpload({ onSuccess, onSkip, existingLabDate }: LabUploadProps) {
-  const [state, setState] = useState<UploadState>("idle")
-  const [dragOver, setDragOver] = useState(false)
-  const [parsingMsg, setParsingMsg] = useState(PARSING_MESSAGES[0])
-  const [markers, setMarkers] = useState<BloodMarkers | null>(null)
-  const [collectionDate, setCollectionDate] = useState<string | null>(null)
-  const [newScore, setNewScore] = useState<number | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+// ─── Component ────────────────────────────────────────────────────────────────
 
-  const uploadFile = useCallback(async (file: File) => {
-    if (!file.name.toLowerCase().endsWith(".pdf")) {
-      setError("Please upload a PDF file.")
-      return
+export function LabUpload({ onSuccess, onSkip }: LabUploadProps) {
+  type Phase = "idle" | "parsing" | "confirm" | "saving" | "success" | "manual"
+
+  const [phase,         setPhase]         = useState<Phase>("idle")
+  const [stageIdx,      setStageIdx]      = useState(0)
+  const [parsedMarkers, setParsedMarkers] = useState<ParsedMarker[]>([])
+  const [labDate,       setLabDate]       = useState("")
+  const [manualValues,  setManualValues]  = useState<Partial<Record<keyof BloodMarkers, string>>>({})
+  const [newScore,      setNewScore]      = useState(0)
+  const [dragOver,      setDragOver]      = useState(false)
+  const [error,         setError]         = useState<string | null>(null)
+
+  const pollRef   = useRef<ReturnType<typeof setInterval> | null>(null)
+  const timerRef  = useRef<ReturnType<typeof setTimeout>  | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (pollRef.current)  clearInterval(pollRef.current)
+      if (timerRef.current) clearTimeout(timerRef.current)
     }
-    setState("uploading")
-    setError(null)
+  }, [])
 
-    const formData = new FormData()
-    formData.append("file", file)
-
-    let jobId: string
-    try {
-      const res = await fetch("/api/labs/upload", { method: "POST", body: formData })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? "Upload failed")
-      jobId = data.jobId
-    } catch (err) {
-      setError(String(err))
-      setState("error")
-      return
-    }
-
-    // Start polling
-    setState("parsing")
-    let msgIdx = 0
-    let attempts = 0
-
+  const startPolling = useCallback((jobId: string) => {
+    let polls = 0
     pollRef.current = setInterval(async () => {
-      attempts++
-      msgIdx = (msgIdx + 1) % PARSING_MESSAGES.length
-      setParsingMsg(PARSING_MESSAGES[msgIdx]!)
-
-      if (attempts > 60) {
-        clearInterval(pollRef.current!)
-        setError("Parsing timed out. Please try again.")
-        setState("error")
-        return
-      }
+      polls++
+      if (polls === 3) setStageIdx(2) // advance to "Mapping..."
 
       try {
-        const res = await fetch(`/api/labs/status/${jobId}`)
-        const data = await res.json()
-
-        if (data.status === "complete") {
-          clearInterval(pollRef.current!)
-          setMarkers(data.markers)
-          setCollectionDate(data.collectionDate)
-          setNewScore(data.newScore)
-          setState("complete")
-        } else if (data.status === "failed") {
-          clearInterval(pollRef.current!)
-          setError("We couldn't parse this PDF. Make sure it's a lab report from Quest, LabCorp, or similar.")
-          setState("error")
+        const res  = await fetch(`/api/labs/status/${jobId}`)
+        const data = await res.json() as {
+          status: string
+          markers?: ParsedMarker[]
+          labDate?: string
+          error?: string
         }
-        // "pending" / "processing" — keep polling
+
+        if (data.status === "complete" && data.markers) {
+          clearInterval(pollRef.current!)
+          setParsedMarkers(data.markers)
+          setLabDate(data.labDate ?? new Date().toISOString().slice(0, 10))
+          setPhase("confirm")
+        } else if (data.status === "failed" || !res.ok) {
+          clearInterval(pollRef.current!)
+          setError(data.error ?? "Parsing failed — please try re-uploading.")
+          setPhase("idle")
+        }
       } catch {
-        // network hiccup — keep polling
+        clearInterval(pollRef.current!)
+        setError("Connection error while checking parse status.")
+        setPhase("idle")
       }
     }, 2000)
   }, [])
 
-  const onDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setDragOver(false)
-    const file = e.dataTransfer.files[0]
-    if (file) uploadFile(file)
-  }, [uploadFile])
+  const handleFile = useCallback(async (file: File) => {
+    if (file.type !== "application/pdf") {
+      setError("Please upload a PDF file.")
+      return
+    }
+    setError(null)
+    setPhase("parsing")
+    setStageIdx(0)
 
-  const onFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) uploadFile(file)
-  }, [uploadFile])
+    timerRef.current = setTimeout(() => setStageIdx(1), 1500)
 
-  // ── Idle state ──
-  if (state === "idle" || state === "error") {
+    try {
+      const pdfBase64 = await fileToBase64(file)
+      const res  = await fetch("/api/labs/upload", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ pdfBase64 }),
+      })
+      const data = await res.json() as { jobId?: string; error?: string }
+
+      if (!res.ok || !data.jobId) throw new Error(data.error ?? `HTTP ${res.status}`)
+
+      startPolling(data.jobId)
+    } catch (err) {
+      if (timerRef.current) clearTimeout(timerRef.current)
+      setError(err instanceof Error ? err.message : "Upload failed")
+      setPhase("idle")
+    }
+  }, [startPolling])
+
+  async function saveMarkers(markers: BloodMarkers, src = "upload_pdf") {
+    setPhase("saving")
+    try {
+      const res  = await fetch("/api/labs/save", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ markers, labDate: markers.labDate, source: src }),
+      })
+      const data = await res.json() as { score?: number; error?: string }
+      if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`)
+      setNewScore(data.score ?? 0)
+      setPhase("success")
+      onSuccess(markers, data.score ?? 0)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save")
+      setPhase(parsedMarkers.length > 0 ? "confirm" : "manual")
+    }
+  }
+
+  function handleConfirmSave() {
+    const markers: BloodMarkers = { labDate }
+    for (const m of parsedMarkers) {
+      if (m.found && m.value !== null) {
+        (markers as Record<string, unknown>)[m.slug] = m.value
+      }
+    }
+    saveMarkers(markers, "upload_pdf")
+  }
+
+  function handleManualSave() {
+    const markers: BloodMarkers = { labDate: new Date().toISOString().slice(0, 10) }
+    for (const m of MARKERS) {
+      const v = parseFloat(manualValues[m.slug] ?? "")
+      if (!isNaN(v)) (markers as Record<string, unknown>)[m.slug] = v
+    }
+    saveMarkers(markers, "manual_entry")
+  }
+
+  // ── Success ─────────────────────────────────────────────────────────────────
+
+  if (phase === "success") {
     return (
-      <div className="flex flex-col gap-4">
-        {existingLabDate && (
-          <p className="font-body text-xs" style={{ color: "var(--ink-60)" }}>
-            Current labs from {existingLabDate}. Upload new results to update your score.
-          </p>
-        )}
+      <div className="flex flex-col items-center gap-6 text-center">
         <div
-          onClick={() => fileInputRef.current?.click()}
-          onDrop={onDrop}
-          onDragOver={e => { e.preventDefault(); setDragOver(true) }}
-          onDragLeave={() => setDragOver(false)}
-          className="flex flex-col items-center justify-center gap-3 p-8 cursor-pointer transition-all"
-          style={{
-            border: `1.5px dashed ${dragOver ? "var(--blood-c)" : "var(--ink-30)"}`,
-            borderRadius: 4,
-            background: dragOver ? "var(--blood-bg)" : "var(--warm-50)",
-          }}
+          className="flex h-14 w-14 items-center justify-center"
+          style={{ background: "var(--blood-bg)", borderRadius: "50%" }}
         >
-          <span className="font-body text-2xl" style={{ color: "var(--blood-c)", fontFamily: "monospace" }}>⌗</span>
-          <p className="font-body text-sm text-center" style={{ color: "var(--ink)" }}>
-            Drop your lab PDF here
+          <span style={{ color: "var(--blood-c)", fontSize: 22 }}>✓</span>
+        </div>
+        <div>
+          <p className="font-display text-xl font-light" style={{ color: "var(--ink)" }}>
+            Blood panel saved.
           </p>
-          <p className="font-body text-xs" style={{ color: "var(--ink-30)" }}>or click to browse</p>
-          <div className="flex gap-3 mt-1">
-            {["Quest", "LabCorp", "BioReference", "Everlywell"].map(lab => (
-              <span key={lab} className="font-body text-[9px] uppercase tracking-widest px-2 py-1"
-                    style={{ border: "0.5px solid var(--ink-12)", color: "var(--ink-60)" }}>
-                {lab}
+          <p className="font-body text-sm mt-1" style={{ color: "var(--ink-60)" }}>
+            Your score has been updated.
+          </p>
+        </div>
+        {newScore > 0 && (
+          <div className="flex items-baseline gap-1">
+            <span className="font-display text-5xl font-light" style={{ color: "var(--ink)" }}>
+              {newScore}
+            </span>
+            <span className="font-body text-sm" style={{ color: "var(--ink-30)" }}>/100</span>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // ── Saving ──────────────────────────────────────────────────────────────────
+
+  if (phase === "saving") {
+    return (
+      <div className="flex flex-col items-center gap-4 py-10">
+        <div
+          className="h-2.5 w-2.5 rounded-full animate-pulse"
+          style={{ background: "var(--blood-c)" }}
+        />
+        <p className="font-body text-sm" style={{ color: "var(--ink-60)" }}>
+          Saving to your profile...
+        </p>
+      </div>
+    )
+  }
+
+  // ── Parsing / polling ────────────────────────────────────────────────────────
+
+  if (phase === "parsing") {
+    return (
+      <div className="flex flex-col gap-4 py-10">
+        {PARSE_STAGES.map((s, i) => {
+          const isDone    = i < stageIdx
+          const isCurrent = i === stageIdx
+          return (
+            <div key={s.key} className="flex items-center gap-3">
+              <div
+                className={`h-2.5 w-2.5 rounded-full transition-all ${isCurrent ? "animate-pulse" : ""}`}
+                style={{ background: isDone || isCurrent ? "var(--blood-c)" : "var(--ink-12)" }}
+              />
+              <span
+                className="font-body text-sm"
+                style={{ color: isDone ? "var(--ink-30)" : isCurrent ? "var(--ink)" : "var(--ink-20, #d8d8d8)" }}
+              >
+                {s.label}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
+  // ── Confirmation ─────────────────────────────────────────────────────────────
+
+  if (phase === "confirm") {
+    const found = parsedMarkers.filter((m) => m.found).length
+    return (
+      <div className="flex flex-col gap-5">
+        <p className="font-body text-[10px] uppercase tracking-widest" style={{ color: "var(--ink-30)" }}>
+          {found} of {parsedMarkers.length} markers detected
+        </p>
+
+        <div style={{ border: "0.5px solid var(--ink-12)", borderRadius: 4, overflow: "hidden" }}>
+          <div
+            className="grid items-center px-4 py-2"
+            style={{ gridTemplateColumns: "1fr 80px 56px", borderBottom: "0.5px solid var(--ink-12)" }}
+          >
+            {["Marker", "Value", "Unit"].map((h) => (
+              <span
+                key={h}
+                className="font-body text-[9px] uppercase tracking-widest"
+                style={{ color: "var(--ink-30)", textAlign: h !== "Marker" ? "right" : undefined }}
+              >
+                {h}
               </span>
             ))}
           </div>
-        </div>
 
-        <input ref={fileInputRef} type="file" accept=".pdf" className="hidden" onChange={onFileChange} />
-
-        {error && (
-          <div className="flex flex-col gap-2">
-            <p className="font-body text-xs" style={{ color: "#991B1B" }}>{error}</p>
-            <button onClick={() => { setState("idle"); setError(null) }}
-                    className="self-start font-body text-xs uppercase tracking-widest"
-                    style={{ color: "var(--ink-60)" }}>Try again</button>
-          </div>
-        )}
-
-        {onSkip && (
-          <button onClick={onSkip} className="font-body text-xs uppercase tracking-widest"
-                  style={{ color: "var(--ink-30)" }}>Skip for now</button>
-        )}
-      </div>
-    )
-  }
-
-  // ── Uploading / parsing ──
-  if (state === "uploading" || state === "parsing") {
-    return (
-      <div className="flex flex-col items-center gap-4 py-6 text-center">
-        <div className="h-8 w-8 rounded-full border-2 border-t-transparent animate-spin"
-             style={{ borderColor: "var(--blood-c)", borderTopColor: "transparent" }} />
-        <p className="font-body text-sm" style={{ color: "var(--ink)" }}>
-          {state === "uploading" ? "Uploading your lab results..." : parsingMsg}
-        </p>
-        {state === "parsing" && (
-          <p className="font-body text-xs" style={{ color: "var(--ink-30)" }}>
-            Usually takes 10–30 seconds
-          </p>
-        )}
-      </div>
-    )
-  }
-
-  // ── Complete ──
-  if (state === "complete" && markers) {
-    const detectedMarkers = Object.entries(markers).filter(
-      ([k, v]) => k !== "labCollectionDate" && v !== undefined
-    )
-    return (
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full"
-               style={{ background: "var(--blood-bg)" }}>
-            <span style={{ color: "var(--blood-c)" }}>✓</span>
-          </div>
-          <div>
-            <p className="font-body text-sm font-medium" style={{ color: "var(--ink)" }}>
-              {detectedMarkers.length} markers detected
-            </p>
-            {collectionDate && (
-              <p className="font-body text-xs" style={{ color: "var(--ink-60)" }}>
-                Results from {new Date(collectionDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div className="flex flex-col divide-y" style={{ border: "0.5px solid var(--ink-12)", borderRadius: 4 }}>
-          {detectedMarkers.map(([key, value]) => (
-            <div key={key} className="flex items-center justify-between px-3 py-2">
-              <span className="font-body text-xs" style={{ color: "var(--ink-60)" }}>
-                {MARKER_LABELS[key] ?? key}
+          {parsedMarkers.map((m) => (
+            <div
+              key={m.slug}
+              className="grid items-center px-4 py-2.5"
+              style={{
+                gridTemplateColumns: "1fr 80px 56px",
+                borderBottom: "0.5px solid var(--ink-06, #f8f8f8)",
+                background: m.found ? "white" : "var(--ink-03, #fafafa)",
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <span style={{ fontSize: 11, color: m.found ? "var(--blood-c)" : "var(--ink-30)" }}>
+                  {m.found ? "✓" : "✗"}
+                </span>
+                <span
+                  className="font-body text-sm"
+                  style={{ color: m.found ? "var(--ink)" : "var(--ink-30)" }}
+                >
+                  {m.name}
+                </span>
+              </div>
+              <span
+                className="font-body text-sm font-medium text-right"
+                style={{ color: m.found ? "var(--ink)" : "var(--ink-20, #ddd)" }}
+              >
+                {m.found && m.value !== null ? m.value : "—"}
               </span>
-              <span className="font-display text-sm font-light" style={{ color: "var(--ink)" }}>
-                {typeof value === "number" ? value.toFixed(1) : String(value)}
+              <span className="font-body text-xs text-right" style={{ color: "var(--ink-30)" }}>
+                {m.unit}
               </span>
             </div>
           ))}
         </div>
 
-        {newScore !== null && (
-          <p className="font-body text-xs" style={{ color: "var(--gold)" }}>
-            Blood panel updated · New score: {newScore}
-          </p>
+        {error && (
+          <p className="font-body text-xs" style={{ color: "#991B1B" }}>{error}</p>
         )}
 
         <button
-          onClick={() => markers && newScore !== null && onSuccess(markers, newScore)}
-          className="h-12 w-full font-body text-xs uppercase tracking-[0.08em] text-white"
+          onClick={handleConfirmSave}
+          className="h-12 w-full font-body text-xs uppercase tracking-[0.08em] text-white transition-opacity hover:opacity-85"
           style={{ background: "var(--blood-c)" }}
         >
-          Use these results →
+          Save to my profile
         </button>
-
-        <button onClick={() => { setState("idle"); setError(null) }}
-                className="font-body text-xs uppercase tracking-widest"
-                style={{ color: "var(--ink-30)" }}>
-          Re-upload different file
+        <button
+          onClick={() => { setPhase("idle"); setError(null) }}
+          className="font-body text-xs uppercase tracking-widest"
+          style={{ color: "var(--ink-30)" }}
+        >
+          Re-upload
         </button>
       </div>
     )
   }
 
-  return null
+  // ── Manual entry ─────────────────────────────────────────────────────────────
+
+  if (phase === "manual") {
+    return (
+      <div className="flex flex-col gap-4">
+        <div
+          className="grid items-center gap-2 px-1"
+          style={{ gridTemplateColumns: "1fr 110px 52px" }}
+        >
+          {["Marker", "Value", "Unit"].map((h) => (
+            <span
+              key={h}
+              className="font-body text-[9px] uppercase tracking-widest"
+              style={{ color: "var(--ink-30)", textAlign: h !== "Marker" ? "right" : undefined }}
+            >
+              {h}
+            </span>
+          ))}
+        </div>
+
+        {MARKERS.map((m) => (
+          <div
+            key={m.slug}
+            className="grid items-center gap-2 p-3"
+            style={{
+              gridTemplateColumns: "1fr 110px 52px",
+              border: "0.5px solid var(--ink-12)",
+              borderRadius: 4,
+              background: "white",
+            }}
+          >
+            <span className="font-body text-sm" style={{ color: "var(--ink)" }}>{m.name}</span>
+            <input
+              type="number"
+              step="0.1"
+              min="0"
+              placeholder={m.placeholder}
+              value={manualValues[m.slug] ?? ""}
+              onChange={(e) =>
+                setManualValues((prev) => ({ ...prev, [m.slug]: e.target.value }))
+              }
+              className="font-body text-sm w-full text-right"
+              style={{
+                color: "var(--ink)",
+                background: "transparent",
+                border: "none",
+                outline: "none",
+                borderBottom: "1px solid var(--ink-12)",
+              }}
+            />
+            <span className="font-body text-xs text-right" style={{ color: "var(--ink-30)" }}>
+              {m.unit}
+            </span>
+          </div>
+        ))}
+
+        {error && (
+          <p className="font-body text-xs" style={{ color: "#991B1B" }}>{error}</p>
+        )}
+
+        <button
+          onClick={handleManualSave}
+          className="h-12 w-full font-body text-xs uppercase tracking-[0.08em] text-white transition-opacity hover:opacity-85 mt-2"
+          style={{ background: "var(--blood-c)" }}
+        >
+          Save values
+        </button>
+        <button
+          onClick={() => { setPhase("idle"); setError(null) }}
+          className="font-body text-xs uppercase tracking-widest"
+          style={{ color: "var(--ink-30)" }}
+        >
+          ← Back to upload
+        </button>
+      </div>
+    )
+  }
+
+  // ── Idle (default) ───────────────────────────────────────────────────────────
+
+  return (
+    <div className="flex flex-col items-center gap-5 w-full">
+      <label
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => {
+          e.preventDefault()
+          setDragOver(false)
+          const file = e.dataTransfer.files[0]
+          if (file) handleFile(file)
+        }}
+        className="flex w-full cursor-pointer flex-col items-center gap-4 border-2 border-dashed px-8 py-14 transition-colors"
+        style={{
+          borderColor:   dragOver ? "var(--blood-c)" : "var(--ink-15, #e4e4e4)",
+          background:    dragOver ? "var(--blood-bg)" : "white",
+          borderRadius:  4,
+        }}
+      >
+        <div
+          className="flex h-12 w-12 items-center justify-center"
+          style={{ border: "0.5px solid var(--ink-12)", borderRadius: 2 }}
+        >
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            style={{ color: "var(--ink-30)" }}
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+          </svg>
+        </div>
+        <div className="text-center">
+          <span className="font-body text-sm" style={{ color: "var(--ink)" }}>
+            Drop your lab PDF here
+          </span>
+          <span className="block font-body text-xs mt-1" style={{ color: "var(--ink-30)" }}>
+            Quest · LabCorp · BioReference · Everlywell · or click to browse
+          </span>
+        </div>
+        <input
+          type="file"
+          accept=".pdf"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            if (file) handleFile(file)
+          }}
+        />
+      </label>
+
+      {error && (
+        <p className="font-body text-xs self-start" style={{ color: "#991B1B" }}>{error}</p>
+      )}
+
+      {onSkip && (
+        <button
+          onClick={onSkip}
+          className="font-body text-xs uppercase tracking-widest transition-opacity hover:opacity-70"
+          style={{ color: "var(--ink-30)" }}
+        >
+          Skip — add later
+        </button>
+      )}
+
+      <div
+        className="w-full text-center"
+        style={{ borderTop: "0.5px solid var(--ink-08, #f2f2f2)", paddingTop: 14 }}
+      >
+        <button
+          onClick={() => { setError(null); setPhase("manual") }}
+          className="font-body text-xs uppercase tracking-widest transition-opacity hover:opacity-70"
+          style={{ color: "var(--ink-30)" }}
+        >
+          Have your results but no PDF? Enter them here.
+        </button>
+      </div>
+    </div>
+  )
 }

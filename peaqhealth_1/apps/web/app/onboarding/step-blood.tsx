@@ -1,15 +1,17 @@
-"use client";
+"use client"
 
-import { LabUpload, type BloodMarkers } from "../components/lab-upload";
+import { LabUpload, type BloodMarkers } from "../components/lab-upload"
+
+export type { BloodMarkers }
 
 interface Props {
-  onConfirm: (markers: BloodMarkers, newScore: number) => void;
-  onSkip: () => void;
+  onConfirm: (markers: BloodMarkers, newScore: number) => void
+  onSkip: () => void
 }
 
 export function StepBlood({ onConfirm, onSkip }: Props) {
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col items-center gap-8 w-full">
       <div className="text-center">
         <h2 className="font-display text-4xl font-light tracking-tight text-ink">
           Upload blood labs
@@ -20,5 +22,5 @@ export function StepBlood({ onConfirm, onSkip }: Props) {
       </div>
       <LabUpload onSuccess={onConfirm} onSkip={onSkip} />
     </div>
-  );
+  )
 }
