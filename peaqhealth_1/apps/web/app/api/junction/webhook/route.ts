@@ -14,7 +14,6 @@ const HANDLED_EVENTS = new Set([
 ])
 
 export async function POST(request: NextRequest) {
-  // Verify webhook secret
   const webhookSecret = process.env.JUNCTION_WEBHOOK_SECRET
   if (webhookSecret) {
     const incoming = request.headers.get("x-vital-webhook-secret")
@@ -47,7 +46,28 @@ export async function POST(request: NextRequest) {
 
   const userId = client_user_id
 
-  // ── sleep_apnea_alert: flag high_osa_risk ────────────────────────────────
+  // -- sleep_breathing_disturbance: store spo2 dip estimate -----------------
+  if (
+    event_type === "daily.data.sleep_breathing_disturbance.created" ||
+    event_type === "daily.data.sleep_breathing_disturbance.updated"
+  ) {
+    const data = body.data as Record<string, unknown> | undefined
+    const disturbanceCount = (data?.disturbance_count as number) ?? 0
+    const spo2Dips =
+      disturbanceCount === 0  ? 0 :
+      disturbanceCount <= 3   ? 1 :
+      disturbanceCount <= 10  ? 3 : 8
+
+    await supabase
+      .from("wearable_connections")
+      .update({ latest_spo2_dips: spo2Dips, last_sync_at: new Date().toISOString() })
+      .eq("user_id", userId)
+      .eq("status", "connected")
+
+    return NextResponse.json({ status: "processed", event: "sleep_breathing_disturbance", spo2Dips })
+  }
+
+  // -- sleep_apnea_alert: flag high_osa_risk ---------------------------------
   if (event_type === "daily.data.sleep_apnea_alert.created") {
     await supabase
       .from("wearable_connections")
@@ -59,22 +79,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ status: "processed", event: "sleep_apnea_alert", score: newScore })
   }
 
-  // ── historical.data: upsert all sleep records then recalculate once ──────
+  // -- historical.data: upsert all sleep records then recalculate once ------
   if (event_type === "historical.data") {
     const data = body.data as Record<string, unknown> | undefined
     const sleepRecords = (data?.sleep ?? []) as Array<Record<string, unknown>>
 
     if (sleepRecords.length > 0) {
-      // Upsert each record into junction_sleep_summaries if that table exists,
-      // otherwise just update retro_nights count on the wearable connection.
       const retroNights = sleepRecords.filter(r => (r.duration as number) > 0).length
-
       await supabase
         .from("wearable_connections")
-        .update({
-          retro_nights: retroNights,
-          last_sync_at: new Date().toISOString(),
-        })
+        .update({ retro_nights: retroNights, last_sync_at: new Date().toISOString() })
         .eq("user_id", userId)
         .eq("status", "connected")
     }
@@ -83,7 +97,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ status: "processed", event: "historical.data", retroNights: sleepRecords.length, score: newScore })
   }
 
-  // ── All other sleep events: update last_sync_at + recalculate ────────────
+  // -- All other sleep events: update last_sync_at + recalculate ------------
   await supabase
     .from("wearable_connections")
     .update({ last_sync_at: new Date().toISOString() })
