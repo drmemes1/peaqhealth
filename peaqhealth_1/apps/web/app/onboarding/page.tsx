@@ -45,6 +45,17 @@ export default function OnboardingPage() {
     lifestyle: data.lifestyleCompleted ? "active" : step === "lifestyle" || step === "welcome" || step === "wearable" || step === "blood" || step === "oral" ? "pending" : "skipped",
   };
 
+  // Persist wearable connection
+  const persistWearable = useCallback(async (provider: WearableProvider) => {
+    if (!userId) return;
+    await supabase.from("wearable_connections").upsert({
+      user_id: userId,
+      provider,
+      access_token: "onboarding_placeholder",
+      refresh_token: "onboarding_placeholder",
+      token_expires_at: new Date(Date.now() + 86400000).toISOString(),
+    }, { onConflict: "user_id,provider" }).select();
+  }, [userId, supabase]);
 
   // Persist oral kit order
   const persistOral = useCallback(async () => {
@@ -78,9 +89,9 @@ export default function OnboardingPage() {
   }, [userId, supabase, router]);
 
   // Step handlers
-  // ConnectWearable already persists via /api/junction/wearable-connected
-  function handleWearableConnect(provider: string, _retroNights: number) {
-    setData((prev) => ({ ...prev, wearableProvider: provider as WearableProvider, wearableConnected: true }));
+  function handleWearableConnect(provider: WearableProvider) {
+    setData((prev) => ({ ...prev, wearableProvider: provider, wearableConnected: true }));
+    persistWearable(provider);
     setStep("blood");
   }
 
@@ -88,7 +99,7 @@ export default function OnboardingPage() {
     setStep("blood");
   }
 
-  // LabUpload already persists via /api/labs/upload + /api/labs/status
+  // /api/labs/save already persists; just advance the step
   function handleBloodConfirm(_markers: BloodMarkers, _newScore: number) {
     setData((prev) => ({ ...prev, bloodUploaded: true }));
     setStep("oral");
