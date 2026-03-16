@@ -1,64 +1,47 @@
-"use client";
+import Image from "next/image";
 
 interface LogoSvgProps {
   size?: number;   // controls height; width scales proportionally
-  color?: string;  // stroke / fill color
+  color?: string;  // used to detect light vs dark background context
   className?: string;
 }
 
 /**
- * Inline SVG recreation of the Peaq logo.
- * Mountain-peak motif with EKG heartbeat in the centre + "peaq" wordmark.
- * No image file required — transparent background, scales at any size.
+ * Peaq logo component.
+ * Uses the actual PNG asset with CSS blend modes to handle both
+ * light and dark backgrounds without the logo's white background showing.
+ *
+ * Light bg (color is dark):  mix-blend-mode: multiply  → white PNG bg disappears
+ * Dark bg  (color is light): filter: invert(1) + mix-blend-mode: screen → white marks show
  */
 export function LogoSvg({
   size = 48,
   color = "#141410",
   className,
 }: LogoSvgProps) {
-  // viewBox is 240 × 200; width scales from height
   const width = Math.round(size * (240 / 200));
 
+  // If the caller passes a light/white color it means we're on a dark background
+  const onDarkBg =
+    color.startsWith("rgba(250") ||
+    color.startsWith("rgba(255") ||
+    color === "white" ||
+    color === "#fff" ||
+    color === "#ffffff";
+
   return (
-    <svg
+    <Image
+      src="/images/peaq_logo.png"
+      alt="Peaq Health"
       width={width}
       height={size}
-      viewBox="0 0 240 200"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-label="Peaq Health"
       className={className}
-    >
-      {/* Mountain peaks + EKG heartbeat */}
-      <path
-        d="M 14,128
-           L 78,28
-           L 104,80
-           L 110,48
-           L 116,108
-           L 122,30
-           L 128,76
-           L 175,26
-           L 226,128"
-        stroke={color}
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-
-      {/* "peaq" wordmark */}
-      <text
-        x="120"
-        y="174"
-        textAnchor="middle"
-        fontFamily="'Cormorant Garamond', Georgia, serif"
-        fontSize="46"
-        fontWeight="300"
-        letterSpacing="4"
-        fill={color}
-      >
-        peaq
-      </text>
-    </svg>
+      style={{
+        objectFit: "contain",
+        ...(onDarkBg
+          ? { filter: "invert(1)", mixBlendMode: "screen" }
+          : { mixBlendMode: "multiply" }),
+      }}
+    />
   );
 }
