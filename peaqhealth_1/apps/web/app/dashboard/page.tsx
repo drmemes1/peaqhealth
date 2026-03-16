@@ -15,7 +15,7 @@ export default async function DashboardPage() {
     { data: oral },
     { data: lifestyle },
   ] = await Promise.all([
-    supabase.from("score_snapshots").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1).single(),
+    supabase.from("score_snapshots").select("*").eq("user_id", user.id).order("calculated_at", { ascending: false }).limit(1).single(),
     supabase.from("wearable_connections").select("*").eq("user_id", user.id).eq("status", "connected").order("connected_at", { ascending: false }).limit(1).single(),
     supabase.from("lab_results").select("*").eq("user_id", user.id).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).single(),
     supabase.from("oral_kit_orders").select("*").eq("user_id", user.id).eq("status", "results_ready").order("created_at", { ascending: false }).limit(1).single(),
@@ -35,7 +35,7 @@ export default async function DashboardPage() {
     else labFreshness = 'expired'
   }
 
-  const score = snapshot?.score ?? 0
+  const score = Number(snapshot?.score ?? 0)
   const breakdown = {
     sleepSub:        snapshot?.sleep_sub ?? 0,
     bloodSub:        snapshot?.blood_sub ?? 0,
@@ -47,7 +47,7 @@ export default async function DashboardPage() {
   const props: ScoreWheelProps = {
     score,
     breakdown,
-    sleepConnected: !!wearable,
+    sleepConnected: !!wearable || Number(snapshot?.sleep_sub ?? 0) > 0,
     labFreshness,
     oralActive: !!oral,
     sleepData: wearable ? {
