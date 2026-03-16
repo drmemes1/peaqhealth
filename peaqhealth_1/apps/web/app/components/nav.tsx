@@ -14,6 +14,7 @@ export function Nav({ initials = "?", cartCount = 0, onCartOpen }: NavProps) {
   const links = [
     { href: "/dashboard", label: "Dashboard" },
     { href: "/shop", label: "Shop" },
+    { href: "/science", label: "Science" },
     { href: "/settings", label: "Settings" },
   ];
   const today = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric" });
