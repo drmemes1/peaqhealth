@@ -14,29 +14,53 @@ const HANDLED_EVENTS = new Set([
 ])
 
 export async function POST(request: NextRequest) {
+  // ── Signature verification ────────────────────────────────────────────────
+  // Junction sends the raw secret in x-vital-webhook-secret.
+  // If JUNCTION_WEBHOOK_SECRET is not set we skip verification (dev mode).
   const webhookSecret = process.env.JUNCTION_WEBHOOK_SECRET
   if (webhookSecret) {
     const incoming = request.headers.get("x-vital-webhook-secret")
+    console.log("[webhook] secret check — incoming header present:", !!incoming)
     if (incoming !== webhookSecret) {
+      console.error("[webhook] secret mismatch — rejecting request")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+    console.log("[webhook] secret verified OK")
+  } else {
+    console.warn("[webhook] JUNCTION_WEBHOOK_SECRET not set — skipping verification")
   }
 
+  // ── Parse body ────────────────────────────────────────────────────────────
   let body: Record<string, unknown>
   try {
     body = await request.json() as Record<string, unknown>
   } catch {
+    console.error("[webhook] failed to parse JSON body")
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
   }
 
-  const { event_type, client_user_id } = body as { event_type: string; client_user_id: string }
+  // Junction webhook payload shape:
+  //   event_type    — e.g. "daily.data.sleep.created"
+  //   user_id       — Junction's own UUID for this user (stable, not hashed)
+  //   client_user_id — our ID passed at user-creation time, BUT Junction
+  //                    hashes it in webhook payloads, so we CANNOT use it
+  //                    directly as a Supabase user ID.
+  const event_type      = body.event_type      as string | undefined
+  const junctionUserId  = body.user_id         as string | undefined
+  const clientUserIdRaw = body.client_user_id  as string | undefined
 
-  if (!HANDLED_EVENTS.has(event_type)) {
+  console.log("[webhook] received event:", event_type,
+    "| junction user_id:", junctionUserId,
+    "| client_user_id (hashed):", clientUserIdRaw)
+
+  if (!event_type || !HANDLED_EVENTS.has(event_type)) {
+    console.log("[webhook] ignoring event:", event_type)
     return NextResponse.json({ status: "ignored" })
   }
 
-  if (!client_user_id) {
-    return NextResponse.json({ error: "Missing client_user_id" }, { status: 400 })
+  if (!junctionUserId) {
+    console.error("[webhook] missing user_id in payload")
+    return NextResponse.json({ error: "Missing user_id" }, { status: 400 })
   }
 
   const supabase = createClient(
@@ -44,9 +68,26 @@ export async function POST(request: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  const userId = client_user_id
+  // ── Resolve Supabase user from Junction user_id ───────────────────────────
+  // client_user_id is hashed by Junction in webhook payloads, so we look up
+  // the real Supabase user ID via profiles.junction_user_id instead.
+  const { data: profileRow, error: profileErr } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("junction_user_id", junctionUserId)
+    .single()
 
-  // -- sleep_breathing_disturbance: store spo2 dip estimate -----------------
+  if (profileErr || !profileRow) {
+    console.error("[webhook] no Supabase user found for junction_user_id:", junctionUserId,
+      "| error:", profileErr?.message)
+    // Return 200 so Junction doesn't keep retrying for a user we don't know about
+    return NextResponse.json({ status: "ignored", reason: "user_not_found" })
+  }
+
+  const userId = profileRow.id as string
+  console.log("[webhook] resolved Supabase userId:", userId, "for junction_user_id:", junctionUserId)
+
+  // ── sleep_breathing_disturbance: store spo2 dip estimate ─────────────────
   if (
     event_type === "daily.data.sleep_breathing_disturbance.created" ||
     event_type === "daily.data.sleep_breathing_disturbance.updated"
@@ -58,52 +99,70 @@ export async function POST(request: NextRequest) {
       disturbanceCount <= 3   ? 1 :
       disturbanceCount <= 10  ? 3 : 8
 
-    await supabase
+    console.log("[webhook] sleep_breathing_disturbance — disturbanceCount:", disturbanceCount, "→ spo2Dips:", spo2Dips)
+
+    const { error: updateErr } = await supabase
       .from("wearable_connections")
       .update({ latest_spo2_dips: spo2Dips, last_sync_at: new Date().toISOString() })
       .eq("user_id", userId)
       .eq("status", "connected")
 
+    if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
+
     return NextResponse.json({ status: "processed", event: "sleep_breathing_disturbance", spo2Dips })
   }
 
-  // -- sleep_apnea_alert: flag high_osa_risk ---------------------------------
+  // ── sleep_apnea_alert: flag high_osa_risk ─────────────────────────────────
   if (event_type === "daily.data.sleep_apnea_alert.created") {
-    await supabase
+    console.log("[webhook] sleep_apnea_alert — flagging high_osa_risk for user:", userId)
+
+    const { error: updateErr } = await supabase
       .from("wearable_connections")
       .update({ high_osa_risk: true, last_sync_at: new Date().toISOString() })
       .eq("user_id", userId)
       .eq("status", "connected")
 
+    if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
+
     const newScore = await recalculateScore(userId, supabase)
+    console.log("[webhook] sleep_apnea_alert — recalculated score:", newScore)
     return NextResponse.json({ status: "processed", event: "sleep_apnea_alert", score: newScore })
   }
 
-  // -- historical.data: upsert all sleep records then recalculate once ------
+  // ── historical.data: upsert sleep records then recalculate once ───────────
   if (event_type === "historical.data") {
     const data = body.data as Record<string, unknown> | undefined
     const sleepRecords = (data?.sleep ?? []) as Array<Record<string, unknown>>
+    console.log("[webhook] historical.data — sleep records:", sleepRecords.length)
 
     if (sleepRecords.length > 0) {
       const retroNights = sleepRecords.filter(r => (r.duration as number) > 0).length
-      await supabase
+      const { error: updateErr } = await supabase
         .from("wearable_connections")
         .update({ retro_nights: retroNights, last_sync_at: new Date().toISOString() })
         .eq("user_id", userId)
         .eq("status", "connected")
+
+      if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
     }
 
     const newScore = await recalculateScore(userId, supabase)
+    console.log("[webhook] historical.data — recalculated score:", newScore)
     return NextResponse.json({ status: "processed", event: "historical.data", retroNights: sleepRecords.length, score: newScore })
   }
 
-  // -- All other sleep events: update last_sync_at + recalculate ------------
-  await supabase
+  // ── All other sleep events: update last_sync_at + recalculate ─────────────
+  console.log("[webhook] sleep event:", event_type, "— updating last_sync_at and recalculating for user:", userId)
+
+  const { error: updateErr } = await supabase
     .from("wearable_connections")
     .update({ last_sync_at: new Date().toISOString() })
     .eq("user_id", userId)
     .eq("status", "connected")
 
+  if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
+
   const newScore = await recalculateScore(userId, supabase)
+  console.log("[webhook] recalculated score:", newScore, "for user:", userId)
   return NextResponse.json({ status: "processed", score: newScore })
 }
