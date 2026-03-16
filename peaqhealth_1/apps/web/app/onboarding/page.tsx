@@ -7,10 +7,10 @@ import type {
   OnboardingStep,
   OnboardingData,
   PanelStates,
-  DetectedMarker,
   WearableProvider,
   LifestyleAnswers,
 } from "./types";
+import type { BloodMarkers } from "../components/lab-upload";
 import { INITIAL_DATA } from "./types";
 import { LeftPanel } from "./left-panel";
 import { StepWelcome } from "./step-welcome";
@@ -57,17 +57,6 @@ export default function OnboardingPage() {
     }, { onConflict: "user_id,provider" }).select();
   }, [userId, supabase]);
 
-  // Persist blood markers
-  const persistBlood = useCallback(async (markers: DetectedMarker[]) => {
-    if (!userId) return;
-    await supabase.from("lab_results").insert({
-      user_id: userId,
-      lab_provider: "upload",
-      report_date: new Date().toISOString().slice(0, 10),
-      markers,
-    });
-  }, [userId, supabase]);
-
   // Persist oral kit order
   const persistOral = useCallback(async () => {
     if (!userId) return;
@@ -110,9 +99,9 @@ export default function OnboardingPage() {
     setStep("blood");
   }
 
-  function handleBloodConfirm(markers: DetectedMarker[]) {
-    setData((prev) => ({ ...prev, bloodUploaded: true, bloodMarkers: markers }));
-    persistBlood(markers);
+  // /api/labs/save already persists; just advance the step
+  function handleBloodConfirm(_markers: BloodMarkers, _newScore: number) {
+    setData((prev) => ({ ...prev, bloodUploaded: true }));
     setStep("oral");
   }
 
