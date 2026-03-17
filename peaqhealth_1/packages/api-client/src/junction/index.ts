@@ -11,8 +11,8 @@
 
 const JUNCTION_BASE_URL =
   process.env.JUNCTION_ENV === 'production'
-    ? 'https://api.us.junction.com'
-    : 'https://api.sandbox.us.junction.com'
+    ? 'https://api.tryvital.io'
+    : 'https://api.sandbox.tryvital.io'
 
 const JUNCTION_API_KEY = process.env.JUNCTION_API_KEY ?? ''
 
@@ -202,10 +202,12 @@ export interface LabParserResult {
  * Docs: POST /v3/lab-report-parser
  */
 export async function createLabParserJob(pdfBase64: string): Promise<LabParserJob> {
+  console.log('[lab-parser] submitting job to:', `${JUNCTION_BASE_URL}/v3/lab-report-parser`)
   const res = await junctionFetch('/v3/lab-report-parser', {
     method: 'POST',
     body: JSON.stringify({ file: pdfBase64, file_type: 'application/pdf' }),
   })
+  console.log('[lab-parser] job created:', res.job_id)
   return { jobId: res.job_id as string, status: 'pending' }
 }
 
@@ -214,7 +216,9 @@ export async function createLabParserJob(pdfBase64: string): Promise<LabParserJo
  * Docs: GET /v3/lab-report-parser/{job_id}
  */
 export async function getLabParserJob(jobId: string): Promise<LabParserResult> {
+  console.log('[lab-parser] polling job:', `${JUNCTION_BASE_URL}/v3/lab-report-parser/${jobId}`)
   const res = await junctionFetch(`/v3/lab-report-parser/${jobId}`)
+  console.log('[lab-parser] poll result — status:', res.status)
   return res as unknown as LabParserResult
 }
 
@@ -271,7 +275,8 @@ export async function seedSandboxSleepData(
 // ─── Internal fetch helper ────────────────────────────────────────────────────
 
 async function junctionFetch(path: string, init: RequestInit = {}): Promise<Record<string, unknown>> {
-  const res = await fetch(`${JUNCTION_BASE_URL}${path}`, {
+  const url = `${JUNCTION_BASE_URL}${path}`
+  const res = await fetch(url, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
@@ -282,6 +287,7 @@ async function junctionFetch(path: string, init: RequestInit = {}): Promise<Reco
 
   if (!res.ok) {
     const body = await res.text().catch(() => '')
+    console.error(`[junction] ${init.method ?? 'GET'} ${url} → ${res.status}:`, body)
     throw new Error(`Junction API error ${res.status}: ${body}`)
   }
 
