@@ -19,8 +19,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing pdfBase64" }, { status: 422 })
   }
 
+  // Look up Junction user_id — required by the lab parser API
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("junction_user_id")
+    .eq("id", user.id)
+    .single()
+
+  const junctionUserId = profile?.junction_user_id as string | undefined
+  if (!junctionUserId) {
+    return NextResponse.json(
+      { error: "No Junction user linked. Connect a wearable first or contact support." },
+      { status: 422 }
+    )
+  }
+
   try {
-    const { jobId } = await createLabParserJob(pdfBase64)
+    const { jobId } = await createLabParserJob(pdfBase64, junctionUserId)
     return NextResponse.json({ jobId })
   } catch (err) {
     console.error("[labs/upload] Junction parse job failed:", err)
