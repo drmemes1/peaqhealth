@@ -231,9 +231,9 @@ export async function createLabParserJob(pdfBase64: string, junctionUserId: stri
   })
 
   if (!res.ok) {
-    const body = await res.text().catch(() => '')
-    console.error(`[lab-parser] POST ${url} → ${res.status}:`, body)
-    throw new Error(`Junction lab parser error ${res.status}: ${body}`)
+    const errBody = await res.text().catch(() => '')
+    console.error(`[lab-parser] POST ${url} → ${res.status}`)
+    throw new Error(`Junction lab parser error ${res.status}`)
   }
 
   const data = await res.json() as Record<string, unknown>
@@ -337,9 +337,9 @@ async function junctionFetch(path: string, init: RequestInit = {}): Promise<Reco
   })
 
   if (!res.ok) {
-    const body = await res.text().catch(() => '')
-    console.error(`[junction] ${init.method ?? 'GET'} ${url} → ${res.status}:`, body)
-    throw new Error(`Junction API error ${res.status}: ${body}`)
+    // Do not log response body — may contain PHI from lab/health endpoints
+    console.error(`[junction] ${init.method ?? 'GET'} ${url} → ${res.status}`)
+    throw new Error(`Junction API error ${res.status}`)
   }
 
   return res.json() as Promise<Record<string, unknown>>

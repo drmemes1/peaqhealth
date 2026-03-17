@@ -118,8 +118,8 @@ export async function POST(request: NextRequest) {
         }).eq("id", labRow.id)
 
         const newScore = await recalculateScore(labRow.user_id as string, supabaseAnon)
-        console.log("[webhook] lab parser (no user_id) — updated and recalculated score:", newScore)
-        return NextResponse.json({ status: "processed", event: "lab_report_completed", score: newScore })
+        console.log("[webhook] lab parser (no user_id) — updated and recalculated for user:", labRow.user_id)
+        return NextResponse.json({ status: "processed", event: "lab_report_completed" })
       }
     }
     return NextResponse.json({ received: true })
@@ -204,7 +204,7 @@ export async function POST(request: NextRequest) {
       disturbanceCount <= 3   ? 1 :
       disturbanceCount <= 10  ? 3 : 8
 
-    console.log("[webhook] sleep_breathing_disturbance — disturbanceCount:", disturbanceCount, "→ spo2Dips:", spo2Dips)
+    console.log("[webhook] sleep_breathing_disturbance — processed for user:", userId)
 
     const { error: updateErr } = await supabase
       .from("wearable_connections")
@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
 
     if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
 
-    return NextResponse.json({ status: "processed", event: "sleep_breathing_disturbance", spo2Dips })
+    return NextResponse.json({ status: "processed", event: "sleep_breathing_disturbance" })
   }
 
   // ── sleep_apnea_alert: flag high_osa_risk ─────────────────────────────────
@@ -228,8 +228,8 @@ export async function POST(request: NextRequest) {
     if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
 
     const newScore = await recalculateScore(userId, supabase)
-    console.log("[webhook] sleep_apnea_alert — recalculated score:", newScore)
-    return NextResponse.json({ status: "processed", event: "sleep_apnea_alert", score: newScore })
+    console.log("[webhook] sleep_apnea_alert — recalculated score for user:", userId)
+    return NextResponse.json({ status: "processed", event: "sleep_apnea_alert" })
   }
 
   // ── historical.data: upsert sleep records then recalculate once ───────────
@@ -249,8 +249,8 @@ export async function POST(request: NextRequest) {
     }
 
     const newScore = await recalculateScore(userId, supabase)
-    console.log("[webhook] historical.data — recalculated score:", newScore)
-    return NextResponse.json({ status: "processed", event: "historical.data", retroNights: sleepRecords.length, score: newScore })
+    console.log("[webhook] historical.data — recalculated for user:", userId)
+    return NextResponse.json({ status: "processed", event: "historical.data" })
   }
 
   // ── lab_report.parsing_job.updated: process parsed lab results ────────────
@@ -327,8 +327,8 @@ export async function POST(request: NextRequest) {
         }
 
         const newScore = await recalculateScore(userId, supabase)
-        console.log("[webhook] lab parser — recalculated score:", newScore)
-        return NextResponse.json({ status: "processed", event: "lab_report_completed", score: newScore })
+        console.log("[webhook] lab parser — recalculated for user:", userId)
+        return NextResponse.json({ status: "processed", event: "lab_report_completed" })
       }
     }
 
@@ -356,6 +356,6 @@ export async function POST(request: NextRequest) {
   if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
 
   const newScore = await recalculateScore(userId, supabase)
-  console.log("[webhook] recalculated score:", newScore, "for user:", userId)
-  return NextResponse.json({ status: "processed", score: newScore })
+  console.log("[webhook] recalculated for user:", userId)
+  return NextResponse.json({ status: "processed" })
 }
