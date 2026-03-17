@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { useVitalLink } from "@tryvital/vital-link"
 
 interface ConnectWearableProps {
@@ -10,10 +11,10 @@ interface ConnectWearableProps {
 }
 
 const DEVICES = [
-  { id: "apple_health", label: "Apple Watch", icon: "◎" },
-  { id: "oura",         label: "Oura Ring",   icon: "○" },
-  { id: "whoop",        label: "WHOOP",        icon: "⌇" },
-  { id: "garmin",       label: "Garmin",       icon: "◈" },
+  { id: "apple_health", label: "Apple Watch", icon: "◎", appOnly: true },
+  { id: "oura",         label: "Oura Ring",   icon: "○", appOnly: false },
+  { id: "whoop",        label: "WHOOP",        icon: "⌇", appOnly: false },
+  { id: "garmin",       label: "Garmin",       icon: "◈", appOnly: false },
 ]
 
 export function ConnectWearable({ onSuccess, onSkip, mode }: ConnectWearableProps) {
@@ -22,6 +23,7 @@ export function ConnectWearable({ onSuccess, onSkip, mode }: ConnectWearableProp
   const [retroNights, setRetroNights] = useState(0)
   const [provider, setProvider] = useState("")
   const [error, setError] = useState<string | null>(null)
+  const [appleHint, setAppleHint] = useState(false)
 
   const { open: openWidget, ready } = useVitalLink({
     onSuccess: async (metadata: { userId?: string; connected?: Array<{ providerSlug?: string; name?: string }> }) => {
@@ -110,16 +112,49 @@ export function ConnectWearable({ onSuccess, onSkip, mode }: ConnectWearableProp
         {DEVICES.map(d => (
           <div
             key={d.id}
+            onClick={d.appOnly ? () => setAppleHint(true) : undefined}
             className="flex items-center gap-3 p-3"
-            style={{ border: "0.5px solid var(--ink-12)", borderRadius: 4, background: "white" }}
+            style={{
+              border: `0.5px solid ${d.appOnly ? "var(--gold)" : "var(--ink-12)"}`,
+              borderRadius: 4,
+              background: "white",
+              opacity: d.appOnly ? 0.55 : 1,
+              cursor: d.appOnly ? "pointer" : "default",
+              position: "relative",
+            }}
           >
-            <span className="font-body text-lg" style={{ color: "var(--sleep-c)", fontFamily: "monospace" }}>
+            <span className="font-body text-lg" style={{ color: d.appOnly ? "var(--ink-30)" : "var(--sleep-c)", fontFamily: "monospace" }}>
               {d.icon}
             </span>
-            <span className="font-body text-xs" style={{ color: "var(--ink)" }}>{d.label}</span>
+            <span className="font-body text-xs" style={{ color: d.appOnly ? "var(--ink-30)" : "var(--ink)" }}>{d.label}</span>
+            {d.appOnly && (
+              <span
+                style={{
+                  fontFamily: "var(--font-body)",
+                  fontSize: 9,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  color: "var(--gold)",
+                  border: "0.5px solid var(--gold)",
+                  borderRadius: 9,
+                  padding: "1px 6px",
+                  marginLeft: "auto",
+                  flexShrink: 0,
+                  lineHeight: "16px",
+                }}
+              >
+                App only
+              </span>
+            )}
           </div>
         ))}
       </div>
+
+      {appleHint && (
+        <p className="font-body text-xs" style={{ color: "var(--gold)", lineHeight: 1.5 }}>
+          Apple Health sync is available in the Peaq iOS app — coming soon. For now, enter your sleep manually.
+        </p>
+      )}
 
       {error && (
         <p className="font-body text-xs" style={{ color: "#991B1B" }}>{error}</p>
@@ -143,6 +178,26 @@ export function ConnectWearable({ onSuccess, onSkip, mode }: ConnectWearableProp
           Skip for now
         </button>
       )}
+
+      {/* iOS app banner */}
+      <div
+        style={{
+          borderTop: "0.5px solid var(--ink-06)",
+          paddingTop: 16,
+          textAlign: "center",
+        }}
+      >
+        <p className="font-body text-xs" style={{ color: "var(--ink-30)", lineHeight: 1.6 }}>
+          Want to sync Apple Health or Apple Watch?{" "}
+          Our iOS app is coming soon.{" "}
+          <Link
+            href="/#waitlist"
+            style={{ color: "var(--gold)", textDecoration: "underline", textUnderlineOffset: 3, textDecorationThickness: "0.5px" }}
+          >
+            Join the waitlist →
+          </Link>
+        </p>
+      </div>
     </div>
   )
 }
