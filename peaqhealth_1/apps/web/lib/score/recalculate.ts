@@ -50,22 +50,33 @@ export function mapLifestyleRow(row: Record<string, unknown>): LifestyleInputs {
   }
 }
 
+function num(v: unknown): number | undefined {
+  return typeof v === "number" && v > 0 ? v : undefined
+}
+
 export function mapLabRow(row: Record<string, unknown>): BloodInputs | undefined {
   if (!row.hs_crp_mgl && !row.apob_mgdl && !row.vitamin_d_ngml) return undefined
   return {
-    hsCRP_mgL:           (row.hs_crp_mgl          as number) ?? 0,
-    vitaminD_ngmL:       (row.vitamin_d_ngml       as number) ?? 0,
-    apoB_mgdL:           (row.apob_mgdl            as number) ?? 0,
-    ldl_mgdL:            (row.ldl_mgdl             as number) ?? 0,
-    hdl_mgdL:            (row.hdl_mgdl             as number) ?? 0,
-    triglycerides_mgdL:  (row.triglycerides_mgdl   as number) ?? 0,
-    lpa_mgdL:            (row.lpa_mgdl             as number) ?? 0,
-    glucose_mgdL:        row.glucose_mgdl           as number | undefined,
-    hba1c_pct:           row.hba1c_pct              as number | undefined,
-    esr_mmhr:            row.esr_mmhr               as number | undefined,
-    homocysteine_umolL:  row.homocysteine_umoll      as number | undefined,
-    ferritin_ngmL:       row.ferritin_ngml           as number | undefined,
-    labCollectionDate:   row.collection_date         as string | undefined,
+    hsCRP_mgL:           num(row.hs_crp_mgl),
+    vitaminD_ngmL:       num(row.vitamin_d_ngml),
+    apoB_mgdL:           num(row.apob_mgdl),
+    ldl_mgdL:            num(row.ldl_mgdl),
+    hdl_mgdL:            num(row.hdl_mgdl),
+    triglycerides_mgdL:  num(row.triglycerides_mgdl),
+    lpa_mgdL:            num(row.lpa_mgdl),
+    glucose_mgdL:        num(row.glucose_mgdl),
+    hba1c_pct:           num(row.hba1c_pct),
+    eGFR_mLmin:          num(row.egfr_ml_min),
+    alt_UL:              num(row.alt_ul),
+    ast_UL:              num(row.ast_ul),
+    albumin_gdL:         num(row.albumin_gdl),
+    hemoglobin_gdL:      num(row.hemoglobin_gdl),
+    wbc_x10L:            num(row.wbc_x10l),
+    rdw_pct:             num(row.rdw_pct),
+    esr_mmhr:            num(row.esr_mmhr),
+    homocysteine_umolL:  num(row.homocysteine_umoll),
+    ferritin_ngmL:       num(row.ferritin_ngml),
+    labCollectionDate:   row.collection_date as string | undefined,
   }
 }
 
@@ -143,22 +154,29 @@ export async function recalculateScore(
   const result = calculatePeaqScore(sleepInputs, bloodInputs, oralInputs, lifestyleInputs)
 
   await supabase.from("score_snapshots").insert({
-    user_id:              userId,
-    calculated_at:        new Date().toISOString(),
-    engine_version:       result.version,
-    score:                result.score,
-    category:             result.category,
-    sleep_sub:            result.breakdown.sleepSub,
-    sleep_source:         result.breakdown.sleepSource,
-    blood_sub:            result.breakdown.bloodSub,
-    oral_sub:             result.breakdown.oralSub,
-    lifestyle_sub:        result.breakdown.lifestyleSub,
-    interaction_pool:     result.breakdown.interactionPool,
-    lab_result_id:        labsRes.data?.id     ?? null,
-    oral_kit_id:          oralRes.data?.id     ?? null,
+    user_id:                userId,
+    calculated_at:          new Date().toISOString(),
+    engine_version:         result.version,
+    score:                  result.score,
+    category:               result.category,
+    sleep_sub:              result.breakdown.sleepSub,
+    sleep_source:           result.breakdown.sleepSource,
+    blood_sub:              result.breakdown.bloodSub,
+    oral_sub:               result.breakdown.oralSub,
+    lifestyle_sub:          result.breakdown.lifestyleSub,
+    interaction_pool:       result.breakdown.interactionPool,
+    lab_result_id:          labsRes.data?.id     ?? null,
+    oral_kit_id:            oralRes.data?.id     ?? null,
     wearable_connection_id: wearableRes.data?.id ?? null,
-    lifestyle_record_id:  lifestyleRes.data?.id ?? null,
-    lab_freshness:        result.labFreshness,
+    lifestyle_record_id:    lifestyleRes.data?.id ?? null,
+    lab_freshness:          result.labFreshness,
+    // v5.0 new fields
+    peaq_percent:           result.peaqPercent,
+    peaq_percent_label:     result.peaqPercentLabel,
+    lpa_flag:               result.lpaFlag,
+    hscrp_retest_flag:      result.hsCRPRetestFlag,
+    blood_recency_multiplier: result.bloodRecencyMultiplier,
+    interactions_fired:     result.interactionsFired,
   })
 
   return result.score

@@ -64,20 +64,21 @@ export interface ScoreWheelProps {
     updatedAt: string
   }
   interactions: {
-    sleepInflammation: boolean
-    spo2Lipid: boolean
-    dualInflammatory: boolean
-    hrvHomocysteine: boolean
-    periodontCRP: boolean
-    osaTaxaSpO2: boolean
-    lowNitrateCRP: boolean
-    lowDiversitySleep: boolean
-    familyCVDApoB: boolean
-    highStressCRP: boolean
-    poorNutritionTrig: boolean
-    highHRPoorSleep: boolean
-    alcoholPoorSleep: boolean
+    sleepInflammation:   boolean
+    spo2Lipid:           boolean
+    dualInflammatory:    boolean
+    hrvHomocysteine:     boolean
+    periodontCRP:        boolean
+    osaTaxaSpO2:         boolean
+    lowNitrateCRP:       boolean
+    lowDiversitySleep:   boolean
+    poorSleepOralQ:      boolean
+    poorExerciseSmoking: boolean
   }
+  peaqPercent?:      number
+  peaqPercentLabel?: string
+  lpaFlag?:          "elevated" | "very_elevated" | null
+  hsCRPRetestFlag?:  boolean
 }
 
 function flag(good: boolean, watch?: boolean): Flag {
@@ -90,6 +91,7 @@ export function ScoreWheel({
   score, breakdown, sleepConnected, labFreshness, oralActive,
   sleepData, bloodData, oralData, lifestyleData, interactions,
   lastSyncAt, lastSyncRequestedAt,
+  peaqPercent, peaqPercentLabel, lpaFlag, hsCRPRetestFlag,
 }: ScoreWheelProps) {
   const [mounted, setMounted] = useState(false)
   const [hoveredRing, setHoveredRing] = useState<string | null>(null)
@@ -120,10 +122,10 @@ export function ScoreWheel({
   const bloodLocked = !hasBlood
 
   const RINGS = [
-    { r: 96, circumference: 603.2, color: "var(--sleep-c)", trackColor: "var(--sleep-bg)", fillPct: breakdown.sleepSub / 32, pending: !sleepConnected, animDelay: 300, ringKey: "sleep", glowColor: "rgba(74,127,181,0.5)" },
-    { r: 84, circumference: 527.8, color: "var(--blood-c)", trackColor: "var(--blood-bg)", fillPct: breakdown.bloodSub / 28, pending: bloodLocked, animDelay: 450, ringKey: "blood", glowColor: "rgba(192,57,43,0.45)" },
-    { r: 72, circumference: 452.4, color: "var(--oral-c)",  trackColor: "var(--oral-bg)",  fillPct: breakdown.oralSub / 25,  pending: !oralActive,   animDelay: 600, ringKey: "oral",  glowColor: "rgba(45,106,79,0.45)" },
-    { r: 60, circumference: 376.99, color: "var(--gold)",   trackColor: "var(--gold-dim)", fillPct: breakdown.interactionPool / 15, pending: false,  animDelay: 750, ringKey: "ix",    glowColor: "rgba(184,134,11,0.5)" },
+    { r: 96, circumference: 603.2,  color: "var(--sleep-c)", trackColor: "var(--sleep-bg)", fillPct: breakdown.sleepSub / 27, pending: !sleepConnected, animDelay: 300, ringKey: "sleep", glowColor: "rgba(74,127,181,0.5)" },
+    { r: 84, circumference: 527.8,  color: "var(--blood-c)", trackColor: "var(--blood-bg)", fillPct: breakdown.bloodSub / 33, pending: bloodLocked,      animDelay: 450, ringKey: "blood", glowColor: "rgba(192,57,43,0.45)" },
+    { r: 72, circumference: 452.4,  color: "var(--oral-c)",  trackColor: "var(--oral-bg)",  fillPct: breakdown.oralSub / 27, pending: !oralActive,       animDelay: 600, ringKey: "oral",  glowColor: "rgba(45,106,79,0.45)" },
+    { r: 60, circumference: 376.99, color: "var(--gold)",    trackColor: "var(--gold-dim)", fillPct: breakdown.interactionPool / 15, pending: false,     animDelay: 750, ringKey: "ix",    glowColor: "rgba(184,134,11,0.5)" },
   ]
 
   const LEGEND = [
@@ -201,6 +203,31 @@ export function ScoreWheel({
           scorePulse={scorePulse}
         />
         <RingLegend items={LEGEND} />
+        {peaqPercent !== undefined && (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+            <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--ink-30)", margin: 0 }}>
+              Data Completeness · {peaqPercentLabel}
+            </p>
+            <div style={{ display: "flex", gap: 4 }}>
+              {[
+                { label: "Sleep",     pct: breakdown.sleepSub / 27,          color: "var(--sleep-c)" },
+                { label: "Blood",     pct: breakdown.bloodSub / 33,          color: "var(--blood-c)" },
+                { label: "Oral",      pct: breakdown.oralSub / 27,           color: "var(--oral-c)"  },
+                { label: "Lifestyle", pct: breakdown.lifestyleSub / 8,       color: "var(--gold)"    },
+              ].map(bar => (
+                <div key={bar.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                  <div style={{ width: 40, height: 4, borderRadius: 2, background: "var(--ink-06)", overflow: "hidden" }}>
+                    <div style={{ width: `${Math.min(100, bar.pct * 100)}%`, height: "100%", background: bar.color, borderRadius: 2, transition: "width 0.8s ease" }} />
+                  </div>
+                  <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 8, color: "var(--ink-30)", textTransform: "uppercase" }}>{bar.label}</span>
+                </div>
+              ))}
+            </div>
+            <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "var(--ink-60)", margin: 0 }}>
+              {peaqPercent}% complete
+            </p>
+          </div>
+        )}
       </div>
 
       {/* HERO */}
@@ -273,6 +300,22 @@ export function ScoreWheel({
             <span style={{ color: "var(--amber)" }}>⚠</span>
             <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "var(--amber)" }}>
               These results are {bloodData.monthsOld} months old. Retest recommended.
+            </span>
+          </div>
+        )}
+        {hsCRPRetestFlag && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", marginBottom: 8, borderRadius: 4, background: "rgba(220,38,38,0.06)", border: "0.5px solid rgba(220,38,38,0.2)" }}>
+            <span style={{ color: "#dc2626" }}>↑</span>
+            <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "#991b1b" }}>
+              hsCRP &gt;10 mg/L may indicate acute inflammation. Retest in 2–4 weeks once resolved.
+            </span>
+          </div>
+        )}
+        {lpaFlag && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", marginBottom: 8, borderRadius: 4, background: "rgba(245,158,11,0.08)", border: "0.5px solid rgba(245,158,11,0.3)" }}>
+            <span style={{ color: "#d97706" }}>⚑</span>
+            <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "#92400e" }}>
+              Lp(a) {lpaFlag === "very_elevated" ? "very elevated (>50 mg/dL)" : "elevated (30–50 mg/dL)"}. Genetic cardiovascular risk factor — discuss with your physician.
             </span>
           </div>
         )}
