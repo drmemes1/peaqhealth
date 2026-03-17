@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { Webhook } from "svix"
 import { createClient } from "@supabase/supabase-js"
 import { recalculateScore } from "../../../../lib/score/recalculate"
+import { mapParserResultToBloodInputs, type LabParserResult } from "@peaq/api-client/junction"
 
 const HANDLED_EVENTS = new Set([
   "daily.data.sleep.created",
@@ -13,6 +14,7 @@ const HANDLED_EVENTS = new Set([
   "daily.data.sleep_apnea_alert.created",
   "historical.data",
   "provider.connection.created",
+  "lab_report.parsing_job.updated",
 ])
 
 export async function POST(request: NextRequest) {
@@ -71,6 +73,56 @@ export async function POST(request: NextRequest) {
   if (!event_type || !HANDLED_EVENTS.has(event_type)) {
     console.log("[webhook] ignoring event:", event_type)
     return NextResponse.json({ status: "ignored" })
+  }
+
+  // Lab parser webhooks may not have a junction user_id — handle separately
+  if (event_type === "lab_report.parsing_job.updated" && !junctionUserId) {
+    const data = body.data as Record<string, unknown> | undefined
+    const jobId = (data?.job_id ?? data?.id) as string | undefined
+    const jobStatus = data?.status as string | undefined
+    console.log("[webhook] lab_report event without user_id — jobId:", jobId, "status:", jobStatus)
+
+    if (jobStatus === "completed" && jobId) {
+      const supabaseAnon = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      )
+      // Find the lab_results row by job_id to get the user
+      const { data: labRow } = await supabaseAnon
+        .from("lab_results")
+        .select("id, user_id")
+        .eq("junction_parser_job_id", jobId)
+        .single()
+
+      if (labRow) {
+        const parserResult: LabParserResult = {
+          jobId,
+          status: "completed",
+          data: data!.data as LabParserResult["data"],
+        }
+        const bloodInputs = mapParserResultToBloodInputs(parserResult)
+
+        await supabaseAnon.from("lab_results").update({
+          parser_status:      "complete",
+          hs_crp_mgl:         bloodInputs.hsCRP_mgL ?? null,
+          vitamin_d_ngml:     bloodInputs.vitaminD_ngmL ?? null,
+          apob_mgdl:          bloodInputs.apoB_mgdL ?? null,
+          ldl_mgdl:           bloodInputs.ldl_mgdL ?? null,
+          hdl_mgdl:           bloodInputs.hdl_mgdL ?? null,
+          triglycerides_mgdl: bloodInputs.triglycerides_mgdL ?? null,
+          lpa_mgdl:           bloodInputs.lpa_mgdL ?? null,
+          glucose_mgdl:       bloodInputs.glucose_mgdL ?? null,
+          hba1c_pct:          bloodInputs.hba1c_pct ?? null,
+          collection_date:    bloodInputs.labCollectionDate ?? null,
+          lab_name:           bloodInputs.labName ?? null,
+        }).eq("id", labRow.id)
+
+        const newScore = await recalculateScore(labRow.user_id as string, supabaseAnon)
+        console.log("[webhook] lab parser (no user_id) — updated and recalculated score:", newScore)
+        return NextResponse.json({ status: "processed", event: "lab_report_completed", score: newScore })
+      }
+    }
+    return NextResponse.json({ received: true })
   }
 
   if (!junctionUserId) {
@@ -199,6 +251,88 @@ export async function POST(request: NextRequest) {
     const newScore = await recalculateScore(userId, supabase)
     console.log("[webhook] historical.data — recalculated score:", newScore)
     return NextResponse.json({ status: "processed", event: "historical.data", retroNights: sleepRecords.length, score: newScore })
+  }
+
+  // ── lab_report.parsing_job.updated: process parsed lab results ────────────
+  if (event_type === "lab_report.parsing_job.updated") {
+    const data = body.data as Record<string, unknown> | undefined
+    const jobStatus = data?.status as string | undefined
+    const jobId = (data?.job_id ?? data?.id) as string | undefined
+
+    console.log("[webhook] lab_report.parsing_job.updated — jobId:", jobId, "status:", jobStatus)
+
+    if (jobStatus === "completed" && data) {
+      // Build a LabParserResult from the webhook payload
+      const parserResult: LabParserResult = {
+        jobId: jobId ?? "",
+        status: "completed",
+        data: data.data as LabParserResult["data"],
+      }
+
+      const bloodInputs = mapParserResultToBloodInputs(parserResult)
+      console.log("[webhook] lab parser — extracted markers:", Object.keys(bloodInputs).filter(k => (bloodInputs as Record<string, unknown>)[k] !== undefined).length)
+
+      // Find pending lab_results row by junction_parser_job_id, or insert new
+      if (jobId) {
+        const { data: existingLab } = await supabase
+          .from("lab_results")
+          .select("id")
+          .eq("user_id", userId)
+          .eq("junction_parser_job_id", jobId)
+          .single()
+
+        if (existingLab) {
+          await supabase.from("lab_results").update({
+            parser_status:      "complete",
+            hs_crp_mgl:         bloodInputs.hsCRP_mgL ?? null,
+            vitamin_d_ngml:     bloodInputs.vitaminD_ngmL ?? null,
+            apob_mgdl:          bloodInputs.apoB_mgdL ?? null,
+            ldl_mgdl:           bloodInputs.ldl_mgdL ?? null,
+            hdl_mgdl:           bloodInputs.hdl_mgdL ?? null,
+            triglycerides_mgdl: bloodInputs.triglycerides_mgdL ?? null,
+            lpa_mgdl:           bloodInputs.lpa_mgdL ?? null,
+            glucose_mgdl:       bloodInputs.glucose_mgdL ?? null,
+            hba1c_pct:          bloodInputs.hba1c_pct ?? null,
+            esr_mmhr:           bloodInputs.esr_mmhr ?? null,
+            homocysteine_umoll: bloodInputs.homocysteine_umolL ?? null,
+            ferritin_ngml:      bloodInputs.ferritin_ngmL ?? null,
+            collection_date:    bloodInputs.labCollectionDate ?? null,
+            lab_name:           bloodInputs.labName ?? null,
+          }).eq("id", existingLab.id)
+
+          console.log("[webhook] lab parser — updated existing lab_results row:", existingLab.id)
+        } else {
+          await supabase.from("lab_results").insert({
+            user_id:                  userId,
+            junction_parser_job_id:   jobId,
+            source:                   "webhook_parser",
+            parser_status:            "complete",
+            collection_date:          bloodInputs.labCollectionDate ?? new Date().toISOString().slice(0, 10),
+            lab_name:                 bloodInputs.labName ?? null,
+            hs_crp_mgl:              bloodInputs.hsCRP_mgL ?? null,
+            vitamin_d_ngml:          bloodInputs.vitaminD_ngmL ?? null,
+            apob_mgdl:               bloodInputs.apoB_mgdL ?? null,
+            ldl_mgdl:                bloodInputs.ldl_mgdL ?? null,
+            hdl_mgdl:                bloodInputs.hdl_mgdL ?? null,
+            triglycerides_mgdl:      bloodInputs.triglycerides_mgdL ?? null,
+            lpa_mgdl:                bloodInputs.lpa_mgdL ?? null,
+            glucose_mgdl:            bloodInputs.glucose_mgdL ?? null,
+            hba1c_pct:               bloodInputs.hba1c_pct ?? null,
+            esr_mmhr:                bloodInputs.esr_mmhr ?? null,
+            homocysteine_umoll:      bloodInputs.homocysteine_umolL ?? null,
+            ferritin_ngml:           bloodInputs.ferritin_ngmL ?? null,
+          })
+
+          console.log("[webhook] lab parser — inserted new lab_results row for user:", userId)
+        }
+
+        const newScore = await recalculateScore(userId, supabase)
+        console.log("[webhook] lab parser — recalculated score:", newScore)
+        return NextResponse.json({ status: "processed", event: "lab_report_completed", score: newScore })
+      }
+    }
+
+    return NextResponse.json({ received: true, event: "lab_report.parsing_job.updated" })
   }
 
   // ── All other sleep events: update last_sync_at + biometrics + recalculate ─

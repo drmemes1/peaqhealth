@@ -169,85 +169,132 @@ export async function requestHistoricalPull(
 
 // ─── Lab report parser ────────────────────────────────────────────────────────
 
+export type LabParserStatus = 'started' | 'processing' | 'pending_review' | 'completed' | 'failed'
+
 export interface LabParserJob {
   jobId: string
-  status: 'pending' | 'processing' | 'complete' | 'failed'
+  status: LabParserStatus
+}
+
+export interface LabParserResultEntry {
+  test_name: string
+  value: string
+  units: string
+  interpretation: string
+  is_above_max_range: boolean
+  is_below_min_range: boolean
+  loinc_matches?: Array<{
+    loinc_code: string
+    loinc_name: string
+    display_name: string
+    confidence_score: number
+  }>
 }
 
 export interface LabParserResult {
   jobId: string
-  status: 'complete' | 'failed'
-  metadata?: {
-    laboratory: string
-    date_collected: string
-    patient: string
+  status: LabParserStatus
+  data?: {
+    metadata?: {
+      lab_name: string
+      date_collected: string
+      date_reported: string
+      patient_first_name: string
+    }
+    results?: LabParserResultEntry[]
   }
-  results?: Array<{
-    name: string
-    slug: string
-    value: number
-    unit: string
-    interpretation: 'normal' | 'abnormal' | 'critical'
-    is_above_max_range: boolean
-    is_below_min_range: boolean
-    min_range_value?: number
-    max_range_value?: number
-    loinc?: string
-  }>
 }
 
 /**
- * Submit a lab PDF for parsing.
+ * Submit a lab PDF for parsing via multipart/form-data.
  * Returns immediately with a job_id; poll getLabParserJob for results.
- * Docs: POST /v3/lab-report-parser
+ * Docs: POST /v3/lab-report-parser/job
  */
 export async function createLabParserJob(pdfBase64: string): Promise<LabParserJob> {
-  console.log('[lab-parser] submitting job to:', `${JUNCTION_BASE_URL}/v3/lab-report-parser`)
-  const res = await junctionFetch('/v3/lab-report-parser', {
+  const url = `${JUNCTION_BASE_URL}/v3/lab-report-parser/job`
+  console.log('[lab-parser] submitting job to:', url)
+
+  const buffer = Buffer.from(pdfBase64, 'base64')
+  const blob = new Blob([buffer], { type: 'application/pdf' })
+  const formData = new FormData()
+  formData.append('file', blob, 'lab_report.pdf')
+  formData.append('needs_human_review', 'false')
+
+  const res = await fetch(url, {
     method: 'POST',
-    body: JSON.stringify({ file: pdfBase64, file_type: 'application/pdf' }),
+    headers: { 'x-vital-api-key': JUNCTION_API_KEY },
+    body: formData,
   })
-  console.log('[lab-parser] job created:', res.job_id)
-  return { jobId: res.job_id as string, status: 'pending' }
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
+    console.error(`[lab-parser] POST ${url} → ${res.status}:`, body)
+    throw new Error(`Junction lab parser error ${res.status}: ${body}`)
+  }
+
+  const data = await res.json() as Record<string, unknown>
+  const jobId = (data.job_id ?? data.id ?? '') as string
+  console.log('[lab-parser] job created:', jobId, 'status:', data.status)
+  return { jobId, status: (data.status as LabParserStatus) ?? 'started' }
 }
 
 /**
  * Poll for lab parser job completion.
- * Docs: GET /v3/lab-report-parser/{job_id}
+ * Docs: GET /v3/lab-report-parser/job/{job_id}
  */
 export async function getLabParserJob(jobId: string): Promise<LabParserResult> {
-  console.log('[lab-parser] polling job:', `${JUNCTION_BASE_URL}/v3/lab-report-parser/${jobId}`)
-  const res = await junctionFetch(`/v3/lab-report-parser/${jobId}`)
-  console.log('[lab-parser] poll result — status:', res.status)
-  return res as unknown as LabParserResult
+  const url = `${JUNCTION_BASE_URL}/v3/lab-report-parser/job/${jobId}`
+  console.log('[lab-parser] polling job:', url)
+  const res = await junctionFetch(`/v3/lab-report-parser/job/${jobId}`)
+  const status = (res.status as LabParserStatus) ?? 'started'
+  console.log('[lab-parser] poll result — status:', status)
+  return {
+    jobId,
+    status,
+    data: res.data as LabParserResult['data'],
+  }
 }
 
 /**
- * Map Junction parser result slugs → BloodInputs for score engine.
- * Junction uses LOINC-based slugs — map the most common ones.
+ * Map Junction parser results → BloodInputs for score engine.
+ * Uses case-insensitive test_name matching against known lab names
+ * (Quest, LabCorp, etc.).
  */
 export function mapParserResultToBloodInputs(
   result: LabParserResult
-): Partial<import('@peaq/types').BloodInputs> {
-  if (result.status !== 'complete' || !result.results) return {}
+): Partial<import('@peaq/types').BloodInputs> & { labName?: string } {
+  if (result.status !== 'completed' || !result.data?.results) return {}
 
-  const get = (slug: string): number | undefined =>
-    result.results?.find((r) => r.slug === slug || r.name.toLowerCase().includes(slug))?.value
+  const results = result.data.results
+
+  // Case-insensitive search by test_name — returns first numeric match
+  const get = (...patterns: string[]): number | undefined => {
+    for (const pattern of patterns) {
+      const lower = pattern.toLowerCase()
+      const match = results.find((r) => r.test_name.toLowerCase().includes(lower))
+      if (match) {
+        const num = parseFloat(match.value)
+        if (!isNaN(num)) return num
+      }
+    }
+    return undefined
+  }
 
   return {
-    hsCRP_mgL:           get('hs-crp') ?? get('crp') ?? get('c-reactive'),
-    vitaminD_ngmL:       get('25-hydroxyvitamin') ?? get('vitamin-d'),
-    apoB_mgdL:           get('apolipoprotein-b') ?? get('apob'),
-    ldl_mgdL:            get('ldl-cholesterol') ?? get('ldl'),
-    hdl_mgdL:            get('hdl-cholesterol') ?? get('hdl'),
+    hsCRP_mgL:           get('hs-crp', 'hscrp', 'c-reactive protein', 'crp'),
+    vitaminD_ngmL:       get('25-oh vitamin d', '25-hydroxyvitamin', 'vitamin d', 'vit d'),
+    apoB_mgdL:           get('apolipoprotein b', 'apob'),
+    ldl_mgdL:            get('ldl cholesterol', 'ldl-c', 'ldl chol'),
+    hdl_mgdL:            get('hdl cholesterol', 'hdl-c', 'hdl chol'),
     triglycerides_mgdL:  get('triglyceride'),
-    lpa_mgdL:            get('lipoprotein-a') ?? get('lp(a)'),
+    lpa_mgdL:            get('lipoprotein(a)', 'lipoprotein (a)', 'lp(a)'),
     glucose_mgdL:        get('glucose'),
-    hba1c_pct:           get('hemoglobin-a1c') ?? get('hba1c'),
-    esr_mmhr:            get('erythrocyte-sedimentation'),
+    hba1c_pct:           get('hemoglobin a1c', 'hba1c', 'a1c'),
+    esr_mmhr:            get('erythrocyte sedimentation', 'sed rate', 'esr'),
     homocysteine_umolL:  get('homocysteine'),
     ferritin_ngmL:       get('ferritin'),
-    labCollectionDate:   result.metadata?.date_collected,
+    labCollectionDate:   result.data.metadata?.date_collected,
+    labName:             result.data.metadata?.lab_name,
   }
 }
 
