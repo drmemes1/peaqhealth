@@ -5,7 +5,7 @@
  * Handles:
  *   - Wearable device connections (Link widget token)
  *   - Sleep data retrieval (GET /v2/summary/sleep/{user_id})
- *   - Lab report parsing (POST /v3/lab-report-parser)
+ *   - Lab report parsing (POST /lab_report/v1/parser/job)
  *   - Webhook verification
  */
 
@@ -169,7 +169,7 @@ export async function requestHistoricalPull(
 
 // ─── Lab report parser ────────────────────────────────────────────────────────
 
-export type LabParserStatus = 'started' | 'processing' | 'pending_review' | 'completed' | 'failed'
+export type LabParserStatus = 'upload_pending' | 'started' | 'completed' | 'failed'
 
 export interface LabParserJob {
   jobId: string
@@ -208,16 +208,20 @@ export interface LabParserResult {
 /**
  * Submit a lab PDF for parsing via multipart/form-data.
  * Returns immediately with a job_id; poll getLabParserJob for results.
- * Docs: POST /v3/lab-report-parser/job
+ * Docs: POST /lab_report/v1/parser/job
+ *
+ * @param pdfBase64 - Base64-encoded PDF file
+ * @param junctionUserId - Junction user UUID (from profiles.junction_user_id)
  */
-export async function createLabParserJob(pdfBase64: string): Promise<LabParserJob> {
-  const url = `${JUNCTION_BASE_URL}/v3/lab-report-parser/job`
-  console.log('[lab-parser] submitting job to:', url)
+export async function createLabParserJob(pdfBase64: string, junctionUserId: string): Promise<LabParserJob> {
+  const url = `${JUNCTION_BASE_URL}/lab_report/v1/parser/job`
+  console.log('[lab-parser] submitting job to:', url, 'user_id:', junctionUserId)
 
   const buffer = Buffer.from(pdfBase64, 'base64')
   const blob = new Blob([buffer], { type: 'application/pdf' })
   const formData = new FormData()
   formData.append('file', blob, 'lab_report.pdf')
+  formData.append('user_id', junctionUserId)
   formData.append('needs_human_review', 'false')
 
   const res = await fetch(url, {
@@ -233,20 +237,20 @@ export async function createLabParserJob(pdfBase64: string): Promise<LabParserJo
   }
 
   const data = await res.json() as Record<string, unknown>
-  const jobId = (data.job_id ?? data.id ?? '') as string
+  const jobId = (data.job_id ?? '') as string
   console.log('[lab-parser] job created:', jobId, 'status:', data.status)
-  return { jobId, status: (data.status as LabParserStatus) ?? 'started' }
+  return { jobId, status: (data.status as LabParserStatus) ?? 'upload_pending' }
 }
 
 /**
  * Poll for lab parser job completion.
- * Docs: GET /v3/lab-report-parser/job/{job_id}
+ * Docs: GET /lab_report/v1/parser/job/{job_id}
  */
 export async function getLabParserJob(jobId: string): Promise<LabParserResult> {
-  const url = `${JUNCTION_BASE_URL}/v3/lab-report-parser/job/${jobId}`
+  const url = `${JUNCTION_BASE_URL}/lab_report/v1/parser/job/${jobId}`
   console.log('[lab-parser] polling job:', url)
-  const res = await junctionFetch(`/v3/lab-report-parser/job/${jobId}`)
-  const status = (res.status as LabParserStatus) ?? 'started'
+  const res = await junctionFetch(`/lab_report/v1/parser/job/${jobId}`)
+  const status = (res.status as LabParserStatus) ?? 'upload_pending'
   console.log('[lab-parser] poll result — status:', status)
   return {
     jobId,

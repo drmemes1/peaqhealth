@@ -29,8 +29,8 @@ export async function GET(
     const result = await getLabParserJob(jobId)
     const status = result.status as string
 
-    // Junction statuses: started, processing, pending_review, completed, failed
-    if (status === "started" || status === "processing" || status === "pending_review") {
+    // Junction statuses: upload_pending, started, completed, failed
+    if (status === "upload_pending" || status === "started") {
       return NextResponse.json({ status: "pending" })
     }
 
