@@ -111,6 +111,11 @@ export default async function DashboardPage() {
       osaTaxaSpO2:       snapshot?.ix_osa_taxa_spo2 ?? true,
       lowNitrateCRP:     snapshot?.ix_low_nitrate_crp ?? true,
       lowDiversitySleep: snapshot?.ix_low_diversity_sleep ?? true,
+      familyCVDApoB:     snapshot?.ix_family_cvd_apob ?? false,
+      highStressCRP:     snapshot?.ix_high_stress_crp ?? false,
+      poorNutritionTrig: snapshot?.ix_poor_nutrition_trig ?? false,
+      highHRPoorSleep:   snapshot?.ix_high_hr_poor_sleep ?? false,
+      alcoholPoorSleep:  snapshot?.ix_alcohol_poor_sleep ?? false,
     },
   }
 

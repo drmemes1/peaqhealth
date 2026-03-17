@@ -58,6 +58,20 @@ export interface LifestyleAnswers {
   sleepQualSelf: string;
   nightWakings: string;
   daytimeFatigue: string;
+  // Medical history (optional)
+  hypertensionDx: string;
+  onBPMeds: string;
+  onStatins: string;
+  familyHistoryCVD: string;
+  // Nutrition
+  vegetableServings: string;
+  fruitServings: string;
+  processedFood: string;
+  sugaryDrinks: string;
+  // Alcohol
+  alcoholDrinks: string;
+  // Stress
+  stressLevel: string;
 }
 
 export interface OnboardingData {

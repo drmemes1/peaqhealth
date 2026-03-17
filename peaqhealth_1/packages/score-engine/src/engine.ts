@@ -1,7 +1,15 @@
 /**
- * Peaq Score Engine — v4.1
+ * Peaq Score Engine — v4.2
  *
  * Four-panel architecture: Sleep + Blood + Oral Microbiome + Lifestyle
+ *
+ * Changes from v4.1:
+ *   - LifestyleInputs: added cardiovascular history, biometrics, nutrition, alcohol, stress
+ *   - Lifestyle panel redistribution: exercise 2.5, oral hygiene+dental 1.5, resting HR 1.5,
+ *     VO2max 1, nutrition 1.5, alcohol 0.5, smoking 1.5, medical history penalty −1
+ *   - 5 new interaction terms: familyCVD×ApoB, stress×CRP, nutrition×triglycerides,
+ *     highHR×poorSleep, alcohol×poorSleep
+ *   - Version tag: "4.2"
  *
  * Changes from v4.0:
  *   - SleepInputs: avgSpo2 (avg SpO2 %) and highOsaRisk (device alert flag) added
@@ -117,6 +125,30 @@ export interface LifestyleInputs {
   nightWakings:   "never" | "less_once_wk" | "once_twice_wk" | "3plus_wk"
   /** Do you use sleep medication (prescription or OTC)? */
   sleepMedication: "never" | "less_once_wk" | "once_twice_wk" | "3plus_wk"
+
+  // ── Cardiovascular history (optional) ───────────────────────────────────────
+  hypertensionDx?: boolean
+  onBPMeds?: boolean
+  onStatins?: boolean
+  onDiabetesMeds?: boolean
+  familyHistoryCVD?: boolean
+  familyHistoryHypertension?: boolean
+
+  // ── Biometrics from wearable (optional) ─────────────────────────────────────
+  restingHR?: number
+  vo2max?: number
+
+  // ── Nutrition (optional) ────────────────────────────────────────────────────
+  vegetableServingsPerDay?: number
+  fruitServingsPerDay?: number
+  processedFoodFrequency?: 1 | 2 | 3 | 4 | 5
+  sugaryDrinksPerWeek?: number
+
+  // ── Alcohol (optional) ──────────────────────────────────────────────────────
+  alcoholDrinksPerWeek?: number
+
+  // ── Stress (optional) ───────────────────────────────────────────────────────
+  stressLevel?: "low" | "moderate" | "high"
 }
 
 // ─── Existing input types (unchanged from v3) ─────────────────────────────────
@@ -161,7 +193,7 @@ export interface OralInputs {
 // ─── Output types ──────────────────────────────────────────────────────────────
 
 export interface PeaqScoreResult {
-  version: "4.1"
+  version: "4.2"
   score:    number
   category: "optimal" | "good" | "moderate" | "attention"
 
@@ -204,6 +236,10 @@ export interface PeaqScoreResult {
     oralHygieneScore:  number
     dentalVisitScore:  number
     heartScore:        number
+    restingHRScore:  number
+    vo2maxScore:     number
+    nutritionScore:  number
+    alcoholScore:    number
     psqiEstimate:      number  // questionnaire sleep estimate (0–22)
   }
 
@@ -222,6 +258,11 @@ export interface PeaqScoreResult {
     // Questionnaire-driven (fire without sensor data)
     poorSleepOralQ:    boolean   // −2
     poorExerciseSmoking: boolean // −2
+    familyCVDApoB:       boolean   // −1.5
+    highStressCRP:       boolean   // −1
+    poorNutritionTrig:   boolean   // −1
+    highHRPoorSleep:     boolean   // −1
+    alcoholPoorSleep:    boolean   // −1.5
   }
 
   oralPendingTerms: number
@@ -249,15 +290,15 @@ export interface PeaqScoreResult {
  */
 function scoreExercise(level: ExerciseLevel): number {
   switch (level) {
-    case "active":    return 4
-    case "moderate":  return 2
-    case "light":     return 1
+    case "active":    return 2.5
+    case "moderate":  return 1.5
+    case "light":     return 0.75
     case "sedentary": return 0
   }
 }
 
 /**
- * Oral hygiene behaviour → 0–3 pts
+ * Oral hygiene behaviour → 0–1 pts
  * Scoring grid matches VanWormer 2012 OHI + ADA brushing/flossing guidelines:
  *   excellent = brush 2×+ AND floss daily        → 3 pts
  *   good      = brush 2×+ AND floss most days    → 2.5 pts
@@ -294,7 +335,7 @@ function scoreOralHygiene(
   // Antiseptic mouthwash penalty (nominal — only chlorhexidine/Listerine-type)
   if (mouthwash === "antiseptic") pts -= 0.5
 
-  return Math.max(0, Math.min(3, Math.round(pts * 2) / 2))  // round to 0.5
+  return Math.max(0, Math.min(1, Math.round(pts * 2) / 2))  // round to 0.5
 }
 
 /**
@@ -304,10 +345,10 @@ function scoreOralHygiene(
  */
 function scoreDentalVisit(visit: DentalVisit): number {
   switch (visit) {
-    case "within_6mo": return 2
-    case "6_to_12mo":  return 2    // still within ≥1/yr threshold
-    case "over_1yr":   return 1
-    case "over_2yr":   return 0.5
+    case "within_6mo": return 0.5
+    case "6_to_12mo":  return 0.5
+    case "over_1yr":   return 0.25
+    case "over_2yr":   return 0
     case "never":      return 0
   }
 }
@@ -323,10 +364,67 @@ function scoreHeart(
   diabetes:     boolean
 ): number {
   if (smoking === "current")             return 0
-  if (hypertension && diabetes)          return 0
-  if (hypertension || diabetes)          return 0.5
-  if (smoking === "former")              return 0.75
-  return 1
+  if (smoking === "former")              return 1
+  return 1.5
+}
+
+/**
+ * Resting Heart Rate → 0–1.5 pts (NEW)
+ * Only scores when wearable data available.
+ */
+function scoreRestingHR(hr?: number): number {
+  if (hr === undefined) return 0
+  if (hr < 55) return 1.5
+  if (hr <= 65) return 1.25
+  if (hr <= 75) return 1
+  if (hr <= 85) return 0.5
+  return 0
+}
+
+/**
+ * VO2 Max → 0–1 pt (NEW)
+ * Only scores when wearable data available.
+ */
+function scoreVO2Max(vo2?: number): number {
+  if (vo2 === undefined) return 0
+  if (vo2 > 50) return 1
+  if (vo2 >= 40) return 0.75
+  if (vo2 >= 30) return 0.5
+  return 0
+}
+
+/**
+ * Nutrition → 0–1.5 pts (NEW)
+ * Scores based on available nutrition inputs.
+ */
+function scoreNutrition(ls: LifestyleInputs): number {
+  let pts = 0
+  if (ls.vegetableServingsPerDay !== undefined && ls.vegetableServingsPerDay >= 3) pts += 0.5
+  if (ls.fruitServingsPerDay !== undefined && ls.fruitServingsPerDay >= 2) pts += 0.25
+  if (ls.processedFoodFrequency !== undefined && ls.processedFoodFrequency <= 2) pts += 0.5
+  if (ls.sugaryDrinksPerWeek !== undefined && ls.sugaryDrinksPerWeek <= 3) pts += 0.25
+  return Math.min(1.5, pts)
+}
+
+/**
+ * Alcohol → 0–0.5 pt (NEW)
+ */
+function scoreAlcohol(drinks?: number): number {
+  if (drinks === undefined) return 0
+  if (drinks <= 7) return 0.5
+  if (drinks <= 14) return 0.25
+  return 0
+}
+
+/**
+ * Medical history modifiers (NEW — penalty only)
+ * These reduce the final lifestyle score, min 0.
+ */
+function medicalHistoryPenalty(ls: LifestyleInputs): number {
+  let penalty = 0
+  if (ls.familyHistoryCVD) penalty += 0.5
+  if (ls.hypertensionDx && !ls.onBPMeds) penalty += 0.5
+  return penalty
 }
 
 /**
@@ -442,7 +540,7 @@ function checkPoorExerciseSmoking(ls: LifestyleInputs): boolean {
 
 function generateLifestyleInsights(
   ls: LifestyleInputs,
-  scores: { exercise: number; oralHygiene: number; dental: number; heart: number }
+  scores: { exercise: number; oralHygiene: number; dental: number; heart: number; restingHR: number; vo2max: number; nutrition: number; alcohol: number }
 ): string[] {
   const insights: string[] = []
 
@@ -473,6 +571,26 @@ function generateLifestyleInsights(
 
   if (ls.knownHypertension && ls.knownDiabetes) {
     insights.push("Known hypertension and diabetes are both present — these compound cardiovascular risk significantly and are both modifiable through sleep, exercise, and dietary changes tracked by Peaq.")
+  }
+
+  if (ls.restingHR !== undefined && ls.restingHR > 85) {
+    insights.push("Resting heart rate above 85 bpm — elevated resting HR is independently associated with cardiovascular mortality. Regular aerobic exercise is the primary intervention.")
+  }
+
+  if (ls.alcoholDrinksPerWeek !== undefined && ls.alcoholDrinksPerWeek > 14) {
+    insights.push("Alcohol intake above 14 drinks/week — heavy consumption directly fragments sleep architecture, elevates resting heart rate, and raises inflammatory markers.")
+  }
+
+  if (ls.stressLevel === "high") {
+    insights.push("High stress reported — chronic stress elevates cortisol, hsCRP, and resting heart rate. This amplifies inflammatory interactions across all panels.")
+  }
+
+  if (ls.familyHistoryCVD) {
+    insights.push("Family history of cardiovascular disease — genetic risk factors make proactive monitoring of ApoB, hsCRP, and Lp(a) especially important.")
+  }
+
+  if (ls.processedFoodFrequency !== undefined && ls.processedFoodFrequency >= 4) {
+    insights.push("Frequent processed food consumption — associated with elevated triglycerides, systemic inflammation, and metabolic dysfunction.")
   }
 
   return insights
@@ -590,6 +708,22 @@ function checkLowDiversitySleep(shannon: number, sleepEff: number): boolean {
   return shannon < 2.5 && sleepEff < 80
 }
 
+function checkFamilyCVDApoB(familyHistory: boolean | undefined, apoB: number): boolean {
+  return !!familyHistory && apoB > 100
+}
+function checkHighStressCRP(stress: string | undefined, crp: number): boolean {
+  return stress === "high" && crp > 3
+}
+function checkPoorNutritionTrig(processed: number | undefined, tg: number): boolean {
+  return processed !== undefined && processed >= 4 && tg > 150
+}
+function checkHighHRPoorSleep(hr: number | undefined, sleepEff: number): boolean {
+  return hr !== undefined && hr > 80 && sleepEff < 75
+}
+function checkAlcoholPoorSleep(drinks: number | undefined, deepPct: number, sleepEff: number): boolean {
+  return drinks !== undefined && drinks > 10 && (deepPct < 0.15 || sleepEff < 75)
+}
+
 export type LabFreshness = "fresh" | "aging" | "stale" | "expired" | "none"
 
 export function computeLabFreshness(labCollectionDate?: string): {
@@ -704,6 +838,7 @@ export function calculatePeaqScore(
 
   // ── Lifestyle sub-score ──
   let exerciseScore = 0, oralHygieneScore = 0, dentalVisitScore = 0, heartScore = 0
+  let restingHRScore = 0, vo2maxScore = 0, nutritionScore = 0, alcoholScore = 0
   let lifestyleSub = 0
 
   if (lifestyle) {
@@ -711,8 +846,14 @@ export function calculatePeaqScore(
     oralHygieneScore  = scoreOralHygiene(lifestyle.brushingFreq, lifestyle.flossingFreq, lifestyle.mouthwashType)
     dentalVisitScore  = scoreDentalVisit(lifestyle.lastDentalVisit)
     heartScore        = scoreHeart(lifestyle.smokingStatus, lifestyle.knownHypertension, lifestyle.knownDiabetes)
-    lifestyleSub      = exerciseScore + oralHygieneScore + dentalVisitScore + heartScore
-    lifestyleSub      = Math.min(10, Math.round(lifestyleSub * 2) / 2)
+    restingHRScore    = scoreRestingHR(lifestyle.restingHR)
+    vo2maxScore       = scoreVO2Max(lifestyle.vo2max)
+    nutritionScore    = scoreNutrition(lifestyle)
+    alcoholScore      = scoreAlcohol(lifestyle.alcoholDrinksPerWeek)
+    const rawLifestyle = exerciseScore + oralHygieneScore + dentalVisitScore + heartScore
+                       + restingHRScore + vo2maxScore + nutritionScore + alcoholScore
+    const penalty     = medicalHistoryPenalty(lifestyle)
+    lifestyleSub      = Math.max(0, Math.min(10, Math.round((rawLifestyle - penalty) * 2) / 2))
   }
 
   // ── Interaction terms ──
@@ -735,6 +876,13 @@ export function calculatePeaqScore(
   const poorSleepOralQ      = lifestyle ? checkPoorSleepOralQ(lifestyle, sleep) : false
   const poorExerciseSmoking = lifestyle ? checkPoorExerciseSmoking(lifestyle) : false
 
+  // New interaction terms (v4.2)
+  const familyCVDApoB     = lifestyle && !bloodLocked ? checkFamilyCVDApoB(lifestyle.familyHistoryCVD, blood?.apoB_mgdL ?? 0) : false
+  const highStressCRP     = lifestyle && !bloodLocked ? checkHighStressCRP(lifestyle.stressLevel, crpVal) : false
+  const poorNutritionTrig = lifestyle && !bloodLocked ? checkPoorNutritionTrig(lifestyle.processedFoodFrequency, blood?.triglycerides_mgdL ?? 0) : false
+  const highHRPoorSleep   = lifestyle && sleep ? checkHighHRPoorSleep(lifestyle.restingHR, sleepEff) : false
+  const alcoholPoorSleep  = lifestyle && sleep ? checkAlcoholPoorSleep(lifestyle.alcoholDrinksPerWeek, sleep.deepSleepPct, sleepEff) : false
+
   let interactionPool = 14
   if (sleepInflammation)    interactionPool -= 5
   if (spo2Lipid)            interactionPool -= 3
@@ -746,6 +894,11 @@ export function calculatePeaqScore(
   if (lowDiversitySleep)    interactionPool -= 2
   if (poorSleepOralQ)       interactionPool -= 2
   if (poorExerciseSmoking)  interactionPool -= 2
+  if (familyCVDApoB)       interactionPool -= 1.5
+  if (highStressCRP)       interactionPool -= 1
+  if (poorNutritionTrig)   interactionPool -= 1
+  if (highHRPoorSleep)     interactionPool -= 1
+  if (alcoholPoorSleep)    interactionPool -= 1.5
   interactionPool = Math.max(0, interactionPool)
 
   // Oral pending terms
@@ -758,7 +911,7 @@ export function calculatePeaqScore(
 
   // ── Lifestyle insights ──
   const lifestyleInsights = lifestyle
-    ? generateLifestyleInsights(lifestyle, { exercise: exerciseScore, oralHygiene: oralHygieneScore, dental: dentalVisitScore, heart: heartScore })
+    ? generateLifestyleInsights(lifestyle, { exercise: exerciseScore, oralHygiene: oralHygieneScore, dental: dentalVisitScore, heart: heartScore, restingHR: restingHRScore, vo2max: vo2maxScore, nutrition: nutritionScore, alcohol: alcoholScore })
     : []
 
   // ── Oral data age ──
@@ -768,7 +921,7 @@ export function calculatePeaqScore(
   }
 
   return {
-    version: "4.1",
+    version: "4.2",
     score,
     category,
     breakdown: {
@@ -789,12 +942,15 @@ export function calculatePeaqScore(
       crpScore, vitDScore, apoBScore, ldlHdlScore, glycemicScore, lpaScore, triglyceridesScore,
       shannonScore, nitrateScore, periodontScore, osaScore,
       exerciseScore, oralHygieneScore: Math.round(oralHygieneScore * 10) / 10,
-      dentalVisitScore, heartScore, psqiEstimate,
+      dentalVisitScore, heartScore,
+      restingHRScore, vo2maxScore, nutritionScore, alcoholScore,
+      psqiEstimate,
     },
     interactions: {
       sleepInflammation, spo2Lipid, dualInflammatory, hrvHomocysteine,
       periodontCRP, osaTaxaSpO2, lowNitrateCRP, lowDiversitySleep,
       poorSleepOralQ, poorExerciseSmoking,
+      familyCVDApoB, highStressCRP, poorNutritionTrig, highHRPoorSleep, alcoholPoorSleep,
     },
     oralPendingTerms,
     lifestyleInsights,
@@ -835,6 +991,14 @@ export function runTests(): void {
     daytimeFatigue:    "sometimes",
     nightWakings:      "less_once_wk",
     sleepMedication:   "never",
+    restingHR: 62,
+    vo2max: 45,
+    vegetableServingsPerDay: 4,
+    fruitServingsPerDay: 3,
+    processedFoodFrequency: 1 as const,
+    sugaryDrinksPerWeek: 1,
+    alcoholDrinksPerWeek: 4,
+    stressLevel: "low" as const,
   }
 
   const poorLifestyle: LifestyleInputs = {
@@ -852,6 +1016,12 @@ export function runTests(): void {
     daytimeFatigue:    "often",
     nightWakings:      "3plus_wk",
     sleepMedication:   "once_twice_wk",
+    restingHR: 88,
+    familyHistoryCVD: true,
+    alcoholDrinksPerWeek: 18,
+    stressLevel: "high" as const,
+    processedFoodFrequency: 5 as const,
+    sugaryDrinksPerWeek: 10,
   }
 
   const freshDate = new Date(Date.now() - 20 * 86400000).toISOString().slice(0, 10)

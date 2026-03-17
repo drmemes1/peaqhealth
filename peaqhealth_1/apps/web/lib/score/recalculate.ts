@@ -32,6 +32,21 @@ export function mapLifestyleRow(row: Record<string, unknown>): LifestyleInputs {
     daytimeFatigue:  (fatMap[row.daytime_fatigue  as string] ?? "sometimes")   as LifestyleInputs["daytimeFatigue"],
     nightWakings:    (wakeMap[row.night_wakings   as string] ?? "less_once_wk") as LifestyleInputs["nightWakings"],
     sleepMedication: "never",
+    // New optional fields (v4.2)
+    hypertensionDx: row.hypertension_dx === "yes" || row.hypertension_dx === true ? true : undefined,
+    onBPMeds: row.on_bp_meds === "yes" || row.on_bp_meds === true ? true : undefined,
+    onStatins: row.on_statins === "yes" || row.on_statins === true ? true : undefined,
+    onDiabetesMeds: row.on_diabetes_meds === "yes" || row.on_diabetes_meds === true ? true : undefined,
+    familyHistoryCVD: row.family_history_cvd === "yes" ? true : row.family_history_cvd === "no" ? false : undefined,
+    familyHistoryHypertension: row.family_history_hypertension === "yes" || row.family_history_hypertension === true ? true : undefined,
+    restingHR: typeof row.latest_resting_hr === "number" ? row.latest_resting_hr : undefined,
+    vo2max: typeof row.latest_vo2max === "number" ? row.latest_vo2max : undefined,
+    vegetableServingsPerDay: typeof row.vegetable_servings_per_day === "number" ? row.vegetable_servings_per_day : undefined,
+    fruitServingsPerDay: typeof row.fruit_servings_per_day === "number" ? row.fruit_servings_per_day : undefined,
+    processedFoodFrequency: typeof row.processed_food_frequency === "number" ? (row.processed_food_frequency as 1|2|3|4|5) : undefined,
+    sugaryDrinksPerWeek: typeof row.sugary_drinks_per_week === "number" ? row.sugary_drinks_per_week : undefined,
+    alcoholDrinksPerWeek: typeof row.alcohol_drinks_per_week === "number" ? row.alcohol_drinks_per_week : undefined,
+    stressLevel: typeof row.stress_level === "string" && ["low", "moderate", "high"].includes(row.stress_level) ? (row.stress_level as "low" | "moderate" | "high") : undefined,
   }
 }
 
@@ -116,7 +131,14 @@ export async function recalculateScore(
 
   const bloodInputs     = labsRes.data     ? mapLabRow(labsRes.data as Record<string, unknown>)           : undefined
   const oralInputs      = oralRes.data     ? mapOralRow(oralRes.data as Record<string, unknown>)          : undefined
-  const lifestyleInputs = lifestyleRes.data ? mapLifestyleRow(lifestyleRes.data as Record<string, unknown>) : undefined
+  let lifestyleInputs = lifestyleRes.data ? mapLifestyleRow(lifestyleRes.data as Record<string, unknown>) : undefined
+
+  // Merge wearable biometrics (resting HR, VO2 max) into lifestyle inputs
+  if (lifestyleInputs && wearableRes.data) {
+    const wRow = wearableRes.data as Record<string, unknown>
+    if (typeof wRow.latest_resting_hr === "number") lifestyleInputs.restingHR = wRow.latest_resting_hr
+    if (typeof wRow.latest_vo2max === "number") lifestyleInputs.vo2max = wRow.latest_vo2max
+  }
 
   const result = calculatePeaqScore(sleepInputs, bloodInputs, oralInputs, lifestyleInputs)
 

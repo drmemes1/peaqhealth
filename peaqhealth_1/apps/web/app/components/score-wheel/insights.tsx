@@ -72,9 +72,14 @@ interface InsightsProps {
   bloodHsCrp?: number
   bloodApoB?: number
   oralPeriodont?: number
+  // New v4.2 props
+  familyHistoryCVD?: boolean
+  stressLevel?: string
+  alcoholDrinksPerWeek?: number
+  sleepEfficiency?: number
 }
 
-export function Insights({ sleepConnected, hasBlood, oralActive, sleepHrv, sleepDeepPct, bloodHsCrp, bloodApoB, oralPeriodont }: InsightsProps) {
+export function Insights({ sleepConnected, hasBlood, oralActive, sleepHrv, sleepDeepPct, bloodHsCrp, bloodApoB, oralPeriodont, familyHistoryCVD, stressLevel, alcoholDrinksPerWeek, sleepEfficiency }: InsightsProps) {
   const cards = []
   let idx = 0
 
@@ -114,6 +119,36 @@ export function Insights({ sleepConnected, hasBlood, oralActive, sleepHrv, sleep
         title="Oral microbiome unlocks 4 interaction terms"
         body="Your oral bacteria directly predict sleep-breathing risk, cardiovascular inflammation, and nitric oxide production. Dalton 2025 (n=1,139 NIH-AARP): oral microbiome diversity independently predicts sleep quality scores."
         tag="Oral · Pending" accentColor="var(--oral-c)" tagBg="var(--oral-bg)" tagColor="var(--oral-c)" muted
+      />
+    )
+  }
+
+  if (familyHistoryCVD && bloodApoB !== undefined && bloodApoB > 100) {
+    cards.push(
+      <InsightCard key="fam-cvd" cardIndex={idx++}
+        title="Family history + elevated ApoB — cardiovascular priority"
+        body={`Your family history of cardiovascular disease combined with ApoB at ${bloodApoB} mg/dL puts cardiovascular health as your top priority. Sniderman 2019: ApoB is a superior predictor of events vs LDL-C alone.`}
+        tag="Blood · Genetic risk" accentColor="var(--blood-c)" tagBg="var(--blood-bg)" tagColor="var(--blood-c)"
+      />
+    )
+  }
+
+  if (stressLevel === "high" && bloodHsCrp !== undefined && bloodHsCrp > 3) {
+    cards.push(
+      <InsightCard key="stress-crp" cardIndex={idx++}
+        title="High stress amplifying inflammation markers"
+        body={`Chronic stress is amplifying your inflammatory markers — hsCRP at ${bloodHsCrp} mg/L. Irwin 2016: stress-inflammation pathways are bidirectional and self-reinforcing.`}
+        tag="Lifestyle × Blood" accentColor="var(--gold)" tagBg="var(--gold-dim)" tagColor="var(--gold)"
+      />
+    )
+  }
+
+  if (alcoholDrinksPerWeek !== undefined && alcoholDrinksPerWeek > 10 && sleepConnected && (sleepEfficiency !== undefined && sleepEfficiency < 80)) {
+    cards.push(
+      <InsightCard key="alcohol-sleep" cardIndex={idx++}
+        title="Alcohol use affecting sleep quality"
+        body={`${alcoholDrinksPerWeek} drinks/week appears to be affecting your sleep architecture — efficiency at ${sleepEfficiency}%. Alcohol suppresses REM sleep and fragments overnight recovery.`}
+        tag="Lifestyle × Sleep" accentColor="var(--sleep-c)" tagBg="var(--sleep-bg)" tagColor="var(--sleep-c)"
       />
     )
   }
