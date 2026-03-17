@@ -201,12 +201,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ status: "processed", event: "historical.data", retroNights: sleepRecords.length, score: newScore })
   }
 
-  // ── All other sleep events: update last_sync_at + recalculate ─────────────
+  // ── All other sleep events: update last_sync_at + biometrics + recalculate ─
   console.log("[webhook] sleep event:", event_type, "— updating last_sync_at and recalculating for user:", userId)
+
+  // Extract resting HR and VO2 max from sleep data when available
+  const sleepData = body.data as Record<string, unknown> | undefined
+  const updatePayload: Record<string, unknown> = { last_sync_at: new Date().toISOString(), status: "connected" }
+  const hrLowest = sleepData?.hr_lowest as number | undefined
+  const avgHR = sleepData?.average_hr as number | undefined
+  const vo2Max = sleepData?.vo2_max as number | undefined
+  if (hrLowest && hrLowest > 0) updatePayload.latest_resting_hr = hrLowest
+  else if (avgHR && avgHR > 0) updatePayload.latest_resting_hr = avgHR
+  if (vo2Max && vo2Max > 0) updatePayload.latest_vo2max = vo2Max
 
   const { error: updateErr } = await supabase
     .from("wearable_connections")
-    .update({ last_sync_at: new Date().toISOString(), status: "connected" })
+    .update(updatePayload)
     .eq("user_id", userId)
 
   if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)

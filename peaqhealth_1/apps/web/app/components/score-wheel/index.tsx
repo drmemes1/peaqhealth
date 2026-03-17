@@ -70,6 +70,11 @@ export interface ScoreWheelProps {
     osaTaxaSpO2: boolean
     lowNitrateCRP: boolean
     lowDiversitySleep: boolean
+    familyCVDApoB: boolean
+    highStressCRP: boolean
+    poorNutritionTrig: boolean
+    highHRPoorSleep: boolean
+    alcoholPoorSleep: boolean
   }
 }
 

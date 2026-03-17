@@ -138,6 +138,110 @@ const QUESTIONS: QuestionDef[] = [
       { value: "severe", label: "Severe" },
     ],
   },
+  // ── Medical History ──
+  {
+    key: "hypertensionDx", dbKey: "hypertension_dx",
+    label: "Have you been diagnosed with high blood pressure?", type: "choice",
+    options: [
+      { value: "yes", label: "Yes" },
+      { value: "no", label: "No" },
+    ],
+  },
+  {
+    key: "onBPMeds", dbKey: "on_bp_meds",
+    label: "Are you taking medication for blood pressure?", type: "choice",
+    options: [
+      { value: "yes", label: "Yes" },
+      { value: "no", label: "No" },
+      { value: "na", label: "N/A" },
+    ],
+  },
+  {
+    key: "onStatins", dbKey: "on_statins",
+    label: "Are you taking a statin (cholesterol medication)?", type: "choice",
+    options: [
+      { value: "yes", label: "Yes" },
+      { value: "no", label: "No" },
+    ],
+  },
+  {
+    key: "familyHistoryCVD", dbKey: "family_history_cvd",
+    label: "Parent or sibling had heart attack/stroke before 65?", type: "choice",
+    options: [
+      { value: "yes", label: "Yes" },
+      { value: "no", label: "No" },
+      { value: "unsure", label: "Not sure" },
+    ],
+  },
+  // ── Nutrition ──
+  {
+    key: "vegetableServings", dbKey: "vegetable_servings_per_day",
+    label: "Servings of vegetables per day?", type: "choice",
+    options: [
+      { value: "0", label: "0" },
+      { value: "1", label: "1" },
+      { value: "2", label: "2" },
+      { value: "3", label: "3" },
+      { value: "4", label: "4" },
+      { value: "5", label: "5+" },
+    ],
+  },
+  {
+    key: "fruitServings", dbKey: "fruit_servings_per_day",
+    label: "Servings of fruit per day?", type: "choice",
+    options: [
+      { value: "0", label: "0" },
+      { value: "1", label: "1" },
+      { value: "2", label: "2" },
+      { value: "3", label: "3" },
+      { value: "4", label: "4" },
+      { value: "5", label: "5+" },
+    ],
+  },
+  {
+    key: "processedFood", dbKey: "processed_food_frequency",
+    label: "How often do you eat processed or fast food?", type: "choice",
+    options: [
+      { value: "1", label: "Never" },
+      { value: "2", label: "Rarely" },
+      { value: "3", label: "Sometimes" },
+      { value: "4", label: "Often" },
+      { value: "5", label: "Daily" },
+    ],
+  },
+  {
+    key: "sugaryDrinks", dbKey: "sugary_drinks_per_week",
+    label: "Sugary drinks per week?", type: "choice",
+    options: [
+      { value: "0", label: "0" },
+      { value: "1", label: "1–2" },
+      { value: "3", label: "3–5" },
+      { value: "7", label: "6–10" },
+      { value: "14", label: "10+" },
+    ],
+  },
+  // ── Alcohol ──
+  {
+    key: "alcoholDrinks", dbKey: "alcohol_drinks_per_week",
+    label: "Alcoholic drinks per week on average?", type: "choice",
+    options: [
+      { value: "0", label: "0" },
+      { value: "3", label: "1–5" },
+      { value: "7", label: "6–10" },
+      { value: "14", label: "11–14" },
+      { value: "20", label: "15+" },
+    ],
+  },
+  // ── Stress ──
+  {
+    key: "stressLevel", dbKey: "stress_level",
+    label: "How would you rate your current stress level?", type: "choice",
+    options: [
+      { value: "low", label: "Low" },
+      { value: "moderate", label: "Moderate" },
+      { value: "high", label: "High" },
+    ],
+  },
 ];
 
 interface Props {
@@ -175,11 +279,14 @@ export function LifestyleForm({ userId, existing }: Props) {
 
     // Build DB row
     const row: Record<string, unknown> = { user_id: userId };
+    const intKeys = new Set(["vegetable_servings_per_day", "fruit_servings_per_day", "processed_food_frequency", "sugary_drinks_per_week", "alcohol_drinks_per_week"]);
     for (const q of QUESTIONS) {
       if (q.type === "boolean") {
         row[q.dbKey] = answers[q.key] === "true";
+      } else if (intKeys.has(q.dbKey)) {
+        row[q.dbKey] = answers[q.key] ? parseInt(answers[q.key], 10) : null;
       } else {
-        row[q.dbKey] = answers[q.key];
+        row[q.dbKey] = answers[q.key] || null;
       }
     }
 
