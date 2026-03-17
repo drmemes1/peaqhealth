@@ -230,14 +230,35 @@ function extractLabName(lines: string[]): string | undefined {
 
 function extractCollectionDate(lines: string[]): string | undefined {
   const text = lines.join(" ")
-  // Match date patterns: MM/DD/YYYY, YYYY-MM-DD, Month DD YYYY
-  const dateMatch = text.match(/(?:collected|drawn|specimen|date)[:\s]*(\d{1,2}\/\d{1,2}\/\d{2,4})/i)
-    ?? text.match(/(\d{4}-\d{2}-\d{2})/)
-  if (!dateMatch) return undefined
-  try {
-    const d = new Date(dateMatch[1])
-    if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10)
-  } catch { /* ignore */ }
+
+  const datePatterns = [
+    // "Collection date: Dec 11, 2025" or "Collection date: Dec 11, 2025 10:05 AM"
+    /collection date[:\s]+(\w+ \d{1,2},?\s*\d{4})/i,
+    // "Collected: 12/11/2025"
+    /collected[:\s]+(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
+    // "Collection Date: 12/11/2025"
+    /collection date[:\s]+(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
+    // "Date collected: Dec 11, 2025"
+    /date collected[:\s]+(\w+ \d{1,2},?\s*\d{4})/i,
+    // "Specimen collected: 12/11/25"
+    /specimen collected[:\s]+(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
+    // "Drawn: 12/11/2025"
+    /drawn[:\s]+(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
+    // ISO format: "2025-12-11"
+    /(\d{4}-\d{2}-\d{2})/,
+    // Standalone: "Dec 11, 2025"
+    /\b((?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+\d{1,2},?\s*\d{4})\b/i,
+  ]
+
+  for (const pattern of datePatterns) {
+    const match = text.match(pattern)
+    if (!match) continue
+    try {
+      const d = new Date(match[1])
+      if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10)
+    } catch { /* ignore */ }
+  }
+
   return undefined
 }
 
