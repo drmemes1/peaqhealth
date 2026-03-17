@@ -60,6 +60,8 @@ export default async function DashboardPage() {
   const props: ScoreWheelProps = {
     score,
     breakdown,
+    lastSyncAt:            (wearable?.last_sync_at as string | null) ?? null,
+    lastSyncRequestedAt:   (wearable?.last_sync_requested_at as string | null) ?? null,
     sleepConnected: !!wearable || Number(snapshot?.sleep_sub ?? 0) > 0,
     labFreshness,
     oralActive: !!oral,

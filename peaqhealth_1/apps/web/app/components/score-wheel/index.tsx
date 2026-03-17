@@ -14,6 +14,8 @@ import { CTABlocks } from "./cta-blocks"
 // Re-export the props type so dashboard-client can import it
 export interface ScoreWheelProps {
   score: number
+  lastSyncAt?: string | null
+  lastSyncRequestedAt?: string | null
   breakdown: {
     sleepSub: number
     bloodSub: number
@@ -82,6 +84,7 @@ function flag(good: boolean, watch?: boolean): Flag {
 export function ScoreWheel({
   score, breakdown, sleepConnected, labFreshness, oralActive,
   sleepData, bloodData, oralData, lifestyleData, interactions,
+  lastSyncAt, lastSyncRequestedAt,
 }: ScoreWheelProps) {
   const [mounted, setMounted] = useState(false)
   const [hoveredRing, setHoveredRing] = useState<string | null>(null)
