@@ -29,12 +29,18 @@ export async function GET(
     const result = await getLabParserJob(jobId)
     const status = result.status as string
 
-    if (status === "pending" || status === "processing") {
+    // Junction statuses: started, processing, pending_review, completed, failed
+    if (status === "started" || status === "processing" || status === "pending_review") {
       return NextResponse.json({ status: "pending" })
     }
 
     if (status === "failed") {
       return NextResponse.json({ status: "failed", error: "Lab parsing failed" }, { status: 422 })
+    }
+
+    if (status !== "completed") {
+      console.warn("[labs/status] unexpected status:", status)
+      return NextResponse.json({ status: "pending" })
     }
 
     // Map Junction parser output to canonical markers
@@ -51,10 +57,14 @@ export async function GET(
       }
     })
 
+    const labDate = result.data?.metadata?.date_collected ?? new Date().toISOString().slice(0, 10)
+    const labName = result.data?.metadata?.lab_name
+
     return NextResponse.json({
       status:  "complete",
       markers,
-      labDate: result.metadata?.date_collected ?? new Date().toISOString().slice(0, 10),
+      labDate,
+      labName,
     })
   } catch (err) {
     console.error("[labs/status] error:", err)
