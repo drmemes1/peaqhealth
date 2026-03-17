@@ -1,54 +1,24 @@
 /**
- * Peaq Score Engine — v4.2
+ * Peaq Score Engine — v5.0
  *
  * Four-panel architecture: Sleep + Blood + Oral Microbiome + Lifestyle
  *
- * Changes from v4.1:
- *   - LifestyleInputs: added cardiovascular history, biometrics, nutrition, alcohol, stress
- *   - Lifestyle panel redistribution: exercise 2.5, oral hygiene+dental 1.5, resting HR 1.5,
- *     VO2max 1, nutrition 1.5, alcohol 0.5, smoking 1.5, medical history penalty −1
- *   - 5 new interaction terms: familyCVD×ApoB, stress×CRP, nutrition×triglycerides,
- *     highHR×poorSleep, alcohol×poorSleep
- *   - Version tag: "4.2"
+ * Changes from v4.2:
+ *   - Panel weight redistribution: Sleep 28→27, Blood 28→33, Oral 25→27,
+ *     Lifestyle 10→8, Interactions 14→15
+ *   - Raw total 110 pts normalized to 100: finalScore = (raw / 110) × 100
+ *   - Blood panel: expanded scoring ranges for CRP, ApoB, LDL/HDL, Glycemic
+ *   - Oral panel: expanded Shannon and periodontopathogen scoring
+ *   - Version tag: "5.0"
  *
- * Changes from v4.0:
- *   - SleepInputs: avgSpo2 (avg SpO2 %) and highOsaRisk (device alert flag) added
- *   - scoreSpo2: penalises sustained low avg SpO2 (<93% or <95%)
- *   - osaTaxaSpO2 interaction: also fires on device-confirmed OSA alert (highOsaRisk)
- *   - aggregateSleepInputs: now computes avgSpo2 from Junction summaries
- *
- * Changes from v3.0:
- *   - Lifestyle panel added (10 pts) — always active from questionnaire
- *   - Sleep reduced 32 → 28 pts (questionnaire seeds remaining 4 pts when no wearable)
- *   - Blood unchanged 28 pts
- *   - Oral unchanged 25 pts
- *   - Interaction pool 15 → 14 pts (1 pt redistributed to lifestyle floor)
- *   - Questionnaire-driven interactions added (2 terms, max −4 pts)
- *   - Sleep panel: wearable data OVERRIDES questionnaire estimate when present
- *   - Version tag: "4.0"
- *
- * Full architecture (max 100):
- *   Sleep          28 pts  (wearable) or PSQI-6 estimate (max 22 pts, capped)
- *   Blood          28 pts
- *   Oral           25 pts
- *   Lifestyle      10 pts  (questionnaire — always active, never locked)
- *   Interactions   14 pts  (pool starts full; terms subtract; floor 0)
+ * Full architecture (max 110 raw → normalized to 100):
+ *   Sleep          27 pts  (wearable) or PSQI-6 estimate (max 21 pts, capped)
+ *   Blood          33 pts
+ *   Oral           27 pts
+ *   Lifestyle       8 pts  (questionnaire — always active, never locked)
+ *   Interactions   15 pts  (pool starts full; terms subtract; floor 0)
  *   ─────────────────────
- *   Total         105 → capped at 100
- *
- * Lifestyle panel (10 pts):
- *   Exercise         4 pts  (IPAQ-inspired tiers — MET-min/week proxy)
- *   Oral hygiene     3 pts  (ADA guidelines + Park 2019 Korean cohort n=247,696)
- *   Dental visits    2 pts  (Park 2019: ≥1/yr = 14% lower CVD risk)
- *   Heart / smoking  1 pt   (non-smoker + no known HTN)
- *
- * Questionnaire sleep estimate (max 22/28, capped below wearable max):
- *   Based on B-PSQI (6 questions, Buysse 1989 / validated 2021)
- *   Replaced entirely by wearable data when SleepInputs are provided
- *
- * Questionnaire interactions (max −4 pts from pool):
- *   poorSleepQ × poorOralHygiene   −2  (Dalton 2025 — bidirectional)
- *   poorExercise × smoking          −2  (AHA: compound CVD risk multiplier)
+ *   Total         110 raw → normalized to 100
  */
 
 // ─── Questionnaire types ───────────────────────────────────────────────────────
@@ -193,7 +163,7 @@ export interface OralInputs {
 // ─── Output types ──────────────────────────────────────────────────────────────
 
 export interface PeaqScoreResult {
-  version: "4.2"
+  version: "5.0"
   score:    number
   category: "optimal" | "good" | "moderate" | "attention"
 
@@ -201,10 +171,10 @@ export interface PeaqScoreResult {
     sleepRaw:        number   // before modifiers
     sleepSub:        number   // after modifiers (wearable) or PSQI estimate
     sleepSource:     "wearable" | "questionnaire" | "none"
-    bloodSub:        number   // 0–28
-    oralSub:         number   // 0–25
-    lifestyleSub:    number   // 0–10 (always present if questionnaire answered)
-    interactionPool: number   // 0–14
+    bloodSub:        number   // 0–33
+    oralSub:         number   // 0–27
+    lifestyleSub:    number   // 0–8 (always present if questionnaire answered)
+    interactionPool: number   // 0–15
     oralPending:     boolean
     bloodLocked:     boolean
     lifestylePending: boolean // true if questionnaire not yet answered
@@ -462,7 +432,7 @@ function oralHygieneIndex(
  *   Daytime fatigue   3 pts   (PSQI component 7 — daytime dysfunction)
  *   Sleep medication  0 pts   (indicator of poor sleep, but medication use itself not penalised)
  *   ─────────────────────────
- *   Max              22 pts
+ *   Max              21 pts
  */
 export function estimateSleepFromQuestionnaire(ls: LifestyleInputs): number {
   // Duration
@@ -501,7 +471,7 @@ export function estimateSleepFromQuestionnaire(ls: LifestyleInputs): number {
     fatiguePts[ls.daytimeFatigue]
   )
 
-  return Math.min(22, Math.max(0, total))
+  return Math.min(21, Math.max(0, total))
 }
 
 // ─── Questionnaire interaction checks ────────────────────────────────────────
@@ -599,14 +569,14 @@ function generateLifestyleInsights(
 // ─── Re-export scoring functions from v3 (unchanged) ─────────────────────────
 
 function scoreDeepSleep(pct: number): number {
-  if (pct < 8)  return 0; if (pct < 12) return 4
-  if (pct < 17) return 9; if (pct < 22) return 13
-  return 16
+  if (pct < 8)  return 0; if (pct < 12) return 3
+  if (pct < 17) return 8; if (pct < 22) return 12
+  return 15
 }
 function scoreHRV(hrv: number): number {
-  if (hrv < 20) return 0; if (hrv < 35) return 3
-  if (hrv < 50) return 6; if (hrv < 70) return 8
-  return 10
+  if (hrv < 20) return 0; if (hrv < 35) return 2
+  if (hrv < 50) return 4; if (hrv < 70) return 6
+  return 8
 }
 function scoreSpo2(dips: number, avgSpo2?: number): number {
   let score: number
@@ -627,15 +597,15 @@ function vitDSleepMultiplier(vitD: number): number {
 }
 function scoreCRP(crp: number): number {
   if (crp > 10) return 0; if (crp > 3) return 2
-  if (crp > 1) return 5; if (crp > 0.5) return 7; return 8
+  if (crp > 1) return 5; if (crp > 0.5) return 8; return 10
 }
 function scoreVitaminD(vitD: number): number {
   if (vitD < 12) return 0; if (vitD < 20) return 1
-  if (vitD < 30) return 3; if (vitD < 50) return 5; return 6
+  if (vitD < 30) return 3; if (vitD < 50) return 5; return 7
 }
 function scoreApoB(apoB: number): number {
   if (apoB > 130) return 0; if (apoB > 100) return 2
-  if (apoB > 80) return 4; if (apoB > 60) return 5; return 6
+  if (apoB > 80) return 4; if (apoB > 60) return 6; return 7
 }
 function scoreLdlHdl(ldl: number, hdl: number): { score: number; ratio: number } {
   const ratio = hdl > 0 ? parseFloat((ldl / hdl).toFixed(2)) : 99
@@ -662,21 +632,21 @@ function scoreGlycemic(glucose?: number, hba1c?: number): {
     else if (hba1c >= 5.7) band = worse(band, "prediabetic")
     else if (hba1c >= 5.4) band = worse(band, "high-normal")
   }
-  const score = { optimal: 2, "high-normal": 1, prediabetic: 0, diabetic: 0, unknown: 1 }[band]
+  const score = { optimal: 3, "high-normal": 2, prediabetic: 0, diabetic: 0, unknown: 1 }[band]
   return { score, band }
 }
 function scoreLpa(lpa: number): number { return lpa <= 30 ? 1 : 0 }
 function scoreTriglycerides(tg: number): number { return tg < 150 ? 1 : 0 }
 function scoreShannon(h: number): number {
   if (h < 2.0) return 0; if (h < 2.5) return 2
-  if (h < 3.0) return 4; if (h < 3.5) return 6; return 8
+  if (h < 3.0) return 5; if (h < 3.5) return 7; return 9
 }
 function scoreNitrateReducers(pct: number): number {
   if (pct < 0.5) return 0; if (pct < 2) return 2
   if (pct < 5) return 4; if (pct < 10) return 6; return 7
 }
 function scorePeriodontopathogen(pct: number): number {
-  if (pct >= 5) return 0; if (pct >= 2) return 2; if (pct >= 0.5) return 4; return 6
+  if (pct >= 5) return 0; if (pct >= 2) return 2; if (pct >= 0.5) return 5; return 7
 }
 function scoreOsaTaxa(pct: number): number {
   if (pct >= 3) return 0; if (pct >= 1) return 2; return 4
@@ -749,7 +719,7 @@ function getCategory(score: number): PeaqScoreResult["category"] {
 // ─── Main scoring function ────────────────────────────────────────────────────
 
 /**
- * Calculate Peaq Score v4.
+ * Calculate Peaq Score v5.
  *
  * @param sleep   - Wearable sleep data (optional). When absent, questionnaire estimate used.
  * @param blood   - Blood biomarker inputs (optional). When absent, blood panel = 0.
@@ -778,7 +748,7 @@ export function calculatePeaqScore(
   let psqiEstimate = 0
 
   if (sleep) {
-    // Wearable data takes full priority — max 28 pts
+    // Wearable data takes full priority — max 27 pts
     sleepSource = "wearable"
     deepSleepScore  = scoreDeepSleep(sleep.deepSleepPct)
     remScore        = scoreREM(sleep.remPct)
@@ -791,9 +761,9 @@ export function calculatePeaqScore(
     hrvScore        = ferritinHrvPenalty ? rawHrv * 0.85 : rawHrv
     sleepRaw        = deepSleepScore + hrvScore + spo2Score + remScore
     sleepSub        = Math.round(sleepRaw * vitDSleepPenalty * 10) / 10
-    sleepSub        = Math.min(28, sleepSub)
+    sleepSub        = Math.min(27, sleepSub)
   } else if (lifestyle) {
-    // Questionnaire estimate — max 22 pts (capped)
+    // Questionnaire estimate — max 21 pts (capped)
     sleepSource  = "questionnaire"
     psqiEstimate = estimateSleepFromQuestionnaire(lifestyle)
     sleepSub     = psqiEstimate
@@ -853,7 +823,7 @@ export function calculatePeaqScore(
     const rawLifestyle = exerciseScore + oralHygieneScore + dentalVisitScore + heartScore
                        + restingHRScore + vo2maxScore + nutritionScore + alcoholScore
     const penalty     = medicalHistoryPenalty(lifestyle)
-    lifestyleSub      = Math.max(0, Math.min(10, Math.round((rawLifestyle - penalty) * 2) / 2))
+    lifestyleSub      = Math.max(0, Math.min(8, Math.round((rawLifestyle - penalty) * 2) / 2))
   }
 
   // ── Interaction terms ──
@@ -883,7 +853,7 @@ export function calculatePeaqScore(
   const highHRPoorSleep   = lifestyle && sleep ? checkHighHRPoorSleep(lifestyle.restingHR, sleepEff) : false
   const alcoholPoorSleep  = lifestyle && sleep ? checkAlcoholPoorSleep(lifestyle.alcoholDrinksPerWeek, sleep.deepSleepPct, sleepEff) : false
 
-  let interactionPool = 14
+  let interactionPool = 15
   if (sleepInflammation)    interactionPool -= 5
   if (spo2Lipid)            interactionPool -= 3
   if (dualInflammatory)     interactionPool -= 2
@@ -904,9 +874,9 @@ export function calculatePeaqScore(
   // Oral pending terms
   const oralPendingTerms = !oral ? 4 : 0
 
-  // ── Final score ──
-  const rawScore = sleepSub + bloodSub + oralSub + lifestyleSub + interactionPool
-  const score    = Math.round(Math.min(100, Math.max(0, rawScore)))
+  // ── Final score (normalize 110 raw → 100) ──
+  const rawTotal = sleepSub + bloodSub + oralSub + lifestyleSub + interactionPool
+  const score    = Math.round(Math.min(100, Math.max(0, (rawTotal / 110) * 100)))
   const category = getCategory(score)
 
   // ── Lifestyle insights ──
@@ -921,7 +891,7 @@ export function calculatePeaqScore(
   }
 
   return {
-    version: "4.2",
+    version: "5.0",
     score,
     category,
     breakdown: {
@@ -974,7 +944,7 @@ export function calculatePeaqScore(
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 export function runTests(): void {
-  console.log("═══ Peaq Score Engine v4.0 — Test Suite ═══\n")
+  console.log("═══ Peaq Score Engine v5.0 — Test Suite ═══\n")
 
   const goodLifestyle: LifestyleInputs = {
     exerciseLevel:     "active",
