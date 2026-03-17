@@ -7,7 +7,10 @@
   "exports": {
     ".": "./src/index.ts",
     "./junction": "./src/junction/index.ts",
-    "./supabase": "./src/supabase/index.ts"
+    "./supabase": "./src/supabase/index.ts",
+    "./lab/marker-map": "./src/lab/marker-map.ts",
+    "./lab/mapper": "./src/lab/mapper.ts",
+    "./lab/parser-factory": "./src/lab/parser-factory.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useEffect, useRef } from "react"
+import { useState, useCallback } from "react"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -80,57 +80,6 @@ export function LabUpload({ onSuccess, onSkip }: LabUploadProps) {
   const [dragOver,      setDragOver]      = useState(false)
   const [error,         setError]         = useState<string | null>(null)
 
-  const pollRef   = useRef<ReturnType<typeof setInterval> | null>(null)
-  const timerRef  = useRef<ReturnType<typeof setTimeout>  | null>(null)
-
-  useEffect(() => {
-    return () => {
-      if (pollRef.current)  clearInterval(pollRef.current)
-      if (timerRef.current) clearTimeout(timerRef.current)
-    }
-  }, [])
-
-  const startPolling = useCallback((jobId: string) => {
-    let polls = 0
-    const MAX_POLLS = 45 // 45 × 2s = 90s timeout
-    pollRef.current = setInterval(async () => {
-      polls++
-      if (polls === 3) setStageIdx(2) // advance to "Mapping..."
-
-      if (polls > MAX_POLLS) {
-        clearInterval(pollRef.current!)
-        setError("Lab parsing is taking longer than expected. Try uploading again or enter your values manually.")
-        setPhase("idle")
-        return
-      }
-
-      try {
-        const res  = await fetch(`/api/labs/status/${jobId}`)
-        const data = await res.json() as {
-          status: string
-          markers?: ParsedMarker[]
-          labDate?: string
-          error?: string
-        }
-
-        if (data.status === "complete" && data.markers) {
-          clearInterval(pollRef.current!)
-          setParsedMarkers(data.markers)
-          setLabDate(data.labDate ?? new Date().toISOString().slice(0, 10))
-          setPhase("confirm")
-        } else if (data.status === "failed" || !res.ok) {
-          clearInterval(pollRef.current!)
-          setError(data.error ?? "Parsing failed — please try re-uploading.")
-          setPhase("idle")
-        }
-      } catch {
-        clearInterval(pollRef.current!)
-        setError("Connection error while checking parse status.")
-        setPhase("idle")
-      }
-    }, 2000)
-  }, [])
-
   const handleFile = useCallback(async (file: File) => {
     if (file.type !== "application/pdf") {
       setError("Please upload a PDF file.")
@@ -140,7 +89,9 @@ export function LabUpload({ onSuccess, onSkip }: LabUploadProps) {
     setPhase("parsing")
     setStageIdx(0)
 
-    timerRef.current = setTimeout(() => setStageIdx(1), 1500)
+    // Advance progress stages while Azure processes the document
+    const t1 = setTimeout(() => setStageIdx(1), 1500)
+    const t2 = setTimeout(() => setStageIdx(2), 4000)
 
     try {
       const pdfBase64 = await fileToBase64(file)
@@ -149,17 +100,29 @@ export function LabUpload({ onSuccess, onSkip }: LabUploadProps) {
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ pdfBase64 }),
       })
-      const data = await res.json() as { jobId?: string; error?: string }
+      const data = await res.json() as {
+        status?: string
+        markers?: ParsedMarker[]
+        labDate?: string
+        error?: string
+      }
 
-      if (!res.ok || !data.jobId) throw new Error(data.error ?? `HTTP ${res.status}`)
+      clearTimeout(t1); clearTimeout(t2)
 
-      startPolling(data.jobId)
+      if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`)
+      if (data.status === "complete" && data.markers) {
+        setParsedMarkers(data.markers)
+        setLabDate(data.labDate ?? new Date().toISOString().slice(0, 10))
+        setPhase("confirm")
+      } else {
+        throw new Error(data.error ?? "Parsing returned no markers")
+      }
     } catch (err) {
-      if (timerRef.current) clearTimeout(timerRef.current)
+      clearTimeout(t1); clearTimeout(t2)
       setError(err instanceof Error ? err.message : "Upload failed")
       setPhase("idle")
     }
-  }, [startPolling])
+  }, [])
 
   async function saveMarkers(markers: BloodMarkers, src = "upload_pdf") {
     setPhase("saving")
