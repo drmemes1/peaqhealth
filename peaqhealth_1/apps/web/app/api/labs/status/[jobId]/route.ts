@@ -1,3 +1,7 @@
+// Dormant — Junction lab parser not active.
+// Azure parsing is synchronous in /api/labs/upload.
+// Kept for potential future Junction re-integration.
+
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "../../../../../lib/supabase/server"
 import { getLabParserJob, mapParserResultToBloodInputs } from "@peaq/api-client/junction"
