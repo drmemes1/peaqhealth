@@ -194,7 +194,6 @@ async function analyzeWithAzure(buffer: Buffer): Promise<{ lines: string[]; tabl
   const operationUrl = submitRes.headers.get("Operation-Location")
   if (!operationUrl) throw new Error("Azure: no Operation-Location header")
 
-  // Poll for completion (max 30s, every 2s)
   for (let i = 0; i < 15; i++) {
     await new Promise((r) => setTimeout(r, 2000))
 
@@ -237,7 +236,8 @@ async function analyzeWithAzure(buffer: Buffer): Promise<{ lines: string[]; tabl
   throw new Error("Azure analysis timed out")
 }
 
-// Plausible physiological ranges — values outside these are likely reference ranges or noise
+// ─── Plausible ranges ───────────────────────────────────────────────────────
+
 const PLAUSIBLE_RANGES: Record<string, [number, number]> = {
   ldl_mgdL: [20, 400], hdl_mgdL: [10, 150], triglycerides_mgdL: [20, 2000],
   glucose_mgdL: [40, 600], hsCRP_mgL: [0.01, 100], vitaminD_ngmL: [4, 150],
@@ -255,37 +255,155 @@ const PLAUSIBLE_RANGES: Record<string, [number, number]> = {
   mcv_fL: [50, 120], mch_pg: [20, 40], cortisol_ugdL: [1, 50],
 }
 
-// Keywords that precede reference range values, not actual results
-const RANGE_KEYWORDS = /(?:normal|reference|range|target|limit|standard)\s*(?:value)?[:\s]*$/i
+function isPlausible(key: string, val: number): boolean {
+  const range = PLAUSIBLE_RANGES[key]
+  if (!range) return val > 0 && val < 10000
+  return val >= range[0] && val <= range[1]
+}
 
-// LabCorp line pattern: "TestName [A,] B, 01 VALUE [High/Low] units range"
-// Anchors on the "B, 01" lab code which ALWAYS separates name from value
-const LABCORP_LINE = /^(.+?)\s+(?:[A-Z],\s*)*B,?\s*\d+\s+([\d.]+)/
+// ─── Marker lookup helper ───────────────────────────────────────────────────
 
-function extractMarkersFromLines(lines: string[]): Record<string, number> {
+function lookupMarker(name: string): string | undefined {
+  const lower = name.toLowerCase().trim()
+  // Try exact match first
+  if (MARKERS[lower]) return MARKERS[lower]
+  // Try includes match (longest marker name first)
+  for (const [markerName, key] of SORTED_MARKERS) {
+    if (lower.includes(markerName)) return key
+  }
+  return undefined
+}
+
+function lookupMarkerExact(name: string): string | undefined {
+  const lower = name.toLowerCase().trim()
+  // Only exact match for Quest line-by-line format
+  for (const [markerName, key] of SORTED_MARKERS) {
+    if (lower === markerName) return key
+  }
+  return undefined
+}
+
+// ─── Format detection ───────────────────────────────────────────────────────
+
+type LabFormat = "labcorp" | "quest_mychart" | "unknown"
+
+function detectLabFormat(lines: string[]): LabFormat {
+  const text = lines.join("\n").toLowerCase()
+  const labcorpMatches = (text.match(/b, 0\d/g) ?? []).length
+  if (labcorpMatches > 5 || text.includes("labcorp")) return "labcorp"
+  const questMatches = (text.match(/normal range:/gi) ?? []).length
+  if (questMatches > 3 || text.includes("normal value:")) return "quest_mychart"
+  return "unknown"
+}
+
+// ─── LabCorp parser ─────────────────────────────────────────────────────────
+//
+// Confirmed format from debug logs:
+//   Line N:   "MarkerName B, 01"  (or "A, B, 01")
+//   Line N+1: "VALUE"
+//   Line N+2: "units" or "High"/"Low"
+//   Line N+3: "reference range"
+
+// Regex to detect LabCorp lab code at end of line
+const LABCORP_CODE = /\s+(?:[A-Z],\s*)*B,?\s*\d+\s*$/
+
+function extractMarkersLabCorp(lines: string[]): Record<string, number> {
   const found: Record<string, number> = {}
 
-  // Pass 1: LabCorp structured line extraction (most reliable)
-  for (const line of lines) {
-    const labcorpMatch = LABCORP_LINE.exec(line)
-    if (!labcorpMatch) continue
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim()
 
-    const testName = labcorpMatch[1].trim().toLowerCase()
-    const val = parseFloat(labcorpMatch[2])
-    if (isNaN(val) || val <= 0) continue
+    // Check if line ends with LabCorp lab code pattern
+    if (!LABCORP_CODE.test(line)) continue
 
-    // Find matching marker — try each marker name against the test name
-    for (const [markerName, canonicalKey] of SORTED_MARKERS) {
-      if (found[canonicalKey]) continue
-      if (!testName.includes(markerName)) continue
-      const range = PLAUSIBLE_RANGES[canonicalKey]
-      if (range && (val < range[0] || val > range[1])) continue
+    // Extract marker name: everything before the lab code
+    const markerName = line.replace(LABCORP_CODE, "").trim()
+    const canonicalKey = lookupMarker(markerName)
+    if (!canonicalKey || found[canonicalKey]) continue
+
+    // Value is ALWAYS on the very next line
+    const valueLine = lines[i + 1]?.trim()
+    if (!valueLine) continue
+
+    // Extract leading number (may have trailing "High"/"Low")
+    const numMatch = valueLine.match(/^([\d.]+)/)
+    if (!numMatch) continue
+
+    const val = parseFloat(numMatch[1])
+    if (!isPlausible(canonicalKey, val)) continue
+
+    found[canonicalKey] = val
+  }
+
+  return found
+}
+
+// ─── Quest MyChart parser ───────────────────────────────────────────────────
+//
+// Confirmed format:
+//   Line N:   "MarkerName"                  ← exact match
+//   Line N+1: "Normal range: LOW - HIGH unit"  ← skip
+//   Line N+2: "LOW HIGH"                    ← skip (two-number ref range)
+//   Line N+3: "ACTUAL_VALUE [High/Low]"     ← take this
+
+const QUEST_SKIP_PATTERNS = [
+  /normal\s+(?:range|value)\s*:/i,
+  /fasting\s+reference/i,
+  /reference\s+interval/i,
+  />\s*or\s*=/i,
+  /<\s*or\s*=/i,
+  /^value$/i,
+  /http/i,
+  /^\d{1,2}\/\d{1,2}\/\d{2,4}$/,
+  /^(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+\d{1,2},?\s*\d{4}$/i,
+  /not reported|see note/i,
+  /desirable|borderline|high risk/i,
+  /ascvd|therapeutic/i,
+]
+
+const TWO_NUMBER_LINE = /^\d+\.?\d*\s+\d+\.?\d*$/
+const RESULT_LINE = /^([\d.]+)\s*(?:High|Low|H|L|Critical)?\s*$/i
+
+function extractMarkersQuestMyChart(lines: string[]): Record<string, number> {
+  const found: Record<string, number> = {}
+
+  for (let i = 0; i < lines.length; i++) {
+    const lineTrimmed = lines[i].trim()
+
+    // Check if this line is an exact marker name
+    const canonicalKey = lookupMarkerExact(lineTrimmed)
+    if (!canonicalKey || found[canonicalKey]) continue
+
+    // Scan the next 6 lines for the actual result value
+    for (let j = i + 1; j <= Math.min(i + 6, lines.length - 1); j++) {
+      const next = lines[j].trim()
+      if (!next) continue
+
+      // Skip reference range / metadata lines
+      if (QUEST_SKIP_PATTERNS.some((p) => p.test(next))) continue
+      if (TWO_NUMBER_LINE.test(next)) continue
+
+      // Try to extract numeric result
+      const m = RESULT_LINE.exec(next)
+      if (!m) continue
+
+      const val = parseFloat(m[1])
+      if (!isPlausible(canonicalKey, val)) continue
+
       found[canonicalKey] = val
       break
     }
   }
 
-  // Pass 2: Fallback to full-text search for markers not found in pass 1
+  return found
+}
+
+// ─── General full-text parser (fallback) ────────────────────────────────────
+
+const RANGE_KEYWORDS = /(?:normal|reference|range|target|limit|standard)\s*(?:value)?[:\s]*$/i
+
+function extractMarkersGeneralText(lines: string[], alreadyFound: Record<string, number>): Record<string, number> {
+  const found = { ...alreadyFound }
   const fullText = lines.join("\n").toLowerCase()
 
   for (const [markerName, canonicalKey] of SORTED_MARKERS) {
@@ -297,28 +415,23 @@ function extractMarkersFromLines(lines: string[]): Record<string, number> {
     const surrounding = fullText.slice(idx, idx + 300)
     const numPattern = /\b(\d{1,4}\.?\d{0,3})\b/g
     let match: RegExpExecArray | null
-    const range = PLAUSIBLE_RANGES[canonicalKey]
 
     while ((match = numPattern.exec(surrounding)) !== null) {
       const val = parseFloat(match[1])
       if (val <= 0 || val > 9999) continue
 
-      // Check ~10 chars before the number for comparison operators
       const charsBefore = surrounding.slice(Math.max(0, match.index - 10), match.index)
       if (/[<>≥≤]\s*$/.test(charsBefore)) continue
       if (/\bor\s*=\s*$/.test(charsBefore)) continue
 
-      // Check chars after for dash-separated ranges
       const charsAfter = surrounding.slice(match.index + match[0].length, match.index + match[0].length + 15)
       if (/^\s*[-–]\s*\d/.test(charsAfter)) continue
       if (/^\s+\d{2,4}\b/.test(charsAfter) && val < 500) continue
 
-      // Check if reference range keywords appear before this number
       const textBefore = surrounding.slice(0, match.index)
       if (RANGE_KEYWORDS.test(textBefore)) continue
 
-      // Sanity check against plausible physiological range
-      if (range && (val < range[0] || val > range[1])) continue
+      if (!isPlausible(canonicalKey, val)) continue
 
       found[canonicalKey] = val
       break
@@ -328,7 +441,28 @@ function extractMarkersFromLines(lines: string[]): Record<string, number> {
   return found
 }
 
-// ─── Lp(a) unit detection + conversion ──────────────────────────────────────
+// ─── Main parser dispatcher ─────────────────────────────────────────────────
+
+function extractMarkersFromLines(lines: string[]): Record<string, number> {
+  const format = detectLabFormat(lines)
+  console.log("[parser] detected format:", format)
+
+  let results: Record<string, number>
+
+  if (format === "labcorp") {
+    const primary = extractMarkersLabCorp(lines)
+    results = extractMarkersGeneralText(lines, primary)
+  } else if (format === "quest_mychart") {
+    const primary = extractMarkersQuestMyChart(lines)
+    results = extractMarkersGeneralText(lines, primary)
+  } else {
+    results = extractMarkersGeneralText(lines, {})
+  }
+
+  return results
+}
+
+// ─── Lp(a) unit conversion ──────────────────────────────────────────────────
 
 function convertLpaUnits(
   rawVal: number,
@@ -336,25 +470,22 @@ function convertLpaUnits(
 ): { lpa_mgdL: number; wasNmol: boolean } {
   const fullText = lines.join(" ").toLowerCase()
 
-  // Search near "lipoprotein" for unit strings within 50 chars
   const lpaIdx = fullText.indexOf("lipoprotein")
   if (lpaIdx !== -1) {
     const nearby = fullText.slice(lpaIdx, lpaIdx + 80)
     if (nearby.includes("nmol/l") || nearby.includes("nmol")) {
-      // LabCorp reports nmol/L — convert: nmol/L ÷ 2.5 ≈ mg/dL
       return { lpa_mgdL: Math.round((rawVal / 2.5) * 10) / 10, wasNmol: true }
     }
   }
 
-  // Default: assume mg/dL (Quest format)
   return { lpa_mgdL: rawVal, wasNmol: false }
 }
 
-// ─── Post-processing: derived markers + unit conversions ────────────────────
+// ─── Post-processing ────────────────────────────────────────────────────────
 
 interface PostProcessResult {
   markers: Record<string, number>
-  notes: Record<string, string>  // e.g. "lpa_mgdL": "112.2 nmol/L → 44.9 mg/dL"
+  notes: Record<string, string>
 }
 
 function postProcessMarkers(
@@ -375,7 +506,7 @@ function postProcessMarkers(
     delete result.lpa_raw
   }
 
-  // Calculate LDL:HDL ratio from actual values (never extract from text)
+  // Always calculate LDL:HDL ratio from parsed values
   if (result.ldl_mgdL && result.hdl_mgdL) {
     result.ldlHdlRatio = Math.round((result.ldl_mgdL / result.hdl_mgdL) * 100) / 100
   }
@@ -432,23 +563,6 @@ async function processFile(file: FileInput, index: number): Promise<FileResult> 
     console.log("[azure] file", index + 1, "analysis complete, lines:", lines.length, "table cells:", tables.length)
 
     const allLines = [...lines, ...tables]
-
-    // Temporary debug: log lines containing key marker names
-    const debugMarkers = [
-      "albumin", "wbc", "testosterone", "apolipoprotein",
-      "c-reactive", "creatinine", "shbg", "sex horm",
-      "lipoprotein"
-    ]
-    for (let i = 0; i < allLines.length; i++) {
-      const line = allLines[i].toLowerCase()
-      if (debugMarkers.some(m => line.includes(m))) {
-        console.log(`[debug] line ${i}: "${allLines[i]}"`)
-        console.log(`[debug] line ${i+1}: "${allLines[i+1] || ''}"`)
-        console.log(`[debug] line ${i+2}: "${allLines[i+2] || ''}"`)
-        console.log(`[debug] line ${i+3}: "${allLines[i+3] || ''}"`)
-      }
-    }
-
     const rawMarkers = extractMarkersFromLines(allLines)
     const { markers, notes } = postProcessMarkers(rawMarkers, allLines)
     const labName = extractLabName(lines)
@@ -519,7 +633,6 @@ export async function POST(request: NextRequest) {
     }, { status: 422 })
   }
 
-  // Merge markers — most recent collectionDate takes precedence
   const merged: Record<string, number> = {}
   const markerSource: Record<string, string> = {}
   const mergedNotes: Record<string, string> = {}
