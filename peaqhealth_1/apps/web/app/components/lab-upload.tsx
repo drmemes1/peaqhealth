@@ -23,6 +23,75 @@ interface ParsedMarker {
   value:    number
   unit:     string
   filename: string
+  note?:    string
+  category: string
+}
+
+// Display names + units + category for all parseable markers
+const MARKER_META: Record<string, { name: string; unit: string; category: string }> = {
+  // Cardiovascular
+  ldl_mgdL: { name: "LDL Cholesterol", unit: "mg/dL", category: "Cardiovascular" },
+  hdl_mgdL: { name: "HDL Cholesterol", unit: "mg/dL", category: "Cardiovascular" },
+  triglycerides_mgdL: { name: "Triglycerides", unit: "mg/dL", category: "Cardiovascular" },
+  apoB_mgdL: { name: "ApoB", unit: "mg/dL", category: "Cardiovascular" },
+  lpa_mgdL: { name: "Lp(a)", unit: "mg/dL", category: "Cardiovascular" },
+  totalCholesterol_mgdL: { name: "Total Cholesterol", unit: "mg/dL", category: "Cardiovascular" },
+  vldl_mgdL: { name: "VLDL", unit: "mg/dL", category: "Cardiovascular" },
+  nonHDL_mgdL: { name: "Non-HDL", unit: "mg/dL", category: "Cardiovascular" },
+  ldlHdlRatio: { name: "LDL:HDL Ratio", unit: "ratio", category: "Cardiovascular" },
+  // Inflammation
+  hsCRP_mgL: { name: "hs-CRP", unit: "mg/L", category: "Inflammation" },
+  wbc_kul: { name: "WBC", unit: "K/uL", category: "Inflammation" },
+  rdw_pct: { name: "RDW", unit: "%", category: "Inflammation" },
+  albumin_gdL: { name: "Albumin", unit: "g/dL", category: "Inflammation" },
+  esr_mmhr: { name: "ESR", unit: "mm/hr", category: "Inflammation" },
+  // Metabolic
+  glucose_mgdL: { name: "Glucose", unit: "mg/dL", category: "Metabolic" },
+  hba1c_pct: { name: "HbA1c", unit: "%", category: "Metabolic" },
+  creatinine_mgdL: { name: "Creatinine", unit: "mg/dL", category: "Metabolic" },
+  egfr_mLmin: { name: "eGFR", unit: "mL/min", category: "Metabolic" },
+  bun_mgdL: { name: "BUN", unit: "mg/dL", category: "Metabolic" },
+  uricAcid_mgdL: { name: "Uric Acid", unit: "mg/dL", category: "Metabolic" },
+  // Liver
+  alt_UL: { name: "ALT", unit: "U/L", category: "Liver" },
+  ast_UL: { name: "AST", unit: "U/L", category: "Liver" },
+  alkPhos_UL: { name: "Alk Phos", unit: "U/L", category: "Liver" },
+  totalBilirubin_mgdL: { name: "Bilirubin", unit: "mg/dL", category: "Liver" },
+  // Hormones
+  testosterone_ngdL: { name: "Testosterone", unit: "ng/dL", category: "Hormones" },
+  freeTesto_pgmL: { name: "Free Testosterone", unit: "pg/mL", category: "Hormones" },
+  shbg_nmolL: { name: "SHBG", unit: "nmol/L", category: "Hormones" },
+  tsh_uIUmL: { name: "TSH", unit: "uIU/mL", category: "Hormones" },
+  cortisol_ugdL: { name: "Cortisol", unit: "ug/dL", category: "Hormones" },
+  dhea_s_ugdL: { name: "DHEA-S", unit: "ug/dL", category: "Hormones" },
+  // CBC
+  hemoglobin_gdL: { name: "Hemoglobin", unit: "g/dL", category: "CBC" },
+  hematocrit_pct: { name: "Hematocrit", unit: "%", category: "CBC" },
+  mcv_fL: { name: "MCV", unit: "fL", category: "CBC" },
+  mch_pg: { name: "MCH", unit: "pg", category: "CBC" },
+  mchc_gdl: { name: "MCHC", unit: "g/dL", category: "CBC" },
+  rbc_mil: { name: "RBC", unit: "M/uL", category: "CBC" },
+  platelets_kul: { name: "Platelets", unit: "K/uL", category: "CBC" },
+  neutrophils_pct: { name: "Neutrophils", unit: "%", category: "CBC" },
+  lymphs_pct: { name: "Lymphs", unit: "%", category: "CBC" },
+  // Micronutrients
+  vitaminD_ngmL: { name: "Vitamin D", unit: "ng/mL", category: "Micronutrients" },
+  ferritin_ngmL: { name: "Ferritin", unit: "ng/mL", category: "Micronutrients" },
+  homocysteine_umolL: { name: "Homocysteine", unit: "umol/L", category: "Micronutrients" },
+  // Other
+  sodium_mmolL: { name: "Sodium", unit: "mmol/L", category: "Electrolytes" },
+  potassium_mmolL: { name: "Potassium", unit: "mmol/L", category: "Electrolytes" },
+  chloride_mmolL: { name: "Chloride", unit: "mmol/L", category: "Electrolytes" },
+  co2_mmolL: { name: "CO2", unit: "mmol/L", category: "Electrolytes" },
+  calcium_mgdL: { name: "Calcium", unit: "mg/dL", category: "Electrolytes" },
+  totalProtein_gdL: { name: "Total Protein", unit: "g/dL", category: "Electrolytes" },
+  globulin_gdL: { name: "Globulin", unit: "g/dL", category: "Electrolytes" },
+}
+
+const CATEGORY_ORDER = ["Cardiovascular", "Inflammation", "Metabolic", "Liver", "Hormones", "CBC", "Micronutrients", "Electrolytes"]
+
+function roundDisplay(val: number): string {
+  return String(Math.round(val * 100) / 100)
 }
 
 interface LabUploadProps {
@@ -137,16 +206,20 @@ export function LabUpload({ onSuccess, onSkip }: LabUploadProps) {
       setLabName(data.labName)
       setLabDate(data.collectionDate ?? new Date().toISOString().slice(0, 10))
 
-      // Build parsed marker list for display
+      // Build parsed marker list with display names + categories
       const markers: ParsedMarker[] = []
+      const markerNotes = (data as Record<string, unknown>).markerNotes as Record<string, string> | undefined
       if (data.markers) {
         for (const [key, val] of Object.entries(data.markers)) {
+          const meta = MARKER_META[key]
           markers.push({
             key,
-            name: key,
+            name: meta?.name ?? key,
             value: val,
-            unit: "",
+            unit: meta?.unit ?? "",
             filename: data.markerSource?.[key] ?? "",
+            note: markerNotes?.[key],
+            category: meta?.category ?? "Other",
           })
         }
       }
@@ -293,38 +366,41 @@ export function LabUpload({ onSuccess, onSkip }: LabUploadProps) {
           </div>
         )}
 
-        <div style={{ border: "0.5px solid var(--ink-12)", borderRadius: 4, overflow: "hidden" }}>
-          <div
-            className="grid items-center px-4 py-2"
-            style={{ gridTemplateColumns: "20px 1fr 80px auto", gap: 8, borderBottom: "0.5px solid var(--ink-12)" }}
-          >
-            <span />
-            <span className="font-body text-[9px] uppercase tracking-widest" style={{ color: "var(--ink-30)" }}>Marker</span>
-            <span className="font-body text-[9px] uppercase tracking-widest text-right" style={{ color: "var(--ink-30)" }}>Value</span>
-            <span className="font-body text-[9px] uppercase tracking-widest text-right" style={{ color: "var(--ink-30)", minWidth: 100 }}>Source</span>
-          </div>
-
-          {parsedMarkers.map((m) => (
-            <div
-              key={m.key}
-              className="grid items-center px-4 py-2.5"
-              style={{
-                gridTemplateColumns: "20px 1fr 80px auto",
-                gap: 8,
-                borderBottom: "0.5px solid var(--ink-06, #f8f8f8)",
-                background: "white",
-              }}
-            >
-              <span style={{ fontSize: 11, color: "var(--blood-c)" }}>✓</span>
-              <span className="font-body text-sm" style={{ color: "var(--ink)" }}>{m.key}</span>
-              <span className="font-body text-sm font-medium text-right" style={{ color: "var(--ink)" }}>
-                {m.value}
-              </span>
-              <span className="font-body text-[10px] text-right" style={{ color: "var(--ink-30)", minWidth: 100 }}>
-                {m.filename}
-              </span>
-            </div>
-          ))}
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {CATEGORY_ORDER.map((cat) => {
+            const catMarkers = parsedMarkers.filter((m) => m.category === cat)
+            if (catMarkers.length === 0) return null
+            return (
+              <div key={cat}>
+                <p className="font-body text-[9px] uppercase tracking-widest" style={{ color: "var(--ink-30)", marginBottom: 6 }}>
+                  {cat}
+                </p>
+                <div style={{ border: "0.5px solid var(--ink-12)", borderRadius: 4, overflow: "hidden" }}>
+                  {catMarkers.map((m) => (
+                    <div
+                      key={m.key}
+                      className="grid items-center px-4 py-2.5"
+                      style={{
+                        gridTemplateColumns: "16px 1fr auto auto",
+                        gap: 8,
+                        borderBottom: "0.5px solid var(--ink-06, #f8f8f8)",
+                        background: "white",
+                      }}
+                    >
+                      <span style={{ fontSize: 11, color: "var(--blood-c)" }}>✓</span>
+                      <span className="font-body text-sm" style={{ color: "var(--ink)" }}>{m.name}</span>
+                      <span className="font-body text-sm font-medium text-right" style={{ color: "var(--ink)" }}>
+                        {roundDisplay(m.value)} <span className="font-body text-[10px]" style={{ color: "var(--ink-30)" }}>{m.unit}</span>
+                      </span>
+                      <span className="font-body text-[10px] text-right" style={{ color: "var(--ink-30)", minWidth: 80 }}>
+                        {m.note ?? m.filename}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
         </div>
 
         {error && (
