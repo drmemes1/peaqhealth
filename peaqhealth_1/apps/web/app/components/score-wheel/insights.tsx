@@ -83,21 +83,38 @@ export function Insights({ sleepConnected, hasBlood, oralActive, sleepHrv, sleep
   const cards = []
   let idx = 0
 
-  if (sleepConnected && sleepHrv !== undefined && sleepHrv < 50) {
+  // Only generate an insight when the value is real (> 0 and physiologically plausible)
+  const realHrv   = sleepHrv   !== undefined && sleepHrv   > 0
+  const realCrp   = bloodHsCrp !== undefined && bloodHsCrp > 0
+  const realApoB  = bloodApoB  !== undefined && bloodApoB  > 0
+  const deepLabel = (sleepDeepPct !== undefined && sleepDeepPct > 0) ? `${sleepDeepPct}%` : "—"
+  const apoBLabel = realApoB ? `${bloodApoB} mg/dL` : "—"
+
+  if (sleepConnected && realHrv && sleepHrv! < 50) {
     cards.push(
       <InsightCard key="hrv" cardIndex={idx++}
         title="HRV below target — autonomic recovery opportunity"
-        body={`RMSSD at ${sleepHrv}ms is below the ≥50ms target. Dalton 2025 (n=1,139 NIH-AARP): consistent sleep timing variance under 30 minutes shifts RMSSD by 5–8ms over 4 weeks. Your deep sleep at ${sleepDeepPct ?? "—"}% is the linked lever.`}
+        body={`RMSSD at ${sleepHrv}ms is below the ≥50ms target. Dalton 2025 (n=1,139 NIH-AARP): consistent sleep timing variance under 30 minutes shifts RMSSD by 5–8ms over 4 weeks. Your deep sleep at ${deepLabel} is the linked lever.`}
         tag="Sleep · Recovery" accentColor="var(--sleep-c)" tagBg="var(--sleep-bg)" tagColor="var(--sleep-c)"
       />
     )
   }
 
-  if (hasBlood && bloodHsCrp !== undefined && bloodHsCrp < 2.0) {
+  if (hasBlood && realCrp && bloodHsCrp! > 0 && bloodHsCrp! < 2.0) {
     cards.push(
       <InsightCard key="crp" cardIndex={idx++}
-        title="hsCRP at threshold — inflammatory baseline good"
-        body={`At ${bloodHsCrp} mg/L you sit at the optimal ceiling. JUPITER trial (n=17,802): below 2.0 represents low inflammatory cardiovascular risk. ApoB at ${bloodApoB ?? "—"} mg/dL provides strong atherogenic protection.`}
+        title={`hsCRP at ${bloodHsCrp} mg/L — inflammatory baseline good`}
+        body={`Below 2.0 mg/L represents low inflammatory cardiovascular risk (JUPITER trial, n=17,802). ApoB at ${apoBLabel} provides additional atherogenic context.`}
+        tag="Blood · Cardiovascular" accentColor="var(--blood-c)" tagBg="var(--blood-bg)" tagColor="var(--blood-c)"
+      />
+    )
+  }
+
+  if (hasBlood && realCrp && bloodHsCrp! >= 2.0) {
+    cards.push(
+      <InsightCard key="crp-elevated" cardIndex={idx++}
+        title={`hsCRP at ${bloodHsCrp} mg/L — inflammation elevated`}
+        body={`Above 2.0 mg/L indicates elevated cardiovascular inflammatory risk. JUPITER trial (n=17,802): reducing hsCRP below 2.0 is an independent treatment target. Discuss with your physician.`}
         tag="Blood · Cardiovascular" accentColor="var(--blood-c)" tagBg="var(--blood-bg)" tagColor="var(--blood-c)"
       />
     )
@@ -113,17 +130,7 @@ export function Insights({ sleepConnected, hasBlood, oralActive, sleepHrv, sleep
     )
   }
 
-  if (!oralActive) {
-    cards.push(
-      <InsightCard key="oral-pending" cardIndex={idx++}
-        title="Oral microbiome unlocks 4 interaction terms"
-        body="Your oral bacteria directly predict sleep-breathing risk, cardiovascular inflammation, and nitric oxide production. Dalton 2025 (n=1,139 NIH-AARP): oral microbiome diversity independently predicts sleep quality scores."
-        tag="Oral · Pending" accentColor="var(--oral-c)" tagBg="var(--oral-bg)" tagColor="var(--oral-c)" muted
-      />
-    )
-  }
-
-  if (familyHistoryCVD && bloodApoB !== undefined && bloodApoB > 100) {
+  if (familyHistoryCVD && realApoB && bloodApoB! > 100) {
     cards.push(
       <InsightCard key="fam-cvd" cardIndex={idx++}
         title="Family history + elevated ApoB — cardiovascular priority"
@@ -133,7 +140,7 @@ export function Insights({ sleepConnected, hasBlood, oralActive, sleepHrv, sleep
     )
   }
 
-  if (stressLevel === "high" && bloodHsCrp !== undefined && bloodHsCrp > 3) {
+  if (stressLevel === "high" && realCrp && bloodHsCrp! > 3) {
     cards.push(
       <InsightCard key="stress-crp" cardIndex={idx++}
         title="High stress amplifying inflammation markers"
@@ -143,13 +150,22 @@ export function Insights({ sleepConnected, hasBlood, oralActive, sleepHrv, sleep
     )
   }
 
-  if (alcoholDrinksPerWeek !== undefined && alcoholDrinksPerWeek > 10 && sleepConnected && (sleepEfficiency !== undefined && sleepEfficiency < 80)) {
+  if (alcoholDrinksPerWeek !== undefined && alcoholDrinksPerWeek > 10 && sleepConnected && sleepEfficiency !== undefined && sleepEfficiency > 0 && sleepEfficiency < 80) {
     cards.push(
       <InsightCard key="alcohol-sleep" cardIndex={idx++}
         title="Alcohol use affecting sleep quality"
         body={`${alcoholDrinksPerWeek} drinks/week appears to be affecting your sleep architecture — efficiency at ${sleepEfficiency}%. Alcohol suppresses REM sleep and fragments overnight recovery.`}
         tag="Lifestyle × Sleep" accentColor="var(--sleep-c)" tagBg="var(--sleep-bg)" tagColor="var(--sleep-c)"
       />
+    )
+  }
+
+  // No data at all — show empty state instead of silently disappearing
+  if (cards.length === 0 && !sleepConnected && !hasBlood && !oralActive) {
+    return (
+      <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", fontSize: 18, color: "rgba(20,20,16,0.4)", textAlign: "center", margin: 0, lineHeight: 1.6 }}>
+        Upload your lab results to unlock<br />personalized insights
+      </p>
     )
   }
 
