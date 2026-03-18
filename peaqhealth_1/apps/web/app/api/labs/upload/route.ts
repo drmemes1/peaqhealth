@@ -218,8 +218,7 @@ function extractMarkersFromLines(lines: string[]): Record<string, number> {
     if (idx === -1) continue
 
     const surrounding = fullText.slice(idx, idx + 300)
-    // Match numbers, but skip those preceded by < > or part of ranges (e.g. "65 - 99")
-    const numPattern = /(?<![<>])\b(\d{1,4}\.?\d{0,3})\b(?!\s*[-–]\s*\d)/g
+    const numPattern = /\b(\d{1,4}\.?\d{0,3})\b/g
     let match: RegExpExecArray | null
     const range = PLAUSIBLE_RANGES[canonicalKey]
 
@@ -227,7 +226,17 @@ function extractMarkersFromLines(lines: string[]): Record<string, number> {
       const val = parseFloat(match[1])
       if (val <= 0 || val > 9999) continue
 
-      // Check if this number is preceded by reference range keywords
+      // Check ~10 chars before the number for comparison operators (handles "≥40", "< 150", "> OR = 40")
+      const charsBefore = surrounding.slice(Math.max(0, match.index - 10), match.index)
+      if (/[<>≥≤]\s*$/.test(charsBefore)) continue
+      if (/\bor\s*=\s*$/.test(charsBefore)) continue
+
+      // Check chars after for dash/space-separated ranges (handles "65-99" and "65 99")
+      const charsAfter = surrounding.slice(match.index + match[0].length, match.index + match[0].length + 15)
+      if (/^\s*[-–]\s*\d/.test(charsAfter)) continue              // "65-99" style
+      if (/^\s+\d{2,4}\b/.test(charsAfter) && val < 500) continue // "65 99" style (two nums, space-sep)
+
+      // Check if reference range keywords appear immediately before this number in surrounding
       const textBefore = surrounding.slice(0, match.index)
       if (RANGE_KEYWORDS.test(textBefore)) continue
 
