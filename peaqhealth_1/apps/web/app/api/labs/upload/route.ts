@@ -523,11 +523,17 @@ function extractMarkersFromTableRows(
 ): Record<string, number> {
   const found = { ...alreadyFound }
 
-  for (const row of tableRows) {
+  for (let rowIdx = 0; rowIdx < tableRows.length; rowIdx++) {
+    const row = tableRows[rowIdx]
     if (row.cells.length < 2) continue
 
     const firstCell  = row.cells[0]?.content?.trim() ?? ""
     const secondCell = row.cells[1]?.content?.trim() ?? ""
+
+    // Diagnostic: log every row that mentions ApoB so we can see what value it holds
+    if (/apolipoprotein|apob/i.test(firstCell)) {
+      console.log("[table-apob] row:", rowIdx, "cells:", row.cells.map((c) => c.content).join(" | "))
+    }
 
     // Skip header rows
     if (/^(?:test|component|analyte|ordered|result)/i.test(firstCell)) continue
@@ -579,13 +585,17 @@ function postProcessMarkers(
   const result = { ...markers }
   const notes: Record<string, string> = {}
 
-  // Convert Lp(a) from raw to mg/dL
+  // Convert Lp(a) from raw to mg/dL.
+  // Guard: if lpa_mgdL is already set (LabCorp parser converts inline),
+  // do NOT overwrite it — just clean up lpa_raw.
   if (result.lpa_raw) {
-    const rawVal = result.lpa_raw
-    const { lpa_mgdL, wasNmol } = convertLpaUnits(rawVal, lines)
-    result.lpa_mgdL = lpa_mgdL
-    if (wasNmol) {
-      notes.lpa_mgdL = `${rawVal} nmol/L → ${lpa_mgdL} mg/dL`
+    if (!result.lpa_mgdL) {
+      const rawVal = result.lpa_raw
+      const { lpa_mgdL, wasNmol } = convertLpaUnits(rawVal, lines)
+      result.lpa_mgdL = lpa_mgdL
+      if (wasNmol) {
+        notes.lpa_mgdL = `${rawVal} nmol/L → ${lpa_mgdL} mg/dL`
+      }
     }
     delete result.lpa_raw
   }
