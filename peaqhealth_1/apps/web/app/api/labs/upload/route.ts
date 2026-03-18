@@ -191,6 +191,22 @@ async function analyzeWithAzure(buffer: Buffer): Promise<{ lines: string[]; tabl
   throw new Error("Azure analysis timed out")
 }
 
+// Plausible physiological ranges — values outside these are likely reference ranges or noise
+const PLAUSIBLE_RANGES: Record<string, [number, number]> = {
+  ldl_mgdL: [20, 400], hdl_mgdL: [10, 150], triglycerides_mgdL: [20, 2000],
+  glucose_mgdL: [40, 600], hsCRP_mgL: [0.1, 200], vitaminD_ngmL: [4, 150],
+  hba1c_pct: [3, 15], creatinine_mgdL: [0.3, 15], egfr_mLmin: [5, 200],
+  alt_UL: [5, 500], ast_UL: [5, 500], wbc_kul: [1, 30], hemoglobin_gdL: [5, 20],
+  rdw_pct: [8, 25], albumin_gdL: [1, 6], bun_mgdL: [2, 100],
+  sodium_mmolL: [100, 170], potassium_mmolL: [2, 8], apoB_mgdL: [20, 300],
+  lpa_mgdL: [0.5, 300], ferritin_ngmL: [1, 2000], totalCholesterol_mgdL: [50, 500],
+  homocysteine_umolL: [2, 50], tsh_uIUmL: [0.1, 20], calcium_mgdL: [5, 15],
+  hematocrit_pct: [20, 65], rbc_mil: [2, 8], platelets_kul: [50, 600],
+}
+
+// Keywords that precede reference range values, not actual results
+const RANGE_KEYWORDS = /(?:normal|reference|range|target|limit|standard|or\s*=)\s*(?:value)?[:\s]*$/i
+
 function extractMarkersFromLines(lines: string[]): Record<string, number> {
   const found: Record<string, number> = {}
   const fullText = lines.join("\n").toLowerCase()
@@ -201,15 +217,23 @@ function extractMarkersFromLines(lines: string[]): Record<string, number> {
     const idx = fullText.indexOf(markerName.toLowerCase())
     if (idx === -1) continue
 
-    const surrounding = fullText.slice(idx, idx + 200)
-    const numMatches = surrounding.match(/\b(\d{1,4}\.?\d{0,3})\b/g)
+    const surrounding = fullText.slice(idx, idx + 300)
+    // Match numbers, but skip those preceded by < > or part of ranges (e.g. "65 - 99")
+    const numPattern = /(?<![<>])\b(\d{1,4}\.?\d{0,3})\b(?!\s*[-–]\s*\d)/g
+    let match: RegExpExecArray | null
+    const range = PLAUSIBLE_RANGES[canonicalKey]
 
-    if (!numMatches) continue
+    while ((match = numPattern.exec(surrounding)) !== null) {
+      const val = parseFloat(match[1])
+      if (val <= 0 || val > 9999) continue
 
-    for (const numStr of numMatches) {
-      const val = parseFloat(numStr)
-      if (val <= 0) continue
-      if (val > 9999) continue
+      // Check if this number is preceded by reference range keywords
+      const textBefore = surrounding.slice(0, match.index)
+      if (RANGE_KEYWORDS.test(textBefore)) continue
+
+      // Sanity check against plausible physiological range
+      if (range && (val < range[0] || val > range[1])) continue
+
       found[canonicalKey] = val
       break
     }

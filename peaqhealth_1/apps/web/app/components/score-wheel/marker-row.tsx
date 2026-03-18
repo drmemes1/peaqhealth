@@ -1,13 +1,14 @@
 "use client"
 import { useState } from "react"
 
-export type Flag = "good" | "watch" | "attention" | "pending"
+export type Flag = "good" | "watch" | "attention" | "pending" | "not_tested"
 
 const FLAG_STYLES: Record<Flag, { bg: string; text: string; label: string }> = {
-  good:      { bg: "#EAF3DE", text: "#2D6A4F", label: "Good" },
-  watch:     { bg: "#FEF3C7", text: "#92400E", label: "Watch" },
-  attention: { bg: "#FEE2E2", text: "#991B1B", label: "Attention" },
-  pending:   { bg: "#F7F5F0", text: "rgba(20,20,16,0.6)", label: "Pending" },
+  good:       { bg: "#EAF3DE", text: "#2D6A4F", label: "Good" },
+  watch:      { bg: "#FEF3C7", text: "#92400E", label: "Watch" },
+  attention:  { bg: "#FEE2E2", text: "#991B1B", label: "Attention" },
+  pending:    { bg: "#F7F5F0", text: "rgba(20,20,16,0.6)", label: "Pending" },
+  not_tested: { bg: "#F7F5F0", text: "rgba(20,20,16,0.35)", label: "—" },
 }
 
 interface MarkerRowProps {
@@ -25,8 +26,10 @@ interface MarkerRowProps {
 
 export function MarkerRow({ name, sub, value, unit, flag, barPct, color, trackColor, hoverBg, mounted }: MarkerRowProps) {
   const [hovered, setHovered] = useState(false)
-  const isPending = flag === "pending" || value === null
-  const fs = FLAG_STYLES[flag]
+  const isNotTested = value === null || value === 0 || value === "0"
+  const isPending = flag === "pending" || isNotTested
+  const effectiveFlag = isNotTested && flag !== "pending" ? "not_tested" : flag
+  const fs = FLAG_STYLES[effectiveFlag]
 
   return (
     <div
@@ -61,13 +64,21 @@ export function MarkerRow({ name, sub, value, unit, flag, barPct, color, trackCo
 
       {/* Value + unit */}
       <div style={{ width: 80, textAlign: "right" }}>
-        <span style={{
-          fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 14,
-          color: isPending ? "var(--ink-30)" : flag === "good" ? color : flag === "attention" ? "#991B1B" : "#92400E",
-        }}>
-          {isPending ? "—" : value}
-        </span>
-        {!isPending && <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, color: "var(--ink-30)", marginLeft: 3 }}>{unit}</span>}
+        {isNotTested ? (
+          <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "var(--ink-30)" }}>
+            Not tested
+          </span>
+        ) : (
+          <>
+            <span style={{
+              fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 14,
+              color: isPending ? "var(--ink-30)" : effectiveFlag === "good" ? color : effectiveFlag === "attention" ? "#991B1B" : "#92400E",
+            }}>
+              {isPending ? "—" : value}
+            </span>
+            {!isPending && <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, color: "var(--ink-30)", marginLeft: 3 }}>{unit}</span>}
+          </>
+        )}
       </div>
 
       {/* Flag badge */}

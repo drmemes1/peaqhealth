@@ -160,14 +160,18 @@ export function ScoreWheel({
     efficiency: flag(sleepData.efficiency >= 85, sleepData.efficiency >= 78),
   } : null
 
+  // Flag helper: 0 means not tested
+  const bflag = (val: number, good: boolean, watch?: boolean): Flag =>
+    val === 0 ? "not_tested" : flag(good, watch)
+
   const bf = bloodData ? {
-    hsCRP:     flag(bloodData.hsCRP < 0.5, bloodData.hsCRP < 2.0),
-    vitaminD:  flag(bloodData.vitaminD >= 30 && bloodData.vitaminD <= 60, bloodData.vitaminD >= 20),
-    apoB:      flag(bloodData.apoB < 90, bloodData.apoB < 120),
-    ldlHdl:    flag(bloodData.ldlHdlRatio < 2.0, bloodData.ldlHdlRatio < 3.0),
-    hba1c:     flag(bloodData.hba1c < 5.4, bloodData.hba1c < 5.7),
-    lpa:       flag(bloodData.lpa < 30, bloodData.lpa < 50),
-    tg:        flag(bloodData.triglycerides < 150, bloodData.triglycerides < 200),
+    hsCRP:     bflag(bloodData.hsCRP, bloodData.hsCRP < 0.5, bloodData.hsCRP < 2.0),
+    vitaminD:  bflag(bloodData.vitaminD, bloodData.vitaminD >= 30 && bloodData.vitaminD <= 60, bloodData.vitaminD >= 20),
+    apoB:      bflag(bloodData.apoB, bloodData.apoB < 90, bloodData.apoB < 120),
+    ldlHdl:    bflag(bloodData.ldlHdlRatio, bloodData.ldlHdlRatio < 2.0, bloodData.ldlHdlRatio < 3.0),
+    hba1c:     bflag(bloodData.hba1c, bloodData.hba1c < 5.4, bloodData.hba1c < 5.7),
+    lpa:       bflag(bloodData.lpa, bloodData.lpa < 30, bloodData.lpa < 50),
+    tg:        bflag(bloodData.triglycerides, bloodData.triglycerides < 150, bloodData.triglycerides < 200),
   } : null
 
   const of_ = oralData ? {
@@ -328,15 +332,18 @@ export function ScoreWheel({
             { name: "HbA1c",         sub: "Glycaemia · target <5.4%",        val: bloodData?.hba1c,          unit: "%",     flagKey: "hba1c",    max: 8    },
             { name: "Lp(a)",         sub: "Lipoprotein(a) · target <30",     val: bloodData?.lpa,            unit: "mg/dL", flagKey: "lpa",      max: 80   },
             { name: "Triglycerides", sub: "Target <150 mg/dL",               val: bloodData?.triglycerides,  unit: "mg/dL", flagKey: "tg",       max: 300  },
-          ].map(row => (
-            <MarkerRow key={row.name} name={row.name} sub={row.sub}
-              value={row.val ?? null} unit={row.unit}
-              flag={bf ? (bf[row.flagKey as keyof typeof bf] as Flag) : "pending"}
-              barPct={row.val !== undefined ? fa(row.val, row.max) : 0}
-              color="var(--blood-c)" trackColor="var(--blood-bg)"
-              hoverBg="rgba(192,57,43,0.04)" mounted={mounted}
-            />
-          ))}
+          ].map(row => {
+            const notTested = row.val === undefined || row.val === 0
+            return (
+              <MarkerRow key={row.name} name={row.name} sub={row.sub}
+                value={notTested ? null : (row.val ?? null)} unit={row.unit}
+                flag={notTested ? "not_tested" : bf ? (bf[row.flagKey as keyof typeof bf] as Flag) : "pending"}
+                barPct={notTested ? 0 : fa(row.val!, row.max)}
+                color="var(--blood-c)" trackColor="var(--blood-bg)"
+                hoverBg="rgba(192,57,43,0.04)" mounted={mounted}
+              />
+            )
+          })}
         </div>
       </div>
 
