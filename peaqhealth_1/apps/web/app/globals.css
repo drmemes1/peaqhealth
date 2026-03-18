@@ -25,6 +25,11 @@
   --font-body: "Instrument Sans", system-ui, sans-serif;
   --amber: #92400E;
   --amber-bg: #FEF3C7;
+  --status-optimal: #2D6A4F;
+  --status-good: #4A7FB5;
+  --status-watch: #B8860B;
+  --status-attention: #C0392B;
+  --status-muted: rgba(20,20,16,0.2);
 }
 
 @theme inline {
