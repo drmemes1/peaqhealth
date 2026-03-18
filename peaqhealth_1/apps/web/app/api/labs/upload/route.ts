@@ -433,6 +433,7 @@ function extractMarkersQuestMyChart(lines: string[]): Record<string, number> {
       const val = parseFloat(m[1])
       if (!isPlausible(canonicalKey, val)) continue
 
+      console.log("[quest-found]", canonicalKey, "=", val, "from line:", lines[j])
       found[canonicalKey] = val
       i = j // advance past the value line so adjacent markers don't grab same value
       break
@@ -523,16 +524,29 @@ function extractMarkersFromTableRows(
 ): Record<string, number> {
   const found = { ...alreadyFound }
 
+  console.log("[table-structure] total rows:", tableRows.length)
+  if (tableRows.length > 0) {
+    console.log("[table-structure] first row:", JSON.stringify(tableRows[0]))
+  }
+
   for (let rowIdx = 0; rowIdx < tableRows.length; rowIdx++) {
     const row = tableRows[rowIdx]
     if (row.cells.length < 2) continue
 
     const firstCell  = row.cells[0]?.content?.trim() ?? ""
     const secondCell = row.cells[1]?.content?.trim() ?? ""
+    const cellContents = row.cells.map((c) => c.content ?? "")
+    const rowText      = cellContents.join(" | ").toLowerCase()
 
-    // Diagnostic: log every row that mentions ApoB so we can see what value it holds
-    if (/apolipoprotein|apob/i.test(firstCell)) {
-      console.log("[table-apob] row:", rowIdx, "cells:", row.cells.map((c) => c.content).join(" | "))
+    // Log every row that mentions ApoB or contains the suspicious values 44.9 / 70
+    if (
+      rowText.includes("apolipoprotein") ||
+      rowText.includes("44.9") ||
+      rowText.includes(" 70 ") ||
+      rowText.endsWith(" 70") ||
+      rowText.startsWith("70 ")
+    ) {
+      console.log("[table-row-detail] row:", rowIdx, "cells:", cellContents.join(" | "))
     }
 
     // Skip header rows
