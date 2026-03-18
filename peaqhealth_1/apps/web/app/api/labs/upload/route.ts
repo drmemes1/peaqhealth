@@ -332,20 +332,17 @@ const LABCORP_CODE = /\s+(?:[A-Z0-9],\s*)*[B8],?\s*\d+\s*$/
 function extractMarkersLabCorp(lines: string[]): Record<string, number> {
   const found: Record<string, number> = {}
 
-  // Debug: find every line containing "apolipoprotein"
-  for (let i = 0; i < lines.length; i++) {
-    if (lines[i].toLowerCase().includes("apolipoprotein")) {
-      console.log("[apob-all-lines] line", i, ":", JSON.stringify(lines[i]))
-      console.log("[apob-all-lines] next:", JSON.stringify(lines[i + 1]))
-      console.log("[apob-all-lines] next2:", JSON.stringify(lines[i + 2]))
-    }
+  // Debug: log all lines from index 270 onwards
+  for (let i = 270; i < lines.length; i++) {
+    console.log("[late-lines]", i, ":", JSON.stringify(lines[i]))
   }
 
-  // Debug: find every line containing "44.9" that isn't hematocrit
+  // Debug: hunt for "70" standalone or any "Apolipoprotein" line
   for (let i = 0; i < lines.length; i++) {
-    if (lines[i].includes("44.9") && !lines[i].toLowerCase().includes("hematocrit")) {
-      console.log("[44.9-line] line", i, ":", JSON.stringify(lines[i]))
-      console.log("[44.9-line] prev:", JSON.stringify(lines[i - 1]))
+    if (lines[i].trim() === "70" || lines[i].includes("Apolipoprotein")) {
+      console.log("[apob-hunt]", i, ":", JSON.stringify(lines[i]))
+      console.log("[apob-hunt] prev:", JSON.stringify(lines[i - 1]))
+      console.log("[apob-hunt] next:", JSON.stringify(lines[i + 1]))
     }
   }
 
