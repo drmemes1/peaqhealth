@@ -335,13 +335,6 @@ function extractMarkersLabCorp(lines: string[]): Record<string, number> {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim()
 
-    // Debug: track ApoB line matching
-    if (line.toLowerCase().includes("apolipoprotein")) {
-      console.log("[apob-check] line:", line)
-      console.log("[apob-check] has semicolon:", line.includes(";"))
-      console.log("[apob-check] next line:", lines[i + 1])
-    }
-
     // Skip header/metadata lines (semicolon-separated test lists, ordered items)
     if (line.includes(";") || /ordered items|venipuncture/i.test(line)) continue
 
@@ -369,7 +362,6 @@ function extractMarkersLabCorp(lines: string[]): Record<string, number> {
     if (canonicalKey === "lpa_raw") {
       const fullDocText = lines.join(" ").toLowerCase()
       const isNmol = fullDocText.includes("lipoprotein") && fullDocText.includes("nmol/l")
-      console.log("[lpa-check] value:", val, "isNmol:", isNmol)
       found["lpa_mgdL"] = isNmol ? Math.round((val / 2.5) * 10) / 10 : val
       // Skip lpa_raw — already resolved to mg/dL
       continue
@@ -433,7 +425,6 @@ function extractMarkersQuestMyChart(lines: string[]): Record<string, number> {
       const val = parseFloat(m[1])
       if (!isPlausible(canonicalKey, val)) continue
 
-      console.log("[quest-found]", canonicalKey, "=", val, "from line:", lines[j])
       found[canonicalKey] = val
       i = j // advance past the value line so adjacent markers don't grab same value
       break
@@ -501,10 +492,10 @@ function extractMarkersFromLines(lines: string[], tableRows: AzureTableRow[]): R
   }
 
   if (format === "labcorp") {
-    // LabCorp: line parser + table rows (catches ApoB and other table-only markers)
-    const primary     = extractMarkersLabCorp(lines)
-    const withGeneral = extractMarkersGeneralText(lines, primary)
-    return extractMarkersFromTableRows(tableRows, withGeneral)
+    // LabCorp: line parser + table rows only — no general text fallback.
+    // General text finds wrong values (e.g. ApoB grabbing nearby hematocrit).
+    const primary = extractMarkersLabCorp(lines)
+    return extractMarkersFromTableRows(tableRows, primary)
   }
 
   // Unknown format: general text + table rows as best-effort fallback
@@ -524,30 +515,16 @@ function extractMarkersFromTableRows(
 ): Record<string, number> {
   const found = { ...alreadyFound }
 
-  console.log("[table-structure] total rows:", tableRows.length)
-  if (tableRows.length > 0) {
-    console.log("[table-structure] first row:", JSON.stringify(tableRows[0]))
-  }
-
   for (let rowIdx = 0; rowIdx < tableRows.length; rowIdx++) {
     const row = tableRows[rowIdx]
     if (row.cells.length < 2) continue
 
-    const firstCell  = row.cells[0]?.content?.trim() ?? ""
-    const secondCell = row.cells[1]?.content?.trim() ?? ""
+    const firstCell    = row.cells[0]?.content?.trim() ?? ""
+    const secondCell   = row.cells[1]?.content?.trim() ?? ""
     const cellContents = row.cells.map((c) => c.content ?? "")
-    const rowText      = cellContents.join(" | ").toLowerCase()
 
-    // Log every row that mentions ApoB or contains the suspicious values 44.9 / 70
-    if (
-      rowText.includes("apolipoprotein") ||
-      rowText.includes("44.9") ||
-      rowText.includes(" 70 ") ||
-      rowText.endsWith(" 70") ||
-      rowText.startsWith("70 ")
-    ) {
-      console.log("[table-row-detail] row:", rowIdx, "cells:", cellContents.join(" | "))
-    }
+    // Log first 3 cells of every row to diagnose which row holds ApoB = 70
+    console.log("[table-all-rows] checking row:", rowIdx, cellContents.slice(0, 3).join(" | "))
 
     // Skip header rows
     if (/^(?:test|component|analyte|ordered|result)/i.test(firstCell)) continue
@@ -559,7 +536,6 @@ function extractMarkersFromTableRows(
     if (isNaN(val) || val <= 0) continue
     if (!isPlausible(canonicalKey, val)) continue
 
-    console.log("[table-parser]", firstCell, "→", canonicalKey, "=", val)
     found[canonicalKey] = val
   }
 
@@ -665,10 +641,7 @@ function extractCollectionDate(lines: string[]): string | undefined {
 async function processFile(file: FileInput, index: number): Promise<FileResult> {
   try {
     const buffer = Buffer.from(file.base64, "base64")
-    console.log("[azure] file", index + 1, "submitted, analyzing...")
-
     const { lines, tables, tableRows } = await analyzeWithAzure(buffer)
-    console.log("[azure] file", index + 1, "analysis complete, lines:", lines.length, "table cells:", tables.length, "table rows:", tableRows.length)
 
     const allLines  = [...lines, ...tables]
     // Table-row pass is format-gated inside the dispatcher (not run for Quest MyChart)
@@ -676,14 +649,6 @@ async function processFile(file: FileInput, index: number): Promise<FileResult> 
     const { markers, notes } = postProcessMarkers(rawMarkers, allLines)
     const labName = extractLabName(lines)
     const collectionDate = extractCollectionDate(lines)
-
-    console.log("[azure] file", index + 1, "markers found:", Object.keys(markers).length)
-    const _fullText = allLines.join(" ").toLowerCase()
-    console.log("[lpa-final] lpa_mgdL in results:", markers["lpa_mgdL"])
-    console.log("[apob-final] apoB_mgdL in results:", markers["apoB_mgdL"])
-    console.log("[lpa-check] fulltext has lipoprotein:", _fullText.includes("lipoprotein"))
-    console.log("[lpa-check] fulltext has nmol/l:", _fullText.includes("nmol/l"))
-    console.log("[table-rows] count:", tableRows?.length ?? 0)
 
     return {
       filename: file.filename,
@@ -735,8 +700,6 @@ export async function POST(request: NextRequest) {
   if (files.length === 0) {
     return NextResponse.json({ error: "No files provided" }, { status: 422 })
   }
-
-  console.log("[azure] submitting", files.length, "files")
 
   const results = await Promise.all(files.map((f, i) => processFile(f, i)))
 
