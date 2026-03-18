@@ -314,6 +314,13 @@ function extractMarkersLabCorp(lines: string[]): Record<string, number> {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim()
 
+    // Debug: track ApoB line matching
+    if (line.toLowerCase().includes("apolipoprotein")) {
+      console.log("[apob-check] line:", line)
+      console.log("[apob-check] has semicolon:", line.includes(";"))
+      console.log("[apob-check] next line:", lines[i + 1])
+    }
+
     // Skip header/metadata lines (semicolon-separated test lists, ordered items)
     if (line.includes(";") || /ordered items|venipuncture/i.test(line)) continue
 
@@ -338,6 +345,8 @@ function extractMarkersLabCorp(lines: string[]): Record<string, number> {
 
     // Lp(a): check nearby lines for nmol/L unit → convert to mg/dL inline
     if (canonicalKey === "lpa_raw") {
+      console.log("[lpa-check] value:", val)
+      console.log("[lpa-check] nearby:", lines[i + 2], lines[i + 3], lines[i + 4])
       const nearbyText = [
         lines[i + 2], lines[i + 3], lines[i + 4],
       ].filter(Boolean).join(" ").toLowerCase()
