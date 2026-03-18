@@ -62,7 +62,6 @@ export async function POST(request: NextRequest) {
       is_locked:          false,
       lock_expires_at:    lockExpiresAt,
       version:            nextVersion,
-      locked_at:          null,
       hs_crp_mgl:         markers.hsCRP_mgL          ?? null,
       vitamin_d_ngml:     markers.vitaminD_ngmL      ?? null,
       apob_mgdl:          markers.apoB_mgdL          ?? null,
