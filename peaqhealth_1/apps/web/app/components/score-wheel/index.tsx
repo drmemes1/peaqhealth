@@ -44,9 +44,15 @@ export interface ScoreWheelProps {
     hba1c: number
     lpa: number
     triglycerides: number
+    ldl: number
+    hdl: number
+    glucose: number
+    egfr: number
+    hemoglobin: number
     collectionDate: string
     labName: string
     monthsOld: number
+    bloodInsight?: string
   }
   oralData?: {
     shannonDiversity: number
@@ -97,6 +103,46 @@ function formatValue(value: number): string {
 // Status dot colors
 const STATUS_COLORS: Record<Flag, string> = {
   good: "#2D6A4F", watch: "#B8860B", attention: "#C0392B", pending: "rgba(20,20,16,0.15)", not_tested: "rgba(20,20,16,0.15)",
+}
+
+// Spectrum bar marker row — positioned dot on track with optional optimal zone
+function SpectrumRow({ name, value, unit, f, min, max, optMin, optMax }: {
+  name: string; value: number | undefined; unit: string; f: Flag
+  min: number; max: number; optMin: number; optMax: number
+}) {
+  if (!value || value === 0) return null
+  const clamp = (v: number) => Math.max(0, Math.min(100, v))
+  const pct = clamp(((value - min) / (max - min)) * 100)
+  const optMinPct = clamp(((optMin - min) / (max - min)) * 100)
+  const optMaxPct = clamp(((optMax - min) / (max - min)) * 100)
+  const dotColor = f === "good" ? "#2D6A4F" : f === "watch" ? "#B8860B" : f === "attention" ? "#C0392B" : "rgba(20,20,16,0.3)"
+  const badgeBg   = f === "good" ? "#EAF3DE" : f === "watch" ? "#FEF3C7" : f === "attention" ? "#FEE2E2" : "#F7F5F0"
+  const badgeText = f === "good" ? "#2D6A4F" : f === "watch" ? "#92400E" : f === "attention" ? "#991B1B" : "rgba(20,20,16,0.6)"
+  const badgeLabel = f === "good" ? "Optimal" : f === "watch" ? "Watch" : f === "attention" ? "Attention" : "—"
+
+  return (
+    <div style={{ padding: "10px 0", borderBottom: "0.5px solid var(--ink-06)" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+          <div style={{ width: 7, height: 7, borderRadius: "50%", background: dotColor, flexShrink: 0 }} />
+          <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink)" }}>{name}</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink)" }}>
+            {formatValue(value)} <span style={{ fontSize: 10, color: "var(--ink-30)" }}>{unit}</span>
+          </span>
+          <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "3px 8px", borderRadius: 3, background: badgeBg, color: badgeText }}>{badgeLabel}</span>
+        </div>
+      </div>
+      {/* Track */}
+      <div style={{ position: "relative", height: 4, borderRadius: 2, background: "rgba(20,20,16,0.07)", margin: "0 0 2px" }}>
+        {/* Optimal zone */}
+        <div style={{ position: "absolute", top: 0, bottom: 0, left: `${optMinPct}%`, width: `${optMaxPct - optMinPct}%`, background: "rgba(45,106,79,0.15)", borderRadius: 2 }} />
+        {/* Dot */}
+        <div style={{ position: "absolute", top: "50%", left: `${pct}%`, transform: "translate(-50%, -50%)", width: 8, height: 8, borderRadius: "50%", background: dotColor, border: "1.5px solid white", boxShadow: "0 1px 3px rgba(0,0,0,0.2)", zIndex: 1 }} />
+      </div>
+    </div>
+  )
 }
 
 function StatusDots({ flags }: { flags: Flag[] }) {
@@ -282,6 +328,11 @@ export function ScoreWheel({
     hba1c:     bflag(bloodData.hba1c, bloodData.hba1c < 5.4, bloodData.hba1c < 5.7),
     lpa:       bflag(bloodData.lpa, bloodData.lpa < 30, bloodData.lpa < 50),
     tg:        bflag(bloodData.triglycerides, bloodData.triglycerides < 150, bloodData.triglycerides < 200),
+    ldl:       bflag(bloodData.ldl, bloodData.ldl < 100, bloodData.ldl < 130),
+    hdl:       bflag(bloodData.hdl, bloodData.hdl >= 60, bloodData.hdl >= 40),
+    glucose:   bflag(bloodData.glucose, bloodData.glucose >= 70 && bloodData.glucose < 100, bloodData.glucose < 126),
+    egfr:      bflag(bloodData.egfr, bloodData.egfr >= 90, bloodData.egfr >= 60),
+    hemoglobin: bflag(bloodData.hemoglobin, bloodData.hemoglobin >= 12 && bloodData.hemoglobin <= 17.5, bloodData.hemoglobin >= 10),
   } : null
 
   const of_ = oralData ? {
@@ -477,6 +528,11 @@ export function ScoreWheel({
             </span>
           </div>
         )}
+        {bloodData?.bloodInsight && (
+          <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", fontSize: 16, color: "rgba(20,20,16,0.7)", lineHeight: 1.55, margin: "0 0 14px", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+            {bloodData.bloodInsight}
+          </p>
+        )}
         <div style={{ borderTop: "0.5px solid var(--ink-12)" }}>
           {[
             { name: "hsCRP",         sub: "High-sensitivity · target <0.5",  val: bloodData?.hsCRP,         unit: "mg/L",  flagKey: "hsCRP",    max: 5    },
@@ -499,6 +555,65 @@ export function ScoreWheel({
             )
           })}
         </div>
+        {bloodData && (() => {
+          const useApoB = bloodData.apoB > 0
+          const useLDL  = !useApoB && bloodData.ldl > 0
+          const useHbA1c = bloodData.hba1c > 0 && bloodData.glucose === 0
+          return (
+            <div style={{ marginTop: 4 }}>
+              {useApoB && (
+                <SpectrumRow name="ApoB" value={bloodData.apoB} unit="mg/dL"
+                  f={bf!.apoB} min={40} max={160} optMin={40} optMax={90} />
+              )}
+              {useLDL && (
+                <SpectrumRow name="LDL" value={bloodData.ldl} unit="mg/dL"
+                  f={bf!.ldl} min={40} max={220} optMin={40} optMax={100} />
+              )}
+              {bloodData.hdl > 0 && (
+                <SpectrumRow name="HDL" value={bloodData.hdl} unit="mg/dL"
+                  f={bf!.hdl} min={20} max={100} optMin={60} optMax={100} />
+              )}
+              {bloodData.glucose > 0 && (
+                <SpectrumRow name="Glucose" value={bloodData.glucose} unit="mg/dL"
+                  f={bf!.glucose} min={60} max={180} optMin={70} optMax={99} />
+              )}
+              {useHbA1c && (
+                <SpectrumRow name="HbA1c" value={bloodData.hba1c} unit="%"
+                  f={bf!.hba1c} min={4} max={10} optMin={4} optMax={5.4} />
+              )}
+              {bloodData.egfr > 0 && (
+                <SpectrumRow name="eGFR" value={bloodData.egfr} unit="mL/min"
+                  f={bf!.egfr} min={0} max={130} optMin={90} optMax={130} />
+              )}
+              {bloodData.hemoglobin > 0 && (
+                <SpectrumRow name="Hemoglobin" value={bloodData.hemoglobin} unit="g/dL"
+                  f={bf!.hemoglobin} min={8} max={20} optMin={12} optMax={17.5} />
+              )}
+            </div>
+          )
+        })()}
+        {bloodData && (() => {
+          const missing: Array<{ label: string; pts: number }> = []
+          if (!bloodData.hsCRP)   missing.push({ label: "hs-CRP",   pts: 3 })
+          if (!bloodData.hba1c)   missing.push({ label: "HbA1c",    pts: 3 })
+          if (!bloodData.vitaminD) missing.push({ label: "Vitamin D", pts: 2 })
+          if (missing.length === 0) return null
+          return (
+            <div style={{ marginTop: 16, padding: "12px 14px", borderRadius: 6, background: "rgba(184,134,11,0.05)", border: "0.5px solid rgba(184,134,11,0.2)" }}>
+              <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "rgba(20,20,16,0.45)", margin: "0 0 8px" }}>
+                These markers would strengthen your score
+              </p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {missing.map(m => (
+                  <a key={m.label} href="/settings/labs" style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 4, background: "white", border: "0.5px solid rgba(184,134,11,0.3)", textDecoration: "none", cursor: "pointer" }}>
+                    <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "var(--ink)" }}>{m.label}</span>
+                    <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "#B8860B" }}>+{m.pts} pts</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )
+        })()}
         {hasBlood && (
           <a href="/dashboard/blood" style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "var(--gold)", display: "block", marginTop: 12 }}>
             View full blood panel →
