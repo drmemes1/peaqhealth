@@ -1,18 +1,24 @@
 interface IXChip {
   key: string
   label: string
-  requiresOral: boolean
 }
 
 const IX_LIST: IXChip[] = [
-  { key: "sleepInflammation", label: "Sleep × CRP",        requiresOral: false },
-  { key: "spo2Lipid",         label: "SpO2 × Lipids",      requiresOral: false },
-  { key: "dualInflammatory",  label: "ESR + CRP dual",     requiresOral: false },
-  { key: "hrvHomocysteine",   label: "HRV × Homocysteine", requiresOral: false },
-  { key: "periodontCRP",      label: "Oral path × CRP",    requiresOral: true  },
-  { key: "osaTaxaSpO2",       label: "OSA taxa × SpO2",    requiresOral: true  },
-  { key: "lowNitrateCRP",     label: "Nitrate × CRP",      requiresOral: true  },
-  { key: "lowDiversitySleep", label: "Diversity × Sleep",  requiresOral: true  },
+  { key: "sleepInflammation", label: "Sleep × CRP" },
+  { key: "spo2Lipid",         label: "SpO2 × Lipids" },
+  { key: "dualInflammatory",  label: "ESR + CRP dual" },
+  { key: "hrvHomocysteine",   label: "HRV × Homocysteine" },
+  { key: "periodontCRP",      label: "Oral path × CRP" },
+  { key: "osaTaxaSpO2",       label: "OSA taxa × SpO2" },
+  { key: "lowNitrateCRP",     label: "Nitrate × CRP" },
+  { key: "lowDiversitySleep", label: "Diversity × Sleep" },
+  { key: "familyCVDApoB",     label: "Family CVD × ApoB" },
+  { key: "highStressCRP",     label: "Stress × CRP" },
+  { key: "poorNutritionTrig", label: "Nutrition × TG" },
+  { key: "highHRPoorSleep",   label: "High HR × Sleep" },
+  { key: "alcoholPoorSleep",  label: "Alcohol × Sleep" },
+  { key: "poorSleepOralQ",    label: "Sleep Q × Oral" },
+  { key: "poorExerciseSmoking", label: "Sedentary × Smoking" },
 ]
 
 interface IXChipsProps {
@@ -20,31 +26,40 @@ interface IXChipsProps {
   interactions: Record<string, boolean>
 }
 
-export function IXChips({ oralActive, interactions }: IXChipsProps) {
+export function IXChips({ interactions }: IXChipsProps) {
+  // Only show interactions that actually fired
+  const fired = IX_LIST.filter(chip => interactions[chip.key] === true)
+
+  if (fired.length === 0) {
+    return (
+      <p style={{
+        fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+        fontSize: 11,
+        color: "var(--ink-30)",
+        margin: 0,
+      }}>
+        No interactions detected with current data
+      </p>
+    )
+  }
+
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-      {IX_LIST.map(chip => {
-        const locked = chip.requiresOral && !oralActive
-        const fired = !locked && interactions[chip.key] === false
-        return (
-          <span
-            key={chip.key}
-            style={{
-              fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-              fontSize: 10,
-              padding: "4px 10px",
-              borderRadius: 3,
-              ...(locked
-                ? { background: "var(--warm-50)", color: "var(--ink-30)", border: "0.5px dashed var(--ink-12)" }
-                : fired
-                ? { background: "#FEE2E2", color: "#991B1B" }
-                : { background: "#EAF3DE", color: "#2D6A4F" }),
-            }}
-          >
-            {chip.label}{!locked ? (fired ? " — fired" : " — clear") : ""}
-          </span>
-        )
-      })}
+      {fired.map(chip => (
+        <span
+          key={chip.key}
+          style={{
+            fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+            fontSize: 10,
+            padding: "4px 10px",
+            borderRadius: 3,
+            background: "#FEE2E2",
+            color: "#991B1B",
+          }}
+        >
+          {chip.label}
+        </span>
+      ))}
     </div>
   )
 }
