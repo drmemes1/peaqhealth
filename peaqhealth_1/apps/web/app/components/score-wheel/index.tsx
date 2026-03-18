@@ -276,36 +276,21 @@ export function ScoreWheel({
   // Stale badge
   const staleBadge = labFreshness === "stale" && bloodData ? `⚠ ${bloodData.monthsOld} mo old` : labFreshness === "aging" && bloodData ? `${bloodData.monthsOld} mo old` : undefined
 
-  // Panel descriptions
-  const sleepDesc = sleepConnected ? "Deep sleep and HRV are your main levers." : "No wearable connected. Connect Apple Watch, Oura, WHOOP, or Garmin."
+  // Panel descriptions — derived from real data only, no hardcoded copy
+  const sleepDesc = sleepConnected && sleepData
+    ? `Synced ${sleepData.lastSync ? new Date(sleepData.lastSync).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "recently"} via ${sleepData.device}`
+    : "Connect a wearable to unlock sleep scoring"
 
-  function generateBloodDesc(): string {
-    if (!bloodData) return "No lab results. Upload your most recent blood panel."
-    const testedCount = [
-      bloodData.hsCRP, bloodData.vitaminD, bloodData.apoB,
-      bloodData.ldlHdlRatio, bloodData.hba1c, bloodData.lpa, bloodData.triglycerides,
-    ].filter(v => v > 0).length
-    if (testedCount === 0) return "No markers found in uploaded labs."
-    const lipidPresent = bloodData.apoB > 0 || bloodData.ldlHdlRatio > 0 || bloodData.triglycerides > 0
-    const lipidGood = (!bloodData.apoB || bloodData.apoB < 90) &&
-                      (!bloodData.ldlHdlRatio || bloodData.ldlHdlRatio < 2.0) &&
-                      (!bloodData.triglycerides || bloodData.triglycerides < 150)
-    const inflamGood = !bloodData.hsCRP || bloodData.hsCRP < 2.0
-    const glycemicGood = !bloodData.hba1c || bloodData.hba1c < 5.7
-    if (lipidPresent && lipidGood && bloodData.hsCRP > 0 && inflamGood && glycemicGood) {
-      return "Lipid profile and inflammation markers in range. Glycemic tracking well."
-    }
-    if (lipidPresent && lipidGood && bloodData.hsCRP > 0 && inflamGood) {
-      return "Lipid profile and inflammation markers in range."
-    }
-    if (lipidPresent && lipidGood) return "Lipid profile looks strong."
-    if (bloodData.hsCRP > 0 && !inflamGood) return "Elevated inflammation detected. Review with your physician."
-    return `${testedCount} marker${testedCount !== 1 ? "s" : ""} tested.`
-  }
-  const bloodDesc = generateBloodDesc()
+  // Blood: use AI insight if available, else simple marker count
+  const bloodDesc = bloodData?.bloodInsight
+    ? bloodData.bloodInsight.split(".")[0] + "."
+    : hasBlood ? "" : "Upload your most recent blood panel."
 
-  const oralDesc = oralActive ? "Shannon diversity and periodontal burden in range." : "Kit results pending. High diversity and low periodontal burden are your targets."
-  const ixDesc = oralActive ? "All interaction terms evaluated." : "4 oral interaction terms locked pending kit results."
+  const oralDesc = oralActive
+    ? ""
+    : "Order your oral microbiome kit to unlock oral scoring"
+
+  const ixDesc = ""
 
   // Sleep marker flags
   const sf = sleepData ? {
@@ -490,20 +475,7 @@ export function ScoreWheel({
           </a>
         ) : undefined}
       >
-        {labLockExpiresAt && new Date(labLockExpiresAt) > new Date() && (() => {
-          const msLeft = new Date(labLockExpiresAt).getTime() - Date.now()
-          const hLeft  = Math.floor(msLeft / 3600000)
-          const mLeft  = Math.floor((msLeft % 3600000) / 60000)
-          const label  = hLeft > 0 ? `${hLeft}h ${mLeft}m` : `${mLeft}m`
-          return (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", marginBottom: 12, borderRadius: 4, background: "#FFFBEB", border: "0.5px solid rgba(184,134,11,0.25)" }}>
-              <span style={{ color: "#B8860B" }}>⏱</span>
-              <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "#92400E" }}>
-                Results unlock in {label} — re-upload to correct before they lock in.
-              </span>
-            </div>
-          )
-        })()}
+        {/* Lock countdown removed — locking still happens in background */}
         {(labFreshness === "stale") && bloodData && (
           <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", marginBottom: 12, borderRadius: 4, background: "var(--amber-bg)" }}>
             <span style={{ color: "var(--amber)" }}>⚠</span>
