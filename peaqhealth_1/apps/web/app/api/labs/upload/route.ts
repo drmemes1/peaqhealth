@@ -433,6 +433,7 @@ function extractMarkersQuestMyChart(lines: string[]): Record<string, number> {
       const val = parseFloat(m[1])
       if (!isPlausible(canonicalKey, val)) continue
 
+      console.log("[quest-found]", canonicalKey, "=", val, "from line:", lines[j])
       found[canonicalKey] = val
       i = j // advance past the value line so adjacent markers don't grab same value
       break
