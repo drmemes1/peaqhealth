@@ -487,23 +487,28 @@ function extractMarkersGeneralText(lines: string[], alreadyFound: Record<string,
 
 // ─── Main parser dispatcher ─────────────────────────────────────────────────
 
-function extractMarkersFromLines(lines: string[]): Record<string, number> {
+function extractMarkersFromLines(lines: string[], tableRows: AzureTableRow[]): Record<string, number> {
   const format = detectLabFormat(lines)
   console.log("[parser] detected format:", format)
 
-  let results: Record<string, number>
-
-  if (format === "labcorp") {
-    const primary = extractMarkersLabCorp(lines)
-    results = extractMarkersGeneralText(lines, primary)
-  } else if (format === "quest_mychart") {
+  if (format === "quest_mychart") {
+    // Quest MyChart: line-by-line parser only.
+    // Do NOT run table-row parser — table cells contain reference ranges
+    // that would overwrite the correct values found by the line parser.
     const primary = extractMarkersQuestMyChart(lines)
-    results = extractMarkersGeneralText(lines, primary)
-  } else {
-    results = extractMarkersGeneralText(lines, {})
+    return extractMarkersGeneralText(lines, primary)
   }
 
-  return results
+  if (format === "labcorp") {
+    // LabCorp: line parser + table rows (catches ApoB and other table-only markers)
+    const primary     = extractMarkersLabCorp(lines)
+    const withGeneral = extractMarkersGeneralText(lines, primary)
+    return extractMarkersFromTableRows(tableRows, withGeneral)
+  }
+
+  // Unknown format: general text + table rows as best-effort fallback
+  const primary = extractMarkersGeneralText(lines, {})
+  return extractMarkersFromTableRows(tableRows, primary)
 }
 
 // ─── Table-row parser (catches markers Azure puts in table cells not lines) ───
@@ -642,9 +647,8 @@ async function processFile(file: FileInput, index: number): Promise<FileResult> 
     console.log("[azure] file", index + 1, "analysis complete, lines:", lines.length, "table cells:", tables.length, "table rows:", tableRows.length)
 
     const allLines  = [...lines, ...tables]
-    const fromLines = extractMarkersFromLines(allLines)
-    // Table-row pass: catches markers Azure puts in table cells (e.g. ApoB on LabCorp)
-    const rawMarkers = extractMarkersFromTableRows(tableRows, fromLines)
+    // Table-row pass is format-gated inside the dispatcher (not run for Quest MyChart)
+    const rawMarkers = extractMarkersFromLines(allLines, tableRows)
     const { markers, notes } = postProcessMarkers(rawMarkers, allLines)
     const labName = extractLabName(lines)
     const collectionDate = extractCollectionDate(lines)
