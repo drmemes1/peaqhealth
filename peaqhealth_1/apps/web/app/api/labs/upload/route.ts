@@ -4,104 +4,149 @@ import { createClient } from "../../../../lib/supabase/server"
 // ─── Marker name → canonical key mapping ────────────────────────────────────
 
 const MARKERS: Record<string, string> = {
-  "ldl": "ldl_mgdL",
+  // LDL
+  "ldl chol calc (nih)": "ldl_mgdL",
+  "ldl cholesterol calc": "ldl_mgdL",
   "ldl cholesterol": "ldl_mgdL",
   "ldl-c": "ldl_mgdL",
-  "ldl cholesterol calc": "ldl_mgdL",
-  "hdl": "hdl_mgdL",
+  "ldl": "ldl_mgdL",
+  // HDL
   "hdl cholesterol": "hdl_mgdL",
   "hdl-c": "hdl_mgdL",
+  "hdl": "hdl_mgdL",
+  // Triglycerides
   "triglycerides": "triglycerides_mgdL",
-  "hs-crp": "hsCRP_mgL",
-  "hscrp": "hsCRP_mgL",
+  // hsCRP — Quest + LabCorp formats
+  "c-reactive protein, cardiac": "hsCRP_mgL",
+  "c-reactive protein (high sensitivity)": "hsCRP_mgL",
+  "crp, cardiac": "hsCRP_mgL",
+  "cardiac crp": "hsCRP_mgL",
   "c-reactive protein": "hsCRP_mgL",
   "high sensitivity crp": "hsCRP_mgL",
-  "hba1c": "hba1c_pct",
+  "hs-crp": "hsCRP_mgL",
+  "hscrp": "hsCRP_mgL",
+  // HbA1c
   "hemoglobin a1c": "hba1c_pct",
-  "a1c": "hba1c_pct",
   "glycated hemoglobin": "hba1c_pct",
-  "glucose": "glucose_mgdL",
+  "hba1c": "hba1c_pct",
+  "a1c": "hba1c_pct",
+  // Glucose
   "fasting glucose": "glucose_mgdL",
-  "vitamin d": "vitaminD_ngmL",
-  "25-oh vitamin d": "vitaminD_ngmL",
-  "vit d": "vitaminD_ngmL",
+  "glucose": "glucose_mgdL",
+  // Vitamin D
   "vitamin d, 25-oh": "vitaminD_ngmL",
+  "25-oh vitamin d": "vitaminD_ngmL",
+  "vitamin d": "vitaminD_ngmL",
+  "vit d": "vitaminD_ngmL",
+  // ApoB
   "apolipoprotein b": "apoB_mgdL",
   "apob": "apoB_mgdL",
   "apo b": "apoB_mgdL",
-  "lipoprotein(a)": "lpa_mgdL",
-  "lp(a)": "lpa_mgdL",
+  // Lp(a) — Quest uses mg/dL, LabCorp uses nmol/L
+  "lipoprotein (a)": "lpa_raw",
+  "lipoprotein(a)": "lpa_raw",
+  "lp(a)": "lpa_raw",
+  // Creatinine
   "creatinine": "creatinine_mgdL",
-  "egfr": "egfr_mLmin",
+  // eGFR
   "estimated gfr": "egfr_mLmin",
-  "alt": "alt_UL",
-  "alt (sgpt)": "alt_UL",
+  "egfr": "egfr_mLmin",
+  // ALT
   "alanine aminotransferase": "alt_UL",
+  "alt (sgpt)": "alt_UL",
   "sgpt": "alt_UL",
-  "ast": "ast_UL",
-  "ast/sgot": "ast_UL",
+  "alt": "alt_UL",
+  // AST
   "aspartate aminotransferase": "ast_UL",
+  "ast (sgot)": "ast_UL",
+  "ast/sgot": "ast_UL",
   "sgot": "ast_UL",
-  "wbc": "wbc_kul",
-  "white blood cell": "wbc_kul",
+  "ast": "ast_UL",
+  // WBC
   "white blood cells": "wbc_kul",
+  "white blood cell": "wbc_kul",
+  "wbc": "wbc_kul",
+  // Hemoglobin
   "hemoglobin": "hemoglobin_gdL",
   "hgb": "hemoglobin_gdL",
-  "rdw": "rdw_pct",
+  // RDW
   "red cell distribution width": "rdw_pct",
   "rdw-cv": "rdw_pct",
-  "mcv": "mcv_fL",
+  "rdw": "rdw_pct",
+  // MCV
   "mean corpuscular volume": "mcv_fL",
+  "mcv": "mcv_fL",
+  // Albumin
   "albumin": "albumin_gdL",
-  "bun": "bun_mgdL",
+  // BUN
   "blood urea nitrogen": "bun_mgdL",
   "urea nitrogen": "bun_mgdL",
+  "bun": "bun_mgdL",
+  // Alkaline phosphatase
   "alkaline phosphatase": "alkPhos_UL",
   "alk phos": "alkPhos_UL",
   "alp": "alkPhos_UL",
-  "total bilirubin": "totalBilirubin_mgdL",
+  // Bilirubin
   "bilirubin, total": "totalBilirubin_mgdL",
   "bilirubin total": "totalBilirubin_mgdL",
+  "total bilirubin": "totalBilirubin_mgdL",
+  // Electrolytes
   "sodium": "sodium_mmolL",
   "potassium": "potassium_mmolL",
-  "total cholesterol": "totalCholesterol_mgdL",
+  "chloride": "chloride_mmolL",
+  "carbon dioxide, total": "co2_mmolL",
+  "carbon dioxide": "co2_mmolL",
+  "co2": "co2_mmolL",
+  "calcium": "calcium_mgdL",
+  // Cholesterol
   "cholesterol, total": "totalCholesterol_mgdL",
-  "non-hdl": "nonHDL_mgdL",
+  "total cholesterol": "totalCholesterol_mgdL",
   "non hdl cholesterol": "nonHDL_mgdL",
+  "non-hdl": "nonHDL_mgdL",
+  "vldl cholesterol cal": "vldl_mgdL",
+  // Protein
+  "protein, total": "totalProtein_gdL",
+  "total protein": "totalProtein_gdL",
+  "globulin, total": "globulin_gdL",
+  "globulin": "globulin_gdL",
+  "a/g ratio": "agRatio",
+  // Other blood
   "uric acid": "uricAcid_mgdL",
   "ferritin": "ferritin_ngmL",
-  "tsh": "tsh_uIUmL",
-  "thyroid stimulating hormone": "tsh_uIUmL",
-  "testosterone": "testosterone_ngdL",
-  "testosterone, total": "testosterone_ngdL",
-  "free testosterone": "freeTesto_pgmL",
-  "dhea-s": "dhea_s_ugdL",
-  "dhea sulfate": "dhea_s_ugdL",
-  "igf-1": "igf1_ngmL",
-  "insulin-like growth factor": "igf1_ngmL",
-  "fasting insulin": "fastingInsulin_uIUmL",
   "homocysteine": "homocysteine_umolL",
-  "omega-3 index": "omega3Index_pct",
-  "cortisol": "cortisol_ugdL",
-  "platelet": "platelets_kul",
+  "esr": "esr_mmhr",
+  "erythrocyte sedimentation": "esr_mmhr",
+  "sed rate": "esr_mmhr",
+  // CBC
   "platelet count": "platelets_kul",
-  "rbc": "rbc_mil",
+  "platelets": "platelets_kul",
+  "platelet": "platelets_kul",
   "red blood cell": "rbc_mil",
+  "rbc": "rbc_mil",
   "hematocrit": "hematocrit_pct",
   "mch": "mch_pg",
   "mchc": "mchc_gdl",
   "mpv": "mpv_fl",
-  "calcium": "calcium_mgdL",
-  "carbon dioxide": "co2_mmolL",
-  "co2": "co2_mmolL",
-  "chloride": "chloride_mmolL",
-  "protein, total": "totalProtein_gdL",
-  "total protein": "totalProtein_gdL",
-  "globulin": "globulin_gdL",
-  "a/g ratio": "agRatio",
-  "esr": "esr_mmhr",
-  "erythrocyte sedimentation": "esr_mmhr",
-  "sed rate": "esr_mmhr",
+  "neutrophils": "neutrophils_pct",
+  "lymphs": "lymphs_pct",
+  // Thyroid
+  "thyroid stimulating hormone": "tsh_uIUmL",
+  "tsh": "tsh_uIUmL",
+  // Hormones
+  "testosterone, total": "testosterone_ngdL",
+  "testosterone": "testosterone_ngdL",
+  "free testosterone(direct)": "freeTesto_pgmL",
+  "free testosterone (direct)": "freeTesto_pgmL",
+  "free testosterone": "freeTesto_pgmL",
+  "sex horm binding glob, serum": "shbg_nmolL",
+  "dhea sulfate": "dhea_s_ugdL",
+  "dhea-s": "dhea_s_ugdL",
+  "insulin-like growth factor": "igf1_ngmL",
+  "igf-1": "igf1_ngmL",
+  "fasting insulin": "fastingInsulin_uIUmL",
+  "cortisol": "cortisol_ugdL",
+  // Other
+  "omega-3 index": "omega3Index_pct",
 }
 
 // Sort by name length descending for matching (longer first to avoid partial matches)
@@ -194,21 +239,51 @@ async function analyzeWithAzure(buffer: Buffer): Promise<{ lines: string[]; tabl
 // Plausible physiological ranges — values outside these are likely reference ranges or noise
 const PLAUSIBLE_RANGES: Record<string, [number, number]> = {
   ldl_mgdL: [20, 400], hdl_mgdL: [10, 150], triglycerides_mgdL: [20, 2000],
-  glucose_mgdL: [40, 600], hsCRP_mgL: [0.1, 200], vitaminD_ngmL: [4, 150],
+  glucose_mgdL: [40, 600], hsCRP_mgL: [0.01, 100], vitaminD_ngmL: [4, 150],
   hba1c_pct: [3, 15], creatinine_mgdL: [0.3, 15], egfr_mLmin: [5, 200],
   alt_UL: [5, 500], ast_UL: [5, 500], wbc_kul: [1, 30], hemoglobin_gdL: [5, 20],
   rdw_pct: [8, 25], albumin_gdL: [1, 6], bun_mgdL: [2, 100],
   sodium_mmolL: [100, 170], potassium_mmolL: [2, 8], apoB_mgdL: [20, 300],
-  lpa_mgdL: [0.5, 300], ferritin_ngmL: [1, 2000], totalCholesterol_mgdL: [50, 500],
+  lpa_raw: [0.5, 500], ferritin_ngmL: [1, 2000], totalCholesterol_mgdL: [50, 500],
   homocysteine_umolL: [2, 50], tsh_uIUmL: [0.1, 20], calcium_mgdL: [5, 15],
   hematocrit_pct: [20, 65], rbc_mil: [2, 8], platelets_kul: [50, 600],
+  testosterone_ngdL: [10, 1500], freeTesto_pgmL: [1, 50], shbg_nmolL: [5, 200],
+  alkPhos_UL: [10, 500], totalBilirubin_mgdL: [0.1, 15], co2_mmolL: [10, 40],
+  chloride_mmolL: [85, 115], totalProtein_gdL: [4, 10], globulin_gdL: [1, 5],
+  neutrophils_pct: [20, 90], lymphs_pct: [5, 60], vldl_mgdL: [2, 100],
+  mcv_fL: [50, 120], mch_pg: [20, 40], cortisol_ugdL: [1, 50],
 }
 
 // Keywords that precede reference range values, not actual results
-const RANGE_KEYWORDS = /(?:normal|reference|range|target|limit|standard|or\s*=)\s*(?:value)?[:\s]*$/i
+const RANGE_KEYWORDS = /(?:normal|reference|range|target|limit|standard)\s*(?:value)?[:\s]*$/i
+
+// LabCorp line pattern: "TestName B, 01 VALUE units range"
+const LABCORP_LINE = /^(.+?)\s+[A-Z],?\s*\d+\s+([\d.]+)\s+/i
 
 function extractMarkersFromLines(lines: string[]): Record<string, number> {
   const found: Record<string, number> = {}
+
+  // Pass 1: Try LabCorp structured line extraction
+  for (const line of lines) {
+    const labcorpMatch = LABCORP_LINE.exec(line)
+    if (!labcorpMatch) continue
+
+    const testName = labcorpMatch[1].trim().toLowerCase()
+    const val = parseFloat(labcorpMatch[2])
+    if (isNaN(val) || val <= 0) continue
+
+    // Find matching marker
+    for (const [markerName, canonicalKey] of SORTED_MARKERS) {
+      if (found[canonicalKey]) continue
+      if (!testName.includes(markerName)) continue
+      const range = PLAUSIBLE_RANGES[canonicalKey]
+      if (range && (val < range[0] || val > range[1])) continue
+      found[canonicalKey] = val
+      break
+    }
+  }
+
+  // Pass 2: Fallback to full-text search for markers not found in pass 1
   const fullText = lines.join("\n").toLowerCase()
 
   for (const [markerName, canonicalKey] of SORTED_MARKERS) {
@@ -226,17 +301,17 @@ function extractMarkersFromLines(lines: string[]): Record<string, number> {
       const val = parseFloat(match[1])
       if (val <= 0 || val > 9999) continue
 
-      // Check ~10 chars before the number for comparison operators (handles "≥40", "< 150", "> OR = 40")
+      // Check ~10 chars before the number for comparison operators
       const charsBefore = surrounding.slice(Math.max(0, match.index - 10), match.index)
       if (/[<>≥≤]\s*$/.test(charsBefore)) continue
       if (/\bor\s*=\s*$/.test(charsBefore)) continue
 
-      // Check chars after for dash/space-separated ranges (handles "65-99" and "65 99")
+      // Check chars after for dash-separated ranges
       const charsAfter = surrounding.slice(match.index + match[0].length, match.index + match[0].length + 15)
-      if (/^\s*[-–]\s*\d/.test(charsAfter)) continue              // "65-99" style
-      if (/^\s+\d{2,4}\b/.test(charsAfter) && val < 500) continue // "65 99" style (two nums, space-sep)
+      if (/^\s*[-–]\s*\d/.test(charsAfter)) continue
+      if (/^\s+\d{2,4}\b/.test(charsAfter) && val < 500) continue
 
-      // Check if reference range keywords appear immediately before this number in surrounding
+      // Check if reference range keywords appear before this number
       const textBefore = surrounding.slice(0, match.index)
       if (RANGE_KEYWORDS.test(textBefore)) continue
 
@@ -250,6 +325,53 @@ function extractMarkersFromLines(lines: string[]): Record<string, number> {
 
   return found
 }
+
+// ─── Lp(a) unit detection + conversion ──────────────────────────────────────
+
+function convertLpaUnits(
+  rawVal: number,
+  lines: string[]
+): { lpa_mgdL: number } {
+  const fullText = lines.join(" ").toLowerCase()
+
+  // Search near "lipoprotein" for unit strings
+  const lpaIdx = fullText.indexOf("lipoprotein")
+  if (lpaIdx !== -1) {
+    const nearby = fullText.slice(lpaIdx, lpaIdx + 200)
+    if (nearby.includes("nmol/l") || nearby.includes("nmol")) {
+      // LabCorp reports nmol/L — convert: nmol/L ÷ 2.5 ≈ mg/dL
+      return { lpa_mgdL: Math.round((rawVal / 2.5) * 10) / 10 }
+    }
+  }
+
+  // Default: assume mg/dL (Quest format)
+  return { lpa_mgdL: rawVal }
+}
+
+// ─── Post-processing: derived markers + unit conversions ────────────────────
+
+function postProcessMarkers(
+  markers: Record<string, number>,
+  lines: string[]
+): Record<string, number> {
+  const result = { ...markers }
+
+  // Convert Lp(a) from raw to mg/dL
+  if (result.lpa_raw) {
+    const { lpa_mgdL } = convertLpaUnits(result.lpa_raw, lines)
+    result.lpa_mgdL = lpa_mgdL
+    delete result.lpa_raw
+  }
+
+  // Calculate LDL:HDL ratio from actual values (never extract from text)
+  if (result.ldl_mgdL && result.hdl_mgdL) {
+    result.ldlHdlRatio = Math.round((result.ldl_mgdL / result.hdl_mgdL) * 100) / 100
+  }
+
+  return result
+}
+
+// ─── Lab name + date extraction ─────────────────────────────────────────────
 
 function extractLabName(lines: string[]): string | undefined {
   const text = lines.join(" ").toLowerCase()
@@ -265,21 +387,13 @@ function extractCollectionDate(lines: string[]): string | undefined {
   const text = lines.join(" ")
 
   const datePatterns = [
-    // "Collection date: Dec 11, 2025" or "Collection date: Dec 11, 2025 10:05 AM"
     /collection date[:\s]+(\w+ \d{1,2},?\s*\d{4})/i,
-    // "Collected: 12/11/2025"
     /collected[:\s]+(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
-    // "Collection Date: 12/11/2025"
     /collection date[:\s]+(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
-    // "Date collected: Dec 11, 2025"
     /date collected[:\s]+(\w+ \d{1,2},?\s*\d{4})/i,
-    // "Specimen collected: 12/11/25"
     /specimen collected[:\s]+(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
-    // "Drawn: 12/11/2025"
     /drawn[:\s]+(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
-    // ISO format: "2025-12-11"
     /(\d{4}-\d{2}-\d{2})/,
-    // Standalone: "Dec 11, 2025"
     /\b((?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+\d{1,2},?\s*\d{4})\b/i,
   ]
 
@@ -295,6 +409,8 @@ function extractCollectionDate(lines: string[]): string | undefined {
   return undefined
 }
 
+// ─── File processing ────────────────────────────────────────────────────────
+
 async function processFile(file: FileInput, index: number): Promise<FileResult> {
   try {
     const buffer = Buffer.from(file.base64, "base64")
@@ -304,7 +420,8 @@ async function processFile(file: FileInput, index: number): Promise<FileResult> 
     console.log("[azure] file", index + 1, "analysis complete, lines:", lines.length, "table cells:", tables.length)
 
     const allLines = [...lines, ...tables]
-    const markers = extractMarkersFromLines(allLines)
+    const rawMarkers = extractMarkersFromLines(allLines)
+    const markers = postProcessMarkers(rawMarkers, allLines)
     const labName = extractLabName(lines)
     const collectionDate = extractCollectionDate(lines)
 
@@ -340,7 +457,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Lab parser not configured" }, { status: 500 })
   }
 
-  // Parse request — support both multi-file and single-file (backwards compat)
   let files: FileInput[]
   try {
     const body = await request.json() as Record<string, unknown>
@@ -363,10 +479,8 @@ export async function POST(request: NextRequest) {
 
   console.log("[azure] submitting", files.length, "files")
 
-  // Process all files in parallel
   const results = await Promise.all(files.map((f, i) => processFile(f, i)))
 
-  // Check if all failed
   const succeeded = results.filter((r) => !r.error)
   if (succeeded.length === 0) {
     return NextResponse.json({
@@ -375,12 +489,10 @@ export async function POST(request: NextRequest) {
     }, { status: 422 })
   }
 
-  // Merge markers across all files
-  // If same marker in multiple files, prefer the one with most recent collectionDate
+  // Merge markers — most recent collectionDate takes precedence
   const merged: Record<string, number> = {}
   const markerSource: Record<string, string> = {}
 
-  // Sort by collectionDate descending so most recent file's markers take precedence
   const sorted = [...succeeded].sort((a, b) => {
     if (!a.collectionDate && !b.collectionDate) return 0
     if (!a.collectionDate) return 1
@@ -397,23 +509,18 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Use earliest collectionDate (usually same blood draw split across reports)
   const dates = results.map((r) => r.collectionDate).filter(Boolean) as string[]
   const collectionDate = dates.length > 0 ? dates.sort()[0] : new Date().toISOString().slice(0, 10)
-
-  // Use first lab name found
   const labName = results.find((r) => r.labName)?.labName
 
   console.log("[azure] merged total markers:", Object.keys(merged).length)
 
-  // Build per-file summary
   const perFile = results.map((r) => ({
     filename: r.filename,
     markersFound: r.markersFound,
     error: r.error,
   }))
 
-  // Note which files failed
   const failedFiles = results.filter((r) => r.error)
   const warnings = failedFiles.map((f) => `Could not read ${f.filename}`)
 

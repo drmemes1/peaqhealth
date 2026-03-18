@@ -79,6 +79,7 @@ export interface ScoreWheelProps {
   peaqPercentLabel?: string
   lpaFlag?:          "elevated" | "very_elevated" | null
   hsCRPRetestFlag?:  boolean
+  additionalMarkers?: Array<{ name: string; value: number; unit: string }>
 }
 
 function flag(good: boolean, watch?: boolean): Flag {
@@ -87,11 +88,40 @@ function flag(good: boolean, watch?: boolean): Flag {
   return "attention"
 }
 
+function CollapsibleSection({
+  title, subtitle, defaultOpen, color, delay, fadeUpFn, children,
+}: {
+  title: string; subtitle: string; defaultOpen: boolean; color: string
+  delay: string; fadeUpFn: (d: string) => React.CSSProperties; children: React.ReactNode
+}) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <div style={fadeUpFn(delay)}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        style={{
+          width: "100%", display: "flex", alignItems: "baseline", justifyContent: "space-between",
+          marginBottom: open ? 12 : 0, padding: 0, border: "none", background: "transparent", cursor: "pointer",
+        }}
+      >
+        <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 20, fontWeight: 300, color: "var(--ink)", margin: 0 }}>{title}</h3>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+          <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color }}>{subtitle}</span>
+          <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, color: "var(--ink-30)", transition: "transform 0.2s ease", display: "inline-block", transform: open ? "rotate(0)" : "rotate(-90deg)" }}>▼</span>
+        </div>
+      </button>
+      <div style={{ maxHeight: open ? 2000 : 0, overflow: "hidden", transition: "max-height 0.4s ease", borderTop: open ? "0.5px solid var(--ink-12)" : "none" }}>
+        {children}
+      </div>
+    </div>
+  )
+}
+
 export function ScoreWheel({
   score, breakdown, sleepConnected, labFreshness, oralActive,
   sleepData, bloodData, oralData, lifestyleData, interactions,
   lastSyncAt, lastSyncRequestedAt,
-  peaqPercent, peaqPercentLabel, lpaFlag, hsCRPRetestFlag,
+  peaqPercent, peaqPercentLabel, lpaFlag, hsCRPRetestFlag, additionalMarkers,
 }: ScoreWheelProps) {
   const [mounted, setMounted] = useState(false)
   const [hoveredRing, setHoveredRing] = useState<string | null>(null)
@@ -346,6 +376,34 @@ export function ScoreWheel({
           })}
         </div>
       </div>
+
+      {/* ADDITIONAL MARKERS (collapsible) */}
+      {additionalMarkers && additionalMarkers.length > 0 && (
+        <CollapsibleSection
+          title="Additional Markers"
+          subtitle={`${additionalMarkers.length} markers · not included in score`}
+          defaultOpen={false}
+          color="var(--ink-60)"
+          delay="0.23s"
+          fadeUpFn={fadeUp}
+        >
+          {additionalMarkers.map((m) => (
+            <div
+              key={m.name}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: "8px 0", borderBottom: "0.5px solid var(--ink-06)",
+              }}
+            >
+              <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink-60)" }}>{m.name}</span>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink)" }}>{m.value}</span>
+                <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, color: "var(--ink-30)" }}>{m.unit}</span>
+              </div>
+            </div>
+          ))}
+        </CollapsibleSection>
+      )}
 
       {/* ORAL MARKERS */}
       <div style={fadeUp("0.26s")}>
