@@ -1,158 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "../../../../lib/supabase/server"
+import OpenAI from "openai"
 
-// ─── Marker name → canonical key mapping ────────────────────────────────────
-
-const MARKERS: Record<string, string> = {
-  // LDL
-  "ldl chol calc (nih)": "ldl_mgdL",
-  "ldl cholesterol calc": "ldl_mgdL",
-  "ldl cholesterol": "ldl_mgdL",
-  "ldl-c": "ldl_mgdL",
-  "ldl": "ldl_mgdL",
-  // HDL
-  "hdl cholesterol": "hdl_mgdL",
-  "hdl-c": "hdl_mgdL",
-  "hdl": "hdl_mgdL",
-  // Triglycerides
-  "triglycerides": "triglycerides_mgdL",
-  // hsCRP — Quest + LabCorp formats
-  "c-reactive protein, cardiac": "hsCRP_mgL",
-  "c-reactive protein (high sensitivity)": "hsCRP_mgL",
-  "crp, cardiac": "hsCRP_mgL",
-  "cardiac crp": "hsCRP_mgL",
-  "c-reactive protein": "hsCRP_mgL",
-  "high sensitivity crp": "hsCRP_mgL",
-  "hs-crp": "hsCRP_mgL",
-  "hscrp": "hsCRP_mgL",
-  // HbA1c
-  "hemoglobin a1c": "hba1c_pct",
-  "glycated hemoglobin": "hba1c_pct",
-  "hba1c": "hba1c_pct",
-  "a1c": "hba1c_pct",
-  // Glucose
-  "fasting glucose": "glucose_mgdL",
-  "glucose": "glucose_mgdL",
-  // Vitamin D
-  "vitamin d, 25-oh": "vitaminD_ngmL",
-  "25-oh vitamin d": "vitaminD_ngmL",
-  "vitamin d": "vitaminD_ngmL",
-  "vit d": "vitaminD_ngmL",
-  // ApoB
-  "apolipoprotein b": "apoB_mgdL",
-  "apob": "apoB_mgdL",
-  "apo b": "apoB_mgdL",
-  // Lp(a) — Quest uses mg/dL, LabCorp uses nmol/L
-  "lipoprotein (a)": "lpa_raw",
-  "lipoprotein(a)": "lpa_raw",
-  "lp(a)": "lpa_raw",
-  // Creatinine
-  "creatinine": "creatinine_mgdL",
-  // eGFR
-  "estimated gfr": "egfr_mLmin",
-  "egfr": "egfr_mLmin",
-  // ALT
-  "alanine aminotransferase": "alt_UL",
-  "alt (sgpt)": "alt_UL",
-  "sgpt": "alt_UL",
-  "alt": "alt_UL",
-  // AST
-  "aspartate aminotransferase": "ast_UL",
-  "ast (sgot)": "ast_UL",
-  "ast/sgot": "ast_UL",
-  "sgot": "ast_UL",
-  "ast": "ast_UL",
-  // WBC
-  "white blood cells": "wbc_kul",
-  "white blood cell": "wbc_kul",
-  "wbc": "wbc_kul",
-  // Hemoglobin
-  "hemoglobin": "hemoglobin_gdL",
-  "hgb": "hemoglobin_gdL",
-  // RDW
-  "red cell distribution width": "rdw_pct",
-  "rdw-cv": "rdw_pct",
-  "rdw": "rdw_pct",
-  // MCV
-  "mean corpuscular volume": "mcv_fL",
-  "mcv": "mcv_fL",
-  // Albumin
-  "albumin": "albumin_gdL",
-  // BUN
-  "blood urea nitrogen": "bun_mgdL",
-  "urea nitrogen": "bun_mgdL",
-  "bun": "bun_mgdL",
-  // Alkaline phosphatase
-  "alkaline phosphatase": "alkPhos_UL",
-  "alk phos": "alkPhos_UL",
-  "alp": "alkPhos_UL",
-  // Bilirubin
-  "bilirubin, total": "totalBilirubin_mgdL",
-  "bilirubin total": "totalBilirubin_mgdL",
-  "total bilirubin": "totalBilirubin_mgdL",
-  // Electrolytes
-  "sodium": "sodium_mmolL",
-  "potassium": "potassium_mmolL",
-  "chloride": "chloride_mmolL",
-  "carbon dioxide, total": "co2_mmolL",
-  "carbon dioxide": "co2_mmolL",
-  "co2": "co2_mmolL",
-  "calcium": "calcium_mgdL",
-  // Cholesterol
-  "cholesterol, total": "totalCholesterol_mgdL",
-  "total cholesterol": "totalCholesterol_mgdL",
-  "non hdl cholesterol": "nonHDL_mgdL",
-  "non-hdl": "nonHDL_mgdL",
-  "vldl cholesterol cal": "vldl_mgdL",
-  // Protein
-  "protein, total": "totalProtein_gdL",
-  "total protein": "totalProtein_gdL",
-  "globulin, total": "globulin_gdL",
-  "globulin": "globulin_gdL",
-  "a/g ratio": "agRatio",
-  // Other blood
-  "uric acid": "uricAcid_mgdL",
-  "ferritin": "ferritin_ngmL",
-  "homocysteine": "homocysteine_umolL",
-  "esr": "esr_mmhr",
-  "erythrocyte sedimentation": "esr_mmhr",
-  "sed rate": "esr_mmhr",
-  // CBC
-  "platelet count": "platelets_kul",
-  "platelets": "platelets_kul",
-  "platelet": "platelets_kul",
-  "red blood cell": "rbc_mil",
-  "rbc": "rbc_mil",
-  "hematocrit": "hematocrit_pct",
-  "mch": "mch_pg",
-  "mchc": "mchc_gdl",
-  "mpv": "mpv_fl",
-  "neutrophils": "neutrophils_pct",
-  "lymphs": "lymphs_pct",
-  // Thyroid
-  "thyroid stimulating hormone": "tsh_uIUmL",
-  "tsh": "tsh_uIUmL",
-  // Hormones
-  "testosterone, total": "testosterone_ngdL",
-  "testosterone": "testosterone_ngdL",
-  "free testosterone(direct)": "freeTesto_pgmL",
-  "free testosterone (direct)": "freeTesto_pgmL",
-  "free testosterone": "freeTesto_pgmL",
-  "sex horm binding glob, serum": "shbg_nmolL",
-  "dhea sulfate": "dhea_s_ugdL",
-  "dhea-s": "dhea_s_ugdL",
-  "insulin-like growth factor": "igf1_ngmL",
-  "igf-1": "igf1_ngmL",
-  "fasting insulin": "fastingInsulin_uIUmL",
-  "cortisol": "cortisol_ugdL",
-  // Other
-  "omega-3 index": "omega3Index_pct",
-}
-
-// Sort by name length descending for matching (longer first to avoid partial matches)
-const SORTED_MARKERS = Object.entries(MARKERS).sort((a, b) => b[0].length - a[0].length)
-
-// ─── Azure Document Intelligence helpers ────────────────────────────────────
+// ─── Types ──────────────────────────────────────────────────────────────────
 
 interface FileInput {
   base64: string
@@ -167,520 +17,246 @@ interface FileResult {
   labName?: string
   collectionDate?: string
   notes?: Record<string, string>
+  parserUsed: "openai" | "azure-hybrid" | "failed"
   error?: string
 }
 
-// Structured table row — cells sorted by column index
-interface AzureTableRow {
-  cells: Array<{ content: string; colIndex: number }>
-}
+// ─── OpenAI prompt ──────────────────────────────────────────────────────────
 
-async function analyzeWithAzure(buffer: Buffer): Promise<{
-  lines: string[]
-  tables: string[]
-  tableRows: AzureTableRow[]
-}> {
-  const endpoint = process.env.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT
-  const apiKey = process.env.AZURE_DOCUMENT_INTELLIGENCE_KEY
+const EXTRACTION_PROMPT = `You are a medical lab report parser. Extract ALL lab test results from this document.
+Return ONLY a valid JSON object with no other text, no markdown fences, no explanation.
 
-  if (!endpoint || !apiKey) throw new Error("Azure Document Intelligence not configured")
+Use these exact key names where applicable:
+ldl_mgdL, hdl_mgdL, triglycerides_mgdL, hsCRP_mgL, hba1c_pct, glucose_mgdL,
+vitaminD_ngmL, apoB_mgdL, lpa_mgdL, creatinine_mgdL, egfr_mLmin, alt_UL, ast_UL,
+wbc_kul, hemoglobin_gdL, rdw_pct, mcv_fL, albumin_gdL, bun_mgdL, alkPhos_UL,
+totalBilirubin_mgdL, sodium_mmolL, potassium_mmolL, totalCholesterol_mgdL,
+nonHDL_mgdL, testosterone_ngdL, freeTesto_pgmL, shbg_nmolL, vldl_mgdL,
+uricAcid_mgdL, ferritin_ngmL, tsh_uIUmL, homocysteine_umolL, omega3Index_pct,
+cortisol_ugdL, dhea_s_ugdL, igf1_ngmL, fastingInsulin_uIUmL, hematocrit_pct,
+platelets_kul, rbc_mil, mch_pg, mchc_gdl, neutrophils_pct, lymphs_pct,
+globulin_gdL, totalProtein_gdL, calcium_mgdL, chloride_mmolL, co2_mmolL,
+esr_mmhr, mpv_fl, agRatio,
+collectionDate, labName
 
-  const analyzeUrl = `${endpoint}documentintelligence/documentModels/prebuilt-layout:analyze?api-version=2024-11-30`
+Rules:
+- Only include markers actually present in the report
+- Use the RESULT value, NOT reference ranges
+- For Lp(a) in nmol/L, convert to mg/dL by dividing by 2.5
+- All numeric values should be numbers, not strings
+- collectionDate should be the specimen collection date in YYYY-MM-DD format
+- labName should be the laboratory name (Quest Diagnostics, LabCorp, etc)
+- Omit any marker not found — do not include null values`
 
-  const submitRes = await fetch(analyzeUrl, {
-    method: "POST",
-    headers: {
-      "Ocp-Apim-Subscription-Key": apiKey,
-      "Content-Type": "application/pdf",
-    },
-    body: new Uint8Array(buffer),
-  })
+// ─── OpenAI Vision parser (primary) ─────────────────────────────────────────
 
-  if (!submitRes.ok) {
-    throw new Error(`Azure submit failed: ${submitRes.status}`)
-  }
+async function parseWithOpenAIVision(fileBase64: string): Promise<Record<string, unknown> | null> {
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) return null
 
-  const operationUrl = submitRes.headers.get("Operation-Location")
-  if (!operationUrl) throw new Error("Azure: no Operation-Location header")
+  const openai = new OpenAI({ apiKey })
 
-  for (let i = 0; i < 15; i++) {
-    await new Promise((r) => setTimeout(r, 2000))
-
-    const pollRes = await fetch(operationUrl, {
-      headers: { "Ocp-Apim-Subscription-Key": apiKey },
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      max_tokens: 2000,
+      messages: [{
+        role: "user",
+        content: [
+          { type: "text", text: EXTRACTION_PROMPT },
+          {
+            type: "image_url",
+            image_url: {
+              url: `data:image/png;base64,${fileBase64}`,
+              detail: "high",
+            },
+          },
+        ],
+      }],
     })
 
-    if (!pollRes.ok) continue
+    const text = response.choices[0]?.message?.content?.trim() ?? ""
+    // Strip markdown fences if present
+    const jsonStr = text.replace(/^```(?:json)?\n?/i, "").replace(/\n?```$/i, "").trim()
+    return JSON.parse(jsonStr) as Record<string, unknown>
+  } catch (err) {
+    console.log("[parser] OpenAI vision failed:", err instanceof Error ? err.message : "unknown error")
+    return null
+  }
+}
 
-    const data = await pollRes.json() as Record<string, unknown>
-    const status = data.status as string
+// ─── Azure text extraction + OpenAI text parser (hybrid fallback) ────────────
 
-    if (status === "succeeded") {
-      const result    = data.analyzeResult as Record<string, unknown> | undefined
-      const pages     = (result?.pages  ?? []) as Array<{ lines?: Array<{ content: string }> }>
-      const rawTables = (result?.tables ?? []) as Array<{
-        cells?: Array<{ content: string; rowIndex: number; columnIndex: number }>
-      }>
+async function extractTextWithAzure(buffer: Buffer): Promise<string | null> {
+  const endpoint = process.env.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT
+  const apiKey = process.env.AZURE_DOCUMENT_INTELLIGENCE_KEY
+  if (!endpoint || !apiKey) return null
 
-      const lines: string[] = []
-      for (const page of pages) {
-        for (const line of page.lines ?? []) lines.push(line.content)
+  try {
+    const analyzeUrl = `${endpoint}documentintelligence/documentModels/prebuilt-layout:analyze?api-version=2024-11-30`
+
+    const submitRes = await fetch(analyzeUrl, {
+      method: "POST",
+      headers: {
+        "Ocp-Apim-Subscription-Key": apiKey,
+        "Content-Type": "application/pdf",
+      },
+      body: new Uint8Array(buffer),
+    })
+
+    if (!submitRes.ok) return null
+
+    const operationUrl = submitRes.headers.get("Operation-Location")
+    if (!operationUrl) return null
+
+    for (let i = 0; i < 15; i++) {
+      await new Promise((r) => setTimeout(r, 2000))
+
+      const pollRes = await fetch(operationUrl, {
+        headers: { "Ocp-Apim-Subscription-Key": apiKey },
+      })
+
+      if (!pollRes.ok) continue
+
+      const data = await pollRes.json() as Record<string, unknown>
+      if (data.status === "succeeded") {
+        const result = data.analyzeResult as Record<string, unknown> | undefined
+        const pages = (result?.pages ?? []) as Array<{ lines?: Array<{ content: string }> }>
+        const tables = (result?.tables ?? []) as Array<{ cells?: Array<{ content: string }> }>
+
+        const allText: string[] = []
+        for (const page of pages) {
+          for (const line of page.lines ?? []) allText.push(line.content)
+        }
+        for (const table of tables) {
+          for (const cell of table.cells ?? []) allText.push(cell.content)
+        }
+
+        return allText.join("\n")
       }
 
-      const tableCells: string[] = []
-      const tableRows:  AzureTableRow[] = []
-
-      for (const table of rawTables) {
-        // Flat cells for existing parsers
-        for (const cell of table.cells ?? []) tableCells.push(cell.content)
-
-        // Structured rows for table-based extraction
-        const rowMap = new Map<number, Array<{ content: string; colIndex: number }>>()
-        for (const cell of table.cells ?? []) {
-          const row = cell.rowIndex
-          if (!rowMap.has(row)) rowMap.set(row, [])
-          rowMap.get(row)!.push({ content: cell.content, colIndex: cell.columnIndex })
-        }
-        for (const [, cells] of Array.from(rowMap.entries()).sort((a, b) => a[0] - b[0])) {
-          tableRows.push({ cells: cells.sort((a, b) => a.colIndex - b.colIndex) })
-        }
-      }
-
-      return { lines, tables: tableCells, tableRows }
+      if (data.status === "failed") return null
     }
-
-    if (status === "failed") {
-      throw new Error("Azure analysis failed")
-    }
+  } catch {
+    // fall through
   }
 
-  throw new Error("Azure analysis timed out")
+  return null
 }
 
-// ─── Plausible ranges ───────────────────────────────────────────────────────
+async function parseWithAzureHybrid(fileBase64: string): Promise<Record<string, unknown> | null> {
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) return null
 
-const PLAUSIBLE_RANGES: Record<string, [number, number]> = {
-  ldl_mgdL: [20, 400], hdl_mgdL: [10, 150], triglycerides_mgdL: [20, 2000],
-  glucose_mgdL: [40, 600], hsCRP_mgL: [0.01, 100], vitaminD_ngmL: [4, 150],
-  hba1c_pct: [3, 15], creatinine_mgdL: [0.3, 15], egfr_mLmin: [5, 200],
-  alt_UL: [5, 500], ast_UL: [5, 500], wbc_kul: [1, 30], hemoglobin_gdL: [5, 20],
-  rdw_pct: [8, 25], albumin_gdL: [1, 6], bun_mgdL: [2, 100],
-  sodium_mmolL: [100, 170], potassium_mmolL: [2, 8], apoB_mgdL: [20, 300],
-  lpa_raw: [0.5, 500], ferritin_ngmL: [1, 2000], totalCholesterol_mgdL: [50, 500],
-  homocysteine_umolL: [2, 50], tsh_uIUmL: [0.1, 20], calcium_mgdL: [5, 15],
-  hematocrit_pct: [20, 65], rbc_mil: [2, 8], platelets_kul: [50, 600],
-  testosterone_ngdL: [10, 1500], freeTesto_pgmL: [1, 50], shbg_nmolL: [5, 200],
-  alkPhos_UL: [10, 500], totalBilirubin_mgdL: [0.1, 15], co2_mmolL: [10, 40],
-  chloride_mmolL: [85, 115], totalProtein_gdL: [4, 10], globulin_gdL: [1, 5],
-  neutrophils_pct: [20, 90], lymphs_pct: [5, 60], vldl_mgdL: [2, 100],
-  mcv_fL: [50, 120], mch_pg: [20, 40], cortisol_ugdL: [1, 50],
-}
+  const buffer = Buffer.from(fileBase64, "base64")
+  const azureText = await extractTextWithAzure(buffer)
+  if (!azureText) return null
 
-function isPlausible(key: string, val: number): boolean {
-  const range = PLAUSIBLE_RANGES[key]
-  if (!range) return val > 0 && val < 10000
-  return val >= range[0] && val <= range[1]
-}
+  console.log("[parser] Azure extracted text length:", azureText.length)
 
-// ─── Marker lookup helper ───────────────────────────────────────────────────
+  const openai = new OpenAI({ apiKey })
 
-function lookupMarker(name: string): string | undefined {
-  const lower = name.toLowerCase().trim()
-  // Try exact match first
-  if (MARKERS[lower]) return MARKERS[lower]
-  // Try includes match (longest marker name first)
-  for (const [markerName, key] of SORTED_MARKERS) {
-    if (lower.includes(markerName)) return key
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      max_tokens: 2000,
+      messages: [{
+        role: "user",
+        content: `${EXTRACTION_PROMPT}\n\nLab report text:\n\n${azureText}`,
+      }],
+    })
+
+    const text = response.choices[0]?.message?.content?.trim() ?? ""
+    const jsonStr = text.replace(/^```(?:json)?\n?/i, "").replace(/\n?```$/i, "").trim()
+    return JSON.parse(jsonStr) as Record<string, unknown>
+  } catch (err) {
+    console.log("[parser] Azure hybrid GPT parse failed:", err instanceof Error ? err.message : "unknown error")
+    return null
   }
-  return undefined
 }
 
-function lookupMarkerExact(name: string): string | undefined {
-  const lower = name.toLowerCase().trim()
-  // Only exact match for Quest line-by-line format
-  for (const [markerName, key] of SORTED_MARKERS) {
-    if (lower === markerName) return key
-  }
-  return undefined
-}
+// ─── Extract markers from parsed JSON ───────────────────────────────────────
 
-// ─── Format detection ───────────────────────────────────────────────────────
+function extractFromParsedJson(
+  parsed: Record<string, unknown>
+): { markers: Record<string, number>; labName?: string; collectionDate?: string } {
+  const markers: Record<string, number> = {}
+  let labName: string | undefined
+  let collectionDate: string | undefined
 
-type LabFormat = "labcorp" | "quest_mychart" | "unknown"
-
-function detectLabFormat(lines: string[]): LabFormat {
-  const text = lines.join("\n").toLowerCase()
-  const labcorpMatches = (text.match(/b, 0\d/g) ?? []).length
-  if (labcorpMatches > 5 || text.includes("labcorp")) return "labcorp"
-  const questMatches = (text.match(/normal range:/gi) ?? []).length
-  if (questMatches > 3 || text.includes("normal value:")) return "quest_mychart"
-  return "unknown"
-}
-
-// ─── LabCorp parser ─────────────────────────────────────────────────────────
-//
-// Confirmed format from debug logs:
-//   Line N:   "MarkerName B, 01"  (or "A, B, 01")
-//   Line N+1: "VALUE"
-//   Line N+2: "units" or "High"/"Low"
-//   Line N+3: "reference range"
-
-// Regex to detect LabCorp lab code at end of line
-// Matches "B, 01", "A, B, 01", "8, 01" (OCR misreads B as 8)
-const LABCORP_CODE = /\s+(?:[A-Z0-9],\s*)*[B8],?\s*\d+\s*$/
-
-function extractMarkersLabCorp(lines: string[]): Record<string, number> {
-  const found: Record<string, number> = {}
-
-  // Debug: log all lines from index 270 onwards
-  for (let i = 270; i < lines.length; i++) {
-    console.log("[late-lines]", i, ":", JSON.stringify(lines[i]))
-  }
-
-  // Debug: hunt for "70" standalone or any "Apolipoprotein" line
-  for (let i = 0; i < lines.length; i++) {
-    if (lines[i].trim() === "70" || lines[i].includes("Apolipoprotein")) {
-      console.log("[apob-hunt]", i, ":", JSON.stringify(lines[i]))
-      console.log("[apob-hunt] prev:", JSON.stringify(lines[i - 1]))
-      console.log("[apob-hunt] next:", JSON.stringify(lines[i + 1]))
-    }
-  }
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim()
-
-    // Skip header/metadata lines (semicolon-separated test lists, ordered items)
-    if (line.includes(";") || /ordered items|venipuncture/i.test(line)) continue
-
-    // Check if line ends with LabCorp lab code pattern
-    if (!LABCORP_CODE.test(line)) continue
-
-    // Extract marker name: everything before the lab code
-    const markerName = line.replace(LABCORP_CODE, "").trim()
-    const canonicalKey = lookupMarker(markerName)
-    if (!canonicalKey || found[canonicalKey]) continue
-
-    // Value is ALWAYS on the very next line
-    const valueLine = lines[i + 1]?.trim()
-    if (!valueLine) continue
-
-    // Extract leading number (may have trailing "High"/"Low")
-    const numMatch = valueLine.match(/^([\d.]+)/)
-    if (!numMatch) continue
-
-    const val = parseFloat(numMatch[1])
-    if (!isPlausible(canonicalKey, val)) continue
-
-    // Lp(a): nmol/L unit may appear in a table cell far from the marker line.
-    // Search the full document (lines already includes table cells via allLines).
-    if (canonicalKey === "lpa_raw") {
-      const fullDocText = lines.join(" ").toLowerCase()
-      const isNmol = fullDocText.includes("lipoprotein") && fullDocText.includes("nmol/l")
-      found["lpa_mgdL"] = isNmol ? Math.round((val / 2.5) * 10) / 10 : val
-      // Skip lpa_raw — already resolved to mg/dL
+  for (const [key, val] of Object.entries(parsed)) {
+    if (key === "labName" && typeof val === "string") {
+      labName = val
       continue
     }
-
-    found[canonicalKey] = val
-  }
-
-  return found
-}
-
-// ─── Quest MyChart parser ───────────────────────────────────────────────────
-//
-// Confirmed format:
-//   Line N:   "MarkerName"                  ← exact match
-//   Line N+1: "Normal range: LOW - HIGH unit"  ← skip
-//   Line N+2: "LOW HIGH"                    ← skip (two-number ref range)
-//   Line N+3: "ACTUAL_VALUE [High/Low]"     ← take this
-
-const QUEST_SKIP_PATTERNS = [
-  /normal\s+(?:range|value)\s*:/i,
-  /fasting\s+reference/i,
-  /reference\s+interval/i,
-  />\s*or\s*=/i,
-  /<\s*or\s*=/i,
-  /^value$/i,
-  /http/i,
-  /^\d{1,2}\/\d{1,2}\/\d{2,4}$/,
-  /^(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+\d{1,2},?\s*\d{4}$/i,
-  /not reported|see note/i,
-  /desirable|borderline|high risk/i,
-  /ascvd|therapeutic/i,
-]
-
-const TWO_NUMBER_LINE = /^\d+\.?\d*\s+\d+\.?\d*$/
-const RESULT_LINE = /^([\d.]+)\s*(?:High|Low|H|L|Critical)?\s*$/i
-
-function extractMarkersQuestMyChart(lines: string[]): Record<string, number> {
-  const found: Record<string, number> = {}
-
-  for (let i = 0; i < lines.length; i++) {
-    const lineTrimmed = lines[i].trim()
-
-    // Check if this line is an exact marker name
-    const canonicalKey = lookupMarkerExact(lineTrimmed)
-    if (!canonicalKey || found[canonicalKey]) continue
-
-    // Scan the next 6 lines for the actual result value
-    for (let j = i + 1; j <= Math.min(i + 6, lines.length - 1); j++) {
-      const next = lines[j].trim()
-      if (!next) continue
-
-      // Skip reference range / metadata lines
-      if (QUEST_SKIP_PATTERNS.some((p) => p.test(next))) continue
-      if (TWO_NUMBER_LINE.test(next)) continue
-
-      // Try to extract numeric result
-      const m = RESULT_LINE.exec(next)
-      if (!m) continue
-
-      const val = parseFloat(m[1])
-      if (!isPlausible(canonicalKey, val)) continue
-
-      found[canonicalKey] = val
-      i = j // advance past the value line so adjacent markers don't grab same value
-      break
+    if (key === "collectionDate" && typeof val === "string") {
+      collectionDate = val
+      continue
+    }
+    if (typeof val === "number" && val > 0) {
+      markers[key] = val
+    } else if (typeof val === "string") {
+      const num = parseFloat(val)
+      if (!isNaN(num) && num > 0) markers[key] = num
     }
   }
 
-  return found
-}
-
-// ─── General full-text parser (fallback) ────────────────────────────────────
-
-const RANGE_KEYWORDS = /(?:normal|reference|range|target|limit|standard)\s*(?:value)?[:\s]*$/i
-
-function extractMarkersGeneralText(lines: string[], alreadyFound: Record<string, number>): Record<string, number> {
-  const found = { ...alreadyFound }
-  const fullText = lines.join("\n").toLowerCase()
-
-  for (const [markerName, canonicalKey] of SORTED_MARKERS) {
-    if (found[canonicalKey]) continue
-
-    const idx = fullText.indexOf(markerName.toLowerCase())
-    if (idx === -1) continue
-
-    const surrounding = fullText.slice(idx, idx + 300)
-    const numPattern = /\b(\d{1,4}\.?\d{0,3})\b/g
-    let match: RegExpExecArray | null
-
-    while ((match = numPattern.exec(surrounding)) !== null) {
-      const val = parseFloat(match[1])
-      if (val <= 0 || val > 9999) continue
-
-      const charsBefore = surrounding.slice(Math.max(0, match.index - 10), match.index)
-      if (/[<>≥≤]\s*$/.test(charsBefore)) continue
-      if (/\bor\s*=\s*$/.test(charsBefore)) continue
-
-      const charsAfter = surrounding.slice(match.index + match[0].length, match.index + match[0].length + 15)
-      if (/^\s*[-–]\s*\d/.test(charsAfter)) continue
-      if (/^\s+\d{2,4}\b/.test(charsAfter) && val < 500) continue
-
-      const textBefore = surrounding.slice(0, match.index)
-      if (RANGE_KEYWORDS.test(textBefore)) continue
-
-      if (!isPlausible(canonicalKey, val)) continue
-
-      found[canonicalKey] = val
-      break
-    }
+  // Calculate LDL:HDL ratio if both present
+  if (markers.ldl_mgdL && markers.hdl_mgdL) {
+    markers.ldlHdlRatio = Math.round((markers.ldl_mgdL / markers.hdl_mgdL) * 100) / 100
   }
 
-  return found
-}
-
-// ─── Main parser dispatcher ─────────────────────────────────────────────────
-
-function extractMarkersFromLines(lines: string[], tableRows: AzureTableRow[]): Record<string, number> {
-  const format = detectLabFormat(lines)
-  console.log("[parser] detected format:", format)
-
-  if (format === "quest_mychart") {
-    // Quest MyChart: line-by-line parser only.
-    // Do NOT run table-row parser — table cells contain reference ranges
-    // that would overwrite the correct values found by the line parser.
-    const primary = extractMarkersQuestMyChart(lines)
-    return extractMarkersGeneralText(lines, primary)
-  }
-
-  if (format === "labcorp") {
-    // LabCorp: line parser + table rows only — no general text fallback.
-    // General text finds wrong values (e.g. ApoB grabbing nearby hematocrit).
-    const primary = extractMarkersLabCorp(lines)
-    return extractMarkersFromTableRows(tableRows, primary)
-  }
-
-  // Unknown format: general text + table rows as best-effort fallback
-  const primary = extractMarkersGeneralText(lines, {})
-  return extractMarkersFromTableRows(tableRows, primary)
-}
-
-// ─── Table-row parser (catches markers Azure puts in table cells not lines) ───
-//
-// LabCorp PDFs: Azure extracts some markers (e.g. ApoB) into table cells with
-// structure: | TestName | Value | Flag | Units | Reference |
-// The flat tableCells array loses row structure; this uses the structured rows.
-
-function extractMarkersFromTableRows(
-  tableRows: AzureTableRow[],
-  alreadyFound: Record<string, number>
-): Record<string, number> {
-  const found = { ...alreadyFound }
-
-  for (let rowIdx = 0; rowIdx < tableRows.length; rowIdx++) {
-    const row = tableRows[rowIdx]
-    if (row.cells.length < 2) continue
-
-    const firstCell    = row.cells[0]?.content?.trim() ?? ""
-    const secondCell   = row.cells[1]?.content?.trim() ?? ""
-    const cellContents = row.cells.map((c) => c.content ?? "")
-
-    // Log first 3 cells of every row to diagnose which row holds ApoB = 70
-    console.log("[table-all-rows] checking row:", rowIdx, cellContents.slice(0, 3).join(" | "))
-
-    // Skip header rows
-    if (/^(?:test|component|analyte|ordered|result)/i.test(firstCell)) continue
-
-    const canonicalKey = lookupMarker(firstCell)
-    if (!canonicalKey || found[canonicalKey]) continue
-
-    const val = parseFloat(secondCell)
-    if (isNaN(val) || val <= 0) continue
-    if (!isPlausible(canonicalKey, val)) continue
-
-    found[canonicalKey] = val
-  }
-
-  return found
-}
-
-// ─── Lp(a) unit conversion ──────────────────────────────────────────────────
-
-function convertLpaUnits(
-  rawVal: number,
-  lines: string[]
-): { lpa_mgdL: number; wasNmol: boolean } {
-  const fullText = lines.join(" ").toLowerCase()
-
-  const lpaIdx = fullText.indexOf("lipoprotein")
-  if (lpaIdx !== -1) {
-    const nearby = fullText.slice(lpaIdx, lpaIdx + 80)
-    if (nearby.includes("nmol/l") || nearby.includes("nmol")) {
-      return { lpa_mgdL: Math.round((rawVal / 2.5) * 10) / 10, wasNmol: true }
-    }
-  }
-
-  return { lpa_mgdL: rawVal, wasNmol: false }
-}
-
-// ─── Post-processing ────────────────────────────────────────────────────────
-
-interface PostProcessResult {
-  markers: Record<string, number>
-  notes: Record<string, string>
-}
-
-function postProcessMarkers(
-  markers: Record<string, number>,
-  lines: string[]
-): PostProcessResult {
-  const result = { ...markers }
-  const notes: Record<string, string> = {}
-
-  // Convert Lp(a) from raw to mg/dL.
-  // Guard: if lpa_mgdL is already set (LabCorp parser converts inline),
-  // do NOT overwrite it — just clean up lpa_raw.
-  if (result.lpa_raw) {
-    if (!result.lpa_mgdL) {
-      const rawVal = result.lpa_raw
-      const { lpa_mgdL, wasNmol } = convertLpaUnits(rawVal, lines)
-      result.lpa_mgdL = lpa_mgdL
-      if (wasNmol) {
-        notes.lpa_mgdL = `${rawVal} nmol/L → ${lpa_mgdL} mg/dL`
-      }
-    }
-    delete result.lpa_raw
-  }
-
-  // Always calculate LDL:HDL ratio from parsed values
-  if (result.ldl_mgdL && result.hdl_mgdL) {
-    result.ldlHdlRatio = Math.round((result.ldl_mgdL / result.hdl_mgdL) * 100) / 100
-  }
-
-  return { markers: result, notes }
-}
-
-// ─── Lab name + date extraction ─────────────────────────────────────────────
-
-function extractLabName(lines: string[]): string | undefined {
-  const text = lines.join(" ").toLowerCase()
-  if (text.includes("quest diagnostics")) return "Quest Diagnostics"
-  if (text.includes("labcorp")) return "LabCorp"
-  if (text.includes("bioreference")) return "BioReference"
-  if (text.includes("everlywell")) return "Everlywell"
-  if (text.includes("insidetracker")) return "InsideTracker"
-  return undefined
-}
-
-function extractCollectionDate(lines: string[]): string | undefined {
-  const text = lines.join(" ")
-
-  const datePatterns = [
-    /collection date[:\s]+(\w+ \d{1,2},?\s*\d{4})/i,
-    /collected[:\s]+(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
-    /collection date[:\s]+(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
-    /date collected[:\s]+(\w+ \d{1,2},?\s*\d{4})/i,
-    /specimen collected[:\s]+(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
-    /drawn[:\s]+(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
-    /(\d{4}-\d{2}-\d{2})/,
-    /\b((?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+\d{1,2},?\s*\d{4})\b/i,
-  ]
-
-  for (const pattern of datePatterns) {
-    const match = text.match(pattern)
-    if (!match) continue
-    try {
-      const d = new Date(match[1])
-      if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10)
-    } catch { /* ignore */ }
-  }
-
-  return undefined
+  return { markers, labName, collectionDate }
 }
 
 // ─── File processing ────────────────────────────────────────────────────────
 
 async function processFile(file: FileInput, index: number): Promise<FileResult> {
-  try {
-    const buffer = Buffer.from(file.base64, "base64")
-    const { lines, tables, tableRows } = await analyzeWithAzure(buffer)
+  console.log("[parser] file", index + 1, "starting...")
 
-    const allLines  = [...lines, ...tables]
-    // Table-row pass is format-gated inside the dispatcher (not run for Quest MyChart)
-    const rawMarkers = extractMarkersFromLines(allLines, tableRows)
-    const { markers, notes } = postProcessMarkers(rawMarkers, allLines)
-    const labName = extractLabName(lines)
-    const collectionDate = extractCollectionDate(lines)
+  // Strategy 1: OpenAI Vision (primary)
+  const visionResult = await parseWithOpenAIVision(file.base64)
+  if (visionResult) {
+    const { markers, labName, collectionDate } = extractFromParsedJson(visionResult)
+    if (Object.keys(markers).length > 0) {
+      console.log("[parser] used: openai — markers:", Object.keys(markers).length)
+      return {
+        filename: file.filename,
+        markers,
+        markersFound: Object.keys(markers).length,
+        labName,
+        collectionDate,
+        parserUsed: "openai",
+      }
+    }
+  }
 
-    return {
-      filename: file.filename,
-      markers,
-      markersFound: Object.keys(markers).length,
-      labName,
-      collectionDate,
-      notes,
+  // Strategy 2: Azure text extraction + OpenAI text parsing (hybrid)
+  console.log("[parser] OpenAI vision returned 0 markers, trying Azure hybrid...")
+  const hybridResult = await parseWithAzureHybrid(file.base64)
+  if (hybridResult) {
+    const { markers, labName, collectionDate } = extractFromParsedJson(hybridResult)
+    if (Object.keys(markers).length > 0) {
+      console.log("[parser] used: azure-hybrid — markers:", Object.keys(markers).length)
+      return {
+        filename: file.filename,
+        markers,
+        markersFound: Object.keys(markers).length,
+        labName,
+        collectionDate,
+        parserUsed: "azure-hybrid",
+      }
     }
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : "Unknown error"
-    console.error("[azure] file", index + 1, "failed:", msg)
-    return {
-      filename: file.filename,
-      markers: {},
-      markersFound: 0,
-      error: msg,
-    }
+  }
+
+  // Both failed
+  console.log("[parser] used: failed — no markers from either parser")
+  return {
+    filename: file.filename,
+    markers: {},
+    markersFound: 0,
+    parserUsed: "failed",
+    error: "Could not extract markers from this file",
   }
 }
 
@@ -691,7 +267,7 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  if (!process.env.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT || !process.env.AZURE_DOCUMENT_INTELLIGENCE_KEY) {
+  if (!process.env.OPENAI_API_KEY && !process.env.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT) {
     return NextResponse.json({ error: "Lab parser not configured" }, { status: 500 })
   }
 
@@ -725,6 +301,7 @@ export async function POST(request: NextRequest) {
     }, { status: 422 })
   }
 
+  // Merge markers — most recent collectionDate takes precedence
   const merged: Record<string, number> = {}
   const markerSource: Record<string, string> = {}
   const mergedNotes: Record<string, string> = {}
@@ -749,12 +326,14 @@ export async function POST(request: NextRequest) {
   const dates = results.map((r) => r.collectionDate).filter(Boolean) as string[]
   const collectionDate = dates.length > 0 ? dates.sort()[0] : new Date().toISOString().slice(0, 10)
   const labName = results.find((r) => r.labName)?.labName
+  const parsersUsed = [...new Set(succeeded.map((r) => r.parserUsed))]
 
-  console.log("[azure] merged total markers:", Object.keys(merged).length)
+  console.log("[parser] merged total markers:", Object.keys(merged).length, "parsers:", parsersUsed.join(", "))
 
   const perFile = results.map((r) => ({
     filename: r.filename,
     markersFound: r.markersFound,
+    parserUsed: r.parserUsed,
     error: r.error,
   }))
 
@@ -769,7 +348,7 @@ export async function POST(request: NextRequest) {
     labName,
     collectionDate,
     markersFound: Object.keys(merged).length,
-    parserUsed: "azure",
+    parserUsed: parsersUsed.join(", "),
     filesProcessed: succeeded.length,
     perFile,
     warnings: warnings.length > 0 ? warnings : undefined,
