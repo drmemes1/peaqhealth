@@ -262,19 +262,149 @@ const RANGE_KEYWORDS = /(?:normal|reference|range|target|limit|standard)\s*(?:va
 // Anchors on the "B, 01" lab code which ALWAYS separates name from value
 const LABCORP_LINE = /^(.+?)\s+(?:[A-Z],\s*)*B,?\s*\d+\s+([\d.]+)/
 
-function extractMarkersFromLines(lines: string[]): Record<string, number> {
+// ─── Format detection ─────────────────────────────────────────────────────────
+
+type LabFormat = "labcorp" | "quest_mychart" | "unknown"
+
+function detectLabFormat(lines: string[]): LabFormat {
+  const text = lines.join(" ").toLowerCase()
+  if (/\bb,\s*0?1\b/.test(text) || text.includes("labcorp")) return "labcorp"
+  if (text.includes("normal range:") || text.includes("normal value:")) return "quest_mychart"
+  return "unknown"
+}
+
+// ─── Quest MyChart line-by-line parser ───────────────────────────────────────
+//
+// Format per marker:
+//   MarkerName                       ← line we detect
+//   Normal range: LOW - HIGH unit    ← skip
+//   LOW HIGH                         ← skip (two-number reference range)
+//   ACTUAL_VALUE [High/Low]          ← take this
+//
+// OR:
+//   MarkerName
+//   Normal value: > OR = X unit      ← skip
+//   Value                            ← skip (literal label)
+//   ACTUAL_VALUE [High/Low]          ← take this
+
+// Lines to always skip when scanning for result value
+const QUEST_SKIP_PATTERNS = [
+  /normal\s+(?:range|value)\s*:/i,
+  /fasting\s+reference/i,
+  /reference\s+interval/i,
+  />\s*or\s*=/i,
+  /<\s*or\s*=/i,
+  /^value$/i,
+  /http/i,
+  // Dates: MM/DD/YYYY or "Month DD, YYYY"
+  /^\d{1,2}\/\d{1,2}\/\d{2,4}$/,
+  /^(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+\d{1,2},?\s*\d{4}$/i,
+]
+
+// Two numbers separated by whitespace only = reference range repeat (e.g. "65 99", "3.8 10.8")
+const TWO_NUMBER_LINE = /^\d+\.?\d*\s+\d+\.?\d*$/
+
+// Result line: a number, optionally followed by a High/Low flag
+const RESULT_LINE = /^([\d.]+)\s*(?:High|Low|H|L)?\s*$/i
+
+function extractMarkersQuestMyChart(lines: string[]): Record<string, number> {
   const found: Record<string, number> = {}
 
-  // Pass 1: LabCorp structured line extraction (most reliable)
-  for (const line of lines) {
-    const labcorpMatch = LABCORP_LINE.exec(line)
-    if (!labcorpMatch) continue
+  for (let i = 0; i < lines.length; i++) {
+    const lineTrimmed = lines[i].trim()
+    const lineLower   = lineTrimmed.toLowerCase()
 
-    const testName = labcorpMatch[1].trim().toLowerCase()
-    const val = parseFloat(labcorpMatch[2])
+    // Find the longest marker name that exactly matches this line
+    let canonicalKey: string | undefined
+    for (const [markerName, key] of SORTED_MARKERS) {
+      if (lineLower === markerName) { canonicalKey = key; break }
+    }
+    if (!canonicalKey || found[canonicalKey]) continue
+
+    const range = PLAUSIBLE_RANGES[canonicalKey]
+
+    // Scan the next up to 6 lines for the actual result
+    for (let j = i + 1; j <= Math.min(i + 6, lines.length - 1); j++) {
+      const next = lines[j].trim()
+      if (!next) continue
+
+      // Skip reference range / metadata lines
+      if (QUEST_SKIP_PATTERNS.some((p) => p.test(next))) continue
+      if (TWO_NUMBER_LINE.test(next)) continue
+
+      // Try to extract the numeric result (strip High/Low flag if present)
+      const m = RESULT_LINE.exec(next)
+      if (!m) continue
+
+      const val = parseFloat(m[1])
+      if (isNaN(val) || val <= 0) continue
+      if (range && (val < range[0] || val > range[1])) continue
+
+      found[canonicalKey] = val
+      break
+    }
+  }
+
+  return found
+}
+
+// ─── General full-text parser (fallback) ─────────────────────────────────────
+
+function extractMarkersGeneralText(lines: string[], alreadyFound: Record<string, number>): Record<string, number> {
+  const found = { ...alreadyFound }
+  const fullText = lines.join("\n").toLowerCase()
+
+  for (const [markerName, canonicalKey] of SORTED_MARKERS) {
+    if (found[canonicalKey]) continue
+
+    const idx = fullText.indexOf(markerName.toLowerCase())
+    if (idx === -1) continue
+
+    const surrounding = fullText.slice(idx, idx + 300)
+    const numPattern  = /\b(\d{1,4}\.?\d{0,3})\b/g
+    let match: RegExpExecArray | null
+    const range = PLAUSIBLE_RANGES[canonicalKey]
+
+    while ((match = numPattern.exec(surrounding)) !== null) {
+      const val = parseFloat(match[1])
+      if (val <= 0 || val > 9999) continue
+
+      // Check ~10 chars before number for comparison operators (handles ≥40, < 150, or =)
+      const charsBefore = surrounding.slice(Math.max(0, match.index - 10), match.index)
+      if (/[<>≥≤]\s*$/.test(charsBefore)) continue
+      if (/\bor\s*=\s*$/.test(charsBefore)) continue
+
+      // Check chars after for range patterns (65-99 or 65 99)
+      const charsAfter = surrounding.slice(match.index + match[0].length, match.index + match[0].length + 15)
+      if (/^\s*[-–]\s*\d/.test(charsAfter)) continue
+      if (/^\s+\d{2,4}\b/.test(charsAfter) && val < 500) continue
+
+      const textBefore = surrounding.slice(0, match.index)
+      if (RANGE_KEYWORDS.test(textBefore)) continue
+
+      if (range && (val < range[0] || val > range[1])) continue
+
+      found[canonicalKey] = val
+      break
+    }
+  }
+
+  return found
+}
+
+// ─── LabCorp structured-line parser ──────────────────────────────────────────
+
+function extractMarkersLabCorp(lines: string[], alreadyFound: Record<string, number>): Record<string, number> {
+  const found = { ...alreadyFound }
+
+  for (const line of lines) {
+    const m = LABCORP_LINE.exec(line)
+    if (!m) continue
+
+    const testName = m[1].trim().toLowerCase()
+    const val      = parseFloat(m[2])
     if (isNaN(val) || val <= 0) continue
 
-    // Find matching marker — try each marker name against the test name
     for (const [markerName, canonicalKey] of SORTED_MARKERS) {
       if (found[canonicalKey]) continue
       if (!testName.includes(markerName)) continue
@@ -285,47 +415,29 @@ function extractMarkersFromLines(lines: string[]): Record<string, number> {
     }
   }
 
-  // Pass 2: Fallback to full-text search for markers not found in pass 1
-  const fullText = lines.join("\n").toLowerCase()
+  return found
+}
 
-  for (const [markerName, canonicalKey] of SORTED_MARKERS) {
-    if (found[canonicalKey]) continue
+// ─── Main dispatcher ──────────────────────────────────────────────────────────
 
-    const idx = fullText.indexOf(markerName.toLowerCase())
-    if (idx === -1) continue
+function extractMarkersFromLines(lines: string[]): Record<string, number> {
+  const format = detectLabFormat(lines)
+  console.log("[parser] detected format:", format)
 
-    const surrounding = fullText.slice(idx, idx + 300)
-    const numPattern = /\b(\d{1,4}\.?\d{0,3})\b/g
-    let match: RegExpExecArray | null
-    const range = PLAUSIBLE_RANGES[canonicalKey]
-
-    while ((match = numPattern.exec(surrounding)) !== null) {
-      const val = parseFloat(match[1])
-      if (val <= 0 || val > 9999) continue
-
-      // Check ~10 chars before the number for comparison operators
-      const charsBefore = surrounding.slice(Math.max(0, match.index - 10), match.index)
-      if (/[<>≥≤]\s*$/.test(charsBefore)) continue
-      if (/\bor\s*=\s*$/.test(charsBefore)) continue
-
-      // Check chars after for dash-separated ranges
-      const charsAfter = surrounding.slice(match.index + match[0].length, match.index + match[0].length + 15)
-      if (/^\s*[-–]\s*\d/.test(charsAfter)) continue
-      if (/^\s+\d{2,4}\b/.test(charsAfter) && val < 500) continue
-
-      // Check if reference range keywords appear before this number
-      const textBefore = surrounding.slice(0, match.index)
-      if (RANGE_KEYWORDS.test(textBefore)) continue
-
-      // Sanity check against plausible physiological range
-      if (range && (val < range[0] || val > range[1])) continue
-
-      found[canonicalKey] = val
-      break
-    }
+  if (format === "quest_mychart") {
+    // Quest MyChart: line-by-line parser first, general text as fallback
+    const primary = extractMarkersQuestMyChart(lines)
+    return extractMarkersGeneralText(lines, primary)
   }
 
-  return found
+  if (format === "labcorp") {
+    // LabCorp: structured B,01 parser first, general text as fallback
+    const primary = extractMarkersLabCorp(lines, {})
+    return extractMarkersGeneralText(lines, primary)
+  }
+
+  // Unknown format: general text only
+  return extractMarkersGeneralText(lines, {})
 }
 
 // ─── Lp(a) unit detection + conversion ──────────────────────────────────────
