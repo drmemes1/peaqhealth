@@ -170,7 +170,16 @@ interface FileResult {
   error?: string
 }
 
-async function analyzeWithAzure(buffer: Buffer): Promise<{ lines: string[]; tables: string[] }> {
+// Structured table row — cells sorted by column index
+interface AzureTableRow {
+  cells: Array<{ content: string; colIndex: number }>
+}
+
+async function analyzeWithAzure(buffer: Buffer): Promise<{
+  lines: string[]
+  tables: string[]
+  tableRows: AzureTableRow[]
+}> {
   const endpoint = process.env.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT
   const apiKey = process.env.AZURE_DOCUMENT_INTELLIGENCE_KEY
 
@@ -207,25 +216,37 @@ async function analyzeWithAzure(buffer: Buffer): Promise<{ lines: string[]; tabl
     const status = data.status as string
 
     if (status === "succeeded") {
-      const result = data.analyzeResult as Record<string, unknown> | undefined
-      const pages = (result?.pages ?? []) as Array<{ lines?: Array<{ content: string }> }>
-      const tables = (result?.tables ?? []) as Array<{ cells?: Array<{ content: string }> }>
+      const result    = data.analyzeResult as Record<string, unknown> | undefined
+      const pages     = (result?.pages  ?? []) as Array<{ lines?: Array<{ content: string }> }>
+      const rawTables = (result?.tables ?? []) as Array<{
+        cells?: Array<{ content: string; rowIndex: number; columnIndex: number }>
+      }>
 
       const lines: string[] = []
       for (const page of pages) {
-        for (const line of page.lines ?? []) {
-          lines.push(line.content)
-        }
+        for (const line of page.lines ?? []) lines.push(line.content)
       }
 
       const tableCells: string[] = []
-      for (const table of tables) {
+      const tableRows:  AzureTableRow[] = []
+
+      for (const table of rawTables) {
+        // Flat cells for existing parsers
+        for (const cell of table.cells ?? []) tableCells.push(cell.content)
+
+        // Structured rows for table-based extraction
+        const rowMap = new Map<number, Array<{ content: string; colIndex: number }>>()
         for (const cell of table.cells ?? []) {
-          tableCells.push(cell.content)
+          const row = cell.rowIndex
+          if (!rowMap.has(row)) rowMap.set(row, [])
+          rowMap.get(row)!.push({ content: cell.content, colIndex: cell.columnIndex })
+        }
+        for (const [, cells] of Array.from(rowMap.entries()).sort((a, b) => a[0] - b[0])) {
+          tableRows.push({ cells: cells.sort((a, b) => a.colIndex - b.colIndex) })
         }
       }
 
-      return { lines, tables: tableCells }
+      return { lines, tables: tableCells, tableRows }
     }
 
     if (status === "failed") {
@@ -343,19 +364,14 @@ function extractMarkersLabCorp(lines: string[]): Record<string, number> {
     const val = parseFloat(numMatch[1])
     if (!isPlausible(canonicalKey, val)) continue
 
-    // Lp(a): check nearby lines for nmol/L unit → convert to mg/dL inline
+    // Lp(a): nmol/L unit may appear in a table cell far from the marker line.
+    // Search the full document (lines already includes table cells via allLines).
     if (canonicalKey === "lpa_raw") {
-      console.log("[lpa-check] value:", val)
-      console.log("[lpa-check] nearby:", lines[i + 2], lines[i + 3], lines[i + 4])
-      const nearbyText = [
-        lines[i + 2], lines[i + 3], lines[i + 4],
-      ].filter(Boolean).join(" ").toLowerCase()
-      if (nearbyText.includes("nmol/l") || nearbyText.includes("nmol")) {
-        found["lpa_mgdL"] = Math.round((val / 2.5) * 10) / 10
-      } else {
-        found["lpa_mgdL"] = val
-      }
-      // Skip lpa_raw — we've already resolved to mg/dL
+      const fullDocText = lines.join(" ").toLowerCase()
+      const isNmol = fullDocText.includes("lipoprotein") && fullDocText.includes("nmol/l")
+      console.log("[lpa-check] value:", val, "isNmol:", isNmol)
+      found["lpa_mgdL"] = isNmol ? Math.round((val / 2.5) * 10) / 10 : val
+      // Skip lpa_raw — already resolved to mg/dL
       continue
     }
 
@@ -490,6 +506,41 @@ function extractMarkersFromLines(lines: string[]): Record<string, number> {
   return results
 }
 
+// ─── Table-row parser (catches markers Azure puts in table cells not lines) ───
+//
+// LabCorp PDFs: Azure extracts some markers (e.g. ApoB) into table cells with
+// structure: | TestName | Value | Flag | Units | Reference |
+// The flat tableCells array loses row structure; this uses the structured rows.
+
+function extractMarkersFromTableRows(
+  tableRows: AzureTableRow[],
+  alreadyFound: Record<string, number>
+): Record<string, number> {
+  const found = { ...alreadyFound }
+
+  for (const row of tableRows) {
+    if (row.cells.length < 2) continue
+
+    const firstCell  = row.cells[0]?.content?.trim() ?? ""
+    const secondCell = row.cells[1]?.content?.trim() ?? ""
+
+    // Skip header rows
+    if (/^(?:test|component|analyte|ordered|result)/i.test(firstCell)) continue
+
+    const canonicalKey = lookupMarker(firstCell)
+    if (!canonicalKey || found[canonicalKey]) continue
+
+    const val = parseFloat(secondCell)
+    if (isNaN(val) || val <= 0) continue
+    if (!isPlausible(canonicalKey, val)) continue
+
+    console.log("[table-parser]", firstCell, "→", canonicalKey, "=", val)
+    found[canonicalKey] = val
+  }
+
+  return found
+}
+
 // ─── Lp(a) unit conversion ──────────────────────────────────────────────────
 
 function convertLpaUnits(
@@ -587,11 +638,13 @@ async function processFile(file: FileInput, index: number): Promise<FileResult> 
     const buffer = Buffer.from(file.base64, "base64")
     console.log("[azure] file", index + 1, "submitted, analyzing...")
 
-    const { lines, tables } = await analyzeWithAzure(buffer)
-    console.log("[azure] file", index + 1, "analysis complete, lines:", lines.length, "table cells:", tables.length)
+    const { lines, tables, tableRows } = await analyzeWithAzure(buffer)
+    console.log("[azure] file", index + 1, "analysis complete, lines:", lines.length, "table cells:", tables.length, "table rows:", tableRows.length)
 
-    const allLines = [...lines, ...tables]
-    const rawMarkers = extractMarkersFromLines(allLines)
+    const allLines  = [...lines, ...tables]
+    const fromLines = extractMarkersFromLines(allLines)
+    // Table-row pass: catches markers Azure puts in table cells (e.g. ApoB on LabCorp)
+    const rawMarkers = extractMarkersFromTableRows(tableRows, fromLines)
     const { markers, notes } = postProcessMarkers(rawMarkers, allLines)
     const labName = extractLabName(lines)
     const collectionDate = extractCollectionDate(lines)
