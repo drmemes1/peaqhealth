@@ -55,7 +55,6 @@ function num(v: unknown): number | undefined {
 }
 
 export function mapLabRow(row: Record<string, unknown>): BloodInputs | undefined {
-  if (!row.hs_crp_mgl && !row.apob_mgdl && !row.vitamin_d_ngml) return undefined
   const mapped: BloodInputs = {
     hsCRP_mgL:           num(row.hs_crp_mgl),
     vitaminD_ngmL:       num(row.vitamin_d_ngml),
@@ -78,20 +77,15 @@ export function mapLabRow(row: Record<string, unknown>): BloodInputs | undefined
     ferritin_ngmL:       num(row.ferritin_ngml),
     labCollectionDate:   row.collection_date as string | undefined,
   }
-  console.log("[mapLabRow] blood inputs mapped:", {
-    hsCRP_mgL:         mapped.hsCRP_mgL,
-    apoB_mgdL:         mapped.apoB_mgdL,
-    ldl_mgdL:          mapped.ldl_mgdL,
-    hdl_mgdL:          mapped.hdl_mgdL,
-    triglycerides_mgdL: mapped.triglycerides_mgdL,
-    glucose_mgdL:      mapped.glucose_mgdL,
-    hba1c_pct:         mapped.hba1c_pct,
-    vitaminD_ngmL:     mapped.vitaminD_ngmL,
-    eGFR_mLmin:        mapped.eGFR_mLmin,
-    wbc_x10L:          mapped.wbc_x10L,
-    alt_UL:            mapped.alt_UL,
-    ast_UL:            mapped.ast_UL,
-  })
+
+  // Return undefined only if no numeric marker is present at all
+  const presentKeys = Object.entries(mapped)
+    .filter(([k, v]) => k !== "labCollectionDate" && v !== undefined && (v as number) > 0)
+    .map(([k]) => k)
+
+  if (presentKeys.length === 0) return undefined
+
+  console.log("[score] blood markers present:", presentKeys)
   return mapped
 }
 
