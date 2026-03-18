@@ -650,6 +650,12 @@ async function processFile(file: FileInput, index: number): Promise<FileResult> 
     const collectionDate = extractCollectionDate(lines)
 
     console.log("[azure] file", index + 1, "markers found:", Object.keys(markers).length)
+    const _fullText = allLines.join(" ").toLowerCase()
+    console.log("[lpa-final] lpa_mgdL in results:", markers["lpa_mgdL"])
+    console.log("[apob-final] apoB_mgdL in results:", markers["apoB_mgdL"])
+    console.log("[lpa-check] fulltext has lipoprotein:", _fullText.includes("lipoprotein"))
+    console.log("[lpa-check] fulltext has nmol/l:", _fullText.includes("nmol/l"))
+    console.log("[table-rows] count:", tableRows?.length ?? 0)
 
     return {
       filename: file.filename,
