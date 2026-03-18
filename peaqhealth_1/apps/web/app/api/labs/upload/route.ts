@@ -432,6 +432,23 @@ async function processFile(file: FileInput, index: number): Promise<FileResult> 
     console.log("[azure] file", index + 1, "analysis complete, lines:", lines.length, "table cells:", tables.length)
 
     const allLines = [...lines, ...tables]
+
+    // Temporary debug: log lines containing key marker names
+    const debugMarkers = [
+      "albumin", "wbc", "testosterone", "apolipoprotein",
+      "c-reactive", "creatinine", "shbg", "sex horm",
+      "lipoprotein"
+    ]
+    for (let i = 0; i < allLines.length; i++) {
+      const line = allLines[i].toLowerCase()
+      if (debugMarkers.some(m => line.includes(m))) {
+        console.log(`[debug] line ${i}: "${allLines[i]}"`)
+        console.log(`[debug] line ${i+1}: "${allLines[i+1] || ''}"`)
+        console.log(`[debug] line ${i+2}: "${allLines[i+2] || ''}"`)
+        console.log(`[debug] line ${i+3}: "${allLines[i+3] || ''}"`)
+      }
+    }
+
     const rawMarkers = extractMarkersFromLines(allLines)
     const { markers, notes } = postProcessMarkers(rawMarkers, allLines)
     const labName = extractLabName(lines)
