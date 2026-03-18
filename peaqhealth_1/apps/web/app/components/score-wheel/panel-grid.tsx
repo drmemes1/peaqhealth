@@ -106,9 +106,9 @@ export function PanelGrid({
         <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-30)" }}>Score composition</span>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
-        <PanelCard label="Sleep" color="var(--sleep-c)" trackColor="var(--sleep-bg)" score={displaySleep} max={32} active={sleepConnected} locked={!sleepConnected} desc={sleepDesc} mounted={mounted} highlighted={hoveredRing === "sleep"} />
-        <PanelCard label="Blood" color="var(--blood-c)" trackColor="var(--blood-bg)" score={displayBlood} max={28} active={hasBlood} locked={bloodLocked} desc={bloodDesc} staleBadge={staleBadge} mounted={mounted} highlighted={hoveredRing === "blood"} />
-        <PanelCard label="Oral Microbiome" color="var(--oral-c)" trackColor="var(--oral-bg)" score={displayOral} max={25} active={oralActive} locked={!oralActive} desc={oralDesc} mounted={mounted} highlighted={hoveredRing === "oral"} />
+        <PanelCard label="Sleep" color="var(--sleep-c)" trackColor="var(--sleep-bg)" score={displaySleep} max={27} active={sleepConnected} locked={!sleepConnected} desc={sleepDesc} mounted={mounted} highlighted={hoveredRing === "sleep"} />
+        <PanelCard label="Blood" color="var(--blood-c)" trackColor="var(--blood-bg)" score={displayBlood} max={33} active={hasBlood} locked={bloodLocked} desc={bloodDesc} staleBadge={staleBadge} mounted={mounted} highlighted={hoveredRing === "blood"} />
+        <PanelCard label="Oral Microbiome" color="var(--oral-c)" trackColor="var(--oral-bg)" score={displayOral} max={27} active={oralActive} locked={!oralActive} desc={oralDesc} mounted={mounted} highlighted={hoveredRing === "oral"} />
         {/* IX card spans full width */}
         <div
           style={{
