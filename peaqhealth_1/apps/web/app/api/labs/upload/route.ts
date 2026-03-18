@@ -166,6 +166,7 @@ interface FileResult {
   markersFound: number
   labName?: string
   collectionDate?: string
+  notes?: Record<string, string>
   error?: string
 }
 
@@ -257,13 +258,14 @@ const PLAUSIBLE_RANGES: Record<string, [number, number]> = {
 // Keywords that precede reference range values, not actual results
 const RANGE_KEYWORDS = /(?:normal|reference|range|target|limit|standard)\s*(?:value)?[:\s]*$/i
 
-// LabCorp line pattern: "TestName B, 01 VALUE units range"
-const LABCORP_LINE = /^(.+?)\s+[A-Z],?\s*\d+\s+([\d.]+)\s+/i
+// LabCorp line pattern: "TestName [A,] B, 01 VALUE [High/Low] units range"
+// Anchors on the "B, 01" lab code which ALWAYS separates name from value
+const LABCORP_LINE = /^(.+?)\s+(?:[A-Z],\s*)*B,?\s*\d+\s+([\d.]+)/
 
 function extractMarkersFromLines(lines: string[]): Record<string, number> {
   const found: Record<string, number> = {}
 
-  // Pass 1: Try LabCorp structured line extraction
+  // Pass 1: LabCorp structured line extraction (most reliable)
   for (const line of lines) {
     const labcorpMatch = LABCORP_LINE.exec(line)
     if (!labcorpMatch) continue
@@ -272,7 +274,7 @@ function extractMarkersFromLines(lines: string[]): Record<string, number> {
     const val = parseFloat(labcorpMatch[2])
     if (isNaN(val) || val <= 0) continue
 
-    // Find matching marker
+    // Find matching marker — try each marker name against the test name
     for (const [markerName, canonicalKey] of SORTED_MARKERS) {
       if (found[canonicalKey]) continue
       if (!testName.includes(markerName)) continue
@@ -331,35 +333,45 @@ function extractMarkersFromLines(lines: string[]): Record<string, number> {
 function convertLpaUnits(
   rawVal: number,
   lines: string[]
-): { lpa_mgdL: number } {
+): { lpa_mgdL: number; wasNmol: boolean } {
   const fullText = lines.join(" ").toLowerCase()
 
-  // Search near "lipoprotein" for unit strings
+  // Search near "lipoprotein" for unit strings within 50 chars
   const lpaIdx = fullText.indexOf("lipoprotein")
   if (lpaIdx !== -1) {
-    const nearby = fullText.slice(lpaIdx, lpaIdx + 200)
+    const nearby = fullText.slice(lpaIdx, lpaIdx + 80)
     if (nearby.includes("nmol/l") || nearby.includes("nmol")) {
       // LabCorp reports nmol/L — convert: nmol/L ÷ 2.5 ≈ mg/dL
-      return { lpa_mgdL: Math.round((rawVal / 2.5) * 10) / 10 }
+      return { lpa_mgdL: Math.round((rawVal / 2.5) * 10) / 10, wasNmol: true }
     }
   }
 
   // Default: assume mg/dL (Quest format)
-  return { lpa_mgdL: rawVal }
+  return { lpa_mgdL: rawVal, wasNmol: false }
 }
 
 // ─── Post-processing: derived markers + unit conversions ────────────────────
 
+interface PostProcessResult {
+  markers: Record<string, number>
+  notes: Record<string, string>  // e.g. "lpa_mgdL": "112.2 nmol/L → 44.9 mg/dL"
+}
+
 function postProcessMarkers(
   markers: Record<string, number>,
   lines: string[]
-): Record<string, number> {
+): PostProcessResult {
   const result = { ...markers }
+  const notes: Record<string, string> = {}
 
   // Convert Lp(a) from raw to mg/dL
   if (result.lpa_raw) {
-    const { lpa_mgdL } = convertLpaUnits(result.lpa_raw, lines)
+    const rawVal = result.lpa_raw
+    const { lpa_mgdL, wasNmol } = convertLpaUnits(rawVal, lines)
     result.lpa_mgdL = lpa_mgdL
+    if (wasNmol) {
+      notes.lpa_mgdL = `${rawVal} nmol/L → ${lpa_mgdL} mg/dL`
+    }
     delete result.lpa_raw
   }
 
@@ -368,7 +380,7 @@ function postProcessMarkers(
     result.ldlHdlRatio = Math.round((result.ldl_mgdL / result.hdl_mgdL) * 100) / 100
   }
 
-  return result
+  return { markers: result, notes }
 }
 
 // ─── Lab name + date extraction ─────────────────────────────────────────────
@@ -421,7 +433,7 @@ async function processFile(file: FileInput, index: number): Promise<FileResult> 
 
     const allLines = [...lines, ...tables]
     const rawMarkers = extractMarkersFromLines(allLines)
-    const markers = postProcessMarkers(rawMarkers, allLines)
+    const { markers, notes } = postProcessMarkers(rawMarkers, allLines)
     const labName = extractLabName(lines)
     const collectionDate = extractCollectionDate(lines)
 
@@ -433,6 +445,7 @@ async function processFile(file: FileInput, index: number): Promise<FileResult> 
       markersFound: Object.keys(markers).length,
       labName,
       collectionDate,
+      notes,
     }
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error"
@@ -492,6 +505,7 @@ export async function POST(request: NextRequest) {
   // Merge markers — most recent collectionDate takes precedence
   const merged: Record<string, number> = {}
   const markerSource: Record<string, string> = {}
+  const mergedNotes: Record<string, string> = {}
 
   const sorted = [...succeeded].sort((a, b) => {
     if (!a.collectionDate && !b.collectionDate) return 0
@@ -505,6 +519,7 @@ export async function POST(request: NextRequest) {
       if (!(key in merged)) {
         merged[key] = val
         markerSource[key] = result.filename
+        if (result.notes?.[key]) mergedNotes[key] = result.notes[key]
       }
     }
   }
@@ -528,6 +543,7 @@ export async function POST(request: NextRequest) {
     status: "complete",
     markers: merged,
     markerSource,
+    markerNotes: Object.keys(mergedNotes).length > 0 ? mergedNotes : undefined,
     labName,
     collectionDate,
     markersFound: Object.keys(merged).length,
