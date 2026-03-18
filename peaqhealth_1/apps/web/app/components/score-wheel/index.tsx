@@ -75,11 +75,12 @@ export interface ScoreWheelProps {
     poorSleepOralQ:      boolean
     poorExerciseSmoking: boolean
   }
-  peaqPercent?:      number
-  peaqPercentLabel?: string
-  lpaFlag?:          "elevated" | "very_elevated" | null
-  hsCRPRetestFlag?:  boolean
-  additionalMarkers?: Array<{ name: string; value: number; unit: string }>
+  peaqPercent?:        number
+  peaqPercentLabel?:   string
+  lpaFlag?:            "elevated" | "very_elevated" | null
+  hsCRPRetestFlag?:    boolean
+  additionalMarkers?:  Array<{ name: string; value: number; unit: string }>
+  labLockExpiresAt?:   string | null  // ISO — null/undefined means locked or no labs
 }
 
 function flag(good: boolean, watch?: boolean): Flag {
@@ -175,6 +176,7 @@ export function ScoreWheel({
   sleepData, bloodData, oralData, lifestyleData, interactions,
   lastSyncAt, lastSyncRequestedAt,
   peaqPercent, peaqPercentLabel, lpaFlag, hsCRPRetestFlag, additionalMarkers,
+  labLockExpiresAt,
 }: ScoreWheelProps) {
   const [mounted, setMounted] = useState(false)
   const [hoveredRing, setHoveredRing] = useState<string | null>(null)
@@ -437,6 +439,20 @@ export function ScoreWheel({
           </a>
         ) : undefined}
       >
+        {labLockExpiresAt && new Date(labLockExpiresAt) > new Date() && (() => {
+          const msLeft = new Date(labLockExpiresAt).getTime() - Date.now()
+          const hLeft  = Math.floor(msLeft / 3600000)
+          const mLeft  = Math.floor((msLeft % 3600000) / 60000)
+          const label  = hLeft > 0 ? `${hLeft}h ${mLeft}m` : `${mLeft}m`
+          return (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", marginBottom: 12, borderRadius: 4, background: "#FFFBEB", border: "0.5px solid rgba(184,134,11,0.25)" }}>
+              <span style={{ color: "#B8860B" }}>⏱</span>
+              <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "#92400E" }}>
+                Results unlock in {label} — re-upload to correct before they lock in.
+              </span>
+            </div>
+          )
+        })()}
         {(labFreshness === "stale") && bloodData && (
           <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", marginBottom: 12, borderRadius: 4, background: "var(--amber-bg)" }}>
             <span style={{ color: "var(--amber)" }}>⚠</span>
