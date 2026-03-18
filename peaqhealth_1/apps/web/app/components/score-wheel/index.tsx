@@ -88,29 +88,76 @@ function flag(good: boolean, watch?: boolean): Flag {
   return "attention"
 }
 
-function CollapsibleSection({
-  title, subtitle, defaultOpen, color, delay, fadeUpFn, children,
+// Status dot colors
+const STATUS_COLORS: Record<Flag, string> = {
+  good: "#2D6A4F", watch: "#B8860B", attention: "#C0392B", pending: "rgba(20,20,16,0.15)", not_tested: "rgba(20,20,16,0.15)",
+}
+
+function StatusDots({ flags }: { flags: Flag[] }) {
+  const top4 = flags.slice(0, 4)
+  return (
+    <div style={{ display: "flex", gap: 3, alignItems: "center" }}>
+      {top4.map((f, i) => (
+        <div key={i} style={{
+          width: 6, height: 6, borderRadius: "50%",
+          background: f === "good" ? STATUS_COLORS.good : (f === "not_tested" || f === "pending") ? "transparent" : STATUS_COLORS[f],
+          border: f === "good" ? "none" : `1px solid ${STATUS_COLORS[f]}`,
+        }} />
+      ))}
+    </div>
+  )
+}
+
+function CollapsiblePanel({
+  title, score, maxScore, subtitle, statusDots, defaultOpen, delay, fadeUpFn, children,
 }: {
-  title: string; subtitle: string; defaultOpen: boolean; color: string
-  delay: string; fadeUpFn: (d: string) => React.CSSProperties; children: React.ReactNode
+  title: string; score?: number; maxScore?: number; subtitle?: string
+  statusDots?: Flag[]; defaultOpen: boolean; delay: string
+  fadeUpFn: (d: string) => React.CSSProperties; children: React.ReactNode
 }) {
   const [open, setOpen] = useState(defaultOpen)
+  const [hoverToggle, setHoverToggle] = useState(false)
   return (
     <div style={fadeUpFn(delay)}>
-      <button
-        onClick={() => setOpen((o) => !o)}
+      <div
         style={{
-          width: "100%", display: "flex", alignItems: "baseline", justifyContent: "space-between",
-          marginBottom: open ? 12 : 0, padding: 0, border: "none", background: "transparent", cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          marginBottom: open ? 12 : 0, cursor: "pointer",
         }}
+        onClick={() => setOpen((o) => !o)}
       >
-        <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 20, fontWeight: 300, color: "var(--ink)", margin: 0 }}>{title}</h3>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-          <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color }}>{subtitle}</span>
-          <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, color: "var(--ink-30)", transition: "transform 0.2s ease", display: "inline-block", transform: open ? "rotate(0)" : "rotate(-90deg)" }}>▼</span>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
+          <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 22, fontWeight: 300, color: "var(--ink)", margin: 0 }}>{title}</h3>
+          {score !== undefined && maxScore !== undefined && (
+            <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "var(--ink-30)" }}>
+              {score}/{maxScore} pts
+            </span>
+          )}
         </div>
-      </button>
-      <div style={{ maxHeight: open ? 2000 : 0, overflow: "hidden", transition: "max-height 0.4s ease", borderTop: open ? "0.5px solid var(--ink-12)" : "none" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {subtitle && (
+            <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "var(--ink-60)" }}>{subtitle}</span>
+          )}
+          {!open && statusDots && <StatusDots flags={statusDots} />}
+          <div
+            onMouseEnter={() => setHoverToggle(true)}
+            onMouseLeave={() => setHoverToggle(false)}
+            style={{
+              width: 20, height: 20, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+              border: `0.5px solid ${hoverToggle ? "var(--gold)" : "rgba(20,20,16,0.2)"}`,
+              color: hoverToggle ? "var(--gold)" : "rgba(20,20,16,0.5)",
+              fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 16, lineHeight: 1,
+              transition: "border-color 0.2s ease, color 0.2s ease", flexShrink: 0,
+            }}
+          >
+            {open ? "−" : "+"}
+          </div>
+        </div>
+      </div>
+      <div style={{
+        maxHeight: open ? 2000 : 0, opacity: open ? 1 : 0, overflow: "hidden",
+        transition: "max-height 0.3s ease, opacity 0.3s ease",
+      }}>
         {children}
       </div>
     </div>
@@ -295,14 +342,22 @@ export function ScoreWheel({
       <CTABlocks sleepConnected={sleepConnected} labFreshness={labFreshness} oralActive={oralActive} />
 
       {/* SLEEP MARKERS */}
-      <div style={fadeUp("0.14s")}>
-        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 16 }}>
-          <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 22, fontWeight: 300, color: "var(--ink)", margin: 0 }}>Sleep</h3>
-          <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "var(--ink-60)" }}>
-            {sleepData ? `${sleepData.nightsAvg}-NIGHT AVG · ${sleepData.device.toUpperCase()}` : "NO DATA"}
-          </span>
-        </div>
+      <CollapsiblePanel
+        title="Sleep"
+        score={Math.round(breakdown.sleepSub * 10) / 10}
+        maxScore={27}
+        subtitle={sleepData ? `${sleepData.nightsAvg}-NIGHT AVG · ${sleepData.device.toUpperCase()}` : "NO DATA"}
+        statusDots={sf ? [sf.deep, sf.hrv, sf.spo2Dips, sf.rem] : undefined}
+        defaultOpen={sleepConnected}
+        delay="0.14s"
+        fadeUpFn={fadeUp}
+      >
         <div style={{ borderTop: "0.5px solid var(--ink-12)" }}>
+          {sleepData && (
+            <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "var(--ink-30)", padding: "8px 0 0", margin: 0 }}>
+              Via {sleepData.device} · Last sync {sleepData.lastSync ? new Date(sleepData.lastSync).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}
+            </p>
+          )}
           {[
             { name: "Deep sleep",       sub: "Slow-wave · target ≥17%",    val: sleepData?.deepPct,   unit: "% of TST",  flagKey: "deep",       max: 30 },
             { name: "HRV",              sub: "RMSSD · target ≥50 ms",      val: sleepData?.hrv,       unit: "ms RMSSD",  flagKey: "hrv",        max: 100 },
@@ -319,16 +374,19 @@ export function ScoreWheel({
             />
           ))}
         </div>
-      </div>
+      </CollapsiblePanel>
 
       {/* BLOOD MARKERS */}
-      <div style={fadeUp("0.20s")}>
-        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 16 }}>
-          <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 22, fontWeight: 300, color: "var(--ink)", margin: 0 }}>Blood</h3>
-          <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "var(--ink-60)" }}>
-            {bloodData ? `${bloodData.labName.toUpperCase()} · ${new Date(bloodData.collectionDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }).toUpperCase()}` : "NO DATA"}
-          </span>
-        </div>
+      <CollapsiblePanel
+        title="Blood"
+        score={breakdown.bloodSub}
+        maxScore={33}
+        subtitle={bloodData ? `${bloodData.labName.toUpperCase()} · ${new Date(bloodData.collectionDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }).toUpperCase()}` : "NO DATA"}
+        statusDots={bf ? [bf.hsCRP, bf.apoB, bf.lpa, bf.tg] : undefined}
+        defaultOpen={hasBlood}
+        delay="0.20s"
+        fadeUpFn={fadeUp}
+      >
         {(labFreshness === "stale") && bloodData && (
           <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", marginBottom: 12, borderRadius: 4, background: "var(--amber-bg)" }}>
             <span style={{ color: "var(--amber)" }}>⚠</span>
@@ -375,15 +433,14 @@ export function ScoreWheel({
             )
           })}
         </div>
-      </div>
+      </CollapsiblePanel>
 
       {/* ADDITIONAL MARKERS (collapsible) */}
       {additionalMarkers && additionalMarkers.length > 0 && (
-        <CollapsibleSection
+        <CollapsiblePanel
           title="Additional Markers"
-          subtitle={`${additionalMarkers.length} markers · not included in score`}
+          subtitle={`${additionalMarkers.length} markers · not scored`}
           defaultOpen={false}
-          color="var(--ink-60)"
           delay="0.23s"
           fadeUpFn={fadeUp}
         >
@@ -402,17 +459,20 @@ export function ScoreWheel({
               </div>
             </div>
           ))}
-        </CollapsibleSection>
+        </CollapsiblePanel>
       )}
 
       {/* ORAL MARKERS */}
-      <div style={fadeUp("0.26s")}>
-        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 16 }}>
-          <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 22, fontWeight: 300, color: "var(--ink)", margin: 0 }}>Oral Microbiome</h3>
-          <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "var(--ink-60)" }}>
-            {oralData ? `ZYMO RESEARCH · ${new Date(oralData.reportDate).toLocaleDateString("en-US", { month: "short", year: "numeric" }).toUpperCase()}` : "ZYMO RESEARCH · PENDING"}
-          </span>
-        </div>
+      <CollapsiblePanel
+        title="Oral Microbiome"
+        score={breakdown.oralSub}
+        maxScore={27}
+        subtitle={oralData ? `ZYMO RESEARCH · ${new Date(oralData.reportDate).toLocaleDateString("en-US", { month: "short", year: "numeric" }).toUpperCase()}` : "PENDING"}
+        statusDots={of_ ? [of_.shannon, of_.nitrate, of_.periodont, of_.osa] : undefined}
+        defaultOpen={oralActive}
+        delay="0.26s"
+        fadeUpFn={fadeUp}
+      >
         <div style={{ borderTop: "0.5px solid var(--ink-12)" }}>
           {[
             { name: "Shannon diversity",   sub: "16S species richness · target ≥3.0",         val: oralData?.shannonDiversity,   unit: "index",   flagKey: "shannon",  max: 5  },
@@ -429,16 +489,18 @@ export function ScoreWheel({
             />
           ))}
         </div>
-      </div>
+      </CollapsiblePanel>
 
       {/* LIFESTYLE */}
-      <div style={fadeUp("0.30s")}>
-        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 16 }}>
-          <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 22, fontWeight: 300, color: "var(--ink)", margin: 0 }}>Lifestyle</h3>
-          <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "var(--ink-60)" }}>
-            {lifestyleData ? `QUESTIONNAIRE · ${new Date(lifestyleData.updatedAt).toLocaleDateString("en-US", { month: "short", year: "numeric" }).toUpperCase()}` : "QUESTIONNAIRE"}
-          </span>
-        </div>
+      <CollapsiblePanel
+        title="Lifestyle"
+        score={Math.round(breakdown.lifestyleSub * 10) / 10}
+        maxScore={8}
+        subtitle={lifestyleData ? `QUESTIONNAIRE · ${new Date(lifestyleData.updatedAt).toLocaleDateString("en-US", { month: "short", year: "numeric" }).toUpperCase()}` : "QUESTIONNAIRE"}
+        defaultOpen={!!lifestyleData}
+        delay="0.30s"
+        fadeUpFn={fadeUp}
+      >
         <div style={{ borderTop: "0.5px solid var(--ink-12)" }}>
           {[
             { name: "Exercise", val: lifestyleData ? exerciseLabel[lifestyleData.exerciseTier] : null, flag: lifestyleData ? (lifestyleData.exerciseTier === "sedentary" ? "attention" : lifestyleData.exerciseTier === "light" ? "watch" : "good") as Flag : "pending" as Flag },
@@ -464,7 +526,7 @@ export function ScoreWheel({
         <a href="/settings/lifestyle" style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "var(--gold)", display: "block", marginTop: 12 }}>
           Update lifestyle answers →
         </a>
-      </div>
+      </CollapsiblePanel>
 
       {/* INSIGHTS */}
       <div style={fadeUp("0.32s")}>
