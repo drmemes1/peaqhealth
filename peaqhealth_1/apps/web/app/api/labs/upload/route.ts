@@ -305,13 +305,17 @@ function detectLabFormat(lines: string[]): LabFormat {
 //   Line N+3: "reference range"
 
 // Regex to detect LabCorp lab code at end of line
-const LABCORP_CODE = /\s+(?:[A-Z],\s*)*B,?\s*\d+\s*$/
+// Matches "B, 01", "A, B, 01", "8, 01" (OCR misreads B as 8)
+const LABCORP_CODE = /\s+(?:[A-Z0-9],\s*)*[B8],?\s*\d+\s*$/
 
 function extractMarkersLabCorp(lines: string[]): Record<string, number> {
   const found: Record<string, number> = {}
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim()
+
+    // Skip header/metadata lines (semicolon-separated test lists, ordered items)
+    if (line.includes(";") || /ordered items|venipuncture/i.test(line)) continue
 
     // Check if line ends with LabCorp lab code pattern
     if (!LABCORP_CODE.test(line)) continue
@@ -331,6 +335,20 @@ function extractMarkersLabCorp(lines: string[]): Record<string, number> {
 
     const val = parseFloat(numMatch[1])
     if (!isPlausible(canonicalKey, val)) continue
+
+    // Lp(a): check nearby lines for nmol/L unit → convert to mg/dL inline
+    if (canonicalKey === "lpa_raw") {
+      const nearbyText = [
+        lines[i + 2], lines[i + 3], lines[i + 4],
+      ].filter(Boolean).join(" ").toLowerCase()
+      if (nearbyText.includes("nmol/l") || nearbyText.includes("nmol")) {
+        found["lpa_mgdL"] = Math.round((val / 2.5) * 10) / 10
+      } else {
+        found["lpa_mgdL"] = val
+      }
+      // Skip lpa_raw — we've already resolved to mg/dL
+      continue
+    }
 
     found[canonicalKey] = val
   }
