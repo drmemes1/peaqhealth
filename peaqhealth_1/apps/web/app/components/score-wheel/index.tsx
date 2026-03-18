@@ -88,6 +88,11 @@ function flag(good: boolean, watch?: boolean): Flag {
   return "attention"
 }
 
+function formatValue(value: number): string {
+  if (value === Math.floor(value)) return value.toString()
+  return (Math.round(value * 100) / 100).toString()
+}
+
 // Status dot colors
 const STATUS_COLORS: Record<Flag, string> = {
   good: "#2D6A4F", watch: "#B8860B", attention: "#C0392B", pending: "rgba(20,20,16,0.15)", not_tested: "rgba(20,20,16,0.15)",
@@ -109,11 +114,11 @@ function StatusDots({ flags }: { flags: Flag[] }) {
 }
 
 function CollapsiblePanel({
-  title, score, maxScore, subtitle, statusDots, defaultOpen, delay, fadeUpFn, children,
+  title, score, maxScore, subtitle, statusDots, defaultOpen, delay, fadeUpFn, headerExtra, children,
 }: {
   title: string; score?: number; maxScore?: number; subtitle?: string
   statusDots?: Flag[]; defaultOpen: boolean; delay: string
-  fadeUpFn: (d: string) => React.CSSProperties; children: React.ReactNode
+  fadeUpFn: (d: string) => React.CSSProperties; headerExtra?: React.ReactNode; children: React.ReactNode
 }) {
   const [open, setOpen] = useState(defaultOpen)
   const [hoverToggle, setHoverToggle] = useState(false)
@@ -138,6 +143,7 @@ function CollapsiblePanel({
           {subtitle && (
             <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "var(--ink-60)" }}>{subtitle}</span>
           )}
+          {headerExtra}
           {!open && statusDots && <StatusDots flags={statusDots} />}
           <div
             onMouseEnter={() => setHoverToggle(true)}
@@ -224,7 +230,32 @@ export function ScoreWheel({
 
   // Panel descriptions
   const sleepDesc = sleepConnected ? "Deep sleep and HRV are your main levers." : "No wearable connected. Connect Apple Watch, Oura, WHOOP, or Garmin."
-  const bloodDesc = hasBlood ? "hsCRP, ApoB, and Lp(a) in excellent range. Glycemic tracking well." : "No lab results. Upload your most recent blood panel."
+
+  function generateBloodDesc(): string {
+    if (!bloodData) return "No lab results. Upload your most recent blood panel."
+    const testedCount = [
+      bloodData.hsCRP, bloodData.vitaminD, bloodData.apoB,
+      bloodData.ldlHdlRatio, bloodData.hba1c, bloodData.lpa, bloodData.triglycerides,
+    ].filter(v => v > 0).length
+    if (testedCount === 0) return "No markers found in uploaded labs."
+    const lipidPresent = bloodData.apoB > 0 || bloodData.ldlHdlRatio > 0 || bloodData.triglycerides > 0
+    const lipidGood = (!bloodData.apoB || bloodData.apoB < 90) &&
+                      (!bloodData.ldlHdlRatio || bloodData.ldlHdlRatio < 2.0) &&
+                      (!bloodData.triglycerides || bloodData.triglycerides < 150)
+    const inflamGood = !bloodData.hsCRP || bloodData.hsCRP < 2.0
+    const glycemicGood = !bloodData.hba1c || bloodData.hba1c < 5.7
+    if (lipidPresent && lipidGood && bloodData.hsCRP > 0 && inflamGood && glycemicGood) {
+      return "Lipid profile and inflammation markers in range. Glycemic tracking well."
+    }
+    if (lipidPresent && lipidGood && bloodData.hsCRP > 0 && inflamGood) {
+      return "Lipid profile and inflammation markers in range."
+    }
+    if (lipidPresent && lipidGood) return "Lipid profile looks strong."
+    if (bloodData.hsCRP > 0 && !inflamGood) return "Elevated inflammation detected. Review with your physician."
+    return `${testedCount} marker${testedCount !== 1 ? "s" : ""} tested.`
+  }
+  const bloodDesc = generateBloodDesc()
+
   const oralDesc = oralActive ? "Shannon diversity and periodontal burden in range." : "Kit results pending. High diversity and low periodontal burden are your targets."
   const ixDesc = oralActive ? "All interaction terms evaluated." : "4 oral interaction terms locked pending kit results."
 
@@ -386,6 +417,25 @@ export function ScoreWheel({
         defaultOpen={hasBlood}
         delay="0.20s"
         fadeUpFn={fadeUp}
+        headerExtra={hasBlood ? (
+          <a
+            href="/settings/labs"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+              fontSize: 11,
+              fontVariant: "small-caps",
+              letterSpacing: "0.04em",
+              color: "rgba(20,20,16,0.4)",
+              textDecoration: "none",
+              transition: "color 0.2s ease",
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "#B8860B" }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "rgba(20,20,16,0.4)" }}
+          >
+            ↑ re-upload labs
+          </a>
+        ) : undefined}
       >
         {(labFreshness === "stale") && bloodData && (
           <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", marginBottom: 12, borderRadius: 4, background: "var(--amber-bg)" }}>
@@ -424,7 +474,7 @@ export function ScoreWheel({
             const notTested = row.val === undefined || row.val === 0
             return (
               <MarkerRow key={row.name} name={row.name} sub={row.sub}
-                value={notTested ? null : (row.val ?? null)} unit={row.unit}
+                value={notTested ? null : formatValue(row.val!)} unit={row.unit}
                 flag={notTested ? "not_tested" : bf ? (bf[row.flagKey as keyof typeof bf] as Flag) : "pending"}
                 barPct={notTested ? 0 : fa(row.val!, row.max)}
                 color="var(--blood-c)" trackColor="var(--blood-bg)"
@@ -433,6 +483,11 @@ export function ScoreWheel({
             )
           })}
         </div>
+        {hasBlood && (
+          <a href="/dashboard/blood" style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "var(--gold)", display: "block", marginTop: 12 }}>
+            View full blood panel →
+          </a>
+        )}
       </CollapsiblePanel>
 
       {/* ADDITIONAL MARKERS (collapsible) */}
@@ -454,7 +509,7 @@ export function ScoreWheel({
             >
               <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink-60)" }}>{m.name}</span>
               <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-                <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink)" }}>{m.value}</span>
+                <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink)" }}>{formatValue(m.value)}</span>
                 <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, color: "var(--ink-30)" }}>{m.unit}</span>
               </div>
             </div>
