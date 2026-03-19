@@ -83,6 +83,8 @@ export function mapLabRow(row: Record<string, unknown>): BloodInputs | undefined
     totalCholesterol_mgdL:  num(row.total_cholesterol_mgdl),
     nonHDL_mgdL:            num(row.non_hdl_mgdl),
     tsh_uIUmL:              num(row.tsh_uiuml),
+    sodium_mmolL:           num(row.sodium_mmoll),
+    potassium_mmolL:        num(row.potassium_mmoll),
     labCollectionDate:      row.collection_date as string | undefined,
   }
 
