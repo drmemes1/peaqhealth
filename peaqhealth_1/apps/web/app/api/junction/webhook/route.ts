@@ -241,6 +241,7 @@ export async function POST(request: NextRequest) {
     event_type === "historical.data.sleep_cycle.created"
   ) {
     const data = body.data as Record<string, unknown> | undefined
+    console.log("[sleep-cycle] full payload:", JSON.stringify(body.data).slice(0, 500))
     const duration = (data?.duration as number) || (data?.total_sleep_duration as number) || 0
 
     const updatePayload: Record<string, unknown> = {
