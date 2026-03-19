@@ -662,14 +662,25 @@ export function calculatePeaqScore(sleep?: SleepInputs, blood?: BloodInputs, ora
     sleepSource      = "wearable"
     deepSleepScore   = scoreDeepSleep(sleep.deepSleepPct)
     remScore         = scoreREM(sleep.remPct)
-    spo2Score        = scoreSpo2(sleep.spo2DipsPerNight, sleep.avgSpo2)
+    // Treat 0 as "no data" for HRV and SPO2 — wearables store 0 when the metric is unavailable
+    spo2Score        = (sleep.spo2DipsPerNight > 0 || sleep.avgSpo2 !== undefined) ? scoreSpo2(sleep.spo2DipsPerNight, sleep.avgSpo2) : 0
     const vitD       = blood && !bloodLocked ? (blood.vitaminD_ngmL ?? 30) : 30
     vitDSleepPenalty = vitDSleepMultiplier(vitD)
     ferritinHrvPenalty = blood?.ferritin_ngmL !== undefined && blood.ferritin_ngmL < 20
-    const rawHrv     = scoreHRV(sleep.hrv_ms)
+    const rawHrv     = sleep.hrv_ms > 0 ? scoreHRV(sleep.hrv_ms) : 0
     hrvScore         = ferritinHrvPenalty ? rawHrv * 0.85 : rawHrv
     sleepRaw         = deepSleepScore + hrvScore + spo2Score + remScore
     sleepSub         = Math.min(27, Math.round(sleepRaw * vitDSleepPenalty * 10) / 10)
+    console.log("[sleep-engine] scoring:", JSON.stringify({
+      deep: sleep.deepSleepPct, deepScore: deepSleepScore,
+      rem: sleep.remPct, remScore,
+      hrv: sleep.hrv_ms, hrvScore,
+      spo2: sleep.spo2DipsPerNight, spo2Score,
+      efficiency: sleep.sleepEfficiencyPct,
+      nights: sleepNightsAvailable,
+      vitDPenalty: vitDSleepPenalty,
+      total: sleepSub,
+    }))
   } else if (lifestyle) {
     sleepSource  = "questionnaire"
     psqiEstimate = estimateSleepFromQuestionnaire(lifestyle)

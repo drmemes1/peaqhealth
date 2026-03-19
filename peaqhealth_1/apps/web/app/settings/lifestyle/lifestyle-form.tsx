@@ -304,6 +304,9 @@ export function LifestyleForm({ existing }: Props) {
       body: JSON.stringify(row),
     });
 
+    // Recalculate score so lifestyle_sub updates in score_snapshots
+    await fetch("/api/score/recalculate", { method: "POST" });
+
     setSaving(false);
     setSaved(true);
 
