@@ -22,20 +22,22 @@ const HANDLED_EVENTS = new Set([
 // ── Helper: fetch sleep sessions from the Vital API ──────────────────────────
 async function fetchSleepSessions(
   junctionUserId: string,
-  startDate: string,
-  endDate: string
 ): Promise<Array<Record<string, unknown>>> {
   const baseUrl = process.env.JUNCTION_ENV === "production"
     ? "https://api.tryvital.io"
     : "https://api.sandbox.tryvital.io"
 
+  const endDate = new Date().toISOString().split("T")[0]
+  const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
+
+  const url = `${baseUrl}/v2/summary/sleep/${junctionUserId}?start_date=${startDate}&end_date=${endDate}`
+  console.log("[sleep] fetching URL:", url)
+
   try {
-    const res = await fetch(
-      `${baseUrl}/v2/summary/sleep/${junctionUserId}?start_date=${startDate}&end_date=${endDate}`,
-      { headers: { "x-vital-api-key": process.env.JUNCTION_API_KEY! } }
-    )
+    const res = await fetch(url, { headers: { "x-vital-api-key": process.env.JUNCTION_API_KEY! } })
     if (!res.ok) {
-      console.error("[sleep] Vital API fetch failed:", res.status)
+      const body = await res.text()
+      console.error("[sleep] Vital API fetch failed:", res.status, "body:", body)
       return []
     }
     const data = await res.json() as Record<string, unknown>
@@ -404,7 +406,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
-    const sessions = await fetchSleepSessions(junctionUserId, startDate, endDate)
+    const sessions = await fetchSleepSessions(junctionUserId)
     const nightsAvailable = sessions.filter(s => {
       const d = (s.total_sleep_duration as number) || (s.duration as number) || 0
       return d > 0
@@ -463,7 +465,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
-    const sessions = await fetchSleepSessions(junctionUserId, startDate, endDate)
+    const sessions = await fetchSleepSessions(junctionUserId)
     const session = sessions[0] ?? null
     if (!session) {
       console.log("[sleep-cycle] no sleep session returned from API for user:", userId)
