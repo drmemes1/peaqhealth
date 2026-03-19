@@ -141,7 +141,7 @@ export async function recalculateScore(
   supabase: SupabaseClient
 ): Promise<number> {
   const [wearableRes, labsRes, oralRes, lifestyleRes, manualSleepRes] = await Promise.all([
-    supabase.from("wearable_connections").select("*").eq("user_id", userId).order("updated_at", { ascending: false }).limit(1).single(),
+    supabase.from("wearable_connections").select("*").eq("user_id", userId).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("lab_results").select("*").eq("user_id", userId).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).single(),
     supabase.from("oral_kit_orders").select("*").eq("user_id", userId).eq("status", "results_ready").order("ordered_at", { ascending: false }).limit(1).single(),
     supabase.from("lifestyle_records").select("*").eq("user_id", userId).order("updated_at", { ascending: false }).limit(1).single(),
@@ -151,7 +151,9 @@ export async function recalculateScore(
   // Sleep inputs: prefer Junction API; fall back to wearable_connections averages; then manual entries
   let sleepInputs: SleepInputs | undefined
 
-  console.log("[score] wearable query result:", JSON.stringify(wearableRes.data ?? wearableRes.error))
+  if (wearableRes.error) console.error("[score] wearable query error:", wearableRes.error.message)
+  console.log("[score] wearable found:", wearableRes.data ? "yes" : "no",
+    "efficiency:", (wearableRes.data as Record<string, unknown> | null)?.sleep_efficiency ?? "—")
 
   if (wearableRes.data?.junction_user_id) {
     try {

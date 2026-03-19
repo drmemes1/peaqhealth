@@ -338,10 +338,17 @@ export async function POST(request: NextRequest) {
 
     const { error: updateErr } = await supabase
       .from("wearable_connections")
-      .update({ latest_spo2_dips: spo2Dips, last_sync_at: new Date().toISOString(), status: "connected" })
-      .eq("user_id", userId)
+      .upsert({
+        user_id: userId,
+        junction_user_id: junctionUserId,
+        provider: "unknown",
+        connected_at: new Date().toISOString(),
+        latest_spo2_dips: spo2Dips,
+        last_sync_at: new Date().toISOString(),
+        status: "connected",
+      }, { onConflict: "user_id" })
 
-    if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
+    if (updateErr) console.error("[webhook] wearable_connections upsert error:", updateErr.message)
 
     return NextResponse.json({ status: "processed", event: "sleep_breathing_disturbance" })
   }
@@ -352,10 +359,17 @@ export async function POST(request: NextRequest) {
 
     const { error: updateErr } = await supabase
       .from("wearable_connections")
-      .update({ high_osa_risk: true, last_sync_at: new Date().toISOString(), status: "connected" })
-      .eq("user_id", userId)
+      .upsert({
+        user_id: userId,
+        junction_user_id: junctionUserId,
+        provider: "unknown",
+        connected_at: new Date().toISOString(),
+        high_osa_risk: true,
+        last_sync_at: new Date().toISOString(),
+        status: "connected",
+      }, { onConflict: "user_id" })
 
-    if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
+    if (updateErr) console.error("[webhook] wearable_connections upsert error:", updateErr.message)
 
     const newScore = await recalculateScore(userId, supabase)
     console.log("[webhook] sleep_apnea_alert — recalculated score for user:", userId)
@@ -401,10 +415,15 @@ export async function POST(request: NextRequest) {
 
     const { error: updateErr } = await supabase
       .from("wearable_connections")
-      .update(updatePayload)
-      .eq("user_id", userId)
+      .upsert({
+        user_id: userId,
+        junction_user_id: junctionUserId,
+        provider: "unknown",
+        connected_at: new Date().toISOString(),
+        ...updatePayload,
+      }, { onConflict: "user_id" })
 
-    if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
+    if (updateErr) console.error("[webhook] wearable_connections upsert error:", updateErr.message)
 
     const newScore = await recalculateScore(userId, supabase)
     console.log("[webhook]", event_type, "— recalculated score:", newScore, "for user:", userId)
@@ -438,8 +457,16 @@ export async function POST(request: NextRequest) {
       console.log("[sleep] insufficient full sessions (<7) — storing count only, skipping averages")
       await supabase
         .from("wearable_connections")
-        .update({ nights_available: nightsAvailable, last_sync_at: new Date().toISOString(), updated_at: new Date().toISOString(), status: "connected" })
-        .eq("user_id", userId)
+        .upsert({
+          user_id: userId,
+          junction_user_id: junctionUserId,
+          provider: "unknown",
+          connected_at: new Date().toISOString(),
+          nights_available: nightsAvailable,
+          last_sync_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          status: "connected",
+        }, { onConflict: "user_id" })
       return NextResponse.json({ received: true, nightsAvailable })
     }
 
@@ -451,10 +478,15 @@ export async function POST(request: NextRequest) {
 
     const { error: updateErr } = await supabase
       .from("wearable_connections")
-      .update(updatePayload)
-      .eq("user_id", userId)
+      .upsert({
+        user_id: userId,
+        junction_user_id: junctionUserId,
+        provider: "unknown",
+        connected_at: new Date().toISOString(),
+        ...updatePayload,
+      }, { onConflict: "user_id" })
 
-    if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
+    if (updateErr) console.error("[webhook] wearable_connections upsert error:", updateErr.message)
 
     const newScore = await recalculateScore(userId, supabase)
     console.log("[webhook] historical.data.sleep.created — recalculated score:", newScore, "for user:", userId)
@@ -468,7 +500,7 @@ export async function POST(request: NextRequest) {
       .from("wearable_connections")
       .select("last_sync_at")
       .eq("user_id", userId)
-      .single()
+      .maybeSingle()
 
     const today = new Date().toISOString().slice(0, 10)
     if (wConn?.last_sync_at && (wConn.last_sync_at as string).slice(0, 10) === today) {
@@ -504,10 +536,15 @@ export async function POST(request: NextRequest) {
 
     const { error: updateErr } = await supabase
       .from("wearable_connections")
-      .update(updatePayload)
-      .eq("user_id", userId)
+      .upsert({
+        user_id: userId,
+        junction_user_id: junctionUserId,
+        provider: "unknown",
+        connected_at: new Date().toISOString(),
+        ...updatePayload,
+      }, { onConflict: "user_id" })
 
-    if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
+    if (updateErr) console.error("[webhook] wearable_connections upsert error:", updateErr.message)
 
     const newScore = await recalculateScore(userId, supabase)
     console.log("[webhook]", event_type, "— recalculated score:", newScore, "for user:", userId)
@@ -524,10 +561,17 @@ export async function POST(request: NextRequest) {
       const retroNights = sleepRecords.filter(r => (r.duration as number) > 0).length
       const { error: updateErr } = await supabase
         .from("wearable_connections")
-        .update({ retro_nights: retroNights, last_sync_at: new Date().toISOString(), status: "connected" })
-        .eq("user_id", userId)
+        .upsert({
+          user_id: userId,
+          junction_user_id: junctionUserId,
+          provider: "unknown",
+          connected_at: new Date().toISOString(),
+          retro_nights: retroNights,
+          last_sync_at: new Date().toISOString(),
+          status: "connected",
+        }, { onConflict: "user_id" })
 
-      if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
+      if (updateErr) console.error("[webhook] wearable_connections upsert error:", updateErr.message)
     }
 
     const newScore = await recalculateScore(userId, supabase)
@@ -632,10 +676,15 @@ export async function POST(request: NextRequest) {
 
   const { error: updateErr } = await supabase
     .from("wearable_connections")
-    .update(updatePayload)
-    .eq("user_id", userId)
+    .upsert({
+      user_id: userId,
+      junction_user_id: junctionUserId,
+      provider: "unknown",
+      connected_at: new Date().toISOString(),
+      ...updatePayload,
+    }, { onConflict: "user_id" })
 
-  if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
+  if (updateErr) console.error("[webhook] wearable_connections upsert error:", updateErr.message)
 
   const newScore = await recalculateScore(userId, supabase)
   console.log("[webhook] recalculated for user:", userId)
