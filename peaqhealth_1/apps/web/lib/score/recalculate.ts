@@ -1,5 +1,4 @@
 import { calculatePeaqScore, type LifestyleInputs, type BloodInputs, type OralInputs, type SleepInputs } from "@peaq/score-engine"
-import { getSleepSummaries, aggregateSleepInputs } from "@peaq/api-client/junction"
 import type { SupabaseClient } from "@supabase/supabase-js"
 
 // ─── DB row → engine type mappers ─────────────────────────────────────────────
@@ -145,12 +144,34 @@ export async function recalculateScore(
 
   // Sleep inputs: prefer Junction API; fall back to manual entries
   let sleepInputs: SleepInputs | undefined
-  if (wearableRes.data?.junction_user_id) {
-    try {
-      const summaries = await getSleepSummaries(wearableRes.data.junction_user_id as string, { days: 14 })
-      sleepInputs = aggregateSleepInputs(summaries) ?? undefined
-    } catch {
-      // proceed without sleep data
+
+  if (wearableRes.error) console.error("[score] wearable query error:", wearableRes.error.message)
+  console.log("[score] wearable found:", wearableRes.data ? "yes" : "no",
+    "efficiency:", (wearableRes.data as Record<string, unknown> | null)?.sleep_efficiency ?? "—")
+
+  // Build sleepInputs exclusively from wearable_connections averages (populated by webhook)
+  if (!sleepInputs && wearableRes.data) {
+    const wRow = wearableRes.data as Record<string, unknown>
+    const nightsAvailable = (wRow.nights_available as number) ?? 0
+    const efficiency      = (wRow.sleep_efficiency as number) ?? 0
+    const deepPct         = (wRow.deep_sleep_pct   as number) ?? 0
+    const remPct          = (wRow.rem_pct           as number) ?? 0
+    const hrv             = (wRow.hrv_rmssd         as number) ?? 0
+    const spo2Dips        = (wRow.latest_spo2_dips  as number) ?? 0
+
+    // Accept data if we have ≥7 nights OR sleep_efficiency is present
+    const hasEnoughData = (nightsAvailable >= 7) || (efficiency > 0)
+
+    if (hasEnoughData) {
+      // Values stored as percentages (e.g. 87, 17.4, 20.1) — engine expects 0–100 scale
+      sleepInputs = {
+        deepSleepPct:       deepPct,
+        hrv_ms:             hrv,
+        spo2DipsPerNight:   spo2Dips,
+        remPct:             remPct,
+        sleepEfficiencyPct: efficiency,
+      }
+      console.log("[score] sleep from wearable_connections fallback — nights:", nightsAvailable, "eff:", efficiency, "deep:", deepPct, "rem:", remPct, "hrv:", hrv)
     }
   }
   if (!sleepInputs && manualSleepRes.data && manualSleepRes.data.length >= 7) {
