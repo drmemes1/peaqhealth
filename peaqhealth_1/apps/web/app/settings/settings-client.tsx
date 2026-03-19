@@ -4,7 +4,6 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "../../lib/supabase/client"
-import { useTheme } from "../components/theme-provider"
 
 interface Props {
   userId: string
@@ -61,37 +60,6 @@ function RowItem({
   )
 }
 
-function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
-  return (
-    <button
-      role="switch"
-      aria-checked={on}
-      onClick={onToggle}
-      className="relative flex shrink-0 cursor-pointer items-center transition-all"
-      style={{
-        width: 42,
-        height: 24,
-        borderRadius: 12,
-        background: on ? "var(--ink)" : "var(--ink-30)",
-        border: "none",
-        outline: "none",
-        padding: 0,
-      }}
-    >
-      <span
-        className="absolute transition-all"
-        style={{
-          width: 18,
-          height: 18,
-          borderRadius: "50%",
-          background: "var(--off-white)",
-          left: on ? 21 : 3,
-          boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
-        }}
-      />
-    </button>
-  )
-}
 
 function ChevronRight() {
   return (
@@ -118,6 +86,55 @@ function buildReportHtml(data: Record<string, unknown>, name: string, email: str
   const wearable = data.wearable as Record<string, unknown> | null
 
   const today = new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })
+
+  // ── Insights computation ─────────────────────────────────────────────────
+  const sleepConnected = wearable != null
+  const hasBlood = lab != null
+  const oralSub = Number(snapshot?.oral_sub ?? 0)
+  const oralActive = oralSub > 0
+
+  const sleepHrv = wearable?.hrv_rmssd != null ? Number(wearable.hrv_rmssd) : undefined
+  const sleepDeepPct = wearable?.deep_sleep_pct != null ? Number(wearable.deep_sleep_pct) : undefined
+  const sleepEfficiency = wearable?.sleep_efficiency != null ? Number(wearable.sleep_efficiency) : undefined
+  const bloodHsCrp = lab?.hs_crp_mgl != null ? Number(lab.hs_crp_mgl) : undefined
+  const bloodApoB = lab?.apob_mgdl != null ? Number(lab.apob_mgdl) : undefined
+  const bloodLdl = lab?.ldl_mgdl != null ? Number(lab.ldl_mgdl) : undefined
+  const bloodVitaminD = lab?.vitamin_d_ngml != null ? Number(lab.vitamin_d_ngml) : undefined
+  const bloodGlucose = lab?.glucose_mgdl != null ? Number(lab.glucose_mgdl) : undefined
+  const bloodHba1c = lab?.hba1c_pct != null ? Number(lab.hba1c_pct) : undefined
+  const stressLevel = lifestyle?.stress_level as string | undefined
+  const bloodInsight = lab?.blood_insight as string | undefined
+
+  type InsightCard = { title: string; body: string; tag: string; color: string; tagBg: string; tagColor: string }
+  const insightCards: InsightCard[] = []
+
+  if (sleepConnected && sleepHrv !== undefined && sleepHrv < 50)
+    insightCards.push({ title: "HRV below target — autonomic recovery opportunity", body: `RMSSD at ${sleepHrv}ms is below the ≥50ms target. Dalton 2025 (n=1,139 NIH-AARP): consistent sleep timing variance under 30 minutes shifts RMSSD by 5–8ms over 4 weeks. Your deep sleep at ${sleepDeepPct ?? "—"}% is the linked lever.`, tag: "Sleep · Recovery", color: "#4A7FB5", tagBg: "#EBF2FA", tagColor: "#4A7FB5" })
+
+  if (hasBlood && bloodHsCrp !== undefined && bloodHsCrp < 2.0)
+    insightCards.push({ title: "hsCRP at threshold — inflammatory baseline good", body: `At ${bloodHsCrp} mg/L you sit at the optimal ceiling. JUPITER trial (n=17,802): below 2.0 represents low inflammatory cardiovascular risk. ApoB at ${bloodApoB ?? "—"} mg/dL provides strong atherogenic protection.`, tag: "Blood · Cardiovascular", color: "#C0392B", tagBg: "#FDECEA", tagColor: "#C0392B" })
+
+  if (!oralActive)
+    insightCards.push({ title: "Oral microbiome unlocks 4 interaction terms", body: "Your oral bacteria directly predict sleep-breathing risk, cardiovascular inflammation, and nitric oxide production. Dalton 2025 (n=1,139 NIH-AARP): oral microbiome diversity independently predicts sleep quality scores.", tag: "Oral · Pending", color: "#2D6A4F", tagBg: "#EAF3DE", tagColor: "#2D6A4F" })
+
+  if (stressLevel === "high" && bloodHsCrp !== undefined && bloodHsCrp > 3)
+    insightCards.push({ title: "High stress amplifying inflammation markers", body: `Chronic stress is amplifying your inflammatory markers — hsCRP at ${bloodHsCrp} mg/L. Irwin 2016: stress-inflammation pathways are bidirectional and self-reinforcing.`, tag: "Lifestyle × Blood", color: "#B8860B", tagBg: "rgba(184,134,11,0.12)", tagColor: "#92400E" })
+
+  type NextStepItem = { panel: "sleep" | "blood" | "oral"; text: string; pts: number }
+  const PANEL_COLOR = { sleep: "#4A7FB5", blood: "#C0392B", oral: "#2D6A4F" }
+  const nextItems: NextStepItem[] = []
+
+  if (!sleepConnected) nextItems.push({ panel: "sleep", text: "Connect a wearable to unlock sleep scoring — worth up to 27 pts", pts: 27 })
+  if (!oralActive) nextItems.push({ panel: "oral", text: "Order your oral microbiome kit — worth up to 27 pts", pts: 27 })
+  if (hasBlood && bloodLdl !== undefined && bloodLdl > 130) nextItems.push({ panel: "blood", text: `LDL at ${bloodLdl} mg/dL — consider dietary changes or discuss statins with your doctor`, pts: 4 })
+  if (hasBlood && bloodHsCrp !== undefined && bloodHsCrp > 2) nextItems.push({ panel: "blood", text: `hsCRP at ${bloodHsCrp} mg/L — elevated inflammation, review diet and stress`, pts: 3 })
+  if (hasBlood && bloodGlucose !== undefined && bloodGlucose > 99) nextItems.push({ panel: "blood", text: `Fasting glucose at ${bloodGlucose} mg/dL — prediabetic range, reduce refined carbs`, pts: 3 })
+  if (hasBlood && bloodVitaminD !== undefined && bloodVitaminD > 0 && bloodVitaminD < 30) nextItems.push({ panel: "blood", text: `Vitamin D at ${bloodVitaminD} ng/mL — below optimal, consider supplementation`, pts: 2 })
+  if (hasBlood && !bloodHsCrp) nextItems.push({ panel: "blood", text: "Add hsCRP to your next blood panel — key inflammation marker worth ~3 pts", pts: 3 })
+  if (hasBlood && !bloodHba1c) nextItems.push({ panel: "blood", text: "Add HbA1c to your next panel — metabolic health marker worth ~3 pts", pts: 3 })
+  if (!hasBlood) nextItems.push({ panel: "blood", text: "Upload your most recent blood panel to unlock blood scoring — worth up to 33 pts", pts: 33 })
+  nextItems.sort((a, b) => b.pts - a.pts)
+  const topNextSteps = nextItems.slice(0, 3)
 
   const bloodRows = [
     ["LDL Cholesterol", lab?.ldl_mgdl, "mg/dL", "<100 optimal"],
@@ -166,7 +183,6 @@ function buildReportHtml(data: Record<string, unknown>, name: string, email: str
   const sleepSub = Number(snapshot?.sleep_sub ?? 0)
   const bloodSub = Number(snapshot?.blood_sub ?? 0)
   const lifestyleSub = Number(snapshot?.lifestyle_sub ?? 0)
-  const oralSub = Number(snapshot?.oral_sub ?? 0)
 
   const lifestyleItems = lifestyle ? [
     ["Exercise frequency", lifestyle.exercise_freq],
@@ -273,6 +289,7 @@ function buildReportHtml(data: Record<string, unknown>, name: string, email: str
       </tr>`).join("")}
     </tbody>
   </table>` : '<p class="no-data">No blood markers on file.</p>'}
+  ${bloodInsight ? `<div style="margin-top:14px;padding:12px 14px;background:#F7F5F0;border-left:3px solid #B8860B;font-size:12px;line-height:1.7;color:#555">${bloodInsight}</div>` : ""}
   ` : '<p class="no-data">No blood panel on file. Upload a lab report in Peaq Health to include blood data in future reports.</p>'}
 
   <h2>Sleep & Recovery</h2>
@@ -295,6 +312,27 @@ function buildReportHtml(data: Record<string, unknown>, name: string, email: str
     <div class="lifestyle-row"><span>${label}</span><span>${val}</span></div>`).join("")}
   </div>` : '<p class="no-data">No lifestyle data on file. Complete the lifestyle questionnaire in Peaq Health.</p>'}
 
+  ${insightCards.length > 0 ? `
+  <h2>Insights</h2>
+  <p style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#aaa;margin-bottom:14px">What your data is telling you</p>
+  ${insightCards.map(card => `
+  <div style="border:0.5px solid #e5e5e5;border-left:3px solid ${card.color};padding:14px 16px;margin-bottom:10px">
+    <p style="font-family:'Cormorant Garamond',Georgia,serif;font-size:16px;font-weight:400;color:#141410;margin:0 0 5px">${card.title}</p>
+    <p style="font-size:12px;line-height:1.65;color:#555;margin:0 0 10px">${card.body}</p>
+    <span style="font-size:9px;text-transform:uppercase;letter-spacing:0.05em;padding:3px 8px;background:${card.tagBg};color:${card.tagColor}">${card.tag}</span>
+  </div>`).join("")}` : ""}
+
+  ${topNextSteps.length > 0 ? `
+  <h2>What to focus on next</h2>
+  ${topNextSteps.map(item => `
+  <div style="background:#F7F5F0;border:0.5px solid rgba(20,20,16,0.1);border-left:3px solid ${PANEL_COLOR[item.panel]};padding:14px 16px;margin-bottom:8px;display:flex;justify-content:space-between;gap:12px">
+    <div>
+      <span style="display:block;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:${PANEL_COLOR[item.panel]};margin-bottom:4px">${item.panel}</span>
+      <p style="font-size:12px;line-height:1.6;color:#141410;margin:0">${item.text}</p>
+    </div>
+    <span style="font-size:11px;color:#B8860B;flex-shrink:0;padding-top:1px">+${item.pts} pts</span>
+  </div>`).join("")}` : ""}
+
   <div class="footer">
     <span>Peaq Health · peaqhealth.me</span>
     <span>Generated ${today}</span>
@@ -310,7 +348,6 @@ function buildReportHtml(data: Record<string, unknown>, name: string, email: str
 
 export function SettingsClient({ userId, email, firstName: initialFirst, lastName: initialLast, createdAt }: Props) {
   const router = useRouter()
-  const { theme, toggle } = useTheme()
   const supabase = createClient()
 
   const [firstName, setFirstName] = useState(initialFirst)
@@ -488,18 +525,6 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
           >
             {saving ? "Saving…" : saved ? "Saved ✓" : "Save changes"}
           </button>
-        </div>
-      </section>
-
-      {/* ── Preferences ─────────────────────────────────────────────── */}
-      <section className="mb-8 fade-up" style={{ animationDelay: "0.08s" }}>
-        <SectionLabel>Preferences</SectionLabel>
-        <div className="overflow-hidden rounded-lg" style={{ border: "0.5px solid var(--ink-12)" }}>
-          <RowItem
-            label="Dark mode"
-            description="Easier on the eyes in low light"
-            right={<Toggle on={theme === "dark"} onToggle={toggle} />}
-          />
         </div>
       </section>
 
