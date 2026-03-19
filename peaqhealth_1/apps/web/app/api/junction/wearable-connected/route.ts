@@ -8,13 +8,35 @@ export async function POST(request: NextRequest) {
   console.log("[wearable] connected route called")
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!user) {
+    console.error("[wearable] auth failed — no user session")
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+  console.log("[wearable] auth userId:", user.id)
 
-  const { provider, junctionUserId } = await request.json() as { provider: string; junctionUserId: string }
+  let provider: string
+  let junctionUserId: string
+  try {
+    const body = await request.json() as { provider?: string; junctionUserId?: string }
+    provider = body.provider ?? ""
+    junctionUserId = body.junctionUserId ?? ""
+  } catch {
+    console.error("[wearable] failed to parse request body")
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
+  }
+
+  console.log("[wearable] provider:", provider)
+  console.log("[wearable] junctionUserId:", junctionUserId)
 
   if (!provider || !junctionUserId) {
     return NextResponse.json({ error: "Missing provider or junctionUserId" }, { status: 400 })
   }
+
+  // Stamp the profile with junction_user_id so webhook lookups resolve correctly
+  await supabase
+    .from("profiles")
+    .update({ junction_user_id: junctionUserId })
+    .eq("id", user.id)
 
   // Fetch retroactive sleep data (90 days)
   let retroNights = 0
@@ -40,6 +62,7 @@ export async function POST(request: NextRequest) {
     .select()
     .single()
 
+  console.log("[wearable] upsert result:", insertError ?? "success")
   if (insertError) {
     console.error("[wearable] upsert error:", insertError.message, insertError.code)
     return NextResponse.json({ error: "Failed to save connection" }, { status: 500 })
