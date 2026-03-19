@@ -259,8 +259,8 @@ export function LabUpload({ onSkip }: LabUploadProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [parsedLabName, setParsedLabName] = useState<string | undefined>()
   const [parsedCollectionDate, setParsedCollectionDate] = useState<string | undefined>()
-  // editedMarkers: slug → string value (editable; empty = user removed or not entered)
-  const [editedMarkers, setEditedMarkers] = useState<Record<string, string>>({})
+  // editedMarkers: slug → number | null (null = user removed; absent key = not parsed)
+  const [editedMarkers, setEditedMarkers] = useState<Record<string, number | null>>({})
   // which slugs were originally parsed (to distinguish found vs. "+" add rows)
   const [parsedSlugs, setParsedSlugs] = useState<Set<string>>(new Set())
   const [manualLabDate, setManualLabDate] = useState(new Date().toISOString().slice(0, 10))
@@ -323,11 +323,11 @@ export function LabUpload({ onSkip }: LabUploadProps) {
       }
 
       // Capture ALL markers from API
-      const edited: Record<string, string> = {}
+      const edited: Record<string, number | null> = {}
       const found = new Set<string>()
       for (const [k, v] of Object.entries(data.markers)) {
         if (typeof v === "number" && v > 0) {
-          edited[k] = String(v)
+          edited[k] = v
           found.add(k)
         }
       }
@@ -362,34 +362,42 @@ export function LabUpload({ onSkip }: LabUploadProps) {
     }
   }
 
+  const updateMarker = (key: string, val: string) => {
+    const num = parseFloat(val)
+    setEditedMarkers(prev => ({ ...prev, [key]: isNaN(num) ? null : num }))
+    if (invalidSlugs.has(key)) {
+      setInvalidSlugs(prev => { const s = new Set(prev); s.delete(key); return s })
+    }
+  }
+
+  const removeMarker = (key: string) => {
+    setEditedMarkers(prev => { const next = { ...prev }; delete next[key]; return next })
+    setParsedSlugs(prev => { const s = new Set(prev); s.delete(key); return s })
+  }
+
   function handleConfirmSave() {
     // Validate plausible ranges
     const badSlugs = new Set<string>()
     const badNames: string[] = []
     for (const [slug, val] of Object.entries(editedMarkers)) {
-      if (!val) continue
-      const n = parseFloat(val)
-      if (isNaN(n)) continue
+      if (val == null) continue
       const range = PLAUSIBLE_RANGES[slug]
-      if (range && (n < range[0] || n > range[1])) {
+      if (range && (val < range[0] || val > range[1])) {
         badSlugs.add(slug)
         badNames.push(slugToName(slug))
       }
     }
 
     setInvalidSlugs(badSlugs)
+    setValidationWarning(badSlugs.size > 0
+      ? `Some values look unusual — please check ${badNames.join(", ")} before saving`
+      : null
+    )
 
-    if (badSlugs.size > 0) {
-      setValidationWarning(`Some values look unusual — please check ${badNames.join(", ")} before saving`)
-    } else {
-      setValidationWarning(null)
-    }
-
-    // Build final markers object
+    // Build final markers object (only non-null, positive values)
     const markers: Record<string, unknown> = { labDate: parsedCollectionDate }
     for (const [slug, val] of Object.entries(editedMarkers)) {
-      const n = parseFloat(val)
-      if (!isNaN(n) && n > 0) markers[slug] = n
+      if (val != null && val > 0) markers[slug] = val
     }
 
     saveMarkers(markers, "upload_pdf", parsedLabName)
@@ -434,7 +442,7 @@ export function LabUpload({ onSkip }: LabUploadProps) {
   // ── Confirm ───────────────────────────────────────────────────────────────
 
   if (phase === "confirm") {
-    const nonEmptyCount = Object.values(editedMarkers).filter(v => v && parseFloat(v) > 0).length
+    const nonEmptyCount = Object.values(editedMarkers).filter(v => v != null && v > 0).length
 
     // Build per-category view: found markers + high-value missing "+" rows
     const categoryViews = CATEGORIES.map(cat => {
@@ -500,12 +508,7 @@ export function LabUpload({ onSkip }: LabUploadProps) {
                       step="0.01"
                       min="0"
                       value={editedMarkers[m.slug] ?? ""}
-                      onChange={e => {
-                        setEditedMarkers(prev => ({ ...prev, [m.slug]: e.target.value }))
-                        if (invalidSlugs.has(m.slug)) {
-                          setInvalidSlugs(prev => { const s = new Set(prev); s.delete(m.slug); return s })
-                        }
-                      }}
+                      onChange={e => updateMarker(m.slug, e.target.value)}
                       className="font-body text-sm text-right"
                       style={{
                         width: 72,
@@ -524,14 +527,7 @@ export function LabUpload({ onSkip }: LabUploadProps) {
                       {m.unit}
                     </span>
                     <button
-                      onClick={() => {
-                        setEditedMarkers(prev => {
-                          const next = { ...prev }
-                          delete next[m.slug]
-                          return next
-                        })
-                        setParsedSlugs(prev => { const s = new Set(prev); s.delete(m.slug); return s })
-                      }}
+                      onClick={() => removeMarker(m.slug)}
                       className="font-body text-[11px] leading-none"
                       style={{ color: "var(--ink-30)", flexShrink: 0, lineHeight: 1 }}
                       title="Remove this marker"
@@ -563,16 +559,12 @@ export function LabUpload({ onSkip }: LabUploadProps) {
                       placeholder={m.placeholder}
                       value={editedMarkers[m.slug] ?? ""}
                       onChange={e => {
-                        const val = e.target.value
-                        if (val) {
-                          setEditedMarkers(prev => ({ ...prev, [m.slug]: val }))
+                        const num = parseFloat(e.target.value)
+                        if (!isNaN(num) && num > 0) {
+                          setEditedMarkers(prev => ({ ...prev, [m.slug]: num }))
                           setParsedSlugs(prev => new Set([...prev, m.slug]))
                         } else {
-                          setEditedMarkers(prev => {
-                            const next = { ...prev }
-                            delete next[m.slug]
-                            return next
-                          })
+                          setEditedMarkers(prev => { const next = { ...prev }; delete next[m.slug]; return next })
                           setParsedSlugs(prev => { const s = new Set(prev); s.delete(m.slug); return s })
                         }
                       }}
