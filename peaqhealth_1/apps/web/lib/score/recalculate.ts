@@ -1,5 +1,4 @@
 import { calculatePeaqScore, type LifestyleInputs, type BloodInputs, type OralInputs, type SleepInputs } from "@peaq/score-engine"
-import { getSleepSummaries, aggregateSleepInputs } from "@peaq/api-client/junction"
 import type { SupabaseClient } from "@supabase/supabase-js"
 
 // ─── DB row → engine type mappers ─────────────────────────────────────────────
@@ -155,23 +154,7 @@ export async function recalculateScore(
   console.log("[score] wearable found:", wearableRes.data ? "yes" : "no",
     "efficiency:", (wearableRes.data as Record<string, unknown> | null)?.sleep_efficiency ?? "—")
 
-  if (wearableRes.data?.junction_user_id) {
-    try {
-      const summaries = await getSleepSummaries(wearableRes.data.junction_user_id as string, { days: 14 })
-      const validNights = summaries.filter(s => s.duration > 0).length
-      const aggregated = aggregateSleepInputs(summaries)
-      if (aggregated) {
-        sleepInputs = { ...aggregated, nightsAvailable: validNights }
-        console.log("[score] sleep from Junction API — nights:", validNights)
-      }
-      // Note: if aggregated is null (< 7 nights), don't set all-zero inputs;
-      // fall through to wearable_connections fallback below.
-    } catch {
-      // proceed to fallback
-    }
-  }
-
-  // Fallback: use averaged sleep data saved by webhook into wearable_connections
+  // Build sleepInputs exclusively from wearable_connections averages (populated by webhook)
   if (!sleepInputs && wearableRes.data) {
     const wRow = wearableRes.data as Record<string, unknown>
     const nightsAvailable = (wRow.nights_available as number) ?? 0
