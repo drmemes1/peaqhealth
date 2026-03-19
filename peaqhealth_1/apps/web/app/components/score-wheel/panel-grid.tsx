@@ -27,8 +27,8 @@ function PanelCard({ label, color, trackColor, score, max, active, locked, desc,
       onMouseLeave={() => setHovered(false)}
       onTouchStart={() => haptics.light()}
       style={{
-        background: "white",
-        border: `0.5px solid ${highlighted ? color + "66" : hovered && active ? "rgba(20,20,16,0.20)" : "var(--ink-12)"}`,
+        background: "var(--off-white)",
+        border: `0.5px solid ${highlighted ? color + "66" : hovered && active ? "var(--ink-30)" : "var(--ink-12)"}`,
         borderTop: `2px solid ${locked ? "transparent" : active ? color : color + "44"}`,
         borderRadius: 4,
         padding: "14px 16px",
@@ -111,7 +111,7 @@ export function PanelGrid({
         {/* IX card — 4th cell in 2×2 grid */}
         <div
           style={{
-            background: "white",
+            background: "var(--off-white)",
             border: `0.5px solid ${hoveredRing === "ix" ? "rgba(184,134,11,0.4)" : "var(--ink-12)"}`,
             borderTop: "2px solid var(--gold)",
             borderRadius: 4,

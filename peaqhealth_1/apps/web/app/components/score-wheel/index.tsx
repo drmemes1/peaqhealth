@@ -471,12 +471,12 @@ export function ScoreWheel({
               fontSize: 11,
               fontVariant: "small-caps",
               letterSpacing: "0.04em",
-              color: "rgba(20,20,16,0.4)",
+              color: "var(--ink-30)",
               textDecoration: "none",
               transition: "color 0.2s ease",
             }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "#B8860B" }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "rgba(20,20,16,0.4)" }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--gold)" }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--ink-30)" }}
           >
             ↑ re-upload labs
           </a>
@@ -492,15 +492,15 @@ export function ScoreWheel({
           </div>
         )}
         {hsCRPRetestFlag && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", marginBottom: 8, borderRadius: 4, background: "rgba(220,38,38,0.06)", border: "0.5px solid rgba(220,38,38,0.2)" }}>
-            <span style={{ color: "#dc2626" }}>↑</span>
-            <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "#991b1b" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", marginBottom: 8, borderRadius: 4, background: "var(--blood-bg)", border: "0.5px solid rgba(192,57,43,0.25)" }}>
+            <span style={{ color: "var(--blood-c)" }}>↑</span>
+            <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "var(--blood-c)" }}>
               hsCRP &gt;10 mg/L may indicate acute inflammation. Retest in 2–4 weeks once resolved.
             </span>
           </div>
         )}
         {bloodData?.bloodInsight && (
-          <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", fontSize: 16, color: "rgba(20,20,16,0.7)", lineHeight: 1.55, margin: "0 0 14px", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+          <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", fontSize: 16, color: "var(--ink-80)", lineHeight: 1.55, margin: "0 0 14px", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
             {bloodData.bloodInsight}
           </p>
         )}
@@ -571,13 +571,13 @@ export function ScoreWheel({
           if (!bloodData.vitaminD) missing.push({ label: "Vitamin D", pts: 2 })
           if (missing.length === 0) return null
           return (
-            <div style={{ marginTop: 16, padding: "12px 14px", borderRadius: 6, background: "rgba(184,134,11,0.05)", border: "0.5px solid rgba(184,134,11,0.2)" }}>
-              <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "rgba(20,20,16,0.45)", margin: "0 0 8px" }}>
+            <div style={{ marginTop: 16, padding: "12px 14px", borderRadius: 6, background: "var(--gold-dim)", border: "0.5px solid rgba(184,134,11,0.2)" }}>
+              <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--ink-60)", margin: "0 0 8px" }}>
                 These markers would strengthen your score
               </p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                 {missing.map(m => (
-                  <a key={m.label} href="/settings/labs" style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 4, background: "white", border: "0.5px solid rgba(184,134,11,0.3)", textDecoration: "none", cursor: "pointer" }}>
+                  <a key={m.label} href="/settings/labs" style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 4, background: "var(--off-white)", border: "0.5px solid rgba(184,134,11,0.3)", textDecoration: "none", cursor: "pointer" }}>
                     <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "var(--ink)" }}>{m.label}</span>
                     <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "#B8860B" }}>+{m.pts} pts</span>
                   </a>
@@ -672,8 +672,8 @@ export function ScoreWheel({
                 <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink-60)" }}>{row.val ?? "—"}</span>
                 <span style={{
                   fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "3px 8px", borderRadius: 3,
-                  background: row.flag === "good" ? "#EAF3DE" : row.flag === "watch" ? "#FEF3C7" : row.flag === "attention" ? "#FEE2E2" : "#F7F5F0",
-                  color: row.flag === "good" ? "#2D6A4F" : row.flag === "watch" ? "#92400E" : row.flag === "attention" ? "#991B1B" : "rgba(20,20,16,0.6)",
+                  background: row.flag === "good" ? "var(--oral-bg)" : row.flag === "watch" ? "var(--amber-bg)" : row.flag === "attention" ? "var(--blood-bg)" : "var(--warm-50)",
+                  color: row.flag === "good" ? "var(--status-optimal)" : row.flag === "watch" ? "var(--amber)" : row.flag === "attention" ? "var(--status-attention)" : "var(--ink-60)",
                 }}>
                   {row.flag === "pending" ? "Pending" : row.flag === "good" ? "Good" : row.flag === "watch" ? "Watch" : "Attention"}
                 </span>

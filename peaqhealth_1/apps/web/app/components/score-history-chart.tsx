@@ -32,7 +32,7 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<
 
   return (
     <div style={{
-      background: "white",
+      background: "var(--off-white)",
       border: "0.5px solid var(--ink-12)",
       borderRadius: 4,
       padding: "10px 14px",
@@ -86,7 +86,7 @@ export function ScoreHistoryChart({ data }: ScoreHistoryChartProps) {
           tick={{
             fontFamily: "'Cormorant Garamond', Georgia, serif",
             fontSize: 12,
-            fill: "rgba(20,20,16,0.4)",
+            fill: "var(--ink-30)",
           }}
           axisLine={false}
           tickLine={false}
@@ -96,7 +96,7 @@ export function ScoreHistoryChart({ data }: ScoreHistoryChartProps) {
           tick={{
             fontFamily: "'Cormorant Garamond', Georgia, serif",
             fontSize: 12,
-            fill: "rgba(20,20,16,0.4)",
+            fill: "var(--ink-30)",
           }}
           axisLine={false}
           tickLine={false}
@@ -108,8 +108,8 @@ export function ScoreHistoryChart({ data }: ScoreHistoryChartProps) {
           dataKey="score"
           stroke="#B8860B"
           strokeWidth={1.5}
-          dot={<Dot r={3} fill="#B8860B" stroke="white" strokeWidth={1.5} />}
-          activeDot={{ r: 5, fill: "#B8860B", stroke: "white", strokeWidth: 2 }}
+          dot={<Dot r={3} fill="#B8860B" stroke="var(--off-white)" strokeWidth={1.5} />}
+          activeDot={{ r: 5, fill: "#B8860B", stroke: "var(--off-white)", strokeWidth: 2 }}
         />
       </LineChart>
     </ResponsiveContainer>

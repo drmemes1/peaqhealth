@@ -20,7 +20,7 @@ function CTABlock({ color, title, points, features, buttonLabel, href }: CTABloc
         <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 20, fontWeight: 300, color: "white", margin: 0 }}>{title}</h3>
         <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, textTransform: "uppercase", color: "rgba(255,255,255,0.65)" }}>{points} available</span>
       </div>
-      <div style={{ background: "white", border: "0.5px solid var(--ink-12)", borderTop: "none", borderRadius: "0 0 4px 4px", padding: "16px 20px" }}>
+      <div style={{ background: "var(--off-white)", border: "0.5px solid var(--ink-12)", borderTop: "none", borderRadius: "0 0 4px 4px", padding: "16px 20px" }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 24px", marginBottom: 16 }}>
           {features.map(f => (
             <div key={f} style={{ display: "flex", gap: 6 }}>
