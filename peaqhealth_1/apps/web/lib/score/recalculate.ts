@@ -141,7 +141,7 @@ export async function recalculateScore(
   supabase: SupabaseClient
 ): Promise<number> {
   const [wearableRes, labsRes, oralRes, lifestyleRes, manualSleepRes] = await Promise.all([
-    supabase.from("wearable_connections").select("*").eq("user_id", userId).eq("status", "connected").order("connected_at", { ascending: false }).limit(1).single(),
+    supabase.from("wearable_connections").select("*").eq("user_id", userId).order("updated_at", { ascending: false }).limit(1).single(),
     supabase.from("lab_results").select("*").eq("user_id", userId).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).single(),
     supabase.from("oral_kit_orders").select("*").eq("user_id", userId).eq("status", "results_ready").order("ordered_at", { ascending: false }).limit(1).single(),
     supabase.from("lifestyle_records").select("*").eq("user_id", userId).order("updated_at", { ascending: false }).limit(1).single(),
@@ -151,18 +151,7 @@ export async function recalculateScore(
   // Sleep inputs: prefer Junction API; fall back to wearable_connections averages; then manual entries
   let sleepInputs: SleepInputs | undefined
 
-  // Always log what's saved in the DB for debugging
-  if (wearableRes.data) {
-    const wRow = wearableRes.data as Record<string, unknown>
-    console.log("[score] sleep data from DB:", JSON.stringify({
-      nights_available: wRow.nights_available,
-      sleep_efficiency: wRow.sleep_efficiency,
-      deep_sleep_pct:   wRow.deep_sleep_pct,
-      rem_pct:          wRow.rem_pct,
-      hrv_rmssd:        wRow.hrv_rmssd,
-      latest_resting_hr: wRow.latest_resting_hr,
-    }))
-  }
+  console.log("[score] wearable query result:", JSON.stringify(wearableRes.data ?? wearableRes.error))
 
   if (wearableRes.data?.junction_user_id) {
     try {
@@ -183,21 +172,25 @@ export async function recalculateScore(
   // Fallback: use averaged sleep data saved by webhook into wearable_connections
   if (!sleepInputs && wearableRes.data) {
     const wRow = wearableRes.data as Record<string, unknown>
-    const nightsAvailable = (wRow.nights_available as number) || 0
-    const efficiency      = (wRow.sleep_efficiency as number) || 0
-    const deepPct         = (wRow.deep_sleep_pct   as number) || 0
-    const remPct          = (wRow.rem_pct           as number) || 0
-    const hrv             = (wRow.hrv_rmssd         as number) || 0
-    const spo2Dips        = (wRow.latest_spo2_dips  as number) || 0
+    const nightsAvailable = (wRow.nights_available as number) ?? 0
+    const efficiency      = (wRow.sleep_efficiency as number) ?? 0
+    const deepPct         = (wRow.deep_sleep_pct   as number) ?? 0
+    const remPct          = (wRow.rem_pct           as number) ?? 0
+    const hrv             = (wRow.hrv_rmssd         as number) ?? 0
+    const spo2Dips        = (wRow.latest_spo2_dips  as number) ?? 0
 
-    if (nightsAvailable >= 7 && efficiency > 0) {
+    // Accept data if we have ≥7 nights OR sleep_efficiency is present
+    const hasEnoughData = (nightsAvailable >= 7) || (efficiency > 0)
+
+    if (hasEnoughData) {
+      // Values stored as percentages (e.g. 87, 17, 20.1) — engine expects 0–100 scale
       sleepInputs = {
         deepSleepPct:       deepPct,
         hrv_ms:             hrv,
         spo2DipsPerNight:   spo2Dips,
         remPct:             remPct,
         sleepEfficiencyPct: efficiency,
-        nightsAvailable,
+        nightsAvailable:    nightsAvailable || undefined,
       }
       console.log("[score] sleep from wearable_connections fallback — nights:", nightsAvailable, "eff:", efficiency, "deep:", deepPct, "rem:", remPct, "hrv:", hrv)
     }
@@ -220,7 +213,18 @@ export async function recalculateScore(
     if (typeof wRow.latest_vo2max === "number") lifestyleInputs.vo2max = wRow.latest_vo2max
   }
 
+  console.log("[score] sleep inputs:", JSON.stringify(sleepInputs ?? null))
+  console.log("[score] blood inputs present:", bloodInputs ? Object.keys(bloodInputs).filter(k => (bloodInputs as Record<string, unknown>)[k] != null).length : 0)
+
   const result = calculatePeaqScore(sleepInputs, bloodInputs, oralInputs, lifestyleInputs)
+
+  console.log("[score] breakdown:", JSON.stringify({
+    sleep: result.breakdown.sleepSub,
+    blood: result.breakdown.bloodSub,
+    oral:  result.breakdown.oralSub,
+    lifestyle: result.breakdown.lifestyleSub,
+    total: result.score,
+  }))
 
   await supabase.from("score_snapshots").insert({
     user_id:                userId,
