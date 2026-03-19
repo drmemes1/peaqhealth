@@ -19,6 +19,64 @@ const HANDLED_EVENTS = new Set([
   "lab_report.parsing_job.updated",
 ])
 
+// ── Helper: fetch the most recent sleep session from the Vital API ────────────
+async function fetchLatestSleepSession(
+  junctionUserId: string,
+  startDate: string,
+  endDate: string
+): Promise<Record<string, unknown> | null> {
+  const baseUrl = process.env.JUNCTION_ENV === "production"
+    ? "https://api.tryvital.io"
+    : "https://api.sandbox.tryvital.io"
+
+  try {
+    const res = await fetch(
+      `${baseUrl}/v2/summary/sleep/${junctionUserId}?start_date=${startDate}&end_date=${endDate}`,
+      { headers: { "x-vital-api-key": process.env.JUNCTION_API_KEY! } }
+    )
+    if (!res.ok) {
+      console.error("[sleep] Vital API fetch failed:", res.status)
+      return null
+    }
+    const data = await res.json() as Record<string, unknown>
+    console.log("[sleep] fetched data:", JSON.stringify(data).slice(0, 500))
+    const sessions = (data.sleep ?? data.data ?? []) as Array<Record<string, unknown>>
+    return sessions[0] ?? null
+  } catch (err) {
+    console.error("[sleep] fetch error:", err instanceof Error ? err.message : "unknown")
+    return null
+  }
+}
+
+// ── Helper: build wearable update payload from a sleep session ─────────────────
+function buildSleepUpdatePayload(session: Record<string, unknown>): Record<string, unknown> {
+  const totalSecs  = (session.total_sleep_duration as number) || (session.duration as number) || 0
+  const payload: Record<string, unknown> = {
+    last_sync_at: new Date().toISOString(),
+    status: "connected",
+  }
+
+  if (totalSecs > 0) {
+    const deepSecs   = (session.deep_sleep_duration  as number) || 0
+    const remSecs    = (session.rem_sleep_duration   as number) || 0
+    const lightSecs  = (session.light_sleep_duration as number) || 0
+    const efficiency = (session.sleep_efficiency     as number) || 0
+    const hrv        = (session.hrv_rmssd_evening    as number) || (session.hrv_rmssd as number) || 0
+    const hrLowest   = (session.hr_lowest            as number) || 0
+    const spo2Avg    = session.spo2_avg              as number | undefined
+
+    if (deepSecs  > 0) payload.deep_sleep_pct  = Math.round((deepSecs  / totalSecs) * 1000) / 10
+    if (remSecs   > 0) payload.rem_pct          = Math.round((remSecs   / totalSecs) * 1000) / 10
+    if (lightSecs > 0) payload.light_sleep_pct  = Math.round((lightSecs / totalSecs) * 1000) / 10
+    if (efficiency > 0) payload.sleep_efficiency = Math.round(efficiency * 1000) / 10
+    if (hrv       > 0) payload.hrv_rmssd         = hrv
+    if (hrLowest  > 0) payload.latest_resting_hr  = hrLowest
+    if (spo2Avg !== undefined && spo2Avg < 90) payload.latest_spo2_dips = 1
+  }
+
+  return payload
+}
+
 export async function POST(request: NextRequest) {
   // ── Signature verification (Svix) ────────────────────────────────────────
   // Junction uses Svix to deliver webhooks. Svix signs each request with
@@ -237,8 +295,7 @@ export async function POST(request: NextRequest) {
   // ── sleep_cycle events: extract sleep architecture + save display columns ─
   if (
     event_type === "daily.data.sleep_cycle.created" ||
-    event_type === "daily.data.sleep_cycle.updated" ||
-    event_type === "historical.data.sleep_cycle.created"
+    event_type === "daily.data.sleep_cycle.updated"
   ) {
     const data = body.data as Record<string, unknown> | undefined
     console.log("[sleep-cycle] full payload:", JSON.stringify(body.data).slice(0, 500))
@@ -284,23 +341,27 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ status: "processed", event: event_type })
   }
 
-  // ── historical.data.sleep.created: single historical sleep night ──────────
+  // ── historical.data.sleep.created: fetch from Vital API + save ───────────
   if (event_type === "historical.data.sleep.created") {
     const data = body.data as Record<string, unknown> | undefined
-    const hrv = (data?.hrv_rmssd_evening as number) || 0
-    const spo2Min = data?.spo2_min as number | undefined
+    const startDate = (body.start_date ?? data?.start_date) as string | undefined
+    const endDate   = (body.end_date   ?? data?.end_date)   as string | undefined
 
-    const updatePayload: Record<string, unknown> = {
-      last_sync_at: new Date().toISOString(),
-      status: "connected",
+    if (!startDate || !endDate) {
+      console.log("[sleep] historical — missing dates in payload, skipping")
+      return NextResponse.json({ received: true })
     }
 
-    if (hrv > 0) updatePayload.hrv_rmssd = hrv
-    // Estimate spo2 dip from spo2_min — a dip is < 90%
-    if (spo2Min !== undefined && spo2Min < 90) updatePayload.latest_spo2_dips = 1
+    const session = await fetchLatestSleepSession(junctionUserId, startDate, endDate)
+    if (!session) {
+      console.log("[sleep] no sleep session returned from API for user:", userId)
+      return NextResponse.json({ received: true })
+    }
 
-    console.log("[webhook] historical.data.sleep.created — hrv:", hrv,
-      "spo2_min:", spo2Min, "for user:", userId)
+    const updatePayload = buildSleepUpdatePayload(session)
+    console.log("[sleep] saving —", Object.entries(updatePayload)
+      .filter(([k]) => k !== "last_sync_at" && k !== "status")
+      .map(([k, v]) => `${k}: ${v}`).join(", "), "for user:", userId)
 
     const { error: updateErr } = await supabase
       .from("wearable_connections")
@@ -311,6 +372,53 @@ export async function POST(request: NextRequest) {
 
     const newScore = await recalculateScore(userId, supabase)
     console.log("[webhook] historical.data.sleep.created — recalculated score:", newScore, "for user:", userId)
+    return NextResponse.json({ status: "processed", event: event_type })
+  }
+
+  // ── historical.data.sleep_cycle.created: fetch from Vital API (deduped) ──
+  if (event_type === "historical.data.sleep_cycle.created") {
+    // Skip if already synced today — historical events can fire repeatedly
+    const { data: wConn } = await supabase
+      .from("wearable_connections")
+      .select("last_sync_at")
+      .eq("user_id", userId)
+      .single()
+
+    const today = new Date().toISOString().slice(0, 10)
+    if (wConn?.last_sync_at && (wConn.last_sync_at as string).slice(0, 10) === today) {
+      console.log("[sleep-cycle] already synced today — skipping for user:", userId)
+      return NextResponse.json({ status: "skipped", event: event_type })
+    }
+
+    const data = body.data as Record<string, unknown> | undefined
+    const startDate = (body.start_date ?? data?.start_date) as string | undefined
+    const endDate   = (body.end_date   ?? data?.end_date)   as string | undefined
+
+    if (!startDate || !endDate) {
+      console.log("[sleep-cycle] historical — missing dates in payload, skipping")
+      return NextResponse.json({ received: true })
+    }
+
+    const session = await fetchLatestSleepSession(junctionUserId, startDate, endDate)
+    if (!session) {
+      console.log("[sleep-cycle] no sleep session returned from API for user:", userId)
+      return NextResponse.json({ received: true })
+    }
+
+    const updatePayload = buildSleepUpdatePayload(session)
+    console.log("[sleep-cycle] historical — saving —", Object.entries(updatePayload)
+      .filter(([k]) => k !== "last_sync_at" && k !== "status")
+      .map(([k, v]) => `${k}: ${v}`).join(", "), "for user:", userId)
+
+    const { error: updateErr } = await supabase
+      .from("wearable_connections")
+      .update(updatePayload)
+      .eq("user_id", userId)
+
+    if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
+
+    const newScore = await recalculateScore(userId, supabase)
+    console.log("[webhook]", event_type, "— recalculated score:", newScore, "for user:", userId)
     return NextResponse.json({ status: "processed", event: event_type })
   }
 
