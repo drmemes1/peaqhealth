@@ -183,7 +183,6 @@ function buildReportHtml(data: Record<string, unknown>, name: string, email: str
   const sleepSub = Number(snapshot?.sleep_sub ?? 0)
   const bloodSub = Number(snapshot?.blood_sub ?? 0)
   const lifestyleSub = Number(snapshot?.lifestyle_sub ?? 0)
-  const oralSub = Number(snapshot?.oral_sub ?? 0)
 
   const lifestyleItems = lifestyle ? [
     ["Exercise frequency", lifestyle.exercise_freq],
