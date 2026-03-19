@@ -143,7 +143,7 @@ export async function recalculateScore(
     supabase.from("wearable_connections").select("*").eq("user_id", userId).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("lab_results").select("*").eq("user_id", userId).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).single(),
     supabase.from("oral_kit_orders").select("*").eq("user_id", userId).eq("status", "results_ready").order("ordered_at", { ascending: false }).limit(1).single(),
-    supabase.from("lifestyle_records").select("*").eq("user_id", userId).order("updated_at", { ascending: false }).limit(1).single(),
+    supabase.from("lifestyle_records").select("*").eq("user_id", userId).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("manual_sleep_entries").select("duration_seconds,quality").eq("user_id", userId).order("date", { ascending: false }).limit(14),
   ])
 
