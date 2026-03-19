@@ -18,7 +18,6 @@ export default async function LifestylePage() {
 
   return (
     <LifestyleForm
-      userId={user.id}
       existing={existing as Record<string, unknown> | null}
     />
   );

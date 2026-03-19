@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "../../../lib/supabase/client";
 import { Logo } from "../../components/logo";
 import Link from "next/link";
 
@@ -255,13 +254,11 @@ const QUESTIONS: QuestionDef[] = [
 ];
 
 interface Props {
-  userId: string;
   existing: Record<string, unknown> | null;
 }
 
-export function LifestyleForm({ userId, existing }: Props) {
+export function LifestyleForm({ existing }: Props) {
   const router = useRouter();
-  const supabase = createClient();
 
   // Pre-fill from existing data
   const initial: Record<string, string> = {};
@@ -288,7 +285,7 @@ export function LifestyleForm({ userId, existing }: Props) {
     setSaving(true);
 
     // Build DB row
-    const row: Record<string, unknown> = { user_id: userId };
+    const row: Record<string, unknown> = {};
     const intKeys = new Set(["vegetable_servings_per_day", "fruit_servings_per_day", "processed_food_frequency", "sugary_drinks_per_week", "alcohol_drinks_per_week"]);
     for (const q of QUESTIONS) {
       if (q.type === "boolean") {
@@ -300,10 +297,12 @@ export function LifestyleForm({ userId, existing }: Props) {
       }
     }
 
-    await supabase
-      .from("lifestyle_records")
-      .upsert(row, { onConflict: "user_id" })
-      .select();
+    // POST to API route — saves lifestyle data and triggers score recalculation
+    await fetch("/api/lifestyle/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(row),
+    });
 
     setSaving(false);
     setSaved(true);
