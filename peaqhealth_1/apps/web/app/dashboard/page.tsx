@@ -116,6 +116,7 @@ export default async function DashboardPage() {
       updatedAt:     lifestyle.updated_at ?? "",
     } : undefined,
     oralOrdered: !!oralAny,
+    sleepNightsAvailable: (wearable?.retro_nights as number | null) ?? 0,
     interactionsFired,
     peaqPercent:      (snapshot?.peaq_percent      as number | null) ?? undefined,
     peaqPercentLabel: (snapshot?.peaq_percent_label as string | null) ?? undefined,
