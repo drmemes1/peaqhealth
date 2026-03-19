@@ -158,7 +158,7 @@ function Section({
 
 // ─── Marker row with spectrum bar ───────────────────────────────────────────
 
-function MarkerRow({ val, def, isHsCRP }: { val: number | null; def: MarkerDef; isHsCRP?: boolean }) {
+function MarkerRow({ val, def, isHsCRP, flagNote }: { val: number | null; def: MarkerDef; isHsCRP?: boolean; flagNote?: string }) {
   const status = getStatus(val, def, isHsCRP)
   const s = STATUS_STYLES[status]
   const notTested = status === "not_tested"
@@ -180,6 +180,9 @@ function MarkerRow({ val, def, isHsCRP }: { val: number | null; def: MarkerDef; 
           <span style={{ fontFamily: "var(--font-body)", fontSize: 14, fontWeight: 500, color: notTested ? "var(--ink-30)" : "var(--ink)" }}>
             {notTested ? "Not tested" : val}
           </span>
+          {!notTested && flagNote && (
+            <span title={flagNote} style={{ cursor: "help", color: "#d97706", fontSize: 12, marginLeft: 2 }}>⚑</span>
+          )}
           {!notTested && <span style={{ fontFamily: "var(--font-body)", fontSize: 10, color: "var(--ink-30)" }}>{def.unit}</span>}
           <span style={{ fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "3px 8px", borderRadius: 3, background: s.bg, color: s.text }}>
             {s.label}
@@ -232,13 +235,13 @@ export function BloodPanelClient({ lab, snapshot, history }: Props) {
 
   const hasData = !!lab
 
-  function renderSection(title: string, defs: MarkerDef[], defaultOpen: boolean) {
+  function renderSection(title: string, defs: MarkerDef[], defaultOpen: boolean, getNote?: (key: string) => string | undefined) {
     const hasAny = defs.some(d => getVal(lab, d.key) !== null)
     if (!hasData) return null
     return (
       <Section title={title} defaultOpen={hasAny && defaultOpen}>
         {defs.map(d => (
-          <MarkerRow key={d.key} val={getVal(lab, d.key)} def={d} isHsCRP={d.key === "hs_crp_mgl"} />
+          <MarkerRow key={d.key} val={getVal(lab, d.key)} def={d} isHsCRP={d.key === "hs_crp_mgl"} flagNote={getNote?.(d.key)} />
         ))}
       </Section>
     )
@@ -288,15 +291,6 @@ export function BloodPanelClient({ lab, snapshot, history }: Props) {
         )}
 
         {/* Flags */}
-        {lpaFlag && (lpaFlag === "elevated" || lpaFlag === "very_elevated") && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", marginBottom: 12, borderRadius: 4, background: "rgba(245,158,11,0.08)", border: "0.5px solid rgba(245,158,11,0.3)" }}>
-            <span style={{ color: "#d97706" }}>⚑</span>
-            <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "#92400e" }}>
-              Lp(a) {lpaFlag === "very_elevated" ? "very elevated (>50 mg/dL)" : "elevated (30–50 mg/dL)"}. Genetic cardiovascular risk factor — discuss with your physician.
-            </span>
-          </div>
-        )}
-
         {hsCRPRetestFlag && (
           <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", marginBottom: 12, borderRadius: 4, background: "rgba(220,38,38,0.06)", border: "0.5px solid rgba(220,38,38,0.2)" }}>
             <span style={{ color: "#dc2626" }}>↑</span>
@@ -327,7 +321,9 @@ export function BloodPanelClient({ lab, snapshot, history }: Props) {
         )}
 
         {/* Sub-panels */}
-        {renderSection("Cardiovascular Lipids", CARDIOVASCULAR, true)}
+        {renderSection("Cardiovascular Lipids", CARDIOVASCULAR, true, (key) =>
+          key === "lpa_mgdl" && lpaFlag ? "Genetic cardiovascular risk factor — discuss with your physician" : undefined
+        )}
         {renderSection("Inflammation & Resilience", INFLAMMATION, true)}
         {renderSection("Metabolic", METABOLIC, true)}
         {renderSection("Organ Function", ORGAN, true)}

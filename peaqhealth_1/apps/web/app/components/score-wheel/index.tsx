@@ -118,7 +118,7 @@ function formatValue(value: number): string {
 
 // Status dot colors
 const STATUS_COLORS: Record<Flag, string> = {
-  good: "#2D6A4F", watch: "#B8860B", attention: "#C0392B", pending: "rgba(20,20,16,0.15)", not_tested: "rgba(20,20,16,0.15)",
+  good: "var(--status-optimal)", watch: "var(--gold)", attention: "var(--blood-c)", pending: "var(--ink-12)", not_tested: "var(--ink-12)",
 }
 
 // Spectrum bar marker row — positioned dot on track with optional optimal zone
@@ -131,9 +131,9 @@ function SpectrumRow({ name, value, unit, f, min, max, optMin, optMax }: {
   const pct = clamp(((value - min) / (max - min)) * 100)
   const optMinPct = clamp(((optMin - min) / (max - min)) * 100)
   const optMaxPct = clamp(((optMax - min) / (max - min)) * 100)
-  const dotColor = f === "good" ? "#2D6A4F" : f === "watch" ? "#B8860B" : f === "attention" ? "#C0392B" : "rgba(20,20,16,0.3)"
-  const badgeBg   = f === "good" ? "#EAF3DE" : f === "watch" ? "#FEF3C7" : f === "attention" ? "#FEE2E2" : "#F7F5F0"
-  const badgeText = f === "good" ? "#2D6A4F" : f === "watch" ? "#92400E" : f === "attention" ? "#991B1B" : "rgba(20,20,16,0.6)"
+  const dotColor  = f === "good" ? "var(--status-optimal)" : f === "watch" ? "var(--gold)" : f === "attention" ? "var(--blood-c)" : "var(--ink-30)"
+  const badgeBg   = f === "good" ? "var(--oral-bg)"  : f === "watch" ? "var(--amber-bg)"  : f === "attention" ? "var(--blood-bg)" : "var(--warm-50)"
+  const badgeText = f === "good" ? "var(--status-optimal)" : f === "watch" ? "var(--amber)" : f === "attention" ? "var(--status-attention)" : "var(--ink-60)"
   const badgeLabel = f === "good" ? "Optimal" : f === "watch" ? "Watch" : f === "attention" ? "Attention" : "—"
 
   return (
@@ -151,11 +151,11 @@ function SpectrumRow({ name, value, unit, f, min, max, optMin, optMax }: {
         </div>
       </div>
       {/* Track */}
-      <div style={{ position: "relative", height: 4, borderRadius: 2, background: "rgba(20,20,16,0.07)", margin: "0 0 2px" }}>
+      <div style={{ position: "relative", height: 4, borderRadius: 2, background: "var(--ink-06)", margin: "0 0 2px" }}>
         {/* Optimal zone */}
         <div style={{ position: "absolute", top: 0, bottom: 0, left: `${optMinPct}%`, width: `${optMaxPct - optMinPct}%`, background: "rgba(45,106,79,0.15)", borderRadius: 2 }} />
         {/* Dot */}
-        <div style={{ position: "absolute", top: "50%", left: `${pct}%`, transform: "translate(-50%, -50%)", width: 8, height: 8, borderRadius: "50%", background: dotColor, border: "1.5px solid white", boxShadow: "0 1px 3px rgba(0,0,0,0.2)", zIndex: 1 }} />
+        <div style={{ position: "absolute", top: "50%", left: `${pct}%`, transform: "translate(-50%, -50%)", width: 8, height: 8, borderRadius: "50%", background: dotColor, border: "1.5px solid var(--off-white)", boxShadow: "0 1px 3px rgba(0,0,0,0.2)", zIndex: 1 }} />
       </div>
     </div>
   )
@@ -213,8 +213,8 @@ function CollapsiblePanel({
             onMouseLeave={() => setHoverToggle(false)}
             style={{
               width: 20, height: 20, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
-              border: `0.5px solid ${hoverToggle ? "var(--gold)" : "rgba(20,20,16,0.2)"}`,
-              color: hoverToggle ? "var(--gold)" : "rgba(20,20,16,0.5)",
+              border: `0.5px solid ${hoverToggle ? "var(--gold)" : "var(--ink-12)"}`,
+              color: hoverToggle ? "var(--gold)" : "var(--ink-30)",
               fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 16, lineHeight: 1,
               transition: "border-color 0.2s ease, color 0.2s ease", flexShrink: 0,
             }}
@@ -499,14 +499,6 @@ export function ScoreWheel({
             </span>
           </div>
         )}
-        {lpaFlag && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", marginBottom: 8, borderRadius: 4, background: "rgba(245,158,11,0.08)", border: "0.5px solid rgba(245,158,11,0.3)" }}>
-            <span style={{ color: "#d97706" }}>⚑</span>
-            <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "#92400e" }}>
-              Lp(a) {lpaFlag === "very_elevated" ? "very elevated (>50 mg/dL)" : "elevated (30–50 mg/dL)"}. Genetic cardiovascular risk factor — discuss with your physician.
-            </span>
-          </div>
-        )}
         {bloodData?.bloodInsight && (
           <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", fontSize: 16, color: "rgba(20,20,16,0.7)", lineHeight: 1.55, margin: "0 0 14px", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
             {bloodData.bloodInsight}
@@ -519,7 +511,7 @@ export function ScoreWheel({
             { name: "ApoB",          sub: "Particles · target <90",           val: bloodData?.apoB,           unit: "mg/dL", flagKey: "apoB",     max: 150  },
             { name: "LDL : HDL",     sub: "Ratio · target <2.0",             val: bloodData?.ldlHdlRatio,    unit: "ratio", flagKey: "ldlHdl",   max: 5    },
             { name: "HbA1c",         sub: "Glycaemia · target <5.4%",        val: bloodData?.hba1c,          unit: "%",     flagKey: "hba1c",    max: 8    },
-            { name: "Lp(a)",         sub: "Lipoprotein(a) · target <30",     val: bloodData?.lpa,            unit: "mg/dL", flagKey: "lpa",      max: 80   },
+            { name: "Lp(a)",         sub: "Lipoprotein(a) · target <30",     val: bloodData?.lpa,            unit: "mg/dL", flagKey: "lpa",      max: 80,   note: lpaFlag ? "Genetic cardiovascular risk factor — discuss with your physician" : undefined },
             { name: "Triglycerides", sub: "Target <150 mg/dL",               val: bloodData?.triglycerides,  unit: "mg/dL", flagKey: "tg",       max: 300  },
           ].map(row => {
             const notTested = row.val === undefined || row.val === 0
@@ -530,6 +522,7 @@ export function ScoreWheel({
                 barPct={notTested ? 0 : fa(row.val!, row.max)}
                 color="var(--blood-c)" trackColor="var(--blood-bg)"
                 hoverBg="rgba(192,57,43,0.04)" mounted={mounted}
+                note={(row as { note?: string }).note}
               />
             )
           })}

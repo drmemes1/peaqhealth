@@ -4,11 +4,11 @@ import { useState } from "react"
 export type Flag = "good" | "watch" | "attention" | "pending" | "not_tested"
 
 const FLAG_STYLES: Record<Flag, { bg: string; text: string; label: string }> = {
-  good:       { bg: "#EAF3DE", text: "#2D6A4F", label: "Good" },
-  watch:      { bg: "#FEF3C7", text: "#92400E", label: "Watch" },
-  attention:  { bg: "#FEE2E2", text: "#991B1B", label: "Attention" },
-  pending:    { bg: "#F7F5F0", text: "rgba(20,20,16,0.6)", label: "Pending" },
-  not_tested: { bg: "#F7F5F0", text: "rgba(20,20,16,0.35)", label: "—" },
+  good:       { bg: "var(--oral-bg)",  text: "var(--status-optimal)",   label: "Good" },
+  watch:      { bg: "var(--amber-bg)", text: "var(--amber)",             label: "Watch" },
+  attention:  { bg: "var(--blood-bg)", text: "var(--status-attention)",  label: "Attention" },
+  pending:    { bg: "var(--warm-50)",  text: "var(--ink-60)",            label: "Pending" },
+  not_tested: { bg: "var(--warm-50)",  text: "var(--ink-30)",            label: "—" },
 }
 
 interface MarkerRowProps {
@@ -22,9 +22,10 @@ interface MarkerRowProps {
   trackColor: string
   hoverBg: string
   mounted: boolean
+  note?: string  // inline tooltip flag
 }
 
-export function MarkerRow({ name, sub, value, unit, flag, barPct, color, trackColor, hoverBg, mounted }: MarkerRowProps) {
+export function MarkerRow({ name, sub, value, unit, flag, barPct, color, trackColor, hoverBg, mounted, note }: MarkerRowProps) {
   const [hovered, setHovered] = useState(false)
   const isNotTested = value === null || value === 0 || value === "0"
   const isPending = flag === "pending" || isNotTested
@@ -72,10 +73,13 @@ export function MarkerRow({ name, sub, value, unit, flag, barPct, color, trackCo
           <>
             <span style={{
               fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 14,
-              color: isPending ? "var(--ink-30)" : effectiveFlag === "good" ? color : effectiveFlag === "attention" ? "#991B1B" : "#92400E",
+              color: isPending ? "var(--ink-30)" : effectiveFlag === "good" ? color : effectiveFlag === "attention" ? "var(--status-attention)" : "var(--amber)",
             }}>
               {isPending ? "—" : value}
             </span>
+            {!isPending && note && (
+              <span title={note} style={{ cursor: "help", color: "#d97706", fontSize: 11, marginLeft: 3 }}>⚑</span>
+            )}
             {!isPending && <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, color: "var(--ink-30)", marginLeft: 3 }}>{unit}</span>}
           </>
         )}

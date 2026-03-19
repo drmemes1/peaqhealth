@@ -120,6 +120,21 @@ LABCORP FORMAT RULES:
 - Skip "Ordered Items:" header line with semicolons
 - Never use reference range values
 
+CRITICAL - APOLIPOPROTEIN B (ApoB):
+In LabCorp reports, ApoB appears on its own separate page with this exact structure:
+  'Apolipoprotein B'
+  'Test  Current Result and Flag  ...'
+  'Apolipoprotein B B, 01  [VALUE]  mg/dL  <90'
+  'Desirable < 90'
+  'Borderline High 90 - 99'
+  etc.
+
+The VALUE is a number between 40-200.
+It appears BEFORE the 'Desirable' reference table.
+NEVER return null for ApoB if you see 'Apolipoprotein B' followed by a number.
+Example: 'Apolipoprotein B B, 01  70  mg/dL'
+→ apoB_mgdL: 70
+
 QUEST MYCHART FORMAT RULES:
 - Format: MarkerName → Normal range line →
   reference numbers line → RESULT [High/Low]
@@ -130,6 +145,7 @@ QUEST MYCHART FORMAT RULES:
 UNIVERSAL RULES:
 - Only extract markers with real result values
 - Never use 0 as a value — omit if not found
+- Omit keys entirely when not found — do NOT return null values
 - collectionDate in YYYY-MM-DD format
 - labName: "LabCorp" or "Quest Diagnostics"
 
