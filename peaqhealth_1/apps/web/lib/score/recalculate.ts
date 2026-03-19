@@ -55,27 +55,35 @@ function num(v: unknown): number | undefined {
 }
 
 export function mapLabRow(row: Record<string, unknown>): BloodInputs | undefined {
-  const mapped: BloodInputs = {
-    hsCRP_mgL:           num(row.hs_crp_mgl),
-    vitaminD_ngmL:       num(row.vitamin_d_ngml),
-    apoB_mgdL:           num(row.apob_mgdl),
-    ldl_mgdL:            num(row.ldl_mgdl),
-    hdl_mgdL:            num(row.hdl_mgdl),
-    triglycerides_mgdL:  num(row.triglycerides_mgdl),
-    lpa_mgdL:            num(row.lpa_mgdl),
-    glucose_mgdL:        num(row.glucose_mgdl),
-    hba1c_pct:           num(row.hba1c_pct),
-    eGFR_mLmin:          num(row.egfr_mlmin),
-    alt_UL:              num(row.alt_ul),
-    ast_UL:              num(row.ast_ul),
-    albumin_gdL:         num(row.albumin_gdl),
-    hemoglobin_gdL:      num(row.hemoglobin_gdl),
-    wbc_x10L:            num(row.wbc_kul),
-    rdw_pct:             num(row.rdw_pct),
-    esr_mmhr:            num(row.esr_mmhr),
-    homocysteine_umolL:  num(row.homocysteine_umoll),
-    ferritin_ngmL:       num(row.ferritin_ngml),
-    labCollectionDate:   row.collection_date as string | undefined,
+  const mapped = {
+    hsCRP_mgL:              num(row.hs_crp_mgl),
+    vitaminD_ngmL:          num(row.vitamin_d_ngml),
+    apoB_mgdL:              num(row.apob_mgdl),
+    ldl_mgdL:               num(row.ldl_mgdl),
+    hdl_mgdL:               num(row.hdl_mgdl),
+    triglycerides_mgdL:     num(row.triglycerides_mgdl),
+    lpa_mgdL:               num(row.lpa_mgdl),
+    glucose_mgdL:           num(row.glucose_mgdl),
+    hba1c_pct:              num(row.hba1c_pct),
+    eGFR_mLmin:             num(row.egfr_mlmin),
+    alt_UL:                 num(row.alt_ul),
+    ast_UL:                 num(row.ast_ul),
+    albumin_gdL:            num(row.albumin_gdl),
+    hemoglobin_gdL:         num(row.hemoglobin_gdl),
+    wbc_x10L:               num(row.wbc_kul),
+    rdw_pct:                num(row.rdw_pct),
+    esr_mmhr:               num(row.esr_mmhr),
+    homocysteine_umolL:     num(row.homocysteine_umoll),
+    ferritin_ngmL:          num(row.ferritin_ngml),
+    creatinine_mgdL:        num(row.creatinine_mgdl),
+    bun_mgdL:               num(row.bun_mgdl),
+    alkPhos_UL:             num(row.alk_phos_ul),
+    totalBilirubin_mgdL:    num(row.total_bilirubin_mgdl),
+    testosterone_ngdL:      num(row.testosterone_ngdl),
+    totalCholesterol_mgdL:  num(row.total_cholesterol_mgdl),
+    nonHDL_mgdL:            num(row.non_hdl_mgdl),
+    tsh_uIUmL:              num(row.tsh_uiuml),
+    labCollectionDate:      row.collection_date as string | undefined,
   }
 
   // Return undefined only if no numeric marker is present at all
@@ -86,7 +94,7 @@ export function mapLabRow(row: Record<string, unknown>): BloodInputs | undefined
   if (presentKeys.length === 0) return undefined
 
   console.log("[score] blood markers present:", presentKeys)
-  return mapped
+  return mapped as BloodInputs
 }
 
 export function mapOralRow(row: Record<string, unknown>): OralInputs | undefined {

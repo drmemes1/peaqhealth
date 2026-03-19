@@ -5,6 +5,7 @@ import { getSleepSummaries, requestHistoricalPull } from "@peaq/api-client/junct
 import { recalculateScore } from "../../../../lib/score/recalculate"
 
 export async function POST(request: NextRequest) {
+  console.log("[wearable] connected route called")
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (insertError) {
-    console.error("wearable_connections insert error:", insertError)
+    console.error("[wearable] upsert error:", insertError.message, insertError.code)
     return NextResponse.json({ error: "Failed to save connection" }, { status: 500 })
   }
 
