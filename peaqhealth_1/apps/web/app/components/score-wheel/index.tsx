@@ -21,7 +21,7 @@ export interface ScoreWheelProps {
     bloodSub: number
     oralSub: number
     lifestyleSub: number
-    interactionPool: number
+    interactionPool: number | null
   }
   sleepConnected: boolean
   labFreshness: "fresh" | "aging" | "stale" | "expired" | "none"
@@ -253,7 +253,7 @@ export function ScoreWheel({
   useCountUp(breakdown.sleepSub, 900, 350, setDisplaySleep)
   useCountUp(breakdown.bloodSub, 900, 450, setDisplayBlood)
   useCountUp(breakdown.oralSub, 900, 550, setDisplayOral)
-  useCountUp(breakdown.interactionPool, 800, 650, setDisplayIx)
+  useCountUp(breakdown.interactionPool ?? 0, 800, 650, setDisplayIx)
 
   useEffect(() => {
     setMounted(true)
@@ -272,7 +272,7 @@ export function ScoreWheel({
     { r: 96, circumference: 603.2,  color: "var(--sleep-c)", trackColor: "var(--sleep-bg)", fillPct: breakdown.sleepSub / 27, pending: !sleepConnected, animDelay: 300, ringKey: "sleep", glowColor: "rgba(74,127,181,0.5)" },
     { r: 84, circumference: 527.8,  color: "var(--blood-c)", trackColor: "var(--blood-bg)", fillPct: breakdown.bloodSub / 33, pending: bloodLocked,      animDelay: 450, ringKey: "blood", glowColor: "rgba(192,57,43,0.45)" },
     { r: 72, circumference: 452.4,  color: "var(--oral-c)",  trackColor: "var(--oral-bg)",  fillPct: breakdown.oralSub / 27, pending: !oralActive,       animDelay: 600, ringKey: "oral",  glowColor: "rgba(45,106,79,0.45)" },
-    { r: 60, circumference: 376.99, color: "var(--gold)",    trackColor: "var(--gold-dim)", fillPct: breakdown.interactionPool / 15, pending: false,     animDelay: 750, ringKey: "ix",    glowColor: "rgba(184,134,11,0.5)" },
+    { r: 60, circumference: 376.99, color: "var(--gold)",    trackColor: "var(--gold-dim)", fillPct: (breakdown.interactionPool ?? 0) / 15, pending: false,     animDelay: 750, ringKey: "ix",    glowColor: "rgba(184,134,11,0.5)" },
   ]
 
   const LEGEND = [

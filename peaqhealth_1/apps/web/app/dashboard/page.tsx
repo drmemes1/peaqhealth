@@ -58,7 +58,7 @@ export default async function DashboardPage() {
     bloodSub:        snapshot?.blood_sub ?? 0,
     oralSub:         snapshot?.oral_sub ?? 0,
     lifestyleSub:    snapshot?.lifestyle_sub ?? 0,
-    interactionPool: snapshot?.interaction_pool ?? 15,
+    interactionPool: snapshot?.interaction_pool ?? null,
   }
 
   const props: ScoreWheelProps = {
@@ -116,14 +116,14 @@ export default async function DashboardPage() {
     } : undefined,
     oralOrdered: !!oralAny,
     interactions: {
-      sleepInflammation:   snapshot?.ix_sleep_inflammation ?? true,
-      spo2Lipid:           snapshot?.ix_spo2_lipid ?? true,
-      dualInflammatory:    snapshot?.ix_dual_inflammatory ?? true,
-      hrvHomocysteine:     snapshot?.ix_hrv_homocysteine ?? true,
-      periodontCRP:        snapshot?.ix_periodont_crp ?? true,
-      osaTaxaSpO2:         snapshot?.ix_osa_taxa_spo2 ?? true,
-      lowNitrateCRP:       snapshot?.ix_low_nitrate_crp ?? true,
-      lowDiversitySleep:   snapshot?.ix_low_diversity_sleep ?? true,
+      sleepInflammation:   snapshot?.ix_sleep_inflammation ?? false,
+      spo2Lipid:           snapshot?.ix_spo2_lipid ?? false,
+      dualInflammatory:    snapshot?.ix_dual_inflammatory ?? false,
+      hrvHomocysteine:     snapshot?.ix_hrv_homocysteine ?? false,
+      periodontCRP:        snapshot?.ix_periodont_crp ?? false,
+      osaTaxaSpO2:         snapshot?.ix_osa_taxa_spo2 ?? false,
+      lowNitrateCRP:       snapshot?.ix_low_nitrate_crp ?? false,
+      lowDiversitySleep:   snapshot?.ix_low_diversity_sleep ?? false,
       poorSleepOralQ:      false,
       poorExerciseSmoking: false,
       ...(() => {
