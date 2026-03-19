@@ -3,12 +3,12 @@ import { createClient } from "../../../../lib/supabase/server"
 import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { recalculateScore } from "../../../../lib/score/recalculate"
 import type { BloodMarkers } from "../../../components/lab-upload"
-import OpenAI from "openai"
+import { AzureOpenAI } from "openai"
 
 type DbRow = Record<string, number | string | null | undefined>
 
 async function generateBloodInsight(row: DbRow): Promise<string | null> {
-  const key = process.env.OPENAI_API_KEY
+  const key = process.env.AZURE_OPENAI_KEY
   if (!key) return null
 
   const n = (v: unknown) => typeof v === "number" && v > 0
@@ -55,9 +55,14 @@ Rules:
 - Never mention markers with value 0`
 
   try {
-    const client = new OpenAI({ apiKey: key })
+    const client = new AzureOpenAI({
+      apiKey: key,
+      endpoint: process.env.AZURE_OPENAI_ENDPOINT,
+      apiVersion: "2024-08-01-preview",
+      deployment: process.env.AZURE_OPENAI_DEPLOYMENT,
+    })
     const res = await client.chat.completions.create({
-      model: "gpt-4o",
+      model: process.env.AZURE_OPENAI_DEPLOYMENT!,
       max_tokens: 120,
       temperature: 0.7,
       messages: [{ role: "user", content: insightPrompt }],
