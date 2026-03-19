@@ -21,7 +21,6 @@ export interface ScoreWheelProps {
     bloodSub: number
     oralSub: number
     lifestyleSub: number
-    interactionPool: number | null
   }
   sleepConnected: boolean
   labFreshness: "fresh" | "aging" | "stale" | "expired" | "none"
@@ -69,23 +68,7 @@ export interface ScoreWheelProps {
     smoking: boolean
     updatedAt: string
   }
-  interactions: {
-    sleepInflammation:   boolean
-    spo2Lipid:           boolean
-    dualInflammatory:    boolean
-    hrvHomocysteine:     boolean
-    periodontCRP:        boolean
-    osaTaxaSpO2:         boolean
-    lowNitrateCRP:       boolean
-    lowDiversitySleep:   boolean
-    poorSleepOralQ:      boolean
-    poorExerciseSmoking: boolean
-    familyCVDApoB?:      boolean
-    highStressCRP?:      boolean
-    poorNutritionTrig?:  boolean
-    highHRPoorSleep?:    boolean
-    alcoholPoorSleep?:   boolean
-  }
+  interactionsFired?: string[]
   peaqPercent?:        number
   peaqPercentLabel?:   string
   lpaFlag?:            "elevated" | "very_elevated" | null
@@ -235,7 +218,7 @@ function CollapsiblePanel({
 
 export function ScoreWheel({
   score, breakdown, sleepConnected, labFreshness, oralActive,
-  sleepData, bloodData, oralData, lifestyleData, interactions,
+  sleepData, bloodData, oralData, lifestyleData, interactionsFired,
   lastSyncAt, lastSyncRequestedAt,
   peaqPercent, peaqPercentLabel, lpaFlag, hsCRPRetestFlag, additionalMarkers,
   labLockExpiresAt, oralOrdered,
@@ -247,13 +230,13 @@ export function ScoreWheel({
   const [displaySleep, setDisplaySleep] = useState(0)
   const [displayBlood, setDisplayBlood] = useState(0)
   const [displayOral, setDisplayOral] = useState(0)
-  const [displayIx, setDisplayIx] = useState(0)
+  const [displayLifestyle, setDisplayLifestyle] = useState(0)
 
   useCountUp(score, 1400, 200, setDisplayScore)
   useCountUp(breakdown.sleepSub, 900, 350, setDisplaySleep)
   useCountUp(breakdown.bloodSub, 900, 450, setDisplayBlood)
   useCountUp(breakdown.oralSub, 900, 550, setDisplayOral)
-  useCountUp(breakdown.interactionPool ?? 0, 800, 650, setDisplayIx)
+  useCountUp(breakdown.lifestyleSub, 800, 650, setDisplayLifestyle)
 
   useEffect(() => {
     setMounted(true)
@@ -272,14 +255,14 @@ export function ScoreWheel({
     { r: 96, circumference: 603.2,  color: "var(--sleep-c)", trackColor: "var(--sleep-bg)", fillPct: breakdown.sleepSub / 27, pending: !sleepConnected, animDelay: 300, ringKey: "sleep", glowColor: "rgba(74,127,181,0.5)" },
     { r: 84, circumference: 527.8,  color: "var(--blood-c)", trackColor: "var(--blood-bg)", fillPct: breakdown.bloodSub / 33, pending: bloodLocked,      animDelay: 450, ringKey: "blood", glowColor: "rgba(192,57,43,0.45)" },
     { r: 72, circumference: 452.4,  color: "var(--oral-c)",  trackColor: "var(--oral-bg)",  fillPct: breakdown.oralSub / 27, pending: !oralActive,       animDelay: 600, ringKey: "oral",  glowColor: "rgba(45,106,79,0.45)" },
-    { r: 60, circumference: 376.99, color: "var(--gold)",    trackColor: "var(--gold-dim)", fillPct: (breakdown.interactionPool ?? 0) / 15, pending: false,     animDelay: 750, ringKey: "ix",    glowColor: "rgba(184,134,11,0.5)" },
+    { r: 60, circumference: 376.99, color: "var(--gold)",    trackColor: "var(--gold-dim)", fillPct: breakdown.lifestyleSub / 13, pending: !lifestyleData,  animDelay: 750, ringKey: "lifestyle",  glowColor: "rgba(184,134,11,0.5)" },
   ]
 
   const LEGEND = [
     { label: "Sleep",        color: "var(--sleep-c)", active: sleepConnected },
     { label: "Blood",        color: "var(--blood-c)", active: hasBlood },
     { label: `Oral${!oralActive ? " (pending)" : ""}`, color: "var(--oral-c)", active: oralActive },
-    { label: "Interactions", color: "var(--gold)",    active: true },
+    { label: "Lifestyle",    color: "var(--gold)",    active: !!lifestyleData },
   ]
 
   const subline = ""
@@ -370,7 +353,7 @@ export function ScoreWheel({
                 { label: "Sleep",     pct: breakdown.sleepSub / 27,          color: "var(--sleep-c)" },
                 { label: "Blood",     pct: breakdown.bloodSub / 33,          color: "var(--blood-c)" },
                 { label: "Oral",      pct: breakdown.oralSub / 27,           color: "var(--oral-c)"  },
-                { label: "Lifestyle", pct: breakdown.lifestyleSub / 8,       color: "var(--gold)"    },
+                { label: "Lifestyle", pct: breakdown.lifestyleSub / 13,      color: "var(--gold)"    },
               ].map(bar => (
                 <div key={bar.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
                   <div style={{ width: 40, height: 4, borderRadius: 2, background: "var(--ink-06)", overflow: "hidden" }}>
@@ -406,13 +389,60 @@ export function ScoreWheel({
       {/* PANEL GRID */}
       <div style={fadeUp("0.08s")}>
         <PanelGrid
-          displaySleep={displaySleep} displayBlood={displayBlood} displayOral={displayOral} displayIx={displayIx}
-          sleepConnected={sleepConnected} labFreshness={labFreshness} oralActive={oralActive}
-          ixPool={breakdown.interactionPool} interactions={interactions}
+          displaySleep={displaySleep} displayBlood={displayBlood} displayOral={displayOral} displayLifestyle={displayLifestyle}
+          sleepConnected={sleepConnected} labFreshness={labFreshness} oralActive={oralActive} lifestyleActive={!!lifestyleData}
+          lifestyleSub={breakdown.lifestyleSub}
           sleepDesc={sleepDesc} bloodDesc={bloodDesc} oralDesc={oralDesc}
           staleBadge={staleBadge} mounted={mounted} hoveredRing={hoveredRing}
+          interactionsFired={interactionsFired}
         />
       </div>
+
+      {/* INTERACTION INSIGHTS */}
+      {interactionsFired && interactionsFired.length > 0 && (
+        <div style={fadeUp("0.10s")}>
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12 }}>
+            <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 22, fontWeight: 300, color: "var(--ink)", margin: 0 }}>Patterns detected</h3>
+            <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-30)" }}>Cross-panel signals</span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {interactionsFired.map(key => {
+              const INSIGHT_COPY: Record<string, { title: string; body: string; panels: string[] }> = {
+                sleepInflammation:   { title: "Sleep × Inflammation", body: "Poor sleep elevates CRP. Elevated CRP fragments sleep. The cycle is self-reinforcing.", panels: ["Sleep", "Blood"] },
+                spo2Lipid:           { title: "SpO2 × Lipids", body: "Nocturnal hypoxia activates the sympathetic nervous system and promotes LDL oxidation.", panels: ["Sleep", "Blood"] },
+                dualInflammatory:    { title: "Dual Inflammatory", body: "Concurrent hsCRP and ESR elevation indicates systemic, multi-pathway inflammation.", panels: ["Blood"] },
+                hrvHomocysteine:     { title: "HRV × Homocysteine", body: "Autonomic dysfunction compounded by endothelial injury — a high-risk cardiovascular phenotype.", panels: ["Sleep", "Blood"] },
+                periodontCRP:        { title: "Periodontal × CRP", body: "Periodontal pathogen burden directly elevates systemic CRP via bacteraemia.", panels: ["Oral", "Blood"] },
+                osaTaxaSpO2:         { title: "OSA Taxa × SpO2", body: "The microbiome flags OSA risk; the wearable detects its physiological consequence.", panels: ["Oral", "Sleep"] },
+                lowNitrateCRP:       { title: "Low Nitrate × CRP", body: "Depleted oral NO pathway plus elevated inflammation — dual hit on vascular health.", panels: ["Oral", "Blood"] },
+                lowDiversitySleep:   { title: "Low Diversity × Sleep", body: "The bidirectional relationship between oral microbiome diversity and sleep quality.", panels: ["Oral", "Sleep"] },
+                poorSleepOralQ:      { title: "Poor Sleep × Oral Hygiene", body: "Poor sleep efficiency combined with suboptimal oral care creates compounding systemic risk.", panels: ["Sleep", "Oral"] },
+                poorExerciseSmoking: { title: "Sedentary × Smoking", body: "Sedentary lifestyle and current smoking are the two most modifiable cardiovascular risk factors.", panels: ["Lifestyle"] },
+                familyCVDApoB:       { title: "Family CVD × ApoB", body: "Family history of CVD makes ApoB monitoring especially important as a primary prevention target.", panels: ["Blood", "Lifestyle"] },
+                highStressCRP:       { title: "High Stress × CRP", body: "Elevated cortisol from chronic stress directly increases hsCRP and inflammatory burden.", panels: ["Lifestyle", "Blood"] },
+                poorNutritionTrig:   { title: "Nutrition × Triglycerides", body: "Frequent processed food consumption is a primary driver of elevated triglycerides.", panels: ["Lifestyle", "Blood"] },
+                highHRPoorSleep:     { title: "Resting HR × Sleep", body: "High resting heart rate paired with poor sleep reflects inadequate cardiovascular recovery.", panels: ["Lifestyle", "Sleep"] },
+                alcoholPoorSleep:    { title: "Alcohol × Sleep", body: "Alcohol intake above 14 drinks/week directly fragments sleep architecture.", panels: ["Lifestyle", "Sleep"] },
+              }
+              const insight = INSIGHT_COPY[key]
+              if (!insight) return null
+              return (
+                <div key={key} style={{ background: "white", border: "0.5px solid var(--ink-12)", borderLeft: "2px solid var(--gold)", borderRadius: 4, padding: "12px 16px" }}>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 4 }}>
+                    <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, fontWeight: 600, color: "var(--gold)" }}>{insight.title}</span>
+                    <div style={{ display: "flex", gap: 4 }}>
+                      {insight.panels.map(p => (
+                        <span key={p} style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "2px 6px", borderRadius: 2, background: "var(--warm-100)", color: "var(--ink-60)" }}>{p}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "var(--ink-60)", margin: 0 }}>{insight.body}</p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* CTA BLOCKS */}
       <CTABlocks sleepConnected={sleepConnected} labFreshness={labFreshness} oralActive={oralActive} />
@@ -660,7 +690,7 @@ export function ScoreWheel({
       <CollapsiblePanel
         title="Lifestyle"
         score={Math.round(breakdown.lifestyleSub * 10) / 10}
-        maxScore={8}
+        maxScore={13}
         subtitle={lifestyleData ? `QUESTIONNAIRE · ${new Date(lifestyleData.updatedAt).toLocaleDateString("en-US", { month: "short", year: "numeric" }).toUpperCase()}` : "QUESTIONNAIRE"}
         defaultOpen={!!lifestyleData}
         delay="0.30s"

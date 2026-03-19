@@ -210,10 +210,10 @@ export default function SciencePage() {
   /* scroll-reveal for all FadeUp elements handled inline */
 
   const panelBars = [
-    { label: "Sleep", pts: 28, color: "var(--sleep-c)", pct: 28 },
-    { label: "Blood", pts: 28, color: "var(--blood-c)", pct: 28 },
-    { label: "Oral microbiome", pts: 25, color: "var(--oral-c)", pct: 25 },
-    { label: "Lifestyle", pts: 10, color: "var(--gold)", pct: 10 },
+    { label: "Sleep", pts: 27, color: "var(--sleep-c)", pct: 27 },
+    { label: "Blood", pts: 33, color: "var(--blood-c)", pct: 33 },
+    { label: "Oral microbiome", pts: 27, color: "var(--oral-c)", pct: 27 },
+    { label: "Lifestyle", pts: 13, color: "var(--gold)", pct: 13 },
   ];
 
   const scoreCategories = [
@@ -380,7 +380,7 @@ export default function SciencePage() {
 
         <FadeUp delay={60}>
           <p style={{ ...bodyTextStyle, marginBottom: 32 }}>
-            The Peaq Score runs from 0 to 100. It is composed of four panels and a cross-panel interaction pool. Each panel is independently meaningful — you receive partial scores as data becomes available.
+            The Peaq Score runs from 0 to 100. It is composed of four panels that sum directly to 100 points. Each panel is independently meaningful — you receive partial scores as data becomes available. Cross-panel interactions are detected and surfaced as insight cards but do not affect your numeric score.
           </p>
         </FadeUp>
 
@@ -400,8 +400,8 @@ export default function SciencePage() {
                 </span>
               </div>
             ))}
-            {/* Interaction pool */}
-            <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
+            {/* Interactions note */}
+            <div style={{ display: "flex", alignItems: "center", marginBottom: 8, opacity: 0.5 }}>
               <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "var(--ink-60)", width: 120, flexShrink: 0 }}>
                 Interactions
               </span>
@@ -491,7 +491,7 @@ export default function SciencePage() {
         {/* ═══ SLEEP PANEL ═══ */}
         <FadeUp>
           <h2 style={{ ...sectionTitleStyle, borderLeft: "3px solid var(--sleep-c)", paddingLeft: 16 }}>
-            Sleep &middot; 28 points
+            Sleep &middot; 27 points
           </h2>
         </FadeUp>
 
@@ -500,7 +500,7 @@ export default function SciencePage() {
             Sleep is the foundation of the Peaq Score. Poor sleep quality is not merely a performance issue — it is a systemic health signal that drives inflammation, glucose dysregulation, immune suppression, and accelerated biological aging. We weight it accordingly.
           </p>
           <p style={{ ...bodyTextStyle, marginBottom: 32 }}>
-            Sleep data requires a connected wearable — Apple Watch, Oura, WHOOP, or Garmin. We use a 7-night minimum to avoid single-night noise. Questionnaire estimates are accepted but capped at 22/28 points — wearable data is more precise.
+            Sleep data requires a connected wearable — Apple Watch, Oura, WHOOP, or Garmin. We use a 7-night minimum to avoid single-night noise. Questionnaire estimates are accepted but capped at 21/27 points — wearable data is more precise.
           </p>
         </FadeUp>
 
@@ -563,7 +563,7 @@ export default function SciencePage() {
         {/* ═══ BLOOD PANEL ═══ */}
         <FadeUp>
           <h2 style={{ ...sectionTitleStyle, borderLeft: "3px solid var(--blood-c)", paddingLeft: 16 }}>
-            Blood &middot; 28 points
+            Blood &middot; 33 points
           </h2>
         </FadeUp>
 
@@ -795,7 +795,7 @@ export default function SciencePage() {
         {/* ═══ CROSS-PANEL INTERACTIONS ═══ */}
         <FadeUp>
           <h2 style={{ ...sectionTitleStyle, borderLeft: "3px solid var(--gold)", paddingLeft: 16 }}>
-            Cross-panel interactions &middot; 14 point pool
+            Cross-panel Intelligence
           </h2>
         </FadeUp>
 
@@ -805,10 +805,10 @@ export default function SciencePage() {
               This is what makes the Peaq Score different from any other consumer health product.
             </p>
             <p style={{ marginBottom: 16 }}>
-              The interaction pool starts at 14 points. When two signals from different panels compound each other — when the combination is demonstrably worse than either alone — a penalty term fires and subtracts from the pool. The pool floor is zero.
+              Cross-panel interactions are detected silently and surfaced as insight cards on your dashboard. They do not subtract from your score — they expand your understanding.
             </p>
             <p style={{ marginBottom: 32 }}>
-              This models how biology actually works. Inflammation and poor sleep are not independent risks you simply add together. They amplify each other through shared pathways.
+              This models how biology actually works. Inflammation and poor sleep are not independent risks you simply add together. They amplify each other through shared pathways. When an interaction fires, you see it explained in plain language with the relevant panels tagged.
             </p>
           </div>
         </FadeUp>

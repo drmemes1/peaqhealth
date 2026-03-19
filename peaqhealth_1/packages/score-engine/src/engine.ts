@@ -1,30 +1,25 @@
 /**
- * Peaq Score Engine — v5.0
+ * Peaq Score Engine — v6.0
  *
  * Four-panel architecture: Sleep + Blood + Oral Microbiome + Lifestyle
  *
- * Changes from v4.2:
- *   - Panel weight redistribution: Sleep 28->27, Blood 28->33, Oral 25->27,
- *     Lifestyle 10->8, Interactions 14->15
- *   - Raw total 110 pts normalized to 100: finalScore = (raw / 110) x 100
- *   - Blood panel: 6 sub-panels (CVLipids 10, InflamRes 8, Metabolic 7,
- *     OrgFunc 5, Micronutrients 4, CBC 4) = 38pts raw -> scaled to 33pts
- *   - BloodInputs: all fields now optional for partial scoring
- *   - Recency decay: 0-90d->1.0, 91-180d->0.95, 181-270d->0.85, 271-365d->0.75, >365d->locked(0)
- *   - Lp(a): flag-only (elevated / very_elevated), no points
- *   - hsCRP >10 sets hsCRPRetestFlag; scores 0.25pt instead of 0
- *   - Interaction terms: 15 -> 10 high-evidence terms
- *   - calculatePeaqPercent() exported for data-completeness gauge
- *   - Version tag: "5.0"
+ * Changes from v5.0:
+ *   - Lifestyle max 8->13 (proportional scaling of raw sub-scores)
+ *   - Interactions removed from score total — silent insight engine only
+ *   - New formula: finalScore = Math.min(100, sleepSub + bloodSub + oralSub + lifestyleSub)
+ *   - No normalization divisor needed — panels sum to exactly 100
+ *   - interactionPool and interactionsFired retained for downstream insight cards
+ *   - Version tag: "6.0"
  *
- * Full architecture (max 110 raw -> normalized to 100):
+ * Full architecture (panels sum to exactly 100):
  *   Sleep          27 pts  (wearable) or PSQI-6 estimate (max 21 pts, capped)
  *   Blood          33 pts
  *   Oral           27 pts
- *   Lifestyle       8 pts  (questionnaire -- always active, never locked)
- *   Interactions   15 pts  (pool starts full; terms subtract; floor 0)
+ *   Lifestyle      13 pts  (questionnaire -- always active, never locked)
  *   --------------------------
- *   Total         110 raw -> normalized to 100
+ *   Total         100 pts  (no normalization needed)
+ *
+ *   Cross-panel interactions: silent insight engine, not scored
  */
 
 // ---- Questionnaire types ----------------------------------------------------
@@ -133,7 +128,7 @@ export interface BloodPanelResult {
 }
 
 export interface PeaqScoreResult {
-  version: "5.0"
+  version: "6.0"
   score:    number
   category: "optimal" | "good" | "moderate" | "attention"
   breakdown: {
@@ -699,7 +694,8 @@ export function calculatePeaqScore(sleep?: SleepInputs, blood?: BloodInputs, ora
     nutritionScore   = scoreNutrition(lifestyle)
     alcoholScore     = scoreAlcohol(lifestyle.alcoholDrinksPerWeek)
     const raw        = exerciseScore + oralHygieneScore + dentalVisitScore + heartScore + restingHRScore + vo2maxScore + nutritionScore + alcoholScore
-    lifestyleSub     = Math.max(0, Math.min(8, Math.round((raw - medicalHistoryPenalty(lifestyle)) * 2) / 2))
+    const net        = raw - medicalHistoryPenalty(lifestyle)
+    lifestyleSub     = Math.max(0, Math.min(13, Math.round(net * (13 / 8) * 2) / 2))
   }
 
   // Interactions (10 terms, pool 15)
@@ -739,8 +735,8 @@ export function calculatePeaqScore(sleep?: SleepInputs, blood?: BloodInputs, ora
     poorSleepOralQ && "poorSleepOralQ", poorExerciseSmoking && "poorExerciseSmoking",
   ].filter(Boolean) as string[]
 
-  const rawTotal = sleepSub + bloodSub + oralSub + lifestyleSub + interactionPool
-  const score    = Math.round(Math.min(100, Math.max(0, (rawTotal / 110) * 100)))
+  const rawTotal = sleepSub + bloodSub + oralSub + lifestyleSub
+  const score    = Math.round(Math.min(100, Math.max(0, rawTotal)))
   const { peaqPercent, peaqPercentLabel } = calculatePeaqPercent({ sleep, blood, oral, lifestyle })
 
   const lifestyleInsights = lifestyle
@@ -751,7 +747,7 @@ export function calculatePeaqScore(sleep?: SleepInputs, blood?: BloodInputs, ora
   if (oral?.collectionDate) oralDataAge = Math.floor((Date.now() - new Date(oral.collectionDate).getTime()) / 86400000)
 
   return {
-    version: "5.0",
+    version: "6.0",
     score,
     category: getCategory(score),
     breakdown: {
@@ -792,7 +788,7 @@ export function calculatePeaqScore(sleep?: SleepInputs, blood?: BloodInputs, ora
 // ---- Tests ------------------------------------------------------------------
 
 export function runTests(): void {
-  console.log("=== Peaq Score Engine v5.0 -- Test Suite ===\n")
+  console.log("=== Peaq Score Engine v6.0 -- Test Suite ===\n")
   const goodLS: LifestyleInputs = {
     exerciseLevel: "active", brushingFreq: "twice_plus", flossingFreq: "daily",
     mouthwashType: "fluoride", lastDentalVisit: "within_6mo", smokingStatus: "never",

@@ -21,29 +21,29 @@ function computeBreakdowns(data: OnboardingData): PanelBreakdown[] {
   return [
     {
       label: "Sleep",
-      pts: sleepActive ? 22 : 0,
-      max: 28,
+      pts: sleepActive ? 21 : 0,
+      max: 27,
       color: "#4A7FB5",
       active: sleepActive,
     },
     {
       label: "Blood",
-      pts: bloodActive ? 24 : 0,
-      max: 28,
+      pts: bloodActive ? 28 : 0,
+      max: 33,
       color: "#C0392B",
       active: bloodActive,
     },
     {
       label: "Oral",
-      pts: oralActive ? 18 : 0,
-      max: 25,
+      pts: oralActive ? 19 : 0,
+      max: 27,
       color: "#2D6A4F",
       active: oralActive,
     },
     {
       label: "Lifestyle",
-      pts: lifestyleActive ? 8 : 0,
-      max: 10,
+      pts: lifestyleActive ? 10 : 0,
+      max: 13,
       color: "#B8860B",
       active: lifestyleActive,
     },
@@ -68,9 +68,7 @@ export function StepScore({ data, onNext }: Props) {
 
   const activePanels = breakdowns.filter((b) => b.active);
   const subtotal = activePanels.reduce((s, b) => s + b.pts, 0);
-  // Interaction pool: 14 pts, scaled by how many panels are active
-  const ixPts = Math.round(14 * (activePanels.length / 4));
-  const totalScore = subtotal + ixPts;
+  const totalScore = subtotal;
 
   useEffect(() => {
     const t = setTimeout(() => setRevealed(true), 400);
@@ -93,7 +91,7 @@ export function StepScore({ data, onNext }: Props) {
         sleep={{ pts: breakdowns[0]!.pts, max: breakdowns[0]!.max, active: breakdowns[0]!.active }}
         blood={{ pts: breakdowns[1]!.pts, max: breakdowns[1]!.max, active: breakdowns[1]!.active }}
         oral={{ pts: breakdowns[2]!.pts, max: breakdowns[2]!.max, active: breakdowns[2]!.active }}
-        ix={{ pts: ixPts, max: 14, active: true }}
+
         size={200}
         animate={revealed}
       />

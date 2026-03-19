@@ -11,13 +11,13 @@ const CONFIGS = {
   sleep: {
     bg: "var(--sleep-bg)", border: "rgba(74,127,181,0.2)", iconBg: "rgba(74,127,181,0.12)",
     color: "var(--sleep-c)", subColor: "rgba(74,127,181,0.7)",
-    title: "No wearable connected", sub: "32 pts locked · Connect Oura, WHOOP, or Garmin · Apple Watch via iOS app soon",
+    title: "No wearable connected", sub: "27 pts locked · Connect Oura, WHOOP, or Garmin · Apple Watch via iOS app soon",
     href: "/onboarding", breathe: true,
   },
   blood: {
     bg: "var(--blood-bg)", border: "rgba(192,57,43,0.2)", iconBg: "rgba(192,57,43,0.12)",
     color: "var(--blood-c)", subColor: "rgba(192,57,43,0.7)",
-    title: "No lab results uploaded", sub: "28 pts locked · Upload your most recent blood panel",
+    title: "No lab results uploaded", sub: "33 pts locked · Upload your most recent blood panel",
     href: "/settings/labs", breathe: true,
   },
   "blood-stale": {
@@ -31,7 +31,7 @@ const CONFIGS = {
     bg: "var(--blood-bg)", border: "rgba(192,57,43,0.2)", iconBg: "rgba(192,57,43,0.12)",
     color: "var(--blood-c)", subColor: "rgba(192,57,43,0.7)",
     title: "Lab results expired — over 12 months old",
-    sub: "Blood panel locked · Upload recent labs to restore 28 pts",
+    sub: "Blood panel locked · Upload recent labs to restore 33 pts",
     href: "/settings/labs", breathe: false,
   },
   oral: {

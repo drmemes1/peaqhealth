@@ -55,7 +55,7 @@ export function CTABlocks({ sleepConnected, labFreshness, oralActive }: CTABlock
         <CTABlock
           color="var(--sleep-c)"
           title={<>Unlock your <em style={{ fontStyle: "italic" }}>sleep panel.</em></>}
-          points="+32 pts"
+          points="+27 pts"
           features={["Deep sleep % — slow-wave and metabolic recovery","HRV RMSSD — autonomic recovery","SpO2 dips — sleep-breathing and OSA signal","REM % — cognitive processing","Unlocks 7 cross-panel interaction terms","7-night minimum to unlock"]}
           buttonLabel="Connect wearable — Oura, WHOOP, Garmin"
           href="/onboarding"
@@ -65,7 +65,7 @@ export function CTABlocks({ sleepConnected, labFreshness, oralActive }: CTABlock
         <CTABlock
           color="var(--blood-c)"
           title={<>Unlock your <em style={{ fontStyle: "italic" }}>blood panel.</em></>}
-          points="+28 pts"
+          points="+33 pts"
           features={["hsCRP — inflammatory status","ApoB — primary atherogenic marker","Vitamin D — immune and metabolic","Lp(a) — genetic cardiovascular risk","LDL:HDL ratio and triglycerides","Lab freshness tracked over time"]}
           buttonLabel="Upload lab results"
           href="/settings/labs"

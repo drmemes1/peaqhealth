@@ -4,10 +4,10 @@ import { LogoSvg } from "../components/logo-svg";
 import { STEPS, STEP_LABELS, type OnboardingStep, type PanelStates, type PanelStatus } from "./types";
 
 const PANEL_CONFIG: { key: keyof PanelStates; label: string; color: string; pts: string }[] = [
-  { key: "sleep", label: "Sleep", color: "#4A7FB5", pts: "28 pts" },
-  { key: "blood", label: "Blood", color: "#C0392B", pts: "28 pts" },
-  { key: "oral",  label: "Oral",  color: "#2D6A4F", pts: "25 pts" },
-  { key: "lifestyle", label: "Lifestyle", color: "#B8860B", pts: "10 pts" },
+  { key: "sleep", label: "Sleep", color: "#4A7FB5", pts: "27 pts" },
+  { key: "blood", label: "Blood", color: "#C0392B", pts: "33 pts" },
+  { key: "oral",  label: "Oral",  color: "#2D6A4F", pts: "27 pts" },
+  { key: "lifestyle", label: "Lifestyle", color: "#B8860B", pts: "13 pts" },
 ];
 
 function StatusBadge({ status }: { status: PanelStatus }) {
