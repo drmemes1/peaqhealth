@@ -1,20 +1,12 @@
 "use client"
 
-import { useRouter } from "next/navigation"
-import { LabUpload, type BloodMarkers } from "../../components/lab-upload"
+import { LabUpload } from "../../components/lab-upload"
 
 interface Props {
   existingDate: string | null
 }
 
 export function LabsSettingsClient({ existingDate }: Props) {
-  const router = useRouter()
-
-  function handleSuccess(_markers: BloodMarkers, _score: number) {
-    // Reload dashboard after a brief success moment
-    setTimeout(() => router.push("/dashboard"), 1800)
-  }
-
   return (
     <div className="min-h-svh bg-off-white">
       <main className="mx-auto max-w-[480px] px-6 py-16 flex flex-col gap-8">
@@ -49,7 +41,7 @@ export function LabsSettingsClient({ existingDate }: Props) {
           )}
         </div>
 
-        <LabUpload onSuccess={handleSuccess} />
+        <LabUpload />
       </main>
     </div>
   )

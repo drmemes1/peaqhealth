@@ -299,8 +299,6 @@ export function ScoreWheel({
 
   const oralDesc = (!oralActive && oralOrdered) ? "Kit processing" : ""
 
-  const ixDesc = ""
-
   // Sleep marker flags
   const sf = sleepData ? {
     deep:       flag(sleepData.deepPct >= 17, sleepData.deepPct >= 13),
@@ -411,7 +409,7 @@ export function ScoreWheel({
           displaySleep={displaySleep} displayBlood={displayBlood} displayOral={displayOral} displayIx={displayIx}
           sleepConnected={sleepConnected} labFreshness={labFreshness} oralActive={oralActive}
           ixPool={breakdown.interactionPool} interactions={interactions}
-          sleepDesc={sleepDesc} bloodDesc={bloodDesc} oralDesc={oralDesc} ixDesc={ixDesc}
+          sleepDesc={sleepDesc} bloodDesc={bloodDesc} oralDesc={oralDesc}
           staleBadge={staleBadge} mounted={mounted} hoveredRing={hoveredRing}
         />
       </div>

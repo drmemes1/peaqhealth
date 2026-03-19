@@ -84,7 +84,6 @@ interface PanelGridProps {
   sleepDesc: string
   bloodDesc: string
   oralDesc: string
-  ixDesc: string
   staleBadge?: string
   mounted: boolean
   hoveredRing: string | null
@@ -93,7 +92,7 @@ interface PanelGridProps {
 export function PanelGrid({
   displaySleep, displayBlood, displayOral, displayIx,
   sleepConnected, labFreshness, oralActive, ixPool, interactions,
-  sleepDesc, bloodDesc, oralDesc, ixDesc, staleBadge,
+  sleepDesc, bloodDesc, oralDesc, staleBadge,
   mounted, hoveredRing,
 }: PanelGridProps) {
   const hasBlood = labFreshness !== "none" && labFreshness !== "expired"
@@ -109,10 +108,9 @@ export function PanelGrid({
         <PanelCard label="Sleep" color="var(--sleep-c)" trackColor="var(--sleep-bg)" score={displaySleep} max={27} active={sleepConnected} locked={!sleepConnected} desc={sleepDesc} mounted={mounted} highlighted={hoveredRing === "sleep"} />
         <PanelCard label="Blood" color="var(--blood-c)" trackColor="var(--blood-bg)" score={displayBlood} max={33} active={hasBlood} locked={bloodLocked} desc={bloodDesc} staleBadge={staleBadge} mounted={mounted} highlighted={hoveredRing === "blood"} />
         <PanelCard label="Oral Microbiome" color="var(--oral-c)" trackColor="var(--oral-bg)" score={displayOral} max={27} active={oralActive} locked={!oralActive} desc={oralDesc} mounted={mounted} highlighted={hoveredRing === "oral"} />
-        {/* IX card spans full width */}
+        {/* IX card — 4th cell in 2×2 grid */}
         <div
           style={{
-            gridColumn: "1 / -1",
             background: "white",
             border: `0.5px solid ${hoveredRing === "ix" ? "rgba(184,134,11,0.4)" : "var(--ink-12)"}`,
             borderTop: "2px solid var(--gold)",
@@ -121,22 +119,15 @@ export function PanelGrid({
             transition: "border-color 0.2s ease",
           }}
         >
-          <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-            <div style={{ flex: "0 0 50%" }}>
-              <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--ink-60)" }}>Cross-panel Interactions</span>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 4, margin: "4px 0" }}>
-                <span style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 34, fontWeight: 300, color: "var(--gold)" }}>{displayIx}</span>
-                <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "var(--ink-30)" }}>/ 15</span>
-              </div>
-              <div style={{ height: 3, borderRadius: 2, background: "var(--warm-100)", margin: "6px 0 8px", overflow: "hidden" }}>
-                <div style={{ height: "100%", width: mounted ? `${(ixPool / 15) * 100}%` : "0%", background: "var(--gold)", borderRadius: 2, transition: "width 1.4s cubic-bezier(.16,1,.3,1) 400ms" }} />
-              </div>
-              <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "var(--ink-60)", margin: 0 }}>{ixDesc}</p>
-            </div>
-            <div style={{ flex: 1 }}>
-              <IXChips oralActive={oralActive} interactions={interactions} />
-            </div>
+          <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--ink-60)" }}>Interactions</span>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 4, margin: "4px 0 6px" }}>
+            <span style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 34, fontWeight: 300, color: "var(--gold)" }}>{displayIx}</span>
+            <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "var(--ink-30)" }}>/ 15</span>
           </div>
+          <div style={{ height: 3, borderRadius: 2, background: "var(--warm-100)", marginBottom: 10, overflow: "hidden" }}>
+            <div style={{ height: "100%", width: mounted ? `${(ixPool / 15) * 100}%` : "0%", background: "var(--gold)", borderRadius: 2, transition: "width 1.4s cubic-bezier(.16,1,.3,1) 400ms" }} />
+          </div>
+          <IXChips oralActive={oralActive} interactions={interactions} />
         </div>
       </div>
     </div>

@@ -10,7 +10,6 @@ import type {
   WearableProvider,
   LifestyleAnswers,
 } from "./types";
-import type { BloodMarkers } from "../components/lab-upload";
 import { INITIAL_DATA } from "./types";
 import { LeftPanel } from "./left-panel";
 import { StepWelcome } from "./step-welcome";
@@ -99,12 +98,6 @@ export default function OnboardingPage() {
     setStep("blood");
   }
 
-  // /api/labs/save already persists; just advance the step
-  function handleBloodConfirm(_markers: BloodMarkers, _newScore: number) {
-    setData((prev) => ({ ...prev, bloodUploaded: true }));
-    setStep("oral");
-  }
-
   function handleBloodSkip() {
     setStep("oral");
   }
@@ -136,7 +129,7 @@ export default function OnboardingPage() {
       case "wearable":
         return <StepWearable onConnect={handleWearableConnect} onSkip={handleWearableSkip} />;
       case "blood":
-        return <StepBlood onConfirm={handleBloodConfirm} onSkip={handleBloodSkip} />;
+        return <StepBlood onSkip={handleBloodSkip} />;
       case "oral":
         return <StepOral onOrder={handleOralOrder} onSkip={handleOralSkip} />;
       case "lifestyle":
