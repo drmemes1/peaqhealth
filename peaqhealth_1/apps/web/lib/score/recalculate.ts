@@ -148,7 +148,17 @@ export async function recalculateScore(
   if (wearableRes.data?.junction_user_id) {
     try {
       const summaries = await getSleepSummaries(wearableRes.data.junction_user_id as string, { days: 14 })
-      sleepInputs = aggregateSleepInputs(summaries) ?? undefined
+      const validNights = summaries.filter(s => s.duration > 0).length
+      const aggregated = aggregateSleepInputs(summaries)
+      if (aggregated) {
+        sleepInputs = { ...aggregated, nightsAvailable: validNights }
+      } else if (validNights > 0) {
+        // Wearable connected, some nights available but not enough for reliable scoring yet
+        sleepInputs = {
+          deepSleepPct: 0, hrv_ms: 0, spo2DipsPerNight: 0, remPct: 0, sleepEfficiencyPct: 0,
+          nightsAvailable: validNights,
+        }
+      }
     } catch {
       // proceed without sleep data
     }

@@ -499,8 +499,11 @@ export default function SciencePage() {
           <p style={{ ...bodyTextStyle, marginBottom: 16 }}>
             Sleep is the foundation of the Peaq Score. Poor sleep quality is not merely a performance issue — it is a systemic health signal that drives inflammation, glucose dysregulation, immune suppression, and accelerated biological aging. We weight it accordingly.
           </p>
-          <p style={{ ...bodyTextStyle, marginBottom: 32 }}>
+          <p style={{ ...bodyTextStyle, marginBottom: 16 }}>
             Sleep data requires a connected wearable — Apple Watch, Oura, WHOOP, or Garmin. We use a 7-night minimum to avoid single-night noise. Questionnaire estimates are accepted but capped at 21/27 points — wearable data is more precise.
+          </p>
+          <p style={{ ...bodyTextStyle, marginBottom: 32 }}>
+            Sleep scoring requires a minimum of 7 nights of wearable data to ensure statistical reliability. This threshold is based on published research showing that 7 nights are needed to reliably estimate habitual sleep efficiency (Cheung et al., <em>Sleep Medicine Reviews</em>, 2021). Scores update nightly as new data arrives.
           </p>
         </FadeUp>
 
