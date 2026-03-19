@@ -6,18 +6,18 @@ import { useRouter } from "next/navigation"
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface BloodMarkers {
-  hsCRP_mgL?:          number
-  vitaminD_ngmL?:      number
-  apoB_mgdL?:          number
-  ldl_mgdL?:           number
-  hdl_mgdL?:           number
-  triglycerides_mgdL?: number
-  lpa_mgdL?:           number
-  glucose_mgdL?:       number
-  hba1c_pct?:          number
-  labDate?:            string
+  hsCRP_mgL?:              number
+  vitaminD_ngmL?:          number
+  apoB_mgdL?:              number
+  ldl_mgdL?:               number
+  hdl_mgdL?:               number
+  triglycerides_mgdL?:     number
+  lpa_mgdL?:               number
+  glucose_mgdL?:           number
+  hba1c_pct?:              number
+  fastingInsulin_uIUmL?:   number
+  labDate?:                string
 }
-
 
 interface LabUploadProps {
   onSkip?: () => void
@@ -26,15 +26,25 @@ interface LabUploadProps {
 // ─── Canonical markers for display ──────────────────────────────────────────
 
 const DISPLAY_MARKERS: Array<{ slug: keyof BloodMarkers; name: string; unit: string; placeholder: string }> = [
-  { slug: "hsCRP_mgL",          name: "hs-CRP",        unit: "mg/L",  placeholder: "0.8"  },
-  { slug: "vitaminD_ngmL",      name: "Vitamin D",     unit: "ng/mL", placeholder: "42"   },
-  { slug: "apoB_mgdL",          name: "ApoB",          unit: "mg/dL", placeholder: "85"   },
-  { slug: "ldl_mgdL",           name: "LDL",           unit: "mg/dL", placeholder: "110"  },
-  { slug: "hdl_mgdL",           name: "HDL",           unit: "mg/dL", placeholder: "58"   },
-  { slug: "triglycerides_mgdL", name: "Triglycerides", unit: "mg/dL", placeholder: "95"   },
-  { slug: "lpa_mgdL",           name: "Lp(a)",         unit: "mg/dL", placeholder: "18"   },
-  { slug: "glucose_mgdL",       name: "Glucose",       unit: "mg/dL", placeholder: "88"   },
-  { slug: "hba1c_pct",          name: "HbA1c",         unit: "%",     placeholder: "5.2"  },
+  { slug: "hsCRP_mgL",              name: "hs-CRP",           unit: "mg/L",     placeholder: "0.8"  },
+  { slug: "vitaminD_ngmL",          name: "Vitamin D",        unit: "ng/mL",    placeholder: "42"   },
+  { slug: "apoB_mgdL",              name: "ApoB",             unit: "mg/dL",    placeholder: "85"   },
+  { slug: "ldl_mgdL",               name: "LDL",              unit: "mg/dL",    placeholder: "110"  },
+  { slug: "hdl_mgdL",               name: "HDL",              unit: "mg/dL",    placeholder: "58"   },
+  { slug: "triglycerides_mgdL",     name: "Triglycerides",    unit: "mg/dL",    placeholder: "95"   },
+  { slug: "lpa_mgdL",               name: "Lp(a)",            unit: "mg/dL",    placeholder: "18"   },
+  { slug: "glucose_mgdL",           name: "Glucose",          unit: "mg/dL",    placeholder: "88"   },
+  { slug: "hba1c_pct",              name: "HbA1c",            unit: "%",        placeholder: "5.2"  },
+  { slug: "fastingInsulin_uIUmL",   name: "Fasting Insulin",  unit: "µIU/mL",   placeholder: "7"    },
+]
+
+// High-value markers to surface in "missing" section
+const MISSING_MARKER_SLUGS: Array<keyof BloodMarkers> = [
+  "apoB_mgdL",
+  "hsCRP_mgL",
+  "hba1c_pct",
+  "vitaminD_ngmL",
+  "fastingInsulin_uIUmL",
 ]
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -54,11 +64,14 @@ async function fileToBase64(file: File): Promise<string> {
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export function LabUpload({ onSkip }: LabUploadProps) {
-  type Phase = "idle" | "parsing" | "saving" | "manual"
+  type Phase = "idle" | "parsing" | "confirm" | "saving" | "manual"
 
   const router = useRouter()
   const [phase, setPhase] = useState<Phase>("idle")
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+  const [parsedMarkers, setParsedMarkers] = useState<BloodMarkers | null>(null)
+  const [parsedLabName, setParsedLabName] = useState<string | undefined>()
+  const [missingValues, setMissingValues] = useState<Partial<Record<keyof BloodMarkers, string>>>({})
   const [manualLabDate, setManualLabDate] = useState(new Date().toISOString().slice(0, 10))
   const [manualValues, setManualValues] = useState<Partial<Record<keyof BloodMarkers, string>>>({})
   const [dragOver, setDragOver] = useState(false)
@@ -123,7 +136,10 @@ export function LabUpload({ onSkip }: LabUploadProps) {
         if (val !== undefined) (markers as Record<string, unknown>)[m.slug] = val
       }
 
-      await saveMarkers(markers, "upload_pdf", data.labName)
+      setParsedMarkers(markers)
+      setParsedLabName(data.labName)
+      setMissingValues({})
+      setPhase("confirm")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed")
       setPhase("idle")
@@ -145,6 +161,17 @@ export function LabUpload({ onSkip }: LabUploadProps) {
       setError(err instanceof Error ? err.message : "Failed to save")
       setPhase("idle")
     }
+  }
+
+  function handleConfirmSave() {
+    if (!parsedMarkers) return
+    // Merge missing-marker inputs into parsed markers
+    const merged: BloodMarkers = { ...parsedMarkers }
+    for (const slug of MISSING_MARKER_SLUGS) {
+      const v = parseFloat(missingValues[slug] ?? "")
+      if (!isNaN(v)) (merged as Record<string, unknown>)[slug] = v
+    }
+    saveMarkers(merged, "upload_pdf", parsedLabName)
   }
 
   function handleManualSave() {
@@ -179,6 +206,111 @@ export function LabUpload({ onSkip }: LabUploadProps) {
         <p className="font-body text-xs" style={{ color: "var(--ink-30)" }}>
           Processing {selectedFiles.length} file{selectedFiles.length !== 1 ? "s" : ""}...
         </p>
+      </div>
+    )
+  }
+
+  // ── Confirm ───────────────────────────────────────────────────────────────
+
+  if (phase === "confirm" && parsedMarkers) {
+    // Which high-value markers are missing from parse results
+    const missingMarkers = MISSING_MARKER_SLUGS
+      .map(slug => DISPLAY_MARKERS.find(m => m.slug === slug)!)
+      .filter(m => (parsedMarkers as Record<string, unknown>)[m.slug] === undefined)
+
+    // Parsed rows to display (exclude labDate)
+    const parsedRows = DISPLAY_MARKERS.filter(
+      m => (parsedMarkers as Record<string, unknown>)[m.slug] !== undefined
+    )
+
+    return (
+      <div className="flex flex-col gap-5 w-full">
+        {/* Parsed results */}
+        <div>
+          <p className="font-body text-[10px] uppercase tracking-widest mb-3" style={{ color: "var(--ink-30)" }}>
+            Found {parsedRows.length} marker{parsedRows.length !== 1 ? "s" : ""}
+            {parsedLabName ? ` · ${parsedLabName}` : ""}
+            {parsedMarkers.labDate ? ` · ${parsedMarkers.labDate}` : ""}
+          </p>
+          <div style={{ border: "0.5px solid var(--ink-12)", borderRadius: 4, overflow: "hidden" }}>
+            {parsedRows.map((m, i) => (
+              <div
+                key={m.slug}
+                className="flex items-center justify-between px-4 py-2.5"
+                style={{ borderBottom: i < parsedRows.length - 1 ? "0.5px solid var(--ink-06, #f8f8f8)" : "none", background: "white" }}
+              >
+                <div className="flex items-center gap-2">
+                  <span style={{ color: "var(--blood-c)", fontSize: 11 }}>✓</span>
+                  <span className="font-body text-sm" style={{ color: "var(--ink)" }}>{m.name}</span>
+                </div>
+                <span className="font-body text-sm" style={{ color: "var(--ink)" }}>
+                  {(parsedMarkers as Record<string, number>)[m.slug]}
+                  <span className="font-body text-[10px] ml-1" style={{ color: "var(--ink-30)" }}>{m.unit}</span>
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Missing markers */}
+        {missingMarkers.length > 0 && (
+          <div>
+            <p className="font-body text-[12px] mb-3" style={{ color: "var(--ink-30)" }}>
+              Missing any markers? Add them manually
+            </p>
+            <div style={{ border: "0.5px solid var(--ink-12)", borderRadius: 4, overflow: "hidden" }}>
+              {missingMarkers.map((m, i) => (
+                <div
+                  key={m.slug}
+                  className="grid items-center px-4 py-2.5"
+                  style={{
+                    gridTemplateColumns: "1fr auto auto",
+                    gap: 12,
+                    borderBottom: i < missingMarkers.length - 1 ? "0.5px solid var(--ink-06, #f8f8f8)" : "none",
+                    background: "white",
+                  }}
+                >
+                  <span className="font-body text-sm" style={{ color: "var(--ink)" }}>{m.name}</span>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    placeholder={`e.g. ${m.placeholder}`}
+                    value={missingValues[m.slug] ?? ""}
+                    onChange={(e) => setMissingValues(prev => ({ ...prev, [m.slug]: e.target.value }))}
+                    className="font-body text-sm text-right"
+                    style={{
+                      width: 90,
+                      color: "var(--ink)",
+                      background: "transparent",
+                      border: "none",
+                      borderBottom: "1px solid var(--ink-12)",
+                      outline: "none",
+                    }}
+                  />
+                  <span className="font-body text-[10px]" style={{ color: "var(--ink-30)", minWidth: 48, textAlign: "right" }}>{m.unit}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {error && <p className="font-body text-xs" style={{ color: "#991B1B" }}>{error}</p>}
+
+        <button
+          onClick={handleConfirmSave}
+          className="h-12 w-full font-body text-xs uppercase tracking-[0.08em] text-white transition-opacity hover:opacity-85"
+          style={{ background: "var(--blood-c)" }}
+        >
+          Save to my profile
+        </button>
+        <button
+          onClick={() => { setPhase("idle"); setError(null); setSelectedFiles([]) }}
+          className="font-body text-xs uppercase tracking-widest"
+          style={{ color: "var(--ink-30)" }}
+        >
+          Re-upload
+        </button>
       </div>
     )
   }

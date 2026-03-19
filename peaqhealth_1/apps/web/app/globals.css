@@ -86,3 +86,24 @@ body {
 .pb-icon-breathe {
   animation: breathe 2.8s ease-in-out infinite;
 }
+
+/* ─── Dark mode ─────────────────────────────────────────────────────────── */
+
+[data-theme="dark"] {
+  --off-white: #0F0F0C;
+  --warm-50: #18181450;
+  --warm-100: #252520;
+  --warm-200: #2F2F2A;
+  --ink: #F2EFE8;
+  --ink-80: rgba(242,239,232,0.80);
+  --ink-60: rgba(242,239,232,0.60);
+  --ink-30: rgba(242,239,232,0.30);
+  --ink-12: rgba(242,239,232,0.12);
+  --ink-06: rgba(242,239,232,0.06);
+  --gold-dim: rgba(184,134,11,0.20);
+  --gold-light: #3A2D06;
+  --sleep-bg: #0D1A26;
+  --blood-bg: #2A0A08;
+  --oral-bg: #0A1F14;
+  --amber-bg: #2A1A04;
+}
