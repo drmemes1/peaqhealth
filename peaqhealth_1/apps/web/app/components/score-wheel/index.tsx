@@ -80,6 +80,11 @@ export interface ScoreWheelProps {
     lowDiversitySleep:   boolean
     poorSleepOralQ:      boolean
     poorExerciseSmoking: boolean
+    familyCVDApoB?:      boolean
+    highStressCRP?:      boolean
+    poorNutritionTrig?:  boolean
+    highHRPoorSleep?:    boolean
+    alcoholPoorSleep?:   boolean
   }
   peaqPercent?:        number
   peaqPercentLabel?:   string
@@ -87,6 +92,17 @@ export interface ScoreWheelProps {
   hsCRPRetestFlag?:    boolean
   additionalMarkers?:  Array<{ name: string; value: number; unit: string }>
   labLockExpiresAt?:   string | null  // ISO — null/undefined means locked or no labs
+  oralOrdered?:        boolean        // true if any kit order exists (incl. processing)
+}
+
+function relTimeSince(iso: string): string {
+  const ms = Date.now() - new Date(iso).getTime()
+  const min = Math.floor(ms / 60000)
+  if (min < 1) return "just now"
+  if (min < 60) return `${min}m ago`
+  const hr = Math.floor(min / 60)
+  if (hr < 24) return `${hr}h ago`
+  return `${Math.floor(hr / 24)}d ago`
 }
 
 function flag(good: boolean, watch?: boolean): Flag {
@@ -222,7 +238,7 @@ export function ScoreWheel({
   sleepData, bloodData, oralData, lifestyleData, interactions,
   lastSyncAt, lastSyncRequestedAt,
   peaqPercent, peaqPercentLabel, lpaFlag, hsCRPRetestFlag, additionalMarkers,
-  labLockExpiresAt,
+  labLockExpiresAt, oralOrdered,
 }: ScoreWheelProps) {
   const [mounted, setMounted] = useState(false)
   const [hoveredRing, setHoveredRing] = useState<string | null>(null)
@@ -266,29 +282,22 @@ export function ScoreWheel({
     { label: "Interactions", color: "var(--gold)",    active: true },
   ]
 
-  // Dynamic headline subline
-  let subline = "Connect a wearable or upload lab results to begin building your Peaq Score."
-  if (sleepConnected && hasBlood && oralActive) subline = "All three panels active. Your Peaq Score reflects a complete metabolic picture."
-  else if (sleepConnected && hasBlood) subline = "Blood panel is strong. Sleep is your main lever. Add your oral microbiome panel to complete the picture."
-  else if (sleepConnected && oralActive) subline = "Two panels complete. Add blood results to unlock all cross-panel interactions."
-  else if (sleepConnected) subline = "Wearable connected. Add blood labs and your oral kit to complete your profile."
+  const subline = ""
 
   // Stale badge
   const staleBadge = labFreshness === "stale" && bloodData ? `⚠ ${bloodData.monthsOld} mo old` : labFreshness === "aging" && bloodData ? `${bloodData.monthsOld} mo old` : undefined
 
   // Panel descriptions — derived from real data only, no hardcoded copy
-  const sleepDesc = sleepConnected && sleepData
-    ? `Synced ${sleepData.lastSync ? new Date(sleepData.lastSync).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "recently"} via ${sleepData.device}`
-    : "Connect a wearable to unlock sleep scoring"
+  const sleepDesc = sleepConnected && sleepData?.lastSync
+    ? `Synced ${relTimeSince(sleepData.lastSync)} via ${sleepData.device}`
+    : ""
 
-  // Blood: use AI insight if available, else simple marker count
+  // Blood: first sentence of AI insight, or empty
   const bloodDesc = bloodData?.bloodInsight
     ? bloodData.bloodInsight.split(".")[0] + "."
-    : hasBlood ? "" : "Upload your most recent blood panel."
+    : ""
 
-  const oralDesc = oralActive
-    ? ""
-    : "Order your oral microbiome kit to unlock oral scoring"
+  const oralDesc = (!oralActive && oralOrdered) ? "Kit processing" : ""
 
   const ixDesc = ""
 
@@ -625,7 +634,7 @@ export function ScoreWheel({
         title="Oral Microbiome"
         score={breakdown.oralSub}
         maxScore={27}
-        subtitle={oralData ? `ZYMO RESEARCH · ${new Date(oralData.reportDate).toLocaleDateString("en-US", { month: "short", year: "numeric" }).toUpperCase()}` : "PENDING"}
+        subtitle={oralData ? `ZYMO RESEARCH · ${new Date(oralData.reportDate).toLocaleDateString("en-US", { month: "short", year: "numeric" }).toUpperCase()}` : (oralOrdered ? "PROCESSING" : "")}
         statusDots={of_ ? [of_.shannon, of_.nitrate, of_.periodont, of_.osa] : undefined}
         defaultOpen={oralActive}
         delay="0.26s"
