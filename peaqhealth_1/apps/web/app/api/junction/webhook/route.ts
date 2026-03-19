@@ -9,6 +9,8 @@ const HANDLED_EVENTS = new Set([
   "daily.data.sleep.updated",
   "daily.data.sleep_cycle.created",
   "daily.data.sleep_cycle.updated",
+  "historical.data.sleep.created",
+  "historical.data.sleep_cycle.created",
   "daily.data.sleep_breathing_disturbance.created",
   "daily.data.sleep_breathing_disturbance.updated",
   "daily.data.sleep_apnea_alert.created",
@@ -230,6 +232,85 @@ export async function POST(request: NextRequest) {
     const newScore = await recalculateScore(userId, supabase)
     console.log("[webhook] sleep_apnea_alert — recalculated score for user:", userId)
     return NextResponse.json({ status: "processed", event: "sleep_apnea_alert" })
+  }
+
+  // ── sleep_cycle events: extract sleep architecture + save display columns ─
+  if (
+    event_type === "daily.data.sleep_cycle.created" ||
+    event_type === "daily.data.sleep_cycle.updated" ||
+    event_type === "historical.data.sleep_cycle.created"
+  ) {
+    const data = body.data as Record<string, unknown> | undefined
+    const duration = (data?.duration as number) || (data?.total_sleep_duration as number) || 0
+
+    const updatePayload: Record<string, unknown> = {
+      last_sync_at: new Date().toISOString(),
+      status: "connected",
+    }
+
+    if (duration > 0) {
+      const deepSecs  = (data?.deep_sleep_duration  as number) || 0
+      const remSecs   = (data?.rem_sleep_duration   as number) || 0
+      const lightSecs = (data?.light_sleep_duration as number) || 0
+      const deepPct   = (deepSecs  / duration) * 100
+      const remPct    = (remSecs   / duration) * 100
+      const lightPct  = (lightSecs / duration) * 100
+      const efficiency = (data?.sleep_efficiency as number) || 0
+      const hrv = (data?.hrv_rmssd_evening as number) || (data?.hrv_rmssd as number) || 0
+
+      if (deepPct  > 0) updatePayload.deep_sleep_pct  = Math.round(deepPct  * 10) / 10
+      if (remPct   > 0) updatePayload.rem_pct          = Math.round(remPct   * 10) / 10
+      if (lightPct > 0) updatePayload.light_sleep_pct  = Math.round(lightPct * 10) / 10
+      if (efficiency > 0) updatePayload.sleep_efficiency = Math.round(efficiency * 100 * 10) / 10
+      if (hrv > 0) updatePayload.hrv_rmssd = hrv
+
+      console.log("[webhook]", event_type, "— deepPct:", deepPct.toFixed(1),
+        "remPct:", remPct.toFixed(1), "efficiency:", efficiency, "hrv:", hrv,
+        "for user:", userId)
+    } else {
+      console.log("[webhook]", event_type, "— no duration in payload, skipping percentages for user:", userId)
+    }
+
+    const { error: updateErr } = await supabase
+      .from("wearable_connections")
+      .update(updatePayload)
+      .eq("user_id", userId)
+
+    if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
+
+    const newScore = await recalculateScore(userId, supabase)
+    console.log("[webhook]", event_type, "— recalculated score:", newScore, "for user:", userId)
+    return NextResponse.json({ status: "processed", event: event_type })
+  }
+
+  // ── historical.data.sleep.created: single historical sleep night ──────────
+  if (event_type === "historical.data.sleep.created") {
+    const data = body.data as Record<string, unknown> | undefined
+    const hrv = (data?.hrv_rmssd_evening as number) || 0
+    const spo2Min = data?.spo2_min as number | undefined
+
+    const updatePayload: Record<string, unknown> = {
+      last_sync_at: new Date().toISOString(),
+      status: "connected",
+    }
+
+    if (hrv > 0) updatePayload.hrv_rmssd = hrv
+    // Estimate spo2 dip from spo2_min — a dip is < 90%
+    if (spo2Min !== undefined && spo2Min < 90) updatePayload.latest_spo2_dips = 1
+
+    console.log("[webhook] historical.data.sleep.created — hrv:", hrv,
+      "spo2_min:", spo2Min, "for user:", userId)
+
+    const { error: updateErr } = await supabase
+      .from("wearable_connections")
+      .update(updatePayload)
+      .eq("user_id", userId)
+
+    if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
+
+    const newScore = await recalculateScore(userId, supabase)
+    console.log("[webhook] historical.data.sleep.created — recalculated score:", newScore, "for user:", userId)
+    return NextResponse.json({ status: "processed", event: event_type })
   }
 
   // ── historical.data: upsert sleep records then recalculate once ───────────
