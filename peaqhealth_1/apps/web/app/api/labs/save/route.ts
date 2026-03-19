@@ -122,6 +122,9 @@ export async function POST(request: NextRequest) {
   const nextVersion  = isNewVersion ? (existing.version ?? 1) + 1 : (existing?.version ?? 1)
 
   // ── Upsert markers into lab_results ──────────────────────────────────────
+  // Cast to access all extended marker fields the frontend now passes through
+  const m = markers as Record<string, unknown>
+
   const { error: upsertError } = await supabase
     .from("lab_results")
     .upsert({
@@ -133,15 +136,43 @@ export async function POST(request: NextRequest) {
       is_locked:          false,
       lock_expires_at:    lockExpiresAt,
       version:            nextVersion,
-      hs_crp_mgl:         markers.hsCRP_mgL          ?? null,
-      vitamin_d_ngml:     markers.vitaminD_ngmL      ?? null,
-      apob_mgdl:          markers.apoB_mgdL          ?? null,
-      ldl_mgdl:           markers.ldl_mgdL           ?? null,
-      hdl_mgdl:           markers.hdl_mgdL           ?? null,
-      triglycerides_mgdl: markers.triglycerides_mgdL ?? null,
-      lpa_mgdl:           markers.lpa_mgdL           ?? null,
-      glucose_mgdl:       markers.glucose_mgdL       ?? null,
-      hba1c_pct:          markers.hba1c_pct          ?? null,
+      // Core markers
+      hs_crp_mgl:              m.hsCRP_mgL          ?? null,
+      vitamin_d_ngml:          m.vitaminD_ngmL      ?? null,
+      apob_mgdl:               m.apoB_mgdL          ?? null,
+      ldl_mgdl:                m.ldl_mgdL           ?? null,
+      hdl_mgdl:                m.hdl_mgdL           ?? null,
+      triglycerides_mgdl:      m.triglycerides_mgdL ?? null,
+      lpa_mgdl:                m.lpa_mgdL           ?? null,
+      glucose_mgdl:            m.glucose_mgdL       ?? null,
+      hba1c_pct:               m.hba1c_pct          ?? null,
+      // Extended markers
+      total_cholesterol_mgdl:  m.totalCholesterol_mgdL ?? null,
+      non_hdl_mgdl:            m.nonHDL_mgdL           ?? null,
+      vldl_mgdl:               m.vldl_mgdL             ?? null,
+      egfr_mlmin:              m.egfr_mLmin            ?? null,
+      creatinine_mgdl:         m.creatinine_mgdL       ?? null,
+      bun_mgdl:                m.bun_mgdL              ?? null,
+      uric_acid_mgdl:          m.uricAcid_mgdL         ?? null,
+      fasting_insulin_uiuml:   m.fastingInsulin_uIUmL  ?? null,
+      alt_ul:                  m.alt_UL                ?? null,
+      ast_ul:                  m.ast_UL                ?? null,
+      alk_phos_ul:             m.alkPhos_UL            ?? null,
+      total_bilirubin_mgdl:    m.totalBilirubin_mgdL   ?? null,
+      albumin_gdl:             m.albumin_gdL           ?? null,
+      wbc_kul:                 m.wbc_kul               ?? null,
+      hemoglobin_gdl:          m.hemoglobin_gdL        ?? null,
+      hematocrit_pct:          m.hematocrit_pct        ?? null,
+      rdw_pct:                 m.rdw_pct               ?? null,
+      mcv_fl:                  m.mcv_fL                ?? null,
+      platelets_kul:           m.platelets_kul         ?? null,
+      testosterone_ngdl:       m.testosterone_ngdL     ?? null,
+      free_testo_pgml:         m.freeTesto_pgmL        ?? null,
+      shbg_nmoll:              m.shbg_nmolL            ?? null,
+      tsh_uiuml:               m.tsh_uIUmL             ?? null,
+      ferritin_ngml:           m.ferritin_ngmL         ?? null,
+      sodium_mmoll:            m.sodium_mmolL          ?? null,
+      potassium_mmoll:         m.potassium_mmolL       ?? null,
     }, { onConflict: "user_id" })
 
   if (upsertError) {
