@@ -88,6 +88,8 @@ export function mapLabRow(row: Record<string, unknown>): BloodInputs | undefined
     tsh_uIUmL:              num(row.tsh_uiuml),
     sodium_mmolL:           num(row.sodium_mmoll),
     potassium_mmolL:        num(row.potassium_mmoll),
+    uricAcid_mgdL:          num(row.uric_acid_mgdl),
+    fastingInsulin_uIUmL:   num(row.fasting_insulin_uiuml),
     labCollectionDate:      row.collection_date as string | undefined,
   }
 
@@ -146,8 +148,22 @@ export async function recalculateScore(
     supabase.from("manual_sleep_entries").select("duration_seconds,quality").eq("user_id", userId).order("date", { ascending: false }).limit(14),
   ])
 
-  // Sleep inputs: prefer Junction API; fall back to manual entries
+  // Sleep inputs: prefer Junction API; fall back to wearable_connections averages; then manual entries
   let sleepInputs: SleepInputs | undefined
+
+  // Always log what's saved in the DB for debugging
+  if (wearableRes.data) {
+    const wRow = wearableRes.data as Record<string, unknown>
+    console.log("[score] sleep data from DB:", JSON.stringify({
+      nights_available: wRow.nights_available,
+      sleep_efficiency: wRow.sleep_efficiency,
+      deep_sleep_pct:   wRow.deep_sleep_pct,
+      rem_pct:          wRow.rem_pct,
+      hrv_rmssd:        wRow.hrv_rmssd,
+      latest_resting_hr: wRow.latest_resting_hr,
+    }))
+  }
+
   if (wearableRes.data?.junction_user_id) {
     try {
       const summaries = await getSleepSummaries(wearableRes.data.junction_user_id as string, { days: 14 })
@@ -155,17 +171,38 @@ export async function recalculateScore(
       const aggregated = aggregateSleepInputs(summaries)
       if (aggregated) {
         sleepInputs = { ...aggregated, nightsAvailable: validNights }
-      } else if (validNights > 0) {
-        // Wearable connected, some nights available but not enough for reliable scoring yet
-        sleepInputs = {
-          deepSleepPct: 0, hrv_ms: 0, spo2DipsPerNight: 0, remPct: 0, sleepEfficiencyPct: 0,
-          nightsAvailable: validNights,
-        }
+        console.log("[score] sleep from Junction API — nights:", validNights)
       }
+      // Note: if aggregated is null (< 7 nights), don't set all-zero inputs;
+      // fall through to wearable_connections fallback below.
     } catch {
-      // proceed without sleep data
+      // proceed to fallback
     }
   }
+
+  // Fallback: use averaged sleep data saved by webhook into wearable_connections
+  if (!sleepInputs && wearableRes.data) {
+    const wRow = wearableRes.data as Record<string, unknown>
+    const nightsAvailable = (wRow.nights_available as number) || 0
+    const efficiency      = (wRow.sleep_efficiency as number) || 0
+    const deepPct         = (wRow.deep_sleep_pct   as number) || 0
+    const remPct          = (wRow.rem_pct           as number) || 0
+    const hrv             = (wRow.hrv_rmssd         as number) || 0
+    const spo2Dips        = (wRow.latest_spo2_dips  as number) || 0
+
+    if (nightsAvailable >= 7 && efficiency > 0) {
+      sleepInputs = {
+        deepSleepPct:       deepPct,
+        hrv_ms:             hrv,
+        spo2DipsPerNight:   spo2Dips,
+        remPct:             remPct,
+        sleepEfficiencyPct: efficiency,
+        nightsAvailable,
+      }
+      console.log("[score] sleep from wearable_connections fallback — nights:", nightsAvailable, "eff:", efficiency, "deep:", deepPct, "rem:", remPct, "hrv:", hrv)
+    }
+  }
+
   if (!sleepInputs && manualSleepRes.data && manualSleepRes.data.length >= 7) {
     sleepInputs = aggregateManualSleepInputs(
       manualSleepRes.data as Array<{ duration_seconds: number; quality: number }>

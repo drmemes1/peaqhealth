@@ -67,7 +67,7 @@ function buildSleepUpdatePayload(session: Record<string, unknown>): Record<strin
     const remSecs    = (session.rem        as number) || 0
     const lightSecs  = (session.light      as number) || 0
     const efficiency = (session.efficiency as number) || 0
-    const hrv        = (session.hrv_rmssd  as number) || 0
+    const hrv        = (session.hrv_rmssd ?? session.hrv ?? null) as number | null
     const hrLowest   = (session.hr_lowest  as number) || 0
     const spo2Avg    = session.spo2_avg    as number | undefined
 
@@ -75,7 +75,7 @@ function buildSleepUpdatePayload(session: Record<string, unknown>): Record<strin
     if (remSecs   > 0) payload.rem_pct            = Math.round((remSecs   / totalSecs) * 1000) / 10
     if (lightSecs > 0) payload.light_sleep_pct    = Math.round((lightSecs / totalSecs) * 1000) / 10
     if (efficiency > 0) payload.sleep_efficiency  = Math.round(efficiency * 10) / 10
-    if (hrv       > 0) payload.hrv_rmssd           = hrv
+    if (hrv !== null && hrv > 0) payload.hrv_rmssd = hrv
     if (hrLowest  > 0) payload.latest_resting_hr   = hrLowest
     payload.total_sleep_seconds = totalSecs
     if (spo2Avg !== undefined && spo2Avg < 90) payload.latest_spo2_dips = 1
@@ -86,9 +86,15 @@ function buildSleepUpdatePayload(session: Record<string, unknown>): Record<strin
 
 // ── Helper: build averaged wearable payload from multiple sleep sessions ───────
 function buildAveragedSleepPayload(sessions: Array<Record<string, unknown>>): Record<string, unknown> | null {
-  // Vital API v2: total = total sleep seconds, duration = time in bed
-  const valid = sessions.filter(s => ((s.total as number) || (s.duration as number) || 0) > 0)
-  const nightsAvailable = valid.length
+  // Filter out naps and very short sessions — only count full nights (>1 hour)
+  const fullSessions = sessions.filter(s => {
+    const total = (s.total as number) || (s.duration as number) || 0
+    const type  = s.type as string | undefined
+    return total > 3600 && type !== "acknowledged_nap" && type !== "nap"
+  })
+  console.log("[sleep] full sessions:", fullSessions.length, "of", sessions.length)
+
+  const nightsAvailable = fullSessions.length
   if (nightsAvailable < 7) return null
 
   const avg = (vals: number[]) => vals.reduce((a, b) => a + b, 0) / vals.length
@@ -100,19 +106,20 @@ function buildAveragedSleepPayload(sessions: Array<Record<string, unknown>>): Re
   const restingHRs: number[]   = []
   const totalSecsList: number[] = []
 
-  for (const s of valid) {
+  for (const s of fullSessions) {
     const totalSecs  = (s.total as number) || (s.duration as number) || 0
     const deepSecs   = (s.deep       as number) || 0
     const remSecs    = (s.rem        as number) || 0
     const efficiency = (s.efficiency as number) || 0
-    const hrv        = (s.hrv_rmssd  as number) || 0
+    // HRV: use null coalescing — don't conflate missing with zero
+    const hrv        = (s.hrv_rmssd ?? s.hrv ?? null) as number | null
     const hrLowest   = (s.hr_lowest  as number) || 0
 
     totalSecsList.push(totalSecs)
     if (deepSecs  > 0) deepPcts.push((deepSecs / totalSecs) * 100)
     if (remSecs   > 0) remPcts.push((remSecs   / totalSecs) * 100)
     if (efficiency > 0) efficiencies.push(efficiency)
-    if (hrv       > 0) hrvs.push(hrv)
+    if (hrv !== null && hrv > 0) hrvs.push(hrv)
     if (hrLowest  > 0) restingHRs.push(hrLowest)
   }
 
@@ -416,18 +423,22 @@ export async function POST(request: NextRequest) {
     }
 
     const sessions = await fetchSleepSessions(junctionUserId)
-    const nightsAvailable = sessions.filter(s => {
-      const d = (s.total_sleep_duration as number) || (s.duration as number) || 0
-      return d > 0
-    }).length
 
-    console.log("[sleep] nights available:", nightsAvailable, "for user:", userId)
+    // Filter naps and short sessions before counting — must match buildAveragedSleepPayload
+    const fullSessions = sessions.filter(s => {
+      const type = s.type as string | undefined
+      const d = (s.total as number) || (s.duration as number) || 0
+      return d > 3600 && type !== "acknowledged_nap" && type !== "nap"
+    })
+    const nightsAvailable = fullSessions.length
+
+    console.log("[sleep] full sessions:", nightsAvailable, "of", sessions.length, "for user:", userId)
 
     if (nightsAvailable < 7) {
-      console.log("[sleep] insufficient nights (<7) — storing count only, skipping averages")
+      console.log("[sleep] insufficient full sessions (<7) — storing count only, skipping averages")
       await supabase
         .from("wearable_connections")
-        .update({ nights_available: nightsAvailable, last_sync_at: new Date().toISOString(), status: "connected" })
+        .update({ nights_available: nightsAvailable, last_sync_at: new Date().toISOString(), updated_at: new Date().toISOString(), status: "connected" })
         .eq("user_id", userId)
       return NextResponse.json({ received: true, nightsAvailable })
     }
@@ -475,9 +486,14 @@ export async function POST(request: NextRequest) {
     }
 
     const sessions = await fetchSleepSessions(junctionUserId)
-    const session = sessions[0] ?? null
+    const fullSessions = sessions.filter(s => {
+      const total = (s.total as number) || (s.duration as number) || 0
+      const type  = s.type as string | undefined
+      return total > 3600 && type !== "acknowledged_nap" && type !== "nap"
+    })
+    const session = fullSessions[0] ?? null
     if (!session) {
-      console.log("[sleep-cycle] no sleep session returned from API for user:", userId)
+      console.log("[sleep-cycle] no full sleep session returned from API for user:", userId)
       return NextResponse.json({ received: true })
     }
 
