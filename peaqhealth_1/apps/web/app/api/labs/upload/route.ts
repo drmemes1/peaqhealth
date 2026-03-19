@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "../../../../lib/supabase/server"
-import OpenAI from "openai"
+import { AzureOpenAI } from "openai"
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -17,75 +17,11 @@ interface FileResult {
   labName?: string
   collectionDate?: string
   notes?: Record<string, string>
-  parserUsed: "openai" | "azure-hybrid" | "failed"
+  parserUsed: "azure-hybrid" | "failed"
   error?: string
 }
 
-// ─── OpenAI prompt ──────────────────────────────────────────────────────────
-
-const EXTRACTION_PROMPT = `You are a medical lab report parser. Extract ALL lab test results from this document.
-Return ONLY a valid JSON object with no other text, no markdown fences, no explanation.
-
-Use these exact key names where applicable:
-ldl_mgdL, hdl_mgdL, triglycerides_mgdL, hsCRP_mgL, hba1c_pct, glucose_mgdL,
-vitaminD_ngmL, apoB_mgdL, lpa_mgdL, creatinine_mgdL, egfr_mLmin, alt_UL, ast_UL,
-wbc_kul, hemoglobin_gdL, rdw_pct, mcv_fL, albumin_gdL, bun_mgdL, alkPhos_UL,
-totalBilirubin_mgdL, sodium_mmolL, potassium_mmolL, totalCholesterol_mgdL,
-nonHDL_mgdL, testosterone_ngdL, freeTesto_pgmL, shbg_nmolL, vldl_mgdL,
-uricAcid_mgdL, ferritin_ngmL, tsh_uIUmL, homocysteine_umolL, omega3Index_pct,
-cortisol_ugdL, dhea_s_ugdL, igf1_ngmL, fastingInsulin_uIUmL, hematocrit_pct,
-platelets_kul, rbc_mil, mch_pg, mchc_gdl, neutrophils_pct, lymphs_pct,
-globulin_gdL, totalProtein_gdL, calcium_mgdL, chloride_mmolL, co2_mmolL,
-esr_mmhr, mpv_fl, agRatio,
-collectionDate, labName
-
-Rules:
-- Only include markers actually present in the report
-- Use the RESULT value, NOT reference ranges
-- For Lp(a) in nmol/L, convert to mg/dL by dividing by 2.5
-- All numeric values should be numbers, not strings
-- collectionDate should be the specimen collection date in YYYY-MM-DD format
-- labName should be the laboratory name (Quest Diagnostics, LabCorp, etc)
-- Omit any marker not found — do not include null values`
-
-// ─── OpenAI Vision parser (primary) ─────────────────────────────────────────
-
-async function parseWithOpenAIVision(fileBase64: string): Promise<Record<string, unknown> | null> {
-  const apiKey = process.env.OPENAI_API_KEY
-  if (!apiKey) return null
-
-  const openai = new OpenAI({ apiKey })
-
-  try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      max_tokens: 2000,
-      messages: [{
-        role: "user",
-        content: [
-          { type: "text", text: EXTRACTION_PROMPT },
-          {
-            type: "image_url",
-            image_url: {
-              url: `data:image/png;base64,${fileBase64}`,
-              detail: "high",
-            },
-          },
-        ],
-      }],
-    })
-
-    const text = response.choices[0]?.message?.content?.trim() ?? ""
-    // Strip markdown fences if present
-    const jsonStr = text.replace(/^```(?:json)?\n?/i, "").replace(/\n?```$/i, "").trim()
-    return JSON.parse(jsonStr) as Record<string, unknown>
-  } catch (err) {
-    console.log("[parser] OpenAI vision failed:", err instanceof Error ? err.message : "unknown error")
-    return null
-  }
-}
-
-// ─── Azure text extraction + OpenAI text parser (hybrid fallback) ────────────
+// ─── Azure text extraction ───────────────────────────────────────────────────
 
 async function extractTextWithAzure(buffer: Buffer): Promise<string | null> {
   const endpoint = process.env.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT
@@ -124,15 +60,12 @@ async function extractTextWithAzure(buffer: Buffer): Promise<string | null> {
         const pages = (result?.pages ?? []) as Array<{ lines?: Array<{ content: string }> }>
         const tables = (result?.tables ?? []) as Array<{ cells?: Array<{ content: string }> }>
 
-        const allText: string[] = []
-        for (const page of pages) {
-          for (const line of page.lines ?? []) allText.push(line.content)
-        }
-        for (const table of tables) {
-          for (const cell of table.cells ?? []) allText.push(cell.content)
-        }
+        const allContent = [
+          ...pages.flatMap(p => p.lines ?? []).map(l => l.content),
+          ...tables.flatMap(t => t.cells ?? []).map(c => c.content).filter(Boolean),
+        ].join("\n")
 
-        return allText.join("\n")
+        return allContent
       }
 
       if (data.status === "failed") return null
@@ -144,33 +77,131 @@ async function extractTextWithAzure(buffer: Buffer): Promise<string | null> {
   return null
 }
 
+// ─── Azure Document Intelligence + Azure OpenAI parser (primary) ─────────────
+
 async function parseWithAzureHybrid(fileBase64: string): Promise<Record<string, unknown> | null> {
-  const apiKey = process.env.OPENAI_API_KEY
-  if (!apiKey) return null
+  const azureOpenAIKey = process.env.AZURE_OPENAI_KEY
+  if (!azureOpenAIKey) return null
 
   const buffer = Buffer.from(fileBase64, "base64")
-  const azureText = await extractTextWithAzure(buffer)
-  if (!azureText) return null
+  const fullText = await extractTextWithAzure(buffer)
+  if (!fullText) return null
 
-  console.log("[parser] Azure extracted text length:", azureText.length)
+  console.log("[parser] Azure extracted text length:", fullText.length)
 
-  const openai = new OpenAI({ apiKey })
+  const openai = new AzureOpenAI({
+    apiKey: azureOpenAIKey,
+    endpoint: process.env.AZURE_OPENAI_ENDPOINT,
+    apiVersion: "2024-08-01-preview",
+    deployment: process.env.AZURE_OPENAI_DEPLOYMENT,
+  })
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: process.env.AZURE_OPENAI_DEPLOYMENT!,
       max_tokens: 2000,
-      messages: [{
-        role: "user",
-        content: `${EXTRACTION_PROMPT}\n\nLab report text:\n\n${azureText}`,
-      }],
+      temperature: 0,
+      messages: [
+        {
+          role: "system",
+          content: `You are a medical lab report parser.
+Extract ALL test results and return ONLY valid JSON.
+No markdown, no backticks, no explanation.`,
+        },
+        {
+          role: "user",
+          content: `Parse this lab report and return JSON.
+
+LABCORP FORMAT RULES:
+- Lines end with lab code: "TestName B, 01"
+- Value is ALWAYS the next line after the lab code
+- "Apolipoprotein B B, 01" next line = ApoB value
+- Lp(a) in nmol/L → divide by 2.5 for mg/dL
+- Skip "Ordered Items:" header line with semicolons
+- Never use reference range values
+
+QUEST MYCHART FORMAT RULES:
+- Format: MarkerName → Normal range line →
+  reference numbers line → RESULT [High/Low]
+- Result is the standalone number after
+  the reference range
+- Never use the "Normal range:" numbers
+
+UNIVERSAL RULES:
+- Only extract markers with real result values
+- Never use 0 as a value — omit if not found
+- collectionDate in YYYY-MM-DD format
+- labName: "LabCorp" or "Quest Diagnostics"
+
+Return JSON with these exact keys where found:
+{
+  "ldl_mgdL": number,
+  "hdl_mgdL": number,
+  "triglycerides_mgdL": number,
+  "hsCRP_mgL": number,
+  "hba1c_pct": number,
+  "glucose_mgdL": number,
+  "vitaminD_ngmL": number,
+  "apoB_mgdL": number,
+  "lpa_mgdL": number,
+  "creatinine_mgdL": number,
+  "egfr_mLmin": number,
+  "alt_UL": number,
+  "ast_UL": number,
+  "wbc_kul": number,
+  "hemoglobin_gdL": number,
+  "rdw_pct": number,
+  "mcv_fL": number,
+  "albumin_gdL": number,
+  "bun_mgdL": number,
+  "alkPhos_UL": number,
+  "totalBilirubin_mgdL": number,
+  "sodium_mmolL": number,
+  "potassium_mmolL": number,
+  "totalCholesterol_mgdL": number,
+  "nonHDL_mgdL": number,
+  "testosterone_ngdL": number,
+  "freeTesto_pgmL": number,
+  "shbg_nmolL": number,
+  "vldl_mgdL": number,
+  "uricAcid_mgdL": number,
+  "ferritin_ngmL": number,
+  "tsh_uIUmL": number,
+  "hematocrit_pct": number,
+  "platelets_kul": number,
+  "rbc_mil": number,
+  "mch_pg": number,
+  "mchc_gdl": number,
+  "neutrophils_pct": number,
+  "lymphs_pct": number,
+  "globulin_gdL": number,
+  "totalProtein_gdL": number,
+  "calcium_mgdL": number,
+  "chloride_mmolL": number,
+  "co2_mmolL": number,
+  "collectionDate": "YYYY-MM-DD",
+  "labName": "string"
+}
+
+LAB REPORT TEXT:
+${fullText}`,
+        },
+      ],
     })
 
-    const text = response.choices[0]?.message?.content?.trim() ?? ""
-    const jsonStr = text.replace(/^```(?:json)?\n?/i, "").replace(/\n?```$/i, "").trim()
-    return JSON.parse(jsonStr) as Record<string, unknown>
+    const raw = response.choices[0]?.message?.content
+    if (!raw) return null
+
+    console.log("[azure-gpt4o-raw]", raw.slice(0, 400))
+
+    const clean = raw
+      .replace(/```json/gi, "")
+      .replace(/```/g, "")
+      .trim()
+
+    return JSON.parse(clean) as Record<string, unknown>
   } catch (err) {
-    console.log("[parser] Azure hybrid GPT parse failed:", err instanceof Error ? err.message : "unknown error")
+    console.error("[azure-openai] failed:", err instanceof Error ? err.message : "unknown error")
     return null
   }
 }
@@ -214,25 +245,6 @@ function extractFromParsedJson(
 async function processFile(file: FileInput, index: number): Promise<FileResult> {
   console.log("[parser] file", index + 1, "starting...")
 
-  // Strategy 1: OpenAI Vision (primary)
-  const visionResult = await parseWithOpenAIVision(file.base64)
-  if (visionResult) {
-    const { markers, labName, collectionDate } = extractFromParsedJson(visionResult)
-    if (Object.keys(markers).length > 0) {
-      console.log("[parser] used: openai — markers:", Object.keys(markers).length)
-      return {
-        filename: file.filename,
-        markers,
-        markersFound: Object.keys(markers).length,
-        labName,
-        collectionDate,
-        parserUsed: "openai",
-      }
-    }
-  }
-
-  // Strategy 2: Azure text extraction + OpenAI text parsing (hybrid)
-  console.log("[parser] OpenAI vision returned 0 markers, trying Azure hybrid...")
   const hybridResult = await parseWithAzureHybrid(file.base64)
   if (hybridResult) {
     const { markers, labName, collectionDate } = extractFromParsedJson(hybridResult)
@@ -249,8 +261,7 @@ async function processFile(file: FileInput, index: number): Promise<FileResult> 
     }
   }
 
-  // Both failed
-  console.log("[parser] used: failed — no markers from either parser")
+  console.log("[parser] used: failed — no markers extracted")
   return {
     filename: file.filename,
     markers: {},
@@ -267,7 +278,7 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  if (!process.env.OPENAI_API_KEY && !process.env.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT) {
+  if (!process.env.AZURE_OPENAI_KEY || !process.env.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT) {
     return NextResponse.json({ error: "Lab parser not configured" }, { status: 500 })
   }
 
