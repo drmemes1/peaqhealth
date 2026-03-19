@@ -1,50 +1,125 @@
-interface NextStep { bold: string; rest: string }
+interface FocusItem {
+  panel: "sleep" | "blood" | "oral"
+  text: string
+  pts: number
+}
+
+const PANEL_COLOR: Record<FocusItem["panel"], string> = {
+  sleep: "#4A7FB5",
+  blood: "#C0392B",
+  oral:  "#2D6A4F",
+}
 
 interface NextStepsProps {
   sleepConnected: boolean
   hasBlood: boolean
   oralActive: boolean
-  sleepHrv?: number
-  sleepDeepPct?: number
-  labFreshness: string
-  bloodMonthsOld?: number
+  bloodLdl?: number
+  bloodHsCrp?: number
+  bloodVitaminD?: number
+  bloodGlucose?: number
+  bloodHba1c?: number
 }
 
-export function NextSteps({ sleepConnected, hasBlood, oralActive, sleepHrv, sleepDeepPct, labFreshness, bloodMonthsOld }: NextStepsProps) {
-  const steps: NextStep[] = []
+export function NextSteps({
+  sleepConnected, hasBlood, oralActive,
+  bloodLdl, bloodHsCrp, bloodVitaminD, bloodGlucose, bloodHba1c,
+}: NextStepsProps) {
+  const items: FocusItem[] = []
 
-  if (sleepConnected && sleepHrv !== undefined && sleepHrv < 50) {
-    steps.push({ bold: "Prioritise sleep timing consistency.", rest: " HRV responds strongly to consistent sleep and wake times — a 30-minute variance reduction shifts RMSSD by 5–8 ms over 4 weeks." })
-  }
-  if (sleepDeepPct !== undefined && sleepDeepPct < 17) {
-    steps.push({ bold: "Temperature for deep sleep.", rest: " Core temperature drop drives slow-wave entry. A cooler room (65–68°F) is the highest-evidence environmental lever for increasing SWS." })
-  }
-  if (!oralActive) {
-    steps.push({ bold: "Complete your oral kit.", rest: " 25 points and 4 interaction terms pending. The oral panel bridges sleep, cardiovascular, and metabolic health in a single test." })
-  } else {
-    steps.push({ bold: "Retest oral in 90 days.", rest: " Shannon diversity responds to fibre intake and sleep quality within 6–8 weeks." })
-  }
-  if (labFreshness === "stale" && bloodMonthsOld) {
-    steps.push({ bold: `Retest blood soon.`, rest: ` ApoB and Lp(a) are stable markers. Request HbA1c at the same draw to track glycaemic trend alongside sleep improvements.` })
-  } else if (!hasBlood) {
-    steps.push({ bold: "Upload recent lab results", rest: " to unlock your blood panel and 28 additional points." })
-  }
-  if (steps.length === 0) {
-    steps.push({ bold: "Your profile is complete.", rest: " Keep syncing your wearable daily and retest labs in 90 days." })
-  }
+  // ── Missing panels (highest impact) ──────────────────────────────────────
+  if (!sleepConnected)
+    items.push({ panel: "sleep", text: "Connect a wearable to unlock sleep scoring — worth up to 27 pts", pts: 27 })
+
+  if (!oralActive)
+    items.push({ panel: "oral", text: "Order your oral microbiome kit — worth up to 27 pts", pts: 27 })
+
+  // ── Out-of-range blood markers ────────────────────────────────────────────
+  if (hasBlood && bloodLdl !== undefined && bloodLdl > 130)
+    items.push({ panel: "blood", text: `LDL at ${bloodLdl} mg/dL — consider dietary changes or discuss statins with your doctor`, pts: 4 })
+
+  if (hasBlood && bloodHsCrp !== undefined && bloodHsCrp > 2)
+    items.push({ panel: "blood", text: `hsCRP at ${bloodHsCrp} mg/L — elevated inflammation, review diet and stress`, pts: 3 })
+
+  if (hasBlood && bloodGlucose !== undefined && bloodGlucose > 99)
+    items.push({ panel: "blood", text: `Fasting glucose at ${bloodGlucose} mg/dL — prediabetic range, reduce refined carbs`, pts: 3 })
+
+  if (hasBlood && bloodVitaminD !== undefined && bloodVitaminD > 0 && bloodVitaminD < 30)
+    items.push({ panel: "blood", text: `Vitamin D at ${bloodVitaminD} ng/mL — below optimal, consider supplementation`, pts: 2 })
+
+  // ── Missing high-value blood markers ─────────────────────────────────────
+  if (hasBlood && !bloodHsCrp)
+    items.push({ panel: "blood", text: "Add hsCRP to your next blood panel — key inflammation marker worth ~3 pts", pts: 3 })
+
+  if (hasBlood && !bloodHba1c)
+    items.push({ panel: "blood", text: "Add HbA1c to your next panel — metabolic health marker worth ~3 pts", pts: 3 })
+
+  if (hasBlood && !bloodVitaminD)
+    items.push({ panel: "blood", text: "Add Vitamin D to your next panel — worth up to 2 pts", pts: 2 })
+
+  if (!hasBlood)
+    items.push({ panel: "blood", text: "Upload your most recent blood panel to unlock blood scoring — worth up to 33 pts", pts: 33 })
+
+  // Sort highest pts first, take top 3
+  items.sort((a, b) => b.pts - a.pts)
+  const top = items.slice(0, 3)
+
+  if (top.length === 0) return null
 
   return (
-    <div style={{ background: "var(--ink)", borderRadius: 4, padding: 26 }}>
-      <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 25, fontWeight: 300, color: "white", margin: "0 0 24px" }}>
-        What to focus on <em style={{ color: "var(--gold)", fontStyle: "italic" }}>next.</em>
-      </h3>
-      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-        {steps.map((step, i) => (
-          <div key={i} style={{ display: "flex", gap: 16 }}>
-            <span style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 20, color: "var(--gold)", flexShrink: 0, width: 18 }}>{i + 1}</span>
-            <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, lineHeight: 1.65, color: "rgba(255,255,255,0.7)", margin: 0 }}>
-              <strong style={{ color: "white", fontWeight: 500 }}>{step.bold}</strong>{step.rest}
-            </p>
+    <div>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 16 }}>
+        <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 22, fontWeight: 300, color: "var(--ink)", margin: 0 }}>
+          What to focus on <em style={{ fontStyle: "italic", color: "var(--gold)" }}>next.</em>
+        </h3>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {top.map((item, i) => (
+          <div
+            key={i}
+            style={{
+              background: "#FAFAF8",
+              border: "0.5px solid rgba(20,20,16,0.1)",
+              borderLeft: `3px solid ${PANEL_COLOR[item.panel]}`,
+              borderRadius: 8,
+              padding: 16,
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: 12,
+            }}
+          >
+            <div style={{ flex: 1 }}>
+              <span style={{
+                display: "block",
+                fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                fontSize: 10,
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                color: PANEL_COLOR[item.panel],
+                marginBottom: 5,
+              }}>
+                {item.panel}
+              </span>
+              <p style={{
+                fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                fontSize: 13,
+                lineHeight: 1.6,
+                color: "var(--ink)",
+                margin: 0,
+              }}>
+                {item.text}
+              </p>
+            </div>
+            <span style={{
+              fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+              fontSize: 11,
+              color: "#B8860B",
+              flexShrink: 0,
+              paddingTop: 1,
+            }}>
+              +{item.pts} pts
+            </span>
           </div>
         ))}
       </div>

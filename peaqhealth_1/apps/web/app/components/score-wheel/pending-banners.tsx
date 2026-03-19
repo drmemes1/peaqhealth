@@ -37,7 +37,7 @@ const CONFIGS = {
   oral: {
     bg: "var(--oral-bg)", border: "rgba(45,106,79,0.2)", iconBg: "rgba(45,106,79,0.12)",
     color: "var(--oral-c)", subColor: "rgba(45,106,79,0.7)",
-    title: "Oral microbiome data pending", sub: "4 cross-panel terms locked · 25 pts available",
+    title: "Oral microbiome data pending", sub: "4 cross-panel terms locked · 27 pts available",
     href: "/shop", breathe: true,
   },
 } as const
