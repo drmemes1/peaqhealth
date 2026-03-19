@@ -295,6 +295,9 @@ export function LifestyleForm({ userId, existing }: Props) {
       .upsert(row, { onConflict: "user_id" })
       .select();
 
+    // Recalculate score so lifestyle_sub updates in score_snapshots
+    await fetch("/api/score/recalculate", { method: "POST" });
+
     setSaving(false);
     setSaved(true);
 
