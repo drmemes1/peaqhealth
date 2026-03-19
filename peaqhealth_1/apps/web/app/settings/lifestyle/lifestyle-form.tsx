@@ -14,12 +14,22 @@ interface QuestionDef {
   type: "choice" | "boolean";
 }
 
+// ── Section groupings for display ─────────────────────────────────────────
+const SECTIONS: { title: string; subtitle: string; keys: string[] }[] = [
+  { title: "Activity", subtitle: "Exercise patterns affect cardiovascular, metabolic, and inflammatory markers", keys: ["exerciseLevel"] },
+  { title: "Oral Health", subtitle: "Oral hygiene directly influences microbiome, inflammation, and sleep-breathing risk", keys: ["brushingFreq", "flossingFreq", "mouthwashType", "lastDentalVisit"] },
+  { title: "Sleep", subtitle: "Self-reported sleep quality calibrates wearable data and influences your score", keys: ["sleepDuration", "sleepLatency", "sleepQualSelf", "nightWakings", "daytimeFatigue"] },
+  { title: "Nutrition", subtitle: "Diet patterns affect glycemic control, inflammation, and gut microbiome diversity", keys: ["vegetableServings", "fruitServings", "processedFood", "sugaryDrinks"] },
+  { title: "Alcohol & Stress", subtitle: "Both independently modulate sleep architecture and inflammatory markers", keys: ["alcoholDrinks", "stressLevel"] },
+  { title: "Medical History", subtitle: "Diagnoses and medications calibrate cardiovascular interaction scoring", keys: ["smokingStatus", "knownHypertension", "knownDiabetes", "hypertensionDx", "onBPMeds", "onStatins", "familyHistoryCVD"] },
+]
+
 const QUESTIONS: QuestionDef[] = [
   {
     key: "exerciseLevel", dbKey: "exercise_level",
     label: "How often do you exercise?", type: "choice",
     options: [
-      { value: "sedentary", label: "Rarely" },
+      { value: "sedentary", label: "Rarely or never" },
       { value: "light", label: "1–2×/wk" },
       { value: "moderate", label: "3–4×/wk" },
       { value: "active", label: "5+×/wk" },
@@ -317,51 +327,72 @@ export function LifestyleForm({ userId, existing }: Props) {
         </div>
       </nav>
 
-      <main className="mx-auto max-w-[680px] px-6 py-10">
-        <div className="text-center mb-8">
+      <main className="mx-auto max-w-[620px] px-6 py-10">
+        <div className="mb-10">
           <h1 className="font-display text-4xl font-light tracking-tight text-ink">
             Lifestyle questionnaire
           </h1>
-          <p className="mt-3 font-body text-sm text-ink/50">
-            Update your answers to recalculate your score.
+          <p className="mt-2 font-body text-sm text-ink/40">
+            Answers are used to calibrate your Peaq score. Takes about 2 minutes.
           </p>
         </div>
 
-        <div className="flex flex-col gap-5">
-          {QUESTIONS.map((q) => (
-            <div key={q.key} className="flex flex-col gap-2">
-              <span className="font-body text-sm font-medium text-ink">{q.label}</span>
-              <div className="flex flex-wrap gap-2">
-                {q.options.map((opt) => {
-                  const isSelected = answers[q.key] === opt.value;
-                  return (
-                    <button
-                      key={opt.value}
-                      onClick={() => setAnswer(q.key, opt.value)}
-                      className={`rounded-none border px-3 py-1.5 font-body text-xs transition-all ${
-                        isSelected
-                          ? "border-gold bg-gold/10 text-ink"
-                          : "border-ink/10 bg-white text-ink/60 hover:border-ink/25"
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  );
-                })}
+        <div className="flex flex-col gap-10">
+          {SECTIONS.map((section) => {
+            const sectionQs = section.keys
+              .map((k) => QUESTIONS.find((q) => q.key === k))
+              .filter(Boolean) as QuestionDef[];
+
+            return (
+              <div key={section.title}>
+                {/* Section header */}
+                <div className="mb-5 pb-3 border-b border-ink/8">
+                  <span className="font-body text-[10px] uppercase tracking-[0.12em] text-gold">{section.title}</span>
+                  <p className="mt-0.5 font-body text-xs text-ink/40 leading-relaxed">{section.subtitle}</p>
+                </div>
+
+                <div className="flex flex-col gap-6">
+                  {sectionQs.map((q) => (
+                    <div key={q.key} className="flex flex-col gap-2.5">
+                      <span className="font-body text-sm text-ink">{q.label}</span>
+                      <div className="flex flex-wrap gap-2">
+                        {q.options.map((opt) => {
+                          const isSelected = answers[q.key] === opt.value;
+                          return (
+                            <button
+                              key={opt.value}
+                              onClick={() => setAnswer(q.key, opt.value)}
+                              className={`border px-3.5 py-2 font-body text-xs transition-all ${
+                                isSelected
+                                  ? "border-gold bg-gold/8 text-ink"
+                                  : "border-ink/10 bg-white text-ink/50 hover:border-ink/20 hover:text-ink/70"
+                              }`}
+                            >
+                              {opt.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
-        <div className="mt-8 flex flex-col gap-3">
+        <div className="mt-10 flex flex-col gap-3">
           <button
             onClick={handleSave}
             disabled={!allAnswered || saving}
             className="h-12 bg-ink font-body text-sm font-medium uppercase tracking-[0.15em]
                        text-off-white transition-colors hover:bg-gold disabled:opacity-30"
           >
-            {saving ? "Saving..." : saved ? "Score updated ✓" : "Save answers"}
+            {saving ? "Saving…" : saved ? "Score updated ✓" : "Save answers"}
           </button>
+          {!allAnswered && (
+            <p className="font-body text-xs text-ink/30 text-center">Answer all questions to save</p>
+          )}
         </div>
       </main>
     </div>
