@@ -43,6 +43,10 @@ async function fetchSleepSessions(
     const data = await res.json() as Record<string, unknown>
     const sessions = (data.sleep ?? data.data ?? []) as Array<Record<string, unknown>>
     console.log("[sleep] sessions fetched:", sessions.length)
+    if (sessions.length > 0) {
+      console.log("[sleep] session[0] keys:", Object.keys(sessions[0] || {}))
+      console.log("[sleep] session[0] sample:", JSON.stringify(sessions[0]).slice(0, 300))
+    }
     return sessions
   } catch (err) {
     console.error("[sleep] fetch error:", err instanceof Error ? err.message : "unknown")
@@ -52,6 +56,8 @@ async function fetchSleepSessions(
 
 // ── Helper: build wearable update payload from a single sleep session ──────────
 function buildSleepUpdatePayload(session: Record<string, unknown>): Record<string, unknown> {
+  // Vital API v2 uses short names (deep/rem/light/efficiency);
+  // fall back to long names in case of v1 or alternate shape
   const totalSecs  = (session.total_sleep_duration as number) || (session.duration as number) || 0
   const payload: Record<string, unknown> = {
     last_sync_at: new Date().toISOString(),
@@ -59,18 +65,18 @@ function buildSleepUpdatePayload(session: Record<string, unknown>): Record<strin
   }
 
   if (totalSecs > 0) {
-    const deepSecs   = (session.deep_sleep_duration  as number) || 0
-    const remSecs    = (session.rem_sleep_duration   as number) || 0
-    const lightSecs  = (session.light_sleep_duration as number) || 0
-    const efficiency = (session.sleep_efficiency     as number) || 0
-    const hrv        = (session.hrv_rmssd_evening    as number) || (session.hrv_rmssd as number) || 0
-    const hrLowest   = (session.hr_lowest            as number) || 0
-    const spo2Avg    = session.spo2_avg              as number | undefined
+    const deepSecs   = (session.deep               as number) || (session.deep_sleep_duration  as number) || 0
+    const remSecs    = (session.rem                as number) || (session.rem_sleep_duration   as number) || 0
+    const lightSecs  = (session.light              as number) || (session.light_sleep_duration as number) || 0
+    const efficiency = (session.efficiency         as number) || (session.sleep_efficiency     as number) || 0
+    const hrv        = (session.hrv_rmssd_evening  as number) || (session.hrv_rmssd            as number) || 0
+    const hrLowest   = (session.hr_lowest          as number) || 0
+    const spo2Avg    = session.spo2_avg            as number | undefined
 
     if (deepSecs  > 0) payload.deep_sleep_pct  = Math.round((deepSecs  / totalSecs) * 1000) / 10
     if (remSecs   > 0) payload.rem_pct          = Math.round((remSecs   / totalSecs) * 1000) / 10
     if (lightSecs > 0) payload.light_sleep_pct  = Math.round((lightSecs / totalSecs) * 1000) / 10
-    if (efficiency > 0) payload.sleep_efficiency = Math.round(efficiency * 1000) / 10
+    if (efficiency > 0) payload.sleep_efficiency = Math.round(efficiency * 10) / 10
     if (hrv       > 0) payload.hrv_rmssd         = hrv
     if (hrLowest  > 0) payload.latest_resting_hr  = hrLowest
     if (spo2Avg !== undefined && spo2Avg < 90) payload.latest_spo2_dips = 1
@@ -97,12 +103,12 @@ function buildAveragedSleepPayload(sessions: Array<Record<string, unknown>>): Re
   const restingHRs: number[]  = []
 
   for (const s of valid) {
-    const totalSecs = (s.total_sleep_duration as number) || (s.duration as number) || 0
-    const deepSecs  = (s.deep_sleep_duration  as number) || 0
-    const remSecs   = (s.rem_sleep_duration   as number) || 0
-    const efficiency = (s.sleep_efficiency    as number) || 0
-    const hrv       = (s.hrv_rmssd_evening    as number) || (s.hrv_rmssd as number) || 0
-    const hrLowest  = (s.hr_lowest            as number) || 0
+    const totalSecs  = (s.total_sleep_duration as number) || (s.duration as number) || 0
+    const deepSecs   = (s.deep               as number) || (s.deep_sleep_duration  as number) || 0
+    const remSecs    = (s.rem                as number) || (s.rem_sleep_duration   as number) || 0
+    const efficiency = (s.efficiency         as number) || (s.sleep_efficiency     as number) || 0
+    const hrv        = (s.hrv_rmssd_evening  as number) || (s.hrv_rmssd            as number) || 0
+    const hrLowest   = (s.hr_lowest          as number) || 0
 
     if (deepSecs  > 0) deepPcts.push((deepSecs  / totalSecs) * 100)
     if (remSecs   > 0) remPcts.push((remSecs   / totalSecs) * 100)
@@ -353,7 +359,7 @@ export async function POST(request: NextRequest) {
   ) {
     const data = body.data as Record<string, unknown> | undefined
     console.log("[sleep-cycle] full payload:", JSON.stringify(body.data).slice(0, 500))
-    const duration = (data?.duration as number) || (data?.total_sleep_duration as number) || 0
+    const duration = (data?.total_sleep_duration as number) || (data?.duration as number) || 0
 
     const updatePayload: Record<string, unknown> = {
       last_sync_at: new Date().toISOString(),
@@ -361,19 +367,19 @@ export async function POST(request: NextRequest) {
     }
 
     if (duration > 0) {
-      const deepSecs  = (data?.deep_sleep_duration  as number) || 0
-      const remSecs   = (data?.rem_sleep_duration   as number) || 0
-      const lightSecs = (data?.light_sleep_duration as number) || 0
-      const deepPct   = (deepSecs  / duration) * 100
-      const remPct    = (remSecs   / duration) * 100
-      const lightPct  = (lightSecs / duration) * 100
-      const efficiency = (data?.sleep_efficiency as number) || 0
-      const hrv = (data?.hrv_rmssd_evening as number) || (data?.hrv_rmssd as number) || 0
+      const deepSecs   = (data?.deep               as number) || (data?.deep_sleep_duration  as number) || 0
+      const remSecs    = (data?.rem                as number) || (data?.rem_sleep_duration   as number) || 0
+      const lightSecs  = (data?.light              as number) || (data?.light_sleep_duration as number) || 0
+      const deepPct    = (deepSecs  / duration) * 100
+      const remPct     = (remSecs   / duration) * 100
+      const lightPct   = (lightSecs / duration) * 100
+      const efficiency = (data?.efficiency         as number) || (data?.sleep_efficiency     as number) || 0
+      const hrv        = (data?.hrv_rmssd_evening  as number) || (data?.hrv_rmssd            as number) || 0
 
       if (deepPct  > 0) updatePayload.deep_sleep_pct  = Math.round(deepPct  * 10) / 10
       if (remPct   > 0) updatePayload.rem_pct          = Math.round(remPct   * 10) / 10
       if (lightPct > 0) updatePayload.light_sleep_pct  = Math.round(lightPct * 10) / 10
-      if (efficiency > 0) updatePayload.sleep_efficiency = Math.round(efficiency * 100 * 10) / 10
+      if (efficiency > 0) updatePayload.sleep_efficiency = Math.round(efficiency * 10) / 10
       if (hrv > 0) updatePayload.hrv_rmssd = hrv
 
       console.log("[webhook]", event_type, "— deepPct:", deepPct.toFixed(1),

@@ -206,6 +206,21 @@ No markdown, no backticks, no explanation.`,
           role: "user",
           content: `Parse this lab report and return JSON.
 
+APOLIPOPROTEIN B — CRITICAL INSTRUCTION:
+In LabCorp reports, Apolipoprotein B appears on its OWN
+SEPARATE PAGE (usually page 3). The result line looks
+exactly like this:
+  "Apolipoprotein B B, 01  70  mg/dL  <90"
+or in table format:
+  "Apolipoprotein B | 70 | mg/dL | <90"
+The value 70 (or whatever number) appears IMMEDIATELY after
+"Apolipoprotein B B, 01" BEFORE any reference table like:
+  "Desirable < 90"
+  "Borderline High 90 - 99"
+DO NOT return null for apoB_mgdL if you see "Apolipoprotein B"
+followed by any number between 20 and 250 in the document.
+That number IS the apoB_mgdL value.
+
 LABCORP FORMAT RULES:
 - Lines end with lab code: "TestName B, 01"
 - Value is ALWAYS the next line after the lab code
