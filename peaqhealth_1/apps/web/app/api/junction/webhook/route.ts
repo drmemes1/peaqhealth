@@ -19,12 +19,12 @@ const HANDLED_EVENTS = new Set([
   "lab_report.parsing_job.updated",
 ])
 
-// ── Helper: fetch the most recent sleep session from the Vital API ────────────
-async function fetchLatestSleepSession(
+// ── Helper: fetch sleep sessions from the Vital API ──────────────────────────
+async function fetchSleepSessions(
   junctionUserId: string,
   startDate: string,
   endDate: string
-): Promise<Record<string, unknown> | null> {
+): Promise<Array<Record<string, unknown>>> {
   const baseUrl = process.env.JUNCTION_ENV === "production"
     ? "https://api.tryvital.io"
     : "https://api.sandbox.tryvital.io"
@@ -36,19 +36,19 @@ async function fetchLatestSleepSession(
     )
     if (!res.ok) {
       console.error("[sleep] Vital API fetch failed:", res.status)
-      return null
+      return []
     }
     const data = await res.json() as Record<string, unknown>
-    console.log("[sleep] fetched data:", JSON.stringify(data).slice(0, 500))
     const sessions = (data.sleep ?? data.data ?? []) as Array<Record<string, unknown>>
-    return sessions[0] ?? null
+    console.log("[sleep] sessions fetched:", sessions.length)
+    return sessions
   } catch (err) {
     console.error("[sleep] fetch error:", err instanceof Error ? err.message : "unknown")
-    return null
+    return []
   }
 }
 
-// ── Helper: build wearable update payload from a sleep session ─────────────────
+// ── Helper: build wearable update payload from a single sleep session ──────────
 function buildSleepUpdatePayload(session: Record<string, unknown>): Record<string, unknown> {
   const totalSecs  = (session.total_sleep_duration as number) || (session.duration as number) || 0
   const payload: Record<string, unknown> = {
@@ -73,6 +73,58 @@ function buildSleepUpdatePayload(session: Record<string, unknown>): Record<strin
     if (hrLowest  > 0) payload.latest_resting_hr  = hrLowest
     if (spo2Avg !== undefined && spo2Avg < 90) payload.latest_spo2_dips = 1
   }
+
+  return payload
+}
+
+// ── Helper: build averaged wearable payload from multiple sleep sessions ───────
+function buildAveragedSleepPayload(sessions: Array<Record<string, unknown>>): Record<string, unknown> | null {
+  const valid = sessions.filter(s => {
+    const d = (s.total_sleep_duration as number) || (s.duration as number) || 0
+    return d > 0
+  })
+  const nightsAvailable = valid.length
+  if (nightsAvailable < 7) return null
+
+  const avg = (vals: number[]) => vals.reduce((a, b) => a + b, 0) / vals.length
+
+  const deepPcts: number[]    = []
+  const remPcts: number[]     = []
+  const efficiencies: number[] = []
+  const hrvs: number[]        = []
+  const restingHRs: number[]  = []
+
+  for (const s of valid) {
+    const totalSecs = (s.total_sleep_duration as number) || (s.duration as number) || 0
+    const deepSecs  = (s.deep_sleep_duration  as number) || 0
+    const remSecs   = (s.rem_sleep_duration   as number) || 0
+    const efficiency = (s.sleep_efficiency    as number) || 0
+    const hrv       = (s.hrv_rmssd_evening    as number) || (s.hrv_rmssd as number) || 0
+    const hrLowest  = (s.hr_lowest            as number) || 0
+
+    if (deepSecs  > 0) deepPcts.push((deepSecs  / totalSecs) * 100)
+    if (remSecs   > 0) remPcts.push((remSecs   / totalSecs) * 100)
+    if (efficiency > 0) efficiencies.push(efficiency)
+    if (hrv       > 0) hrvs.push(hrv)
+    if (hrLowest  > 0) restingHRs.push(hrLowest)
+  }
+
+  const payload: Record<string, unknown> = {
+    last_sync_at: new Date().toISOString(),
+    status: "connected",
+    nights_available: nightsAvailable,
+  }
+
+  if (deepPcts.length)    payload.deep_sleep_pct  = Math.round(avg(deepPcts)    * 10) / 10
+  if (remPcts.length)     payload.rem_pct          = Math.round(avg(remPcts)     * 10) / 10
+  if (efficiencies.length) payload.sleep_efficiency = Math.round(avg(efficiencies) * 10) / 10
+  if (hrvs.length)        payload.hrv_rmssd         = Math.round(avg(hrvs) * 10) / 10
+  if (restingHRs.length)  payload.latest_resting_hr = Math.round(avg(restingHRs))
+
+  console.log("[sleep] nights available:", nightsAvailable,
+    "avg efficiency:", payload.sleep_efficiency,
+    "avg deep%:", payload.deep_sleep_pct,
+    "avg rem%:", payload.rem_pct)
 
   return payload
 }
@@ -341,7 +393,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ status: "processed", event: event_type })
   }
 
-  // ── historical.data.sleep.created: fetch from Vital API + save ───────────
+  // ── historical.data.sleep.created: fetch 7-night avg from Vital API + save ─
   if (event_type === "historical.data.sleep.created") {
     const data = body.data as Record<string, unknown> | undefined
     const startDate = (body.start_date ?? data?.start_date) as string | undefined
@@ -352,16 +404,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
-    const session = await fetchLatestSleepSession(junctionUserId, startDate, endDate)
-    if (!session) {
-      console.log("[sleep] no sleep session returned from API for user:", userId)
-      return NextResponse.json({ received: true })
+    const sessions = await fetchSleepSessions(junctionUserId, startDate, endDate)
+    const nightsAvailable = sessions.filter(s => {
+      const d = (s.total_sleep_duration as number) || (s.duration as number) || 0
+      return d > 0
+    }).length
+
+    console.log("[sleep] nights available:", nightsAvailable, "for user:", userId)
+
+    if (nightsAvailable < 7) {
+      console.log("[sleep] insufficient nights (<7) — storing count only, skipping averages")
+      await supabase
+        .from("wearable_connections")
+        .update({ nights_available: nightsAvailable, last_sync_at: new Date().toISOString(), status: "connected" })
+        .eq("user_id", userId)
+      return NextResponse.json({ received: true, nightsAvailable })
     }
 
-    const updatePayload = buildSleepUpdatePayload(session)
-    console.log("[sleep] saving —", Object.entries(updatePayload)
-      .filter(([k]) => k !== "last_sync_at" && k !== "status")
-      .map(([k, v]) => `${k}: ${v}`).join(", "), "for user:", userId)
+    const updatePayload = buildAveragedSleepPayload(sessions)
+    if (!updatePayload) {
+      console.log("[sleep] no averaged payload — skipping update for user:", userId)
+      return NextResponse.json({ received: true })
+    }
 
     const { error: updateErr } = await supabase
       .from("wearable_connections")
@@ -399,7 +463,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
-    const session = await fetchLatestSleepSession(junctionUserId, startDate, endDate)
+    const sessions = await fetchSleepSessions(junctionUserId, startDate, endDate)
+    const session = sessions[0] ?? null
     if (!session) {
       console.log("[sleep-cycle] no sleep session returned from API for user:", userId)
       return NextResponse.json({ received: true })
