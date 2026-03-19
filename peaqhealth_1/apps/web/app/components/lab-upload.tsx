@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback, useRef } from "react"
+import { useRouter } from "next/navigation"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -17,87 +18,9 @@ export interface BloodMarkers {
   labDate?:            string
 }
 
-interface ParsedMarker {
-  key:      string
-  name:     string
-  value:    number
-  unit:     string
-  filename: string
-  note?:    string
-  category: string
-}
-
-// Display names + units + category for all parseable markers
-const MARKER_META: Record<string, { name: string; unit: string; category: string }> = {
-  // Cardiovascular
-  ldl_mgdL: { name: "LDL Cholesterol", unit: "mg/dL", category: "Cardiovascular" },
-  hdl_mgdL: { name: "HDL Cholesterol", unit: "mg/dL", category: "Cardiovascular" },
-  triglycerides_mgdL: { name: "Triglycerides", unit: "mg/dL", category: "Cardiovascular" },
-  apoB_mgdL: { name: "ApoB", unit: "mg/dL", category: "Cardiovascular" },
-  lpa_mgdL: { name: "Lp(a)", unit: "mg/dL", category: "Cardiovascular" },
-  totalCholesterol_mgdL: { name: "Total Cholesterol", unit: "mg/dL", category: "Cardiovascular" },
-  vldl_mgdL: { name: "VLDL", unit: "mg/dL", category: "Cardiovascular" },
-  nonHDL_mgdL: { name: "Non-HDL", unit: "mg/dL", category: "Cardiovascular" },
-  ldlHdlRatio: { name: "LDL:HDL Ratio", unit: "ratio", category: "Cardiovascular" },
-  // Inflammation
-  hsCRP_mgL: { name: "hs-CRP", unit: "mg/L", category: "Inflammation" },
-  wbc_kul: { name: "WBC", unit: "K/uL", category: "Inflammation" },
-  rdw_pct: { name: "RDW", unit: "%", category: "Inflammation" },
-  albumin_gdL: { name: "Albumin", unit: "g/dL", category: "Inflammation" },
-  esr_mmhr: { name: "ESR", unit: "mm/hr", category: "Inflammation" },
-  // Metabolic
-  glucose_mgdL: { name: "Glucose", unit: "mg/dL", category: "Metabolic" },
-  hba1c_pct: { name: "HbA1c", unit: "%", category: "Metabolic" },
-  creatinine_mgdL: { name: "Creatinine", unit: "mg/dL", category: "Metabolic" },
-  egfr_mLmin: { name: "eGFR", unit: "mL/min", category: "Metabolic" },
-  bun_mgdL: { name: "BUN", unit: "mg/dL", category: "Metabolic" },
-  uricAcid_mgdL: { name: "Uric Acid", unit: "mg/dL", category: "Metabolic" },
-  // Liver
-  alt_UL: { name: "ALT", unit: "U/L", category: "Liver" },
-  ast_UL: { name: "AST", unit: "U/L", category: "Liver" },
-  alkPhos_UL: { name: "Alk Phos", unit: "U/L", category: "Liver" },
-  totalBilirubin_mgdL: { name: "Bilirubin", unit: "mg/dL", category: "Liver" },
-  // Hormones
-  testosterone_ngdL: { name: "Testosterone", unit: "ng/dL", category: "Hormones" },
-  freeTesto_pgmL: { name: "Free Testosterone", unit: "pg/mL", category: "Hormones" },
-  shbg_nmolL: { name: "SHBG", unit: "nmol/L", category: "Hormones" },
-  tsh_uIUmL: { name: "TSH", unit: "uIU/mL", category: "Hormones" },
-  cortisol_ugdL: { name: "Cortisol", unit: "ug/dL", category: "Hormones" },
-  dhea_s_ugdL: { name: "DHEA-S", unit: "ug/dL", category: "Hormones" },
-  // CBC
-  hemoglobin_gdL: { name: "Hemoglobin", unit: "g/dL", category: "CBC" },
-  hematocrit_pct: { name: "Hematocrit", unit: "%", category: "CBC" },
-  mcv_fL: { name: "MCV", unit: "fL", category: "CBC" },
-  mch_pg: { name: "MCH", unit: "pg", category: "CBC" },
-  mchc_gdl: { name: "MCHC", unit: "g/dL", category: "CBC" },
-  rbc_mil: { name: "RBC", unit: "M/uL", category: "CBC" },
-  platelets_kul: { name: "Platelets", unit: "K/uL", category: "CBC" },
-  neutrophils_pct: { name: "Neutrophils", unit: "%", category: "CBC" },
-  lymphs_pct: { name: "Lymphs", unit: "%", category: "CBC" },
-  // Micronutrients
-  vitaminD_ngmL: { name: "Vitamin D", unit: "ng/mL", category: "Micronutrients" },
-  ferritin_ngmL: { name: "Ferritin", unit: "ng/mL", category: "Micronutrients" },
-  homocysteine_umolL: { name: "Homocysteine", unit: "umol/L", category: "Micronutrients" },
-  // Other
-  sodium_mmolL: { name: "Sodium", unit: "mmol/L", category: "Electrolytes" },
-  potassium_mmolL: { name: "Potassium", unit: "mmol/L", category: "Electrolytes" },
-  chloride_mmolL: { name: "Chloride", unit: "mmol/L", category: "Electrolytes" },
-  co2_mmolL: { name: "CO2", unit: "mmol/L", category: "Electrolytes" },
-  calcium_mgdL: { name: "Calcium", unit: "mg/dL", category: "Electrolytes" },
-  totalProtein_gdL: { name: "Total Protein", unit: "g/dL", category: "Electrolytes" },
-  globulin_gdL: { name: "Globulin", unit: "g/dL", category: "Electrolytes" },
-}
-
-const CATEGORY_ORDER = ["Cardiovascular", "Inflammation", "Metabolic", "Liver", "Hormones", "CBC", "Micronutrients", "Electrolytes"]
-
-function roundDisplay(val: number): string {
-  return String(Math.round(val * 100) / 100)
-}
 
 interface LabUploadProps {
-  onSuccess: (markers: BloodMarkers, newScore: number) => void
   onSkip?: () => void
-  existingLabDate?: string
 }
 
 // ─── Canonical markers for display ──────────────────────────────────────────
@@ -130,21 +53,16 @@ async function fileToBase64(file: File): Promise<string> {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export function LabUpload({ onSuccess, onSkip }: LabUploadProps) {
-  type Phase = "idle" | "parsing" | "confirm" | "saving" | "success" | "manual"
+export function LabUpload({ onSkip }: LabUploadProps) {
+  type Phase = "idle" | "parsing" | "saving" | "manual"
 
+  const router = useRouter()
   const [phase, setPhase] = useState<Phase>("idle")
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
-  const [parsedMarkers, setParsedMarkers] = useState<ParsedMarker[]>([])
-  const [labDate, setLabDate] = useState(new Date().toISOString().slice(0, 10))
-  const [labName, setLabName] = useState<string | undefined>()
-  const [filesProcessed, setFilesProcessed] = useState(0)
   const [manualLabDate, setManualLabDate] = useState(new Date().toISOString().slice(0, 10))
   const [manualValues, setManualValues] = useState<Partial<Record<keyof BloodMarkers, string>>>({})
-  const [newScore, setNewScore] = useState(0)
   const [dragOver, setDragOver] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [warnings, setWarnings] = useState<string[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
 
   function addFiles(newFiles: FileList | File[]) {
@@ -166,7 +84,6 @@ export function LabUpload({ onSuccess, onSkip }: LabUploadProps) {
   const handleUpload = useCallback(async () => {
     if (selectedFiles.length === 0) return
     setError(null)
-    setWarnings([])
     setPhase("parsing")
 
     try {
@@ -185,15 +102,9 @@ export function LabUpload({ onSuccess, onSkip }: LabUploadProps) {
       })
 
       const data = await res.json() as {
-        status?: string
         markers?: Record<string, number>
-        markerSource?: Record<string, string>
         labName?: string
         collectionDate?: string
-        markersFound?: number
-        filesProcessed?: number
-        perFile?: Array<{ filename: string; markersFound: number; error?: string }>
-        warnings?: string[]
         error?: string
       }
 
@@ -201,68 +112,39 @@ export function LabUpload({ onSuccess, onSkip }: LabUploadProps) {
         throw new Error(data.error ?? `HTTP ${res.status}`)
       }
 
-      if (data.warnings) setWarnings(data.warnings)
-      setFilesProcessed(data.filesProcessed ?? 0)
-      setLabName(data.labName)
-      setLabDate(data.collectionDate ?? new Date().toISOString().slice(0, 10))
-
-      // Build parsed marker list with display names + categories
-      const markers: ParsedMarker[] = []
-      const markerNotes = (data as Record<string, unknown>).markerNotes as Record<string, string> | undefined
-      if (data.markers) {
-        for (const [key, val] of Object.entries(data.markers)) {
-          const meta = MARKER_META[key]
-          markers.push({
-            key,
-            name: meta?.name ?? key,
-            value: val,
-            unit: meta?.unit ?? "",
-            filename: data.markerSource?.[key] ?? "",
-            note: markerNotes?.[key],
-            category: meta?.category ?? "Other",
-          })
-        }
-      }
-      setParsedMarkers(markers)
-
-      if (markers.length === 0) {
-        setError("We processed your files but couldn't identify standard lab markers. Try entering your values manually.")
+      if (!data.markers || Object.keys(data.markers).length === 0) {
+        throw new Error("We processed your files but couldn't identify standard lab markers. Try entering your values manually.")
       }
 
-      setPhase("confirm")
+      // Build BloodMarkers from parsed data (only DISPLAY_MARKERS slugs)
+      const markers: BloodMarkers = { labDate: data.collectionDate ?? new Date().toISOString().slice(0, 10) }
+      for (const m of DISPLAY_MARKERS) {
+        const val = data.markers[m.slug]
+        if (val !== undefined) (markers as Record<string, unknown>)[m.slug] = val
+      }
+
+      await saveMarkers(markers, "upload_pdf", data.labName)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed")
       setPhase("idle")
     }
   }, [selectedFiles])
 
-  async function saveMarkers(markers: BloodMarkers, src = "upload_pdf") {
+  async function saveMarkers(markers: BloodMarkers, src = "upload_pdf", labName?: string) {
     setPhase("saving")
     try {
       const res = await fetch("/api/labs/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ markers, labDate: markers.labDate, source: src }),
+        body: JSON.stringify({ markers, labDate: markers.labDate, source: src, labName }),
       })
       const data = await res.json() as { score?: number; error?: string }
       if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`)
-      setNewScore(data.score ?? 0)
-      setPhase("success")
-      onSuccess(markers, data.score ?? 0)
+      router.push("/dashboard")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save")
-      setPhase(parsedMarkers.length > 0 ? "confirm" : "manual")
+      setPhase("idle")
     }
-  }
-
-  function handleConfirmSave() {
-    const markers: BloodMarkers = { labDate }
-    for (const m of parsedMarkers) {
-      if (m.key in markers || DISPLAY_MARKERS.some((d) => d.slug === m.key)) {
-        (markers as Record<string, unknown>)[m.key] = m.value
-      }
-    }
-    saveMarkers(markers, "upload_pdf")
   }
 
   function handleManualSave() {
@@ -272,37 +154,6 @@ export function LabUpload({ onSuccess, onSkip }: LabUploadProps) {
       if (!isNaN(v)) (markers as Record<string, unknown>)[m.slug] = v
     }
     saveMarkers(markers, "manual_entry")
-  }
-
-  // ── Success ─────────────────────────────────────────────────────────────────
-
-  if (phase === "success") {
-    return (
-      <div className="flex flex-col items-center gap-6 text-center">
-        <div
-          className="flex h-14 w-14 items-center justify-center"
-          style={{ background: "var(--blood-bg)", borderRadius: "50%" }}
-        >
-          <span style={{ color: "var(--blood-c)", fontSize: 22 }}>✓</span>
-        </div>
-        <div>
-          <p className="font-display text-xl font-light" style={{ color: "var(--ink)" }}>
-            Blood panel saved.
-          </p>
-          <p className="font-body text-sm mt-1" style={{ color: "var(--ink-60)" }}>
-            Your score has been updated.
-          </p>
-        </div>
-        {newScore > 0 && (
-          <div className="flex items-baseline gap-1">
-            <span className="font-display text-5xl font-light" style={{ color: "var(--ink)" }}>
-              {newScore}
-            </span>
-            <span className="font-body text-sm" style={{ color: "var(--ink-30)" }}>/100</span>
-          </div>
-        )}
-      </div>
-    )
   }
 
   // ── Saving ────────────────────────────────────────────────────────────────
@@ -328,100 +179,6 @@ export function LabUpload({ onSuccess, onSkip }: LabUploadProps) {
         <p className="font-body text-xs" style={{ color: "var(--ink-30)" }}>
           Processing {selectedFiles.length} file{selectedFiles.length !== 1 ? "s" : ""}...
         </p>
-      </div>
-    )
-  }
-
-  // ── Confirmation ──────────────────────────────────────────────────────────
-
-  if (phase === "confirm") {
-    const today = new Date().toISOString().slice(0, 10)
-    return (
-      <div className="flex flex-col gap-5">
-        <p className="font-body text-[10px] uppercase tracking-widest" style={{ color: "var(--ink-30)" }}>
-          Found {parsedMarkers.length} marker{parsedMarkers.length !== 1 ? "s" : ""} across {filesProcessed} file{filesProcessed !== 1 ? "s" : ""}
-          {labName ? ` · ${labName}` : ""}
-        </p>
-
-        <div
-          className="flex items-center gap-3 px-4 py-3"
-          style={{ border: "0.5px solid var(--ink-12)", borderRadius: 4, background: "white" }}
-        >
-          <span className="font-body text-sm flex-1" style={{ color: "var(--ink)" }}>Date of blood draw</span>
-          <input
-            type="date"
-            max={today}
-            value={labDate}
-            onChange={(e) => setLabDate(e.target.value)}
-            className="font-body text-sm"
-            style={{ color: "var(--ink)", background: "transparent", border: "none", outline: "none" }}
-          />
-        </div>
-
-        {warnings.length > 0 && (
-          <div style={{ background: "var(--amber-bg)", border: "0.5px solid rgba(146,64,14,0.2)", borderRadius: 4, padding: "10px 14px" }}>
-            {warnings.map((w, i) => (
-              <p key={i} className="font-body text-xs" style={{ color: "var(--amber)" }}>{w}</p>
-            ))}
-          </div>
-        )}
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {CATEGORY_ORDER.map((cat) => {
-            const catMarkers = parsedMarkers.filter((m) => m.category === cat)
-            if (catMarkers.length === 0) return null
-            return (
-              <div key={cat}>
-                <p className="font-body text-[9px] uppercase tracking-widest" style={{ color: "var(--ink-30)", marginBottom: 6 }}>
-                  {cat}
-                </p>
-                <div style={{ border: "0.5px solid var(--ink-12)", borderRadius: 4, overflow: "hidden" }}>
-                  {catMarkers.map((m) => (
-                    <div
-                      key={m.key}
-                      className="grid items-center px-4 py-2.5"
-                      style={{
-                        gridTemplateColumns: "16px 1fr auto auto",
-                        gap: 8,
-                        borderBottom: "0.5px solid var(--ink-06, #f8f8f8)",
-                        background: "white",
-                      }}
-                    >
-                      <span style={{ fontSize: 11, color: "var(--blood-c)" }}>✓</span>
-                      <span className="font-body text-sm" style={{ color: "var(--ink)" }}>{m.name}</span>
-                      <span className="font-body text-sm font-medium text-right" style={{ color: "var(--ink)" }}>
-                        {roundDisplay(m.value)} <span className="font-body text-[10px]" style={{ color: "var(--ink-30)" }}>{m.unit}</span>
-                      </span>
-                      <span className="font-body text-[10px] text-right" style={{ color: "var(--ink-30)", minWidth: 80 }}>
-                        {m.note ?? m.filename}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
-        {error && (
-          <p className="font-body text-xs" style={{ color: "#991B1B" }}>{error}</p>
-        )}
-
-        <button
-          onClick={handleConfirmSave}
-          disabled={parsedMarkers.length === 0}
-          className="h-12 w-full font-body text-xs uppercase tracking-[0.08em] text-white transition-opacity hover:opacity-85 disabled:opacity-30"
-          style={{ background: "var(--blood-c)" }}
-        >
-          Save to my profile
-        </button>
-        <button
-          onClick={() => { setPhase("idle"); setError(null); setSelectedFiles([]) }}
-          className="font-body text-xs uppercase tracking-widest"
-          style={{ color: "var(--ink-30)" }}
-        >
-          Re-upload
-        </button>
       </div>
     )
   }

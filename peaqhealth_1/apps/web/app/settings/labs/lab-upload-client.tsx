@@ -1,6 +1,5 @@
 "use client"
 
-import { useRouter } from "next/navigation"
 import { LabUpload } from "../../components/lab-upload"
 
 interface Props {
@@ -9,7 +8,6 @@ interface Props {
 }
 
 export function LabUploadClient({ latestLab, history }: Props) {
-  const router = useRouter()
   return (
     <div className="flex flex-col gap-8">
       {/* Current labs */}
@@ -34,10 +32,7 @@ export function LabUploadClient({ latestLab, history }: Props) {
         <span className="font-body text-[10px] uppercase tracking-widest" style={{ color: "var(--ink-30)" }}>
           {latestLab ? "Upload new results" : "Upload lab results"}
         </span>
-        <LabUpload
-          existingLabDate={latestLab?.collection_date as string | undefined}
-          onSuccess={() => router.push("/dashboard")}
-        />
+        <LabUpload />
       </div>
 
       {/* History */}

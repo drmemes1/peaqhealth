@@ -1,15 +1,12 @@
 "use client"
 
-import { LabUpload, type BloodMarkers } from "../components/lab-upload"
-
-export type { BloodMarkers }
+import { LabUpload } from "../components/lab-upload"
 
 interface Props {
-  onConfirm: (markers: BloodMarkers, newScore: number) => void
   onSkip: () => void
 }
 
-export function StepBlood({ onConfirm, onSkip }: Props) {
+export function StepBlood({ onSkip }: Props) {
   return (
     <div className="flex flex-col items-center gap-8 w-full">
       <div className="text-center">
@@ -20,7 +17,7 @@ export function StepBlood({ onConfirm, onSkip }: Props) {
           Drop a PDF from any major lab. We&apos;ll extract your biomarkers automatically.
         </p>
       </div>
-      <LabUpload onSuccess={onConfirm} onSkip={onSkip} />
+      <LabUpload onSkip={onSkip} />
     </div>
   )
 }
