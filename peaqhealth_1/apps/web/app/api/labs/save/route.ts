@@ -5,36 +5,66 @@ import { recalculateScore } from "../../../../lib/score/recalculate"
 import type { BloodMarkers } from "../../../components/lab-upload"
 import OpenAI from "openai"
 
-async function generateBloodInsight(markers: BloodMarkers): Promise<string | null> {
+type DbRow = Record<string, number | string | null | undefined>
+
+async function generateBloodInsight(row: DbRow): Promise<string | null> {
   const key = process.env.OPENAI_API_KEY
   if (!key) return null
 
-  const lines: string[] = []
-  if (markers.hsCRP_mgL)          lines.push(`hs-CRP: ${markers.hsCRP_mgL} mg/L`)
-  if (markers.apoB_mgdL)          lines.push(`ApoB: ${markers.apoB_mgdL} mg/dL`)
-  if (markers.ldl_mgdL)           lines.push(`LDL: ${markers.ldl_mgdL} mg/dL`)
-  if (markers.hdl_mgdL)           lines.push(`HDL: ${markers.hdl_mgdL} mg/dL`)
-  if (markers.triglycerides_mgdL) lines.push(`Triglycerides: ${markers.triglycerides_mgdL} mg/dL`)
-  if (markers.lpa_mgdL)           lines.push(`Lp(a): ${markers.lpa_mgdL} mg/dL`)
-  if (markers.glucose_mgdL)       lines.push(`Glucose: ${markers.glucose_mgdL} mg/dL`)
-  if (markers.hba1c_pct)          lines.push(`HbA1c: ${markers.hba1c_pct}%`)
-  if (markers.vitaminD_ngmL)      lines.push(`Vitamin D: ${markers.vitaminD_ngmL} ng/mL`)
-  if (lines.length === 0) return null
+  const n = (v: unknown) => typeof v === "number" && v > 0
+
+  const present: string[] = []
+  if (n(row.ldl_mgdl))           present.push(`LDL: ${row.ldl_mgdl} mg/dL`)
+  if (n(row.hdl_mgdl))           present.push(`HDL: ${row.hdl_mgdl} mg/dL`)
+  if (n(row.triglycerides_mgdl)) present.push(`Triglycerides: ${row.triglycerides_mgdl} mg/dL`)
+  if (n(row.hs_crp_mgl))         present.push(`hsCRP: ${row.hs_crp_mgl} mg/L`)
+  if (n(row.glucose_mgdl))       present.push(`Glucose: ${row.glucose_mgdl} mg/dL`)
+  if (n(row.hba1c_pct))          present.push(`HbA1c: ${row.hba1c_pct}%`)
+  if (n(row.vitamin_d_ngml))     present.push(`Vitamin D: ${row.vitamin_d_ngml} ng/mL`)
+  if (n(row.apob_mgdl))          present.push(`ApoB: ${row.apob_mgdl} mg/dL`)
+  if (n(row.egfr_mlmin))         present.push(`eGFR: ${row.egfr_mlmin} mL/min`)
+  if (n(row.alt_ul))             present.push(`ALT: ${row.alt_ul} U/L`)
+  if (n(row.wbc_kul))            present.push(`WBC: ${row.wbc_kul} K/uL`)
+  if (n(row.albumin_gdl))        present.push(`Albumin: ${row.albumin_gdl} g/dL`)
+  if (n(row.hemoglobin_gdl))     present.push(`Hemoglobin: ${row.hemoglobin_gdl} g/dL`)
+  if (n(row.lpa_mgdl))           present.push(`Lp(a): ${row.lpa_mgdl} mg/dL`)
+  if (present.length === 0) return null
+
+  const missing: string[] = []
+  if (!n(row.hs_crp_mgl))    missing.push("hsCRP")
+  if (!n(row.hba1c_pct))     missing.push("HbA1c")
+  if (!n(row.vitamin_d_ngml)) missing.push("Vitamin D")
+  if (!n(row.apob_mgdl))     missing.push("ApoB")
+  if (!n(row.lpa_mgdl))      missing.push("Lp(a)")
+
+  const insightPrompt = `You are a longevity health assistant for Peaq Health, a precision wellness platform.
+
+A user just uploaded their blood panel.
+Present markers: ${present.join(", ")}
+${missing.length > 0 ? `Missing high-value markers: ${missing.join(", ")}` : "Panel is comprehensive."}
+
+Write exactly 2 sentences:
+1. One sentence about the most notable finding in their results — good or concerning. Reference the actual values.
+2. One sentence about what missing markers would add to their picture, framed as opportunity. If panel is complete, mention a lifestyle factor that could improve their weakest marker.
+
+Rules:
+- Be specific — use actual numbers
+- Warm but clinical tone
+- No disclaimers, no "I'm not a doctor", no "Great job" or hollow praise
+- Max 50 words total
+- Never mention markers with value 0`
 
   try {
     const client = new OpenAI({ apiKey: key })
     const res = await client.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-4o",
       max_tokens: 120,
-      messages: [{
-        role: "system",
-        content: "You are a concise health data interpreter. Write 1–3 sentence plain-English summary of these blood markers for the patient. Be specific about what looks good or needs attention. Do not use the word 'remarkable'. No markdown. No disclaimers.",
-      }, {
-        role: "user",
-        content: lines.join(", "),
-      }],
+      temperature: 0.7,
+      messages: [{ role: "user", content: insightPrompt }],
     })
-    return res.choices[0]?.message?.content?.trim() ?? null
+    const insight = res.choices[0]?.message?.content?.trim() ?? null
+    console.log("[insight] generated:", insight)
+    return insight
   } catch {
     return null
   }
@@ -119,9 +149,16 @@ export async function POST(request: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
+  // Fetch the full saved row so the insight generator sees all columns (incl. extended markers)
+  const { data: savedRow } = await supabase
+    .from("lab_results")
+    .select("hs_crp_mgl, vitamin_d_ngml, apob_mgdl, ldl_mgdl, hdl_mgdl, triglycerides_mgdl, lpa_mgdl, glucose_mgdl, hba1c_pct, egfr_mlmin, alt_ul, wbc_kul, albumin_gdl, hemoglobin_gdl")
+    .eq("user_id", user.id)
+    .single()
+
   const [newScore, bloodInsight] = await Promise.all([
     recalculateScore(user.id, serviceClient),
-    generateBloodInsight(markers),
+    generateBloodInsight(savedRow ?? {}),
   ])
 
   if (bloodInsight) {

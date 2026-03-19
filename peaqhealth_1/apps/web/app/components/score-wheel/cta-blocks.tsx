@@ -75,7 +75,7 @@ export function CTABlocks({ sleepConnected, labFreshness, oralActive }: CTABlock
         <CTABlock
           color="var(--oral-c)"
           title={<>Complete your <em style={{ fontStyle: "italic" }}>Peaq profile.</em></>}
-          points="+25 pts"
+          points="+27 pts"
           features={["Shannon diversity from 16S sequencing","Nitrate-reducing bacteria — NO pathway","Periodontal pathogen burden","OSA-associated taxa","4 cross-panel terms unlocked","Results in 10–14 days via Zymo"]}
           buttonLabel="Order oral microbiome kit — $129"
           href="/shop"

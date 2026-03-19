@@ -709,8 +709,11 @@ export function ScoreWheel({
       <div style={fadeUp("0.38s")}>
         <NextSteps
           sleepConnected={sleepConnected} hasBlood={hasBlood} oralActive={oralActive}
-          sleepHrv={sleepData?.hrv} sleepDeepPct={sleepData?.deepPct}
-          labFreshness={labFreshness} bloodMonthsOld={bloodData?.monthsOld}
+          bloodLdl={bloodData?.ldl}
+          bloodHsCrp={bloodData?.hsCRP}
+          bloodVitaminD={bloodData?.vitaminD}
+          bloodGlucose={bloodData?.glucose}
+          bloodHba1c={bloodData?.hba1c}
         />
       </div>
 
