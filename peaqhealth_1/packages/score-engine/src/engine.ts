@@ -74,6 +74,7 @@ export interface SleepInputs {
   sleepEfficiencyPct: number
   avgSpo2?:           number
   highOsaRisk?:       boolean
+  nightsAvailable?:   number
 }
 
 export interface BloodInputs {
@@ -132,16 +133,18 @@ export interface PeaqScoreResult {
   score:    number
   category: "optimal" | "good" | "moderate" | "attention"
   breakdown: {
-    sleepRaw:         number
-    sleepSub:         number
-    sleepSource:      "wearable" | "questionnaire" | "none"
-    bloodSub:         number
-    oralSub:          number
-    lifestyleSub:     number
-    interactionPool:  number
-    oralPending:      boolean
-    bloodLocked:      boolean
-    lifestylePending: boolean
+    sleepRaw:               number
+    sleepSub:               number
+    sleepSource:            "wearable" | "questionnaire" | "none"
+    sleepDataInsufficient:  boolean
+    sleepNightsAvailable:   number
+    bloodSub:               number
+    oralSub:                number
+    lifestyleSub:           number
+    interactionPool:        number
+    oralPending:            boolean
+    bloodLocked:            boolean
+    lifestylePending:       boolean
   }
   bloodPanel: BloodPanelResult
   metrics: {
@@ -652,7 +655,10 @@ export function calculatePeaqScore(sleep?: SleepInputs, blood?: BloodInputs, ora
   let sleepSource: "wearable" | "questionnaire" | "none" = "none"
   let psqiEstimate = 0
 
-  if (sleep) {
+  const sleepNightsAvailable = sleep?.nightsAvailable ?? (sleep ? 7 : 0)
+  const sleepDataInsufficient = sleep !== undefined && sleepNightsAvailable < 7
+
+  if (sleep && sleepNightsAvailable >= 7) {
     sleepSource      = "wearable"
     deepSleepScore   = scoreDeepSleep(sleep.deepSleepPct)
     remScore         = scoreREM(sleep.remPct)
@@ -763,6 +769,7 @@ export function calculatePeaqScore(sleep?: SleepInputs, blood?: BloodInputs, ora
     category: getCategory(score),
     breakdown: {
       sleepRaw: Math.round(sleepRaw * 10) / 10, sleepSub: Math.round(sleepSub * 10) / 10, sleepSource,
+      sleepDataInsufficient, sleepNightsAvailable,
       bloodSub: Math.round(bloodSub * 10) / 10, oralSub,
       lifestyleSub: Math.round(lifestyleSub * 10) / 10, interactionPool,
       oralPending: !oral, bloodLocked, lifestylePending: !lifestyle,

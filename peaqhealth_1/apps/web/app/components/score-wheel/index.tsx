@@ -61,11 +61,15 @@ export interface ScoreWheelProps {
     reportDate: string
   }
   lifestyleData?: {
-    exerciseTier: "active" | "moderate" | "light" | "sedentary"
-    brushingFreq: number
-    flossingFreq: number
-    dentalVisits: number
-    smoking: boolean
+    exerciseLevel: string
+    brushingFreq: string
+    flossingFreq: string
+    lastDentalVisit: string
+    smokingStatus: string
+    stressLevel?: string
+    alcoholPerWeek?: number
+    vegServings?: number
+    processedFood?: number
     updatedAt: string
   }
   interactionsFired?: string[]
@@ -74,8 +78,9 @@ export interface ScoreWheelProps {
   lpaFlag?:            "elevated" | "very_elevated" | null
   hsCRPRetestFlag?:    boolean
   additionalMarkers?:  Array<{ name: string; value: number; unit: string }>
-  labLockExpiresAt?:   string | null  // ISO — null/undefined means locked or no labs
-  oralOrdered?:        boolean        // true if any kit order exists (incl. processing)
+  labLockExpiresAt?:      string | null  // ISO — null/undefined means locked or no labs
+  oralOrdered?:           boolean        // true if any kit order exists (incl. processing)
+  sleepNightsAvailable?:  number         // nights of wearable data available (<7 = building baseline)
 }
 
 function relTimeSince(iso: string): string {
@@ -221,7 +226,7 @@ export function ScoreWheel({
   sleepData, bloodData, oralData, lifestyleData, interactionsFired,
   lastSyncAt, lastSyncRequestedAt,
   peaqPercent, peaqPercentLabel, lpaFlag, hsCRPRetestFlag, additionalMarkers,
-  labLockExpiresAt, oralOrdered,
+  labLockExpiresAt, oralOrdered, sleepNightsAvailable,
 }: ScoreWheelProps) {
   const [mounted, setMounted] = useState(false)
   const [hoveredRing, setHoveredRing] = useState<string | null>(null)
@@ -459,6 +464,24 @@ export function ScoreWheel({
         fadeUpFn={fadeUp}
       >
         <div style={{ borderTop: "0.5px solid var(--ink-12)" }}>
+          {sleepConnected && sleepNightsAvailable !== undefined && sleepNightsAvailable < 7 && (
+            <div style={{
+              margin: "12px 0",
+              padding: "12px 14px",
+              background: "rgba(184,134,11,0.04)",
+              borderLeft: "3px solid #B8860B",
+              borderRadius: "0 4px 4px 0",
+            }}>
+              <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink)", margin: "0 0 4px", fontWeight: 500 }}>
+                ⏱ Building your sleep baseline
+              </p>
+              <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink-60)", margin: 0, lineHeight: 1.5 }}>
+                We have{" "}
+                <span style={{ color: "#B8860B", fontWeight: 500 }}>{sleepNightsAvailable} night{sleepNightsAvailable !== 1 ? "s" : ""}</span>
+                {" "}of data so far. Sleep scoring activates after 7 nights. Check back soon.
+              </p>
+            </div>
+          )}
           {sleepData && (
             <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "var(--ink-30)", padding: "8px 0 0", margin: 0 }}>
               Via {sleepData.device} · Last sync {sleepData.lastSync ? new Date(sleepData.lastSync).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}
@@ -697,29 +720,48 @@ export function ScoreWheel({
         fadeUpFn={fadeUp}
       >
         <div style={{ borderTop: "0.5px solid var(--ink-12)" }}>
-          {[
-            { name: "Exercise", val: lifestyleData ? exerciseLabel[lifestyleData.exerciseTier] : null, flag: lifestyleData ? (lifestyleData.exerciseTier === "sedentary" ? "attention" : lifestyleData.exerciseTier === "light" ? "watch" : "good") as Flag : "pending" as Flag },
-            { name: "Oral hygiene", val: lifestyleData ? `Brushing ${lifestyleData.brushingFreq}×/day${lifestyleData.flossingFreq >= 5 ? " + flossing" : ""}` : null, flag: lifestyleData ? (lifestyleData.brushingFreq >= 2 ? "good" : "watch") as Flag : "pending" as Flag },
-            { name: "Dental visits", val: lifestyleData ? (lifestyleData.dentalVisits >= 2 ? "Twice per year" : lifestyleData.dentalVisits >= 1 ? "Once per year" : "Rarely") : null, flag: lifestyleData ? (lifestyleData.dentalVisits >= 1 ? "good" : "attention") as Flag : "pending" as Flag },
-            { name: "Smoking", val: lifestyleData ? (lifestyleData.smoking ? "Current smoker" : "Non-smoker") : null, flag: lifestyleData ? (lifestyleData.smoking ? "attention" : "good") as Flag : "pending" as Flag },
-          ].map(row => (
-            <div key={row.name} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "0.5px solid var(--ink-06)" }}>
-              <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink)" }}>{row.name}</span>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink-60)" }}>{row.val ?? "—"}</span>
-                <span style={{
-                  fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "3px 8px", borderRadius: 3,
-                  background: row.flag === "good" ? "#EAF3DE" : row.flag === "watch" ? "#FEF3C7" : row.flag === "attention" ? "#FEE2E2" : "#F7F5F0",
-                  color: row.flag === "good" ? "#2D6A4F" : row.flag === "watch" ? "#92400E" : row.flag === "attention" ? "#991B1B" : "rgba(20,20,16,0.6)",
-                }}>
-                  {row.flag === "pending" ? "Pending" : row.flag === "good" ? "Good" : row.flag === "watch" ? "Watch" : "Attention"}
-                </span>
+          {(() => {
+            const exLabels: Record<string, string> = { active: "Active — 5+×/wk", moderate: "Moderate — 3–4×/wk", light: "Light — 1–2×/wk", sedentary: "Sedentary" }
+            const brushLabels: Record<string, string> = { once: "Once per day", twice: "Twice per day", more: "3+ times/day" }
+            const flossLabels: Record<string, string> = { never: "Never", sometimes: "Sometimes", daily: "Daily" }
+            const dentalLabels: Record<string, string> = { "6mo": "< 6 months", "1yr": "6–12 months", "2yr": "1–2 years", more: "2+ years" }
+            const smokeLabels: Record<string, string> = { never: "Never smoked", former: "Former smoker", current: "Current smoker" }
+            const stressLabels: Record<string, string> = { low: "Low", moderate: "Moderate", high: "High" }
+
+            type LRow = { name: string; val: string | null; flag: Flag }
+            const rows: LRow[] = []
+
+            if (lifestyleData) {
+              rows.push({ name: "Exercise", val: exLabels[lifestyleData.exerciseLevel] ?? lifestyleData.exerciseLevel, flag: (lifestyleData.exerciseLevel === "sedentary" ? "attention" : lifestyleData.exerciseLevel === "light" ? "watch" : "good") as Flag })
+              rows.push({ name: "Brushing", val: brushLabels[lifestyleData.brushingFreq] ?? lifestyleData.brushingFreq, flag: (lifestyleData.brushingFreq === "once" ? "watch" : "good") as Flag })
+              rows.push({ name: "Flossing", val: flossLabels[lifestyleData.flossingFreq] ?? lifestyleData.flossingFreq, flag: (lifestyleData.flossingFreq === "never" ? "attention" : lifestyleData.flossingFreq === "sometimes" ? "watch" : "good") as Flag })
+              rows.push({ name: "Dental visits", val: dentalLabels[lifestyleData.lastDentalVisit] ?? lifestyleData.lastDentalVisit, flag: (lifestyleData.lastDentalVisit === "6mo" || lifestyleData.lastDentalVisit === "1yr" ? "good" : lifestyleData.lastDentalVisit === "2yr" ? "watch" : "attention") as Flag })
+              rows.push({ name: "Smoking", val: smokeLabels[lifestyleData.smokingStatus] ?? lifestyleData.smokingStatus, flag: (lifestyleData.smokingStatus === "current" ? "attention" : lifestyleData.smokingStatus === "former" ? "watch" : "good") as Flag })
+              if (lifestyleData.stressLevel) rows.push({ name: "Stress", val: stressLabels[lifestyleData.stressLevel] ?? lifestyleData.stressLevel, flag: (lifestyleData.stressLevel === "high" ? "attention" : lifestyleData.stressLevel === "moderate" ? "watch" : "good") as Flag })
+              if (lifestyleData.alcoholPerWeek !== undefined) rows.push({ name: "Alcohol", val: lifestyleData.alcoholPerWeek === 0 ? "None" : `${lifestyleData.alcoholPerWeek} drinks/wk`, flag: (lifestyleData.alcoholPerWeek > 14 ? "attention" : lifestyleData.alcoholPerWeek > 7 ? "watch" : "good") as Flag })
+              if (lifestyleData.vegServings !== undefined) rows.push({ name: "Vegetables", val: lifestyleData.vegServings === 0 ? "None" : `${lifestyleData.vegServings} servings/day`, flag: (lifestyleData.vegServings >= 3 ? "good" : lifestyleData.vegServings >= 1 ? "watch" : "attention") as Flag })
+            } else {
+              rows.push({ name: "Exercise", val: null, flag: "pending" })
+              rows.push({ name: "Oral hygiene", val: null, flag: "pending" })
+              rows.push({ name: "Dental visits", val: null, flag: "pending" })
+              rows.push({ name: "Smoking", val: null, flag: "pending" })
+            }
+
+            const dotColor = (f: Flag) => f === "good" ? "#2D6A4F" : f === "watch" ? "#B8860B" : f === "attention" ? "#C0392B" : "var(--ink-30)"
+
+            return rows.map((row, i) => (
+              <div key={row.name} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 0", borderBottom: i < rows.length - 1 ? "0.5px solid var(--ink-06)" : "none" }}>
+                <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink-60)" }}>{row.name}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink)" }}>{row.val ?? "—"}</span>
+                  <span style={{ fontSize: 8, color: dotColor(row.flag), lineHeight: 1 }}>●</span>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          })()}
         </div>
-        <a href="/settings/lifestyle" style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "var(--gold)", display: "block", marginTop: 12 }}>
-          Update lifestyle answers →
+        <a href="/settings/lifestyle" style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "var(--gold)", display: "block", marginTop: 14 }}>
+          Update lifestyle markers →
         </a>
       </CollapsiblePanel>
 
@@ -728,8 +770,17 @@ export function ScoreWheel({
         <Insights
           sleepConnected={sleepConnected} hasBlood={hasBlood} oralActive={oralActive}
           sleepHrv={sleepData?.hrv} sleepDeepPct={sleepData?.deepPct}
+          sleepEfficiency={sleepData?.efficiency}
           bloodHsCrp={bloodData?.hsCRP} bloodApoB={bloodData?.apoB}
+          bloodLdl={bloodData?.ldl} bloodVitaminD={bloodData?.vitaminD}
+          bloodHba1c={bloodData?.hba1c} bloodGlucose={bloodData?.glucose}
           oralPeriodont={oralData?.periodontPathPct}
+          exerciseLevel={lifestyleData?.exerciseLevel}
+          smokingStatus={lifestyleData?.smokingStatus}
+          stressLevel={lifestyleData?.stressLevel}
+          alcoholDrinksPerWeek={lifestyleData?.alcoholPerWeek}
+          vegServings={lifestyleData?.vegServings}
+          processedFood={lifestyleData?.processedFood}
         />
       </div>
 

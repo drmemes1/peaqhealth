@@ -77,17 +77,108 @@ async function extractTextWithAzure(buffer: Buffer): Promise<string | null> {
   return null
 }
 
-// ─── Azure Document Intelligence + Azure OpenAI parser (primary) ─────────────
+// ─── Regex fallback parser ────────────────────────────────────────────────────
+// Used when Azure OpenAI fails or times out. Matches known marker names against
+// extracted text lines. Handles LabCorp (value on next line) and Quest (value
+// after reference range line).
 
-async function parseWithAzureHybrid(fileBase64: string): Promise<Record<string, unknown> | null> {
+function parseWithRegexFallback(text: string): Record<string, unknown> {
+  const markers: Record<string, unknown> = {}
+  const lines = text.split("\n").map(l => l.trim()).filter(Boolean)
+
+  // Each entry: [output key, ...search strings (case-insensitive)]
+  const DEFS: [string, ...string[]][] = [
+    ["ldl_mgdL",            "ldl cholesterol", "ldl-c", "ldl chol"],
+    ["hdl_mgdL",            "hdl cholesterol", "hdl-c", "hdl chol"],
+    ["triglycerides_mgdL",  "triglycerides", "triglyceride"],
+    ["hsCRP_mgL",           "hs-crp", "hscrp", "c-reactive protein, hs", "high-sensitivity crp"],
+    ["hba1c_pct",           "hemoglobin a1c", "hba1c", "a1c"],
+    ["glucose_mgdL",        "glucose, serum", "glucose, plasma", "glucose"],
+    ["vitaminD_ngmL",       "25-oh vitamin d", "25-hydroxyvitamin", "vitamin d, 25-oh"],
+    ["apoB_mgdL",           "apolipoprotein b", "apob"],
+    ["lpa_mgdL",            "lipoprotein(a)", "lipoprotein (a)", "lp(a)"],
+    ["creatinine_mgdL",     "creatinine, serum", "creatinine"],
+    ["egfr_mLmin",          "egfr", "glomerular filtration"],
+    ["alt_UL",              "alt (sgpt)", "alanine aminotransferase", "alt"],
+    ["ast_UL",              "ast (sgot)", "aspartate aminotransferase", "ast"],
+    ["wbc_kul",             "wbc", "white blood cell", "leukocytes"],
+    ["hemoglobin_gdL",      "hemoglobin", "hgb"],
+    ["rdw_pct",             "rdw", "red cell distribution"],
+    ["mcv_fL",              "mcv", "mean corpuscular volume"],
+    ["albumin_gdL",         "albumin, serum", "albumin"],
+    ["bun_mgdL",            "bun", "urea nitrogen"],
+    ["alkPhos_UL",          "alkaline phosphatase", "alk phos"],
+    ["totalBilirubin_mgdL", "bilirubin, total", "total bilirubin"],
+    ["sodium_mmolL",        "sodium, serum", "sodium"],
+    ["potassium_mmolL",     "potassium, serum", "potassium"],
+    ["totalCholesterol_mgdL","total cholesterol", "cholesterol, total"],
+    ["nonHDL_mgdL",         "non-hdl cholesterol", "non hdl"],
+    ["testosterone_ngdL",   "testosterone, serum", "testosterone, total"],
+    ["freeTesto_pgmL",      "free testosterone", "testosterone, free"],
+    ["shbg_nmolL",          "shbg", "sex hormone binding"],
+    ["ferritin_ngmL",       "ferritin, serum", "ferritin"],
+    ["tsh_uIUmL",           "tsh", "thyroid stimulating"],
+  ]
+
+  const numOnLine = (s: string): number | null => {
+    // standalone number, possibly with decimal
+    const m = s.match(/^\s*(\d+\.?\d*)\s*$/)
+    return m ? parseFloat(m[1]) : null
+  }
+
+  for (const [key, ...patterns] of DEFS) {
+    for (let i = 0; i < lines.length; i++) {
+      const lower = lines[i].toLowerCase()
+      if (!patterns.some(p => lower.includes(p))) continue
+
+      // Check current line for "Label: 1.23" or "Label 1.23 unit"
+      const inline = lines[i].match(/[\s:]+(\d+\.?\d+)\s*(?:mg|g|mmol|nmol|ng|pg|iu|ul|fl|%|ratio|k\/ul|x10)?\/?\S*\s*$/i)
+      if (inline) { markers[key] = parseFloat(inline[1]); break }
+
+      // Check next 3 lines for a standalone number (LabCorp / Quest pattern)
+      for (let j = i + 1; j <= Math.min(i + 3, lines.length - 1); j++) {
+        const n = numOnLine(lines[j])
+        if (n !== null && n > 0) { markers[key] = n; break }
+        // Skip lines that look like reference ranges
+        if (lines[j].match(/\d+\s*[-–]\s*\d+/)) continue
+        // Stop if next line is a different marker name (long text)
+        if (lines[j].length > 30 && !/^\d/.test(lines[j])) break
+      }
+      if (markers[key]) break
+    }
+  }
+
+  // labName heuristic
+  const allText = text.toLowerCase()
+  if (allText.includes("labcorp")) markers.labName = "LabCorp"
+  else if (allText.includes("quest")) markers.labName = "Quest Diagnostics"
+
+  // collection date
+  const dateMatch = text.match(/(?:collected|collection date|date collected)[:\s]+(\d{1,2}\/\d{1,2}\/\d{2,4}|\d{4}-\d{2}-\d{2})/i)
+  if (dateMatch) {
+    const raw = dateMatch[1]
+    const parts = raw.split(/[-\/]/)
+    if (parts.length === 3) {
+      // Normalize to YYYY-MM-DD
+      const [a, b, c] = parts.map(Number)
+      markers.collectionDate = a > 31
+        ? `${a}-${String(b).padStart(2,"0")}-${String(c).padStart(2,"0")}`
+        : `${c > 99 ? c : 2000 + c}-${String(a).padStart(2,"0")}-${String(b).padStart(2,"0")}`
+    }
+  }
+
+  return markers
+}
+
+// ─── Azure OpenAI parser (primary) ───────────────────────────────────────────
+
+async function parseWithAzureOpenAI(fullText: string): Promise<Record<string, unknown> | null> {
   const azureOpenAIKey = process.env.AZURE_OPENAI_KEY
   if (!azureOpenAIKey) return null
 
-  const buffer = Buffer.from(fileBase64, "base64")
-  const fullText = await extractTextWithAzure(buffer)
-  if (!fullText) return null
-
-  console.log("[parser] Azure extracted text length:", fullText.length)
+  console.log("[azure-openai] calling endpoint:", process.env.AZURE_OPENAI_ENDPOINT)
+  console.log("[azure-openai] deployment:", process.env.AZURE_OPENAI_DEPLOYMENT)
+  console.log("[azure-openai] key present:", !!azureOpenAIKey)
 
   const openai = new AzureOpenAI({
     apiKey: azureOpenAIKey,
@@ -95,6 +186,9 @@ async function parseWithAzureHybrid(fileBase64: string): Promise<Record<string, 
     apiVersion: "2024-08-01-preview",
     deployment: process.env.AZURE_OPENAI_DEPLOYMENT,
   })
+
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 25000)
 
   try {
     const response = await openai.chat.completions.create({
@@ -111,6 +205,21 @@ No markdown, no backticks, no explanation.`,
         {
           role: "user",
           content: `Parse this lab report and return JSON.
+
+APOLIPOPROTEIN B — CRITICAL INSTRUCTION:
+In LabCorp reports, Apolipoprotein B appears on its OWN
+SEPARATE PAGE (usually page 3). The result line looks
+exactly like this:
+  "Apolipoprotein B B, 01  70  mg/dL  <90"
+or in table format:
+  "Apolipoprotein B | 70 | mg/dL | <90"
+The value 70 (or whatever number) appears IMMEDIATELY after
+"Apolipoprotein B B, 01" BEFORE any reference table like:
+  "Desirable < 90"
+  "Borderline High 90 - 99"
+DO NOT return null for apoB_mgdL if you see "Apolipoprotein B"
+followed by any number between 20 and 250 in the document.
+That number IS the apoB_mgdL value.
 
 LABCORP FORMAT RULES:
 - Lines end with lab code: "TestName B, 01"
@@ -187,7 +296,7 @@ LAB REPORT TEXT:
 ${fullText}`,
         },
       ],
-    })
+    }, { signal: controller.signal })
 
     const raw = response.choices[0]?.message?.content
     if (!raw) return null
@@ -201,8 +310,11 @@ ${fullText}`,
 
     return JSON.parse(clean) as Record<string, unknown>
   } catch (err) {
-    console.error("[azure-openai] failed:", err instanceof Error ? err.message : "unknown error")
+    const e = err as { message?: string; status?: number; code?: string }
+    console.error("[azure-openai] error:", e.message, "status:", e.status, "code:", e.code)
     return null
+  } finally {
+    clearTimeout(timeoutId)
   }
 }
 
@@ -245,19 +357,29 @@ function extractFromParsedJson(
 async function processFile(file: FileInput, index: number): Promise<FileResult> {
   console.log("[parser] file", index + 1, "starting...")
 
-  const hybridResult = await parseWithAzureHybrid(file.base64)
-  if (hybridResult) {
-    const { markers, labName, collectionDate } = extractFromParsedJson(hybridResult)
-    if (Object.keys(markers).length > 0) {
-      console.log("[parser] used: azure-hybrid — markers:", Object.keys(markers).length)
-      return {
-        filename: file.filename,
-        markers,
-        markersFound: Object.keys(markers).length,
-        labName,
-        collectionDate,
-        parserUsed: "azure-hybrid",
+  const buffer = Buffer.from(file.base64, "base64")
+  const fullText = await extractTextWithAzure(buffer)
+
+  if (fullText) {
+    console.log("[parser] Azure extracted text length:", fullText.length)
+
+    // Try Azure OpenAI first
+    const openaiResult = await parseWithAzureOpenAI(fullText)
+    if (openaiResult) {
+      const { markers, labName, collectionDate } = extractFromParsedJson(openaiResult)
+      if (Object.keys(markers).length > 0) {
+        console.log("[parser] used: azure-hybrid — markers:", Object.keys(markers).length)
+        return { filename: file.filename, markers, markersFound: Object.keys(markers).length, labName, collectionDate, parserUsed: "azure-hybrid" }
       }
+    }
+
+    // Fallback: regex parser
+    console.log("[parser] falling back to regex parser")
+    const regexResult = parseWithRegexFallback(fullText)
+    const { markers, labName, collectionDate } = extractFromParsedJson(regexResult)
+    if (Object.keys(markers).length > 0) {
+      console.log("[parser] used: regex-fallback — markers:", Object.keys(markers).length)
+      return { filename: file.filename, markers, markersFound: Object.keys(markers).length, labName, collectionDate, parserUsed: "azure-hybrid" }
     }
   }
 

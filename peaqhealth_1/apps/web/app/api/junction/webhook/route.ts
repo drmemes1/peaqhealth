@@ -19,60 +19,130 @@ const HANDLED_EVENTS = new Set([
   "lab_report.parsing_job.updated",
 ])
 
-// ── Helper: fetch the most recent sleep session from the Vital API ────────────
-async function fetchLatestSleepSession(
+// ── Helper: fetch sleep sessions from the Vital API ──────────────────────────
+async function fetchSleepSessions(
   junctionUserId: string,
-  startDate: string,
-  endDate: string
-): Promise<Record<string, unknown> | null> {
+): Promise<Array<Record<string, unknown>>> {
   const baseUrl = process.env.JUNCTION_ENV === "production"
     ? "https://api.tryvital.io"
     : "https://api.sandbox.tryvital.io"
 
+  const endDate = new Date().toISOString().split("T")[0]
+  const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
+
+  const url = `${baseUrl}/v2/summary/sleep/${junctionUserId}?start_date=${startDate}&end_date=${endDate}`
+  console.log("[sleep] fetching URL:", url)
+
   try {
-    const res = await fetch(
-      `${baseUrl}/v2/summary/sleep/${junctionUserId}?start_date=${startDate}&end_date=${endDate}`,
-      { headers: { "x-vital-api-key": process.env.JUNCTION_API_KEY! } }
-    )
+    const res = await fetch(url, { headers: { "x-vital-api-key": process.env.JUNCTION_API_KEY! } })
     if (!res.ok) {
-      console.error("[sleep] Vital API fetch failed:", res.status)
-      return null
+      const body = await res.text()
+      console.error("[sleep] Vital API fetch failed:", res.status, "body:", body)
+      return []
     }
     const data = await res.json() as Record<string, unknown>
-    console.log("[sleep] fetched data:", JSON.stringify(data).slice(0, 500))
     const sessions = (data.sleep ?? data.data ?? []) as Array<Record<string, unknown>>
-    return sessions[0] ?? null
+    console.log("[sleep] sessions fetched:", sessions.length)
+    if (sessions.length > 0) {
+      console.log("[sleep] session[0]:", JSON.stringify(sessions[0]).slice(0, 500))
+    }
+    return sessions
   } catch (err) {
     console.error("[sleep] fetch error:", err instanceof Error ? err.message : "unknown")
-    return null
+    return []
   }
 }
 
-// ── Helper: build wearable update payload from a sleep session ─────────────────
+// ── Helper: build wearable update payload from a single sleep session ──────────
 function buildSleepUpdatePayload(session: Record<string, unknown>): Record<string, unknown> {
-  const totalSecs  = (session.total_sleep_duration as number) || (session.duration as number) || 0
+  // Vital API v2 short field names: total, deep, rem, light, efficiency
+  const totalSecs  = (session.total as number) || (session.duration as number) || 0
   const payload: Record<string, unknown> = {
     last_sync_at: new Date().toISOString(),
     status: "connected",
   }
 
   if (totalSecs > 0) {
-    const deepSecs   = (session.deep_sleep_duration  as number) || 0
-    const remSecs    = (session.rem_sleep_duration   as number) || 0
-    const lightSecs  = (session.light_sleep_duration as number) || 0
-    const efficiency = (session.sleep_efficiency     as number) || 0
-    const hrv        = (session.hrv_rmssd_evening    as number) || (session.hrv_rmssd as number) || 0
-    const hrLowest   = (session.hr_lowest            as number) || 0
-    const spo2Avg    = session.spo2_avg              as number | undefined
+    const deepSecs   = (session.deep       as number) || 0
+    const remSecs    = (session.rem        as number) || 0
+    const lightSecs  = (session.light      as number) || 0
+    const efficiency = (session.efficiency as number) || 0
+    const hrv        = (session.hrv_rmssd ?? session.hrv ?? null) as number | null
+    const hrLowest   = (session.hr_lowest  as number) || 0
+    const spo2Avg    = session.spo2_avg    as number | undefined
 
-    if (deepSecs  > 0) payload.deep_sleep_pct  = Math.round((deepSecs  / totalSecs) * 1000) / 10
-    if (remSecs   > 0) payload.rem_pct          = Math.round((remSecs   / totalSecs) * 1000) / 10
-    if (lightSecs > 0) payload.light_sleep_pct  = Math.round((lightSecs / totalSecs) * 1000) / 10
-    if (efficiency > 0) payload.sleep_efficiency = Math.round(efficiency * 1000) / 10
-    if (hrv       > 0) payload.hrv_rmssd         = hrv
-    if (hrLowest  > 0) payload.latest_resting_hr  = hrLowest
+    if (deepSecs  > 0) payload.deep_sleep_pct    = Math.round((deepSecs  / totalSecs) * 1000) / 10
+    if (remSecs   > 0) payload.rem_pct            = Math.round((remSecs   / totalSecs) * 1000) / 10
+    if (lightSecs > 0) payload.light_sleep_pct    = Math.round((lightSecs / totalSecs) * 1000) / 10
+    if (efficiency > 0) payload.sleep_efficiency  = Math.round(efficiency * 10) / 10
+    if (hrv !== null && hrv > 0) payload.hrv_rmssd = hrv
+    if (hrLowest  > 0) payload.latest_resting_hr   = hrLowest
+    payload.total_sleep_seconds = totalSecs
     if (spo2Avg !== undefined && spo2Avg < 90) payload.latest_spo2_dips = 1
   }
+
+  return payload
+}
+
+// ── Helper: build averaged wearable payload from multiple sleep sessions ───────
+function buildAveragedSleepPayload(sessions: Array<Record<string, unknown>>): Record<string, unknown> | null {
+  // Filter out naps and very short sessions — only count full nights (>1 hour)
+  const fullSessions = sessions.filter(s => {
+    const total = (s.total as number) || (s.duration as number) || 0
+    const type  = s.type as string | undefined
+    return total > 3600 && type !== "acknowledged_nap" && type !== "nap"
+  })
+  console.log("[sleep] full sessions:", fullSessions.length, "of", sessions.length)
+
+  const nightsAvailable = fullSessions.length
+  if (nightsAvailable < 7) return null
+
+  const avg = (vals: number[]) => vals.reduce((a, b) => a + b, 0) / vals.length
+
+  const deepPcts: number[]     = []
+  const remPcts: number[]      = []
+  const efficiencies: number[] = []
+  const hrvs: number[]         = []
+  const restingHRs: number[]   = []
+  const totalSecsList: number[] = []
+
+  for (const s of fullSessions) {
+    const totalSecs  = (s.total as number) || (s.duration as number) || 0
+    const deepSecs   = (s.deep       as number) || 0
+    const remSecs    = (s.rem        as number) || 0
+    const efficiency = (s.efficiency as number) || 0
+    // HRV: use null coalescing — don't conflate missing with zero
+    const hrv        = (s.hrv_rmssd ?? s.hrv ?? null) as number | null
+    const hrLowest   = (s.hr_lowest  as number) || 0
+
+    totalSecsList.push(totalSecs)
+    if (deepSecs  > 0) deepPcts.push((deepSecs / totalSecs) * 100)
+    if (remSecs   > 0) remPcts.push((remSecs   / totalSecs) * 100)
+    if (efficiency > 0) efficiencies.push(efficiency)
+    if (hrv !== null && hrv > 0) hrvs.push(hrv)
+    if (hrLowest  > 0) restingHRs.push(hrLowest)
+  }
+
+  const payload: Record<string, unknown> = {
+    last_sync_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    status: "connected",
+    nights_available: nightsAvailable,
+    total_sleep_seconds: Math.round(avg(totalSecsList)),
+  }
+
+  if (deepPcts.length)     payload.deep_sleep_pct   = Math.round(avg(deepPcts)     * 10) / 10
+  if (remPcts.length)      payload.rem_pct           = Math.round(avg(remPcts)      * 10) / 10
+  if (efficiencies.length) payload.sleep_efficiency  = Math.round(avg(efficiencies) * 10) / 10
+  if (hrvs.length)         payload.hrv_rmssd          = Math.round(avg(hrvs)         * 10) / 10
+  if (restingHRs.length)   payload.latest_resting_hr  = Math.round(avg(restingHRs))
+
+  console.log("[sleep] nights available:", nightsAvailable,
+    "avg efficiency:", payload.sleep_efficiency,
+    "avg deep%:", payload.deep_sleep_pct,
+    "avg rem%:", payload.rem_pct,
+    "avg HRV:", payload.hrv_rmssd,
+    "avg resting HR:", payload.latest_resting_hr)
 
   return payload
 }
@@ -268,10 +338,17 @@ export async function POST(request: NextRequest) {
 
     const { error: updateErr } = await supabase
       .from("wearable_connections")
-      .update({ latest_spo2_dips: spo2Dips, last_sync_at: new Date().toISOString(), status: "connected" })
-      .eq("user_id", userId)
+      .upsert({
+        user_id: userId,
+        junction_user_id: junctionUserId,
+        provider: "unknown",
+        connected_at: new Date().toISOString(),
+        latest_spo2_dips: spo2Dips,
+        last_sync_at: new Date().toISOString(),
+        status: "connected",
+      }, { onConflict: "user_id" })
 
-    if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
+    if (updateErr) console.error("[webhook] wearable_connections upsert error:", updateErr.message)
 
     return NextResponse.json({ status: "processed", event: "sleep_breathing_disturbance" })
   }
@@ -282,10 +359,17 @@ export async function POST(request: NextRequest) {
 
     const { error: updateErr } = await supabase
       .from("wearable_connections")
-      .update({ high_osa_risk: true, last_sync_at: new Date().toISOString(), status: "connected" })
-      .eq("user_id", userId)
+      .upsert({
+        user_id: userId,
+        junction_user_id: junctionUserId,
+        provider: "unknown",
+        connected_at: new Date().toISOString(),
+        high_osa_risk: true,
+        last_sync_at: new Date().toISOString(),
+        status: "connected",
+      }, { onConflict: "user_id" })
 
-    if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
+    if (updateErr) console.error("[webhook] wearable_connections upsert error:", updateErr.message)
 
     const newScore = await recalculateScore(userId, supabase)
     console.log("[webhook] sleep_apnea_alert — recalculated score for user:", userId)
@@ -299,7 +383,7 @@ export async function POST(request: NextRequest) {
   ) {
     const data = body.data as Record<string, unknown> | undefined
     console.log("[sleep-cycle] full payload:", JSON.stringify(body.data).slice(0, 500))
-    const duration = (data?.duration as number) || (data?.total_sleep_duration as number) || 0
+    const duration = (data?.total_sleep_duration as number) || (data?.duration as number) || 0
 
     const updatePayload: Record<string, unknown> = {
       last_sync_at: new Date().toISOString(),
@@ -307,19 +391,19 @@ export async function POST(request: NextRequest) {
     }
 
     if (duration > 0) {
-      const deepSecs  = (data?.deep_sleep_duration  as number) || 0
-      const remSecs   = (data?.rem_sleep_duration   as number) || 0
-      const lightSecs = (data?.light_sleep_duration as number) || 0
-      const deepPct   = (deepSecs  / duration) * 100
-      const remPct    = (remSecs   / duration) * 100
-      const lightPct  = (lightSecs / duration) * 100
-      const efficiency = (data?.sleep_efficiency as number) || 0
-      const hrv = (data?.hrv_rmssd_evening as number) || (data?.hrv_rmssd as number) || 0
+      const deepSecs   = (data?.deep               as number) || (data?.deep_sleep_duration  as number) || 0
+      const remSecs    = (data?.rem                as number) || (data?.rem_sleep_duration   as number) || 0
+      const lightSecs  = (data?.light              as number) || (data?.light_sleep_duration as number) || 0
+      const deepPct    = (deepSecs  / duration) * 100
+      const remPct     = (remSecs   / duration) * 100
+      const lightPct   = (lightSecs / duration) * 100
+      const efficiency = (data?.efficiency         as number) || (data?.sleep_efficiency     as number) || 0
+      const hrv        = (data?.hrv_rmssd_evening  as number) || (data?.hrv_rmssd            as number) || 0
 
       if (deepPct  > 0) updatePayload.deep_sleep_pct  = Math.round(deepPct  * 10) / 10
       if (remPct   > 0) updatePayload.rem_pct          = Math.round(remPct   * 10) / 10
       if (lightPct > 0) updatePayload.light_sleep_pct  = Math.round(lightPct * 10) / 10
-      if (efficiency > 0) updatePayload.sleep_efficiency = Math.round(efficiency * 100 * 10) / 10
+      if (efficiency > 0) updatePayload.sleep_efficiency = Math.round(efficiency * 10) / 10
       if (hrv > 0) updatePayload.hrv_rmssd = hrv
 
       console.log("[webhook]", event_type, "— deepPct:", deepPct.toFixed(1),
@@ -331,17 +415,22 @@ export async function POST(request: NextRequest) {
 
     const { error: updateErr } = await supabase
       .from("wearable_connections")
-      .update(updatePayload)
-      .eq("user_id", userId)
+      .upsert({
+        user_id: userId,
+        junction_user_id: junctionUserId,
+        provider: "unknown",
+        connected_at: new Date().toISOString(),
+        ...updatePayload,
+      }, { onConflict: "user_id" })
 
-    if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
+    if (updateErr) console.error("[webhook] wearable_connections upsert error:", updateErr.message)
 
     const newScore = await recalculateScore(userId, supabase)
     console.log("[webhook]", event_type, "— recalculated score:", newScore, "for user:", userId)
     return NextResponse.json({ status: "processed", event: event_type })
   }
 
-  // ── historical.data.sleep.created: fetch from Vital API + save ───────────
+  // ── historical.data.sleep.created: fetch 7-night avg from Vital API + save ─
   if (event_type === "historical.data.sleep.created") {
     const data = body.data as Record<string, unknown> | undefined
     const startDate = (body.start_date ?? data?.start_date) as string | undefined
@@ -352,23 +441,52 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
-    const session = await fetchLatestSleepSession(junctionUserId, startDate, endDate)
-    if (!session) {
-      console.log("[sleep] no sleep session returned from API for user:", userId)
+    const sessions = await fetchSleepSessions(junctionUserId)
+
+    // Filter naps and short sessions before counting — must match buildAveragedSleepPayload
+    const fullSessions = sessions.filter(s => {
+      const type = s.type as string | undefined
+      const d = (s.total as number) || (s.duration as number) || 0
+      return d > 3600 && type !== "acknowledged_nap" && type !== "nap"
+    })
+    const nightsAvailable = fullSessions.length
+
+    console.log("[sleep] full sessions:", nightsAvailable, "of", sessions.length, "for user:", userId)
+
+    if (nightsAvailable < 7) {
+      console.log("[sleep] insufficient full sessions (<7) — storing count only, skipping averages")
+      await supabase
+        .from("wearable_connections")
+        .upsert({
+          user_id: userId,
+          junction_user_id: junctionUserId,
+          provider: "unknown",
+          connected_at: new Date().toISOString(),
+          nights_available: nightsAvailable,
+          last_sync_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          status: "connected",
+        }, { onConflict: "user_id" })
+      return NextResponse.json({ received: true, nightsAvailable })
+    }
+
+    const updatePayload = buildAveragedSleepPayload(sessions)
+    if (!updatePayload) {
+      console.log("[sleep] no averaged payload — skipping update for user:", userId)
       return NextResponse.json({ received: true })
     }
 
-    const updatePayload = buildSleepUpdatePayload(session)
-    console.log("[sleep] saving —", Object.entries(updatePayload)
-      .filter(([k]) => k !== "last_sync_at" && k !== "status")
-      .map(([k, v]) => `${k}: ${v}`).join(", "), "for user:", userId)
-
     const { error: updateErr } = await supabase
       .from("wearable_connections")
-      .update(updatePayload)
-      .eq("user_id", userId)
+      .upsert({
+        user_id: userId,
+        junction_user_id: junctionUserId,
+        provider: "unknown",
+        connected_at: new Date().toISOString(),
+        ...updatePayload,
+      }, { onConflict: "user_id" })
 
-    if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
+    if (updateErr) console.error("[webhook] wearable_connections upsert error:", updateErr.message)
 
     const newScore = await recalculateScore(userId, supabase)
     console.log("[webhook] historical.data.sleep.created — recalculated score:", newScore, "for user:", userId)
@@ -382,7 +500,7 @@ export async function POST(request: NextRequest) {
       .from("wearable_connections")
       .select("last_sync_at")
       .eq("user_id", userId)
-      .single()
+      .maybeSingle()
 
     const today = new Date().toISOString().slice(0, 10)
     if (wConn?.last_sync_at && (wConn.last_sync_at as string).slice(0, 10) === today) {
@@ -399,9 +517,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
-    const session = await fetchLatestSleepSession(junctionUserId, startDate, endDate)
+    const sessions = await fetchSleepSessions(junctionUserId)
+    const fullSessions = sessions.filter(s => {
+      const total = (s.total as number) || (s.duration as number) || 0
+      const type  = s.type as string | undefined
+      return total > 3600 && type !== "acknowledged_nap" && type !== "nap"
+    })
+    const session = fullSessions[0] ?? null
     if (!session) {
-      console.log("[sleep-cycle] no sleep session returned from API for user:", userId)
+      console.log("[sleep-cycle] no full sleep session returned from API for user:", userId)
       return NextResponse.json({ received: true })
     }
 
@@ -412,10 +536,15 @@ export async function POST(request: NextRequest) {
 
     const { error: updateErr } = await supabase
       .from("wearable_connections")
-      .update(updatePayload)
-      .eq("user_id", userId)
+      .upsert({
+        user_id: userId,
+        junction_user_id: junctionUserId,
+        provider: "unknown",
+        connected_at: new Date().toISOString(),
+        ...updatePayload,
+      }, { onConflict: "user_id" })
 
-    if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
+    if (updateErr) console.error("[webhook] wearable_connections upsert error:", updateErr.message)
 
     const newScore = await recalculateScore(userId, supabase)
     console.log("[webhook]", event_type, "— recalculated score:", newScore, "for user:", userId)
@@ -432,10 +561,17 @@ export async function POST(request: NextRequest) {
       const retroNights = sleepRecords.filter(r => (r.duration as number) > 0).length
       const { error: updateErr } = await supabase
         .from("wearable_connections")
-        .update({ retro_nights: retroNights, last_sync_at: new Date().toISOString(), status: "connected" })
-        .eq("user_id", userId)
+        .upsert({
+          user_id: userId,
+          junction_user_id: junctionUserId,
+          provider: "unknown",
+          connected_at: new Date().toISOString(),
+          retro_nights: retroNights,
+          last_sync_at: new Date().toISOString(),
+          status: "connected",
+        }, { onConflict: "user_id" })
 
-      if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
+      if (updateErr) console.error("[webhook] wearable_connections upsert error:", updateErr.message)
     }
 
     const newScore = await recalculateScore(userId, supabase)
@@ -540,10 +676,15 @@ export async function POST(request: NextRequest) {
 
   const { error: updateErr } = await supabase
     .from("wearable_connections")
-    .update(updatePayload)
-    .eq("user_id", userId)
+    .upsert({
+      user_id: userId,
+      junction_user_id: junctionUserId,
+      provider: "unknown",
+      connected_at: new Date().toISOString(),
+      ...updatePayload,
+    }, { onConflict: "user_id" })
 
-  if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
+  if (updateErr) console.error("[webhook] wearable_connections upsert error:", updateErr.message)
 
   const newScore = await recalculateScore(userId, supabase)
   console.log("[webhook] recalculated for user:", userId)

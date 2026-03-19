@@ -71,6 +71,7 @@ export function mapLabRow(row: Record<string, unknown>): BloodInputs | undefined
     hemoglobin_gdL:         num(row.hemoglobin_gdl),
     wbc_x10L:               num(row.wbc_kul),
     rdw_pct:                num(row.rdw_pct),
+    mcv_fL:                 num(row.mcv_fl),
     esr_mmhr:               num(row.esr_mmhr),
     homocysteine_umolL:     num(row.homocysteine_umoll),
     ferritin_ngmL:          num(row.ferritin_ngml),
@@ -79,11 +80,15 @@ export function mapLabRow(row: Record<string, unknown>): BloodInputs | undefined
     alkPhos_UL:             num(row.alk_phos_ul),
     totalBilirubin_mgdL:    num(row.total_bilirubin_mgdl),
     testosterone_ngdL:      num(row.testosterone_ngdl),
+    freeTesto_pgmL:         num(row.free_testo_pgml),
+    shbg_nmolL:             num(row.shbg_nmoll),
     totalCholesterol_mgdL:  num(row.total_cholesterol_mgdl),
     nonHDL_mgdL:            num(row.non_hdl_mgdl),
     tsh_uIUmL:              num(row.tsh_uiuml),
     sodium_mmolL:           num(row.sodium_mmoll),
     potassium_mmolL:        num(row.potassium_mmoll),
+    uricAcid_mgdL:          num(row.uric_acid_mgdl),
+    fastingInsulin_uIUmL:   num(row.fasting_insulin_uiuml),
     labCollectionDate:      row.collection_date as string | undefined,
   }
 
@@ -135,14 +140,14 @@ export async function recalculateScore(
   supabase: SupabaseClient
 ): Promise<number> {
   const [wearableRes, labsRes, oralRes, lifestyleRes, manualSleepRes] = await Promise.all([
-    supabase.from("wearable_connections").select("*").eq("user_id", userId).eq("status", "connected").order("connected_at", { ascending: false }).limit(1).single(),
+    supabase.from("wearable_connections").select("*").eq("user_id", userId).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("lab_results").select("*").eq("user_id", userId).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).single(),
     supabase.from("oral_kit_orders").select("*").eq("user_id", userId).eq("status", "results_ready").order("ordered_at", { ascending: false }).limit(1).single(),
     supabase.from("lifestyle_records").select("*").eq("user_id", userId).order("updated_at", { ascending: false }).limit(1).single(),
     supabase.from("manual_sleep_entries").select("duration_seconds,quality").eq("user_id", userId).order("date", { ascending: false }).limit(14),
   ])
 
-  // Sleep inputs: prefer Junction API; fall back to manual entries
+  // Sleep inputs: prefer Junction API; fall back to wearable_connections averages; then manual entries
   let sleepInputs: SleepInputs | undefined
 
   if (wearableRes.error) console.error("[score] wearable query error:", wearableRes.error.message)
@@ -170,10 +175,12 @@ export async function recalculateScore(
         spo2DipsPerNight:   spo2Dips,
         remPct:             remPct,
         sleepEfficiencyPct: efficiency,
+        nightsAvailable:    nightsAvailable || undefined,
       }
       console.log("[score] sleep from wearable_connections fallback — nights:", nightsAvailable, "eff:", efficiency, "deep:", deepPct, "rem:", remPct, "hrv:", hrv)
     }
   }
+
   if (!sleepInputs && manualSleepRes.data && manualSleepRes.data.length >= 7) {
     sleepInputs = aggregateManualSleepInputs(
       manualSleepRes.data as Array<{ duration_seconds: number; quality: number }>
@@ -191,7 +198,18 @@ export async function recalculateScore(
     if (typeof wRow.latest_vo2max === "number") lifestyleInputs.vo2max = wRow.latest_vo2max
   }
 
+  console.log("[score] sleep inputs:", JSON.stringify(sleepInputs ?? null))
+  console.log("[score] blood inputs present:", bloodInputs ? Object.keys(bloodInputs).filter(k => (bloodInputs as Record<string, unknown>)[k] != null).length : 0)
+
   const result = calculatePeaqScore(sleepInputs, bloodInputs, oralInputs, lifestyleInputs)
+
+  console.log("[score] breakdown:", JSON.stringify({
+    sleep: result.breakdown.sleepSub,
+    blood: result.breakdown.bloodSub,
+    oral:  result.breakdown.oralSub,
+    lifestyle: result.breakdown.lifestyleSub,
+    total: result.score,
+  }))
 
   await supabase.from("score_snapshots").insert({
     user_id:                userId,
