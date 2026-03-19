@@ -65,12 +65,12 @@ export function mapLabRow(row: Record<string, unknown>): BloodInputs | undefined
     lpa_mgdL:               num(row.lpa_mgdl),
     glucose_mgdL:           num(row.glucose_mgdl),
     hba1c_pct:              num(row.hba1c_pct),
-    eGFR_mLmin:             num(row.egfr_mlmin),
+    egfr_mLmin:             num(row.egfr_mlmin),
     alt_UL:                 num(row.alt_ul),
     ast_UL:                 num(row.ast_ul),
     albumin_gdL:            num(row.albumin_gdl),
     hemoglobin_gdL:         num(row.hemoglobin_gdl),
-    wbc_x10L:               num(row.wbc_kul),
+    wbc_kul:                num(row.wbc_kul),
     rdw_pct:                num(row.rdw_pct),
     mcv_fL:                 num(row.mcv_fl),
     esr_mmhr:               num(row.esr_mmhr),
@@ -185,13 +185,13 @@ export async function recalculateScore(
     const hasEnoughData = (nightsAvailable >= 7) || (efficiency > 0)
 
     if (hasEnoughData) {
-      // Values stored as percentages (e.g. 87, 17, 20.1) — engine expects 0–100 scale
+      // Values stored as percentages (e.g. 87, 17.4, 20.1) — engine expects 0–1 decimal scale
       sleepInputs = {
-        deepSleepPct:       deepPct,
+        deepSleepPct:       deepPct    > 0 ? deepPct    / 100 : 0,
         hrv_ms:             hrv,
         spo2DipsPerNight:   spo2Dips,
-        remPct:             remPct,
-        sleepEfficiencyPct: efficiency,
+        remPct:             remPct     > 0 ? remPct     / 100 : 0,
+        sleepEfficiencyPct: efficiency > 0 ? efficiency / 100 : 0,
         nightsAvailable:    nightsAvailable || undefined,
       }
       console.log("[score] sleep from wearable_connections fallback — nights:", nightsAvailable, "eff:", efficiency, "deep:", deepPct, "rem:", remPct, "hrv:", hrv)
