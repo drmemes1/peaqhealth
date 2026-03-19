@@ -15,8 +15,8 @@ const PRODUCTS = [
     badge: "FEATURED",
     icon: "◎",
     shortDesc:
-      "16S rRNA sequencing profiles your oral microbiome across diversity, pathogens, and nitrate-reducing bacteria. Unlocks 25 pts + 4 cross-panel interactions. Results in 10–14 days.",
-    scoreImpact: "+25 pts",
+      "16S rRNA sequencing profiles your oral microbiome across diversity, pathogens, and nitrate-reducing bacteria. Unlocks 27 pts. Results in 10–14 days.",
+    scoreImpact: "+27 pts",
     scoreColor: "var(--oral-c)",
     ship: "Ships in 2–3 days · Results in 10–14 days",
   },
@@ -88,8 +88,8 @@ const PRODUCTS = [
     category: "Blood",
     icon: "◈",
     shortDesc:
-      "Expanded biomarker panel covering lipids, inflammation, hormones, and metabolic markers. Unlocks 28 pts and longevity insights. At-home or clinic draw.",
-    scoreImpact: "+28 pts",
+      "Expanded biomarker panel covering lipids, inflammation, hormones, and metabolic markers. Unlocks 33 pts and longevity insights. At-home or clinic draw.",
+    scoreImpact: "+33 pts",
     scoreColor: "var(--blood-c)",
     ship: "At-home kit or clinic draw",
   },

@@ -55,7 +55,7 @@ interface ScoreRingProps {
   sleep?: { pts: number; max: number; active: boolean };
   blood?: { pts: number; max: number; active: boolean };
   oral?: { pts: number; max: number; active: boolean };
-  ix?: { pts: number; max: number; active: boolean };
+  lifestyle?: { pts: number; max: number; active: boolean };
   size?: number;
   animate?: boolean;
   preview?: boolean;
@@ -65,15 +65,15 @@ const PANEL_COLORS = {
   sleep: "#4A7FB5",
   blood: "#C0392B",
   oral: "#2D6A4F",
-  ix: "#B8860B",
+  lifestyle: "#B8860B",
 };
 
 export function ScoreRing({
   score,
-  sleep = { pts: 0, max: 28, active: false },
-  blood = { pts: 0, max: 28, active: false },
-  oral = { pts: 0, max: 25, active: false },
-  ix = { pts: 14, max: 14, active: true },
+  sleep = { pts: 0, max: 27, active: false },
+  blood = { pts: 0, max: 33, active: false },
+  oral = { pts: 0, max: 27, active: false },
+  lifestyle = { pts: 0, max: 13, active: false },
   size = 200,
   animate = false,
   preview = false,
@@ -101,7 +101,7 @@ export function ScoreRing({
     { key: "sleep" as const, ...sleep, color: PANEL_COLORS.sleep },
     { key: "blood" as const, ...blood, color: PANEL_COLORS.blood },
     { key: "oral" as const, ...oral, color: PANEL_COLORS.oral },
-    { key: "ix" as const, ...ix, color: PANEL_COLORS.ix },
+    { key: "lifestyle" as const, ...lifestyle, color: PANEL_COLORS.lifestyle },
   ];
   const totalMax = panels.reduce((s, p) => s + p.max, 0);
 

@@ -58,8 +58,9 @@ export default async function DashboardPage() {
     bloodSub:        snapshot?.blood_sub ?? 0,
     oralSub:         snapshot?.oral_sub ?? 0,
     lifestyleSub:    snapshot?.lifestyle_sub ?? 0,
-    interactionPool: snapshot?.interaction_pool ?? null,
   }
+
+  const interactionsFired = Array.isArray(snapshot?.interactions_fired) ? snapshot.interactions_fired as string[] : []
 
   const props: ScoreWheelProps = {
     score,
@@ -115,28 +116,7 @@ export default async function DashboardPage() {
       updatedAt:     lifestyle.updated_at ?? "",
     } : undefined,
     oralOrdered: !!oralAny,
-    interactions: {
-      sleepInflammation:   snapshot?.ix_sleep_inflammation ?? false,
-      spo2Lipid:           snapshot?.ix_spo2_lipid ?? false,
-      dualInflammatory:    snapshot?.ix_dual_inflammatory ?? false,
-      hrvHomocysteine:     snapshot?.ix_hrv_homocysteine ?? false,
-      periodontCRP:        snapshot?.ix_periodont_crp ?? false,
-      osaTaxaSpO2:         snapshot?.ix_osa_taxa_spo2 ?? false,
-      lowNitrateCRP:       snapshot?.ix_low_nitrate_crp ?? false,
-      lowDiversitySleep:   snapshot?.ix_low_diversity_sleep ?? false,
-      poorSleepOralQ:      false,
-      poorExerciseSmoking: false,
-      ...(() => {
-        const fired = new Set(Array.isArray(snapshot?.interactions_fired) ? snapshot.interactions_fired as string[] : [])
-        return {
-          familyCVDApoB:    fired.has("familyCVDApoB"),
-          highStressCRP:    fired.has("highStressCRP"),
-          poorNutritionTrig: fired.has("poorNutritionTrig"),
-          highHRPoorSleep:  fired.has("highHRPoorSleep"),
-          alcoholPoorSleep: fired.has("alcoholPoorSleep"),
-        }
-      })(),
-    },
+    interactionsFired,
     peaqPercent:      (snapshot?.peaq_percent      as number | null) ?? undefined,
     peaqPercentLabel: (snapshot?.peaq_percent_label as string | null) ?? undefined,
     lpaFlag:          (snapshot?.lpa_flag          as "elevated" | "very_elevated" | null) ?? null,

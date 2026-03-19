@@ -24,7 +24,7 @@ export function LabsSettingsClient({ existingDate }: Props) {
             Blood panel
           </h1>
           <p className="font-body text-sm mt-2" style={{ color: "var(--ink-60)" }}>
-            Upload your most recent results to unlock 28 points and cross-panel insights.
+            Upload your most recent results to unlock 33 points and cross-panel insights.
           </p>
           {existingDate && (
             <p
