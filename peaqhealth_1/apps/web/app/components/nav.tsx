@@ -4,12 +4,11 @@ import { usePathname } from "next/navigation";
 import { LogoSvg } from "./logo-svg";
 
 interface NavProps {
-  initials?: string;
   cartCount?: number;
   onCartOpen?: () => void;
 }
 
-export function Nav({ initials = "?", cartCount = 0, onCartOpen }: NavProps) {
+export function Nav({ cartCount = 0, onCartOpen }: NavProps) {
   const pathname = usePathname();
   const links = [
     { href: "/dashboard", label: "Dashboard" },
@@ -69,10 +68,6 @@ export function Nav({ initials = "?", cartCount = 0, onCartOpen }: NavProps) {
               )}
             </button>
           )}
-          <div className="flex h-8 w-8 items-center justify-center rounded-full font-body text-xs font-medium"
-               style={{ background: "var(--warm-100)", color: "var(--ink)" }}>
-            {initials}
-          </div>
         </div>
       </div>
     </nav>

@@ -120,6 +120,7 @@ export default async function DashboardPage() {
       updatedAt:       (lifestyle.updated_at        as string) ?? "",
     } : undefined,
     oralOrdered: !!oralAny,
+    oralKitStatus: (!oralAny ? "none" : !oral ? "ordered" : "complete") as "none" | "ordered" | "complete",
     sleepNightsAvailable: (wearable?.nights_available as number | null) ?? 0,
     interactionsFired,
     peaqPercent:      (snapshot?.peaq_percent      as number | null) ?? undefined,
