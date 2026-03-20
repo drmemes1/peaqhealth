@@ -17,9 +17,10 @@ export async function POST(request: NextRequest) {
   let provider: string
   let junctionUserId: string
   try {
-    const body = await request.json() as { provider?: string; junctionUserId?: string }
-    provider = body.provider ?? ""
-    junctionUserId = body.junctionUserId ?? ""
+    const body = await request.json() as Record<string, unknown>
+    console.log("[wearable] full body:", JSON.stringify(body))
+    provider = (body.provider as string) ?? ""
+    junctionUserId = (body.junctionUserId as string) ?? ""
   } catch {
     console.error("[wearable] failed to parse request body")
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
