@@ -464,24 +464,7 @@ export function ScoreWheel({
         fadeUpFn={fadeUp}
       >
         <div style={{ borderTop: "0.5px solid var(--ink-12)" }}>
-          {sleepConnected && sleepNightsAvailable !== undefined && sleepNightsAvailable < 7 && (
-            <div style={{
-              margin: "12px 0",
-              padding: "12px 14px",
-              background: "rgba(184,134,11,0.04)",
-              borderLeft: "3px solid #B8860B",
-              borderRadius: "0 4px 4px 0",
-            }}>
-              <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink)", margin: "0 0 4px", fontWeight: 500 }}>
-                ⏱ Building your sleep baseline
-              </p>
-              <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink-60)", margin: 0, lineHeight: 1.5 }}>
-                We have{" "}
-                <span style={{ color: "#B8860B", fontWeight: 500 }}>{sleepNightsAvailable} night{sleepNightsAvailable !== 1 ? "s" : ""}</span>
-                {" "}of data so far. Sleep scoring activates after 7 nights. Check back soon.
-              </p>
-            </div>
-          )}
+
           {sleepData && (
             <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "var(--ink-30)", padding: "8px 0 0", margin: 0 }}>
               Via {sleepData.device} · Last sync {sleepData.lastSync ? new Date(sleepData.lastSync).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}
@@ -552,14 +535,7 @@ export function ScoreWheel({
             </span>
           </div>
         )}
-        {lpaFlag && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", marginBottom: 8, borderRadius: 4, background: "rgba(245,158,11,0.08)", border: "0.5px solid rgba(245,158,11,0.3)" }}>
-            <span style={{ color: "#d97706" }}>⚑</span>
-            <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "#92400e" }}>
-              Lp(a) {lpaFlag === "very_elevated" ? "very elevated (>50 mg/dL)" : "elevated (30–50 mg/dL)"}. Genetic cardiovascular risk factor — discuss with your physician.
-            </span>
-          </div>
-        )}
+
         {bloodData?.bloodInsight && (
           <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", fontSize: 16, color: "rgba(20,20,16,0.7)", lineHeight: 1.55, margin: "0 0 14px", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
             {bloodData.bloodInsight}
