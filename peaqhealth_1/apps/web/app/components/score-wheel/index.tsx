@@ -81,6 +81,7 @@ export interface ScoreWheelProps {
   labLockExpiresAt?:      string | null  // ISO — null/undefined means locked or no labs
   oralOrdered?:           boolean        // true if any kit order exists (incl. processing)
   sleepNightsAvailable?:  number         // nights of wearable data available (<7 = building baseline)
+  oralKitStatus?:         "none" | "ordered" | "complete"  // derived from oral_kit_orders
 }
 
 function relTimeSince(iso: string): string {
@@ -164,6 +165,195 @@ function StatusDots({ flags }: { flags: Flag[] }) {
   )
 }
 
+const INSIGHT_COPY: Record<string, { title: string; body: string; panels: string[] }> = {
+  sleepInflammation:      { title: "Sleep × Inflammation", body: "Poor sleep elevates CRP. Elevated CRP fragments sleep. The cycle is self-reinforcing.", panels: ["Sleep", "Blood"] },
+  spo2Lipid:              { title: "SpO2 × Lipids", body: "Nocturnal hypoxia activates the sympathetic nervous system and promotes LDL oxidation.", panels: ["Sleep", "Blood"] },
+  dualInflammatory:       { title: "Dual Inflammatory", body: "Concurrent hsCRP and ESR elevation indicates systemic, multi-pathway inflammation.", panels: ["Blood"] },
+  hrvHomocysteine:        { title: "HRV × Homocysteine", body: "Autonomic dysfunction compounded by endothelial injury — a high-risk cardiovascular phenotype.", panels: ["Sleep", "Blood"] },
+  periodontCRP:           { title: "Periodontal × CRP", body: "Periodontal pathogen burden directly elevates systemic CRP via bacteraemia.", panels: ["Oral", "Blood"] },
+  osaTaxaSpO2:            { title: "OSA Taxa × SpO2", body: "The microbiome flags OSA risk; the wearable detects its physiological consequence.", panels: ["Oral", "Sleep"] },
+  lowNitrateCRP:          { title: "Low Nitrate × CRP", body: "Depleted oral NO pathway plus elevated inflammation — dual hit on vascular health.", panels: ["Oral", "Blood"] },
+  lowDiversitySleep:      { title: "Low Diversity × Sleep", body: "The bidirectional relationship between oral microbiome diversity and sleep quality.", panels: ["Oral", "Sleep"] },
+  poorSleepOralQ:         { title: "Poor Sleep × Oral Hygiene", body: "Poor sleep efficiency combined with suboptimal oral care creates compounding systemic risk.", panels: ["Sleep", "Oral"] },
+  poorExerciseSmoking:    { title: "Sedentary × Smoking", body: "Sedentary lifestyle and current smoking are the two most modifiable cardiovascular risk factors.", panels: ["Lifestyle"] },
+  hsCRPLDL:               { title: "hsCRP × LDL", body: "The 2025 ACC guidelines identify hsCRP >2.0 + LDL >130 as requiring clinical attention regardless of either value alone.", panels: ["Blood"] },
+  lowActivityInflammation: { title: "Low Activity × Inflammation", body: "Low physical activity compounds elevated hsCRP — a primary driver of chronic low-grade inflammation.", panels: ["Lifestyle", "Blood"] },
+  familyCVDApoB:          { title: "Family CVD × ApoB", body: "Family history of CVD makes ApoB monitoring especially important as a primary prevention target.", panels: ["Blood", "Lifestyle"] },
+  highStressCRP:          { title: "High Stress × CRP", body: "Elevated cortisol from chronic stress directly increases hsCRP and inflammatory burden.", panels: ["Lifestyle", "Blood"] },
+  poorNutritionTrig:      { title: "Nutrition × Triglycerides", body: "Frequent processed food consumption is a primary driver of elevated triglycerides.", panels: ["Lifestyle", "Blood"] },
+  highHRPoorSleep:        { title: "Resting HR × Sleep", body: "High resting heart rate paired with poor sleep reflects inadequate cardiovascular recovery.", panels: ["Lifestyle", "Sleep"] },
+  alcoholPoorSleep:       { title: "Alcohol × Sleep", body: "Alcohol intake above 14 drinks/week directly fragments sleep architecture.", panels: ["Lifestyle", "Sleep"] },
+}
+
+function CrossPanelInteractions({
+  oralKitStatus = "none",
+  interactionsFired = [],
+  fadeUpFn,
+}: {
+  oralKitStatus?: "none" | "ordered" | "complete"
+  interactionsFired?: string[]
+  fadeUpFn: (d: string) => React.CSSProperties
+}) {
+  const [open, setOpen] = useState(true)
+  const [showAll, setShowAll] = useState(false)
+  const [hoverToggle, setHoverToggle] = useState(false)
+
+  const fired = interactionsFired.filter(k => INSIGHT_COPY[k])
+  const hasFired = fired.length > 0
+  const state = oralKitStatus === "none" ? "A" : oralKitStatus === "ordered" ? "B" : hasFired ? "D" : "C"
+
+  const collapsedSummary =
+    state === "A" ? "🔒 Unlock with oral kit  →  Order now" :
+    state === "B" ? "⏳ Kit processing — insights unlocking soon" :
+    state === "C" ? "✓ No patterns detected" :
+    `⚡ ${fired.length} pattern${fired.length !== 1 ? "s" : ""} detected — ${INSIGHT_COPY[fired[0]]?.title}`
+
+  return (
+    <div style={fadeUpFn("0.10s")}>
+      <style>{`@keyframes cpPulse{0%,100%{opacity:1}50%{opacity:0.35}}`}</style>
+      <div style={{
+        background: "rgba(184,134,11,0.06)",
+        border: "0.5px solid rgba(184,134,11,0.3)",
+        borderRadius: 8,
+        padding: open ? "20px 24px" : "14px 20px",
+        marginBottom: 24,
+        transition: "padding 0.2s ease",
+      }}>
+        {/* Header */}
+        <div
+          onClick={() => setOpen(o => !o)}
+          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", marginBottom: open ? 16 : 0 }}
+        >
+          <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, fontVariant: "small-caps", letterSpacing: "0.1em", color: "#B8860B", fontWeight: 600 }}>
+            Cross-Panel Interactions
+          </span>
+          {!open && (
+            <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "#B8860B", flex: 1, marginLeft: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {collapsedSummary}
+            </span>
+          )}
+          <div
+            onMouseEnter={() => setHoverToggle(true)}
+            onMouseLeave={() => setHoverToggle(false)}
+            style={{
+              width: 20, height: 20, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+              border: `0.5px solid ${hoverToggle ? "#B8860B" : "rgba(184,134,11,0.4)"}`,
+              color: hoverToggle ? "#B8860B" : "rgba(184,134,11,0.6)",
+              fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 16, lineHeight: 1,
+              transition: "border-color 0.2s ease, color 0.2s ease", flexShrink: 0, marginLeft: 8,
+            }}
+          >
+            {open ? "−" : "+"}
+          </div>
+        </div>
+
+        {/* Body — animated open/close */}
+        <div style={{ maxHeight: open ? 2000 : 0, opacity: open ? 1 : 0, overflow: "hidden", transition: "max-height 0.3s ease, opacity 0.3s ease" }}>
+
+          {/* STATE A — no kit ordered */}
+          {state === "A" && (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1 }}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+                  <rect x="3" y="7" width="10" height="8" rx="1.5" stroke="#B8860B" strokeWidth="1.2"/>
+                  <path d="M5.5 7V5a2.5 2.5 0 015 0v2" stroke="#B8860B" strokeWidth="1.2" strokeLinecap="round"/>
+                </svg>
+                <div>
+                  <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", fontSize: 18, color: "#141410", margin: "0 0 4px", lineHeight: 1.3 }}>
+                    Your cross-panel intelligence is waiting.
+                  </p>
+                  <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "rgba(20,20,16,0.5)", margin: 0, lineHeight: 1.5 }}>
+                    The oral microbiome is the missing piece. Spit, send, and wait for your full Peaqture.
+                  </p>
+                </div>
+              </div>
+              <a
+                href="/shop"
+                style={{
+                  fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, fontVariant: "small-caps", letterSpacing: "0.06em",
+                  border: "1px solid #B8860B", color: "#B8860B", background: "transparent",
+                  padding: "8px 16px", borderRadius: 4, textDecoration: "none", whiteSpace: "nowrap", display: "inline-block",
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = "#B8860B"; (e.currentTarget as HTMLAnchorElement).style.color = "#FAFAF8" }}
+                onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = "transparent"; (e.currentTarget as HTMLAnchorElement).style.color = "#B8860B" }}
+              >
+                Order oral kit
+              </a>
+            </div>
+          )}
+
+          {/* STATE B — kit ordered, awaiting results */}
+          {state === "B" && (
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#B8860B", flexShrink: 0, animation: "cpPulse 2s infinite", display: "inline-block" }} />
+              <div>
+                <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", fontSize: 18, color: "#141410", margin: "0 0 4px", lineHeight: 1.3 }}>
+                  Your sample is on its way.
+                </p>
+                <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "rgba(20,20,16,0.5)", margin: 0, lineHeight: 1.5 }}>
+                  Results arrive in 10–14 days. Cross-panel insights unlock then.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* STATE C — oral complete, nothing fired */}
+          {state === "C" && (
+            <div>
+              <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", fontSize: 18, color: "rgba(20,20,16,0.45)", margin: "0 0 6px", lineHeight: 1.3 }}>
+                No patterns detected — your panels look balanced.
+              </p>
+              <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "rgba(20,20,16,0.4)", margin: 0, lineHeight: 1.5 }}>
+                We continuously monitor your data for cross-panel signals. Check back as your data updates.
+              </p>
+            </div>
+          )}
+
+          {/* STATE D — interactions fired */}
+          {state === "D" && (
+            <div>
+              <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", color: "#B8860B", margin: "0 0 10px" }}>
+                Patterns detected:
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {fired.slice(0, showAll ? undefined : 3).map(key => {
+                  const insight = INSIGHT_COPY[key]!
+                  return (
+                    <div key={key} style={{ background: "rgba(184,134,11,0.04)", borderLeft: "3px solid #B8860B", borderRadius: "0 4px 4px 0", padding: "12px 14px" }}>
+                      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 4, gap: 8 }}>
+                        <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, fontWeight: 600, color: "#B8860B" }}>
+                          ⚡ {insight.title}
+                        </span>
+                        <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                          {insight.panels.map(p => (
+                            <span key={p} style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, fontVariant: "small-caps", letterSpacing: "0.05em", color: "#B8860B" }}>{p}</span>
+                          ))}
+                        </div>
+                      </div>
+                      <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "rgba(20,20,16,0.6)", margin: 0, lineHeight: 1.5 }}>
+                        {insight.body}
+                      </p>
+                    </div>
+                  )
+                })}
+              </div>
+              {!showAll && fired.length > 3 && (
+                <button
+                  onClick={e => { e.stopPropagation(); setShowAll(true) }}
+                  style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "#B8860B", background: "none", border: "none", cursor: "pointer", marginTop: 10, padding: 0 }}
+                >
+                  View all {fired.length} patterns →
+                </button>
+              )}
+            </div>
+          )}
+
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function CollapsiblePanel({
   title, score, maxScore, subtitle, statusDots, defaultOpen, delay, fadeUpFn, headerExtra, children,
 }: {
@@ -226,7 +416,7 @@ export function ScoreWheel({
   sleepData, bloodData, oralData, lifestyleData, interactionsFired,
   lastSyncAt, lastSyncRequestedAt,
   peaqPercent, peaqPercentLabel, lpaFlag, hsCRPRetestFlag, additionalMarkers,
-  labLockExpiresAt, oralOrdered, sleepNightsAvailable,
+  labLockExpiresAt, oralOrdered, sleepNightsAvailable, oralKitStatus,
 }: ScoreWheelProps) {
   const [mounted, setMounted] = useState(false)
   const [hoveredRing, setHoveredRing] = useState<string | null>(null)
@@ -403,51 +593,12 @@ export function ScoreWheel({
         />
       </div>
 
-      {/* INTERACTION INSIGHTS */}
-      {interactionsFired && interactionsFired.length > 0 && (
-        <div style={fadeUp("0.10s")}>
-          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12 }}>
-            <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 22, fontWeight: 300, color: "var(--ink)", margin: 0 }}>Patterns detected</h3>
-            <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-30)" }}>Cross-panel signals</span>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {interactionsFired.map(key => {
-              const INSIGHT_COPY: Record<string, { title: string; body: string; panels: string[] }> = {
-                sleepInflammation:   { title: "Sleep × Inflammation", body: "Poor sleep elevates CRP. Elevated CRP fragments sleep. The cycle is self-reinforcing.", panels: ["Sleep", "Blood"] },
-                spo2Lipid:           { title: "SpO2 × Lipids", body: "Nocturnal hypoxia activates the sympathetic nervous system and promotes LDL oxidation.", panels: ["Sleep", "Blood"] },
-                dualInflammatory:    { title: "Dual Inflammatory", body: "Concurrent hsCRP and ESR elevation indicates systemic, multi-pathway inflammation.", panels: ["Blood"] },
-                hrvHomocysteine:     { title: "HRV × Homocysteine", body: "Autonomic dysfunction compounded by endothelial injury — a high-risk cardiovascular phenotype.", panels: ["Sleep", "Blood"] },
-                periodontCRP:        { title: "Periodontal × CRP", body: "Periodontal pathogen burden directly elevates systemic CRP via bacteraemia.", panels: ["Oral", "Blood"] },
-                osaTaxaSpO2:         { title: "OSA Taxa × SpO2", body: "The microbiome flags OSA risk; the wearable detects its physiological consequence.", panels: ["Oral", "Sleep"] },
-                lowNitrateCRP:       { title: "Low Nitrate × CRP", body: "Depleted oral NO pathway plus elevated inflammation — dual hit on vascular health.", panels: ["Oral", "Blood"] },
-                lowDiversitySleep:   { title: "Low Diversity × Sleep", body: "The bidirectional relationship between oral microbiome diversity and sleep quality.", panels: ["Oral", "Sleep"] },
-                poorSleepOralQ:      { title: "Poor Sleep × Oral Hygiene", body: "Poor sleep efficiency combined with suboptimal oral care creates compounding systemic risk.", panels: ["Sleep", "Oral"] },
-                poorExerciseSmoking: { title: "Sedentary × Smoking", body: "Sedentary lifestyle and current smoking are the two most modifiable cardiovascular risk factors.", panels: ["Lifestyle"] },
-                familyCVDApoB:       { title: "Family CVD × ApoB", body: "Family history of CVD makes ApoB monitoring especially important as a primary prevention target.", panels: ["Blood", "Lifestyle"] },
-                highStressCRP:       { title: "High Stress × CRP", body: "Elevated cortisol from chronic stress directly increases hsCRP and inflammatory burden.", panels: ["Lifestyle", "Blood"] },
-                poorNutritionTrig:   { title: "Nutrition × Triglycerides", body: "Frequent processed food consumption is a primary driver of elevated triglycerides.", panels: ["Lifestyle", "Blood"] },
-                highHRPoorSleep:     { title: "Resting HR × Sleep", body: "High resting heart rate paired with poor sleep reflects inadequate cardiovascular recovery.", panels: ["Lifestyle", "Sleep"] },
-                alcoholPoorSleep:    { title: "Alcohol × Sleep", body: "Alcohol intake above 14 drinks/week directly fragments sleep architecture.", panels: ["Lifestyle", "Sleep"] },
-              }
-              const insight = INSIGHT_COPY[key]
-              if (!insight) return null
-              return (
-                <div key={key} style={{ background: "white", border: "0.5px solid var(--ink-12)", borderLeft: "2px solid var(--gold)", borderRadius: 4, padding: "12px 16px" }}>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 4 }}>
-                    <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, fontWeight: 600, color: "var(--gold)" }}>{insight.title}</span>
-                    <div style={{ display: "flex", gap: 4 }}>
-                      {insight.panels.map(p => (
-                        <span key={p} style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "2px 6px", borderRadius: 2, background: "var(--warm-100)", color: "var(--ink-60)" }}>{p}</span>
-                      ))}
-                    </div>
-                  </div>
-                  <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "var(--ink-60)", margin: 0 }}>{insight.body}</p>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
+      {/* CROSS-PANEL INTERACTIONS */}
+      <CrossPanelInteractions
+        oralKitStatus={oralKitStatus}
+        interactionsFired={interactionsFired}
+        fadeUpFn={fadeUp}
+      />
 
       {/* CTA BLOCKS */}
       <CTABlocks sleepConnected={sleepConnected} labFreshness={labFreshness} oralActive={oralActive} />
