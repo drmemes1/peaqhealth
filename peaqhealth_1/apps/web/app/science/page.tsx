@@ -32,6 +32,7 @@ const citations: Record<number, { authors: string; title: string; journal: strin
   22: { authors: "Irwin MR, et al.", title: "Sleep disturbance, sleep duration, and inflammation: a systematic review", journal: "Biological Psychiatry", year: "2016" },
   23: { authors: "Savransky V, et al.", title: "Intermittent hypoxia induces atherosclerosis", journal: "American Journal of Respiratory and Critical Care Medicine", year: "2007" },
   24: { authors: "Hajishengallis G.", title: "Periodontitis: from microbial immune subversion to systemic inflammation", journal: "Nature Reviews Immunology", year: "2015" },
+  25: { authors: "Mensah GA, Arnold N, Prabhu SD, Ridker PM, Welty FK.", title: "Inflammation and Cardiovascular Disease: 2025 ACC Scientific Statement", journal: "J Am Coll Cardiol", year: "2025" },
 };
 
 /* ───────────────────────── helpers ──────────────────────────── */
@@ -595,9 +596,22 @@ export default function SciencePage() {
           title="hsCRP"
           target="<0.5 mg/L"
           color="var(--blood-c)"
-          body={<>High-sensitivity C-reactive protein is the benchmark inflammatory marker. Values above 3.0 mg/L confer 2&times; the cardiovascular risk of values below 1.0 mg/L, independent of LDL cholesterol.<Cite n={6} /></>}
-          evidence="Ridker et al., NEJM 2008 — Jupiter Trial. n=17,802."
+          body={<>High-sensitivity C-reactive protein is the benchmark inflammatory marker. Values above 3.0 mg/L confer 2&times; the cardiovascular risk of values below 1.0 mg/L, independent of LDL cholesterol.<Cite n={6} /> The 2025 ACC Scientific Statement now identifies hsCRP &gt;2.0 mg/L as an independent action threshold — requiring clinical attention regardless of LDL level.<Cite n={25} /></>}
+          evidence="Ridker et al., NEJM 2008 — Jupiter Trial. n=17,802. Updated per Mensah et al., JACC 2025."
         />
+        <FadeUp>
+          <div style={{ background: "rgba(180,60,60,0.04)", borderLeft: "3px solid var(--blood-c)", borderRadius: "0 4px 4px 0", padding: "14px 18px", margin: "0 0 24px" }}>
+            <p style={{ fontFamily: "var(--font-body)", fontSize: 13, fontWeight: 600, color: "var(--ink)", margin: "0 0 6px" }}>
+              2025 ACC Scientific Statement on Inflammation &amp; CVD
+            </p>
+            <p style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink-60)", margin: "0 0 8px", lineHeight: 1.6, fontStyle: "italic" }}>
+              &ldquo;hsCRP is at least as predictive of cardiovascular events as LDL cholesterol, even in patients on statin therapy. An hsCRP above 2.0 mg/L is now an independent action threshold.&rdquo;
+            </p>
+            <p style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", margin: 0 }}>
+              Mensah GA, Arnold N, Prabhu SD, Ridker PM, Welty FK. J Am Coll Cardiol. 2025. DOI: 10.1016/j.jacc.2025.08.047
+            </p>
+          </div>
+        </FadeUp>
         <Marker
           num={7}
           title="ApoB"
@@ -826,6 +840,8 @@ export default function SciencePage() {
           { id: "I6", title: "OSA taxa \u00D7 SpO2", penalty: "up to 3 pts", trigger: "OSA taxa >2% AND SpO2 dips >3/night", cite: 18, desc: "Convergent signal: the microbiome flags OSA risk, the wearable detects its physiological consequence." },
           { id: "I7", title: "Low nitrate \u00D7 CRP", penalty: "up to 2 pts", trigger: "Nitrate-reducers <3% AND hsCRP >1.0 mg/L", cite: null, desc: "Depleted oral NO pathway + elevated inflammation = dual hit on vascular health." },
           { id: "I8", title: "Low diversity \u00D7 Sleep", penalty: "up to 2 pts", trigger: "Shannon diversity <2.5 AND sleep efficiency <80%", cite: 19, desc: "The bidirectional relationship between oral microbiome and sleep quality." },
+          { id: "I9", title: "hsCRP \u00D7 LDL", penalty: "up to 1.5 pts", trigger: "hsCRP >2.0 mg/L AND LDL >130 mg/dL", cite: 25, desc: "The 2025 ACC guidelines identify this combination as requiring clinical attention regardless of either value alone. Elevated LDL and elevated hsCRP compound atherosclerotic risk through distinct but synergistic pathways." },
+          { id: "I10", title: "Low activity \u00D7 Inflammation", penalty: "up to 1.5 pts", trigger: "Sedentary/light activity AND hsCRP >2.0 mg/L", cite: 25, desc: "Low physical activity is a primary driver of chronic low-grade inflammation. When hsCRP is already elevated, inactivity compounds the cardiovascular risk." },
         ].map((ix) => (
           <FadeUp key={ix.id}>
             <div
