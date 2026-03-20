@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Logo } from "../../components/logo";
+import { LogoSvg } from "../../components/logo-svg";
 import Link from "next/link";
 
 interface QuestionDef {
@@ -353,7 +353,7 @@ export function LifestyleForm({ existing }: Props) {
       {/* Nav */}
       <nav className="sticky top-0 z-50 border-b border-ink/8 bg-off-white/95 backdrop-blur-sm">
         <div className="mx-auto flex h-14 max-w-[680px] items-center justify-between px-6">
-          <Logo height={22} />
+          <LogoSvg size={22} />
           <Link
             href="/dashboard"
             className="font-body text-xs uppercase tracking-widest text-ink/40 hover:text-ink transition-colors"
