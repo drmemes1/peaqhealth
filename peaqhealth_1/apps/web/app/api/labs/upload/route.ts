@@ -23,7 +23,7 @@ interface FileResult {
 
 // ─── Azure text extraction ───────────────────────────────────────────────────
 
-async function extractTextWithAzure(buffer: Buffer, model = "prebuilt-layout"): Promise<string | null> {
+async function extractTextWithAzure(buffer: Buffer, model = "prebuilt-read"): Promise<string | null> {
   const endpoint = process.env.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT
   const apiKey = process.env.AZURE_DOCUMENT_INTELLIGENCE_KEY
   if (!endpoint || !apiKey) return null
@@ -57,17 +57,24 @@ async function extractTextWithAzure(buffer: Buffer, model = "prebuilt-layout"): 
       const data = await pollRes.json() as Record<string, unknown>
       if (data.status === "succeeded") {
         const result = data.analyzeResult as Record<string, unknown> | undefined
-        console.log("[azure-di-pages]", (result?.pages as unknown[] | undefined)?.length)
-        console.log("[azure-di-total-content-length]", typeof result?.content === "string" ? (result.content as string).length : undefined)
+        console.log("[azure-di-model]", result?.modelId)
+        console.log("[azure-di-page-count]", (result?.pages as unknown[] | undefined)?.length)
+        console.log("[azure-di-content-length]", typeof result?.content === "string" ? (result.content as string).length : undefined)
+        console.log("[azure-di-has-glucose]", typeof result?.content === "string" ? (result.content as string).includes("GLUCOSE") : false)
+
+        // Use result.content directly — prebuilt-read returns the full concatenated
+        // text of every page with no page limits, preserving line order.
+        if (typeof result?.content === "string" && result.content.length > 0) {
+          return result.content
+        }
+
+        // Fallback for models that don't populate content (should not happen with prebuilt-read)
         const pages = (result?.pages ?? []) as Array<{ lines?: Array<{ content: string }> }>
         const tables = (result?.tables ?? []) as Array<{ cells?: Array<{ content: string }> }>
-
-        const allContent = [
+        return [
           ...pages.flatMap(p => p.lines ?? []).map(l => l.content),
           ...tables.flatMap(t => t.cells ?? []).map(c => c.content).filter(Boolean),
-        ].join("\n")
-
-        return allContent
+        ].join("\n") || null
       }
 
       if (data.status === "failed") return null
