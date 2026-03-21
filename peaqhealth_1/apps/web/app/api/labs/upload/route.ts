@@ -193,7 +193,7 @@ async function parseWithAzureOpenAI(fullText: string): Promise<Record<string, un
   try {
     const response = await openai.chat.completions.create({
       model: process.env.AZURE_OPENAI_DEPLOYMENT!,
-      max_tokens: 3000,
+      max_tokens: 4096,
       temperature: 0,
       messages: [
         {
@@ -315,6 +315,12 @@ ${fullText}`,
     }, { signal: controller.signal })
 
     const raw = response.choices[0]?.message?.content
+    const finishReason = response.choices[0]?.finish_reason
+    console.log("[azure-openai] finish_reason:", finishReason)
+    console.log("[azure-openai] response length:", raw?.length)
+    if (finishReason === "length") {
+      console.warn("[azure-openai] TRUNCATED — increase max_tokens")
+    }
     if (!raw) return null
 
     console.log("[azure-gpt4o-raw]", raw.slice(0, 400))
