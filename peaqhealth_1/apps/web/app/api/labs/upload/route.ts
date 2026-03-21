@@ -226,32 +226,14 @@ function normalizeLabText(text: string): string {
 
 async function extractTextDirect(buffer: Buffer): Promise<string> {
   try {
-    const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs")
-    pdfjsLib.GlobalWorkerOptions.workerSrc = ""
-
-    const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(buffer) })
-    const pdf = await loadingTask.promise
-
-    console.log("[pdfjs-pages]", pdf.numPages)
-
-    const pages: string[] = []
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i)
-      const content = await page.getTextContent()
-      const pageText = content.items
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .map((item: any) => ("str" in item ? item.str : ""))
-        .join(" ")
-      pages.push(pageText)
-    }
-
-    const fullText = pages.join("\n")
-    console.log("[pdfjs-chars]", fullText.length)
-    console.log("[pdfjs-has-glucose]", fullText.includes("GLUCOSE"))
-
-    if (fullText.length > 3000) return fullText
+    const { extractText } = await import("unpdf")
+    const { text, totalPages } = await extractText(new Uint8Array(buffer), { mergePages: true })
+    console.log("[unpdf-pages]", totalPages)
+    console.log("[unpdf-chars]", text?.length)
+    console.log("[unpdf-has-glucose]", text?.includes("GLUCOSE"))
+    if (text && text.length > 3000) return text
   } catch (e) {
-    console.log("[pdfjs-failed]", String(e))
+    console.log("[unpdf-failed]", String(e))
   }
   return ""
 }
