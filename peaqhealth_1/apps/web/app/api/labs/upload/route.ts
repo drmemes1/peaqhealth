@@ -312,7 +312,8 @@ ${fullText}`,
     const response = await openai.chat.completions.create({
       model: process.env.AZURE_OPENAI_DEPLOYMENT!,
       max_tokens: 4096,
-      temperature: 0,
+      temperature: 0.1,
+      user: `parse-${Date.now()}`,
       messages,
     }, { signal: controller.signal })
 
@@ -409,11 +410,20 @@ async function processFile(file: FileInput, index: number): Promise<FileResult> 
   if (fullText) {
     console.log("[parser] total extracted text:", fullText.length, "chars")
 
-    // Normalize multi-line lab format: "TEST NAME 1\n88\n70-130" → "TEST NAME: 88"
+    // Normalize multi-line lab format before sending to GPT-4o
     const normalizedText = fullText
-      .replace(/^(.+?) \d+\n([\d.<>]+)\n([\d.]+-[\d.]+.*)/gm, "$1: $2")
+      // Collapse "TEST NAME 1\n100\n70-130 mg/dL" → "TEST NAME: 100 mg/dL"
+      .replace(/^([A-Z][A-Z0-9 ,.()/]+?) ?(?:\d+)?\n([<>]?[\d.]+)\n([\d.<> ]+[-–][\d.<> ]+[^\n]*)/gm, "$1: $2 $3")
+      // Collapse "TEST NAME\n100\n70-130" without trailing unit line
+      .replace(/^([A-Z][A-Z0-9 ,.()/]+?) ?(?:\d+)?\n([<>]?[\d.]+)$/gm, "$1: $2")
+      // Remove vendor note blocks entirely
+      .replace(/^Vendor note:.*$/gm, "")
+      .replace(/^Observations\s*Result\s*Reference.*$/gm, "")
+      // Collapse excessive blank lines
       .replace(/\n{3,}/g, "\n\n")
+      .trim()
     console.log("[normalized-sample]", normalizedText.substring(2000, 3000))
+    console.log("[normalized-glucose-area]", normalizedText.substring(normalizedText.indexOf("GLUCOSE") - 20, normalizedText.indexOf("GLUCOSE") + 60))
 
     // Split into 12,000-char chunks so long reports don't get truncated
     const CHUNK_SIZE = 12000
