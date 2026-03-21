@@ -23,13 +23,13 @@ interface FileResult {
 
 // ─── Azure text extraction ───────────────────────────────────────────────────
 
-async function extractTextWithAzure(buffer: Buffer): Promise<string | null> {
+async function extractTextWithAzure(buffer: Buffer, model = "prebuilt-layout"): Promise<string | null> {
   const endpoint = process.env.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT
   const apiKey = process.env.AZURE_DOCUMENT_INTELLIGENCE_KEY
   if (!endpoint || !apiKey) return null
 
   try {
-    const analyzeUrl = `${endpoint}documentintelligence/documentModels/prebuilt-layout:analyze?api-version=2024-11-30`
+    const analyzeUrl = `${endpoint}documentintelligence/documentModels/${model}:analyze?api-version=2024-11-30`
 
     const submitRes = await fetch(analyzeUrl, {
       method: "POST",
@@ -193,14 +193,15 @@ async function parseWithAzureOpenAI(fullText: string): Promise<Record<string, un
   try {
     const response = await openai.chat.completions.create({
       model: process.env.AZURE_OPENAI_DEPLOYMENT!,
-      max_tokens: 2000,
+      max_tokens: 3000,
       temperature: 0,
       messages: [
         {
           role: "system",
           content: `You are a medical lab report parser.
-Extract ALL test results and return ONLY valid JSON.
-No markdown, no backticks, no explanation.`,
+Extract EVERY lab value present in the text. If a marker appears with a different name or abbreviation, map it to the closest matching field.
+Return null for fields not found — never omit fields from the response.
+Return ONLY valid JSON. No markdown, no backticks, no explanation.`,
         },
         {
           role: "user",
@@ -242,55 +243,70 @@ UNIVERSAL RULES:
 - collectionDate in YYYY-MM-DD format
 - labName: "LabCorp" or "Quest Diagnostics"
 
-Return JSON with these exact keys where found:
+Return JSON with EVERY field below — use null for fields not found, never omit:
 {
-  "ldl_mgdL": number,
-  "hdl_mgdL": number,
-  "triglycerides_mgdL": number,
-  "hsCRP_mgL": number,
-  "hba1c_pct": number,
-  "glucose_mgdL": number,
-  "vitaminD_ngmL": number,
-  "apoB_mgdL": number,
-  "lpa_mgdL": number,
-  "creatinine_mgdL": number,
-  "egfr_mLmin": number,
-  "alt_UL": number,
-  "ast_UL": number,
-  "wbc_kul": number,
-  "hemoglobin_gdL": number,
-  "rdw_pct": number,
-  "mcv_fL": number,
-  "albumin_gdL": number,
-  "bun_mgdL": number,
-  "alkPhos_UL": number,
-  "totalBilirubin_mgdL": number,
-  "sodium_mmolL": number,
-  "potassium_mmolL": number,
-  "totalCholesterol_mgdL": number,
-  "nonHDL_mgdL": number,
-  "testosterone_ngdL": number,
-  "freeTesto_pgmL": number,
-  "shbg_nmolL": number,
-  "vldl_mgdL": number,
-  "uricAcid_mgdL": number,
-  "ferritin_ngmL": number,
-  "tsh_uIUmL": number,
-  "hematocrit_pct": number,
-  "platelets_kul": number,
-  "rbc_mil": number,
-  "mch_pg": number,
-  "mchc_gdl": number,
-  "neutrophils_pct": number,
-  "lymphs_pct": number,
-  "globulin_gdL": number,
-  "totalProtein_gdL": number,
-  "calcium_mgdL": number,
-  "chloride_mmolL": number,
-  "co2_mmolL": number,
+  "ldl_mgdL": "LDL Cholesterol in mg/dL",
+  "hdl_mgdL": "HDL Cholesterol in mg/dL",
+  "triglycerides_mgdL": "Triglycerides in mg/dL",
+  "totalCholesterol_mgdL": "Total Cholesterol in mg/dL",
+  "nonHDL_mgdL": "Non-HDL Cholesterol in mg/dL",
+  "vldl_mgdL": "VLDL Cholesterol in mg/dL",
+  "hsCRP_mgL": "hs-CRP or C-Reactive Protein value in mg/L",
+  "hba1c_pct": "HbA1c or Hemoglobin A1c as percentage",
+  "glucose_mgdL": "Glucose or Fasting Glucose in mg/dL",
+  "fastingInsulin_uIUmL": "Insulin Fasting in uIU/mL",
+  "vitaminD_ngmL": "Vitamin D 25-OH or 25-Hydroxyvitamin D in ng/mL",
+  "apoB_mgdL": "ApoB or Apolipoprotein B in mg/dL",
+  "lpa_mgdL": "Lp(a) or Lipoprotein(a) in mg/dL",
+  "homocysteine_umolL": "Homocysteine in umol/L",
+  "uricAcid_mgdL": "Uric Acid in mg/dL",
+  "creatinine_mgdL": "Creatinine in mg/dL",
+  "egfr_mLmin": "eGFR Non-African American in mL/min/1.73m2",
+  "bun_mgdL": "BUN or Blood Urea Nitrogen in mg/dL",
+  "alt_UL": "ALT or Alanine Aminotransferase in U/L",
+  "ast_UL": "AST or Aspartate Aminotransferase in U/L",
+  "alkPhos_UL": "Alk Phos or Alkaline Phosphatase in U/L",
+  "totalBilirubin_mgdL": "Total Bilirubin in mg/dL",
+  "albumin_gdL": "Albumin in g/dL",
+  "globulin_gdL": "Globulin in g/dL",
+  "totalProtein_gdL": "Total Protein in g/dL",
+  "sodium_mmolL": "Sodium in mmol/L or mEq/L",
+  "potassium_mmolL": "Potassium in mmol/L or mEq/L",
+  "calcium_mgdL": "Calcium in mg/dL",
+  "chloride_mmolL": "Chloride in mmol/L or mEq/L",
+  "co2_mmolL": "CO2 or Bicarbonate in mmol/L",
+  "wbc_kul": "WBC or White Blood Cell count in K/uL",
+  "hemoglobin_gdL": "Hemoglobin in g/dL",
+  "hematocrit_pct": "Hematocrit as %",
+  "rdw_pct": "RDW or Red Cell Distribution Width as %",
+  "mcv_fL": "MCV or Mean Corpuscular Volume in fL",
+  "mch_pg": "MCH in pg",
+  "mchc_gdl": "MCHC in g/dL",
+  "platelets_kul": "Platelets in K/uL",
+  "rbc_mil": "RBC in million/uL",
+  "neutrophils_pct": "Neutrophils %",
+  "lymphs_pct": "Lymphocytes %",
+  "ferritin_ngmL": "Ferritin in ng/mL",
+  "testosterone_ngdL": "Testosterone Total in ng/dL",
+  "freeTesto_pgmL": "Testosterone Free in pg/mL",
+  "shbg_nmolL": "SHBG or Sex Hormone Binding Globulin in nmol/L",
+  "tsh_uIUmL": "TSH or Thyroid Stimulating Hormone in uIU/mL",
+  "free_t4_ngdL": "Free T4 or Thyroxine Free in ng/dL",
+  "free_t3_pgmL": "Free T3 or Triiodothyronine Free in pg/mL",
+  "dhea_s_ugdL": "DHEA-S or DHEA Sulfate in ug/dL",
+  "igf1_ngmL": "IGF-1 in ng/mL",
+  "cortisol_ugdL": "Cortisol in ug/dL",
   "collectionDate": "YYYY-MM-DD",
-  "labName": "string"
+  "labName": "LabCorp or Quest Diagnostics"
 }
+
+LabCorp and Quest use these common alternate names:
+- CRP High Sensitivity = hsCRP_mgL
+- Hemoglobin A1c = hba1c_pct
+- 25-Hydroxyvitamin D = vitaminD_ngmL
+- Lipoprotein (a) = lpa_mgdL
+- eGFR Non-African = egfr_mLmin (use this value)
+- Alkaline Phosphatase = alkPhos_UL
 
 LAB REPORT TEXT:
 ${fullText}`,
@@ -358,15 +374,57 @@ async function processFile(file: FileInput, index: number): Promise<FileResult> 
   console.log("[parser] file", index + 1, "starting...")
 
   const buffer = Buffer.from(file.base64, "base64")
-  const fullText = await extractTextWithAzure(buffer)
+  let fullText = await extractTextWithAzure(buffer)
+
+  if (fullText && fullText.length < 3000) {
+    console.warn("[parser] low text yield — possible scanned PDF")
+    const ocrText = await extractTextWithAzure(buffer, "prebuilt-read")
+    if (ocrText && ocrText.length > (fullText?.length ?? 0)) {
+      console.log("[parser] OCR retry improved yield:", ocrText.length)
+      fullText = ocrText
+    }
+    if (!fullText || fullText.length < 1000) {
+      return {
+        filename: file.filename,
+        markers: {},
+        markersFound: 0,
+        parserUsed: "failed",
+        error: "We couldn't extract text from this PDF. If it's a scanned document, try downloading a fresh copy from your LabCorp patient portal (labcorplink.com) — portal PDFs are text-based and parse correctly.",
+      }
+    }
+  }
 
   if (fullText) {
-    console.log("[parser] Azure extracted text length:", fullText.length)
+    console.log("[parser] total extracted text:", fullText.length, "chars")
 
-    // Try Azure OpenAI first
-    const openaiResult = await parseWithAzureOpenAI(fullText)
-    if (openaiResult) {
-      const { markers, labName, collectionDate } = extractFromParsedJson(openaiResult)
+    // Split into 12,000-char chunks so long reports don't get truncated
+    const CHUNK_SIZE = 12000
+    const chunks: string[] = []
+    for (let i = 0; i < fullText.length; i += CHUNK_SIZE) {
+      chunks.push(fullText.slice(i, i + CHUNK_SIZE))
+    }
+    console.log("[parser] text sent to GPT-4o:", Math.min(fullText.length, CHUNK_SIZE * chunks.length), "chars across", chunks.length, "chunk(s)")
+
+    // Call GPT-4o per chunk and merge — later non-null values override earlier nulls
+    let mergedOpenAIResult: Record<string, unknown> | null = null
+    for (let ci = 0; ci < chunks.length; ci++) {
+      const chunkResult = await parseWithAzureOpenAI(chunks[ci])
+      if (!chunkResult) continue
+      if (!mergedOpenAIResult) {
+        mergedOpenAIResult = { ...chunkResult }
+      } else {
+        // Later chunks override nulls; collectionDate and labName from first chunk only
+        for (const [k, v] of Object.entries(chunkResult)) {
+          if (k === "collectionDate" || k === "labName") continue
+          if (v !== null && v !== undefined && mergedOpenAIResult[k] == null) {
+            mergedOpenAIResult[k] = v
+          }
+        }
+      }
+    }
+
+    if (mergedOpenAIResult) {
+      const { markers, labName, collectionDate } = extractFromParsedJson(mergedOpenAIResult)
       if (Object.keys(markers).length > 0) {
         console.log("[parser] used: azure-hybrid — markers:", Object.keys(markers).length)
         return { filename: file.filename, markers, markersFound: Object.keys(markers).length, labName, collectionDate, parserUsed: "azure-hybrid" }
