@@ -105,7 +105,7 @@ export function mapLabRow(row: Record<string, unknown>): BloodInputs | undefined
 
 export function mapOralRow(row: Record<string, unknown>): OralInputs | undefined {
   if (!row.shannon_diversity) return undefined
-  return {
+  const base: OralInputs = {
     shannonDiversity:      row.shannon_diversity       as number,
     nitrateReducersPct:    (row.nitrate_reducers_pct   as number) ?? 0,
     periodontopathogenPct: (row.periodontopathogen_pct as number) ?? 0,
@@ -113,6 +113,15 @@ export function mapOralRow(row: Record<string, unknown>): OralInputs | undefined
     collectionDate:        row.collection_date          as string | undefined,
     reportId:              row.id                       as string | undefined,
   }
+  // Enrich with full OralScore data when available (from oral_score_snapshot)
+  if (row.oral_score_snapshot && typeof row.oral_score_snapshot === 'object') {
+    const snap = row.oral_score_snapshot as Record<string, unknown>
+    if (typeof snap.pGingivalisPct === 'number') base.pGingivalisPct = snap.pGingivalisPct
+    if (typeof snap.osaBurden === 'number') base.osaBurden = snap.osaBurden
+    if (typeof snap.periodontalBurden === 'number') base.periodontalBurden = snap.periodontalBurden
+    if (typeof snap.highOsaRisk === 'boolean') base.highOsaRisk = snap.highOsaRisk
+  }
+  return base
 }
 
 // Aggregate manual sleep entries → SleepInputs
@@ -142,8 +151,8 @@ export async function recalculateScore(
   const [wearableRes, labsRes, oralRes, lifestyleRes, manualSleepRes] = await Promise.all([
     supabase.from("wearable_connections").select("*").eq("user_id", userId).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("lab_results").select("*").eq("user_id", userId).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).single(),
-    supabase.from("oral_kit_orders").select("*").eq("user_id", userId).eq("status", "results_ready").order("ordered_at", { ascending: false }).limit(1).single(),
-    supabase.from("lifestyle_records").select("*").eq("user_id", userId).order("updated_at", { ascending: false }).limit(1).single(),
+    supabase.from("oral_kit_orders").select("*").eq("user_id", userId).in("status", ["results_ready", "scored"]).order("ordered_at", { ascending: false }).limit(1).single(),
+    supabase.from("lifestyle_records").select("*").eq("user_id", userId).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("manual_sleep_entries").select("duration_seconds,quality").eq("user_id", userId).order("date", { ascending: false }).limit(14),
   ])
 
