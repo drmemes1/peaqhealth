@@ -198,50 +198,39 @@ async function parseWithAzureOpenAI(fullText: string): Promise<Record<string, un
       messages: [
         {
           role: "system",
-          content: `You are a medical lab report parser.
-Extract EVERY lab value present in the text. If a marker appears with a different name or abbreviation, map it to the closest matching field.
-Return null for fields not found — never omit fields from the response.
-Return ONLY valid JSON. No markdown, no backticks, no explanation.`,
+          content: `You are a medical lab report parser. Extract EVERY lab value present in the text regardless of lab format, section header, or abbreviation used. Map common synonyms (e.g. "GLYCOHEMOGLOBIN" = hba1c_pct, "GFR ESTIMATION" = egfr_mLmin, "HGB" = hemoglobin_gdL). Return null for fields not found. Return ONLY valid JSON with no markdown, no backticks, no code fences, no explanation. Start your response with { and end with }.`,
         },
         {
           role: "user",
           content: `Parse this lab report and return JSON.
 
-APOLIPOPROTEIN B — CRITICAL INSTRUCTION:
-In LabCorp reports, Apolipoprotein B appears on its OWN
-SEPARATE PAGE (usually page 3). The result line looks
-exactly like this:
-  "Apolipoprotein B B, 01  70  mg/dL  <90"
-or in table format:
-  "Apolipoprotein B | 70 | mg/dL | <90"
-The value 70 (or whatever number) appears IMMEDIATELY after
-"Apolipoprotein B B, 01" BEFORE any reference table like:
-  "Desirable < 90"
-  "Borderline High 90 - 99"
-DO NOT return null for apoB_mgdL if you see "Apolipoprotein B"
-followed by any number between 20 and 250 in the document.
-That number IS the apoB_mgdL value.
-
-LABCORP FORMAT RULES:
-- Lines end with lab code: "TestName B, 01"
-- Value is ALWAYS the next line after the lab code
-- "Apolipoprotein B B, 01" next line = ApoB value
-- Lp(a) in nmol/L → divide by 2.5 for mg/dL
-- Skip "Ordered Items:" header line with semicolons
-- Never use reference range values
-
-QUEST MYCHART FORMAT RULES:
-- Format: MarkerName → Normal range line →
-  reference numbers line → RESULT [High/Low]
-- Result is the standalone number after
-  the reference range
-- Never use the "Normal range:" numbers
-
-UNIVERSAL RULES:
-- Only extract markers with real result values
-- Never use 0 as a value — omit if not found
+EXTRACTION RULES:
+- Extract the PATIENT RESULT value only — never use reference range numbers
+- Never use 0 as a value — use null if not found
+- If Lp(a) is reported in nmol/L, convert to mg/dL by dividing by 2.5
 - collectionDate in YYYY-MM-DD format
-- labName: "LabCorp" or "Quest Diagnostics"
+- labName: the lab company name found in the report (e.g. "LabCorp", "Quest Diagnostics")
+- For Apolipoprotein B: the result is the number immediately following the test name, before any reference table
+
+COMMON SYNONYMS (map these to the field shown):
+- CRP High Sensitivity / hs-CRP / C-Reactive Protein = hsCRP_mgL
+- Glycohemoglobin / Hemoglobin A1c / GLYCOHEMOGLOBIN = hba1c_pct
+- 25-Hydroxyvitamin D / Vitamin D 25-OH / 25-OH Vit D = vitaminD_ngmL
+- Lipoprotein (a) / Lp(a) = lpa_mgdL
+- eGFR Non-African / GFR Estimation / Glomerular Filtration Rate = egfr_mLmin
+- Alkaline Phosphatase / Alk Phos = alkPhos_UL
+- HGB / Hgb = hemoglobin_gdL
+- Alanine Aminotransferase / ALT (SGPT) = alt_UL
+- Aspartate Aminotransferase / AST (SGOT) = ast_UL
+- Thyroid Stimulating Hormone = tsh_uIUmL
+- Thyroxine Free / T4 Free / FT4 = free_t4_ngdL
+- Triiodothyronine Free / T3 Free / FT3 = free_t3_pgmL
+- DHEA Sulfate / DHEA-S = dhea_s_ugdL
+- Insulin-Like Growth Factor / IGF-1 = igf1_ngmL
+- Anti-Thyroid Peroxidase / TPO Antibodies = tpoAntibodies_iuML
+- Prostate Specific Antigen / PSA = psa_ngmL
+- Carcinoembryonic Antigen / CEA = cea_ngmL
+- CA 19-9 / Carbohydrate Antigen 19-9 = ca199_UmL
 
 Return JSON with EVERY field below — use null for fields not found, never omit:
 {
@@ -296,17 +285,16 @@ Return JSON with EVERY field below — use null for fields not found, never omit
   "dhea_s_ugdL": "DHEA-S or DHEA Sulfate in ug/dL",
   "igf1_ngmL": "IGF-1 in ng/mL",
   "cortisol_ugdL": "Cortisol in ug/dL",
+  "vitaminB12_pgmL": "Vitamin B12 or Cobalamin in pg/mL",
+  "folate_ngmL": "Folate or Folic Acid in ng/mL",
+  "psa_ngmL": "PSA or Prostate Specific Antigen in ng/mL",
+  "cea_ngmL": "CEA or Carcinoembryonic Antigen in ng/mL",
+  "ca199_UmL": "CA 19-9 or Carbohydrate Antigen 19-9 in U/mL",
+  "thyroglobulin_ngmL": "Thyroglobulin in ng/mL",
+  "tpoAntibodies_iuML": "TPO Antibodies or Anti-Thyroid Peroxidase in IU/mL",
   "collectionDate": "YYYY-MM-DD",
-  "labName": "LabCorp or Quest Diagnostics"
+  "labName": "lab company name from the report"
 }
-
-LabCorp and Quest use these common alternate names:
-- CRP High Sensitivity = hsCRP_mgL
-- Hemoglobin A1c = hba1c_pct
-- 25-Hydroxyvitamin D = vitaminD_ngmL
-- Lipoprotein (a) = lpa_mgdL
-- eGFR Non-African = egfr_mLmin (use this value)
-- Alkaline Phosphatase = alkPhos_UL
 
 LAB REPORT TEXT:
 ${fullText}`,
