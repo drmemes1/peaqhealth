@@ -177,6 +177,7 @@ function parseWithRegexFallback(text: string): Record<string, unknown> {
 // those lines don't end with a bare footnote digit.
 
 function normalizeLabText(text: string): string {
+  console.log("[raw-has-glucose]", text.includes("GLUCOSE"), text.indexOf("GLUCOSE"))
   const lines = text.split("\n")
   const result: string[] = []
   let i = 0
@@ -208,6 +209,7 @@ function normalizeLabText(text: string): string {
     }
   }
 
+  console.log("[normalized-has-glucose]", result.join("\n").includes("GLUCOSE"), result.join("\n").indexOf("GLUCOSE"))
   return result.join("\n")
 }
 
