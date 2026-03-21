@@ -217,16 +217,16 @@ export default function SciencePage() {
   ];
 
   const scoreCategories = [
-    { range: "85\u2013100", label: "Optimal", desc: "Peak condition." },
-    { range: "65\u201384", label: "Good", desc: "Strong foundation. Key levers identified." },
-    { range: "45\u201364", label: "Moderate", desc: "Meaningful room to improve." },
-    { range: "0\u201344", label: "Attention", desc: "Your body is asking for attention." },
+    { range: "85–100", label: "Optimal", desc: "Peak condition." },
+    { range: "65–84", label: "Good", desc: "Strong foundation. Key levers identified." },
+    { range: "45–64", label: "Moderate", desc: "Meaningful room to improve." },
+    { range: "0–44", label: "Attention", desc: "Your body is asking for attention." },
   ];
 
   const freshnessRows = [
-    { label: "Fresh", window: "0\u20136 months", effect: "Full panel score" },
-    { label: "Aging", window: "6\u20139 months", effect: "Soft warning, score maintained" },
-    { label: "Stale", window: "9\u201312 months", effect: "Strong warning, retest recommended" },
+    { label: "Fresh", window: "0–6 months", effect: "Full panel score" },
+    { label: "Aging", window: "6–9 months", effect: "Soft warning, score maintained" },
+    { label: "Stale", window: "9–12 months", effect: "Strong warning, retest recommended" },
     { label: "Expired", window: ">12 months", effect: "Panel locked, 0 pts" },
   ];
 
@@ -523,7 +523,7 @@ export default function SciencePage() {
         <Marker
           num={1}
           title="Deep sleep (slow-wave)"
-          target="\u226517% of total sleep time"
+          target="≥17% of total sleep time"
           color="var(--sleep-c)"
           body={<>Deep sleep drives growth hormone release, metabolic waste clearance via the glymphatic system, and immune consolidation. Below 15% is associated with elevated Alzheimer&rsquo;s biomarkers.<Cite n={1} /></>}
           evidence="Xie et al., Science 2013. Walker, Why We Sleep, 2017."
@@ -531,7 +531,7 @@ export default function SciencePage() {
         <Marker
           num={2}
           title="HRV (RMSSD)"
-          target="\u226550 ms"
+          target="≥50 ms"
           color="var(--sleep-c)"
           body={<>Heart rate variability is the most sensitive non-invasive marker of autonomic nervous system function. Low HRV independently predicts all-cause mortality, cardiovascular events, and poor stress resilience.<Cite n={2} /></>}
           evidence="Thayer et al., Neuroscience & Biobehavioral Reviews 2012. Billman, Frontiers in Physiology 2011."
@@ -539,7 +539,7 @@ export default function SciencePage() {
         <Marker
           num={3}
           title="SpO2 dips"
-          target="\u22642 events per night below 90%"
+          target="≤2 events per night below 90%"
           color="var(--sleep-c)"
           body={<>Overnight oxygen desaturation events are the primary screening signal for obstructive sleep apnea. OSA is diagnosed in 936 million people globally and is massively underdiagnosed. Untreated OSA drives hypertension, atrial fibrillation, and cognitive decline.<Cite n={3} /></>}
           evidence="Benjafield et al., Lancet Respiratory Medicine 2019. n=936 million estimate."
@@ -547,7 +547,7 @@ export default function SciencePage() {
         <Marker
           num={4}
           title="REM sleep"
-          target="\u226518% of total sleep time"
+          target="≥18% of total sleep time"
           color="var(--sleep-c)"
           body={<>REM sleep governs emotional memory consolidation and psychological resilience. Chronic REM suppression is associated with depression, anxiety, and impaired threat processing.<Cite n={4} /></>}
           evidence="Walker & Stickgold, Annual Review of Psychology 2006."
@@ -555,7 +555,7 @@ export default function SciencePage() {
         <Marker
           num={5}
           title="Sleep efficiency"
-          target="\u226585%"
+          target="≥85%"
           color="var(--sleep-c)"
           body={<>Time asleep as a fraction of time in bed. Low efficiency (fragmented sleep, long wake-after-sleep-onset) indicates poor sleep architecture regardless of total hours.<Cite n={5} /></>}
           evidence="Buysse et al., Psychiatry Research 1989 — Pittsburgh Sleep Quality Index."
@@ -609,7 +609,7 @@ export default function SciencePage() {
         <Marker
           num={8}
           title="Vitamin D"
-          target="30\u201360 ng/mL"
+          target="30–60 ng/mL"
           color="var(--blood-c)"
           body={<>Vitamin D deficiency affects ~40% of Americans and is associated with elevated inflammatory cytokines, impaired immune function, depression, and all-cause mortality. The relationship is bidirectional — poor sleep reduces vitamin D synthesis; low vitamin D impairs sleep quality.<Cite n={8} /></>}
           evidence="Forrest & Stuhldreher, Nutrition Research 2011. n=4,495."
@@ -627,7 +627,7 @@ export default function SciencePage() {
           title="HbA1c"
           target="<5.4%"
           color="var(--blood-c)"
-          body={<>Glycated haemoglobin reflects average blood glucose over 90 days. Pre-diabetic range (5.7\u20136.4%) confers elevated risk of dementia, kidney disease, neuropathy, and cardiovascular events — often years before diagnosis.<Cite n={10} /></>}
+          body={<>Glycated haemoglobin reflects average blood glucose over 90 days. Pre-diabetic range (5.7–6.4%) confers elevated risk of dementia, kidney disease, neuropathy, and cardiovascular events — often years before diagnosis.<Cite n={10} /></>}
           evidence="Selvin et al., NEJM 2010. n=11,092."
         />
         <Marker
@@ -661,7 +661,7 @@ export default function SciencePage() {
             The oral microbiome is the least understood and most underutilised dimension of systemic health. The mouth is not isolated from the rest of the body — it shares blood supply with the heart, lungs, and brain. Dysbiosis in oral bacteria has been directly detected in coronary plaques, cerebrospinal fluid, and colorectal tumours.
           </p>
           <p style={{ ...bodyTextStyle, marginBottom: 16 }}>
-            Oral microbiome data comes from Zymo Research 16S rRNA sequencing. A simple at-home swab kit. Results in 10\u201314 days.
+            Oral microbiome data comes from Zymo Research 16S rRNA sequencing. A simple at-home swab kit. Results in 10–14 days.
           </p>
           <p style={{ ...bodyTextStyle, marginBottom: 32 }}>
             This is the panel nobody else measures. It is also where the most compelling cross-panel interactions originate.
@@ -704,7 +704,7 @@ export default function SciencePage() {
         <Marker
           num={13}
           title="Shannon diversity index"
-          target="\u22653.0"
+          target="≥3.0"
           color="var(--oral-c)"
           body={<>Shannon diversity measures the richness and evenness of microbial species in the oral cavity. Low diversity is the hallmark of dysbiosis — a state where pathogenic species overgrow at the expense of beneficial ones.<Cite n={13} /></>}
           evidence="Belstrøm et al., Journal of Oral Microbiology 2014."
@@ -712,7 +712,7 @@ export default function SciencePage() {
         <Marker
           num={14}
           title="Nitrate-reducing bacteria"
-          target="\u22655% of reads"
+          target="≥5% of reads"
           color="var(--oral-c)"
           body={<>Neisseria, Rothia, and Veillonella species convert dietary nitrate into nitrite, which is then converted to nitric oxide (NO) in the circulation. NO is a potent vasodilator critical for blood pressure regulation. Antiseptic mouthwash kills these bacteria.<Cite n={14} /><Cite n={15} /></>}
           evidence="Petersson et al., 2009. Kapil et al., Hypertension 2015 — ORIGINS study, n=300."
@@ -765,7 +765,7 @@ export default function SciencePage() {
           title="Exercise (IPAQ tiers)"
           target="4 points"
           color="var(--gold)"
-          body={<>Physical activity is the single most evidence-dense intervention in preventive medicine. Active (\u226575 min vigorous or \u2265150 min moderate/week): 4 pts. Moderate: 2.5 pts. Light: 1.5 pts. Sedentary: 0 pts.<Cite n={21} /></>}
+          body={<>Physical activity is the single most evidence-dense intervention in preventive medicine. Active (≥75 min vigorous or ≥150 min moderate/week): 4 pts. Moderate: 2.5 pts. Light: 1.5 pts. Sedentary: 0 pts.<Cite n={21} /></>}
           evidence="Lee et al., Lancet 2012."
         />
         <Marker
@@ -781,7 +781,7 @@ export default function SciencePage() {
           title="Dental visits"
           target="2 points"
           color="var(--gold)"
-          body={<>Annual dental visits allow professional debridement of subgingival biofilm — the primary reservoir of periodontal pathogens. \u22651 visit per year: 2 pts. Less frequent: 0 pts.<Cite n={20} /></>}
+          body={<>Annual dental visits allow professional debridement of subgingival biofilm — the primary reservoir of periodontal pathogens. ≥1 visit per year: 2 pts. Less frequent: 0 pts.<Cite n={20} /></>}
           evidence="Park et al., 2019."
         />
         <Marker
