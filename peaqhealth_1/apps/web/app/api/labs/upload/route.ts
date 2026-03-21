@@ -414,6 +414,7 @@ async function processFile(file: FileInput, index: number): Promise<FileResult> 
       chunks.push(fullText.slice(i, i + CHUNK_SIZE))
     }
     console.log("[parser] text sent to GPT-4o:", Math.min(fullText.length, CHUNK_SIZE * chunks.length), "chars across", chunks.length, "chunk(s)")
+    console.log("[azure-extracted-text-sample]", fullText.substring(2000, 3000))
 
     // Call GPT-4o per chunk and merge — later non-null values override earlier nulls
     let mergedOpenAIResult: Record<string, unknown> | null = null
