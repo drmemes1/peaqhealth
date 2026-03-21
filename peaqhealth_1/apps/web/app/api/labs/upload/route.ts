@@ -395,12 +395,36 @@ async function processFile(file: FileInput, index: number): Promise<FileResult> 
   }
 
   if (fullText) {
-    console.log("[parser] Azure extracted text length:", fullText.length)
+    console.log("[parser] total extracted text:", fullText.length, "chars")
 
-    // Try Azure OpenAI first
-    const openaiResult = await parseWithAzureOpenAI(fullText)
-    if (openaiResult) {
-      const { markers, labName, collectionDate } = extractFromParsedJson(openaiResult)
+    // Split into 12,000-char chunks so long reports don't get truncated
+    const CHUNK_SIZE = 12000
+    const chunks: string[] = []
+    for (let i = 0; i < fullText.length; i += CHUNK_SIZE) {
+      chunks.push(fullText.slice(i, i + CHUNK_SIZE))
+    }
+    console.log("[parser] text sent to GPT-4o:", Math.min(fullText.length, CHUNK_SIZE * chunks.length), "chars across", chunks.length, "chunk(s)")
+
+    // Call GPT-4o per chunk and merge — later non-null values override earlier nulls
+    let mergedOpenAIResult: Record<string, unknown> | null = null
+    for (let ci = 0; ci < chunks.length; ci++) {
+      const chunkResult = await parseWithAzureOpenAI(chunks[ci])
+      if (!chunkResult) continue
+      if (!mergedOpenAIResult) {
+        mergedOpenAIResult = { ...chunkResult }
+      } else {
+        // Later chunks override nulls; collectionDate and labName from first chunk only
+        for (const [k, v] of Object.entries(chunkResult)) {
+          if (k === "collectionDate" || k === "labName") continue
+          if (v !== null && v !== undefined && mergedOpenAIResult[k] == null) {
+            mergedOpenAIResult[k] = v
+          }
+        }
+      }
+    }
+
+    if (mergedOpenAIResult) {
+      const { markers, labName, collectionDate } = extractFromParsedJson(mergedOpenAIResult)
       if (Object.keys(markers).length > 0) {
         console.log("[parser] used: azure-hybrid — markers:", Object.keys(markers).length)
         return { filename: file.filename, markers, markersFound: Object.keys(markers).length, labName, collectionDate, parserUsed: "azure-hybrid" }
