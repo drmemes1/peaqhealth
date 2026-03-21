@@ -318,7 +318,11 @@ ${fullText}`,
       .replace(/```/g, "")
       .trim()
 
-    return JSON.parse(clean) as Record<string, unknown>
+    const parsed = JSON.parse(clean) as Record<string, unknown>
+    console.log("[azure-gpt4o-full]", JSON.stringify(parsed, null, 0))
+    console.log("[azure-gpt4o-glucose]", parsed?.glucose_mgdL)
+    console.log("[azure-gpt4o-hba1c]", parsed?.hba1c_pct)
+    return parsed
   } catch (err) {
     const e = err as { message?: string; status?: number; code?: string }
     console.error("[azure-openai] error:", e.message, "status:", e.status, "code:", e.code)
