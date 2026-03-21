@@ -106,6 +106,11 @@ export interface OralInputs {
   nitrateReducersPct:     number
   periodontopathogenPct:  number
   osaTaxaPct:             number
+  // Rich fields populated when full OralScore is available
+  pGingivalisPct?:        number   // P. gingivalis % specifically
+  osaBurden?:             number   // weighted OSA burden score
+  periodontalBurden?:     number   // weighted periodontal burden score
+  highOsaRisk?:           boolean  // oral-derived OSA flag
   collectionDate?:        string
   reportId?:              string
 }
@@ -724,10 +729,13 @@ export function calculatePeaqScore(sleep?: SleepInputs, blood?: BloodInputs, ora
   const spo2Lipid           = !!(sleep && !bloodLocked && checkSpo2Lipid(spo2Val, ldlHdlRatio))
   const dualInflammatory    = !bloodLocked && checkDualInflammatory(crpVal, blood?.esr_mmhr)
   const hrvHomocysteine     = !!(sleep && !bloodLocked && checkHrvHomocysteine(sleep.hrv_ms, blood?.homocysteine_umolL))
-  const periodontCRP        = !!(oral && !bloodLocked && checkPeriodontCRP(oral.periodontopathogenPct, crpVal))
-  const osaTaxaSpO2         = !!((oral && sleep && checkOsaTaxaSpO2(oral.osaTaxaPct, spo2Val, sleep.highOsaRisk)) || (sleep?.highOsaRisk && !oral))
-  const lowNitrateCRP       = !!(oral && !bloodLocked && checkLowNitrateCRP(oral.nitrateReducersPct, crpVal))
-  const lowDiversitySleep   = !!(oral && sleep && checkLowDiversitySleep(oral.shannonDiversity, sleepEff))
+  // Use pGingivalisPct (rich field) for I5 when available — lower 0.5% threshold per Hussain 2023
+  const periodontCRPRich = !!(oral?.pGingivalisPct !== undefined && oral.pGingivalisPct > 0.5 && crpVal > 0.8)
+  const periodontCRP     = !!(oral && !bloodLocked && (periodontCRPRich || checkPeriodontCRP(oral.periodontopathogenPct, crpVal)))
+  // Use oral.highOsaRisk from OralScore when available alongside sleep.highOsaRisk
+  const osaTaxaSpO2      = !!((oral && sleep && checkOsaTaxaSpO2(oral.osaTaxaPct, spo2Val, sleep.highOsaRisk || oral.highOsaRisk)) || (sleep?.highOsaRisk && !oral))
+  const lowNitrateCRP    = !!(oral && !bloodLocked && checkLowNitrateCRP(oral.nitrateReducersPct, crpVal))
+  const lowDiversitySleep = !!(oral && sleep && checkLowDiversitySleep(oral.shannonDiversity, sleepEff))
   const poorSleepOralQ      = !!(lifestyle && checkPoorSleepOralQ(lifestyle, sleep))
   const poorExerciseSmoking = !!(lifestyle && checkPoorExerciseSmoking(lifestyle))
 

@@ -7,7 +7,9 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./flags": "./src/flags.ts"
+    "./flags": "./src/flags.ts",
+    "./oral-parser": "./src/oral-parser.ts",
+    "./oral-mock-data": "./src/oral-mock-data.ts"
   },
   "scripts": {
     "test": "node --import tsx src/engine.ts",

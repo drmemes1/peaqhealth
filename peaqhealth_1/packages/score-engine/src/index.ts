@@ -22,3 +22,6 @@ export type {
   SleepQualSelf,
   DaytimeFatigue,
 } from './engine'
+
+export { parseOralMicrobiome } from './oral-parser'
+export type { ZymoReport, OralScore, OralFinding, SpeciesFinding } from './oral-parser'
