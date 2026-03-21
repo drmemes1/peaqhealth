@@ -224,6 +224,21 @@ function normalizeLabText(text: string): string {
 
 // ─── Azure OpenAI parser (primary) ───────────────────────────────────────────
 
+async function extractTextDirect(buffer: Buffer): Promise<string> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const pdfParse = require("pdf-parse") as (buf: Buffer) => Promise<{ numpages: number; text: string }>
+    const data = await pdfParse(buffer)
+    console.log("[pdf-parse-pages]", data.numpages)
+    console.log("[pdf-parse-chars]", data.text?.length)
+    console.log("[pdf-parse-has-glucose]", data.text?.includes("GLUCOSE"))
+    if (data.text && data.text.length > 3000) return data.text
+  } catch (e) {
+    console.log("[pdf-parse-failed]", String(e))
+  }
+  return ""
+}
+
 async function parseWithAzureOpenAI(fullText: string): Promise<Record<string, unknown> | null> {
   const azureOpenAIKey = process.env.AZURE_OPENAI_KEY
   if (!azureOpenAIKey) return null
@@ -444,6 +459,20 @@ async function processFile(file: FileInput, index: number): Promise<FileResult> 
   console.log("[parser] file", index + 1, "starting...")
 
   const buffer = Buffer.from(file.base64, "base64")
+
+  const directText = await extractTextDirect(buffer)
+  if (directText) {
+    console.log("[extraction-method] pdf-parse")
+    const openaiResult = await parseWithAzureOpenAI(directText)
+    if (openaiResult) {
+      const { markers, labName, collectionDate } = extractFromParsedJson(openaiResult)
+      if (Object.keys(markers).length > 0) {
+        return { filename: file.filename, markers, markersFound: Object.keys(markers).length, labName, collectionDate, parserUsed: "azure-hybrid" }
+      }
+    }
+  }
+  console.log("[extraction-method] azure-di")
+
   let fullText = await extractTextWithAzure(buffer)
 
   if (fullText && fullText.length < 3000) {
