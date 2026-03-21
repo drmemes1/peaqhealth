@@ -409,14 +409,20 @@ async function processFile(file: FileInput, index: number): Promise<FileResult> 
   if (fullText) {
     console.log("[parser] total extracted text:", fullText.length, "chars")
 
+    // Normalize multi-line lab format: "TEST NAME 1\n88\n70-130" → "TEST NAME: 88"
+    const normalizedText = fullText
+      .replace(/^(.+?) \d+\n([\d.<>]+)\n([\d.]+-[\d.]+.*)/gm, "$1: $2")
+      .replace(/\n{3,}/g, "\n\n")
+    console.log("[normalized-sample]", normalizedText.substring(2000, 3000))
+
     // Split into 12,000-char chunks so long reports don't get truncated
     const CHUNK_SIZE = 12000
     const chunks: string[] = []
-    for (let i = 0; i < fullText.length; i += CHUNK_SIZE) {
-      chunks.push(fullText.slice(i, i + CHUNK_SIZE))
+    for (let i = 0; i < normalizedText.length; i += CHUNK_SIZE) {
+      chunks.push(normalizedText.slice(i, i + CHUNK_SIZE))
     }
-    console.log("[parser] text sent to GPT-4o:", Math.min(fullText.length, CHUNK_SIZE * chunks.length), "chars across", chunks.length, "chunk(s)")
-    console.log("[azure-extracted-text-sample]", fullText.substring(2000, 3000))
+    console.log("[parser] text sent to GPT-4o:", Math.min(normalizedText.length, CHUNK_SIZE * chunks.length), "chars across", chunks.length, "chunk(s)")
+    console.log("[azure-extracted-text-sample]", normalizedText.substring(2000, 3000))
 
     // Call GPT-4o per chunk and merge — later non-null values override earlier nulls
     let mergedOpenAIResult: Record<string, unknown> | null = null
