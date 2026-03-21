@@ -170,6 +170,47 @@ function parseWithRegexFallback(text: string): Record<string, unknown> {
   return markers
 }
 
+// ─── Lab text normalizer ──────────────────────────────────────────────────────
+// Collapses Practice Fusion / Quality Laboratory multiline format:
+//   "GLUCOSE 1\n100\n74-106 mg/dL\n06/11/2025" → "GLUCOSE: 100"
+// LabCorp inline format ("Glucose B, 01  83  mg/dL") is unaffected because
+// those lines don't end with a bare footnote digit.
+
+function normalizeLabText(text: string): string {
+  const lines = text.split("\n")
+  const result: string[] = []
+  let i = 0
+
+  while (i < lines.length) {
+    const line = lines[i].trim()
+
+    // Detect: "TEST NAME <digit>" where digit is a trailing footnote number
+    const testNameMatch = line.match(/^([A-Z][A-Z0-9 ,.()/]+?)\s+\d+$/)
+    const nextLine = lines[i + 1]?.trim()
+    const isNumericValue = nextLine !== undefined && /^[<>]?[\d.]+$/.test(nextLine)
+
+    if (testNameMatch && isNumericValue) {
+      const testName = testNameMatch[1].trim()
+      const value = nextLine
+      result.push(`${testName}: ${value}`)
+      i += 2 // consumed: test-name line + value line
+
+      // Skip optional reference range line (e.g. "74-106 mg/dL")
+      const refLine = lines[i]?.trim()
+      if (refLine && /^[\d.<> ]+-[\d.<> ]+/.test(refLine)) i++
+
+      // Skip optional date/time line (e.g. "06/11/2025 02:10 am")
+      const dateLine = lines[i]?.trim()
+      if (dateLine && /^\d{2}\/\d{2}\/\d{4}/.test(dateLine)) i++
+    } else {
+      result.push(lines[i])
+      i++
+    }
+  }
+
+  return result.join("\n")
+}
+
 // ─── Azure OpenAI parser (primary) ───────────────────────────────────────────
 
 async function parseWithAzureOpenAI(fullText: string): Promise<Record<string, unknown> | null> {
@@ -191,6 +232,11 @@ async function parseWithAzureOpenAI(fullText: string): Promise<Record<string, un
   const timeoutId = setTimeout(() => controller.abort(), 25000)
 
   try {
+    const normalizedText = normalizeLabText(fullText)
+    console.log("[normalization] original chars:", fullText.length, "→ normalized:", normalizedText.length)
+    const glucoseIdx = normalizedText.indexOf("GLUCOSE")
+    console.log("[normalization-glucose]", glucoseIdx >= 0 ? normalizedText.substring(glucoseIdx, glucoseIdx + 80) : "not found")
+
     const messages = [
         {
           role: "system" as const,
@@ -305,7 +351,7 @@ Return JSON with EVERY field below — use null for fields not found, never omit
 }
 
 LAB REPORT TEXT:
-${fullText}`,
+${normalizedText}`,
         },
     ]
     console.log("[azure-system-prompt-first100]", messages.find(m => m.role === "system")?.content?.substring(0, 100))
