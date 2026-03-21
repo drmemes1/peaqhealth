@@ -198,7 +198,7 @@ async function parseWithAzureOpenAI(fullText: string): Promise<Record<string, un
       messages: [
         {
           role: "system",
-          content: `You are a medical lab report parser. Extract EVERY lab value present in the text regardless of lab format, section header, or abbreviation used. Map common synonyms (e.g. "GLYCOHEMOGLOBIN" = hba1c_pct, "GFR ESTIMATION" = egfr_mLmin, "HGB" = hemoglobin_gdL). Ignore all vendor notes, reference ranges, and ratio tables — only extract the patient's actual numeric result. Return null for fields not found. Return ONLY valid JSON with no markdown, no backticks, no code fences, no explanation. Start your response with { and end with }.`,
+          content: `You are a medical lab report parser. Extract EVERY lab value present in the text regardless of lab format, section header, or abbreviation used. Ignore all vendor notes, reference ranges, ratio tables, and classification guidelines — only extract the patient's actual numeric result next to the test name. Map common synonyms: GLUCOSE=glucose_mgdL, HGB/HEMOGLOBIN=hemoglobin_gdL, HCT/HEMATOCRIT=hematocrit_pct, GLYCOHEMOGLOBIN/HbA1c=hba1c_pct, ALBUMIN=albumin_gdL, ALT/ALT SGPT=alt_UL, AST/AST SGOT=ast_UL, WBC/WBC AUTOMATED=wbc_kul, RDW=rdw_pct, MCV=mcv_fL, VITAMIN D/VITAMIN D,25-HYDROXY=vitaminD_ngmL, VITAMIN B12=vitaminB12_pgmL, FOLATE=folate_ngmL, GFR ESTIMATION/eGFR=egfr_mLmin, BUN=bun_mgdL, CREATININE=creatinine_mgdL, PLT/PLATELETS=platelets_kul, RBC=rbc_mil, NEUTROPHILS %=neutrophils_pct, LYMPHOCYTES %/LYMPHS=lymphs_pct. Return null for fields not found. Return ONLY valid JSON. Start your response with { and end with }.`,
         },
         {
           role: "user",
