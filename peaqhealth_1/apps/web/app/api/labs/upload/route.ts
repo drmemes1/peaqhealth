@@ -57,6 +57,8 @@ async function extractTextWithAzure(buffer: Buffer, model = "prebuilt-layout"): 
       const data = await pollRes.json() as Record<string, unknown>
       if (data.status === "succeeded") {
         const result = data.analyzeResult as Record<string, unknown> | undefined
+        console.log("[azure-di-pages]", (result?.pages as unknown[] | undefined)?.length)
+        console.log("[azure-di-total-content-length]", typeof result?.content === "string" ? (result.content as string).length : undefined)
         const pages = (result?.pages ?? []) as Array<{ lines?: Array<{ content: string }> }>
         const tables = (result?.tables ?? []) as Array<{ cells?: Array<{ content: string }> }>
 
