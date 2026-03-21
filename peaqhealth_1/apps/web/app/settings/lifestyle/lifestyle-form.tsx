@@ -15,10 +15,10 @@ interface QuestionDef {
 
 // ── Section groupings for display ─────────────────────────────────────────
 const SECTIONS: { title: string; subtitle: string; keys: string[] }[] = [
-  { title: "Activity", subtitle: "Exercise patterns affect cardiovascular, metabolic, and inflammatory markers", keys: ["exerciseLevel"] },
+  { title: "Activity", subtitle: "Exercise patterns affect cardiovascular, metabolic, and inflammatory markers", keys: ["exerciseLevel", "exerciseMinutes"] },
   { title: "Oral Health", subtitle: "Oral hygiene directly influences microbiome, inflammation, and sleep-breathing risk", keys: ["brushingFreq", "flossingFreq", "mouthwashType", "lastDentalVisit"] },
   { title: "Sleep", subtitle: "Self-reported sleep quality calibrates wearable data and influences your score", keys: ["sleepDuration", "sleepLatency", "sleepQualSelf", "nightWakings", "daytimeFatigue"] },
-  { title: "Nutrition", subtitle: "Diet patterns affect glycemic control, inflammation, and gut microbiome diversity", keys: ["vegetableServings", "fruitServings", "processedFood", "sugaryDrinks"] },
+  { title: "Nutrition", subtitle: "Diet patterns affect glycemic control, inflammation, and gut microbiome diversity", keys: ["vegetableServings", "fruitServings", "processedFood", "sugaryDrinks", "dietQuality", "omegaFrequency"] },
   { title: "Alcohol & Stress", subtitle: "Both independently modulate sleep architecture and inflammatory markers", keys: ["alcoholDrinks", "stressLevel"] },
   { title: "Medical History", subtitle: "Diagnoses and medications calibrate cardiovascular interaction scoring", keys: ["smokingStatus", "knownHypertension", "knownDiabetes", "hypertensionDx", "onBPMeds", "onStatins", "familyHistoryCVD"] },
 ]
@@ -241,6 +241,40 @@ const QUESTIONS: QuestionDef[] = [
       { value: "20", label: "15+" },
     ],
   },
+  // ── Exercise minutes ──
+  {
+    key: "exerciseMinutes", dbKey: "exercise_minutes_per_week",
+    label: "Minutes of moderate exercise per week on average?", type: "choice",
+    options: [
+      { value: "30",  label: "< 60 min" },
+      { value: "105", label: "60–150 min" },
+      { value: "225", label: "150–300 min (ACC target)" },
+      { value: "360", label: "> 300 min" },
+    ],
+  },
+  // ── Diet quality ──
+  {
+    key: "dietQuality", dbKey: "diet_quality",
+    label: "Which best describes your diet?", type: "choice",
+    options: [
+      { value: "western",       label: "Standard Western" },
+      { value: "mediterranean", label: "Mediterranean" },
+      { value: "dash",          label: "DASH" },
+      { value: "plant_based",   label: "Plant-based" },
+      { value: "other",         label: "Other" },
+    ],
+  },
+  // ── Omega-3 intake ──
+  {
+    key: "omegaFrequency", dbKey: "omega3_frequency",
+    label: "How often do you eat fatty fish (salmon, sardines, mackerel)?", type: "choice",
+    options: [
+      { value: "rarely",  label: "Rarely" },
+      { value: "weekly",  label: "1×/week" },
+      { value: "often",   label: "2–3×/week" },
+      { value: "daily",   label: "Daily" },
+    ],
+  },
   // ── Stress ──
   {
     key: "stressLevel", dbKey: "stress_level",
@@ -286,7 +320,7 @@ export function LifestyleForm({ existing }: Props) {
 
     // Build DB row
     const row: Record<string, unknown> = {};
-    const intKeys = new Set(["vegetable_servings_per_day", "fruit_servings_per_day", "processed_food_frequency", "sugary_drinks_per_week", "alcohol_drinks_per_week"]);
+    const intKeys = new Set(["vegetable_servings_per_day", "fruit_servings_per_day", "processed_food_frequency", "sugary_drinks_per_week", "alcohol_drinks_per_week", "exercise_minutes_per_week"]);
     for (const q of QUESTIONS) {
       if (q.type === "boolean") {
         row[q.dbKey] = answers[q.key] === "true";

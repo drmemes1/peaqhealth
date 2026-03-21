@@ -181,16 +181,18 @@ export interface PeaqScoreResult {
     psqiEstimate:       number
   }
   interactions: {
-    sleepInflammation:   boolean
-    spo2Lipid:           boolean
-    dualInflammatory:    boolean
-    hrvHomocysteine:     boolean
-    periodontCRP:        boolean
-    osaTaxaSpO2:         boolean
-    lowNitrateCRP:       boolean
-    lowDiversitySleep:   boolean
-    poorSleepOralQ:      boolean
-    poorExerciseSmoking: boolean
+    sleepInflammation:      boolean
+    spo2Lipid:              boolean
+    dualInflammatory:       boolean
+    hrvHomocysteine:        boolean
+    periodontCRP:           boolean
+    osaTaxaSpO2:            boolean
+    lowNitrateCRP:          boolean
+    lowDiversitySleep:      boolean
+    poorSleepOralQ:         boolean
+    poorExerciseSmoking:    boolean
+    hsCRPLDL:               boolean
+    lowActivityInflammation: boolean
   }
   lpaFlag:               "elevated" | "very_elevated" | null
   hsCRPRetestFlag:       boolean
@@ -386,9 +388,15 @@ function cvLipids_ldlHdl(ldl: number, hdl: number): { score: number; ratio: numb
 }
 function cvLipids_tg(v: number): number { return v >= 200 ? 0 : v >= 150 ? 0.25 : v >= 100 ? 0.75 : 1 }
 
+// Thresholds updated per 2025 ACC Scientific Statement (Mensah et al., JACC 2025)
+// hsCRP >2.0 mg/L = action threshold regardless of LDL level per ACC consensus
 function inflamRes_hsCRP(v: number): { score: number; retestFlag: boolean } {
-  if (v > 10) return { score: 0.25, retestFlag: true }
-  return { score: v > 3 ? 1 : v > 1 ? 3.5 : v > 0.5 ? 6.5 : 8, retestFlag: false }
+  if (v > 10) return { score: 0, retestFlag: true }
+  if (v > 3)  return { score: 0.25, retestFlag: false }
+  if (v > 2)  return { score: 1,    retestFlag: false }
+  if (v > 1)  return { score: 2,    retestFlag: false }
+  if (v > 0.5) return { score: 2.5, retestFlag: false }
+  return { score: 3, retestFlag: false }
 }
 
 function metabolic_glucose(v: number): number { return v >= 126 ? 0 : v >= 100 ? 1 : v >= 90 ? 2.5 : 3.5 }
@@ -423,7 +431,7 @@ export function computeRecencyMultiplier(ageDays?: number): number {
 
 // ---- Blood sub-panel scoring ------------------------------------------------
 
-const BLOOD_SCALE = 33 / 38
+const BLOOD_SCALE = 33 / 33  // raw panel maxes: CV(10)+Inf(3)+Met(7)+Org(5)+Mic(4)+CBC(4) = 33
 
 function scaleSubPanel(earned: number, maxFromPresent: number, panelMax: number): number {
   return maxFromPresent === 0 ? 0 : (earned / maxFromPresent) * panelMax * BLOOD_SCALE
@@ -482,16 +490,16 @@ export function scoreBloodSubPanels(blood: BloodInputs): BloodPanelResult {
   if (def(blood.hsCRP_mgL)) {
     const { score, retestFlag } = inflamRes_hsCRP(blood.hsCRP_mgL)
     hsCRPRetestFlag = retestFlag
-    infPresent.push({ key: "hsCRP", earned: score, max: 8 })
+    infPresent.push({ key: "hsCRP", earned: score, max: 3 })
   } else infAbsent.push("hsCRP")
   const infEarned = infPresent.reduce((s, m) => s + m.earned, 0)
   const infMaxFP  = infPresent.reduce((s, m) => s + m.max, 0)
-  const infScore  = scaleSubPanel(infEarned, infMaxFP, 8)
+  const infScore  = scaleSubPanel(infEarned, infMaxFP, 3)
   const infPanel: SubPanelResult = {
     name: "Inflammation & Resilience",
     score: Math.round(infScore * 10) / 10,
     maxFromPresent: Math.round(infMaxFP * BLOOD_SCALE * 10) / 10,
-    panelMax: Math.round(8 * BLOOD_SCALE * 10) / 10,
+    panelMax: Math.round(3 * BLOOD_SCALE * 10) / 10,
     markersPresent: infPresent.map(m => m.key),
     markersAbsent: infAbsent,
   }
@@ -541,6 +549,10 @@ function scoreOsaTaxa(pct: number): number { return pct >= 3 ? 0 : pct >= 1 ? 2 
 
 // ---- Interaction checks -----------------------------------------------------
 
+// 2025 ACC: elevated LDL + elevated hsCRP compound risk even when either alone appears borderline
+function checkHsCRPLDL(crp: number, ldl?: number): boolean { return crp > 2.0 && ldl !== undefined && ldl > 130 }
+// Low physical activity compounds inflammatory marker elevation
+function checkLowActivityInflammation(exerciseLevel: string, crp: number): boolean { return (exerciseLevel === "sedentary" || exerciseLevel === "light") && crp > 2.0 }
 function checkSleepInflammation(eff: number, crp: number): boolean { return eff < 80 && crp > 1.0 }
 function checkSpo2Lipid(dips: number, ratio: number): boolean { return dips > 2 && ratio > 2.5 }
 function checkDualInflammatory(crp: number, esr?: number): boolean { return esr !== undefined && crp > 1.0 && esr > 20 }
@@ -734,22 +746,26 @@ export function calculatePeaqScore(sleep?: SleepInputs, blood?: BloodInputs, ora
   const periodontCRP     = !!(oral && !bloodLocked && (periodontCRPRich || checkPeriodontCRP(oral.periodontopathogenPct, crpVal)))
   // Use oral.highOsaRisk from OralScore when available alongside sleep.highOsaRisk
   const osaTaxaSpO2      = !!((oral && sleep && checkOsaTaxaSpO2(oral.osaTaxaPct, spo2Val, sleep.highOsaRisk || oral.highOsaRisk)) || (sleep?.highOsaRisk && !oral))
-  const lowNitrateCRP    = !!(oral && !bloodLocked && checkLowNitrateCRP(oral.nitrateReducersPct, crpVal))
-  const lowDiversitySleep = !!(oral && sleep && checkLowDiversitySleep(oral.shannonDiversity, sleepEff))
-  const poorSleepOralQ      = !!(lifestyle && checkPoorSleepOralQ(lifestyle, sleep))
-  const poorExerciseSmoking = !!(lifestyle && checkPoorExerciseSmoking(lifestyle))
+  const lowNitrateCRP       = !!(oral && !bloodLocked && checkLowNitrateCRP(oral.nitrateReducersPct, crpVal))
+  const lowDiversitySleep   = !!(oral && sleep && checkLowDiversitySleep(oral.shannonDiversity, sleepEff))
+  const poorSleepOralQ         = !!(lifestyle && checkPoorSleepOralQ(lifestyle, sleep))
+  const poorExerciseSmoking    = !!(lifestyle && checkPoorExerciseSmoking(lifestyle))
+  const hsCRPLDL               = !bloodLocked && checkHsCRPLDL(crpVal, blood?.ldl_mgdL)
+  const lowActivityInflammation = !!(lifestyle && !bloodLocked && checkLowActivityInflammation(lifestyle.exerciseLevel, crpVal))
 
   let interactionPool = 15
-  if (sleepInflammation)   interactionPool -= 5
-  if (spo2Lipid)           interactionPool -= 3
-  if (dualInflammatory)    interactionPool -= 2
-  if (hrvHomocysteine)     interactionPool -= 2
-  if (periodontCRP)        interactionPool -= 4
-  if (osaTaxaSpO2)         interactionPool -= 3
-  if (lowNitrateCRP)       interactionPool -= 2
-  if (lowDiversitySleep)   interactionPool -= 2
-  if (poorSleepOralQ)      interactionPool -= 2
-  if (poorExerciseSmoking) interactionPool -= 2
+  if (sleepInflammation)      interactionPool -= 5
+  if (spo2Lipid)              interactionPool -= 3
+  if (dualInflammatory)       interactionPool -= 2
+  if (hrvHomocysteine)        interactionPool -= 2
+  if (periodontCRP)           interactionPool -= 4
+  if (osaTaxaSpO2)            interactionPool -= 3
+  if (lowNitrateCRP)          interactionPool -= 2
+  if (lowDiversitySleep)      interactionPool -= 2
+  if (poorSleepOralQ)         interactionPool -= 2
+  if (poorExerciseSmoking)    interactionPool -= 2
+  if (hsCRPLDL)               interactionPool -= 1.5
+  if (lowActivityInflammation) interactionPool -= 1.5
   interactionPool = Math.max(0, interactionPool)
 
   const interactionsFired = [
@@ -758,6 +774,7 @@ export function calculatePeaqScore(sleep?: SleepInputs, blood?: BloodInputs, ora
     periodontCRP && "periodontCRP", osaTaxaSpO2 && "osaTaxaSpO2",
     lowNitrateCRP && "lowNitrateCRP", lowDiversitySleep && "lowDiversitySleep",
     poorSleepOralQ && "poorSleepOralQ", poorExerciseSmoking && "poorExerciseSmoking",
+    hsCRPLDL && "hsCRPLDL", lowActivityInflammation && "lowActivityInflammation",
   ].filter(Boolean) as string[]
 
   const rawTotal = sleepSub + bloodSub + oralSub + lifestyleSub
@@ -791,7 +808,7 @@ export function calculatePeaqScore(sleep?: SleepInputs, blood?: BloodInputs, ora
       exerciseScore, oralHygieneScore: Math.round(oralHygieneScore * 10) / 10,
       dentalVisitScore, heartScore, restingHRScore, vo2maxScore, nutritionScore, alcoholScore, psqiEstimate,
     },
-    interactions: { sleepInflammation, spo2Lipid, dualInflammatory, hrvHomocysteine, periodontCRP, osaTaxaSpO2, lowNitrateCRP, lowDiversitySleep, poorSleepOralQ, poorExerciseSmoking },
+    interactions: { sleepInflammation, spo2Lipid, dualInflammatory, hrvHomocysteine, periodontCRP, osaTaxaSpO2, lowNitrateCRP, lowDiversitySleep, poorSleepOralQ, poorExerciseSmoking, hsCRPLDL, lowActivityInflammation },
     lpaFlag: bloodPanel.lpaFlag,
     hsCRPRetestFlag: bloodPanel.hsCRPRetestFlag,
     peaqPercent, peaqPercentLabel,
