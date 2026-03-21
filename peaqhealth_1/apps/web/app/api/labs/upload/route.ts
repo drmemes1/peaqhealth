@@ -207,6 +207,8 @@ EXTRACTION RULES:
 - collectionDate in YYYY-MM-DD format
 - labName: the lab company name found in the report (e.g. "LabCorp", "Quest Diagnostics")
 - For Apolipoprotein B: the result is the number immediately following the test name, before any reference table
+- MULTI-LINE FORMAT: Test name often appears on one line, the patient's numeric result on the very next line, and the reference range on the line after that. Treat the number on the line immediately after a test name as the patient's result.
+- FOOTNOTE NUMBERS: Ignore any superscript footnote markers (single digits like 1, 2, 3) that appear attached to a test name or result — they are not part of the value.
 
 COMMON SYNONYMS (map these to the field shown):
 - CRP High Sensitivity / hs-CRP / C-Reactive Protein = hsCRP_mgL
