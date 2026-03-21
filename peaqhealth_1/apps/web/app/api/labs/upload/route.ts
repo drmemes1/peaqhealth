@@ -198,7 +198,7 @@ async function parseWithAzureOpenAI(fullText: string): Promise<Record<string, un
       messages: [
         {
           role: "system",
-          content: `You are a medical lab report parser. Extract EVERY lab value present in the text regardless of lab format, section header, or abbreviation used. Map common synonyms (e.g. "GLYCOHEMOGLOBIN" = hba1c_pct, "GFR ESTIMATION" = egfr_mLmin, "HGB" = hemoglobin_gdL). Return null for fields not found. Return ONLY valid JSON with no markdown, no backticks, no code fences, no explanation. Start your response with { and end with }.`,
+          content: `You are a medical lab report parser. Extract EVERY lab value present in the text regardless of lab format, section header, or abbreviation used. Map common synonyms (e.g. "GLYCOHEMOGLOBIN" = hba1c_pct, "GFR ESTIMATION" = egfr_mLmin, "HGB" = hemoglobin_gdL). Ignore all vendor notes, reference ranges, and ratio tables — only extract the patient's actual numeric result. Return null for fields not found. Return ONLY valid JSON with no markdown, no backticks, no code fences, no explanation. Start your response with { and end with }.`,
         },
         {
           role: "user",
@@ -214,14 +214,24 @@ EXTRACTION RULES:
 
 COMMON SYNONYMS (map these to the field shown):
 - CRP High Sensitivity / hs-CRP / C-Reactive Protein = hsCRP_mgL
-- Glycohemoglobin / Hemoglobin A1c / GLYCOHEMOGLOBIN = hba1c_pct
-- 25-Hydroxyvitamin D / Vitamin D 25-OH / 25-OH Vit D = vitaminD_ngmL
+- Glycohemoglobin / Hemoglobin A1c / GLYCOHEMOGLOBIN / HbA1c = hba1c_pct
+- GLUCOSE / Glucose, Fasting / Glucose, Serum = glucose_mgdL
+- HGB / Hgb / HEMOGLOBIN = hemoglobin_gdL
+- HCT / HEMATOCRIT = hematocrit_pct
+- ALBUMIN = albumin_gdL
+- ALT / ALT SGPT / Alanine Aminotransferase = alt_UL
+- AST / AST SGOT / Aspartate Aminotransferase = ast_UL
+- WBC / WBC AUTOMATED / White Blood Cell Count = wbc_kul
+- RDW = rdw_pct
+- MCV = mcv_fL
+- BUN / Blood Urea Nitrogen = bun_mgdL
+- CREATININE / Creatinine, Serum = creatinine_mgdL
+- 25-Hydroxyvitamin D / Vitamin D 25-OH / VITAMIN D / VITAMIN D,25-HYDROXY / 25-OH Vit D = vitaminD_ngmL
+- VITAMIN B12 / Cobalamin = vitaminB12_pgmL
+- FOLATE / Folic Acid = folate_ngmL
+- GFR ESTIMATION / eGFR Non-African / Glomerular Filtration Rate = egfr_mLmin
 - Lipoprotein (a) / Lp(a) = lpa_mgdL
-- eGFR Non-African / GFR Estimation / Glomerular Filtration Rate = egfr_mLmin
 - Alkaline Phosphatase / Alk Phos = alkPhos_UL
-- HGB / Hgb = hemoglobin_gdL
-- Alanine Aminotransferase / ALT (SGPT) = alt_UL
-- Aspartate Aminotransferase / AST (SGOT) = ast_UL
 - Thyroid Stimulating Hormone = tsh_uIUmL
 - Thyroxine Free / T4 Free / FT4 = free_t4_ngdL
 - Triiodothyronine Free / T3 Free / FT3 = free_t3_pgmL
