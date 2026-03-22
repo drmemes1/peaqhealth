@@ -71,7 +71,7 @@ export default async function DashboardPage() {
     lastSyncRequestedAt:   (wearable?.last_sync_requested_at as string | null) ?? null,
     sleepConnected: !!wearable || Number(snapshot?.sleep_sub ?? 0) > 0,
     labFreshness,
-    oralActive: !!oral,
+    oralActive: !!oral || true, // TODO: remove mock fallback before launch
     sleepData: wearable ? {
       deepPct:    wearable.deep_sleep_pct ?? 0,
       hrv:        wearable.hrv_rmssd ?? 0,
