@@ -241,7 +241,7 @@ function scoreOralHygiene(brushing: BrushingFreq, flossing: FlossingFreq, mouthw
     }
   }
   if (mouthwash === "antiseptic") pts -= 0.5
-  return Math.max(0, Math.min(1, Math.round(pts * 2) / 2))
+  return Math.max(0, Math.min(3, Math.round(pts * 2) / 2))
 }
 
 function scoreDentalVisit(visit: DentalVisit): number {
