@@ -4,55 +4,112 @@ import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { recalculateScore } from "../../../../lib/score/recalculate"
 import type { BloodMarkers } from "../../../components/lab-upload"
 import { AzureOpenAI } from "openai"
+import type { SupabaseClient } from "@supabase/supabase-js"
 
 type DbRow = Record<string, number | string | null | undefined>
 
-async function generateBloodInsight(row: DbRow): Promise<string | null> {
+async function generateBloodInsight(userId: string, supabase: SupabaseClient, bloodRow: DbRow): Promise<string | null> {
   const key = process.env.AZURE_OPENAI_KEY
   if (!key) return null
 
   const n = (v: unknown) => typeof v === "number" && v > 0
 
-  const present: string[] = []
-  if (n(row.ldl_mgdl))           present.push(`LDL: ${row.ldl_mgdl} mg/dL`)
-  if (n(row.hdl_mgdl))           present.push(`HDL: ${row.hdl_mgdl} mg/dL`)
-  if (n(row.triglycerides_mgdl)) present.push(`Triglycerides: ${row.triglycerides_mgdl} mg/dL`)
-  if (n(row.hs_crp_mgl))         present.push(`hsCRP: ${row.hs_crp_mgl} mg/L`)
-  if (n(row.glucose_mgdl))       present.push(`Glucose: ${row.glucose_mgdl} mg/dL`)
-  if (n(row.hba1c_pct))          present.push(`HbA1c: ${row.hba1c_pct}%`)
-  if (n(row.vitamin_d_ngml))     present.push(`Vitamin D: ${row.vitamin_d_ngml} ng/mL`)
-  if (n(row.apob_mgdl))          present.push(`ApoB: ${row.apob_mgdl} mg/dL`)
-  if (n(row.egfr_mlmin))         present.push(`eGFR: ${row.egfr_mlmin} mL/min`)
-  if (n(row.alt_ul))             present.push(`ALT: ${row.alt_ul} U/L`)
-  if (n(row.wbc_kul))            present.push(`WBC: ${row.wbc_kul} K/uL`)
-  if (n(row.albumin_gdl))        present.push(`Albumin: ${row.albumin_gdl} g/dL`)
-  if (n(row.hemoglobin_gdl))     present.push(`Hemoglobin: ${row.hemoglobin_gdl} g/dL`)
-  if (n(row.lpa_mgdl))           present.push(`Lp(a): ${row.lpa_mgdl} mg/dL`)
-  if (present.length === 0) return null
+  // ── Blood panel ────────────────────────────────────────────────────────────
+  const bloodLines: string[] = []
+  if (n(bloodRow.ldl_mgdl))           bloodLines.push(`LDL: ${bloodRow.ldl_mgdl} mg/dL`)
+  if (n(bloodRow.hdl_mgdl))           bloodLines.push(`HDL: ${bloodRow.hdl_mgdl} mg/dL`)
+  if (n(bloodRow.triglycerides_mgdl)) bloodLines.push(`Triglycerides: ${bloodRow.triglycerides_mgdl} mg/dL`)
+  if (n(bloodRow.hs_crp_mgl))         bloodLines.push(`hsCRP: ${bloodRow.hs_crp_mgl} mg/L`)
+  if (n(bloodRow.glucose_mgdl))       bloodLines.push(`Glucose: ${bloodRow.glucose_mgdl} mg/dL`)
+  if (n(bloodRow.hba1c_pct))          bloodLines.push(`HbA1c: ${bloodRow.hba1c_pct}%`)
+  if (n(bloodRow.vitamin_d_ngml))     bloodLines.push(`Vitamin D: ${bloodRow.vitamin_d_ngml} ng/mL`)
+  if (n(bloodRow.apob_mgdl))          bloodLines.push(`ApoB: ${bloodRow.apob_mgdl} mg/dL`)
+  if (n(bloodRow.egfr_mlmin))         bloodLines.push(`eGFR: ${bloodRow.egfr_mlmin} mL/min`)
+  if (n(bloodRow.alt_ul))             bloodLines.push(`ALT: ${bloodRow.alt_ul} U/L`)
+  if (n(bloodRow.wbc_kul))            bloodLines.push(`WBC: ${bloodRow.wbc_kul} K/uL`)
+  if (n(bloodRow.albumin_gdl))        bloodLines.push(`Albumin: ${bloodRow.albumin_gdl} g/dL`)
+  if (n(bloodRow.hemoglobin_gdl))     bloodLines.push(`Hemoglobin: ${bloodRow.hemoglobin_gdl} g/dL`)
+  if (n(bloodRow.lpa_mgdl))           bloodLines.push(`Lp(a): ${bloodRow.lpa_mgdl} mg/dL`)
+  if (bloodLines.length === 0) return null
 
-  const missing: string[] = []
-  if (!n(row.hs_crp_mgl))    missing.push("hsCRP")
-  if (!n(row.hba1c_pct))     missing.push("HbA1c")
-  if (!n(row.vitamin_d_ngml)) missing.push("Vitamin D")
-  if (!n(row.apob_mgdl))     missing.push("ApoB")
-  if (!n(row.lpa_mgdl))      missing.push("Lp(a)")
+  const missingBlood: string[] = []
+  if (!n(bloodRow.hs_crp_mgl))     missingBlood.push("hsCRP")
+  if (!n(bloodRow.hba1c_pct))      missingBlood.push("HbA1c")
+  if (!n(bloodRow.vitamin_d_ngml)) missingBlood.push("Vitamin D")
+  if (!n(bloodRow.apob_mgdl))      missingBlood.push("ApoB")
+  if (!n(bloodRow.lpa_mgdl))       missingBlood.push("Lp(a)")
 
-  const insightPrompt = `You are a longevity health assistant for Peaq Health, a precision wellness platform.
+  // ── Sleep / wearable ───────────────────────────────────────────────────────
+  const { data: wearable } = await supabase
+    .from("wearable_connections")
+    .select("deep_sleep_pct, hrv_rmssd, spo2_dips, rem_pct, sleep_efficiency, nights_available, provider")
+    .eq("user_id", userId)
+    .eq("status", "connected")
+    .order("connected_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
 
-A user just uploaded their blood panel.
-Present markers: ${present.join(", ")}
-${missing.length > 0 ? `Missing high-value markers: ${missing.join(", ")}` : "Panel is comprehensive."}
+  const sleepLines: string[] = []
+  if (wearable) {
+    if (n(wearable.sleep_efficiency)) sleepLines.push(`Sleep efficiency: ${wearable.sleep_efficiency}%`)
+    if (n(wearable.deep_sleep_pct))   sleepLines.push(`Deep sleep: ${wearable.deep_sleep_pct}%`)
+    if (n(wearable.rem_pct))          sleepLines.push(`REM: ${wearable.rem_pct}%`)
+    if (n(wearable.hrv_rmssd))        sleepLines.push(`HRV: ${wearable.hrv_rmssd} ms`)
+    if (n(wearable.spo2_dips))        sleepLines.push(`SpO2 dips: ${wearable.spo2_dips}`)
+  }
 
-Write exactly 2 sentences:
-1. One sentence about the most notable finding in their results — good or concerning. Reference the actual values.
-2. One sentence about what missing markers would add to their picture, framed as opportunity. If panel is complete, mention a lifestyle factor that could improve their weakest marker.
+  // ── Oral microbiome ────────────────────────────────────────────────────────
+  const { data: oral } = await supabase
+    .from("oral_kit_orders")
+    .select("shannon_diversity, nitrate_reducers_pct, periodontopathogen_pct, osa_taxa_pct")
+    .eq("user_id", userId)
+    .in("status", ["results_ready", "scored"])
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  const oralLines: string[] = []
+  if (oral) {
+    if (n(oral.shannon_diversity))       oralLines.push(`Shannon diversity: ${oral.shannon_diversity}`)
+    if (n(oral.nitrate_reducers_pct))    oralLines.push(`Nitrate reducers: ${oral.nitrate_reducers_pct}%`)
+    if (n(oral.periodontopathogen_pct))  oralLines.push(`Periodontal pathogens: ${oral.periodontopathogen_pct}%`)
+    if (n(oral.osa_taxa_pct))            oralLines.push(`OSA-associated taxa: ${oral.osa_taxa_pct}%`)
+  }
+
+  // ── Lifestyle ──────────────────────────────────────────────────────────────
+  const { data: lifestyle } = await supabase
+    .from("lifestyle_records")
+    .select("exercise_level, brushing_freq, flossing_freq, smoking_status, stress_level, alcohol_drinks_per_week, vegetable_servings_per_day, processed_food_frequency")
+    .eq("user_id", userId)
+    .maybeSingle()
+
+  const lifestyleLines: string[] = []
+  if (lifestyle) {
+    if (lifestyle.exercise_level)           lifestyleLines.push(`Exercise: ${lifestyle.exercise_level}`)
+    if (lifestyle.smoking_status)           lifestyleLines.push(`Smoking: ${lifestyle.smoking_status}`)
+    if (lifestyle.stress_level)             lifestyleLines.push(`Stress: ${lifestyle.stress_level}`)
+    if (n(lifestyle.alcohol_drinks_per_week)) lifestyleLines.push(`Alcohol: ${lifestyle.alcohol_drinks_per_week} drinks/week`)
+    if (n(lifestyle.vegetable_servings_per_day)) lifestyleLines.push(`Vegetables: ${lifestyle.vegetable_servings_per_day} servings/day`)
+  }
+
+  // ── Build prompt ───────────────────────────────────────────────────────────
+  const systemPrompt = `You are a longevity health assistant for Peaq Health, a precision wellness platform that tracks blood, sleep, oral microbiome, and lifestyle data together.
+
+Your job is to identify the single most meaningful cross-panel pattern in a user's data — a connection that spans two or more panels (blood + sleep, blood + oral, oral + lifestyle, etc.) — and communicate it clearly and specifically.
 
 Rules:
-- Be specific — use actual numbers
-- Warm but clinical tone
-- No disclaimers, no "I'm not a doctor", no "Great job" or hollow praise
-- Max 50 words total
-- Never mention markers with value 0`
+- Write exactly 2 sentences, max 60 words total
+- Sentence 1: state the cross-panel pattern using actual numbers (e.g. "Your hsCRP of 2.1 mg/L and periodontal pathogen load of 3.4% are both elevated, pointing to a shared inflammatory driver")
+- Sentence 2: give one concrete, actionable next step that addresses the root pattern — not a generic tip
+- Warm but clinical tone — no disclaimers, no "I'm not a doctor", no hollow praise
+- If only blood data is available, fall back to a single-panel blood insight using actual values
+- Never mention markers with value 0 or panels with no data`
+
+  const userMessage = `Blood panel: ${bloodLines.join(", ")}
+${missingBlood.length > 0 ? `Missing: ${missingBlood.join(", ")}` : "Blood panel is comprehensive."}
+${sleepLines.length > 0 ? `\nSleep data: ${sleepLines.join(", ")}` : ""}
+${oralLines.length > 0 ? `\nOral microbiome: ${oralLines.join(", ")}` : ""}
+${lifestyleLines.length > 0 ? `\nLifestyle: ${lifestyleLines.join(", ")}` : ""}`.trim()
 
   try {
     const client = new AzureOpenAI({
@@ -63,14 +120,19 @@ Rules:
     })
     const res = await client.chat.completions.create({
       model: process.env.AZURE_OPENAI_DEPLOYMENT!,
-      max_tokens: 120,
+      max_tokens: 150,
       temperature: 0.7,
-      messages: [{ role: "user", content: insightPrompt }],
+      messages: [
+        { role: "system" as const, content: systemPrompt },
+        { role: "user"   as const, content: userMessage },
+      ],
     })
     const insight = res.choices[0]?.message?.content?.trim() ?? null
+    console.log("[insight] finish_reason:", res.choices[0]?.finish_reason)
     console.log("[insight] generated:", insight)
     return insight
-  } catch {
+  } catch (err) {
+    console.error("[insight] error:", err)
     return null
   }
 }
@@ -217,7 +279,7 @@ export async function POST(request: NextRequest) {
 
   const [newScore, bloodInsight] = await Promise.all([
     recalculateScore(user.id, serviceClient),
-    generateBloodInsight(savedRow ?? {}),
+    generateBloodInsight(user.id, supabase, savedRow ?? {}),
   ])
 
   if (bloodInsight) {
