@@ -895,7 +895,7 @@ export function ScoreWheel({
       {/* INSIGHTS */}
       <div style={fadeUp("0.32s")}>
         <Insights
-          sleepConnected={sleepConnected} hasBlood={hasBlood} oralActive={oralActive}
+          sleepConnected={sleepConnected} hasBlood={hasBlood} oralActive={oralActive} lifestyleActive={!!lifestyleData}
           sleepHrv={sleepData?.hrv} sleepDeepPct={sleepData?.deepPct}
           sleepEfficiency={sleepData?.efficiency}
           bloodHsCrp={bloodData?.hsCRP} bloodApoB={bloodData?.apoB}
