@@ -13,6 +13,10 @@ function isAdmin(userId: string): boolean {
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  console.log('[admin-post] session user id:', user?.id)
+  console.log('[admin-post] session user email:', user?.email)
+  console.log('[admin-post] ADMIN_USER_IDS env:', process.env.ADMIN_USER_IDS)
+  console.log('[admin-post] trimmed ids:', process.env.ADMIN_USER_IDS?.split(',').map(s => s.trim()))
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   console.log('[admin-auth] user id:', user.id)
   console.log('[admin-auth] allowed ids:', process.env.ADMIN_USER_IDS)
