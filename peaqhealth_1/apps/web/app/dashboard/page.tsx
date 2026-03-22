@@ -2,8 +2,6 @@ import { redirect } from "next/navigation"
 import { createClient } from "../../lib/supabase/server"
 import { DashboardClient } from "./dashboard-client"
 import type { ScoreWheelProps } from "../components/score-wheel"
-import { parseOralMicrobiome } from "@peaq/score-engine"
-import { MOCK_ORAL_DYSBIOTIC } from "@peaq/score-engine/oral-mock-data"
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -54,9 +52,7 @@ export default async function DashboardPage() {
     else labFreshness = 'expired'
   }
 
-  // TODO: remove mock fallback before launch
-  const mockOral = parseOralMicrobiome(MOCK_ORAL_DYSBIOTIC)
-  const oralSub = snapshot?.oral_sub ?? (oral ? 0 : mockOral.total)
+  const oralSub = snapshot?.oral_sub ?? 0
 
   const score = Number(snapshot?.score ?? 0)
   const breakdown = {
@@ -75,7 +71,7 @@ export default async function DashboardPage() {
     lastSyncRequestedAt:   (wearable?.last_sync_requested_at as string | null) ?? null,
     sleepConnected: !!wearable || Number(snapshot?.sleep_sub ?? 0) > 0,
     labFreshness,
-    oralActive: !!oral || true, // TODO: remove mock fallback before launch
+    oralActive: !!oral,
     sleepData: wearable ? {
       deepPct:    wearable.deep_sleep_pct ?? 0,
       hrv:        wearable.hrv_rmssd ?? 0,
@@ -109,17 +105,10 @@ export default async function DashboardPage() {
     oralData: oral ? {
       shannonDiversity:   oral.shannon_diversity ?? 0,
       nitrateReducersPct: oral.nitrate_reducers_pct ?? 0,
-      periodontPathPct:   oral.periodont_path_pct ?? 0,
+      periodontPathPct:   oral.periodontopathogen_pct ?? 0,
       osaTaxaPct:         oral.osa_taxa_pct ?? 0,
       reportDate:         oral.report_date ?? "",
-    } : {
-      // TODO: remove mock fallback before launch
-      shannonDiversity:   mockOral.shannonDiversity,
-      nitrateReducersPct: mockOral.nitrateReducerPct,
-      periodontPathPct:   mockOral.pGingivalisPct,
-      osaTaxaPct:         mockOral.prevotellaPct,
-      reportDate:         MOCK_ORAL_DYSBIOTIC.collection_date,
-    },
+    } : undefined,
     lifestyleData: lifestyle ? {
       exerciseLevel:   (lifestyle.exercise_level    as string) ?? "sedentary",
       brushingFreq:    (lifestyle.brushing_freq     as string) ?? "once",
