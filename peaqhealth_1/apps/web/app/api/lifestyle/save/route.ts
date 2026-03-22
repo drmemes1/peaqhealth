@@ -15,9 +15,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
   }
 
+  function toBoolean(val: unknown): boolean | null {
+    if (val === true  || val === "yes") return true
+    if (val === false || val === "no")  return false
+    return null // "na", undefined, null → null
+  }
+
   const { error: upsertErr } = await supabase
     .from("lifestyle_records")
-    .upsert({ ...row, user_id: user.id }, { onConflict: "user_id" })
+    .upsert({
+      ...row,
+      user_id:           user.id,
+      hypertension_dx:   toBoolean(row.hypertension_dx),
+      on_bp_meds:        toBoolean(row.on_bp_meds),
+      on_statins:        toBoolean(row.on_statins),
+      on_diabetes_meds:  toBoolean(row.on_diabetes_meds),
+      family_history_cvd: toBoolean(row.family_history_cvd),
+    }, { onConflict: "user_id" })
 
   if (upsertErr) {
     console.error("[lifestyle/save] upsert error:", upsertErr.message)
