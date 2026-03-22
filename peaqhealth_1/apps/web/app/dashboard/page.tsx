@@ -58,7 +58,8 @@ export default async function DashboardPage() {
   const breakdown = {
     sleepSub:        snapshot?.sleep_sub ?? 0,
     bloodSub:        snapshot?.blood_sub ?? 0,
-    oralSub:         snapshot?.oral_sub ?? 0,
+    // TODO: remove mock fallback before launch
+    oralSub:         snapshot?.oral_sub ?? (oral ? 0 : parseOralMicrobiome(MOCK_ORAL_DYSBIOTIC).total),
     lifestyleSub:    snapshot?.lifestyle_sub ?? 0,
   }
 
