@@ -2,6 +2,8 @@ import { redirect } from "next/navigation"
 import { createClient } from "../../lib/supabase/server"
 import { DashboardClient } from "./dashboard-client"
 import type { ScoreWheelProps } from "../components/score-wheel"
+import { parseOralMicrobiome } from "@peaq/score-engine"
+import { MOCK_ORAL_DYSBIOTIC } from "@peaq/score-engine/oral-mock-data"
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -106,7 +108,17 @@ export default async function DashboardPage() {
       periodontPathPct:   oral.periodont_path_pct ?? 0,
       osaTaxaPct:         oral.osa_taxa_pct ?? 0,
       reportDate:         oral.report_date ?? "",
-    } : undefined,
+    } : (() => {
+      // TODO: remove mock fallback before launch
+      const mock = parseOralMicrobiome(MOCK_ORAL_DYSBIOTIC)
+      return {
+        shannonDiversity:   mock.shannonDiversity,
+        nitrateReducersPct: mock.nitrateReducerPct,
+        periodontPathPct:   mock.pGingivalisPct,
+        osaTaxaPct:         mock.prevotellaPct,
+        reportDate:         MOCK_ORAL_DYSBIOTIC.collection_date,
+      }
+    })(),
     lifestyleData: lifestyle ? {
       exerciseLevel:   (lifestyle.exercise_level    as string) ?? "sedentary",
       brushingFreq:    (lifestyle.brushing_freq     as string) ?? "once",
