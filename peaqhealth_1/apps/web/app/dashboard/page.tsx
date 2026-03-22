@@ -54,12 +54,15 @@ export default async function DashboardPage() {
     else labFreshness = 'expired'
   }
 
+  // TODO: remove mock fallback before launch
+  const mockOral = parseOralMicrobiome(MOCK_ORAL_DYSBIOTIC)
+  const oralSub = snapshot?.oral_sub ?? (oral ? 0 : mockOral.total)
+
   const score = Number(snapshot?.score ?? 0)
   const breakdown = {
     sleepSub:        snapshot?.sleep_sub ?? 0,
     bloodSub:        snapshot?.blood_sub ?? 0,
-    // TODO: remove mock fallback before launch
-    oralSub:         snapshot?.oral_sub ?? (oral ? 0 : parseOralMicrobiome(MOCK_ORAL_DYSBIOTIC).total),
+    oralSub,
     lifestyleSub:    snapshot?.lifestyle_sub ?? 0,
   }
 
@@ -109,17 +112,14 @@ export default async function DashboardPage() {
       periodontPathPct:   oral.periodont_path_pct ?? 0,
       osaTaxaPct:         oral.osa_taxa_pct ?? 0,
       reportDate:         oral.report_date ?? "",
-    } : (() => {
+    } : {
       // TODO: remove mock fallback before launch
-      const mock = parseOralMicrobiome(MOCK_ORAL_DYSBIOTIC)
-      return {
-        shannonDiversity:   mock.shannonDiversity,
-        nitrateReducersPct: mock.nitrateReducerPct,
-        periodontPathPct:   mock.pGingivalisPct,
-        osaTaxaPct:         mock.prevotellaPct,
-        reportDate:         MOCK_ORAL_DYSBIOTIC.collection_date,
-      }
-    })(),
+      shannonDiversity:   mockOral.shannonDiversity,
+      nitrateReducersPct: mockOral.nitrateReducerPct,
+      periodontPathPct:   mockOral.pGingivalisPct,
+      osaTaxaPct:         mockOral.prevotellaPct,
+      reportDate:         MOCK_ORAL_DYSBIOTIC.collection_date,
+    },
     lifestyleData: lifestyle ? {
       exerciseLevel:   (lifestyle.exercise_level    as string) ?? "sedentary",
       brushingFreq:    (lifestyle.brushing_freq     as string) ?? "once",
