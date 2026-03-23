@@ -186,28 +186,113 @@ const INSIGHT_COPY: Record<string, { title: string; body: string; panels: string
   alcoholPoorSleep:       { title: "Alcohol × Sleep", body: "Alcohol intake above 14 drinks/week directly fragments sleep architecture.", panels: ["Lifestyle", "Sleep"] },
 }
 
+const PANEL_COLORS: Record<string, string> = {
+  "Oral":      "#2D6A4F",
+  "Blood":     "#C0392B",
+  "Sleep":     "#4A7FB5",
+  "Lifestyle": "#B8860B",
+}
+
+type ComputedInteraction = {
+  key: string
+  title: string
+  body: string
+  panels: string[]
+  severity: "high" | "medium"
+}
+
 function CrossPanelInteractions({
   oralKitStatus = "none",
   interactionsFired = [],
+  oralActive = false,
+  oralData,
+  bloodData,
+  sleepData,
   fadeUpFn,
 }: {
   oralKitStatus?: "none" | "ordered" | "complete"
   interactionsFired?: string[]
+  oralActive?: boolean
+  oralData?: ScoreWheelProps["oralData"]
+  bloodData?: ScoreWheelProps["bloodData"]
+  sleepData?: ScoreWheelProps["sleepData"]
   fadeUpFn: (d: string) => React.CSSProperties
 }) {
   const [open, setOpen] = useState(true)
   const [showAll, setShowAll] = useState(false)
   const [hoverToggle, setHoverToggle] = useState(false)
 
+  // Compute interactions client-side from actual data values
+  // oralData pct values are already *100 (13% stored as 0.13 in DB → 13 here)
+  // sleepData deepPct/remPct/efficiency are 0–100 scale
+  const computed: ComputedInteraction[] = []
+  if (oralActive && oralData) {
+    // 5 first so it appears at top if all three panels fire
+    if (bloodData && sleepData &&
+        oralData.periodontPathPct > 2 && bloodData.hsCRP > 1.0 && sleepData.deepPct < 20) {
+      computed.push({
+        key: "tripleSignal",
+        title: "Triple signal — systemic dysbiosis",
+        body: "You have concurrent signals across all three biological systems — oral pathogens, systemic inflammation, and disrupted deep sleep. This triple pattern is associated with accelerated biological aging.",
+        panels: ["Oral", "Blood", "Sleep"],
+        severity: "high",
+      })
+    }
+    if (bloodData &&
+        oralData.periodontPathPct > 2 &&
+        (bloodData.hsCRP > 1.0 || bloodData.ldl > 100 || bloodData.apoB > 80)) {
+      computed.push({
+        key: "periodontCV",
+        title: "Periodontal pathogens & cardiovascular risk",
+        body: "Elevated periodontal pathogens combined with your cardiovascular markers suggest systemic inflammation may be originating in your mouth. P. gingivalis has been found in coronary plaques.",
+        panels: ["Oral", "Blood"],
+        severity: "high",
+      })
+    }
+    if (sleepData &&
+        oralData.osaTaxaPct > 5 &&
+        (sleepData.deepPct < 20 || sleepData.remPct < 20)) {
+      computed.push({
+        key: "osaSleep",
+        title: "OSA-associated bacteria & sleep quality",
+        body: "Your oral microbiome shows elevated OSA-associated taxa alongside suboptimal deep or REM sleep. Oral dysbiosis is independently associated with obstructive sleep apnea risk.",
+        panels: ["Oral", "Sleep"],
+        severity: "high",
+      })
+    }
+    if (oralData.nitrateReducersPct < 5) {
+      computed.push({
+        key: "lowNitrateCV",
+        title: "Nitrate pathway & blood pressure resilience",
+        body: "Low nitrate-reducing bacteria reduce your body's ability to produce nitric oxide — a key vasodilator. This may silently affect cardiovascular resilience even when lipid panels look normal.",
+        panels: ["Oral", "Blood"],
+        severity: "medium",
+      })
+    }
+    if (bloodData && sleepData &&
+        bloodData.hsCRP > 1.0 &&
+        (sleepData.efficiency < 85 || sleepData.deepPct < 20)) {
+      computed.push({
+        key: "inflammSleep",
+        title: "Inflammation & sleep fragmentation",
+        body: "Elevated hsCRP alongside fragmented sleep creates a bidirectional cycle — inflammation disrupts sleep architecture, and poor sleep elevates inflammatory markers.",
+        panels: ["Blood", "Sleep"],
+        severity: "medium",
+      })
+    }
+  }
+
+  const hasComputed = oralActive && computed.length > 0
   const fired = interactionsFired.filter(k => INSIGHT_COPY[k])
-  const hasFired = fired.length > 0
-  const state = oralKitStatus === "none" ? "A" : oralKitStatus === "ordered" ? "B" : hasFired ? "D" : "C"
 
   const collapsedSummary =
-    state === "A" ? "🔒 Unlock with oral kit  →  Order now" :
-    state === "B" ? "⏳ Kit processing — insights unlocking soon" :
-    state === "C" ? "✓ No patterns detected" :
-    `⚡ ${fired.length} pattern${fired.length !== 1 ? "s" : ""} detected — ${INSIGHT_COPY[fired[0]]?.title}`
+    oralActive && computed.length > 0
+      ? `⚡ ${computed.length} pattern${computed.length !== 1 ? "s" : ""} — ${computed[0].title}`
+      : oralActive
+      ? "✓ No patterns detected"
+      : oralKitStatus === "none"
+      ? "🔒 Unlock with oral kit  →  Order now"
+      : "⏳ Kit processing — insights unlocking soon"
 
   return (
     <div style={fadeUpFn("0.10s")}>
@@ -248,11 +333,75 @@ function CrossPanelInteractions({
           </div>
         </div>
 
-        {/* Body — animated open/close */}
+        {/* Body */}
         <div style={{ maxHeight: open ? 2000 : 0, opacity: open ? 1 : 0, overflow: "hidden", transition: "max-height 0.3s ease, opacity 0.3s ease" }}>
 
-          {/* STATE A — no kit ordered */}
-          {state === "A" && (
+          {/* Oral active — show computed interactions */}
+          {oralActive && (
+            hasComputed ? (
+              <div>
+                <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", color: "#B8860B", margin: "0 0 10px" }}>
+                  Patterns detected:
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {computed.slice(0, showAll ? undefined : 3).map(interaction => (
+                    <div key={interaction.key} style={{
+                      background: interaction.severity === "high" ? "rgba(192,57,43,0.03)" : "rgba(184,134,11,0.04)",
+                      borderLeft: `3px solid ${interaction.severity === "high" ? "#C0392B" : "#B8860B"}`,
+                      borderRadius: "0 4px 4px 0", padding: "12px 14px",
+                    }}>
+                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 6, gap: 8 }}>
+                        <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, fontWeight: 600, color: "var(--ink)", lineHeight: 1.3 }}>
+                          {interaction.title}
+                        </span>
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, flexShrink: 0 }}>
+                          <span style={{
+                            fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em",
+                            padding: "2px 6px", borderRadius: 3,
+                            background: interaction.severity === "high" ? "#FEE2E2" : "rgba(184,134,11,0.12)",
+                            color: interaction.severity === "high" ? "#991B1B" : "#92400E",
+                          }}>
+                            {interaction.severity}
+                          </span>
+                          <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+                            {interaction.panels.map(p => (
+                              <span key={p} style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                                <span style={{ width: 6, height: 6, borderRadius: "50%", background: PANEL_COLORS[p] ?? "#B8860B", display: "inline-block", flexShrink: 0 }} />
+                                <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, color: PANEL_COLORS[p] ?? "#B8860B" }}>{p}</span>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "rgba(20,20,16,0.6)", margin: 0, lineHeight: 1.5 }}>
+                        {interaction.body}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                {!showAll && computed.length > 3 && (
+                  <button
+                    onClick={e => { e.stopPropagation(); setShowAll(true) }}
+                    style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "#B8860B", background: "none", border: "none", cursor: "pointer", marginTop: 10, padding: 0 }}
+                  >
+                    View all {computed.length} patterns →
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div>
+                <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", fontSize: 18, color: "rgba(20,20,16,0.45)", margin: "0 0 6px", lineHeight: 1.3 }}>
+                  No patterns detected — your panels look balanced.
+                </p>
+                <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "rgba(20,20,16,0.4)", margin: 0, lineHeight: 1.5 }}>
+                  We continuously monitor your data for cross-panel signals. Check back as your data updates.
+                </p>
+              </div>
+            )
+          )}
+
+          {/* No oral data — kit not ordered */}
+          {!oralActive && oralKitStatus === "none" && (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1 }}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
@@ -283,8 +432,8 @@ function CrossPanelInteractions({
             </div>
           )}
 
-          {/* STATE B — kit ordered, awaiting results */}
-          {state === "B" && (
+          {/* No oral data — kit processing */}
+          {!oralActive && oralKitStatus === "ordered" && (
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#B8860B", flexShrink: 0, animation: "cpPulse 2s infinite", display: "inline-block" }} />
               <div>
@@ -298,54 +447,28 @@ function CrossPanelInteractions({
             </div>
           )}
 
-          {/* STATE C — oral complete, nothing fired */}
-          {state === "C" && (
-            <div>
-              <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", fontSize: 18, color: "rgba(20,20,16,0.45)", margin: "0 0 6px", lineHeight: 1.3 }}>
-                No patterns detected — your panels look balanced.
-              </p>
-              <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "rgba(20,20,16,0.4)", margin: 0, lineHeight: 1.5 }}>
-                We continuously monitor your data for cross-panel signals. Check back as your data updates.
-              </p>
-            </div>
-          )}
-
-          {/* STATE D — interactions fired */}
-          {state === "D" && (
-            <div>
-              <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", color: "#B8860B", margin: "0 0 10px" }}>
-                Patterns detected:
-              </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {fired.slice(0, showAll ? undefined : 3).map(key => {
-                  const insight = INSIGHT_COPY[key]!
-                  return (
-                    <div key={key} style={{ background: "rgba(184,134,11,0.04)", borderLeft: "3px solid #B8860B", borderRadius: "0 4px 4px 0", padding: "12px 14px" }}>
-                      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 4, gap: 8 }}>
-                        <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, fontWeight: 600, color: "#B8860B" }}>
-                          ⚡ {insight.title}
-                        </span>
-                        <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
-                          {insight.panels.map(p => (
-                            <span key={p} style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, fontVariant: "small-caps", letterSpacing: "0.05em", color: "#B8860B" }}>{p}</span>
-                          ))}
-                        </div>
+          {/* Legacy server-fired interactions (fallback) */}
+          {!oralActive && fired.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {fired.map(key => {
+                const insight = INSIGHT_COPY[key]!
+                return (
+                  <div key={key} style={{ background: "rgba(184,134,11,0.04)", borderLeft: "3px solid #B8860B", borderRadius: "0 4px 4px 0", padding: "12px 14px" }}>
+                    <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 4, gap: 8 }}>
+                      <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, fontWeight: 600, color: "#B8860B" }}>⚡ {insight.title}</span>
+                      <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                        {insight.panels.map(p => (
+                          <span key={p} style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                            <span style={{ width: 6, height: 6, borderRadius: "50%", background: PANEL_COLORS[p] ?? "#B8860B", display: "inline-block" }} />
+                            <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, color: PANEL_COLORS[p] ?? "#B8860B" }}>{p}</span>
+                          </span>
+                        ))}
                       </div>
-                      <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "rgba(20,20,16,0.6)", margin: 0, lineHeight: 1.5 }}>
-                        {insight.body}
-                      </p>
                     </div>
-                  )
-                })}
-              </div>
-              {!showAll && fired.length > 3 && (
-                <button
-                  onClick={e => { e.stopPropagation(); setShowAll(true) }}
-                  style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "#B8860B", background: "none", border: "none", cursor: "pointer", marginTop: 10, padding: 0 }}
-                >
-                  View all {fired.length} patterns →
-                </button>
-              )}
+                    <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "rgba(20,20,16,0.6)", margin: 0, lineHeight: 1.5 }}>{insight.body}</p>
+                  </div>
+                )
+              })}
             </div>
           )}
 
@@ -650,6 +773,10 @@ export function ScoreWheel({
       <CrossPanelInteractions
         oralKitStatus={oralKitStatus}
         interactionsFired={interactionsFired}
+        oralActive={oralActive}
+        oralData={oralData}
+        bloodData={bloodData}
+        sleepData={sleepData}
         fadeUpFn={fadeUp}
       />
 
