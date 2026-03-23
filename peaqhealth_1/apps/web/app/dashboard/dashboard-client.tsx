@@ -162,7 +162,7 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
   return (
     <div className="min-h-svh bg-off-white">
       <Nav />
-      <main className="mx-auto max-w-[720px] px-6 py-10">
+      <main className="mx-auto max-w-[720px] px-6 pt-14 pb-10">
 
         {/* Sync bar — only shown when wearable is connected */}
         {sleepConnected && (

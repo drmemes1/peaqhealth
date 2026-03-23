@@ -2,13 +2,14 @@
 import { useEffect, useRef } from "react"
 
 // ─── Layout constants ────────────────────────────────────────────────────────
-const BASELINE = 210
-const MAX_H    = 178   // 100% score → apex at y=32, leaving room for score label
-const HALF_W   = 46
-const CENTERS: [number, number, number, number] = [112, 224, 336, 448]
-const LIFESTYLE_CAP = 0.65  // lifestyle (13 pts) capped at 65% of visual height
-const DURATION = 700   // peak rise duration ms
-const STAGGER  = 120   // ms between peaks
+// ViewBox 700 × 295; peaks centered in 40–660 range
+const BASELINE = 228
+const MAX_H    = 172   // 100% ratio → apex y=56; score label sits at y=40 comfortably
+const HALF_W   = 68    // base width 136px; 155px spacing → 19px gaps between peaks
+const CENTERS: readonly [number, number, number, number] = [120, 275, 430, 585]
+const LIFESTYLE_CAP = 0.65   // lifestyle (13 pts) visually capped at 65% of max height
+const DURATION = 700         // ms each peak takes to rise
+const STAGGER  = 130         // ms between peaks
 
 const PANELS = [
   { key: "sleep",     label: "SLEEP",     max: 27, color: "#4A7FB5" },
@@ -21,7 +22,6 @@ function easeOutCubic(t: number): number {
   return 1 - Math.pow(1 - t, 3)
 }
 
-// Catmull-Rom smooth path through 4 points
 function catmullRomPath(pts: [number, number][]): string {
   if (pts.length < 2) return ""
   const ext: [number, number][] = [
@@ -34,7 +34,7 @@ function catmullRomPath(pts: [number, number][]): string {
   for (let i = 1; i < pts.length; i++) {
     const [p0, p1, p2, p3] = [ext[i-1], ext[i], ext[i+1], ext[i+2]]
     const s = 1 / 3
-    d += ` C ${p1[0] + (p2[0]-p0[0])*s},${p1[1] + (p2[1]-p0[1])*s} ${p2[0] - (p3[0]-p1[0])*s},${p2[1] - (p3[1]-p1[1])*s} ${p2[0]},${p2[1]}`
+    d += ` C ${p1[0]+(p2[0]-p0[0])*s},${p1[1]+(p2[1]-p0[1])*s} ${p2[0]-(p3[0]-p1[0])*s},${p2[1]-(p3[1]-p1[1])*s} ${p2[0]},${p2[1]}`
   }
   return d
 }
@@ -63,9 +63,8 @@ export function PeaksVisualization({
   ]
   const pending = [!sleepConnected, !hasBlood, !oralActive, !hasLifestyle]
 
-  // Final target heights in px
   const finalHeights = rawScores.map((s, i) => {
-    if (pending[i] || s <= 0) return 8   // stub for inactive panel
+    if (pending[i] || s <= 0) return 10
     const ratio = s / PANELS[i].max
     const h = ratio * MAX_H
     return i === 3 ? Math.min(h, LIFESTYLE_CAP * MAX_H) : h
@@ -81,22 +80,20 @@ export function PeaksVisualization({
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = []
 
-    // Animate each peak from flat → full height using RAF
     CENTERS.forEach((cx, i) => {
       const el = polyRefs.current[i]
       if (!el) return
 
-      // Flat starting state
       el.setAttribute("points", `${cx - HALF_W},${BASELINE} ${cx},${BASELINE} ${cx + HALF_W},${BASELINE}`)
 
       const id = setTimeout(() => {
-        const start = performance.now()
+        const start  = performance.now()
         const endH   = finalHeights[i]
-        const target = el  // captured, non-null
+        const target = el
 
         function frame() {
-          const t    = Math.min((performance.now() - start) / DURATION, 1)
-          const ease = easeOutCubic(t)
+          const t     = Math.min((performance.now() - start) / DURATION, 1)
+          const ease  = easeOutCubic(t)
           const apexY = BASELINE - endH * ease
           target.setAttribute("points", `${cx - HALF_W},${BASELINE} ${cx},${apexY} ${cx + HALF_W},${BASELINE}`)
           if (t < 1) requestAnimationFrame(frame)
@@ -107,105 +104,108 @@ export function PeaksVisualization({
       timers.push(id)
     })
 
-    // Reveal curve + dots + score/label decorations after all peaks finish
-    const revealAt = 100 + 3 * STAGGER + DURATION + 80
-    const revealId = setTimeout(() => {
+    // Reveal curve + decorations after all peaks finish
+    const revealAt = 100 + 3 * STAGGER + DURATION + 100
+    timers.push(setTimeout(() => {
       if (curveRef.current) curveRef.current.style.opacity = "1"
       decorRefs.current.forEach(el => { if (el) el.style.opacity = "1" })
-    }, revealAt)
-    timers.push(revealId)
+    }, revealAt))
 
     return () => timers.forEach(clearTimeout)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <svg
-      viewBox="0 0 560 260"
+      viewBox="0 0 700 295"
       width="100%"
-      style={{ maxWidth: 560, display: "block", overflow: "visible" }}
+      style={{ display: "block", overflow: "visible" }}
       aria-label="Score breakdown peaks"
     >
       <defs>
         {PANELS.map(p => (
           <linearGradient key={p.key} id={`pg-${p.key}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stopColor={p.color} stopOpacity={0.80} />
-            <stop offset="100%" stopColor={p.color} stopOpacity={0.05} />
+            <stop offset="0%"   stopColor={p.color} stopOpacity={0.62} />
+            <stop offset="75%"  stopColor={p.color} stopOpacity={0.14} />
+            <stop offset="100%" stopColor={p.color} stopOpacity={0.03} />
           </linearGradient>
         ))}
       </defs>
 
       {/* Baseline rule */}
-      <line x1={44} y1={BASELINE} x2={516} y2={BASELINE}
-        stroke="var(--ink-12)" strokeWidth={0.5} />
+      <line x1={36} y1={BASELINE} x2={664} y2={BASELINE}
+        stroke="rgba(20,20,16,0.10)" strokeWidth={0.75} />
 
       {PANELS.map((p, i) => {
-        const cx   = CENTERS[i]
-        const isPending = pending[i]
-        const score = rawScores[i]
-        const apexY = apexYs[i]
+        const cx         = CENTERS[i]
+        const isPending  = pending[i]
+        const score      = rawScores[i]
+        const apexY      = apexYs[i]
+        const displayVal = isPending || score <= 0
+          ? "—"
+          : Number.isInteger(score) ? String(score) : score.toFixed(1)
 
         return (
           <g key={p.key}>
-            {/* Peak polygon — animated via RAF */}
+            {/* Peak polygon — animated */}
             <polygon
               ref={el => { polyRefs.current[i] = el }}
               points={`${cx - HALF_W},${BASELINE} ${cx},${BASELINE} ${cx + HALF_W},${BASELINE}`}
               fill={isPending ? "none" : `url(#pg-${p.key})`}
               stroke={p.color}
-              strokeWidth={1.5}
+              strokeWidth={1.25}
               strokeLinejoin="round"
-              strokeDasharray={isPending ? "5 4" : undefined}
-              opacity={isPending ? 0.3 : 1}
-              style={{ cursor: "default", transition: "opacity 0.18s ease" }}
+              strokeDasharray={isPending ? "6 4" : undefined}
+              opacity={isPending ? 0.28 : 1}
+              style={{ cursor: "default", transition: "opacity 0.2s ease" }}
               onMouseEnter={e => {
-                e.currentTarget.style.opacity = isPending ? "0.3" : "0.65"
+                e.currentTarget.style.opacity = isPending ? "0.28" : "0.62"
                 onPeakHover?.(p.key)
               }}
               onMouseLeave={e => {
-                e.currentTarget.style.opacity = isPending ? "0.3" : "1"
+                e.currentTarget.style.opacity = isPending ? "0.28" : "1"
                 onPeakHover?.(null)
               }}
             />
 
-            {/* Apex dot + score number + panel label — all fade in after animation */}
+            {/* Apex dot + score + labels — fade in after animation */}
             <g
               ref={el => { decorRefs.current[i] = el }}
-              style={{ opacity: 0, transition: "opacity 420ms ease" }}
+              style={{ opacity: 0, transition: "opacity 500ms ease" }}
             >
               {/* Apex dot */}
-              <circle cx={cx} cy={apexY} r={3.5} fill={p.color} />
+              <circle cx={cx} cy={apexY} r={4} fill={p.color} />
 
               {/* Score value above apex */}
               <text
-                x={cx} y={apexY - 11}
+                x={cx} y={apexY - 14}
                 textAnchor="middle"
                 fontFamily="'Cormorant Garamond', Georgia, serif"
-                fontSize={17}
+                fontSize={20}
                 fontWeight={300}
                 fill={p.color}
               >
-                {isPending ? "—" : (Number.isInteger(score) ? score : Number(score.toFixed(1)))}
+                {displayVal}
               </text>
 
               {/* Panel name below baseline */}
               <text
-                x={cx} y={BASELINE + 18}
+                x={cx} y={BASELINE + 22}
                 textAnchor="middle"
                 fontFamily="var(--font-body, 'Instrument Sans', sans-serif)"
-                fontSize={8.5}
-                letterSpacing="0.13em"
-                fill="var(--ink-60)"
+                fontSize={9}
+                letterSpacing="0.14em"
+                fill="rgba(20,20,16,0.50)"
               >
                 {p.label}
               </text>
 
               {/* /max */}
               <text
-                x={cx} y={BASELINE + 30}
+                x={cx} y={BASELINE + 36}
                 textAnchor="middle"
                 fontFamily="var(--font-body, 'Instrument Sans', sans-serif)"
-                fontSize={8.5}
-                fill="var(--ink-30)"
+                fontSize={9}
+                fill="rgba(20,20,16,0.28)"
               >
                 /{p.max}
               </text>
@@ -214,15 +214,15 @@ export function PeaksVisualization({
         )
       })}
 
-      {/* Skyline dashed curve connecting all 4 apexes */}
+      {/* Skyline dashed curve */}
       <path
         ref={curveRef}
         d={curvePath}
         fill="none"
-        stroke="var(--ink-30)"
+        stroke="rgba(20,20,16,0.20)"
         strokeWidth={1}
-        strokeDasharray="5 4"
-        style={{ opacity: 0, transition: "opacity 400ms ease" }}
+        strokeDasharray="5 5"
+        style={{ opacity: 0, transition: "opacity 500ms ease" }}
       />
     </svg>
   )

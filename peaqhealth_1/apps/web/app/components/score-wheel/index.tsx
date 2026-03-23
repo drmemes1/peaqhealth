@@ -1118,31 +1118,31 @@ export function ScoreWheel({
   const exerciseLabel: Record<string, string> = { active: "Active (4+ days/wk)", moderate: "Moderate (2–3 days/wk)", light: "Light (1 day/wk)", sedentary: "Sedentary" }
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: "0 0 64px", display: "flex", flexDirection: "column", gap: 40 }}>
+    <div style={{ maxWidth: 720, margin: "0 auto", padding: "0 0 80px", display: "flex", flexDirection: "column", gap: 52 }}>
 
       {/* PEAKS */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0, ...fadeUp("0s") }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", ...fadeUp("0s") }}>
         {/* Score number */}
         <span
           className={scorePulse ? "score-pulse" : ""}
           style={{
             fontFamily: "'Cormorant Garamond', Georgia, serif",
-            fontSize: 80, fontWeight: 300, lineHeight: 1,
-            letterSpacing: "-0.02em", color: "var(--ink)", display: "block",
+            fontSize: 96, fontWeight: 300, lineHeight: 1,
+            letterSpacing: "-0.025em", color: "var(--ink)", display: "block",
           }}
         >
           {displayScore}
         </span>
         <p style={{
           fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-          fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em",
-          color: "var(--ink-30)", margin: "4px 0 16px",
+          fontSize: 10, textTransform: "uppercase", letterSpacing: "0.18em",
+          color: "var(--ink-30)", margin: "8px 0 0",
         }}>
           YOUR PEAQ SCORE · {new Date().toLocaleString("en-US", { month: "long", year: "numeric" }).toUpperCase()}
         </p>
 
         {/* Mountain peaks chart */}
-        <div style={{ width: "100%", maxWidth: 560 }}>
+        <div style={{ width: "100%", marginTop: 40 }}>
           <PeaksVisualization
             breakdown={breakdown}
             sleepConnected={sleepConnected}
@@ -1154,13 +1154,13 @@ export function ScoreWheel({
         </div>
 
         {/* Legend */}
-        <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap", justifyContent: "center", marginTop: 4 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap", justifyContent: "center", marginTop: 20 }}>
           {LEGEND.map(({ label, color, active }) => (
-            <div key={label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <div key={label} style={{ display: "flex", alignItems: "center", gap: 7 }}>
               {active ? (
                 <div style={{ width: 7, height: 7, borderRadius: "50%", background: color }} />
               ) : (
-                <div style={{ width: 7, height: 7, borderRadius: "50%", border: `1.5px dashed ${color}`, opacity: 0.5 }} />
+                <div style={{ width: 7, height: 7, borderRadius: "50%", border: `1.5px dashed ${color}`, opacity: 0.45 }} />
               )}
               <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "var(--ink-60)" }}>
                 {label}
@@ -1171,7 +1171,7 @@ export function ScoreWheel({
 
         {/* Data completeness */}
         {peaqPercent !== undefined && (
-          <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "var(--ink-60)", margin: "10px 0 0" }}>
+          <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "var(--ink-60)", margin: "12px 0 0" }}>
             {peaqPercent}% complete
           </p>
         )}
