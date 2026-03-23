@@ -214,6 +214,11 @@ Rules you must follow:
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 30000)
 
+  // HIPAA: PHI-free payload — numeric values only.
+  // Sent:     anonymous numeric biomarkers, lab collection date (date of blood draw — not DOB),
+  //           lab facility name (not patient name), age range (not exact DOB/age),
+  //           biological sex, lifestyle categories, wearable metrics.
+  // NOT sent: user_id, name, email, exact date of birth, address, or device identifier.
   let raw: string
   try {
     const resp = await openai.chat.completions.create({
