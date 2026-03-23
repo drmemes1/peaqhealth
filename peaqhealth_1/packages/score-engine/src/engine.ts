@@ -295,7 +295,7 @@ function scoreVO2Max(vo2?: number, sex?: string): number {
     if (vo2 > 28) return 0.5
     return 0
   }
-  // male or unspecified — ACSM 10th ed. male norms: above-average ≥50, average 44–50, below-average 35–44
+  // male, unspecified, or prefer_not_to_say — conservative ACSM 10th ed. male norms: above-average ≥50, average 44–50, below-average 35–44
   if (vo2 > 50) return 1
   if (vo2 > 44) return 0.75
   if (vo2 > 35) return 0.5
