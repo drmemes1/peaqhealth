@@ -914,8 +914,12 @@ export function runTests(): void {
   console.log(`Penalty test — 45F lifestyleSub: ${p45F.breakdown.lifestyleSub} (expect between 25F and 45M — pre-menopausal × 0.75)`)
   console.assert(p25F.breakdown.lifestyleSub > p45M.breakdown.lifestyleSub, "25F should outscore 45M due to lower age multiplier")
   console.assert(p45F.breakdown.lifestyleSub > p45M.breakdown.lifestyleSub, "45F should outscore 45M due to pre-menopausal sex multiplier")
+  console.assert(p45F.breakdown.lifestyleSub < p25F.breakdown.lifestyleSub, "45F should score less than 25F — higher age multiplier penalty")
 
   console.log("\n=== All tests complete ===")
 }
 
-runTests()
+// Only run tests when executed directly via: node --import tsx src/engine.ts
+if (process.argv[1]?.endsWith('engine.ts')) {
+  runTests()
+}
