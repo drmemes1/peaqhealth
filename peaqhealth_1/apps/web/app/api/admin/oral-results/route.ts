@@ -36,26 +36,36 @@ export async function POST(request: NextRequest) {
   // Parse OTU data
   const oralScore = parseOralMicrobiome(zymoReport)
 
-  // Upsert oral_kit_orders — creates a row if none exists for this user
-  const { error: upsertError } = await serviceClient
+  // Delete any existing oral data for this user, then insert fresh
+  const { error: deleteError } = await serviceClient
     .from('oral_kit_orders')
-    .upsert({
-      user_id:             targetUserId,
-      kit_code:            kitCode.toUpperCase(),
-      status:              'results_ready',
-      raw_otu_table:       zymoReport.taxonomy,
-      oral_score_snapshot: oralScore,
-      findings_snapshot:   oralScore.findings,
-      shannon_diversity:          oralScore.shannonDiversity,
-      nitrate_reducers_pct:       oralScore.nitrateReducerPct,
-      periodontopathogen_pct:     oralScore.pGingivalisPct,
-      osa_taxa_pct:               oralScore.prevotellaPct,
-      results_date:        new Date().toISOString(),
-      report_date:         new Date().toISOString().split('T')[0],
-    }, { onConflict: 'user_id' })
+    .delete()
+    .eq('user_id', targetUserId)
 
-  if (upsertError) {
-    console.error('[admin-oral] upsert error:', upsertError.message)
+  if (deleteError) {
+    console.error('[admin-oral] delete error:', deleteError.message)
+    return NextResponse.json({ error: 'Failed to clear existing results' }, { status: 500 })
+  }
+
+  const { error: insertError } = await serviceClient
+    .from('oral_kit_orders')
+    .insert({
+      user_id:                targetUserId,
+      kit_code:               kitCode.toUpperCase(),
+      status:                 'results_ready',
+      raw_otu_table:          zymoReport.taxonomy,
+      oral_score_snapshot:    oralScore,
+      findings_snapshot:      oralScore.findings,
+      shannon_diversity:      oralScore.shannonDiversity,
+      nitrate_reducers_pct:   oralScore.nitrateReducerPct,
+      periodontopathogen_pct: oralScore.pGingivalisPct,
+      osa_taxa_pct:           oralScore.prevotellaPct,
+      results_date:           new Date().toISOString(),
+      report_date:            new Date().toISOString().split('T')[0],
+    })
+
+  if (insertError) {
+    console.error('[admin-oral] insert error:', insertError.message)
     return NextResponse.json({ error: 'Failed to save results' }, { status: 500 })
   }
 
