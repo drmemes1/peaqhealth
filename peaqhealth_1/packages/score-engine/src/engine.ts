@@ -311,10 +311,25 @@ function scoreAlcohol(drinks?: number): number {
 }
 
 function medicalHistoryPenalty(ls: LifestyleInputs): number {
+  // Age multiplier: 40–59 is the primary prevention window (ACC/AHA 2019 Pooled Cohort Equations)
+  const age = ls.ageRange
+  const ageMultiplier =
+    age === "18_29"   ? 0.5 :
+    age === "30_39"   ? 1.0 :
+    age === "40_49"   ? 1.5 :
+    age === "50_59"   ? 1.5 :
+    age === "60_69"   ? 1.0 :
+    age === "70_plus" ? 0.5 : 1.0  // default when age not provided
+
+  // Sex multiplier: pre-menopausal females have lower absolute ASCVD risk
+  const isFemale = ls.biologicalSex === "female"
+  const isPreMenopausal = isFemale && (age === "18_29" || age === "30_39" || age === "40_49")
+  const sexMultiplier = isPreMenopausal ? 0.75 : 1.0
+
   let p = 0
-  if (ls.familyHistoryCVD) p += 0.5
-  if (ls.hypertensionDx && !ls.onBPMeds) p += 0.5
-  return p
+  if (ls.familyHistoryCVD === true)                       p += 0.5
+  if (ls.hypertensionDx === true && ls.onBPMeds !== true) p += 0.5
+  return p * ageMultiplier * sexMultiplier
 }
 
 function oralHygieneIndex(brushing: BrushingFreq, flossing: FlossingFreq): PeaqScoreResult["derived"]["oralHygieneIndex"] {
@@ -888,5 +903,19 @@ export function runTests(): void {
   const t7 = calculatePeaqScore(sleepGood, { apoB_mgdL: 75, hsCRP_mgL: 0.8, labCollectionDate: freshDate }, undefined, goodLS)
   console.log(`T7 partial blood: blood=${t7.breakdown.bloodSub.toFixed(1)}/33`)
 
+  // Age/sex penalty tests
+  const penaltyBase = { exerciseLevel: "moderate" as ExerciseLevel, brushingFreq: "twice_plus" as BrushingFreq, flossingFreq: "daily" as FlossingFreq, mouthwashType: "none" as MouthwashType, lastDentalVisit: "within_6mo" as DentalVisit, smokingStatus: "never" as SmokingStatus, knownHypertension: false, knownDiabetes: false, sleepDuration: "7_to_8" as SleepDuration, sleepLatency: "15_to_30min" as SleepLatency, sleepQualSelf: "good" as SleepQualSelf, daytimeFatigue: "sometimes" as DaytimeFatigue, nightWakings: "less_once_wk" as const, sleepMedication: "never" as const, familyHistoryCVD: true, hypertensionDx: true, onBPMeds: false }
+
+  const p25F = calculatePeaqScore(undefined, undefined, undefined, { ...penaltyBase, ageRange: "18_29", biologicalSex: "female" })
+  const p45M = calculatePeaqScore(undefined, undefined, undefined, { ...penaltyBase, ageRange: "40_49", biologicalSex: "male" })
+  const p45F = calculatePeaqScore(undefined, undefined, undefined, { ...penaltyBase, ageRange: "40_49", biologicalSex: "female" })
+  console.log(`Penalty test — 25F lifestyleSub: ${p25F.breakdown.lifestyleSub} (expect higher than 45M below)`)
+  console.log(`Penalty test — 45M lifestyleSub: ${p45M.breakdown.lifestyleSub} (expect lowest — full penalty × 1.5)`)
+  console.log(`Penalty test — 45F lifestyleSub: ${p45F.breakdown.lifestyleSub} (expect between 25F and 45M — pre-menopausal × 0.75)`)
+  console.assert(p25F.breakdown.lifestyleSub > p45M.breakdown.lifestyleSub, "25F should outscore 45M due to lower age multiplier")
+  console.assert(p45F.breakdown.lifestyleSub > p45M.breakdown.lifestyleSub, "45F should outscore 45M due to pre-menopausal sex multiplier")
+
   console.log("\n=== All tests complete ===")
 }
+
+runTests()
