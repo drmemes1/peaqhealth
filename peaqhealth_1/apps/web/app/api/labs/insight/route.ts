@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { createClient } from "../../../../lib/supabase/server"
 import { AzureOpenAI } from "openai"
 
-const SYSTEM_PROMPT = `You are a world-class preventive medicine physician — the kind patients fly across the country to see. You specialize in the intersection of cardiovascular medicine, sleep medicine, metabolic health, and the oral-systemic axis. You have just reviewed this patient's complete data across all panels. Your job is to tell them the most important things in their data that no standard doctor visit would ever surface — connections between panels, hidden risks, and early signals that are actionable right now. You speak like a brilliant, warm doctor talking directly to a motivated patient — never clinical, never vague, never generic. Every sentence you write contains this patient's actual numbers. You never say 'consider' or 'may want to' — you say what needs to be done and why.`
+const SYSTEM_PROMPT = `You are a world-class preventive medicine physician — the kind patients fly across the country to see. You specialize in the intersection of cardiovascular medicine, sleep medicine, metabolic health, and the oral-systemic axis. You have just reviewed this patient's complete data across all panels. Your job is to tell them the most important things in their data that no standard doctor visit would ever surface — connections between panels, hidden risks, and early signals that are actionable right now. You speak like a brilliant, warm doctor talking directly to a motivated patient — never clinical, never vague, never generic. Every sentence you write contains this patient's actual numbers. You always frame clinical recommendations as things the patient should consider discussing with their doctor — Peaq provides health information, not medical advice. Use language like 'consider asking your doctor about...' or 'it may be worth discussing with your physician...'.`
 
 function fmtVal(val: unknown, unit: string): string | null {
   if (val === null || val === undefined) return null
@@ -156,6 +156,8 @@ ${sleepSection}
 ${oralSection}
 
 LIFESTYLE:
+- Age range: ${lifestyle?.age_range ?? "not reported"}
+- Biological sex: ${lifestyle?.biological_sex ?? "not reported"}
 - Smoking: ${smoking}
 - Exercise: ${exerciseFreq}
 - Diet: ${dietQuality}
@@ -194,7 +196,7 @@ Rules you must follow:
 - Generate 2-3 supporting insights (not 4 — quality over quantity)
 - If all 4 panels have data, allPanelsBonus is REQUIRED and must be genuinely surprising
 - urgency "act" = needs attention soon, "watch" = monitor this, "routine" = good to know
-- Never use the words: consider, may want to, it's important to, you might, perhaps
+- Never give directives — always frame clinical recommendations as things to consider discussing with their doctor
 - If a panel has no data, do not reference it or fabricate values
 - trajectoryNote only appears when previousLabs data is provided`
 

@@ -111,14 +111,28 @@ export default async function DashboardPage() {
       monthsOld,
       bloodInsight:   (lab.blood_insight       as string | null) ?? undefined,
     } : undefined,
-    oralData: oral ? {
-      shannonDiversity:   oral.shannon_diversity ?? 0,
-      // DB stores these as decimals (0.130 = 13%) — multiply by 100 for display/flag thresholds
-      nitrateReducersPct: ((oral.nitrate_reducers_pct as number) ?? 0) * 100,
-      periodontPathPct:   ((oral.periodontopathogen_pct as number) ?? 0) * 100,
-      osaTaxaPct:         ((oral.osa_taxa_pct as number) ?? 0) * 100,
-      reportDate:         oral.report_date ?? "",
-    } : undefined,
+    oralData: oral ? (() => {
+      // DB stores pct values as decimals (0.130 = 13%) — multiply by 100 for display/flag thresholds
+      const rawOtu = oral.raw_otu_table as Record<string, number> | null
+      const species: Record<string, number> | undefined = rawOtu ? {
+        "Neisseria subflava":        (rawOtu["Neisseria subflava"]        ?? 0) * 100,
+        "Rothia mucilaginosa":       (rawOtu["Rothia mucilaginosa"]       ?? 0) * 100,
+        "Veillonella parvula":       (rawOtu["Veillonella parvula"]       ?? 0) * 100,
+        "Porphyromonas gingivalis":  (rawOtu["Porphyromonas gingivalis"]  ?? 0) * 100,
+        "Treponema denticola":       (rawOtu["Treponema denticola"]       ?? 0) * 100,
+        "Tannerella forsythia":      (rawOtu["Tannerella forsythia"]      ?? 0) * 100,
+        "Prevotella melaninogenica": (rawOtu["Prevotella melaninogenica"] ?? 0) * 100,
+        "Fusobacterium nucleatum":   (rawOtu["Fusobacterium nucleatum"]   ?? 0) * 100,
+      } : undefined
+      return {
+        shannonDiversity:   oral.shannon_diversity ?? 0,
+        nitrateReducersPct: ((oral.nitrate_reducers_pct as number) ?? 0) * 100,
+        periodontPathPct:   ((oral.periodontopathogen_pct as number) ?? 0) * 100,
+        osaTaxaPct:         ((oral.osa_taxa_pct as number) ?? 0) * 100,
+        reportDate:         oral.report_date ?? "",
+        species,
+      }
+    })() : undefined,
     lifestyleData: lifestyle ? {
       exerciseLevel:   (lifestyle.exercise_level    as string) ?? "sedentary",
       brushingFreq:    (lifestyle.brushing_freq     as string) ?? "once",
