@@ -71,6 +71,8 @@ export interface ScoreWheelProps {
     alcoholPerWeek?: number
     vegServings?: number
     processedFood?: number
+    ageRange?: string
+    biologicalSex?: string
     updatedAt: string
   }
   interactionsFired?: string[]
@@ -1439,11 +1441,10 @@ export function ScoreWheel({
               hoverBg="rgba(45,106,79,0.04)" mounted={mounted}
             />
           ))}
-          {oralData?.species && (
-            <CompleteMicrobiomePanel
-              species={oralData.species}
-              shannonDiversity={oralData.shannonDiversity}
-            />
+          {oralActive && (
+            <a href="/dashboard/oral" style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "#2D6A4F", display: "block", marginTop: 12 }}>
+              View full oral panel →
+            </a>
           )}
         </div>
       </CollapsiblePanel>
@@ -1466,11 +1467,15 @@ export function ScoreWheel({
             const dentalLabels: Record<string, string> = { "6mo": "< 6 months", "1yr": "6–12 months", "2yr": "1–2 years", more: "2+ years" }
             const smokeLabels: Record<string, string> = { never: "Never smoked", former: "Former smoker", current: "Current smoker" }
             const stressLabels: Record<string, string> = { low: "Low", moderate: "Moderate", high: "High" }
+            const ageLabels: Record<string, string> = { "18_29": "Under 30", "30_39": "30–39", "40_49": "40–49", "50_59": "50–59", "60_69": "60–69", "70_plus": "70 or older" }
+            const sexLabels: Record<string, string> = { male: "Male", female: "Female", non_binary: "Non-binary", prefer_not_to_say: "Prefer not to answer" }
 
             type LRow = { name: string; val: string | null; flag: Flag }
             const rows: LRow[] = []
 
             if (lifestyleData) {
+              rows.push({ name: "Age range", val: lifestyleData.ageRange ? (ageLabels[lifestyleData.ageRange] ?? lifestyleData.ageRange) : "Not set", flag: (lifestyleData.ageRange ? "good" : "watch") as Flag })
+              rows.push({ name: "Biological sex", val: lifestyleData.biologicalSex ? (sexLabels[lifestyleData.biologicalSex] ?? lifestyleData.biologicalSex) : "Not set", flag: (lifestyleData.biologicalSex ? "good" : "watch") as Flag })
               rows.push({ name: "Exercise", val: exLabels[lifestyleData.exerciseLevel] ?? lifestyleData.exerciseLevel, flag: (lifestyleData.exerciseLevel === "sedentary" ? "attention" : lifestyleData.exerciseLevel === "light" ? "watch" : "good") as Flag })
               rows.push({ name: "Brushing", val: brushLabels[lifestyleData.brushingFreq] ?? lifestyleData.brushingFreq, flag: (lifestyleData.brushingFreq === "once" ? "watch" : "good") as Flag })
               rows.push({ name: "Flossing", val: flossLabels[lifestyleData.flossingFreq] ?? lifestyleData.flossingFreq, flag: (lifestyleData.flossingFreq === "never" ? "attention" : lifestyleData.flossingFreq === "sometimes" ? "watch" : "good") as Flag })
@@ -1480,6 +1485,8 @@ export function ScoreWheel({
               if (lifestyleData.alcoholPerWeek !== undefined) rows.push({ name: "Alcohol", val: lifestyleData.alcoholPerWeek === 0 ? "None" : `${lifestyleData.alcoholPerWeek} drinks/wk`, flag: (lifestyleData.alcoholPerWeek > 14 ? "attention" : lifestyleData.alcoholPerWeek > 7 ? "watch" : "good") as Flag })
               if (lifestyleData.vegServings !== undefined) rows.push({ name: "Vegetables", val: lifestyleData.vegServings === 0 ? "None" : `${lifestyleData.vegServings} servings/day`, flag: (lifestyleData.vegServings >= 3 ? "good" : lifestyleData.vegServings >= 1 ? "watch" : "attention") as Flag })
             } else {
+              rows.push({ name: "Age range", val: null, flag: "pending" })
+              rows.push({ name: "Biological sex", val: null, flag: "pending" })
               rows.push({ name: "Exercise", val: null, flag: "pending" })
               rows.push({ name: "Oral hygiene", val: null, flag: "pending" })
               rows.push({ name: "Dental visits", val: null, flag: "pending" })

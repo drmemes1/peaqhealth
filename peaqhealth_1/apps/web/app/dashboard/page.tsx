@@ -175,6 +175,8 @@ export default async function DashboardPage() {
       alcoholPerWeek:  (lifestyle.alcohol_drinks_per_week as number | undefined),
       vegServings:     (lifestyle.vegetable_servings_per_day as number | undefined),
       processedFood:   (lifestyle.processed_food_frequency as number | undefined),
+      ageRange:        (lifestyle.age_range         as string | undefined),
+      biologicalSex:   (lifestyle.biological_sex    as string | undefined),
       updatedAt:       (lifestyle.updated_at        as string) ?? "",
     } : undefined,
     oralOrdered: !!oralAny,
