@@ -52,6 +52,8 @@ export default async function DashboardPage() {
     else labFreshness = 'expired'
   }
 
+  console.log('[dashboard] oral row:', oral?.id, oral?.shannon_diversity, oral?.status)
+
   const oralSub = snapshot?.oral_sub ?? 0
 
   const score = Number(snapshot?.score ?? 0)
@@ -104,9 +106,10 @@ export default async function DashboardPage() {
     } : undefined,
     oralData: oral ? {
       shannonDiversity:   oral.shannon_diversity ?? 0,
-      nitrateReducersPct: oral.nitrate_reducers_pct ?? 0,
-      periodontPathPct:   oral.periodontopathogen_pct ?? 0,
-      osaTaxaPct:         oral.osa_taxa_pct ?? 0,
+      // DB stores these as decimals (0.130 = 13%) — multiply by 100 for display/flag thresholds
+      nitrateReducersPct: ((oral.nitrate_reducers_pct as number) ?? 0) * 100,
+      periodontPathPct:   ((oral.periodontopathogen_pct as number) ?? 0) * 100,
+      osaTaxaPct:         ((oral.osa_taxa_pct as number) ?? 0) * 100,
       reportDate:         oral.report_date ?? "",
     } : undefined,
     lifestyleData: lifestyle ? {

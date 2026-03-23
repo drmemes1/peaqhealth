@@ -349,6 +349,17 @@ export function LifestyleForm({ existing }: Props) {
     }
   }
 
+  // New fields: age range, biological sex, and preventive screening
+  initial["ageRange"]               = existing?.age_range           != null ? String(existing.age_range)          : "";
+  initial["biologicalSex"]          = existing?.biological_sex       != null ? String(existing.biological_sex)     : "";
+  initial["cacScored"]              = existing?.cac_scored              === true ? "yes" : "";
+  initial["colorectalScreeningDone"] = existing?.colorectal_screening_done === true ? "yes" : "";
+  initial["lungCtDone"]             = existing?.lung_ct_done             === true ? "yes" : "";
+  initial["mammogramDone"]          = existing?.mammogram_done            === true ? "yes" : "";
+  initial["dexaDone"]               = existing?.dexa_done                 === true ? "yes" : "";
+  initial["psaDiscussed"]           = existing?.psa_discussed             === true ? "yes" : "";
+  initial["cervicalScreeningDone"]  = existing?.cervical_screening_done   === true ? "yes" : "";
+
   const [answers, setAnswers] = useState<Record<string, string>>(initial);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -390,6 +401,17 @@ export function LifestyleForm({ existing }: Props) {
     row["sleep_medication"] = "never";
     row["known_hypertension"] = answers["hypertensionDx"] === "yes";
     row["known_diabetes"] = false;
+
+    // Age range, biological sex, and preventive screening fields
+    row["age_range"]                 = answers["ageRange"]               || null;
+    row["biological_sex"]            = answers["biologicalSex"]          || null;
+    row["cac_scored"]                = answers["cacScored"]              === "yes";
+    row["colorectal_screening_done"] = answers["colorectalScreeningDone"] === "yes";
+    row["lung_ct_done"]              = answers["lungCtDone"]             === "yes";
+    row["mammogram_done"]            = answers["mammogramDone"]          === "yes";
+    row["dexa_done"]                 = answers["dexaDone"]               === "yes";
+    row["psa_discussed"]             = answers["psaDiscussed"]           === "yes";
+    row["cervical_screening_done"]   = answers["cervicalScreeningDone"]  === "yes";
 
     const res = await fetch("/api/lifestyle/save", {
       method: "POST",
@@ -456,6 +478,12 @@ export function LifestyleForm({ existing }: Props) {
 
         <div className="flex flex-col gap-12">
           {SECTIONS.map((section) => {
+            const yesNoOptions = [
+              { label: "Yes",      value: "yes"    },
+              { label: "No",       value: "no"     },
+              { label: "Not sure", value: "unsure" },
+            ];
+
             const sectionQs = section.keys
               .map((k) => QUESTIONS.find((q) => q.key === k))
               .filter(Boolean) as QuestionDef[];
@@ -495,6 +523,87 @@ export function LifestyleForm({ existing }: Props) {
                 </div>
 
                 <div className="flex flex-col gap-8">
+                  {/* Age range and biological sex — top of Medical History */}
+                  {section.title === "Medical History" && (
+                    <>
+                      {/* Age range */}
+                      <div>
+                        <p className="font-display text-[17px] font-light leading-snug text-ink mb-1">
+                          Age range
+                        </p>
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          {[
+                            { label: "Under 30",    value: "18_29"   },
+                            { label: "30–39",       value: "30_39"   },
+                            { label: "40–49",       value: "40_49"   },
+                            { label: "50–59",       value: "50_59"   },
+                            { label: "60–69",       value: "60_69"   },
+                            { label: "70 or older", value: "70_plus" },
+                          ].map((opt) => {
+                            const isSelected = answers["ageRange"] === opt.value;
+                            return (
+                              <button
+                                key={opt.value}
+                                onClick={() => setAnswer("ageRange", opt.value)}
+                                className="flex flex-col items-start transition-all"
+                                style={{
+                                  padding: "9px 14px",
+                                  border: isSelected ? "1px solid var(--gold)" : "1px solid rgba(20,20,16,0.1)",
+                                  background: isSelected ? "rgba(184,134,11,0.07)" : "transparent",
+                                }}
+                              >
+                                <span
+                                  className="font-body text-xs leading-tight"
+                                  style={{ color: isSelected ? "var(--ink)" : "rgba(20,20,16,0.5)" }}
+                                >
+                                  {opt.label}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Biological sex */}
+                      <div>
+                        <p className="font-display text-[17px] font-light leading-snug text-ink mb-1">
+                          Biological sex
+                        </p>
+                        <p className="font-body text-[11px] text-ink/35 leading-relaxed mb-3 italic">
+                          Used only for age-appropriate screening recommendations. Not stored with your identity.
+                        </p>
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          {[
+                            { label: "Male",              value: "male"              },
+                            { label: "Female",            value: "female"            },
+                            { label: "Prefer not to say", value: "prefer_not_to_say" },
+                          ].map((opt) => {
+                            const isSelected = answers["biologicalSex"] === opt.value;
+                            return (
+                              <button
+                                key={opt.value}
+                                onClick={() => setAnswer("biologicalSex", opt.value)}
+                                className="flex flex-col items-start transition-all"
+                                style={{
+                                  padding: "9px 14px",
+                                  border: isSelected ? "1px solid var(--gold)" : "1px solid rgba(20,20,16,0.1)",
+                                  background: isSelected ? "rgba(184,134,11,0.07)" : "transparent",
+                                }}
+                              >
+                                <span
+                                  className="font-body text-xs leading-tight"
+                                  style={{ color: isSelected ? "var(--ink)" : "rgba(20,20,16,0.5)" }}
+                                >
+                                  {opt.label}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </>
+                  )}
+
                   {sectionQs.map((q) => (
                     <div key={q.key}>
                       {/* Question text */}
@@ -546,6 +655,247 @@ export function LifestyleForm({ existing }: Props) {
                       </div>
                     </div>
                   ))}
+
+                  {/* Conditional preventive screening questions — Medical History only */}
+                  {section.title === "Medical History" && (
+                    <>
+                      {/* CAC — ACC/AHA 2019: 40–75 */}
+                      {(answers["ageRange"] === "40_49" || answers["ageRange"] === "50_59" || answers["ageRange"] === "60_69") && (
+                        <div>
+                          <p className="font-display text-[17px] font-light leading-snug text-ink mb-1">
+                            Have you had a coronary artery calcium (CAC) score?
+                          </p>
+                          <p className="font-body text-[11px] text-ink/35 leading-relaxed mb-3 italic">
+                            Consider asking your doctor whether CAC scoring is appropriate for you. A score of 0 may support a conversation about delaying statin therapy (ACC/AHA 2019).
+                          </p>
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            {yesNoOptions.map((opt) => {
+                              const isSelected = answers["cacScored"] === opt.value;
+                              return (
+                                <button
+                                  key={opt.value}
+                                  onClick={() => setAnswer("cacScored", opt.value)}
+                                  className="flex flex-col items-start transition-all"
+                                  style={{
+                                    padding: "9px 14px",
+                                    border: isSelected ? "1px solid var(--gold)" : "1px solid rgba(20,20,16,0.1)",
+                                    background: isSelected ? "rgba(184,134,11,0.07)" : "transparent",
+                                  }}
+                                >
+                                  <span className="font-body text-xs leading-tight" style={{ color: isSelected ? "var(--ink)" : "rgba(20,20,16,0.5)" }}>
+                                    {opt.label}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Colorectal — USPSTF 2021: shown from 45 (40_49 band) */}
+                      {(answers["ageRange"] === "40_49" || answers["ageRange"] === "50_59" || answers["ageRange"] === "60_69" || answers["ageRange"] === "70_plus") && (
+                        <div>
+                          <p className="font-display text-[17px] font-light leading-snug text-ink mb-1">
+                            Are you up to date on colorectal cancer screening?
+                          </p>
+                          <p className="font-body text-[11px] text-ink/35 leading-relaxed mb-3 italic">
+                            Consider discussing screening options (colonoscopy, Cologuard, or FIT) with your doctor. USPSTF recommends considering screening starting at age 45.
+                          </p>
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            {yesNoOptions.map((opt) => {
+                              const isSelected = answers["colorectalScreeningDone"] === opt.value;
+                              return (
+                                <button
+                                  key={opt.value}
+                                  onClick={() => setAnswer("colorectalScreeningDone", opt.value)}
+                                  className="flex flex-col items-start transition-all"
+                                  style={{
+                                    padding: "9px 14px",
+                                    border: isSelected ? "1px solid var(--gold)" : "1px solid rgba(20,20,16,0.1)",
+                                    background: isSelected ? "rgba(184,134,11,0.07)" : "transparent",
+                                  }}
+                                >
+                                  <span className="font-body text-xs leading-tight" style={{ color: isSelected ? "var(--ink)" : "rgba(20,20,16,0.5)" }}>
+                                    {opt.label}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Lung CT — USPSTF: 50–80, smoking history */}
+                      {(answers["ageRange"] === "50_59" || answers["ageRange"] === "60_69" || answers["ageRange"] === "70_plus") &&
+                       (answers["smokingStatus"] === "current" || answers["smokingStatus"] === "former") && (
+                        <div>
+                          <p className="font-display text-[17px] font-light leading-snug text-ink mb-1">
+                            Have you discussed annual lung CT screening with your doctor?
+                          </p>
+                          <p className="font-body text-[11px] text-ink/35 leading-relaxed mb-3 italic">
+                            Consider asking your doctor about low-dose CT lung screening if you have a significant smoking history (USPSTF).
+                          </p>
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            {yesNoOptions.map((opt) => {
+                              const isSelected = answers["lungCtDone"] === opt.value;
+                              return (
+                                <button
+                                  key={opt.value}
+                                  onClick={() => setAnswer("lungCtDone", opt.value)}
+                                  className="flex flex-col items-start transition-all"
+                                  style={{
+                                    padding: "9px 14px",
+                                    border: isSelected ? "1px solid var(--gold)" : "1px solid rgba(20,20,16,0.1)",
+                                    background: isSelected ? "rgba(184,134,11,0.07)" : "transparent",
+                                  }}
+                                >
+                                  <span className="font-body text-xs leading-tight" style={{ color: isSelected ? "var(--ink)" : "rgba(20,20,16,0.5)" }}>
+                                    {opt.label}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Mammogram — USPSTF 2024: females 40+ */}
+                      {answers["biologicalSex"] === "female" &&
+                       (answers["ageRange"] === "40_49" || answers["ageRange"] === "50_59" || answers["ageRange"] === "60_69" || answers["ageRange"] === "70_plus") && (
+                        <div>
+                          <p className="font-display text-[17px] font-light leading-snug text-ink mb-1">
+                            Are you up to date on mammography?
+                          </p>
+                          <p className="font-body text-[11px] text-ink/35 leading-relaxed mb-3 italic">
+                            Consider discussing mammogram frequency with your doctor. USPSTF (2024) recommends considering biennial screening starting at 40.
+                          </p>
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            {yesNoOptions.map((opt) => {
+                              const isSelected = answers["mammogramDone"] === opt.value;
+                              return (
+                                <button
+                                  key={opt.value}
+                                  onClick={() => setAnswer("mammogramDone", opt.value)}
+                                  className="flex flex-col items-start transition-all"
+                                  style={{
+                                    padding: "9px 14px",
+                                    border: isSelected ? "1px solid var(--gold)" : "1px solid rgba(20,20,16,0.1)",
+                                    background: isSelected ? "rgba(184,134,11,0.07)" : "transparent",
+                                  }}
+                                >
+                                  <span className="font-body text-xs leading-tight" style={{ color: isSelected ? "var(--ink)" : "rgba(20,20,16,0.5)" }}>
+                                    {opt.label}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Cervical — USPSTF: females 25–65 */}
+                      {answers["biologicalSex"] === "female" &&
+                       (answers["ageRange"] === "30_39" || answers["ageRange"] === "40_49" || answers["ageRange"] === "50_59" || answers["ageRange"] === "60_69") && (
+                        <div>
+                          <p className="font-display text-[17px] font-light leading-snug text-ink mb-1">
+                            Are you current on cervical cancer screening?
+                          </p>
+                          <p className="font-body text-[11px] text-ink/35 leading-relaxed mb-3 italic">
+                            Consider discussing Pap smear or HPV testing schedules with your doctor (USPSTF).
+                          </p>
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            {yesNoOptions.map((opt) => {
+                              const isSelected = answers["cervicalScreeningDone"] === opt.value;
+                              return (
+                                <button
+                                  key={opt.value}
+                                  onClick={() => setAnswer("cervicalScreeningDone", opt.value)}
+                                  className="flex flex-col items-start transition-all"
+                                  style={{
+                                    padding: "9px 14px",
+                                    border: isSelected ? "1px solid var(--gold)" : "1px solid rgba(20,20,16,0.1)",
+                                    background: isSelected ? "rgba(184,134,11,0.07)" : "transparent",
+                                  }}
+                                >
+                                  <span className="font-body text-xs leading-tight" style={{ color: isSelected ? "var(--ink)" : "rgba(20,20,16,0.5)" }}>
+                                    {opt.label}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* DEXA — USPSTF Grade B: females 65+ */}
+                      {answers["biologicalSex"] === "female" &&
+                       (answers["ageRange"] === "60_69" || answers["ageRange"] === "70_plus") && (
+                        <div>
+                          <p className="font-display text-[17px] font-light leading-snug text-ink mb-1">
+                            Have you had a bone density (DEXA) scan?
+                          </p>
+                          <p className="font-body text-[11px] text-ink/35 leading-relaxed mb-3 italic">
+                            Consider asking your doctor about bone density screening. USPSTF recommends considering it for women 65 and older.
+                          </p>
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            {yesNoOptions.map((opt) => {
+                              const isSelected = answers["dexaDone"] === opt.value;
+                              return (
+                                <button
+                                  key={opt.value}
+                                  onClick={() => setAnswer("dexaDone", opt.value)}
+                                  className="flex flex-col items-start transition-all"
+                                  style={{
+                                    padding: "9px 14px",
+                                    border: isSelected ? "1px solid var(--gold)" : "1px solid rgba(20,20,16,0.1)",
+                                    background: isSelected ? "rgba(184,134,11,0.07)" : "transparent",
+                                  }}
+                                >
+                                  <span className="font-body text-xs leading-tight" style={{ color: isSelected ? "var(--ink)" : "rgba(20,20,16,0.5)" }}>
+                                    {opt.label}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* PSA — USPSTF Grade C: males 55–69 */}
+                      {answers["biologicalSex"] === "male" &&
+                       (answers["ageRange"] === "50_59" || answers["ageRange"] === "60_69") && (
+                        <div>
+                          <p className="font-display text-[17px] font-light leading-snug text-ink mb-1">
+                            Have you discussed PSA screening with your doctor?
+                          </p>
+                          <p className="font-body text-[11px] text-ink/35 leading-relaxed mb-3 italic">
+                            PSA screening is an individualized decision. Consider discussing the potential benefits and limitations with your doctor (USPSTF Grade C).
+                          </p>
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            {yesNoOptions.map((opt) => {
+                              const isSelected = answers["psaDiscussed"] === opt.value;
+                              return (
+                                <button
+                                  key={opt.value}
+                                  onClick={() => setAnswer("psaDiscussed", opt.value)}
+                                  className="flex flex-col items-start transition-all"
+                                  style={{
+                                    padding: "9px 14px",
+                                    border: isSelected ? "1px solid var(--gold)" : "1px solid rgba(20,20,16,0.1)",
+                                    background: isSelected ? "rgba(184,134,11,0.07)" : "transparent",
+                                  }}
+                                >
+                                  <span className="font-body text-xs leading-tight" style={{ color: isSelected ? "var(--ink)" : "rgba(20,20,16,0.5)" }}>
+                                    {opt.label}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
             );

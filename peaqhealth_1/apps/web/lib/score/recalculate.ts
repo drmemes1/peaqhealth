@@ -15,6 +15,8 @@ export function mapLifestyleRow(row: Record<string, unknown>): LifestyleInputs {
   const qualMap:   Record<string, string> = { poor: "poor", fair: "fair", good: "good", excellent: "very_good" }
   const wakeMap:   Record<string, string> = { "0": "never", "1to2": "less_once_wk", "3to5": "once_twice_wk", gt5: "3plus_wk" }
   const fatMap:    Record<string, string> = { none: "never", mild: "sometimes", moderate: "often", severe: "always" }
+  const AGE_RANGES  = ["18_29", "30_39", "40_49", "50_59", "60_69", "70_plus"] as const
+  const BIO_SEXES   = ["male", "female", "prefer_not_to_say"] as const
 
   return {
     exerciseLevel:   (exMap[row.exercise_level    as string] ?? "sedentary")   as LifestyleInputs["exerciseLevel"],
@@ -46,6 +48,17 @@ export function mapLifestyleRow(row: Record<string, unknown>): LifestyleInputs {
     sugaryDrinksPerWeek: typeof row.sugary_drinks_per_week === "number" ? row.sugary_drinks_per_week : undefined,
     alcoholDrinksPerWeek: typeof row.alcohol_drinks_per_week === "number" ? row.alcohol_drinks_per_week : undefined,
     stressLevel: typeof row.stress_level === "string" && ["low", "moderate", "high"].includes(row.stress_level) ? (row.stress_level as "low" | "moderate" | "high") : undefined,
+    // v7.0 — age/sex demographic + preventive screening
+    ageRange:      typeof row.age_range === "string" && (AGE_RANGES as readonly string[]).includes(row.age_range) ? (row.age_range as LifestyleInputs["ageRange"]) : undefined,
+    biologicalSex: typeof row.biological_sex === "string" && (BIO_SEXES as readonly string[]).includes(row.biological_sex) ? (row.biological_sex as LifestyleInputs["biologicalSex"]) : undefined,
+    // Only true maps to true — false/null both become undefined (no penalty for non-completion)
+    cacScored:              row.cac_scored === true ? true : undefined,
+    colorectalScreeningDone: row.colorectal_screening_done === true ? true : undefined,
+    lungCtDone:             row.lung_ct_done === true ? true : undefined,
+    mammogramDone:          row.mammogram_done === true ? true : undefined,
+    dexaDone:               row.dexa_done === true ? true : undefined,
+    psaDiscussed:           row.psa_discussed === true ? true : undefined,
+    cervicalScreeningDone:  row.cervical_screening_done === true ? true : undefined,
   }
 }
 
