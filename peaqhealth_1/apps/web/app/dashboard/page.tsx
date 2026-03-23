@@ -12,7 +12,6 @@ export default async function DashboardPage() {
     { data: snapshot },
     { data: wearable },
     { data: lab },
-    { data: oral },
     { data: oralAny },
     { data: lifestyle },
     { data: labHistoryRows },
@@ -20,11 +19,21 @@ export default async function DashboardPage() {
     supabase.from("score_snapshots").select("*").eq("user_id", user.id).order("calculated_at", { ascending: false }).limit(1).single(),
     supabase.from("wearable_connections").select("*").eq("user_id", user.id).eq("status", "connected").order("connected_at", { ascending: false }).limit(1).single(),
     supabase.from("lab_results").select("*").eq("user_id", user.id).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).single(),
-    supabase.from("oral_kit_orders").select("*").eq("user_id", user.id).in("status", ["results_ready", "scored"]).order("created_at", { ascending: false }).limit(1).single(),
     supabase.from("oral_kit_orders").select("id").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1).single(),
     supabase.from("lifestyle_records").select("*").eq("user_id", user.id).single(),
     supabase.from("lab_history").select("locked_at, total_score, blood_score, collection_date, ldl_mgdl, hdl_mgdl, hs_crp_mgl, vitamin_d_ngml").eq("user_id", user.id).order("locked_at", { ascending: true }),
   ])
+
+  const { data: oral, error: oralError } = await supabase
+    .from("oral_kit_orders")
+    .select("*")
+    .eq("user_id", user.id)
+    .in("status", ["results_ready", "scored"])
+    .maybeSingle()
+
+  console.log('[dashboard] oral query user_id:', user.id)
+  console.log('[dashboard] oral query error:', oralError)
+  console.log('[dashboard] oral row:', oral?.id, oral?.shannon_diversity, oral?.status)
 
   // Backfill wearable_connections for legacy users who connected before the upsert fix.
   // If sleep data contributed to their score but no wearable row exists, silently create one.
@@ -51,8 +60,6 @@ export default async function DashboardPage() {
     else if (daysSince <= 365) labFreshness = 'stale'
     else labFreshness = 'expired'
   }
-
-  console.log('[dashboard] oral row:', oral?.id, oral?.shannon_diversity, oral?.status)
 
   const oralSub = snapshot?.oral_sub ?? 0
 
