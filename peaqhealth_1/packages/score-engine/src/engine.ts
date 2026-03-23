@@ -304,7 +304,10 @@ function scoreVO2Max(vo2?: number, sex?: string): number {
 
 function scoreNutrition(ls: LifestyleInputs): number {
   let pts = 0
-  if (ls.vegetableServingsPerDay !== undefined && ls.vegetableServingsPerDay >= 3) pts += 0.5
+  if (ls.vegetableServingsPerDay !== undefined) {
+    if (ls.vegetableServingsPerDay >= 5)       pts += 0.5   // meets 5-a-day guideline
+    else if (ls.vegetableServingsPerDay >= 3)  pts += 0.25  // partial — below guideline
+  }
   if (ls.fruitServingsPerDay !== undefined && ls.fruitServingsPerDay >= 2) pts += 0.25
   if (ls.processedFoodFrequency !== undefined && ls.processedFoodFrequency <= 2) pts += 0.5
   if (ls.sugaryDrinksPerWeek !== undefined && ls.sugaryDrinksPerWeek <= 3) pts += 0.25
@@ -383,6 +386,11 @@ function medicalHistoryPenalty(ls: LifestyleInputs): number {
   let p = 0
   if (ls.familyHistoryCVD === true)                       p += 0.5
   if (ls.hypertensionDx === true && ls.onBPMeds !== true) p += 0.5
+
+  // Chronic stress penalty — cortisol elevation amplifies CVD risk markers
+  if (ls.stressLevel === "high")     p += 1.0
+  else if (ls.stressLevel === "moderate") p += 0.5
+
   return p * ageMultiplier * sexMultiplier
 }
 
@@ -997,6 +1005,25 @@ export function runTests(): void {
   const t_dexaF65 = calculatePeaqScore(undefined, undefined, undefined, { ...screenerBase, ageRange: "60_69", biologicalSex: "female", dexaDone: true })
   const t_dexaF65_no = calculatePeaqScore(undefined, undefined, undefined, { ...screenerBase, ageRange: "60_69", biologicalSex: "female", dexaDone: false })
   console.assert(t_dexaF65.breakdown.lifestyleSub > t_dexaF65_no.breakdown.lifestyleSub, "DEXA compliance should add pts for 65F (60_69 band)")
+
+  // Stress penalty tests
+  const stressBase = { ...screenerBase, familyHistoryCVD: false, hypertensionDx: false, stressLevel: undefined as ("low"|"moderate"|"high"|undefined) }
+  const noStress   = calculatePeaqScore(undefined, undefined, undefined, { ...stressBase, stressLevel: undefined })
+  const modStress  = calculatePeaqScore(undefined, undefined, undefined, { ...stressBase, stressLevel: "moderate" })
+  const highStress = calculatePeaqScore(undefined, undefined, undefined, { ...stressBase, stressLevel: "high" })
+  console.log(`Stress test — no stress lifestyleSub: ${noStress.breakdown.lifestyleSub}`)
+  console.log(`Stress test — moderate stress lifestyleSub: ${modStress.breakdown.lifestyleSub}`)
+  console.log(`Stress test — high stress lifestyleSub: ${highStress.breakdown.lifestyleSub}`)
+  console.assert(noStress.breakdown.lifestyleSub > modStress.breakdown.lifestyleSub, "No stress should outscore moderate stress")
+  console.assert(modStress.breakdown.lifestyleSub > highStress.breakdown.lifestyleSub, "Moderate stress should outscore high stress")
+
+  // Vegetable threshold tests
+  const vegBase = { ...stressBase, stressLevel: undefined as ("low"|"moderate"|"high"|undefined) }
+  const veg2 = calculatePeaqScore(undefined, undefined, undefined, { ...vegBase, vegetableServingsPerDay: 2 })
+  const veg3 = calculatePeaqScore(undefined, undefined, undefined, { ...vegBase, vegetableServingsPerDay: 3 })
+  const veg5 = calculatePeaqScore(undefined, undefined, undefined, { ...vegBase, vegetableServingsPerDay: 5 })
+  console.assert(veg2.breakdown.lifestyleSub < veg3.breakdown.lifestyleSub, "2 servings/day should score less than 3")
+  console.assert(veg3.breakdown.lifestyleSub < veg5.breakdown.lifestyleSub, "3 servings/day should score less than 5 (full guideline credit)")
 
   console.log("\n=== All tests complete ===")
 }
