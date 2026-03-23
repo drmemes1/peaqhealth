@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to clear existing results' }, { status: 500 })
   }
 
-  const { error: insertError } = await serviceClient
+  const { data: insertData, error: insertError } = await serviceClient
     .from('oral_kit_orders')
     .insert({
       user_id:                targetUserId,
@@ -63,10 +63,17 @@ export async function POST(request: NextRequest) {
       results_date:           new Date().toISOString(),
       report_date:            new Date().toISOString().split('T')[0],
     })
+    .select()
+
+  console.log('[admin-oral] insert result:', insertData)
+  console.log('[admin-oral] insert error:', insertError)
+  console.log('[admin-oral] shannon value:', oralScore.shannonDiversity)
+  console.log('[admin-oral] nitrate value:', oralScore.nitrateReducerPct)
+  console.log('[admin-oral] periodontal value:', oralScore.pGingivalisPct)
+  console.log('[admin-oral] osa value:', oralScore.prevotellaPct)
 
   if (insertError) {
-    console.error('[admin-oral] insert error:', insertError.message)
-    return NextResponse.json({ error: 'Failed to save results' }, { status: 500 })
+    return NextResponse.json({ error: insertError.message }, { status: 500 })
   }
 
   // Recalculate score
