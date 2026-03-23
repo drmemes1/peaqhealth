@@ -36,20 +36,9 @@ export async function POST(request: NextRequest) {
   // Parse OTU data
   const oralScore = parseOralMicrobiome(zymoReport)
 
-  // Delete any existing oral data for this user, then insert fresh
-  const { error: deleteError } = await serviceClient
-    .from('oral_kit_orders')
-    .delete()
-    .eq('user_id', targetUserId)
-
-  if (deleteError) {
-    console.error('[admin-oral] delete error:', deleteError.message)
-    return NextResponse.json({ error: 'Failed to clear existing results' }, { status: 500 })
-  }
-
   const { data: insertData, error: insertError } = await serviceClient
     .from('oral_kit_orders')
-    .insert({
+    .upsert({
       user_id:                targetUserId,
       kit_code:               kitCode.toUpperCase(),
       status:                 'results_ready',
@@ -62,7 +51,7 @@ export async function POST(request: NextRequest) {
       osa_taxa_pct:           oralScore.prevotellaPct,
       results_date:           new Date().toISOString(),
       report_date:            new Date().toISOString().split('T')[0],
-    })
+    }, { onConflict: 'user_id' })
     .select()
 
   console.log('[admin-oral] insert result:', insertData)
