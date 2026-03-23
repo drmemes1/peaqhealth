@@ -16,7 +16,7 @@ export function mapLifestyleRow(row: Record<string, unknown>): LifestyleInputs {
   const wakeMap:   Record<string, string> = { "0": "never", "1to2": "less_once_wk", "3to5": "once_twice_wk", gt5: "3plus_wk" }
   const fatMap:    Record<string, string> = { none: "never", mild: "sometimes", moderate: "often", severe: "always" }
   const AGE_RANGES  = ["18_29", "30_39", "40_49", "50_59", "60_69", "70_plus"] as const
-  const BIO_SEXES   = ["male", "female", "prefer_not_to_say"] as const
+  const BIO_SEXES   = ["male", "female", "non_binary", "prefer_not_to_say"] as const
 
   return {
     exerciseLevel:   (exMap[row.exercise_level    as string] ?? "sedentary")   as LifestyleInputs["exerciseLevel"],

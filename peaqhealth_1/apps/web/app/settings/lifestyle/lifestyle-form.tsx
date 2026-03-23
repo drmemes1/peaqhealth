@@ -23,6 +23,13 @@ const SECTIONS: {
   keys: string[];
 }[] = [
   {
+    title: "Demographics",
+    subtitle: "Used for age-appropriate screening recommendations and cardiovascular risk calibration",
+    ptsLabel: "risk calibration",
+    color: "#6B4D8A",
+    keys: [],
+  },
+  {
     title: "Physical Activity",
     subtitle: "Cardiovascular fitness is the single highest-ROI intervention for longevity",
     ptsLabel: "up to 2.5 pts",
@@ -523,8 +530,8 @@ export function LifestyleForm({ existing }: Props) {
                 </div>
 
                 <div className="flex flex-col gap-8">
-                  {/* Age range and biological sex — top of Medical History */}
-                  {section.title === "Medical History" && (
+                  {/* Age range and biological sex */}
+                  {section.title === "Demographics" && (
                     <>
                       {/* Age range */}
                       <div>
@@ -574,9 +581,10 @@ export function LifestyleForm({ existing }: Props) {
                         </p>
                         <div className="flex flex-wrap gap-2 mt-3">
                           {[
-                            { label: "Male",              value: "male"              },
-                            { label: "Female",            value: "female"            },
-                            { label: "Prefer not to say", value: "prefer_not_to_say" },
+                            { label: "Male",                value: "male"              },
+                            { label: "Female",              value: "female"            },
+                            { label: "Non-binary",          value: "non_binary"        },
+                            { label: "Prefer not to answer", value: "prefer_not_to_say" },
                           ].map((opt) => {
                             const isSelected = answers["biologicalSex"] === opt.value;
                             return (
