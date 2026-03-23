@@ -59,6 +59,7 @@ export interface ScoreWheelProps {
     periodontPathPct: number
     osaTaxaPct: number
     reportDate: string
+    species?: Record<string, number>  // key species % reads (0-100 scale)
   }
   lifestyleData?: {
     exerciseLevel: string
@@ -406,6 +407,58 @@ function CollapsiblePanel({
         transition: "max-height 0.3s ease, opacity 0.3s ease",
       }}>
         {children}
+      </div>
+    </div>
+  )
+}
+
+function BacteriaGroup({ title, rows, mounted }: {
+  title: string
+  rows: Array<{ name: string; sub: string; val: number; flag: Flag }>
+  mounted: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const [hov, setHov] = useState(false)
+  const pct = (n: number, max: number) => Math.min((n / max) * 100, 100)
+  return (
+    <div style={{ borderTop: "0.5px solid var(--ink-12)" }}>
+      <div
+        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 16px", cursor: "pointer" }}
+        onClick={() => setOpen(o => !o)}
+      >
+        <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-60)" }}>
+          {title}
+        </span>
+        <div
+          onMouseEnter={() => setHov(true)}
+          onMouseLeave={() => setHov(false)}
+          style={{
+            width: 16, height: 16, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+            border: `0.5px solid ${hov ? "var(--gold)" : "rgba(20,20,16,0.2)"}`,
+            color: hov ? "var(--gold)" : "rgba(20,20,16,0.5)",
+            fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 13, lineHeight: 1,
+            transition: "border-color 0.2s ease, color 0.2s ease", flexShrink: 0,
+          }}
+        >
+          {open ? "−" : "+"}
+        </div>
+      </div>
+      <div style={{ maxHeight: open ? 400 : 0, opacity: open ? 1 : 0, overflow: "hidden", transition: "max-height 0.25s ease, opacity 0.25s ease" }}>
+        {rows.map(row => (
+          <MarkerRow
+            key={row.name}
+            name={row.name}
+            sub={row.sub}
+            value={row.val === 0 ? "Not detected" : formatValue(row.val)}
+            unit="% reads"
+            flag={row.flag}
+            barPct={pct(row.val, 20)}
+            color="var(--oral-c)"
+            trackColor="var(--oral-bg)"
+            hoverBg="rgba(45,106,79,0.04)"
+            mounted={mounted}
+          />
+        ))}
       </div>
     </div>
   )
@@ -833,6 +886,34 @@ export function ScoreWheel({
               hoverBg="rgba(45,106,79,0.04)" mounted={mounted}
             />
           ))}
+          {oralData?.species && (() => {
+            const s = oralData.species!
+            return (
+              <>
+                <BacteriaGroup title="Nitrate-Reducing Bacteria" mounted={mounted} rows={[
+                  { name: "Neisseria subflava",  sub: "Primary nitrate-reducer · NO pathway · target >1%",  val: s["Neisseria subflava"]  ?? 0, flag: flag((s["Neisseria subflava"]  ?? 0) >= 1, (s["Neisseria subflava"]  ?? 0) > 0.1) },
+                  { name: "Rothia mucilaginosa", sub: "Nitrate-reducer + anti-inflammatory · target >1%",    val: s["Rothia mucilaginosa"] ?? 0, flag: flag((s["Rothia mucilaginosa"] ?? 0) >= 1, (s["Rothia mucilaginosa"] ?? 0) > 0.1) },
+                  { name: "Veillonella parvula", sub: "Lactate metaboliser · nitrate-reducer · target >1%",  val: s["Veillonella parvula"] ?? 0, flag: flag((s["Veillonella parvula"] ?? 0) >= 1, (s["Veillonella parvula"] ?? 0) > 0.1) },
+                ]} />
+                <BacteriaGroup title="Periodontal Pathogens" mounted={mounted} rows={[
+                  { name: "P. gingivalis", sub: "Keystone pathogen · systemic risk · target <0.1%", val: s["Porphyromonas gingivalis"] ?? 0, flag: flag((s["Porphyromonas gingivalis"] ?? 0) < 0.1, (s["Porphyromonas gingivalis"] ?? 0) < 0.5) },
+                  { name: "T. denticola",  sub: "Red complex · periodontal risk · target <0.2%",    val: s["Treponema denticola"]     ?? 0, flag: flag((s["Treponema denticola"]     ?? 0) < 0.2, (s["Treponema denticola"]     ?? 0) < 0.8) },
+                  { name: "T. forsythia",  sub: "Red complex · periodontal risk · target <0.3%",    val: s["Tannerella forsythia"]    ?? 0, flag: flag((s["Tannerella forsythia"]    ?? 0) < 0.3, (s["Tannerella forsythia"]    ?? 0) < 1.0) },
+                ]} />
+                <BacteriaGroup title="OSA-Associated Taxa" mounted={mounted} rows={[
+                  { name: "P. melaninogenica", sub: "OSA-enriched · airway inflammation · target <0.5%", val: s["Prevotella melaninogenica"] ?? 0, flag: flag((s["Prevotella melaninogenica"] ?? 0) < 0.5, (s["Prevotella melaninogenica"] ?? 0) < 1.0) },
+                  { name: "F. nucleatum",      sub: "Fusobacterium · OSA signal · target <1%",           val: s["Fusobacterium nucleatum"]   ?? 0, flag: flag((s["Fusobacterium nucleatum"]   ?? 0) < 1.0, (s["Fusobacterium nucleatum"]   ?? 0) < 1.5) },
+                ]} />
+                <div style={{ borderTop: "0.5px solid var(--ink-12)", padding: "12px 16px" }}>
+                  <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-60)", margin: "0 0 4px" }}>Diversity Index</p>
+                  <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 20, color: "var(--ink)", margin: "0 0 4px" }}>{oralData.shannonDiversity.toFixed(2)}</p>
+                  <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "var(--ink-60)", margin: 0, lineHeight: 1.5 }}>
+                    Shannon diversity index measures species richness and evenness. Target ≥3.0 for optimal health.
+                  </p>
+                </div>
+              </>
+            )
+          })()}
         </div>
       </CollapsiblePanel>
 
