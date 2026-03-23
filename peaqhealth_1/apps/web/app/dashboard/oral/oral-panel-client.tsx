@@ -249,10 +249,11 @@ export function OralPanelClient({ oral, snapshot }: Props) {
           .reduce((sum, [, v]) => sum + v, 0) * 100
       : 0
 
-  const shannon = oralScore?.shannonDiversity ?? (oral.shannon_diversity as number | null) ?? 0
-  const nitratePct = ((oralScore?.nitrateReducerPct ?? (oral.nitrate_reducers_pct as number | null) ?? 0)) * 100
-  const periodontalPct = ((oralScore?.periodontalBurden ?? (oral.periodontopathogen_pct as number | null) ?? 0)) * 100
-  const osaPct = ((oralScore?.osaBurden ?? (oral.osa_taxa_pct as number | null) ?? 0)) * 100
+  const shannon = (oral.shannon_diversity as number | null) ?? 0
+  // Summary cards computed directly from raw_otu_table — same source as the full species panel
+  const nitratePct  = sp("Neisseria subflava") + sp("Rothia mucilaginosa") + sp("Veillonella parvula") + sp("Neisseria flavescens")
+  const periodontalPct = sp("Porphyromonas gingivalis") + sp("Treponema denticola") + sp("Tannerella forsythia")
+  const osaPct = sp("Prevotella melaninogenica") + sp("Fusobacterium nucleatum")
 
   // Derive insights from findings (sorted by priority)
   const PRIORITY_ORDER = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "POSITIVE"] as const
