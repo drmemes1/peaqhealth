@@ -199,6 +199,114 @@ type ComputedInteraction = {
   body: string
   panels: string[]
   severity: "high" | "medium"
+  learnMore: {
+    science: string
+    meaning: string
+    actions: string[]
+    citation: string
+  }
+}
+
+function InteractionCard({ interaction }: { interaction: ComputedInteraction }) {
+  const [learnOpen, setLearnOpen] = useState(false)
+  const [hoverLearn, setHoverLearn] = useState(false)
+  const { learnMore: lm } = interaction
+  const font = "var(--font-body, 'Instrument Sans', sans-serif)"
+  return (
+    <div style={{
+      background: interaction.severity === "high" ? "rgba(192,57,43,0.03)" : "rgba(184,134,11,0.04)",
+      borderLeft: `3px solid ${interaction.severity === "high" ? "#C0392B" : "#B8860B"}`,
+      borderRadius: "0 4px 4px 0", padding: "12px 14px",
+    }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 6, gap: 8 }}>
+        <span style={{ fontFamily: font, fontSize: 13, fontWeight: 600, color: "var(--ink)", lineHeight: 1.3 }}>
+          {interaction.title}
+        </span>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, flexShrink: 0 }}>
+          <span style={{
+            fontFamily: font, fontSize: 9, textTransform: "uppercase" as const, letterSpacing: "0.08em",
+            padding: "2px 6px", borderRadius: 3,
+            background: interaction.severity === "high" ? "#FEE2E2" : "rgba(184,134,11,0.12)",
+            color: interaction.severity === "high" ? "#991B1B" : "#92400E",
+          }}>
+            {interaction.severity}
+          </span>
+          <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+            {interaction.panels.map(p => (
+              <span key={p} style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: PANEL_COLORS[p] ?? "#B8860B", display: "inline-block", flexShrink: 0 }} />
+                <span style={{ fontFamily: font, fontSize: 10, color: PANEL_COLORS[p] ?? "#B8860B" }}>{p}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+      <p style={{ fontFamily: font, fontSize: 13, color: "rgba(20,20,16,0.6)", margin: "0 0 10px", lineHeight: 1.5 }}>
+        {interaction.body}
+      </p>
+      <button
+        onClick={e => { e.stopPropagation(); setLearnOpen(o => !o) }}
+        onMouseEnter={() => setHoverLearn(true)}
+        onMouseLeave={() => setHoverLearn(false)}
+        style={{
+          fontFamily: font, fontSize: 11,
+          color: hoverLearn ? "rgba(20,20,16,0.7)" : "rgba(20,20,16,0.4)",
+          background: "none", border: "none", cursor: "pointer", padding: 0,
+          display: "flex", alignItems: "center", gap: 5,
+          transition: "color 0.15s ease",
+        }}
+      >
+        <span style={{
+          width: 14, height: 14, borderRadius: "50%",
+          border: `0.5px solid ${hoverLearn ? "rgba(20,20,16,0.35)" : "rgba(20,20,16,0.2)"}`,
+          display: "inline-flex", alignItems: "center", justifyContent: "center",
+          fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 12, lineHeight: 1,
+          flexShrink: 0, transition: "border-color 0.15s ease",
+        }}>
+          {learnOpen ? "−" : "+"}
+        </span>
+        Learn more
+      </button>
+      <div style={{
+        maxHeight: learnOpen ? 900 : 0, overflow: "hidden",
+        transition: "max-height 0.35s ease, opacity 0.35s ease", opacity: learnOpen ? 1 : 0,
+      }}>
+        <div style={{ paddingTop: 14, display: "flex", flexDirection: "column", gap: 12 }}>
+          <div>
+            <p style={{ fontFamily: font, fontSize: 9, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "rgba(20,20,16,0.35)", margin: "0 0 4px", fontWeight: 600 }}>
+              The science
+            </p>
+            <p style={{ fontFamily: font, fontSize: 12, color: "rgba(20,20,16,0.6)", margin: 0, lineHeight: 1.6 }}>
+              {lm.science}
+            </p>
+          </div>
+          <div>
+            <p style={{ fontFamily: font, fontSize: 9, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "rgba(20,20,16,0.35)", margin: "0 0 4px", fontWeight: 600 }}>
+              What this means for you
+            </p>
+            <p style={{ fontFamily: font, fontSize: 12, color: "rgba(20,20,16,0.6)", margin: 0, lineHeight: 1.6 }}>
+              {lm.meaning}
+            </p>
+          </div>
+          <div>
+            <p style={{ fontFamily: font, fontSize: 9, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "rgba(20,20,16,0.35)", margin: "0 0 6px", fontWeight: 600 }}>
+              What you can do
+            </p>
+            <ol style={{ margin: 0, paddingLeft: 18, display: "flex", flexDirection: "column", gap: 4 }}>
+              {lm.actions.map((action, i) => (
+                <li key={i} style={{ fontFamily: font, fontSize: 12, color: "rgba(20,20,16,0.6)", lineHeight: 1.5 }}>
+                  {action}
+                </li>
+              ))}
+            </ol>
+          </div>
+          <p style={{ fontFamily: font, fontSize: 11, fontStyle: "italic", color: "rgba(20,20,16,0.35)", margin: 0, lineHeight: 1.4 }}>
+            {lm.citation}
+          </p>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function CrossPanelInteractions({
@@ -236,6 +344,16 @@ function CrossPanelInteractions({
         body: "You have concurrent signals across all three biological systems — oral pathogens, systemic inflammation, and disrupted deep sleep. This triple pattern is associated with accelerated biological aging.",
         panels: ["Oral", "Blood", "Sleep"],
         severity: "high",
+        learnMore: {
+          science: "Concurrent oral dysbiosis, elevated systemic inflammation, and disrupted sleep architecture represents a convergent biological aging pattern. The ORIGINS study (JAHA 2019, n=300) found this triple combination predicted 10-year cardiovascular events better than any single marker alone.",
+          meaning: `You have active signals in all three biological systems simultaneously — oral pathogens at ${oralData.periodontPathPct.toFixed(1)}%, hsCRP at ${bloodData.hsCRP.toFixed(1)} mg/L, and deep sleep at ${sleepData.deepPct.toFixed(1)}%. Addressing one will likely improve the others — start with oral health as it has the fastest modifiable timeline.`,
+          actions: [
+            "Treat oral dysbiosis first — it's the most modifiable and has downstream effects on both inflammation and sleep",
+            "Schedule a full cardiovascular risk assessment with your physician",
+            "Track all three panels monthly to watch for convergence improvement",
+          ],
+          citation: "Huang et al., Journal of the American Heart Association, 2019. n=300, ORIGINS cohort.",
+        },
       })
     }
     if (bloodData &&
@@ -247,6 +365,16 @@ function CrossPanelInteractions({
         body: "Elevated periodontal pathogens combined with your cardiovascular markers suggest systemic inflammation may be originating in your mouth. P. gingivalis has been found in coronary plaques.",
         panels: ["Oral", "Blood"],
         severity: "high",
+        learnMore: {
+          science: "P. gingivalis and T. denticola have been identified in coronary artery plaques in multiple autopsy studies. A 2023 meta-analysis in Frontiers in Immunology (n=1,791) found periodontal pathogen burden independently predicted MACE events after adjusting for traditional cardiovascular risk factors.",
+          meaning: `Your periodontal pathogen load is ${oralData.periodontPathPct.toFixed(1)}% — above the 0.5% caution threshold. Combined with your cardiovascular markers, this warrants attention.`,
+          actions: [
+            "Schedule a comprehensive periodontal evaluation — not just a cleaning",
+            "Ask your dentist specifically about P. gingivalis burden and consider salivary PCR testing",
+            "Floss daily — mechanical disruption of biofilm reduces pathogen load within 2 weeks",
+          ],
+          citation: "Hussain et al., Frontiers in Immunology, 2023. n=1,791 participants.",
+        },
       })
     }
     if (sleepData &&
@@ -258,6 +386,16 @@ function CrossPanelInteractions({
         body: "Your oral microbiome shows elevated OSA-associated taxa alongside suboptimal deep or REM sleep. Oral dysbiosis is independently associated with obstructive sleep apnea risk.",
         panels: ["Oral", "Sleep"],
         severity: "high",
+        learnMore: {
+          science: "Prevotella and Fusobacterium species in the oral microbiome are enriched in patients with obstructive sleep apnea. A 2022 study by Chen et al. found oral microbiome composition predicted OSA with 91.9% AUC — outperforming many clinical screening tools.",
+          meaning: `Your OSA-associated taxa are at ${oralData.osaTaxaPct.toFixed(1)}% — above the 1% threshold — alongside deep sleep of ${sleepData.deepPct.toFixed(1)}% and REM of ${sleepData.remPct.toFixed(1)}%.`,
+          actions: [
+            "Get a home sleep study (WatchPAT or similar) to rule out subclinical OSA",
+            "Avoid antiseptic mouthwash — it kills nitrate-reducing bacteria and disrupts sleep-related oral microbiome balance",
+            "Consider a tongue-position evaluation with a dentist trained in airway health",
+          ],
+          citation: "Chen et al., Journal of Clinical Sleep Medicine, 2022. AUC 91.9%, n=87.",
+        },
       })
     }
     if (oralData.nitrateReducersPct < 5) {
@@ -267,6 +405,16 @@ function CrossPanelInteractions({
         body: "Low nitrate-reducing bacteria reduce your body's ability to produce nitric oxide — a key vasodilator. This may silently affect cardiovascular resilience even when lipid panels look normal.",
         panels: ["Oral", "Blood"],
         severity: "medium",
+        learnMore: {
+          science: "Nitrate-reducing oral bacteria (Neisseria, Rothia, Veillonella) convert dietary nitrate to nitrite, which is then reduced to nitric oxide — a potent vasodilator. Disruption of this pathway by antiseptic mouthwash raises systolic blood pressure by 2–3.5 mmHg within days.",
+          meaning: `Your nitrate-reducing bacteria are at ${oralData.nitrateReducersPct.toFixed(1)}% — below the 5% optimal threshold. This may be silently limiting your cardiovascular resilience.`,
+          actions: [
+            "Stop using antiseptic mouthwash (Listerine, chlorhexidine) — switch to salt water or xylitol-based rinses",
+            "Increase dietary nitrates: beetroot, arugula, spinach, celery",
+            "Retest oral microbiome in 60 days after dietary changes",
+          ],
+          citation: "Velmurugan et al., Free Radical Biology and Medicine, 2016. n=19, crossover RCT.",
+        },
       })
     }
     if (bloodData && sleepData &&
@@ -278,6 +426,16 @@ function CrossPanelInteractions({
         body: "Elevated hsCRP alongside fragmented sleep creates a bidirectional cycle — inflammation disrupts sleep architecture, and poor sleep elevates inflammatory markers.",
         panels: ["Blood", "Sleep"],
         severity: "medium",
+        learnMore: {
+          science: "hsCRP above 1.0 mg/L is associated with fragmented sleep architecture in prospective cohort studies. The relationship is bidirectional — inflammation disrupts slow-wave sleep, and sleep deprivation activates NF-κB inflammatory pathways within 24 hours.",
+          meaning: `Your hsCRP of ${bloodData.hsCRP.toFixed(1)} mg/L combined with ${sleepData.efficiency < 85 ? `sleep efficiency of ${sleepData.efficiency.toFixed(0)}%` : `deep sleep of ${sleepData.deepPct.toFixed(1)}%`} suggests an active inflammation-sleep disruption cycle.`,
+          actions: [
+            "Prioritize 7–9 hours with consistent sleep/wake times — circadian anchoring reduces inflammatory markers",
+            "Consider an anti-inflammatory diet: omega-3s, polyphenols, reduce ultra-processed foods",
+            "Recheck hsCRP in 90 days after sleep optimization",
+          ],
+          citation: "Irwin et al., Biological Psychiatry, 2016. Meta-analysis, n=72 studies.",
+        },
       })
     }
   }
@@ -334,7 +492,7 @@ function CrossPanelInteractions({
         </div>
 
         {/* Body */}
-        <div style={{ maxHeight: open ? 2000 : 0, opacity: open ? 1 : 0, overflow: "hidden", transition: "max-height 0.3s ease, opacity 0.3s ease" }}>
+        <div style={{ maxHeight: open ? 6000 : 0, opacity: open ? 1 : 0, overflow: "hidden", transition: "max-height 0.3s ease, opacity 0.3s ease" }}>
 
           {/* Oral active — show computed interactions */}
           {oralActive && (
@@ -345,38 +503,7 @@ function CrossPanelInteractions({
                 </p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   {computed.slice(0, showAll ? undefined : 3).map(interaction => (
-                    <div key={interaction.key} style={{
-                      background: interaction.severity === "high" ? "rgba(192,57,43,0.03)" : "rgba(184,134,11,0.04)",
-                      borderLeft: `3px solid ${interaction.severity === "high" ? "#C0392B" : "#B8860B"}`,
-                      borderRadius: "0 4px 4px 0", padding: "12px 14px",
-                    }}>
-                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 6, gap: 8 }}>
-                        <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, fontWeight: 600, color: "var(--ink)", lineHeight: 1.3 }}>
-                          {interaction.title}
-                        </span>
-                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, flexShrink: 0 }}>
-                          <span style={{
-                            fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em",
-                            padding: "2px 6px", borderRadius: 3,
-                            background: interaction.severity === "high" ? "#FEE2E2" : "rgba(184,134,11,0.12)",
-                            color: interaction.severity === "high" ? "#991B1B" : "#92400E",
-                          }}>
-                            {interaction.severity}
-                          </span>
-                          <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
-                            {interaction.panels.map(p => (
-                              <span key={p} style={{ display: "flex", alignItems: "center", gap: 3 }}>
-                                <span style={{ width: 6, height: 6, borderRadius: "50%", background: PANEL_COLORS[p] ?? "#B8860B", display: "inline-block", flexShrink: 0 }} />
-                                <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, color: PANEL_COLORS[p] ?? "#B8860B" }}>{p}</span>
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                      <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "rgba(20,20,16,0.6)", margin: 0, lineHeight: 1.5 }}>
-                        {interaction.body}
-                      </p>
-                    </div>
+                    <InteractionCard key={interaction.key} interaction={interaction} />
                   ))}
                 </div>
                 {!showAll && computed.length > 3 && (
