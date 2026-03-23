@@ -318,6 +318,52 @@ function scoreAlcohol(drinks?: number): number {
   return 0
 }
 
+// ── Preventive screening compliance (max 1.0 pt) ─────────────────────────────
+// Guidelines: ACC/AHA 2019 (CAC), USPSTF 2021 (colorectal), USPSTF (lung CT, 50–80),
+// USPSTF 2024 (mammogram, females 40+), USPSTF (cervical, females 25–65),
+// USPSTF Grade B (DEXA, females 65+), USPSTF Grade C (PSA, males 55–69)
+// Scoring gate is strictly guideline-eligible age bands.
+// Colorectal: engine awards at 50+ only (45–49 shown in form as informational but not scored).
+// Only compliance (true) is rewarded; non-completion carries no penalty.
+function scorePreventiveScreening(ls: LifestyleInputs): number {
+  const age = ls.ageRange
+  const sex = ls.biologicalSex
+  let pts = 0
+
+  // CAC — ACC/AHA 2019: intermediate-risk adults 40–75
+  const cacEligible = age === "40_49" || age === "50_59" || age === "60_69"
+  if (cacEligible && ls.cacScored === true) pts += 0.5
+
+  // Colorectal — USPSTF 2021: engine awards at 50+ (45–49 shown in form, not scored)
+  const colorectalEligible = age === "50_59" || age === "60_69" || age === "70_plus"
+  if (colorectalEligible && ls.colorectalScreeningDone === true) pts += 0.25
+
+  // Lung CT — USPSTF: ages 50–80 (50_59, 60_69, 70_plus), smoking history required
+  const lungEligible = (age === "50_59" || age === "60_69" || age === "70_plus") &&
+                       ls.smokingStatus !== "never"
+  if (lungEligible && ls.lungCtDone === true) pts += 0.25
+
+  // Mammogram — USPSTF 2024: females 40+
+  const mammoEligible = sex === "female" &&
+    (age === "40_49" || age === "50_59" || age === "60_69" || age === "70_plus")
+  if (mammoEligible && ls.mammogramDone === true) pts += 0.25
+
+  // Cervical — USPSTF: females 25–65 (30_39 through 60_69 bands)
+  const cervicalEligible = sex === "female" &&
+    (age === "30_39" || age === "40_49" || age === "50_59" || age === "60_69")
+  if (cervicalEligible && ls.cervicalScreeningDone === true) pts += 0.25
+
+  // DEXA — USPSTF Grade B: females 65+ (60_69 covers 65–69; 70_plus covers 70+)
+  const dexaEligible = sex === "female" && (age === "60_69" || age === "70_plus")
+  if (dexaEligible && ls.dexaDone === true) pts += 0.25
+
+  // PSA — USPSTF Grade C: males 55–69 (50_59 covers 55–59; 60_69 covers 60–69)
+  const psaEligible = sex === "male" && (age === "50_59" || age === "60_69")
+  if (psaEligible && ls.psaDiscussed === true) pts += 0.25
+
+  return Math.min(1.0, pts)
+}
+
 function medicalHistoryPenalty(ls: LifestyleInputs): number {
   // Age multiplier: 40–59 is the primary prevention window (ACC/AHA 2019 Pooled Cohort Equations)
   const age = ls.ageRange
@@ -767,7 +813,8 @@ export function calculatePeaqScore(sleep?: SleepInputs, blood?: BloodInputs, ora
     vo2maxScore      = scoreVO2Max(lifestyle.vo2max, lifestyle.biologicalSex)
     nutritionScore   = scoreNutrition(lifestyle)
     alcoholScore     = scoreAlcohol(lifestyle.alcoholDrinksPerWeek)
-    const raw        = exerciseScore + oralHygieneScore + dentalVisitScore + heartScore + restingHRScore + vo2maxScore + nutritionScore + alcoholScore
+    const screeningScore = scorePreventiveScreening(lifestyle)
+    const raw        = exerciseScore + oralHygieneScore + dentalVisitScore + heartScore + restingHRScore + vo2maxScore + nutritionScore + alcoholScore + screeningScore
     const net        = raw - medicalHistoryPenalty(lifestyle)
     lifestyleSub     = Math.max(0, Math.min(13, Math.round(net * (13 / 8) * 2) / 2))
   }
@@ -931,6 +978,25 @@ export function runTests(): void {
   console.assert(scoreVO2Max(45, "male")   === 0.75, "Male VO2 45 should be 0.75")
   console.assert(scoreVO2Max(51, "male")   === 1.0,  "Male VO2 51 should be 1.0")
   console.assert(scoreVO2Max(undefined)    === 0,    "undefined VO2 should be 0")
+
+  // Preventive screening tests
+  const screenerBase = { ...penaltyBase, familyHistoryCVD: false, hypertensionDx: false }
+
+  const t_cacM45 = calculatePeaqScore(undefined, undefined, undefined, { ...screenerBase, ageRange: "40_49", biologicalSex: "male", cacScored: true })
+  const t_cacM45_no = calculatePeaqScore(undefined, undefined, undefined, { ...screenerBase, ageRange: "40_49", biologicalSex: "male", cacScored: false })
+  console.assert(t_cacM45.breakdown.lifestyleSub > t_cacM45_no.breakdown.lifestyleSub, "CAC compliance should add pts for 45M")
+
+  const t_mammoF50 = calculatePeaqScore(undefined, undefined, undefined, { ...screenerBase, ageRange: "50_59", biologicalSex: "female", mammogramDone: true })
+  const t_mammoF50_no = calculatePeaqScore(undefined, undefined, undefined, { ...screenerBase, ageRange: "50_59", biologicalSex: "female", mammogramDone: false })
+  console.assert(t_mammoF50.breakdown.lifestyleSub > t_mammoF50_no.breakdown.lifestyleSub, "Mammogram compliance should add pts for 50F")
+
+  const t_colorectalM25 = calculatePeaqScore(undefined, undefined, undefined, { ...screenerBase, ageRange: "18_29", biologicalSex: "male", colorectalScreeningDone: true })
+  const t_colorectalM25_baseline = calculatePeaqScore(undefined, undefined, undefined, { ...screenerBase, ageRange: "18_29", biologicalSex: "male" })
+  console.assert(t_colorectalM25.breakdown.lifestyleSub === t_colorectalM25_baseline.breakdown.lifestyleSub, "Colorectal should NOT award pts for 18_29 (outside guideline age)")
+
+  const t_dexaF65 = calculatePeaqScore(undefined, undefined, undefined, { ...screenerBase, ageRange: "60_69", biologicalSex: "female", dexaDone: true })
+  const t_dexaF65_no = calculatePeaqScore(undefined, undefined, undefined, { ...screenerBase, ageRange: "60_69", biologicalSex: "female", dexaDone: false })
+  console.assert(t_dexaF65.breakdown.lifestyleSub > t_dexaF65_no.breakdown.lifestyleSub, "DEXA compliance should add pts for 65F (60_69 band)")
 
   console.log("\n=== All tests complete ===")
 }
