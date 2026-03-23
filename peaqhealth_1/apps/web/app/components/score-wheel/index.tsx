@@ -1,8 +1,7 @@
 "use client"
 import React, { useEffect, useState } from "react"
 import { useCountUp } from "./use-count-up"
-import { ScoreRingComponent } from "./ring"
-import { RingLegend } from "./ring-legend"
+import { PeaksVisualization } from "./peaks"
 import { HeroTitle } from "./hero-title"
 import { PendingBanner } from "./pending-banners"
 import { PanelGrid } from "./panel-grid"
@@ -1050,13 +1049,6 @@ export function ScoreWheel({
   const hasBlood = labFreshness !== "none" && labFreshness !== "expired"
   const bloodLocked = !hasBlood
 
-  const RINGS = [
-    { r: 96, circumference: 603.2,  color: "var(--sleep-c)", trackColor: "var(--sleep-bg)", fillPct: breakdown.sleepSub / 27, pending: !sleepConnected, animDelay: 300, ringKey: "sleep", glowColor: "rgba(74,127,181,0.5)" },
-    { r: 84, circumference: 527.8,  color: "var(--blood-c)", trackColor: "var(--blood-bg)", fillPct: breakdown.bloodSub / 33, pending: bloodLocked,      animDelay: 450, ringKey: "blood", glowColor: "rgba(192,57,43,0.45)" },
-    { r: 72, circumference: 452.4,  color: "var(--oral-c)",  trackColor: "var(--oral-bg)",  fillPct: breakdown.oralSub / 27, pending: !oralActive,       animDelay: 600, ringKey: "oral",  glowColor: "rgba(45,106,79,0.45)" },
-    { r: 60, circumference: 376.99, color: "var(--gold)",    trackColor: "var(--gold-dim)", fillPct: breakdown.lifestyleSub / 13, pending: !lifestyleData,  animDelay: 750, ringKey: "lifestyle",  glowColor: "rgba(184,134,11,0.5)" },
-  ]
-
   const LEGEND = [
     { label: "Sleep",        color: "var(--sleep-c)", active: sleepConnected },
     { label: "Blood",        color: "var(--blood-c)", active: hasBlood },
@@ -1128,44 +1120,60 @@ export function ScoreWheel({
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: "0 0 64px", display: "flex", flexDirection: "column", gap: 40 }}>
 
-      {/* RING */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20, ...fadeUp("0s") }}>
-        <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em", color: "var(--ink-30)", margin: 0 }}>
+      {/* PEAKS */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0, ...fadeUp("0s") }}>
+        {/* Score number */}
+        <span
+          className={scorePulse ? "score-pulse" : ""}
+          style={{
+            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontSize: 80, fontWeight: 300, lineHeight: 1,
+            letterSpacing: "-0.02em", color: "var(--ink)", display: "block",
+          }}
+        >
+          {displayScore}
+        </span>
+        <p style={{
+          fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+          fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em",
+          color: "var(--ink-30)", margin: "4px 0 16px",
+        }}>
           YOUR PEAQ SCORE · {new Date().toLocaleString("en-US", { month: "long", year: "numeric" }).toUpperCase()}
         </p>
-        <ScoreRingComponent
-          rings={RINGS}
-          score={score}
-          displayScore={displayScore}
-          onRingHover={setHoveredRing}
-          hoveredRing={hoveredRing}
-          scorePulse={scorePulse}
-        />
-        <RingLegend items={LEGEND} />
-        {peaqPercent !== undefined && (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-            <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--ink-30)", margin: 0 }}>
-              Data Completeness · {peaqPercentLabel}
-            </p>
-            <div style={{ display: "flex", gap: 4 }}>
-              {[
-                { label: "Sleep",     pct: breakdown.sleepSub / 27,          color: "var(--sleep-c)" },
-                { label: "Blood",     pct: breakdown.bloodSub / 33,          color: "var(--blood-c)" },
-                { label: "Oral",      pct: breakdown.oralSub / 27,           color: "var(--oral-c)"  },
-                { label: "Lifestyle", pct: breakdown.lifestyleSub / 13,      color: "var(--gold)"    },
-              ].map(bar => (
-                <div key={bar.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-                  <div style={{ width: 40, height: 4, borderRadius: 2, background: "var(--ink-06)", overflow: "hidden" }}>
-                    <div style={{ width: `${Math.min(100, bar.pct * 100)}%`, height: "100%", background: bar.color, borderRadius: 2, transition: "width 0.8s ease" }} />
-                  </div>
-                  <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 8, color: "var(--ink-30)", textTransform: "uppercase" }}>{bar.label}</span>
-                </div>
-              ))}
+
+        {/* Mountain peaks chart */}
+        <div style={{ width: "100%", maxWidth: 560 }}>
+          <PeaksVisualization
+            breakdown={breakdown}
+            sleepConnected={sleepConnected}
+            hasBlood={hasBlood}
+            oralActive={oralActive}
+            hasLifestyle={!!lifestyleData}
+            onPeakHover={setHoveredRing}
+          />
+        </div>
+
+        {/* Legend */}
+        <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap", justifyContent: "center", marginTop: 4 }}>
+          {LEGEND.map(({ label, color, active }) => (
+            <div key={label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              {active ? (
+                <div style={{ width: 7, height: 7, borderRadius: "50%", background: color }} />
+              ) : (
+                <div style={{ width: 7, height: 7, borderRadius: "50%", border: `1.5px dashed ${color}`, opacity: 0.5 }} />
+              )}
+              <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "var(--ink-60)" }}>
+                {label}
+              </span>
             </div>
-            <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "var(--ink-60)", margin: 0 }}>
-              {peaqPercent}% complete
-            </p>
-          </div>
+          ))}
+        </div>
+
+        {/* Data completeness */}
+        {peaqPercent !== undefined && (
+          <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "var(--ink-60)", margin: "10px 0 0" }}>
+            {peaqPercent}% complete
+          </p>
         )}
       </div>
 
