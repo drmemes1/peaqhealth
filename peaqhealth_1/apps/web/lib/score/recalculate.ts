@@ -98,10 +98,19 @@ export function mapLabRow(row: Record<string, unknown>): BloodInputs | undefined
     totalCholesterol_mgdL:  num(row.total_cholesterol_mgdl),
     nonHDL_mgdL:            num(row.non_hdl_mgdl),
     tsh_uIUmL:              num(row.tsh_uiuml),
+    freeT4_ngdL:            num(row.free_t4_ngdl),
+    freeT3_pgmL:            num(row.free_t3_pgml),
+    tpoAntibodies_iuML:     num(row.tpo_antibodies_iuml),
     sodium_mmolL:           num(row.sodium_mmoll),
     potassium_mmolL:        num(row.potassium_mmoll),
     uricAcid_mgdL:          num(row.uric_acid_mgdl),
     fastingInsulin_uIUmL:   num(row.fasting_insulin_uiuml),
+    dhea_s_ugdL:            num(row.dhea_s_ugdl),
+    igf1_ngmL:              num(row.igf1_ngml),
+    cortisol_ugdL:          num(row.cortisol_ugdl),
+    vitaminB12_pgmL:        num(row.vitamin_b12_pgml),
+    folate_ngmL:            num(row.folate_ngml),
+    psa_ngmL:               num(row.psa_ngml),
     labCollectionDate:      row.collection_date as string | undefined,
   }
 
@@ -112,7 +121,7 @@ export function mapLabRow(row: Record<string, unknown>): BloodInputs | undefined
 
   if (presentKeys.length === 0) return undefined
 
-  console.log("[score] blood markers present:", presentKeys)
+  console.log("[blood-score] markers present:", presentKeys)
   return mapped as BloodInputs
 }
 
@@ -213,6 +222,16 @@ export async function recalculateScore(
   const oralInputs      = oralRes.data     ? mapOralRow(oralRes.data as Record<string, unknown>)          : undefined
   let lifestyleInputs = lifestyleRes.data ? mapLifestyleRow(lifestyleRes.data as Record<string, unknown>) : undefined
 
+  // Identify absent premium markers for logging / downstream nudges
+  const missingPremium: string[] = []
+  if (bloodInputs) {
+    if (!bloodInputs.apoB_mgdL)        missingPremium.push("ApoB")
+    if (!bloodInputs.hsCRP_mgL)        missingPremium.push("hsCRP")
+    if (!bloodInputs.lpa_mgdL)         missingPremium.push("Lp(a)")
+    if (!bloodInputs.vitaminD_ngmL)    missingPremium.push("Vitamin D")
+    if (!bloodInputs.hba1c_pct)        missingPremium.push("HbA1c")
+  }
+
   // Merge wearable biometrics (resting HR, VO2 max) into lifestyle inputs
   if (lifestyleInputs && wearableRes.data) {
     const wRow = wearableRes.data as Record<string, unknown>
@@ -232,6 +251,8 @@ export async function recalculateScore(
     lifestyle: result.breakdown.lifestyleSub,
     total: result.score,
   }))
+  console.log("[blood-score] score:", result.breakdown.bloodSub)
+  console.log("[blood-score] missing premium:", missingPremium)
 
   await supabase.from("score_snapshots").insert({
     user_id:                userId,
