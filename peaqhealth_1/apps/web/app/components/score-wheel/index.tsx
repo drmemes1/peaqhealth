@@ -662,6 +662,305 @@ function CollapsiblePanel({
   )
 }
 
+function OralSpeciesRow({ name, role, val, target, note, isPathogen, flagFn, learnWhat, learnWhy, learnCitation }: {
+  name: string
+  role: string
+  val: number        // 0–100 scale; 0 = not detected
+  target: string     // display string e.g. ">2% reads"
+  note: string       // one-line clinical note
+  isPathogen: boolean
+  flagFn: (v: number) => Flag
+  learnWhat: string
+  learnWhy: string
+  learnCitation: string
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const [hovered, setHovered] = useState(false)
+  const font = "var(--font-body, 'Instrument Sans', sans-serif)"
+  const notDetected = val === 0
+  const effectiveFlag: Flag = notDetected ? (isPathogen ? "good" : "not_tested") : flagFn(val)
+  const BADGE: Record<Flag, { bg: string; text: string; label: string }> = {
+    good:       { bg: "#EAF3DE", text: "#2D6A4F",              label: "Optimal"      },
+    watch:      { bg: "#FEF3C7", text: "#92400E",              label: "Watch"        },
+    attention:  { bg: "#FEE2E2", text: "#991B1B",              label: "Attention"    },
+    not_tested: { bg: "#F7F5F0", text: "rgba(20,20,16,0.4)",   label: "Not detected" },
+    pending:    { bg: "#F7F5F0", text: "rgba(20,20,16,0.5)",   label: "—"            },
+  }
+  const bs = BADGE[effectiveFlag]
+  const leftBorder = effectiveFlag === "attention" ? "#C0392B" : effectiveFlag === "watch" ? "#B8860B" : effectiveFlag === "good" ? "#2D6A4F" : "transparent"
+  const valueColor = effectiveFlag === "attention" ? "#991B1B" : effectiveFlag === "watch" ? "#92400E" : "var(--ink)"
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        borderLeft: `2px solid ${leftBorder}`,
+        paddingLeft: 10, paddingTop: 9, paddingBottom: 9,
+        borderBottom: "0.5px solid var(--ink-06)",
+        opacity: (notDetected && !isPathogen) ? 0.55 : 1,
+        background: hovered ? "rgba(45,106,79,0.02)" : "transparent",
+        transition: "background 0.15s ease",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ margin: 0, fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 13, fontStyle: "italic", color: notDetected ? "rgba(20,20,16,0.35)" : "var(--ink)", lineHeight: 1.3 }}>
+            {name}
+          </p>
+          <p style={{ margin: "2px 0 0", fontFamily: font, fontSize: 11, color: "var(--ink-60)", lineHeight: 1.3 }}>
+            {role}
+          </p>
+        </div>
+        <div style={{ textAlign: "right", flexShrink: 0 }}>
+          {notDetected ? (
+            <p style={{ margin: 0, fontFamily: font, fontSize: 11, fontStyle: "italic", color: "rgba(20,20,16,0.35)" }}>Not detected</p>
+          ) : (
+            <p style={{ margin: 0, fontFamily: font, fontSize: 13, color: valueColor }}>
+              {val < 0.01 ? "<0.01" : val.toFixed(2)}%
+            </p>
+          )}
+          <p style={{ margin: "1px 0 0", fontFamily: font, fontSize: 10, color: "rgba(20,20,16,0.3)" }}>{target}</p>
+        </div>
+        <span style={{
+          fontFamily: font, fontSize: 9, textTransform: "uppercase" as const, letterSpacing: "0.05em",
+          padding: "3px 7px", borderRadius: 3, background: bs.bg, color: bs.text,
+          flexShrink: 0, alignSelf: "flex-start", whiteSpace: "nowrap" as const,
+        }}>
+          {bs.label}
+        </span>
+      </div>
+      {note && !notDetected && (
+        <p style={{ margin: "5px 0 6px", fontFamily: font, fontSize: 11, color: "rgba(20,20,16,0.45)", fontStyle: "italic", lineHeight: 1.4 }}>
+          {note}
+        </p>
+      )}
+      <button
+        onClick={e => { e.stopPropagation(); setExpanded(o => !o) }}
+        style={{
+          marginTop: 4, fontFamily: font, fontSize: 10, color: "rgba(20,20,16,0.35)",
+          background: "none", border: "none", cursor: "pointer", padding: 0,
+          display: "flex", alignItems: "center", gap: 4,
+        }}
+      >
+        <span style={{
+          width: 12, height: 12, borderRadius: "50%", border: "0.5px solid rgba(20,20,16,0.2)",
+          display: "inline-flex", alignItems: "center", justifyContent: "center",
+          fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 10, lineHeight: 1, flexShrink: 0,
+        }}>
+          {expanded ? "−" : "+"}
+        </span>
+        Learn more
+      </button>
+      <div style={{ maxHeight: expanded ? 350 : 0, overflow: "hidden", transition: "max-height 0.3s ease, opacity 0.3s ease", opacity: expanded ? 1 : 0 }}>
+        <div style={{ paddingTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+          <div>
+            <p style={{ fontFamily: font, fontSize: 9, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "rgba(20,20,16,0.3)", margin: "0 0 3px", fontWeight: 600 }}>What it does</p>
+            <p style={{ fontFamily: font, fontSize: 12, color: "rgba(20,20,16,0.6)", margin: 0, lineHeight: 1.5 }}>{learnWhat}</p>
+          </div>
+          <div>
+            <p style={{ fontFamily: font, fontSize: 9, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "rgba(20,20,16,0.3)", margin: "0 0 3px", fontWeight: 600 }}>Why it matters</p>
+            <p style={{ fontFamily: font, fontSize: 12, color: "rgba(20,20,16,0.6)", margin: 0, lineHeight: 1.5 }}>{learnWhy}</p>
+          </div>
+          <p style={{ fontFamily: font, fontSize: 11, fontStyle: "italic", color: "rgba(20,20,16,0.3)", margin: 0, lineHeight: 1.4 }}>{learnCitation}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function OralSection({ title, children }: { title: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false)
+  const [hov, setHov] = useState(false)
+  const font = "var(--font-body, 'Instrument Sans', sans-serif)"
+  return (
+    <div style={{ borderTop: "0.5px solid var(--ink-12)" }}>
+      <div
+        onClick={() => setOpen(o => !o)}
+        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", cursor: "pointer" }}
+      >
+        <span style={{ fontFamily: font, fontSize: 10, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "#2D6A4F", fontWeight: 600 }}>
+          {title}
+        </span>
+        <div
+          onMouseEnter={() => setHov(true)}
+          onMouseLeave={() => setHov(false)}
+          style={{
+            width: 16, height: 16, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+            border: `0.5px solid ${hov ? "#2D6A4F" : "rgba(45,106,79,0.35)"}`,
+            color: hov ? "#2D6A4F" : "rgba(45,106,79,0.5)",
+            fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 13, lineHeight: 1,
+            transition: "border-color 0.2s ease, color 0.2s ease", flexShrink: 0,
+          }}
+        >
+          {open ? "−" : "+"}
+        </div>
+      </div>
+      <div style={{ maxHeight: open ? 4000 : 0, overflow: "hidden", transition: "max-height 0.4s ease, opacity 0.3s ease", opacity: open ? 1 : 0 }}>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+function CompleteMicrobiomePanel({ species, shannonDiversity }: {
+  species: Record<string, number>
+  shannonDiversity: number
+}) {
+  const [open, setOpen] = useState(false)
+  const [hov, setHov] = useState(false)
+  const font = "var(--font-body, 'Instrument Sans', sans-serif)"
+  const sp = (key: string) => species[key] ?? 0
+
+  return (
+    <div style={{ borderTop: "0.5px solid var(--ink-12)", marginTop: 4 }}>
+      {/* Panel header */}
+      <div
+        onClick={() => setOpen(o => !o)}
+        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", cursor: "pointer" }}
+      >
+        <div>
+          <span style={{ fontFamily: font, fontSize: 10, textTransform: "uppercase" as const, letterSpacing: "0.12em", color: "#2D6A4F", fontWeight: 600 }}>
+            Complete Microbiome Panel
+          </span>
+          {!open && (
+            <p style={{ margin: "2px 0 0", fontFamily: font, fontSize: 11, color: "rgba(20,20,16,0.4)" }}>
+              8 sections · species-level detail
+            </p>
+          )}
+        </div>
+        <div
+          onMouseEnter={() => setHov(true)}
+          onMouseLeave={() => setHov(false)}
+          style={{
+            width: 20, height: 20, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+            border: `0.5px solid ${hov ? "#2D6A4F" : "rgba(45,106,79,0.4)"}`,
+            color: hov ? "#2D6A4F" : "rgba(45,106,79,0.6)",
+            fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 16, lineHeight: 1,
+            transition: "border-color 0.2s ease, color 0.2s ease", flexShrink: 0,
+          }}
+        >
+          {open ? "−" : "+"}
+        </div>
+      </div>
+
+      <div style={{ maxHeight: open ? 20000 : 0, overflow: "hidden", transition: "max-height 0.5s ease, opacity 0.4s ease", opacity: open ? 1 : 0 }}>
+
+        {/* SECTION 1: NITRATE & CARDIOVASCULAR */}
+        <OralSection title="Nitrate & Cardiovascular">
+          <OralSpeciesRow name="Neisseria subflava" role="Primary nitrate reducer — NO pathway" val={sp("Neisseria subflava")} target=">2% reads" isPathogen={false} note="Converts dietary nitrate to vasodilating nitric oxide; depleted by antiseptic mouthwash within days" flagFn={v => flag(v >= 2, v >= 0.5)} learnWhat="Reduces nitrate from food (beetroot, spinach) to nitrite, which is further converted to nitric oxide in the gut and bloodstream." learnWhy="Nitric oxide is a potent vasodilator. Low Neisseria subflava abundance is associated with impaired endothelial function and elevated blood pressure." learnCitation="Velmurugan et al., Free Radical Biology and Medicine, 2016. n=19, crossover RCT." />
+          <OralSpeciesRow name="Rothia mucilaginosa" role="Nitrate reducer + anti-inflammatory commensal" val={sp("Rothia mucilaginosa")} target=">1% reads" isPathogen={false} note="Dual role: nitrate reduction and mucosal immune modulation" flagFn={v => flag(v >= 1, v >= 0.3)} learnWhat="A highly abundant commensal that participates in nitrate reduction and produces enzymes that neutralize reactive oxygen species." learnWhy="Consistently found at higher abundance in healthy individuals. Its loss correlates with oral inflammation and cardiovascular risk markers." learnCitation="Rosenbaum et al., Cell Host & Microbe, 2021. Oral microbiome-cardiovascular cohort." />
+          <OralSpeciesRow name="Veillonella parvula" role="Lactate metaboliser — nitrate pathway co-contributor" val={sp("Veillonella parvula")} target=">1% reads" isPathogen={false} note="Consumes lactic acid from other bacteria, reducing cariogenic potential while supporting NO pathway" flagFn={v => flag(v >= 1, v >= 0.3)} learnWhat="Converts lactic acid (produced by Streptococci) to propionate and acetate, and also participates in nitrate reduction cooperatively with Neisseria." learnWhy="A key cross-feeder in oral biofilm ecology. Its presence moderates acidity and supports cardiovascular-protective pathways." learnCitation="Mashima & Nakazawa, Frontiers in Microbiology, 2015. Oral microbiome metabolic interactions." />
+          <OralSpeciesRow name="Neisseria flavescens" role="Secondary nitrate reducer — cardiovascular support" val={sp("Neisseria flavescens")} target=">0.5% reads" isPathogen={false} note="Related to N. subflava; contributes to the aggregate nitrate-reducing capacity" flagFn={v => flag(v >= 0.5, v >= 0.1)} learnWhat="A commensal Neisseria species with moderate nitrate-reducing activity, supporting the oral-systemic NO pathway alongside N. subflava." learnWhy="Part of the protective Neisseria community. Loss of this species contributes to reduced aggregate nitrate-reducing capacity." learnCitation="Hyde et al., mBio, 2014. Oral microbiome and nitrate metabolism." />
+        </OralSection>
+
+        {/* SECTION 2: PERIODONTAL PATHOGENS */}
+        <OralSection title="Periodontal Pathogens">
+          <OralSpeciesRow name="Porphyromonas gingivalis" role="Keystone periodontal pathogen — systemic risk" val={sp("Porphyromonas gingivalis")} target="<0.1% reads" isPathogen={true} note="Found in coronary artery plaques in autopsy studies; manipulates host immune response" flagFn={v => flag(v < 0.1, v < 0.5)} learnWhat="A low-abundance keystone pathogen that dysregulates the host immune response out of proportion to its numbers, enabling growth of the broader pathogenic community." learnWhy="Identified in coronary artery plaques and Alzheimer's brain tissue. Associated with MACE events independent of traditional cardiovascular risk factors." learnCitation="Hussain et al., Frontiers in Immunology, 2023. n=1,791. Cardiovascular meta-analysis." />
+          <OralSpeciesRow name="Treponema denticola" role="Red complex pathogen — periodontal + neurological risk" val={sp("Treponema denticola")} target="<0.1% reads" isPathogen={true} note="Alzheimer's: found in brain tissue in post-mortem studies (Riviere et al., 2002)" flagFn={v => flag(v < 0.1, v < 0.5)} learnWhat="Part of the 'red complex' — the most pathogenic bacterial consortium in periodontal disease. Produces enzymes that destroy connective tissue and evade immune defenses." learnWhy="Found in post-mortem brain tissue from Alzheimer's patients. The gingipain proteases from these bacteria can enter circulation and cross the blood-brain barrier." learnCitation="Riviere et al., Brain Research, 2002. Treponema denticola in Alzheimer's brain tissue." />
+          <OralSpeciesRow name="Tannerella forsythia" role="Red complex pathogen — bone resorption" val={sp("Tannerella forsythia")} target="<0.1% reads" isPathogen={true} note="Synergizes with P. gingivalis and T. denticola to accelerate periodontal bone loss" flagFn={v => flag(v < 0.1, v < 0.5)} learnWhat="The third member of the red complex. Produces surface proteins that inhibit apoptosis of infected cells, allowing persistent infection and tissue destruction." learnWhy="A reliable diagnostic marker for severe chronic periodontitis. Its abundance correlates with probing depth and clinical attachment loss." learnCitation="Socransky et al., Journal of Clinical Periodontology, 1998. Original red complex classification." />
+          <OralSpeciesRow name="Prevotella intermedia" role="Hormone-responsive periodontopathogen" val={sp("Prevotella intermedia")} target="<0.5% reads" isPathogen={true} note="Uses progesterone and estrogen as growth factors — elevated in pregnancy gingivitis" flagFn={v => flag(v < 0.5, v < 1.5)} learnWhat="A gram-negative anaerobe that can substitute sex hormones (progesterone, estradiol) for vitamin K as growth factors, making it highly active during hormonal fluctuations." learnWhy="Elevated during pregnancy, puberty, and oral contraceptive use. Associated with systemic inflammation and adverse pregnancy outcomes including preterm birth." learnCitation="Kornman & Loesche, Journal of Periodontal Research, 1980. Hormonal effects on oral microbiome." />
+          <OralSpeciesRow name="Fusobacterium nucleatum" role="Colorectal cancer link — systemic infection bridge" val={sp("Fusobacterium nucleatum")} target="<0.5% reads" isPathogen={true} note="Kostic et al., Nature 2012: enriched in colorectal adenocarcinoma tissue vs. healthy colon" flagFn={v => flag(v < 0.5, v < 1.5)} learnWhat="An opportunistic pathogen that bridges the oral cavity to other body sites. Invades vascular endothelium and can translocate from the mouth to the gut, liver, and placenta." learnWhy="Dramatically enriched in colorectal cancer tissue. Also associated with adverse pregnancy outcomes and has been found in pancreatic cancer samples." learnCitation="Kostic et al., Genome Research, 2012. Fusobacterium in colorectal carcinoma, n=95." />
+        </OralSection>
+
+        {/* SECTION 3: CARIES & DENTAL HEALTH */}
+        <OralSection title="Caries & Dental Health">
+          <OralSpeciesRow name="Streptococcus mutans" role="Primary cavity-causing bacterium" val={sp("Streptococcus mutans")} target="<1% reads" isPathogen={true} note="Ferments dietary sugars to lactic acid, dissolving tooth enamel at pH below 5.5" flagFn={v => flag(v < 1, v < 3)} learnWhat="Produces lactic acid by fermenting sucrose and synthesizes sticky glucans that anchor biofilm to tooth surfaces, creating highly acidic local environments." learnWhy="The most extensively studied cariogenic pathogen. High abundance predicts future caries development and is heritable — mothers with high S. mutans transmit it to infants." learnCitation="Loesche, Microbiological Reviews, 1986. S. mutans as the principal cause of dental caries." />
+          <OralSpeciesRow name="Streptococcus sobrinus" role="Works with S. mutans — amplifies caries risk" val={sp("Streptococcus sobrinus")} target="<0.5% reads" isPathogen={true} note="More acidogenic than S. mutans; co-infection dramatically increases caries severity" flagFn={v => flag(v < 0.5, v < 1.5)} learnWhat="Similar cariogenic mechanism to S. mutans but more acid-tolerant and more efficient at fermentation at lower pH, meaning it remains active even as the environment acidifies." learnWhy="When present alongside S. mutans, caries risk is significantly amplified. Some studies show S. sobrinus may be a stronger predictor of caries activity than S. mutans alone." learnCitation="van Houte et al., Journal of Dental Research, 1991. Role of S. sobrinus in human caries." />
+          <OralSpeciesRow name="Lactobacillus spp." role="Acid producers — secondary caries colonizers" val={sp("Lactobacillus spp.")} target="<2% reads" isPathogen={true} note="Not primary initiators, but thrive in acidic lesions created by Streptococci and deepen cavities" flagFn={v => flag(v < 2, v < 5)} learnWhat="Obligate acid producers that colonize early carious lesions once the pH drops sufficiently for their growth. Produce lactic acid efficiently, accelerating dentinal decay." learnWhy="High Lactobacillus counts in saliva correlate with active caries progression. They indicate established acidogenic niches in the mouth." learnCitation="Caufield et al., Caries Research, 2015. Lactobacillus ecology in caries progression." />
+          <OralSpeciesRow name="Streptococcus salivarius" role="Protective commensal — natural probiotic" val={sp("Streptococcus salivarius")} target=">2% reads" isPathogen={false} note="Produces bacteriocins (salivaricins) that inhibit S. mutans and S. pyogenes growth" flagFn={v => flag(v >= 2, v >= 0.5)} learnWhat="One of the first and most abundant colonizers of the oral cavity. Produces bacteriocin-like inhibitory substances (BLIS) that suppress pathogenic streptococci and help maintain microbiome balance." learnWhy="Commercial probiotic strains are based on S. salivarius K12. Low abundance correlates with increased pathogen colonization and recurrent streptococcal throat infections." learnCitation="Wescombe et al., Probiotics and Antimicrobial Proteins, 2012. S. salivarius K12 clinical trials." />
+          <OralSpeciesRow name="Streptococcus sanguinis" role="Inhibits S. mutans — caries protective" val={sp("Streptococcus sanguinis")} target=">1% reads" isPathogen={false} note="Produces hydrogen peroxide that is directly bactericidal to S. mutans; inverse relationship" flagFn={v => flag(v >= 1, v >= 0.3)} learnWhat="An early colonizer of clean tooth surfaces that produces hydrogen peroxide to maintain an oxidative environment hostile to strict anaerobes like S. mutans." learnWhy="Inverse relationship with S. mutans: high S. sanguinis = low S. mutans. Its abundance is a reliable marker of caries-free status in population studies." learnCitation="Kreth et al., Journal of Bacteriology, 2005. H₂O₂-mediated competition between S. sanguinis and S. mutans." />
+          <OralSpeciesRow name="Actinomyces spp." role="Biofilm scaffold — root surface protection" val={sp("Actinomyces spp.")} target="1–5% reads" isPathogen={false} note="Forms the structural backbone of supragingival plaque; low abundance may indicate shallow biofilm" flagFn={v => flag(v >= 1 && v <= 5, v >= 0.3 && v <= 8)} learnWhat="Gram-positive rods that form the architectural scaffold of dental biofilm. Co-aggregate with other species and contribute to biofilm maturation." learnWhy="Moderate abundance maintains biofilm homeostasis. Very low levels may indicate disrupted biofilm ecology; very high levels may contribute to root caries." learnCitation="Kolenbrander et al., Microbiology, 2010. Oral biofilm architecture and Actinomyces." />
+        </OralSection>
+
+        {/* SECTION 4: PROTECTIVE & BENEFICIAL */}
+        <OralSection title="Protective & Beneficial">
+          <OralSpeciesRow name="Streptococcus salivarius" role="Oral probiotic — bacteriocin producer" val={sp("Streptococcus salivarius")} target=">2% reads" isPathogen={false} note="Produces salivaricins A2 and B — natural antibiotics against S. pyogenes and S. mutans" flagFn={v => flag(v >= 2, v >= 0.5)} learnWhat="One of the first colonizers of the neonatal oral cavity and a lifelong dominant commensal. Produces bacteriocin-like substances that competitively exclude pathogens." learnWhy="The most well-studied oral probiotic bacterium. Its commercial derivatives (BLIS K12) are used to prevent throat infections and maintain oral microbiome balance." learnCitation="Wescombe et al., Probiotics and Antimicrobial Proteins, 2012. S. salivarius clinical evidence." />
+          <OralSpeciesRow name="Streptococcus sanguinis" role="Caries defense — H₂O₂ producer" val={sp("Streptococcus sanguinis")} target=">1% reads" isPathogen={false} note="Inverse relationship with S. mutans: competes for the same tooth-surface niches" flagFn={v => flag(v >= 1, v >= 0.3)} learnWhat="Produces hydrogen peroxide as a metabolic byproduct that kills strict anaerobes and creates an aerobic microenvironment hostile to cariogenic bacteria." learnWhy="Population studies consistently show high S. sanguinis in caries-free individuals. Its abundance is one of the strongest predictors of caries resistance." learnCitation="Kreth et al., Journal of Bacteriology, 2005. Competitive exclusion of S. mutans." />
+          <OralSpeciesRow name="Rothia dentocariosa" role="Anti-inflammatory commensal — biofilm stabilizer" val={sp("Rothia dentocariosa")} target=">0.5% reads" isPathogen={false} note="Produces urease that neutralizes organic acids, preventing pH drops that promote caries" flagFn={v => flag(v >= 0.5, v >= 0.1)} learnWhat="An alkalinogenic bacterium that hydrolyzes urea and produces ammonia, raising plaque pH and counteracting acidogenic species. Also has anti-inflammatory properties." learnWhy="Low Rothia dentocariosa is found in dysbiotic oral microbiomes. Its urease activity is a key pH-buffering mechanism in healthy dental biofilm." learnCitation="Nascimento et al., Journal of Dental Research, 2009. Alkalinogenic bacteria and caries resistance." />
+          <OralSpeciesRow name="Haemophilus parainfluenzae" role="Commensal — early biofilm colonizer" val={sp("Haemophilus parainfluenzae")} target="1–3% reads" isPathogen={false} note="Provides growth factors for other commensals; its abundance indicates a mature, diverse microbiome" flagFn={v => flag(v >= 1 && v <= 3, v >= 0.3 && v <= 5)} learnWhat="An early and abundant colonizer of the oral and upper respiratory mucosa. Provides hemin and NAD growth factors to fastidious commensals that cannot synthesize them." learnWhy="Consistently found at high abundance in healthy individuals. Loss may destabilize the commensal community and create openings for pathogens." learnCitation="Bik et al., PLOS Biology, 2010. Core oral microbiome across 120 individuals." />
+        </OralSection>
+
+        {/* SECTION 5: SYSTEMIC DISEASE MARKERS */}
+        <OralSection title="Systemic Disease Markers">
+          <OralSpeciesRow name="Fusobacterium nucleatum" role="Colorectal cancer bridge organism" val={sp("Fusobacterium nucleatum")} target="<0.5% reads" isPathogen={true} note="Kostic et al., Nature 2012: consistently enriched in colorectal adenocarcinoma vs. normal tissue" flagFn={v => flag(v < 0.5, v < 1.5)} learnWhat="Invades vascular endothelium and can translocate from the oral cavity to distal body sites including the gut, placenta, and liver. Activates oncogenic signaling pathways (Wnt/β-catenin)." learnWhy="Found in the majority of colorectal cancer tissue samples but absent or low in adjacent normal tissue. Also associated with preterm birth and adverse pregnancy outcomes." learnCitation="Kostic et al., Genome Research, 2012. Fusobacterium nucleatum in colorectal carcinoma." />
+          <OralSpeciesRow name="Treponema denticola" role="Alzheimer's-associated pathogen" val={sp("Treponema denticola")} target="<0.1% reads" isPathogen={true} note="Riviere et al., Brain Research 2002: found in post-mortem brain tissue from Alzheimer's patients" flagFn={v => flag(v < 0.1, v < 0.5)} learnWhat="Produces gingipain proteases that degrade host proteins and can enter the bloodstream. Demonstrated ability to cross the blood-brain barrier in animal models." learnWhy="Post-mortem studies have identified T. denticola DNA in Alzheimer's brain tissue. The causal relationship is under active investigation, but the association is robust." learnCitation="Riviere et al., Brain Research, 2002. Oral treponemes in brain tissue of Alzheimer's patients." />
+          <OralSpeciesRow name="Porphyromonas gingivalis" role="Cardiovascular risk pathogen" val={sp("Porphyromonas gingivalis")} target="<0.1% reads" isPathogen={true} note="Hussain et al., Frontiers Immunology 2023 (n=1,791): independently predicts MACE after adjusting for traditional risk factors" flagFn={v => flag(v < 0.1, v < 0.5)} learnWhat="Produces gingipain proteases that cleave complement factors and evade immune destruction. Induces chronic systemic inflammation at levels disproportionate to its oral abundance." learnWhy="Found in coronary artery plaques. A 2023 meta-analysis of 1,791 patients found P. gingivalis burden independently predicted major adverse cardiovascular events." learnCitation="Hussain et al., Frontiers in Immunology, 2023. n=1,791 meta-analysis, MACE prediction." />
+          <OralSpeciesRow name="Prevotella intermedia" role="Hormonal inflammation — pregnancy risk" val={sp("Prevotella intermedia")} target="<0.5% reads" isPathogen={true} note="Uses estrogen and progesterone as growth substrates — disproportionately elevated during hormonal fluctuations" flagFn={v => flag(v < 0.5, v < 1.5)} learnWhat="Uniquely able to substitute sex hormones for vitamin K as essential growth factors, giving it a selective advantage during hormonal changes (pregnancy, menstrual cycle, contraceptive use)." learnWhy="Associated with adverse pregnancy outcomes including preterm birth and low birth weight. Also linked to cardiovascular risk through chronic gingival inflammation." learnCitation="Offenbacher et al., Journal of Periodontology, 1996. Periodontal infection and adverse pregnancy outcomes." />
+        </OralSection>
+
+        {/* SECTION 6: OSA & SLEEP-ASSOCIATED */}
+        <OralSection title="OSA & Sleep-Associated">
+          <OralSpeciesRow name="Prevotella melaninogenica" role="OSA-enriched — airway inflammation" val={sp("Prevotella melaninogenica")} target="<1% reads" isPathogen={true} note="Consistently elevated in OSA patients across multiple cohort studies" flagFn={v => flag(v < 1, v < 2)} learnWhat="An anaerobe enriched in the upper airway microbiome of OSA patients. Produces lipopolysaccharide that promotes upper airway inflammation and may contribute to airway tissue remodeling." learnWhy="Chen et al. (2022) found oral microbiome composition including P. melaninogenica predicted OSA with 91.9% AUC. Its abundance correlates with AHI severity." learnCitation="Chen et al., Journal of Clinical Sleep Medicine, 2022. OSA prediction from oral microbiome, n=87." />
+          <OralSpeciesRow name="Fusobacterium nucleatum" role="OSA-associated systemic bridge organism" val={sp("Fusobacterium nucleatum")} target="<0.5% reads" isPathogen={true} note="Elevated in OSA cohorts alongside P. melaninogenica; contributes to upper airway dysbiosis" flagFn={v => flag(v < 0.5, v < 1.5)} learnWhat="Found at elevated levels in both the oral and pharyngeal microbiome of OSA patients. Its invasive properties may allow penetration of upper airway epithelium." learnWhy="Contributes to the oral microbiome-OSA association. Its concurrent elevation with other OSA-associated taxa strengthens the predictive model for sleep-disordered breathing." learnCitation="Chen et al., Journal of Clinical Sleep Medicine, 2022. OSA microbiome prediction study." />
+          <OralSpeciesRow name="Fusobacterium periodonticum" role="Periodontal + sleep pathway — bridging species" val={sp("Fusobacterium periodonticum")} target="<0.5% reads" isPathogen={true} note="Closely related to F. nucleatum; shares OSA-enrichment and periodontal risk associations" flagFn={v => flag(v < 0.5, v < 1.5)} learnWhat="A Fusobacterium species closely related to F. nucleatum with similar invasive and co-aggregating properties. Bridges periodontal and systemic compartments." learnWhy="Elevated in OSA-associated dysbiosis profiles. Its co-occurrence with F. nucleatum amplifies periodontal-systemic risk." learnCitation="Almeida-Santos et al., mBio, 2021. Fusobacterium species in oral-systemic disease." />
+          <OralSpeciesRow name="Peptostreptococcus spp." role="Anaerobic commensal — sleep microbiome marker" val={sp("Peptostreptococcus spp.")} target="<1% reads" isPathogen={true} note="Part of the OSA-enriched microbial community; contributes to anaerobic dysbiosis in the upper airway" flagFn={v => flag(v < 1, v < 3)} learnWhat="Strictly anaerobic gram-positive cocci that thrive in oxygen-depleted environments. Their abundance in the upper airway increases under hypoxic conditions associated with sleep apnea." learnWhy="Part of the core dysbiotic community found in OSA. High abundance indicates an anaerobic-shifted microbiome consistent with nocturnal oxygen desaturation." learnCitation="Chen et al., Journal of Clinical Sleep Medicine, 2022. Oral microbiome OSA prediction." />
+        </OralSection>
+
+        {/* SECTION 7: BREATH & METABOLIC */}
+        <OralSection title="Breath & Metabolic">
+          <OralSpeciesRow name="Solobacterium moorei" role="Primary halitosis organism — VSC producer" val={sp("Solobacterium moorei")} target="<0.5% reads" isPathogen={true} note="Produces volatile sulfur compounds (H₂S, CH₃SH) that are the primary chemical cause of chronic halitosis" flagFn={v => flag(v < 0.5, v < 1.5)} learnWhat="Produces volatile sulfur compounds (VSCs) — hydrogen sulfide and methyl mercaptan — the chemical signature of breath malodor. Thrives on protein substrates and tongue dorsum biofilm." learnWhy="The dominant organism in tongue biofilm of patients with refractory halitosis. VSC production correlates directly with organoleptic scores of breath odor severity." learnCitation="Haraszthy et al., Journal of Periodontology, 2007. Solobacterium moorei and halitosis." />
+          <OralSpeciesRow name="Prevotella spp." role="Aggregate Prevotella — VSC + inflammation" val={sp("Prevotella spp.")} target="<3% reads" isPathogen={true} note="Total Prevotella genus abundance; includes all species — pathogenic and commensal" flagFn={v => flag(v < 3, v < 6)} learnWhat="The Prevotella genus includes species across a virulence spectrum — from key pathogens (P. intermedia, P. melaninogenica) to moderate commensals. Produces proteolytic enzymes and VSCs." learnWhy="High total Prevotella burden is associated with periodontal disease, OSA, and halitosis. Elevated aggregate Prevotella is a consistent finding in oral dysbiosis." learnCitation="Hajishengallis & Lamont, Trends in Immunology, 2012. Oral dysbiosis and the Prevotella genus." />
+          <OralSpeciesRow name="Fusobacterium spp." role="Aggregate Fusobacterium — cancer + inflammation" val={sp("Fusobacterium spp.")} target="<1% reads" isPathogen={true} note="Total Fusobacterium genus; includes F. nucleatum, F. periodonticum, and other species" flagFn={v => flag(v < 1, v < 3)} learnWhat="The Fusobacterium genus contains multiple species with invasive and pro-inflammatory properties. They produce butyrate and other metabolites that can modulate host immunity." learnWhy="Elevated total Fusobacterium abundance is associated with periodontal disease, OSA, colorectal cancer risk, and adverse pregnancy outcomes." learnCitation="Kostic et al., Cell Host & Microbe, 2013. Fusobacterium and human disease." />
+          <OralSpeciesRow name="Peptostreptococcus spp." role="Anaerobic VSC producer — breath marker" val={sp("Peptostreptococcus spp.")} target="<1% reads" isPathogen={true} note="Proteolytic anaerobes that produce sulfur compounds from amino acid metabolism" flagFn={v => flag(v < 1, v < 3)} learnWhat="Strictly anaerobic proteolytic bacteria that metabolize cysteine and methionine to produce volatile sulfur compounds. Dominant in deep periodontal pockets and tongue dorsum biofilm." learnWhy="High abundance correlates with clinical malodor scores and is found in both halitosis and periodontal disease patient profiles." learnCitation="Persson et al., Journal of Clinical Periodontology, 2011. Peptostreptococcus in oral malodor." />
+        </OralSection>
+
+        {/* SECTION 8: DIVERSITY METRICS */}
+        <OralSection title="Diversity Metrics">
+          <div style={{ padding: "12px 0" }}>
+            {/* Shannon diversity */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderBottom: "0.5px solid var(--ink-06)" }}>
+              <div>
+                <p style={{ margin: 0, fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 13, fontStyle: "italic", color: "var(--ink)" }}>Shannon Diversity Index</p>
+                <p style={{ margin: "2px 0 0", fontFamily: font, fontSize: 11, color: "var(--ink-60)" }}>Species richness and evenness — target ≥3.0</p>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <p style={{ margin: 0, fontFamily: font, fontSize: 16, color: shannonDiversity >= 3 ? "#2D6A4F" : shannonDiversity >= 2 ? "#92400E" : "#991B1B" }}>
+                  {shannonDiversity.toFixed(2)}
+                </p>
+                <span style={{
+                  fontFamily: font, fontSize: 9, textTransform: "uppercase" as const, letterSpacing: "0.05em",
+                  padding: "2px 6px", borderRadius: 3,
+                  background: shannonDiversity >= 3 ? "#EAF3DE" : shannonDiversity >= 2 ? "#FEF3C7" : "#FEE2E2",
+                  color: shannonDiversity >= 3 ? "#2D6A4F" : shannonDiversity >= 2 ? "#92400E" : "#991B1B",
+                }}>
+                  {shannonDiversity >= 3 ? "Optimal" : shannonDiversity >= 2 ? "Watch" : "Attention"}
+                </span>
+              </div>
+            </div>
+            {/* Species richness */}
+            {sp("Species richness") > 0 && (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderBottom: "0.5px solid var(--ink-06)" }}>
+                <div>
+                  <p style={{ margin: 0, fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 13, fontStyle: "italic", color: "var(--ink)" }}>Species Richness</p>
+                  <p style={{ margin: "2px 0 0", fontFamily: font, fontSize: 11, color: "var(--ink-60)" }}>Total OTUs detected — target &gt;150</p>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <p style={{ margin: 0, fontFamily: font, fontSize: 16, color: sp("Species richness") > 150 ? "#2D6A4F" : sp("Species richness") > 80 ? "#92400E" : "#991B1B" }}>
+                    {Math.round(sp("Species richness"))}
+                  </p>
+                  <span style={{
+                    fontFamily: font, fontSize: 9, textTransform: "uppercase" as const, letterSpacing: "0.05em",
+                    padding: "2px 6px", borderRadius: 3,
+                    background: sp("Species richness") > 150 ? "#EAF3DE" : sp("Species richness") > 80 ? "#FEF3C7" : "#FEE2E2",
+                    color: sp("Species richness") > 150 ? "#2D6A4F" : sp("Species richness") > 80 ? "#92400E" : "#991B1B",
+                  }}>
+                    {sp("Species richness") > 150 ? "Optimal" : sp("Species richness") > 80 ? "Watch" : "Attention"}
+                  </span>
+                </div>
+              </div>
+            )}
+            {/* Diversity context note */}
+            <p style={{ margin: "10px 0 0", fontFamily: font, fontSize: 12, color: "rgba(20,20,16,0.5)", lineHeight: 1.6 }}>
+              Higher diversity generally indicates a more resilient oral microbiome with better resistance to pathogen colonization. A Shannon index below 2.0 is associated with dysbiosis-related systemic risk.
+            </p>
+          </div>
+        </OralSection>
+
+      </div>
+    </div>
+  )
+}
+
 function BacteriaGroup({ title, rows, mounted }: {
   title: string
   rows: Array<{ name: string; sub: string; val: number; flag: Flag }>
@@ -1140,34 +1439,12 @@ export function ScoreWheel({
               hoverBg="rgba(45,106,79,0.04)" mounted={mounted}
             />
           ))}
-          {oralData?.species && (() => {
-            const s = oralData.species!
-            return (
-              <>
-                <BacteriaGroup title="Nitrate-Reducing Bacteria" mounted={mounted} rows={[
-                  { name: "Neisseria subflava",  sub: "Primary nitrate-reducer · NO pathway · target >1%",  val: s["Neisseria subflava"]  ?? 0, flag: flag((s["Neisseria subflava"]  ?? 0) >= 1, (s["Neisseria subflava"]  ?? 0) > 0.1) },
-                  { name: "Rothia mucilaginosa", sub: "Nitrate-reducer + anti-inflammatory · target >1%",    val: s["Rothia mucilaginosa"] ?? 0, flag: flag((s["Rothia mucilaginosa"] ?? 0) >= 1, (s["Rothia mucilaginosa"] ?? 0) > 0.1) },
-                  { name: "Veillonella parvula", sub: "Lactate metaboliser · nitrate-reducer · target >1%",  val: s["Veillonella parvula"] ?? 0, flag: flag((s["Veillonella parvula"] ?? 0) >= 1, (s["Veillonella parvula"] ?? 0) > 0.1) },
-                ]} />
-                <BacteriaGroup title="Periodontal Pathogens" mounted={mounted} rows={[
-                  { name: "P. gingivalis", sub: "Keystone pathogen · systemic risk · target <0.1%", val: s["Porphyromonas gingivalis"] ?? 0, flag: flag((s["Porphyromonas gingivalis"] ?? 0) < 0.1, (s["Porphyromonas gingivalis"] ?? 0) < 0.5) },
-                  { name: "T. denticola",  sub: "Red complex · periodontal risk · target <0.2%",    val: s["Treponema denticola"]     ?? 0, flag: flag((s["Treponema denticola"]     ?? 0) < 0.2, (s["Treponema denticola"]     ?? 0) < 0.8) },
-                  { name: "T. forsythia",  sub: "Red complex · periodontal risk · target <0.3%",    val: s["Tannerella forsythia"]    ?? 0, flag: flag((s["Tannerella forsythia"]    ?? 0) < 0.3, (s["Tannerella forsythia"]    ?? 0) < 1.0) },
-                ]} />
-                <BacteriaGroup title="OSA-Associated Taxa" mounted={mounted} rows={[
-                  { name: "P. melaninogenica", sub: "OSA-enriched · airway inflammation · target <0.5%", val: s["Prevotella melaninogenica"] ?? 0, flag: flag((s["Prevotella melaninogenica"] ?? 0) < 0.5, (s["Prevotella melaninogenica"] ?? 0) < 1.0) },
-                  { name: "F. nucleatum",      sub: "Fusobacterium · OSA signal · target <1%",           val: s["Fusobacterium nucleatum"]   ?? 0, flag: flag((s["Fusobacterium nucleatum"]   ?? 0) < 1.0, (s["Fusobacterium nucleatum"]   ?? 0) < 1.5) },
-                ]} />
-                <div style={{ borderTop: "0.5px solid var(--ink-12)", padding: "12px 16px" }}>
-                  <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-60)", margin: "0 0 4px" }}>Diversity Index</p>
-                  <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 20, color: "var(--ink)", margin: "0 0 4px" }}>{oralData.shannonDiversity.toFixed(2)}</p>
-                  <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "var(--ink-60)", margin: 0, lineHeight: 1.5 }}>
-                    Shannon diversity index measures species richness and evenness. Target ≥3.0 for optimal health.
-                  </p>
-                </div>
-              </>
-            )
-          })()}
+          {oralData?.species && (
+            <CompleteMicrobiomePanel
+              species={oralData.species}
+              shannonDiversity={oralData.shannonDiversity}
+            />
+          )}
         </div>
       </CollapsiblePanel>
 
