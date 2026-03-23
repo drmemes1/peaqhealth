@@ -286,11 +286,19 @@ function scoreRestingHR(hr?: number): number {
   return 0
 }
 
-function scoreVO2Max(vo2?: number): number {
-  if (vo2 === undefined) return 0
-  if (vo2 > 50)  return 1
-  if (vo2 >= 40) return 0.75
-  if (vo2 >= 30) return 0.5
+function scoreVO2Max(vo2?: number, sex?: string): number {
+  if (vo2 == null || vo2 <= 0) return 0
+  if (sex === "female") {
+    // ACSM 10th ed. female norms: above-average ≥44, average 37–44, below-average 28–37
+    if (vo2 > 44) return 1
+    if (vo2 > 37) return 0.75
+    if (vo2 > 28) return 0.5
+    return 0
+  }
+  // male or unspecified — ACSM 10th ed. male norms: above-average ≥50, average 44–50, below-average 35–44
+  if (vo2 > 50) return 1
+  if (vo2 > 44) return 0.75
+  if (vo2 > 35) return 0.5
   return 0
 }
 
@@ -756,7 +764,7 @@ export function calculatePeaqScore(sleep?: SleepInputs, blood?: BloodInputs, ora
     dentalVisitScore = scoreDentalVisit(lifestyle.lastDentalVisit)
     heartScore       = scoreHeart(lifestyle.smokingStatus, lifestyle.knownHypertension, lifestyle.knownDiabetes)
     restingHRScore   = scoreRestingHR(lifestyle.restingHR)
-    vo2maxScore      = scoreVO2Max(lifestyle.vo2max)
+    vo2maxScore      = scoreVO2Max(lifestyle.vo2max, lifestyle.biologicalSex)
     nutritionScore   = scoreNutrition(lifestyle)
     alcoholScore     = scoreAlcohol(lifestyle.alcoholDrinksPerWeek)
     const raw        = exerciseScore + oralHygieneScore + dentalVisitScore + heartScore + restingHRScore + vo2maxScore + nutritionScore + alcoholScore
@@ -915,6 +923,14 @@ export function runTests(): void {
   console.assert(p25F.breakdown.lifestyleSub > p45M.breakdown.lifestyleSub, "25F should outscore 45M due to lower age multiplier")
   console.assert(p45F.breakdown.lifestyleSub > p45M.breakdown.lifestyleSub, "45F should outscore 45M due to pre-menopausal sex multiplier")
   console.assert(p45F.breakdown.lifestyleSub < p25F.breakdown.lifestyleSub, "45F should score less than 25F — higher age multiplier penalty")
+
+  // VO2max sex-adjusted tests (ACSM 10th ed.)
+  console.assert(scoreVO2Max(38, "female") === 0.75, "Female VO2 38 should be 0.75 (above average for women)")
+  console.assert(scoreVO2Max(38, "male")   === 0.5,  "Male VO2 38 should be 0.5 (below average for men, tightened threshold)")
+  console.assert(scoreVO2Max(45, "female") === 1.0,  "Female VO2 45 should be 1.0")
+  console.assert(scoreVO2Max(45, "male")   === 0.75, "Male VO2 45 should be 0.75")
+  console.assert(scoreVO2Max(51, "male")   === 1.0,  "Male VO2 51 should be 1.0")
+  console.assert(scoreVO2Max(undefined)    === 0,    "undefined VO2 should be 0")
 
   console.log("\n=== All tests complete ===")
 }
