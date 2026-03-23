@@ -114,16 +114,48 @@ export default async function DashboardPage() {
     oralData: oral ? (() => {
       // DB stores pct values as decimals (0.130 = 13%) — multiply by 100 for display/flag thresholds
       const rawOtu = oral.raw_otu_table as Record<string, number> | null
-      const species: Record<string, number> | undefined = rawOtu ? {
-        "Neisseria subflava":        (rawOtu["Neisseria subflava"]        ?? 0) * 100,
-        "Rothia mucilaginosa":       (rawOtu["Rothia mucilaginosa"]       ?? 0) * 100,
-        "Veillonella parvula":       (rawOtu["Veillonella parvula"]       ?? 0) * 100,
-        "Porphyromonas gingivalis":  (rawOtu["Porphyromonas gingivalis"]  ?? 0) * 100,
-        "Treponema denticola":       (rawOtu["Treponema denticola"]       ?? 0) * 100,
-        "Tannerella forsythia":      (rawOtu["Tannerella forsythia"]      ?? 0) * 100,
-        "Prevotella melaninogenica": (rawOtu["Prevotella melaninogenica"] ?? 0) * 100,
-        "Fusobacterium nucleatum":   (rawOtu["Fusobacterium nucleatum"]   ?? 0) * 100,
-      } : undefined
+      const species: Record<string, number> | undefined = rawOtu ? (() => {
+        // Single species lookup (exact key, *100 for display)
+        const sp = (key: string) => (rawOtu[key] ?? 0) * 100
+        // Genus aggregate: sum all entries whose key starts with prefix
+        const genus = (prefix: string) =>
+          Object.entries(rawOtu)
+            .filter(([k]) => k.toLowerCase().startsWith(prefix.toLowerCase()))
+            .reduce((sum, [, v]) => sum + v, 0) * 100
+        return {
+          // Nitrate & cardiovascular
+          "Neisseria subflava":          sp("Neisseria subflava"),
+          "Rothia mucilaginosa":         sp("Rothia mucilaginosa"),
+          "Veillonella parvula":         sp("Veillonella parvula"),
+          "Neisseria flavescens":        sp("Neisseria flavescens"),
+          // Periodontal pathogens
+          "Porphyromonas gingivalis":    sp("Porphyromonas gingivalis"),
+          "Treponema denticola":         sp("Treponema denticola"),
+          "Tannerella forsythia":        sp("Tannerella forsythia"),
+          "Prevotella intermedia":       sp("Prevotella intermedia"),
+          "Fusobacterium nucleatum":     sp("Fusobacterium nucleatum"),
+          // Caries & dental health
+          "Streptococcus mutans":        sp("Streptococcus mutans"),
+          "Streptococcus sobrinus":      sp("Streptococcus sobrinus"),
+          "Lactobacillus spp.":          genus("Lactobacillus"),
+          "Streptococcus salivarius":    sp("Streptococcus salivarius"),
+          "Streptococcus sanguinis":     sp("Streptococcus sanguinis"),
+          "Actinomyces spp.":            genus("Actinomyces"),
+          // Protective
+          "Rothia dentocariosa":         sp("Rothia dentocariosa"),
+          "Haemophilus parainfluenzae":  sp("Haemophilus parainfluenzae"),
+          // OSA & sleep
+          "Prevotella melaninogenica":   sp("Prevotella melaninogenica"),
+          "Fusobacterium periodonticum": sp("Fusobacterium periodonticum"),
+          "Peptostreptococcus spp.":     genus("Peptostreptococcus"),
+          // Breath & metabolic
+          "Solobacterium moorei":        sp("Solobacterium moorei"),
+          "Prevotella spp.":             genus("Prevotella"),
+          "Fusobacterium spp.":          genus("Fusobacterium"),
+          // Diversity
+          "Species richness":            Object.values(rawOtu).filter(v => v > 0).length,
+        }
+      })() : undefined
       return {
         shannonDiversity:   oral.shannon_diversity ?? 0,
         nitrateReducersPct: ((oral.nitrate_reducers_pct as number) ?? 0) * 100,
