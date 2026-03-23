@@ -1,15 +1,22 @@
 /**
- * Peaq Score Engine — v6.0
+ * Peaq Score Engine — v7.0
  *
  * Four-panel architecture: Sleep + Blood + Oral Microbiome + Lifestyle
  *
- * Changes from v5.0:
+ * Changes from v6.0 to v7.0:
+ *   - Added 9 new optional demographic & preventive screening fields to LifestyleInputs:
+ *     ageRange, biologicalSex, cacScored, colorectalScreeningDone, lungCtDone,
+ *     mammogramDone, dexaDone, psaDiscussed, cervicalScreeningDone
+ *   - Age-weighted CVD risk penalty (medicalHistoryPenalty)
+ *   - Sex-adjusted VO2max thresholds (ACSM 10th ed.)
+ *   - Preventive screening compliance scoring (scorePreventiveScreening)
+ *
+ * Changes from v5.0 to v6.0:
  *   - Lifestyle max 8->13 (proportional scaling of raw sub-scores)
  *   - Interactions removed from score total — silent insight engine only
  *   - New formula: finalScore = Math.min(100, sleepSub + bloodSub + oralSub + lifestyleSub)
  *   - No normalization divisor needed — panels sum to exactly 100
  *   - interactionPool and interactionsFired retained for downstream insight cards
- *   - Version tag: "6.0"
  *
  * Full architecture (panels sum to exactly 100):
  *   Sleep          27 pts  (wearable) or PSQI-6 estimate (max 21 pts, capped)
@@ -64,6 +71,16 @@ export interface LifestyleInputs {
   sugaryDrinksPerWeek?:     number
   alcoholDrinksPerWeek?:    number
   stressLevel?:     "low" | "moderate" | "high"
+  // v7.0 — age/sex demographic + preventive screening
+  ageRange?:               "18_29" | "30_39" | "40_49" | "50_59" | "60_69" | "70_plus"
+  biologicalSex?:          "male" | "female" | "prefer_not_to_say"
+  cacScored?:              boolean
+  colorectalScreeningDone?: boolean
+  lungCtDone?:             boolean
+  mammogramDone?:          boolean
+  dexaDone?:               boolean
+  psaDiscussed?:           boolean
+  cervicalScreeningDone?:  boolean
 }
 
 export interface SleepInputs {
@@ -134,7 +151,7 @@ export interface BloodPanelResult {
 }
 
 export interface PeaqScoreResult {
-  version: "6.0"
+  version: "7.0"
   score:    number
   category: "optimal" | "good" | "moderate" | "attention"
   breakdown: {
@@ -789,7 +806,7 @@ export function calculatePeaqScore(sleep?: SleepInputs, blood?: BloodInputs, ora
   if (oral?.collectionDate) oralDataAge = Math.floor((Date.now() - new Date(oral.collectionDate).getTime()) / 86400000)
 
   return {
-    version: "6.0",
+    version: "7.0",
     score,
     category: getCategory(score),
     breakdown: {
@@ -831,7 +848,7 @@ export function calculatePeaqScore(sleep?: SleepInputs, blood?: BloodInputs, ora
 // ---- Tests ------------------------------------------------------------------
 
 export function runTests(): void {
-  console.log("=== Peaq Score Engine v6.0 -- Test Suite ===\n")
+  console.log("=== Peaq Score Engine v7.0 -- Test Suite ===\n")
   const goodLS: LifestyleInputs = {
     exerciseLevel: "active", brushingFreq: "twice_plus", flossingFreq: "daily",
     mouthwashType: "fluoride", lastDentalVisit: "within_6mo", smokingStatus: "never",
