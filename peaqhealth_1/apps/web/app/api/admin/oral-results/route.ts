@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
 
   // Parse OTU data
   const oralScore = parseOralMicrobiome(zymoReport)
+  console.log('[admin-oral] saving for user:', targetUserId)
 
   const { data: insertData, error: insertError } = await serviceClient
     .from('oral_kit_orders')
