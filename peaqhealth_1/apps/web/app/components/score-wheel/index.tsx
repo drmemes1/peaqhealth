@@ -185,6 +185,7 @@ const INSIGHT_COPY: Record<string, { title: string; body: string; panels: string
   poorNutritionTrig:      { title: "Nutrition × Triglycerides", body: "Frequent processed food consumption is a primary driver of elevated triglycerides.", panels: ["Lifestyle", "Blood"] },
   highHRPoorSleep:        { title: "Resting HR × Sleep", body: "High resting heart rate paired with poor sleep reflects inadequate cardiovascular recovery.", panels: ["Lifestyle", "Sleep"] },
   alcoholPoorSleep:       { title: "Alcohol × Sleep", body: "Alcohol intake above 14 drinks/week directly fragments sleep architecture.", panels: ["Lifestyle", "Sleep"] },
+  sleepLifestyle:         { title: "Sleep + lifestyle combined effect", body: "Small improvements across sleep and lifestyle together reduce cardiovascular risk more efficiently than improving either alone.", panels: ["Sleep", "Lifestyle"] },
 }
 
 const PANEL_COLORS: Record<string, string> = {
@@ -314,6 +315,7 @@ function CrossPanelInteractions({
   oralKitStatus = "none",
   interactionsFired = [],
   oralActive = false,
+  lifestyleActive = false,
   oralData,
   bloodData,
   sleepData,
@@ -322,6 +324,7 @@ function CrossPanelInteractions({
   oralKitStatus?: "none" | "ordered" | "complete"
   interactionsFired?: string[]
   oralActive?: boolean
+  lifestyleActive?: boolean
   oralData?: ScoreWheelProps["oralData"]
   bloodData?: ScoreWheelProps["bloodData"]
   sleepData?: ScoreWheelProps["sleepData"]
@@ -441,11 +444,31 @@ function CrossPanelInteractions({
     }
   }
 
-  const hasComputed = oralActive && computed.length > 0
+  // Sleep + Lifestyle combined effect — fires whenever both panels have data, regardless of oral
+  if (sleepData && lifestyleActive) {
+    computed.push({
+      key: "sleepLifestyle",
+      title: "Sleep + lifestyle combined effect",
+      body: "Research in 53,242 adults shows that small improvements across sleep and lifestyle together reduce cardiovascular risk more efficiently than improving either alone. Just 10 extra minutes of sleep and 5 extra minutes of daily movement combined with a modest diet improvement is associated with 10% lower risk of heart attack, stroke, and heart failure.",
+      panels: ["Sleep", "Lifestyle"],
+      severity: "medium",
+      learnMore: {
+        science: "The SPAN study (Koemel et al., EJPC 2026) found the optimal combination of 8–9.4 hours sleep, 42–104 minutes of moderate activity, and high diet quality was associated with 57% lower risk of major adverse cardiovascular events in a wearable-based cohort of over 53,000 adults. Crucially, behaviors studied in combination required 3x less individual change to achieve the same cardiovascular benefit as behaviors studied in isolation — validating the multi-panel approach.",
+        meaning: "Because you have both sleep and lifestyle data, you can see the combined effect. Small simultaneous improvements — not large changes to one area — are the most efficient path to cardiovascular risk reduction.",
+        actions: [
+          "Consider whether your sleep and activity goals reinforce each other — improving both simultaneously is more efficient than focusing on one",
+          "Track your SPAN score: sleep 8+ hours, move 40+ minutes daily, add one additional serving of vegetables",
+        ],
+        citation: "Koemel et al., European Journal of Preventive Cardiology, 2026. n=53,242, 8-year follow-up, UK Biobank.",
+      },
+    })
+  }
+
+  const hasComputed = computed.length > 0
   const fired = interactionsFired.filter(k => INSIGHT_COPY[k])
 
   const collapsedSummary =
-    oralActive && computed.length > 0
+    computed.length > 0
       ? `⚡ ${computed.length} pattern${computed.length !== 1 ? "s" : ""} — ${computed[0].title}`
       : oralActive
       ? "✓ No patterns detected"
@@ -495,37 +518,38 @@ function CrossPanelInteractions({
         {/* Body */}
         <div style={{ maxHeight: open ? 6000 : 0, opacity: open ? 1 : 0, overflow: "hidden", transition: "max-height 0.3s ease, opacity 0.3s ease" }}>
 
-          {/* Oral active — show computed interactions */}
-          {oralActive && (
-            hasComputed ? (
-              <div>
-                <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", color: "#B8860B", margin: "0 0 10px" }}>
-                  Patterns detected:
-                </p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {computed.slice(0, showAll ? undefined : 3).map(interaction => (
-                    <InteractionCard key={interaction.key} interaction={interaction} />
-                  ))}
-                </div>
-                {!showAll && computed.length > 3 && (
-                  <button
-                    onClick={e => { e.stopPropagation(); setShowAll(true) }}
-                    style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "#B8860B", background: "none", border: "none", cursor: "pointer", marginTop: 10, padding: 0 }}
-                  >
-                    View all {computed.length} patterns →
-                  </button>
-                )}
+          {/* Show computed interactions whenever any are present */}
+          {hasComputed && (
+            <div>
+              <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", color: "#B8860B", margin: "0 0 10px" }}>
+                Patterns detected:
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {computed.slice(0, showAll ? undefined : 3).map(interaction => (
+                  <InteractionCard key={interaction.key} interaction={interaction} />
+                ))}
               </div>
-            ) : (
-              <div>
-                <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", fontSize: 18, color: "rgba(20,20,16,0.45)", margin: "0 0 6px", lineHeight: 1.3 }}>
-                  No patterns detected — your panels look balanced.
-                </p>
-                <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "rgba(20,20,16,0.4)", margin: 0, lineHeight: 1.5 }}>
-                  We continuously monitor your data for cross-panel signals. Check back as your data updates.
-                </p>
-              </div>
-            )
+              {!showAll && computed.length > 3 && (
+                <button
+                  onClick={e => { e.stopPropagation(); setShowAll(true) }}
+                  style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "#B8860B", background: "none", border: "none", cursor: "pointer", marginTop: 10, padding: 0 }}
+                >
+                  View all {computed.length} patterns →
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Oral active but no patterns */}
+          {oralActive && !hasComputed && (
+            <div>
+              <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", fontSize: 18, color: "rgba(20,20,16,0.45)", margin: "0 0 6px", lineHeight: 1.3 }}>
+                No patterns detected — your panels look balanced.
+              </p>
+              <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "rgba(20,20,16,0.4)", margin: 0, lineHeight: 1.5 }}>
+                We continuously monitor your data for cross-panel signals. Check back as your data updates.
+              </p>
+            </div>
           )}
 
           {/* No oral data — kit not ordered */}
@@ -1179,7 +1203,7 @@ export function ScoreWheel({
 
       {/* HERO */}
       <div style={fadeUp("0s")}>
-        <HeroTitle sleepConnected={sleepConnected} hasBlood={hasBlood} oralActive={oralActive} subline={subline} />
+        <HeroTitle score={score} sleepConnected={sleepConnected} hasBlood={hasBlood} oralActive={oralActive} subline={subline} />
       </div>
 
       {/* PENDING BANNERS */}
@@ -1210,6 +1234,7 @@ export function ScoreWheel({
         oralKitStatus={oralKitStatus}
         interactionsFired={interactionsFired}
         oralActive={oralActive}
+        lifestyleActive={!!lifestyleData}
         oralData={oralData}
         bloodData={bloodData}
         sleepData={sleepData}
