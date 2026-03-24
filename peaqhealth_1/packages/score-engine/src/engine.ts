@@ -826,23 +826,6 @@ export function calculatePeaqScore(sleep?: SleepInputs, blood?: BloodInputs, ora
     const penalty    = medicalHistoryPenalty(lifestyle)
     const net        = raw - penalty
     lifestyleSub     = Math.max(0, Math.min(13, Math.round(net * (13 / 8) * 2) / 2))
-    // Debug: compute stress and age/sex multipliers for logging
-    const _stressPenalty = lifestyle.stressLevel === "high" ? 1.0 : lifestyle.stressLevel === "moderate" ? 0.5 : 0
-    const _ageMult = ({"18_29":0.5,"30_39":1.0,"40_49":1.5,"50_59":1.5,"60_69":1.0,"70_plus":0.5} as Record<string,number>)[lifestyle.ageRange ?? ""] ?? 1.0
-    const _isFemPre = lifestyle.biologicalSex === "female" && (lifestyle.ageRange === "18_29" || lifestyle.ageRange === "30_39" || lifestyle.ageRange === "40_49")
-    const _sexMult = _isFemPre ? 0.75 : 1.0
-    console.log("[lifestyle-score] raw components:", {
-      exercise:       exerciseScore,
-      smoking:        heartScore,
-      stress:         -(_stressPenalty * _ageMult * _sexMult),
-      oral:           oralHygieneScore + dentalVisitScore,
-      alcohol:        alcoholScore,
-      diet:           nutritionScore,
-      age_penalty:    _ageMult,
-      sex_adjustment: _sexMult,
-    })
-    console.log("[lifestyle-score] raw total before scaling:", raw)
-    console.log("[lifestyle-score] final scaled score:", lifestyleSub)
   }
 
   // Interactions (10 terms, pool 15)

@@ -57,11 +57,6 @@ async function extractTextWithAzure(buffer: Buffer, model = "prebuilt-read"): Pr
       const data = await pollRes.json() as Record<string, unknown>
       if (data.status === "succeeded") {
         const result = data.analyzeResult as Record<string, unknown> | undefined
-        console.log("[azure-di-model]", result?.modelId)
-        console.log("[azure-di-page-count]", (result?.pages as unknown[] | undefined)?.length)
-        console.log("[azure-di-content-length]", typeof result?.content === "string" ? (result.content as string).length : undefined)
-        console.log("[azure-di-has-glucose]", typeof result?.content === "string" ? (result.content as string).includes("GLUCOSE") : false)
-
         // Use result.content directly — prebuilt-read returns the full concatenated
         // text of every page with no page limits, preserving line order.
         if (typeof result?.content === "string" && result.content.length > 0) {
@@ -186,7 +181,6 @@ function parseWithRegexFallback(text: string): Record<string, unknown> {
 // those lines don't end with a bare footnote digit.
 
 function normalizeLabText(text: string): string {
-  console.log("[raw-has-glucose]", text.includes("GLUCOSE"), text.indexOf("GLUCOSE"))
   const lines = text.split("\n")
   const result: string[] = []
   let i = 0
@@ -218,7 +212,6 @@ function normalizeLabText(text: string): string {
     }
   }
 
-  console.log("[normalized-has-glucose]", result.join("\n").includes("GLUCOSE"), result.join("\n").indexOf("GLUCOSE"))
   return result.join("\n")
 }
 
@@ -227,13 +220,9 @@ function normalizeLabText(text: string): string {
 async function extractTextDirect(buffer: Buffer): Promise<string> {
   try {
     const { extractText } = await import("unpdf")
-    const { text, totalPages } = await extractText(new Uint8Array(buffer), { mergePages: true })
-    console.log("[unpdf-pages]", totalPages)
-    console.log("[unpdf-chars]", text?.length)
-    console.log("[unpdf-has-glucose]", text?.includes("GLUCOSE"))
+    const { text } = await extractText(new Uint8Array(buffer), { mergePages: true })
     if (text && text.length > 3000) return text
-  } catch (e) {
-    console.log("[unpdf-failed]", String(e))
+  } catch {
   }
   return ""
 }
@@ -241,10 +230,6 @@ async function extractTextDirect(buffer: Buffer): Promise<string> {
 async function parseWithAzureOpenAI(fullText: string): Promise<Record<string, unknown> | null> {
   const azureOpenAIKey = process.env.AZURE_OPENAI_KEY
   if (!azureOpenAIKey) return null
-
-  console.log("[azure-openai] calling endpoint:", process.env.AZURE_OPENAI_ENDPOINT)
-  console.log("[azure-openai] deployment:", process.env.AZURE_OPENAI_DEPLOYMENT)
-  console.log("[azure-openai] key present:", !!azureOpenAIKey)
 
   const openai = new AzureOpenAI({
     apiKey: azureOpenAIKey,
@@ -258,9 +243,6 @@ async function parseWithAzureOpenAI(fullText: string): Promise<Record<string, un
 
   try {
     const normalizedText = normalizeLabText(fullText)
-    console.log("[normalization] original chars:", fullText.length, "→ normalized:", normalizedText.length)
-    const glucoseIdx = normalizedText.indexOf("GLUCOSE")
-    console.log("[normalization-glucose]", glucoseIdx >= 0 ? normalizedText.substring(glucoseIdx, glucoseIdx + 80) : "not found")
 
     const messages = [
         {
@@ -379,7 +361,6 @@ LAB REPORT TEXT:
 ${normalizedText}`,
         },
     ]
-    console.log("[azure-system-prompt-first100]", messages.find(m => m.role === "system")?.content?.substring(0, 100))
     const response = await openai.chat.completions.create({
       model: process.env.AZURE_OPENAI_DEPLOYMENT!,
       max_tokens: 4096,
@@ -391,13 +372,7 @@ ${normalizedText}`,
     const raw = response.choices[0]?.message?.content
     const finishReason = response.choices[0]?.finish_reason
     console.log("[azure-openai] finish_reason:", finishReason)
-    console.log("[azure-openai] response length:", raw?.length)
-    if (finishReason === "length") {
-      console.warn("[azure-openai] TRUNCATED — increase max_tokens")
-    }
     if (!raw) return null
-
-    console.log("[azure-gpt4o-raw]", raw.slice(0, 400))
 
     const clean = raw
       .replace(/```json/gi, "")
@@ -405,9 +380,6 @@ ${normalizedText}`,
       .trim()
 
     const parsed = JSON.parse(clean) as Record<string, unknown>
-    console.log("[azure-gpt4o-full]", JSON.stringify(parsed, null, 0))
-    console.log("[azure-gpt4o-glucose]", parsed?.glucose_mgdL)
-    console.log("[azure-gpt4o-hba1c]", parsed?.hba1c_pct)
     return parsed
   } catch (err) {
     const e = err as { message?: string; status?: number; code?: string }
@@ -454,14 +426,11 @@ function extractFromParsedJson(
 
 // ─── File processing ────────────────────────────────────────────────────────
 
-async function processFile(file: FileInput, index: number): Promise<FileResult> {
-  console.log("[parser] file", index + 1, "starting...")
-
+async function processFile(file: FileInput, _index: number): Promise<FileResult> {
   const buffer = Buffer.from(file.base64, "base64")
 
   const directText = await extractTextDirect(buffer)
   if (directText) {
-    console.log("[extraction-method] pdf-parse")
     const openaiResult = await parseWithAzureOpenAI(directText)
     if (openaiResult) {
       const { markers, labName, collectionDate } = extractFromParsedJson(openaiResult)
@@ -470,8 +439,6 @@ async function processFile(file: FileInput, index: number): Promise<FileResult> 
       }
     }
   }
-  console.log("[extraction-method] azure-di")
-
   let fullText = await extractTextWithAzure(buffer)
 
   if (fullText && fullText.length < 3000) {
@@ -497,7 +464,6 @@ async function processFile(file: FileInput, index: number): Promise<FileResult> 
 
     // normalizeLabText runs inside parseWithAzureOpenAI per-chunk
     const normalizedText = fullText
-    console.log("[parser] raw text sample (2000-3000):", normalizedText.substring(2000, 3000))
 
     // Split into 12,000-char chunks so long reports don't get truncated
     const CHUNK_SIZE = 12000
@@ -505,8 +471,6 @@ async function processFile(file: FileInput, index: number): Promise<FileResult> 
     for (let i = 0; i < normalizedText.length; i += CHUNK_SIZE) {
       chunks.push(normalizedText.slice(i, i + CHUNK_SIZE))
     }
-    console.log("[parser] text sent to GPT-4o:", Math.min(normalizedText.length, CHUNK_SIZE * chunks.length), "chars across", chunks.length, "chunk(s)")
-    console.log("[azure-extracted-text-sample]", normalizedText.substring(2000, 3000))
 
     // Call GPT-4o per chunk and merge — later non-null values override earlier nulls
     let mergedOpenAIResult: Record<string, unknown> | null = null

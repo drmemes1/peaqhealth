@@ -121,7 +121,6 @@ export function mapLabRow(row: Record<string, unknown>): BloodInputs | undefined
 
   if (presentKeys.length === 0) return undefined
 
-  console.log("[blood-score] markers present:", presentKeys)
   return mapped as BloodInputs
 }
 
@@ -251,9 +250,6 @@ export async function recalculateScore(
     lifestyle: result.breakdown.lifestyleSub,
     total: result.score,
   }))
-  console.log("[blood-score] score:", result.breakdown.bloodSub)
-  console.log("[blood-score] missing premium:", missingPremium)
-
   await supabase.from("score_snapshots").insert({
     user_id:                userId,
     calculated_at:          new Date().toISOString(),

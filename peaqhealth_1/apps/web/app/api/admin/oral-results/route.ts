@@ -35,9 +35,7 @@ export async function POST(request: NextRequest) {
 
   // Parse OTU data
   const oralScore = parseOralMicrobiome(zymoReport)
-  console.log('[admin-oral] saving for user:', targetUserId)
-
-  const { data: insertData, error: insertError } = await serviceClient
+  const { error: insertError } = await serviceClient
     .from('oral_kit_orders')
     .upsert({
       user_id:                targetUserId,
@@ -54,13 +52,6 @@ export async function POST(request: NextRequest) {
       report_date:            new Date().toISOString().split('T')[0],
     }, { onConflict: 'user_id' })
     .select()
-
-  console.log('[admin-oral] insert result:', insertData)
-  console.log('[admin-oral] insert error:', insertError)
-  console.log('[admin-oral] shannon value:', oralScore.shannonDiversity)
-  console.log('[admin-oral] nitrate value:', oralScore.nitrateReducerPct)
-  console.log('[admin-oral] periodontal value:', oralScore.pGingivalisPct)
-  console.log('[admin-oral] osa value:', oralScore.prevotellaPct)
 
   if (insertError) {
     return NextResponse.json({ error: insertError.message }, { status: 500 })

@@ -24,16 +24,12 @@ export default async function DashboardPage() {
     supabase.from("lab_history").select("locked_at, total_score, blood_score, collection_date, ldl_mgdl, hdl_mgdl, hs_crp_mgl, vitamin_d_ngml").eq("user_id", user.id).order("locked_at", { ascending: true }),
   ])
 
-  const { data: oral, error: oralError } = await supabase
+  const { data: oral } = await supabase
     .from("oral_kit_orders")
     .select("*")
     .eq("user_id", user.id)
     .in("status", ["results_ready", "scored"])
     .maybeSingle()
-
-  console.log('[dashboard] oral query user_id:', user.id)
-  console.log('[dashboard] oral query error:', oralError)
-  console.log('[dashboard] oral row:', oral?.id, oral?.shannon_diversity, oral?.status)
 
   // Backfill wearable_connections for legacy users who connected before the upsert fix.
   // If sleep data contributed to their score but no wearable row exists, silently create one.
