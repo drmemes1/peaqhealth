@@ -11,32 +11,38 @@ const panels = [
 export default function Home() {
   return (
     <div
-      className="relative flex min-h-svh flex-col items-center justify-between bg-off-white selection:bg-gold selection:text-white"
-      style={{ padding: "48px 24px 40px" }}
+      className="relative flex min-h-svh flex-col bg-off-white selection:bg-gold selection:text-white"
+      style={{ padding: "32px 40px 40px" }}
     >
-      {/* Logo — centered, large, blended into cream */}
-      <div
-        className="fade-up flex flex-col items-center gap-6"
-        style={{ animationDelay: "0ms" }}
+      {/* Header — logo top-left, eyebrow top-right */}
+      <header
+        className="fade-up flex w-full items-start justify-between"
+        style={{ animationDelay: "0ms", marginBottom: "auto" }}
       >
-        <LogoSvg size={108} color="var(--ink)" />
+        <LogoSvg size={96} color="var(--ink)" />
+
         <span
           className="font-body text-[10px] uppercase tracking-[0.18em]"
-          style={{ color: "var(--gold)" }}
+          style={{ color: "var(--gold)", paddingTop: 8 }}
         >
           Coming soon · 2026
         </span>
-      </div>
+      </header>
 
-      {/* Hero */}
-      <main className="flex w-full max-w-lg flex-col items-center gap-10 text-center">
-        <div className="flex flex-col items-center gap-6">
+      {/* Hero — vertically centered in remaining space */}
+      <main
+        className="flex w-full flex-col items-center text-center"
+        style={{ paddingTop: 64, paddingBottom: 64 }}
+      >
+        <div className="flex flex-col items-center" style={{ gap: 20, maxWidth: 600 }}>
           <h1
-            className="fade-up font-display font-light leading-[1.08] tracking-[-0.02em]"
+            className="fade-up font-display font-light tracking-[-0.02em]"
             style={{
-              fontSize: "clamp(48px, 7.5vw, 76px)",
+              fontSize: "clamp(50px, 7vw, 78px)",
+              lineHeight: 1.1,
               color: "var(--ink)",
-              animationDelay: "120ms",
+              animationDelay: "100ms",
+              margin: 0,
             }}
           >
             Reach for the peaq.
@@ -47,50 +53,47 @@ export default function Home() {
           </h1>
 
           <p
-            className="fade-up font-body text-sm leading-[1.75] tracking-wide"
+            className="fade-up font-body text-sm leading-relaxed tracking-wide"
             style={{
               color: "var(--ink-60)",
-              animationDelay: "260ms",
-              maxWidth: 340,
+              animationDelay: "220ms",
+              maxWidth: 360,
+              margin: "4px 0 0",
             }}
           >
-            Sleep · Blood · Oral microbiome · Lifestyle&nbsp;&mdash;
-            <br />
-            one score, recalculated nightly.
+            Sleep · Blood · Oral microbiome · Lifestyle&nbsp;&mdash; one score, recalculated nightly.
           </p>
         </div>
 
-        {/* Waitlist */}
-        <div className="fade-up w-full" style={{ animationDelay: "400ms" }}>
+        <div
+          className="fade-up w-full"
+          style={{ animationDelay: "360ms", maxWidth: 480, marginTop: 40 }}
+        >
           <WaitlistForm />
         </div>
 
         <p
           className="fade-up font-body text-[10px] tracking-widest uppercase"
-          style={{ color: "var(--ink-30)", animationDelay: "520ms" }}
+          style={{ color: "var(--ink-30)", animationDelay: "480ms", marginTop: 20 }}
         >
           For informational purposes only
         </p>
       </main>
 
-      {/* Panel score row */}
+      {/* Panel score row — pinned to bottom */}
       <footer
         className="fade-up w-full"
-        style={{ animationDelay: "560ms", maxWidth: 520 }}
+        style={{ animationDelay: "520ms", marginTop: "auto" }}
       >
-        {/* Thin rule */}
-        <div
-          style={{
-            borderTop: "0.5px solid var(--ink-12)",
-            marginBottom: 24,
-          }}
-        />
+        <div style={{ borderTop: "0.5px solid var(--ink-12)", marginBottom: 20 }} />
 
         <div
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(4, 1fr)",
-            gap: 12,
+            gap: 10,
+            maxWidth: 560,
+            margin: "0 auto",
           }}
         >
           {panels.map((p) => (
@@ -100,27 +103,27 @@ export default function Home() {
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                gap: 6,
-                padding: "16px 8px",
+                gap: 5,
+                padding: "14px 8px",
                 background: "var(--warm-50)",
                 border: "0.5px solid var(--ink-06)",
               }}
             >
               <span
-                className="font-body uppercase tracking-[0.14em]"
-                style={{ fontSize: 9, color: p.color, letterSpacing: "0.14em" }}
+                className="font-body uppercase"
+                style={{ fontSize: 9, letterSpacing: "0.14em", color: p.color }}
               >
                 {p.label}
               </span>
               <span
                 className="font-display font-light"
-                style={{ fontSize: 28, lineHeight: 1, color: "var(--ink)" }}
+                style={{ fontSize: 26, lineHeight: 1, color: "var(--ink)" }}
               >
                 {p.pts}
               </span>
               <span
                 className="font-body"
-                style={{ fontSize: 9, color: "var(--ink-30)", letterSpacing: "0.06em" }}
+                style={{ fontSize: 9, letterSpacing: "0.06em", color: "var(--ink-30)" }}
               >
                 pts
               </span>
@@ -130,12 +133,7 @@ export default function Home() {
 
         <p
           className="font-body text-center"
-          style={{
-            fontSize: 10,
-            color: "var(--ink-30)",
-            letterSpacing: "0.06em",
-            marginTop: 14,
-          }}
+          style={{ fontSize: 10, color: "var(--ink-30)", letterSpacing: "0.06em", marginTop: 12 }}
         >
           100 points total
         </p>
