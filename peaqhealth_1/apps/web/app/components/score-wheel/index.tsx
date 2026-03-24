@@ -1179,7 +1179,7 @@ export function ScoreWheel({
 
       {/* HERO */}
       <div style={fadeUp("0s")}>
-        <HeroTitle sleepConnected={sleepConnected} hasBlood={hasBlood} oralActive={oralActive} subline={subline} />
+        <HeroTitle score={score} sleepConnected={sleepConnected} hasBlood={hasBlood} oralActive={oralActive} subline={subline} />
       </div>
 
       {/* PENDING BANNERS */}

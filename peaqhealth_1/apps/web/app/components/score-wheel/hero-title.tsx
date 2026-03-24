@@ -1,25 +1,47 @@
 import React from "react"
 
 interface HeroTitleProps {
+  score: number
   sleepConnected: boolean
   hasBlood: boolean
   oralActive: boolean
   subline: string
 }
 
-export function HeroTitle({ sleepConnected, hasBlood, oralActive, subline }: HeroTitleProps) {
+export function HeroTitle({ score, sleepConnected, hasBlood, oralActive, subline }: HeroTitleProps) {
+  const dataComplete = sleepConnected && hasBlood && oralActive
+  const panelsLoaded = [sleepConnected, hasBlood, oralActive].filter(Boolean).length
+
   let headline: React.ReactNode
 
-  if (sleepConnected && hasBlood && oralActive) {
-    headline = <>Looking <em style={{ color: "var(--gold)", fontStyle: "italic" }}>really good.</em></>
-  } else if (sleepConnected && hasBlood) {
-    headline = <>Looking <em style={{ color: "var(--gold)", fontStyle: "italic" }}>good.</em><br />Room to optimise.</>
-  } else if (sleepConnected && oralActive) {
-    headline = <>Sleep and oral <em style={{ color: "var(--gold)", fontStyle: "italic" }}>active.</em></>
-  } else if (sleepConnected) {
-    headline = <>Sleep data <em style={{ color: "var(--gold)", fontStyle: "italic" }}>active.</em></>
+  if (!sleepConnected && !hasBlood && !oralActive) {
+    // Nothing connected yet
+    headline = <>Your journey <em style={{ color: "var(--gold)", fontStyle: "italic" }}>begins here.</em></>
+  } else if (!dataComplete) {
+    // Partial data — never judge the score, acknowledge what's active
+    if (panelsLoaded === 1) {
+      if (sleepConnected) {
+        headline = <>Sleep data <em style={{ color: "var(--gold)", fontStyle: "italic" }}>connected.</em><br />Two panels still to come.</>
+      } else if (hasBlood) {
+        headline = <>Blood panel <em style={{ color: "var(--gold)", fontStyle: "italic" }}>active.</em><br />More to unlock.</>
+      } else {
+        headline = <>Oral panel <em style={{ color: "var(--gold)", fontStyle: "italic" }}>active.</em><br />More to unlock.</>
+      }
+    } else {
+      // 2 of 3 panels
+      headline = <>Picture is <em style={{ color: "var(--gold)", fontStyle: "italic" }}>coming together.</em><br />One panel still to come.</>
+    }
   } else {
-    headline = <>Getting <em style={{ color: "var(--gold)", fontStyle: "italic" }}>started.</em></>
+    // All three panels active — score is meaningful
+    if (score >= 85) {
+      headline = <>Excellent <em style={{ color: "var(--gold)", fontStyle: "italic" }}>health profile.</em></>
+    } else if (score >= 70) {
+      headline = <>Strong <em style={{ color: "var(--gold)", fontStyle: "italic" }}>foundation.</em><br />A few areas to refine.</>
+    } else if (score >= 55) {
+      headline = <>Real room to <em style={{ color: "var(--gold)", fontStyle: "italic" }}>improve.</em><br />The data shows you where.</>
+    } else {
+      headline = <>Your results <em style={{ color: "var(--gold)", fontStyle: "italic" }}>need attention.</em><br />Start with the highest-impact panel.</>
+    }
   }
 
   return (
