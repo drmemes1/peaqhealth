@@ -2,10 +2,10 @@
 import { useEffect, useRef } from "react"
 
 // ─── Layout constants ────────────────────────────────────────────────────────
-// ViewBox 700 × 295; peaks centered in 40–660 range
-const BASELINE = 228
-const MAX_H    = 172   // 100% ratio → apex y=56; score label sits at y=40 comfortably
-const HALF_W   = 68    // base width 136px; 155px spacing → 19px gaps between peaks
+// ViewBox 700 × 312; peaks centered in 40–660 range
+const BASELINE = 250
+const MAX_H    = 200   // 100% ratio → apex y=50; score label at y=36
+const HALF_W   = 44    // base width 88px; 155px spacing → 67px gaps between peaks
 const CENTERS: readonly [number, number, number, number] = [120, 275, 430, 585]
 const LIFESTYLE_CAP = 0.65   // lifestyle (13 pts) visually capped at 65% of max height
 const DURATION = 700         // ms each peak takes to rise
@@ -116,7 +116,7 @@ export function PeaksVisualization({
 
   return (
     <svg
-      viewBox="0 0 700 295"
+      viewBox="0 0 700 312"
       width="100%"
       style={{ display: "block", overflow: "visible" }}
       aria-label="Score breakdown peaks"
