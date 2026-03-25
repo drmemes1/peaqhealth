@@ -1,19 +1,11 @@
 import Image from "next/image";
 
 interface LogoSvgProps {
-  size?: number;   // controls height; width scales proportionally
-  color?: string;  // used to detect light vs dark background context
+  size?: number;
+  color?: string;  // "white"/"#fff" signals dark background → invert the logo
   className?: string;
 }
 
-/**
- * Peaq logo component.
- * Uses the actual PNG asset with CSS blend modes to handle both
- * light and dark backgrounds without the logo's white background showing.
- *
- * Light bg (color is dark):  mix-blend-mode: multiply  → white PNG bg disappears
- * Dark bg  (color is light): filter: invert(1) + mix-blend-mode: screen → white marks show
- */
 export function LogoSvg({
   size = 48,
   color = "#141410",
@@ -21,7 +13,6 @@ export function LogoSvg({
 }: LogoSvgProps) {
   const width = Math.round(size * (240 / 200));
 
-  // If the caller passes a light/white color it means we're on a dark background
   const onDarkBg =
     color.startsWith("rgba(250") ||
     color.startsWith("rgba(255") ||
@@ -30,24 +21,16 @@ export function LogoSvg({
     color === "#ffffff";
 
   return (
-    <div
+    <Image
+      src="/images/peaq_logo_transparent.png"
+      alt="Peaq Health"
+      width={width}
+      height={size}
       className={className}
       style={{
-        display: "inline-block",
-        lineHeight: 0,
-        mixBlendMode: onDarkBg ? "screen" : "multiply",
+        objectFit: "contain",
+        filter: onDarkBg ? "invert(1)" : undefined,
       }}
-    >
-      <Image
-        src="/images/peaq_logo.png"
-        alt="Peaq Health"
-        width={width}
-        height={size}
-        style={{
-          objectFit: "contain",
-          filter: onDarkBg ? "invert(1)" : undefined,
-        }}
-      />
-    </div>
+    />
   );
 }
