@@ -66,14 +66,49 @@ export default function OnboardingPage() {
     });
   }, [userId, supabase]);
 
-  // Persist lifestyle answers
+  // Persist lifestyle answers — map camelCase UI keys to snake_case DB columns
   const persistLifestyle = useCallback(async (answers: LifestyleAnswers) => {
     if (!userId) return;
-    await supabase.from("lifestyle_records").upsert({
-      user_id: userId,
-      ...answers,
-    }, { onConflict: "user_id" }).select();
-  }, [userId, supabase]);
+    const toInt = (v: string) => (v !== "" ? parseInt(v, 10) : null);
+    const toBool = (v: string | boolean) => {
+      if (v === true  || v === "yes" || v === "true")  return true;
+      if (v === false || v === "no"  || v === "false") return false;
+      return null;
+    };
+    const row = {
+      age_range:                  answers.ageRange        || null,
+      biological_sex:             answers.biologicalSex   || null,
+      exercise_level:             answers.exerciseLevel   || null,
+      brushing_freq:              answers.brushingFreq    || null,
+      flossing_freq:              answers.flossingFreq    || null,
+      mouthwash_type:             answers.mouthwashType   || null,
+      last_dental_visit:          answers.lastDentalVisit || null,
+      smoking_status:             answers.smokingStatus   || null,
+      known_hypertension:         answers.knownHypertension,
+      known_diabetes:             answers.knownDiabetes,
+      sleep_duration:             answers.sleepDuration   || null,
+      sleep_latency:              answers.sleepLatency    || null,
+      sleep_qual_self:            answers.sleepQualSelf   || null,
+      night_wakings:              answers.nightWakings    || null,
+      daytime_fatigue:            answers.daytimeFatigue  || null,
+      sleep_medication:           "never",
+      hypertension_dx:            toBool(answers.hypertensionDx),
+      on_bp_meds:                 toBool(answers.onBPMeds),
+      on_statins:                 toBool(answers.onStatins),
+      family_history_cvd:         toBool(answers.familyHistoryCVD),
+      vegetable_servings_per_day: toInt(answers.vegetableServings),
+      fruit_servings_per_day:     toInt(answers.fruitServings),
+      processed_food_frequency:   toInt(answers.processedFood),
+      sugary_drinks_per_week:     toInt(answers.sugaryDrinks),
+      alcohol_drinks_per_week:    toInt(answers.alcoholDrinks),
+      stress_level:               answers.stressLevel     || null,
+    };
+    await fetch("/api/lifestyle/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(row),
+    });
+  }, [userId]);
 
   // Complete onboarding
   const completeOnboarding = useCallback(async () => {

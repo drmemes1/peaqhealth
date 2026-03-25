@@ -55,7 +55,7 @@ const SECTIONS: {
     subtitle: "Dietary patterns modulate glycemic control, inflammation, and microbiome composition",
     ptsLabel: "up to 1.5 pts",
     color: "#B8860B",
-    keys: ["vegetableServings", "processedFood", "dietQuality", "omegaFrequency"],
+    keys: ["vegetableServings", "fruitServings", "processedFood", "sugaryDrinks", "dietQuality", "omegaFrequency"],
   },
   {
     title: "Alcohol & Stress",
@@ -222,6 +222,18 @@ const QUESTIONS: QuestionDef[] = [
     ],
   },
   {
+    key: "fruitServings", dbKey: "fruit_servings_per_day",
+    label: "How many servings of fruit do you typically eat per day?",
+    context: "≥ 2 servings/day is associated with lower cardiovascular and all-cause mortality risk (Aune 2017).",
+    type: "choice",
+    options: [
+      { value: "0", label: "0" },
+      { value: "1", label: "1" },
+      { value: "2", label: "2" },
+      { value: "3", label: "3+" },
+    ],
+  },
+  {
     key: "processedFood", dbKey: "processed_food_frequency",
     label: "How often do you consume ultra-processed foods (fast food, packaged snacks, ready meals)?",
     context: "Ultra-processed food consumption drives elevated triglycerides, systemic inflammation, and gut dysbiosis.",
@@ -232,6 +244,19 @@ const QUESTIONS: QuestionDef[] = [
       { value: "3", label: "Sometimes (3–4×/week)" },
       { value: "4", label: "Often (5–6×/week)" },
       { value: "5", label: "Daily" },
+    ],
+  },
+  {
+    key: "sugaryDrinks", dbKey: "sugary_drinks_per_week",
+    label: "How many sugary drinks do you consume in a typical week?",
+    context: "Sugary drink consumption is a primary driver of elevated fasting insulin and triglycerides independent of total calories.",
+    type: "choice",
+    options: [
+      { value: "0", label: "None" },
+      { value: "1", label: "1–2" },
+      { value: "3", label: "3–5" },
+      { value: "7", label: "6–10" },
+      { value: "14", label: "10+" },
     ],
   },
   {
@@ -378,8 +403,9 @@ export function LifestyleForm({ existing }: Props) {
     setError(null);
   }
 
-  const answeredCount = QUESTIONS.filter((q) => answers[q.key] !== "").length;
-  const totalQuestions = QUESTIONS.length;
+  const demographicAnswered = [answers["ageRange"], answers["biologicalSex"]].filter(v => v !== "").length;
+  const answeredCount = QUESTIONS.filter((q) => answers[q.key] !== "").length + demographicAnswered;
+  const totalQuestions = QUESTIONS.length + 2; // +2 for age range and biological sex
   const progressPct = Math.round((answeredCount / totalQuestions) * 100);
   const allAnswered = answeredCount === totalQuestions;
 
@@ -390,7 +416,9 @@ export function LifestyleForm({ existing }: Props) {
     const row: Record<string, unknown> = {};
     const intKeys = new Set([
       "vegetable_servings_per_day",
+      "fruit_servings_per_day",
       "processed_food_frequency",
+      "sugary_drinks_per_week",
       "alcohol_drinks_per_week",
       "exercise_minutes_per_week",
     ]);

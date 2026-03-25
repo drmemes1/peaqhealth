@@ -38,7 +38,7 @@ export function mapLifestyleRow(row: Record<string, unknown>): LifestyleInputs {
     onBPMeds: row.on_bp_meds === "yes" || row.on_bp_meds === true ? true : undefined,
     onStatins: row.on_statins === "yes" || row.on_statins === true ? true : undefined,
     onDiabetesMeds: row.on_diabetes_meds === "yes" || row.on_diabetes_meds === true ? true : undefined,
-    familyHistoryCVD: row.family_history_cvd === "yes" ? true : row.family_history_cvd === "no" ? false : undefined,
+    familyHistoryCVD: row.family_history_cvd === true ? true : row.family_history_cvd === false ? false : undefined,
     familyHistoryHypertension: row.family_history_hypertension === "yes" || row.family_history_hypertension === true ? true : undefined,
     restingHR: typeof row.latest_resting_hr === "number" ? row.latest_resting_hr : undefined,
     vo2max: typeof row.latest_vo2max === "number" ? row.latest_vo2max : undefined,

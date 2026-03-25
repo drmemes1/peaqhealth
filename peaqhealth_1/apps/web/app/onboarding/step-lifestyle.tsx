@@ -13,6 +13,31 @@ interface QuestionDef {
 }
 
 const QUESTIONS: QuestionDef[] = [
+  // ── Demographics ──
+  {
+    key: "ageRange",
+    label: "What is your age range?",
+    type: "choice",
+    options: [
+      { value: "18_29", label: "Under 30" },
+      { value: "30_39", label: "30–39" },
+      { value: "40_49", label: "40–49" },
+      { value: "50_59", label: "50–59" },
+      { value: "60_69", label: "60–69" },
+      { value: "70_plus", label: "70+" },
+    ],
+  },
+  {
+    key: "biologicalSex",
+    label: "Biological sex",
+    type: "choice",
+    options: [
+      { value: "male", label: "Male" },
+      { value: "female", label: "Female" },
+      { value: "non_binary", label: "Non-binary" },
+      { value: "prefer_not_to_say", label: "Prefer not to say" },
+    ],
+  },
   {
     key: "exerciseLevel",
     label: "How often do you exercise?",
@@ -266,6 +291,8 @@ const QUESTIONS: QuestionDef[] = [
 ];
 
 const INITIAL_ANSWERS: LifestyleAnswers = {
+  ageRange: "",
+  biologicalSex: "",
   exerciseLevel: "",
   brushingFreq: "",
   flossingFreq: "",
