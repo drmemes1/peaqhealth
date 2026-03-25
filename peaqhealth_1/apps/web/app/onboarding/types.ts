@@ -45,6 +45,9 @@ export interface DetectedMarker {
 }
 
 export interface LifestyleAnswers {
+  // Demographics
+  ageRange: string;
+  biologicalSex: string;
   exerciseLevel: string;
   brushingFreq: string;
   flossingFreq: string;
@@ -58,7 +61,7 @@ export interface LifestyleAnswers {
   sleepQualSelf: string;
   nightWakings: string;
   daytimeFatigue: string;
-  // Medical history (optional)
+  // Medical history
   hypertensionDx: string;
   onBPMeds: string;
   onStatins: string;
