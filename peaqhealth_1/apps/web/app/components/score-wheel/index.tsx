@@ -86,6 +86,67 @@ export interface ScoreWheelProps {
   oralKitStatus?:         "none" | "ordered" | "complete"  // derived from oral_kit_orders
 }
 
+function ageAtLeast(ageRange: string | undefined, minAge: number): boolean {
+  const MIN: Record<string, number> = { "18_29": 18, "30_39": 30, "40_49": 40, "50_59": 50, "60_69": 60, "70_plus": 70 }
+  return (MIN[ageRange ?? ""] ?? 0) >= minAge
+}
+
+type MissingMarker = { label: string; pts: number; reason: string }
+
+function computeRelevantMissing(
+  blood: ScoreWheelProps["bloodData"],
+  lifestyle: ScoreWheelProps["lifestyleData"],
+  oral: ScoreWheelProps["oralData"],
+): MissingMarker[] {
+  if (!blood) return []
+  const ageRange = lifestyle?.ageRange
+  const stress = lifestyle?.stressLevel
+  const results: MissingMarker[] = []
+
+  // HbA1c: only if glucose ≥ 95 or age 40+
+  if (!blood.hba1c) {
+    if (blood.glucose >= 95) {
+      results.push({ label: "HbA1c", pts: 3, reason: `Your fasting glucose of ${blood.glucose} mg/dL is approaching the pre-diabetic threshold — HbA1c would confirm whether this reflects a sustained trend.` })
+    } else if (ageAtLeast(ageRange, 40)) {
+      results.push({ label: "HbA1c", pts: 3, reason: `Routine HbA1c screening is recommended after 40, even with normal fasting glucose, to catch early glycemic drift.` })
+    }
+  }
+
+  // hs-CRP: only if LDL elevated, oral pathogens elevated, or high stress
+  if (!blood.hsCRP) {
+    const ldlHigh = blood.ldl > 120
+    const periodontHigh = (oral?.periodontPathPct ?? 0) > 10
+    if (ldlHigh) {
+      results.push({ label: "hs-CRP", pts: 3, reason: `Your LDL of ${blood.ldl} mg/dL suggests elevated cardiovascular risk — hs-CRP would quantify the inflammatory component driving that risk.` })
+    } else if (periodontHigh) {
+      results.push({ label: "hs-CRP", pts: 3, reason: `Elevated periodontal pathogens in your oral panel are linked to systemic inflammation — hs-CRP would confirm whether this is reaching your bloodstream.` })
+    } else if (stress === "high") {
+      results.push({ label: "hs-CRP", pts: 3, reason: `Chronic stress elevates CRP directly. With high self-reported stress, knowing your hs-CRP baseline is clinically actionable.` })
+    }
+  }
+
+  // Vitamin D: only if age 40+
+  if (!blood.vitaminD && ageAtLeast(ageRange, 40)) {
+    results.push({ label: "Vitamin D", pts: 2, reason: `Vitamin D absorption declines with age. Deficiency is common after 40 and directly affects bone density, immune function, and mood.` })
+  }
+
+  // ApoB: only if LDL or triglycerides elevated
+  if (!blood.apoB) {
+    if (blood.ldl > 120) {
+      results.push({ label: "ApoB", pts: 2, reason: `Your LDL of ${blood.ldl} mg/dL is elevated — ApoB counts the actual particle number, which predicts cardiovascular risk more accurately than LDL alone.` })
+    } else if (blood.triglycerides > 100) {
+      results.push({ label: "ApoB", pts: 2, reason: `Your triglycerides of ${blood.triglycerides} mg/dL suggest metabolic dysregulation — ApoB would quantify the atherogenic particle burden.` })
+    }
+  }
+
+  // Lp(a): always recommend once as genetic screen
+  if (!blood.lpa) {
+    results.push({ label: "Lp(a)", pts: 1, reason: `Lp(a) is a genetic cardiovascular risk factor that cannot be modified by diet or exercise. A single test tells you whether it belongs in your prevention strategy.` })
+  }
+
+  return results
+}
+
 function relTimeSince(iso: string): string {
   const ms = Date.now() - new Date(iso).getTime()
   const min = Math.floor(ms / 60000)
@@ -1053,6 +1114,7 @@ export function ScoreWheel({
   const [displayBlood, setDisplayBlood] = useState(0)
   const [displayOral, setDisplayOral] = useState(0)
   const [displayLifestyle, setDisplayLifestyle] = useState(0)
+  const [openMissingTooltip, setOpenMissingTooltip] = useState<string | null>(null)
 
   useCountUp(score, 1400, 200, setDisplayScore)
   useCountUp(breakdown.sleepSub, 900, 350, setDisplaySleep)
@@ -1392,23 +1454,52 @@ export function ScoreWheel({
             </div>
           )
         })()}
-        {bloodData && (() => {
-          const missing: Array<{ label: string; pts: number }> = []
-          if (!bloodData.hsCRP)   missing.push({ label: "hs-CRP",   pts: 3 })
-          if (!bloodData.hba1c)   missing.push({ label: "HbA1c",    pts: 3 })
-          if (!bloodData.vitaminD) missing.push({ label: "Vitamin D", pts: 2 })
+        {(() => {
+          const missing = computeRelevantMissing(bloodData, lifestyleData, oralData)
           if (missing.length === 0) return null
+          const font = "var(--font-body, 'Instrument Sans', sans-serif)"
           return (
             <div style={{ marginTop: 16, padding: "12px 14px", borderRadius: 6, background: "rgba(184,134,11,0.05)", border: "0.5px solid rgba(184,134,11,0.2)" }}>
-              <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "rgba(20,20,16,0.45)", margin: "0 0 8px" }}>
-                These markers would strengthen your score
+              <p style={{ fontFamily: font, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "rgba(20,20,16,0.45)", margin: "0 0 2px" }}>
+                Consider testing
+              </p>
+              <p style={{ fontFamily: font, fontSize: 10, color: "rgba(20,20,16,0.35)", margin: "0 0 10px" }}>
+                Based on your current results
               </p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                 {missing.map(m => (
-                  <a key={m.label} href="/settings/labs" style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 4, background: "white", border: "0.5px solid rgba(184,134,11,0.3)", textDecoration: "none", cursor: "pointer" }}>
-                    <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "var(--ink)" }}>{m.label}</span>
-                    <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "#B8860B" }}>+{m.pts} pts</span>
-                  </a>
+                  <div key={m.label} style={{ position: "relative" }}>
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 4, background: "white", border: "0.5px solid rgba(184,134,11,0.3)" }}>
+                      <span style={{ fontFamily: font, fontSize: 12, color: "var(--ink)" }}>{m.label}</span>
+                      <span style={{ fontFamily: font, fontSize: 11, color: "#B8860B" }}>+{m.pts} pts</span>
+                      <button
+                        onClick={() => setOpenMissingTooltip(openMissingTooltip === m.label ? null : m.label)}
+                        style={{
+                          width: 15, height: 15, borderRadius: "50%",
+                          border: "0.5px solid #B8860B", background: "transparent",
+                          cursor: "pointer", fontSize: 9, color: "#B8860B",
+                          display: "inline-flex", alignItems: "center", justifyContent: "center",
+                          lineHeight: 1, flexShrink: 0, padding: 0, fontFamily: font,
+                        }}
+                        aria-label={`Why test ${m.label}`}
+                      >
+                        i
+                      </button>
+                    </div>
+                    {openMissingTooltip === m.label && (
+                      <div style={{
+                        position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 20,
+                        padding: "10px 12px", background: "white",
+                        border: "0.5px solid rgba(184,134,11,0.4)", borderRadius: 4,
+                        fontSize: 12, color: "var(--ink)", lineHeight: 1.55,
+                        minWidth: 220, maxWidth: 280,
+                        boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
+                        fontFamily: font,
+                      }}>
+                        {m.reason}
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>

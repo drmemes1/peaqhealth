@@ -221,9 +221,19 @@ interface Props {
   lab: Record<string, unknown> | null
   snapshot: Record<string, unknown> | null
   history: Array<Record<string, unknown>>
+  ageRange?: string
+  stressLevel?: string
+  periodontPathPct?: number
 }
 
-export function BloodPanelClient({ lab, snapshot, history }: Props) {
+function ageAtLeast(ageRange: string | undefined, minAge: number): boolean {
+  const MIN: Record<string, number> = { "18_29": 18, "30_39": 30, "40_49": 40, "50_59": 50, "60_69": 60, "70_plus": 70 }
+  return (MIN[ageRange ?? ""] ?? 0) >= minAge
+}
+
+type MissingMarker = { key: string; name: string; pts: number; reason: string }
+
+export function BloodPanelClient({ lab, snapshot, history, ageRange, stressLevel, periodontPathPct }: Props) {
   const bloodScore = snapshot?.blood_sub as number | undefined
   const lpaFlag = snapshot?.lpa_flag as string | undefined
   const hsCRPRetestFlag = snapshot?.hscrp_retest_flag as boolean | undefined
@@ -231,6 +241,7 @@ export function BloodPanelClient({ lab, snapshot, history }: Props) {
   const collectionDate = lab?.collection_date as string | undefined
 
   const hasData = !!lab
+  const [openMissingTooltip, setOpenMissingTooltip] = useState<string | null>(null)
 
   function renderSection(title: string, defs: MarkerDef[], defaultOpen: boolean) {
     const hasAny = defs.some(d => getVal(lab, d.key) !== null)
@@ -249,15 +260,41 @@ export function BloodPanelClient({ lab, snapshot, history }: Props) {
     .map(k => ({ key: k, val: getVal(lab, k), ...(ADDITIONAL_NAMES[k] ?? { name: k, unit: "" }) }))
     .filter(m => m.val !== null)
 
-  // Missing scored markers
-  const SCORED_KEYS = [
-    { key: "hs_crp_mgl", name: "hsCRP", pts: 3 },
-    { key: "hba1c_pct", name: "HbA1c", pts: 3 },
-    { key: "vitamin_d_ngml", name: "Vitamin D", pts: 2 },
-    { key: "apob_mgdl", name: "ApoB", pts: 2 },
-    { key: "lpa_mgdl", name: "Lp(a)", pts: 1 },
-  ]
-  const missing = SCORED_KEYS.filter(m => getVal(lab, m.key) === null).slice(0, 3)
+  // Missing scored markers — gated by relevance
+  const missing: MissingMarker[] = []
+  const glucose = getVal(lab, "glucose_mgdl") ?? 0
+  const ldl     = getVal(lab, "ldl_mgdl") ?? 0
+  const tg      = getVal(lab, "triglycerides_mgdl") ?? 0
+
+  if (getVal(lab, "hba1c_pct") === null) {
+    if (glucose >= 95) {
+      missing.push({ key: "hba1c_pct", name: "HbA1c", pts: 3, reason: `Your fasting glucose of ${glucose} mg/dL is approaching the pre-diabetic threshold — HbA1c would confirm whether this reflects a sustained trend.` })
+    } else if (ageAtLeast(ageRange, 40)) {
+      missing.push({ key: "hba1c_pct", name: "HbA1c", pts: 3, reason: `Routine HbA1c screening is recommended after 40, even with normal fasting glucose, to catch early glycemic drift.` })
+    }
+  }
+  if (getVal(lab, "hs_crp_mgl") === null) {
+    if (ldl > 120) {
+      missing.push({ key: "hs_crp_mgl", name: "hs-CRP", pts: 3, reason: `Your LDL of ${ldl} mg/dL suggests elevated cardiovascular risk — hs-CRP would quantify the inflammatory component driving that risk.` })
+    } else if ((periodontPathPct ?? 0) > 10) {
+      missing.push({ key: "hs_crp_mgl", name: "hs-CRP", pts: 3, reason: `Elevated periodontal pathogens in your oral panel are linked to systemic inflammation — hs-CRP would confirm whether this is reaching your bloodstream.` })
+    } else if (stressLevel === "high") {
+      missing.push({ key: "hs_crp_mgl", name: "hs-CRP", pts: 3, reason: `Chronic stress elevates CRP directly. With high self-reported stress, knowing your hs-CRP baseline is clinically actionable.` })
+    }
+  }
+  if (getVal(lab, "vitamin_d_ngml") === null && ageAtLeast(ageRange, 40)) {
+    missing.push({ key: "vitamin_d_ngml", name: "Vitamin D", pts: 2, reason: `Vitamin D absorption declines with age. Deficiency is common after 40 and directly affects bone density, immune function, and mood.` })
+  }
+  if (getVal(lab, "apob_mgdl") === null) {
+    if (ldl > 120) {
+      missing.push({ key: "apob_mgdl", name: "ApoB", pts: 2, reason: `Your LDL of ${ldl} mg/dL is elevated — ApoB counts the actual particle number, which predicts cardiovascular risk more accurately than LDL alone.` })
+    } else if (tg > 100) {
+      missing.push({ key: "apob_mgdl", name: "ApoB", pts: 2, reason: `Your triglycerides of ${tg} mg/dL suggest metabolic dysregulation — ApoB would quantify the atherogenic particle burden.` })
+    }
+  }
+  if (getVal(lab, "lpa_mgdl") === null) {
+    missing.push({ key: "lpa_mgdl", name: "Lp(a)", pts: 1, reason: `Lp(a) is a genetic cardiovascular risk factor that cannot be modified by diet or exercise. A single test tells you whether it belongs in your prevention strategy.` })
+  }
 
   return (
     <div className="min-h-svh bg-off-white">
@@ -352,24 +389,52 @@ export function BloodPanelClient({ lab, snapshot, history }: Props) {
         {/* Missing markers CTA */}
         {missing.length > 0 && hasData && (
           <div style={{ marginTop: 32, marginBottom: 32 }}>
-            <p style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "var(--ink-30)", marginBottom: 10 }}>
-              These markers would strengthen your score:
+            <p style={{ fontFamily: "var(--font-body)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--ink-30)", marginBottom: 3 }}>
+              Consider testing
+            </p>
+            <p style={{ fontFamily: "var(--font-body)", fontSize: 10, color: "var(--ink-30)", marginBottom: 10, opacity: 0.7 }}>
+              Based on your current results
             </p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {missing.map(m => (
-                <span
-                  key={m.key}
-                  title="Ask your doctor to add this to your next panel"
-                  style={{
-                    fontFamily: "var(--font-body)", fontSize: 11, padding: "5px 12px",
-                    border: "0.5px solid var(--ink-12)", borderRadius: 3, cursor: "default",
-                    color: "var(--ink-60)", transition: "border-color 0.15s, color 0.15s",
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#B8860B"; e.currentTarget.style.color = "#B8860B" }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(20,20,16,0.12)"; e.currentTarget.style.color = "rgba(20,20,16,0.6)" }}
-                >
-                  + {m.name}  ~{m.pts} pts
-                </span>
+                <div key={m.key} style={{ position: "relative" }}>
+                  <div style={{
+                    display: "inline-flex", alignItems: "center", gap: 6,
+                    padding: "5px 12px", border: "0.5px solid var(--ink-12)", borderRadius: 3,
+                  }}>
+                    <span style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-60)" }}>
+                      {m.name}
+                    </span>
+                    <span style={{ fontFamily: "var(--font-body)", fontSize: 10, color: "#B8860B" }}>
+                      +{m.pts} pts
+                    </span>
+                    <button
+                      onClick={() => setOpenMissingTooltip(openMissingTooltip === m.key ? null : m.key)}
+                      style={{
+                        width: 15, height: 15, borderRadius: "50%",
+                        border: "0.5px solid #B8860B", background: "transparent",
+                        cursor: "pointer", fontSize: 9, color: "#B8860B",
+                        display: "inline-flex", alignItems: "center", justifyContent: "center",
+                        lineHeight: 1, flexShrink: 0, padding: 0, fontFamily: "var(--font-body)",
+                      }}
+                      aria-label={`Why test ${m.name}`}
+                    >
+                      i
+                    </button>
+                  </div>
+                  {openMissingTooltip === m.key && (
+                    <div style={{
+                      position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 20,
+                      padding: "10px 12px", background: "white",
+                      border: "0.5px solid rgba(184,134,11,0.4)", borderRadius: 4,
+                      fontSize: 12, fontFamily: "var(--font-body)", color: "var(--ink)",
+                      lineHeight: 1.55, minWidth: 220, maxWidth: 320,
+                      boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
+                    }}>
+                      {m.reason}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           </div>

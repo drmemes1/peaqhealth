@@ -11,6 +11,8 @@ export default async function BloodPage() {
     { data: lab },
     { data: snapshot },
     { data: history },
+    { data: lifestyle },
+    { data: oral },
   ] = await Promise.all([
     supabase.from("lab_results").select("*")
       .eq("user_id", user.id)
@@ -25,6 +27,15 @@ export default async function BloodPage() {
       .eq("user_id", user.id)
       .order("locked_at", { ascending: false })
       .limit(5),
+    supabase.from("lifestyle_entries").select("age_range, stress_level")
+      .eq("user_id", user.id)
+      .order("updated_at", { ascending: false })
+      .limit(1).single(),
+    supabase.from("oral_kit_orders").select("periodontopathogen_pct")
+      .eq("user_id", user.id)
+      .eq("status", "results_ready")
+      .order("results_date", { ascending: false })
+      .limit(1).single(),
   ])
 
   return (
@@ -32,6 +43,9 @@ export default async function BloodPage() {
       lab={lab as Record<string, unknown> | null}
       snapshot={snapshot as Record<string, unknown> | null}
       history={(history ?? []) as Array<Record<string, unknown>>}
+      ageRange={(lifestyle?.age_range as string | undefined)}
+      stressLevel={(lifestyle?.stress_level as string | undefined)}
+      periodontPathPct={(oral?.periodontopathogen_pct as number | undefined)}
     />
   )
 }
