@@ -11,42 +11,38 @@ const panels = [
 export default function Home() {
   return (
     <div
-      className="relative flex min-h-svh flex-col items-center justify-between bg-off-white selection:bg-gold selection:text-white"
+      className="relative flex min-h-svh flex-col bg-off-white selection:bg-gold selection:text-white"
       style={{ padding: "32px 40px 40px" }}
     >
-      {/* Logo — absolute top-left, blends into cream */}
-      <div
-        className="fade-up"
-        style={{
-          position: "absolute",
-          top: 32,
-          left: 40,
-          animationDelay: "0ms",
-        }}
+      {/* Header — logo top-left, eyebrow top-right */}
+      <header
+        className="fade-up flex w-full items-start justify-between"
+        style={{ animationDelay: "0ms", marginBottom: "auto" }}
       >
         <LogoSvg size={96} color="var(--ink)" />
-      </div>
 
-      {/* Eyebrow */}
-      <div className="fade-up w-full flex justify-center pt-2" style={{ animationDelay: "0ms" }}>
         <span
           className="font-body text-[10px] uppercase tracking-[0.18em]"
-          style={{ color: "var(--gold)" }}
+          style={{ color: "var(--gold)", paddingTop: 8 }}
         >
           Coming soon · 2026
         </span>
-      </div>
+      </header>
 
-      {/* Hero */}
-      <main className="flex w-full max-w-lg flex-col items-center text-center" style={{ gap: 36 }}>
-        <div className="flex flex-col items-center" style={{ gap: 16 }}>
+      {/* Hero — vertically centered in remaining space */}
+      <main
+        className="flex w-full flex-col items-center text-center"
+        style={{ paddingTop: 64, paddingBottom: 64 }}
+      >
+        <div className="flex flex-col items-center" style={{ gap: 20, maxWidth: 600 }}>
           <h1
-            className="fade-up font-display font-light"
+            className="fade-up font-display font-light tracking-[-0.02em]"
             style={{
+              fontSize: "clamp(50px, 7vw, 78px)",
+              lineHeight: 1.1,
+              color: "var(--ink)",
               animationDelay: "100ms",
               margin: 0,
-              lineHeight: 1.12,
-              letterSpacing: "-0.02em",
             }}
           >
             <span
@@ -73,32 +69,38 @@ export default function Home() {
           </h1>
 
           <p
-            className="fade-up font-body text-sm leading-relaxed"
+            className="fade-up font-body text-sm leading-relaxed tracking-wide"
             style={{
               color: "var(--ink-60)",
               animationDelay: "220ms",
-              maxWidth: 380,
-              letterSpacing: "0.02em",
+              maxWidth: 360,
+              margin: "4px 0 0",
             }}
           >
             Sleep · Blood · Oral microbiome · Lifestyle&nbsp;&mdash; one score, recalculated nightly.
           </p>
         </div>
 
-        <div className="fade-up w-full" style={{ animationDelay: "360ms", maxWidth: 480 }}>
+        <div
+          className="fade-up w-full"
+          style={{ animationDelay: "360ms", maxWidth: 480, marginTop: 40 }}
+        >
           <WaitlistForm />
         </div>
 
         <p
           className="fade-up font-body text-[10px] tracking-widest uppercase"
-          style={{ color: "var(--ink-30)", animationDelay: "460ms" }}
+          style={{ color: "var(--ink-30)", animationDelay: "480ms", marginTop: 20 }}
         >
           For informational purposes only
         </p>
       </main>
 
-      {/* Panel score row */}
-      <footer className="fade-up w-full" style={{ animationDelay: "520ms", maxWidth: 560 }}>
+      {/* Panel score row — pinned to bottom */}
+      <footer
+        className="fade-up w-full"
+        style={{ animationDelay: "520ms", marginTop: "auto" }}
+      >
         <div style={{ borderTop: "0.5px solid var(--ink-12)", marginBottom: 20 }} />
 
         <div
@@ -106,6 +108,8 @@ export default function Home() {
             display: "grid",
             gridTemplateColumns: "repeat(4, 1fr)",
             gap: 10,
+            maxWidth: 560,
+            margin: "0 auto",
           }}
         >
           {panels.map((p) => (
