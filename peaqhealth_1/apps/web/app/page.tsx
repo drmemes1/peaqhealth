@@ -11,80 +11,94 @@ const panels = [
 export default function Home() {
   return (
     <div
-      className="relative flex min-h-svh flex-col bg-off-white selection:bg-gold selection:text-white"
+      className="relative flex min-h-svh flex-col items-center justify-between bg-off-white selection:bg-gold selection:text-white"
       style={{ padding: "32px 40px 40px" }}
     >
-      {/* Header — logo top-left, eyebrow top-right */}
-      <header
-        className="fade-up flex w-full items-start justify-between"
-        style={{ animationDelay: "0ms", marginBottom: "auto" }}
+      {/* Logo — absolute top-left, blends into cream */}
+      <div
+        className="fade-up"
+        style={{
+          position: "absolute",
+          top: 32,
+          left: 40,
+          animationDelay: "0ms",
+        }}
       >
         <LogoSvg size={96} color="var(--ink)" />
+      </div>
 
+      {/* Eyebrow */}
+      <div className="fade-up w-full flex justify-center pt-2" style={{ animationDelay: "0ms" }}>
         <span
           className="font-body text-[10px] uppercase tracking-[0.18em]"
-          style={{ color: "var(--gold)", paddingTop: 8 }}
+          style={{ color: "var(--gold)" }}
         >
           Coming soon · 2026
         </span>
-      </header>
+      </div>
 
-      {/* Hero — vertically centered in remaining space */}
-      <main
-        className="flex w-full flex-col items-center text-center"
-        style={{ paddingTop: 64, paddingBottom: 64 }}
-      >
-        <div className="flex flex-col items-center" style={{ gap: 20, maxWidth: 600 }}>
+      {/* Hero */}
+      <main className="flex w-full max-w-lg flex-col items-center text-center" style={{ gap: 36 }}>
+        <div className="flex flex-col items-center" style={{ gap: 16 }}>
           <h1
-            className="fade-up font-display font-light tracking-[-0.02em]"
+            className="fade-up font-display font-light"
             style={{
-              fontSize: "clamp(50px, 7vw, 78px)",
-              lineHeight: 1.1,
-              color: "var(--ink)",
               animationDelay: "100ms",
               margin: 0,
+              lineHeight: 1.12,
+              letterSpacing: "-0.02em",
             }}
           >
-            Reach for the peaq.
-            <br />
-            <em style={{ color: "var(--gold)", fontStyle: "italic" }}>
+            <span
+              style={{
+                display: "block",
+                fontSize: "clamp(46px, 6.5vw, 72px)",
+                color: "var(--ink)",
+                whiteSpace: "nowrap",
+              }}
+            >
+              Reach for the peaq.
+            </span>
+            <em
+              style={{
+                display: "block",
+                fontSize: "clamp(46px, 6.5vw, 72px)",
+                color: "var(--gold)",
+                fontStyle: "italic",
+                whiteSpace: "nowrap",
+              }}
+            >
               Your body, measured.
             </em>
           </h1>
 
           <p
-            className="fade-up font-body text-sm leading-relaxed tracking-wide"
+            className="fade-up font-body text-sm leading-relaxed"
             style={{
               color: "var(--ink-60)",
               animationDelay: "220ms",
-              maxWidth: 360,
-              margin: "4px 0 0",
+              maxWidth: 380,
+              letterSpacing: "0.02em",
             }}
           >
             Sleep · Blood · Oral microbiome · Lifestyle&nbsp;&mdash; one score, recalculated nightly.
           </p>
         </div>
 
-        <div
-          className="fade-up w-full"
-          style={{ animationDelay: "360ms", maxWidth: 480, marginTop: 40 }}
-        >
+        <div className="fade-up w-full" style={{ animationDelay: "360ms", maxWidth: 480 }}>
           <WaitlistForm />
         </div>
 
         <p
           className="fade-up font-body text-[10px] tracking-widest uppercase"
-          style={{ color: "var(--ink-30)", animationDelay: "480ms", marginTop: 20 }}
+          style={{ color: "var(--ink-30)", animationDelay: "460ms" }}
         >
           For informational purposes only
         </p>
       </main>
 
-      {/* Panel score row — pinned to bottom */}
-      <footer
-        className="fade-up w-full"
-        style={{ animationDelay: "520ms", marginTop: "auto" }}
-      >
+      {/* Panel score row */}
+      <footer className="fade-up w-full" style={{ animationDelay: "520ms", maxWidth: 560 }}>
         <div style={{ borderTop: "0.5px solid var(--ink-12)", marginBottom: 20 }} />
 
         <div
@@ -92,8 +106,6 @@ export default function Home() {
             display: "grid",
             gridTemplateColumns: "repeat(4, 1fr)",
             gap: 10,
-            maxWidth: 560,
-            margin: "0 auto",
           }}
         >
           {panels.map((p) => (

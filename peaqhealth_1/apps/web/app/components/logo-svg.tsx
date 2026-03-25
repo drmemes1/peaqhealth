@@ -30,18 +30,24 @@ export function LogoSvg({
     color === "#ffffff";
 
   return (
-    <Image
-      src="/images/peaq_logo.png"
-      alt="Peaq Health"
-      width={width}
-      height={size}
+    <div
       className={className}
       style={{
-        objectFit: "contain",
-        ...(onDarkBg
-          ? { filter: "invert(1)", mixBlendMode: "screen" }
-          : { mixBlendMode: "multiply" }),
+        display: "inline-block",
+        lineHeight: 0,
+        mixBlendMode: onDarkBg ? "screen" : "multiply",
       }}
-    />
+    >
+      <Image
+        src="/images/peaq_logo.png"
+        alt="Peaq Health"
+        width={width}
+        height={size}
+        style={{
+          objectFit: "contain",
+          filter: onDarkBg ? "invert(1)" : undefined,
+        }}
+      />
+    </div>
   );
 }
