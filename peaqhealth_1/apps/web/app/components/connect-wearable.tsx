@@ -10,20 +10,57 @@ interface ConnectWearableProps {
   mode: "onboarding" | "dashboard"
 }
 
-const DEVICES = [
-  { id: "apple_health", label: "Apple Watch", icon: "◎", appOnly: true },
-  { id: "oura",         label: "Oura Ring",   icon: "○", appOnly: false },
-  { id: "whoop",        label: "WHOOP",        icon: "⌇", appOnly: false },
-  { id: "garmin",       label: "Garmin",       icon: "◈", appOnly: false },
+// ─── Wearable definitions ──────────────────────────────────────────────────
+
+const FEATURED = [
+  {
+    id: "whoop",
+    label: "WHOOP",
+    sub: "Direct OAuth · Band 4.0 & 5.0",
+    method: "whoop_oauth" as const,
+    color: "#000000",
+    badge: null,
+    icon: (
+      <svg width="28" height="14" viewBox="0 0 28 14" fill="none">
+        <rect width="28" height="14" rx="7" fill="#000"/>
+        <text x="14" y="10.5" textAnchor="middle" fill="white"
+          style={{ fontSize: 7, fontFamily: "monospace", fontWeight: 700, letterSpacing: "0.08em" }}>
+          WHOOP
+        </text>
+      </svg>
+    ),
+  },
+  {
+    id: "oura",
+    label: "Oura Ring",
+    sub: "Via Junction · Gen 3 & 4",
+    method: "junction" as const,
+    color: "#1a1a2e",
+    badge: null,
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+        <circle cx="11" cy="11" r="9" stroke="#1a1a2e" strokeWidth="2.5" fill="none"/>
+        <circle cx="11" cy="11" r="3.5" fill="#1a1a2e"/>
+      </svg>
+    ),
+  },
 ]
 
+const OTHER_DEVICES = [
+  { id: "garmin",  label: "Garmin" },
+  { id: "fitbit",  label: "Fitbit" },
+  { id: "samsung", label: "Samsung Health" },
+  { id: "polar",   label: "Polar" },
+]
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
 export function ConnectWearable({ onSuccess, onSkip, mode }: ConnectWearableProps) {
-  const [connecting, setConnecting] = useState(false)
+  const [connecting, setConnecting] = useState<string | null>(null)
   const [connected, setConnected] = useState(false)
   const [retroNights, setRetroNights] = useState(0)
-  const [provider, setProvider] = useState("")
+  const [connectedLabel, setConnectedLabel] = useState("")
   const [error, setError] = useState<string | null>(null)
-  const [appleHint, setAppleHint] = useState(false)
 
   const { open: openWidget, ready } = useVitalLink({
     onSuccess: async (metadata: { userId?: string; connected?: Array<{ providerSlug?: string; name?: string }> }) => {
@@ -39,165 +76,302 @@ export function ConnectWearable({ onSuccess, onSkip, mode }: ConnectWearableProp
           body: JSON.stringify({ provider: providerSlug, junctionUserId }),
         })
         const data = await res.json()
-        setProvider(providerSlug)
+        setConnectedLabel(providerSlug.replace(/_/g, " "))
         setRetroNights(data.retroNights ?? 0)
         setConnected(true)
-        setConnecting(false)
+        setConnecting(null)
         onSuccess(providerSlug, data.retroNights ?? 0)
       } catch {
-        setError("Connection saved but score update failed. Refresh the page.")
-        setConnecting(false)
+        setError("Connection saved but score update failed — please refresh.")
+        setConnecting(null)
       }
     },
-    onExit: () => setConnecting(false),
+    onExit: () => setConnecting(null),
     onError: (err: { message?: string }) => {
       setError(err.message ?? "Connection failed")
-      setConnecting(false)
+      setConnecting(null)
     },
     env: (process.env.NEXT_PUBLIC_JUNCTION_ENV ?? "sandbox") as "sandbox" | "production",
   })
 
-  async function handleConnect() {
-    setConnecting(true)
+  async function handleJunction() {
+    setConnecting("junction")
     setError(null)
     try {
       const res = await fetch("/api/junction/link-token", { method: "POST" })
       if (!res.ok) {
         const body = await res.json().catch(() => ({})) as { detail?: string; error?: string }
-        const detail = body.detail ?? body.error ?? `HTTP ${res.status}`
-        console.error("[ConnectWearable] link-token API error:", body)
-        throw new Error(detail)
+        throw new Error(body.detail ?? body.error ?? `HTTP ${res.status}`)
       }
       const data = await res.json() as { link_token?: string; linkToken?: string }
       const linkToken = data.link_token ?? data.linkToken
-      if (!linkToken) {
-        console.error("[ConnectWearable] no link token in response:", data)
-        throw new Error("No link token returned from server")
-      }
-      if (!ready) {
-        console.error("[ConnectWearable] Vital widget not ready")
-        throw new Error("Wearable widget failed to load — please refresh and try again")
-      }
-      console.log("[ConnectWearable] opening Vital widget")
+      if (!linkToken) throw new Error("No link token returned from server")
+      if (!ready) throw new Error("Widget not ready — please refresh and try again")
       openWidget(linkToken)
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Unknown error"
-      console.error("[ConnectWearable] handleConnect failed:", msg)
-      setError(msg)
-      setConnecting(false)
+      setError(err instanceof Error ? err.message : "Unknown error")
+      setConnecting(null)
     }
   }
 
+  // ── Connected state ────────────────────────────────────────────────────────
+
   if (connected) {
     return (
-      <div className="flex flex-col items-center gap-4 text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full"
-             style={{ background: "var(--sleep-bg)" }}>
-          <span className="font-body text-2xl" style={{ color: "var(--sleep-c)" }}>✓</span>
+      <div style={{ textAlign: "center", padding: "24px 0" }}>
+        <div style={{
+          width: 48, height: 48, borderRadius: "50%",
+          background: "rgba(74,127,181,0.10)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          margin: "0 auto 16px",
+        }}>
+          <span style={{ fontSize: 22, color: "var(--sleep-c)" }}>✓</span>
         </div>
-        <p className="font-display text-xl font-light" style={{ color: "var(--ink)" }}>
-          {provider.replace(/_/g, " ")} connected.
+        <p style={{
+          fontFamily: "'Cormorant Garamond', Georgia, serif",
+          fontSize: 22, fontWeight: 300, color: "var(--ink)", margin: "0 0 6px",
+        }}>
+          {connectedLabel} connected
         </p>
-        <p className="font-body text-sm" style={{ color: "var(--ink-60)" }}>
+        <p style={{
+          fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+          fontSize: 13, color: "var(--ink-60)", margin: 0,
+        }}>
           Found {retroNights} night{retroNights !== 1 ? "s" : ""} of sleep data.
         </p>
       </div>
     )
   }
 
+  // ── Main UI ───────────────────────────────────────────────────────────────
+
   return (
-    <div className="flex flex-col gap-6">
-      {/* Device grid */}
-      <div className="grid grid-cols-2 gap-3">
-        {DEVICES.map(d => (
-          <div
-            key={d.id}
-            onClick={d.appOnly ? () => setAppleHint(true) : undefined}
-            className="flex items-center gap-3 p-3"
-            style={{
-              border: `0.5px solid ${d.appOnly ? "var(--gold)" : "var(--ink-12)"}`,
-              borderRadius: 4,
-              background: "white",
-              opacity: d.appOnly ? 0.55 : 1,
-              cursor: d.appOnly ? "pointer" : "default",
-              position: "relative",
-            }}
-          >
-            <span className="font-body text-lg" style={{ color: d.appOnly ? "var(--ink-30)" : "var(--sleep-c)", fontFamily: "monospace" }}>
-              {d.icon}
-            </span>
-            <span className="font-body text-xs" style={{ color: d.appOnly ? "var(--ink-30)" : "var(--ink)" }}>{d.label}</span>
-            {d.appOnly && (
-              <span
-                style={{
-                  fontFamily: "var(--font-body)",
-                  fontSize: 9,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  color: "var(--gold)",
-                  border: "0.5px solid var(--gold)",
-                  borderRadius: 9,
-                  padding: "1px 6px",
-                  marginLeft: "auto",
-                  flexShrink: 0,
-                  lineHeight: "16px",
-                }}
-              >
-                App only
-              </span>
-            )}
-          </div>
-        ))}
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+      {/* Section label */}
+      <p style={{
+        fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+        fontSize: 10, textTransform: "uppercase", letterSpacing: "0.14em",
+        color: "var(--ink-40)", margin: 0,
+      }}>
+        Choose your device
+      </p>
+
+      {/* Featured — WHOOP + Oura */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        {FEATURED.map(device => {
+          const isLoading = connecting === device.id
+          const isWhoop   = device.method === "whoop_oauth"
+
+          return (
+            <div key={device.id} style={{ display: "flex", flexDirection: "column" }}>
+              {isWhoop ? (
+                // WHOOP — direct OAuth redirect
+                <a
+                  href="/api/auth/whoop/connect"
+                  style={{
+                    display: "flex", flexDirection: "column", gap: 12,
+                    padding: "18px 16px",
+                    background: "white",
+                    border: "1px solid rgba(20,20,16,0.14)",
+                    textDecoration: "none",
+                    transition: "border-color 0.18s ease, box-shadow 0.18s ease",
+                    cursor: "pointer",
+                  }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLElement).style.borderColor = "var(--sleep-c)"
+                    ;(e.currentTarget as HTMLElement).style.boxShadow = "0 2px 12px rgba(74,127,181,0.10)"
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLElement).style.borderColor = "rgba(20,20,16,0.14)"
+                    ;(e.currentTarget as HTMLElement).style.boxShadow = "none"
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      {device.icon}
+                    </div>
+                    <span style={{
+                      fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                      fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em",
+                      color: "var(--sleep-c)", border: "0.5px solid var(--sleep-c)",
+                      padding: "2px 6px",
+                    }}>
+                      Connect
+                    </span>
+                  </div>
+                  <div>
+                    <p style={{
+                      fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                      fontSize: 14, fontWeight: 500, color: "var(--ink)", margin: "0 0 3px",
+                    }}>
+                      {device.label}
+                    </p>
+                    <p style={{
+                      fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                      fontSize: 11, color: "var(--ink-40)", margin: 0, lineHeight: 1.4,
+                    }}>
+                      {device.sub}
+                    </p>
+                  </div>
+                </a>
+              ) : (
+                // Oura — Junction widget
+                <button
+                  onClick={handleJunction}
+                  disabled={!ready || connecting !== null}
+                  style={{
+                    display: "flex", flexDirection: "column", gap: 12,
+                    padding: "18px 16px", textAlign: "left",
+                    background: "white",
+                    border: "1px solid rgba(20,20,16,0.14)",
+                    cursor: ready && !connecting ? "pointer" : "default",
+                    opacity: connecting && connecting !== "junction" ? 0.5 : 1,
+                    transition: "border-color 0.18s ease, box-shadow 0.18s ease",
+                  }}
+                  onMouseEnter={e => {
+                    if (ready && !connecting) {
+                      (e.currentTarget as HTMLElement).style.borderColor = "var(--sleep-c)"
+                      ;(e.currentTarget as HTMLElement).style.boxShadow = "0 2px 12px rgba(74,127,181,0.10)"
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLElement).style.borderColor = "rgba(20,20,16,0.14)"
+                    ;(e.currentTarget as HTMLElement).style.boxShadow = "none"
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      {device.icon}
+                    </div>
+                    <span style={{
+                      fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                      fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em",
+                      color: isLoading ? "var(--ink-30)" : "var(--sleep-c)",
+                      border: `0.5px solid ${isLoading ? "var(--ink-30)" : "var(--sleep-c)"}`,
+                      padding: "2px 6px",
+                    }}>
+                      {isLoading ? "Loading…" : "Connect"}
+                    </span>
+                  </div>
+                  <div>
+                    <p style={{
+                      fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                      fontSize: 14, fontWeight: 500, color: "var(--ink)", margin: "0 0 3px",
+                    }}>
+                      {device.label}
+                    </p>
+                    <p style={{
+                      fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                      fontSize: 11, color: "var(--ink-40)", margin: 0, lineHeight: 1.4,
+                    }}>
+                      {device.sub}
+                    </p>
+                  </div>
+                </button>
+              )}
+            </div>
+          )
+        })}
       </div>
 
-      {appleHint && (
-        <p className="font-body text-xs" style={{ color: "var(--gold)", lineHeight: 1.5 }}>
-          Apple Health sync is available in the Peaq iOS app — coming soon. For now, enter your sleep manually.
+      {/* Other devices via Junction */}
+      <div style={{ border: "0.5px solid var(--ink-10)", padding: "14px 16px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <p style={{
+              fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+              fontSize: 13, fontWeight: 500, color: "var(--ink)", margin: "0 0 4px",
+            }}>
+              More devices
+            </p>
+            <p style={{
+              fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+              fontSize: 11, color: "var(--ink-40)", margin: 0,
+            }}>
+              {OTHER_DEVICES.map(d => d.label).join(" · ")}
+            </p>
+          </div>
+          <button
+            onClick={handleJunction}
+            disabled={!ready || connecting !== null}
+            style={{
+              fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+              fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em",
+              color: "var(--ink-60)", background: "none", border: "0.5px solid var(--ink-20)",
+              padding: "6px 12px", cursor: ready && !connecting ? "pointer" : "default",
+              opacity: !ready || (connecting && connecting !== "junction") ? 0.4 : 1,
+              transition: "border-color 0.15s ease",
+            }}
+          >
+            {connecting === "junction" ? "Loading…" : "Browse →"}
+          </button>
+        </div>
+      </div>
+
+      {/* Apple Health — coming soon */}
+      <div style={{
+        display: "flex", alignItems: "center", gap: 14,
+        padding: "14px 16px",
+        background: "rgba(184,134,11,0.03)",
+        border: "0.5px solid rgba(184,134,11,0.20)",
+      }}>
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <path d="M11 4C11 4 9 2 7 3C6 5 7 8 9 9C8 10 7 12 7 14C7 17 9 19 11 19C13 19 15 17 15 14C15 12 14 10 13 9C15 8 16 5 15 3C13 2 11 4 11 4Z"
+            fill="rgba(184,134,11,0.5)" />
+        </svg>
+        <div style={{ flex: 1 }}>
+          <p style={{
+            fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+            fontSize: 13, fontWeight: 500, color: "var(--ink)", margin: "0 0 2px",
+          }}>
+            Apple Health &amp; Apple Watch
+          </p>
+          <p style={{
+            fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+            fontSize: 11, color: "var(--ink-40)", margin: 0,
+          }}>
+            Coming to the iOS app
+          </p>
+        </div>
+        <Link
+          href="/#waitlist"
+          style={{
+            fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+            fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em",
+            color: "var(--gold)", textDecoration: "none",
+            border: "0.5px solid rgba(184,134,11,0.4)",
+            padding: "5px 10px", whiteSpace: "nowrap",
+          }}
+        >
+          Notify me
+        </Link>
+      </div>
+
+      {/* Error */}
+      {error && (
+        <p style={{
+          fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+          fontSize: 12, color: "#991B1B", margin: 0, lineHeight: 1.5,
+        }}>
+          {error}
         </p>
       )}
 
-      {error && (
-        <p className="font-body text-xs" style={{ color: "#991B1B" }}>{error}</p>
-      )}
-
-      <button
-        disabled={!ready || connecting}
-        onClick={handleConnect}
-        className="h-12 w-full font-body text-xs uppercase tracking-[0.08em] text-white transition-opacity hover:opacity-85 disabled:opacity-40"
-        style={{ background: "var(--sleep-c)" }}
-      >
-        {connecting ? "Connecting..." : "Connect your device"}
-      </button>
-
+      {/* Skip */}
       {onSkip && (
         <button
           onClick={onSkip}
-          className="font-body text-xs uppercase tracking-widest"
-          style={{ color: "var(--ink-30)" }}
+          style={{
+            fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+            fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em",
+            color: "var(--ink-30)", background: "none", border: "none",
+            cursor: "pointer", padding: 0, alignSelf: "center",
+          }}
         >
           Skip for now
         </button>
       )}
-
-      {/* iOS app banner */}
-      <div
-        style={{
-          borderTop: "0.5px solid var(--ink-06)",
-          paddingTop: 16,
-          textAlign: "center",
-        }}
-      >
-        <p className="font-body text-xs" style={{ color: "var(--ink-30)", lineHeight: 1.6 }}>
-          Want to sync Apple Health or Apple Watch?{" "}
-          Our iOS app is coming soon.{" "}
-          <Link
-            href="/#waitlist"
-            style={{ color: "var(--gold)", textDecoration: "underline", textUnderlineOffset: 3, textDecorationThickness: "0.5px" }}
-          >
-            Join the waitlist →
-          </Link>
-        </p>
-      </div>
     </div>
   )
 }

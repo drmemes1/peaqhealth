@@ -28,8 +28,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/dashboard?whoop=error`)
   }
 
-  const tokens = await tokenRes.json() as {
-    access_token: string; refresh_token: string; expires_in: number; scope: string
+  const rawTokens = await tokenRes.json() as {
+    access_token: string; refresh_token?: string | null; expires_in: number; scope: string
+  }
+  console.log("[whoop-callback] token fields:", Object.keys(rawTokens))
+
+  const tokens = {
+    access_token:  rawTokens.access_token,
+    refresh_token: rawTokens.refresh_token ?? "",   // WHOOP may omit on first auth
+    expires_in:    rawTokens.expires_in,
+    scope:         rawTokens.scope,
   }
   const tokenExpiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString()
 
