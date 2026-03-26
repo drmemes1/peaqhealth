@@ -250,21 +250,35 @@ export async function recalculateScore(
 
   const result = calculatePeaqScore(sleepInputs, bloodInputs, oralInputs, lifestyleInputs)
 
+  // Sleep panel requires real wearable data — if the engine fell back to questionnaire
+  // estimation (sleepSource === "questionnaire"), discard that estimate so the sleep
+  // panel shows 0 and users are prompted to connect a wearable.
+  const sleepSub = (!sleepInputs && result.breakdown.sleepSource === "questionnaire")
+    ? 0
+    : result.breakdown.sleepSub
+  const storedScore = (!sleepInputs && result.breakdown.sleepSource === "questionnaire")
+    ? Math.max(0, result.score - result.breakdown.sleepSub)
+    : result.score
+  const sleepSource = (!sleepInputs && result.breakdown.sleepSource === "questionnaire")
+    ? "none"
+    : result.breakdown.sleepSource
+
   console.log("[score] breakdown:", JSON.stringify({
-    sleep: result.breakdown.sleepSub,
+    sleep: sleepSub,
     blood: result.breakdown.bloodSub,
     oral:  result.breakdown.oralSub,
     lifestyle: result.breakdown.lifestyleSub,
-    total: result.score,
+    total: storedScore,
+    sleepSource,
   }))
   await supabase.from("score_snapshots").insert({
     user_id:                userId,
     calculated_at:          new Date().toISOString(),
     engine_version:         result.version,
-    score:                  result.score,
+    score:                  storedScore,
     category:               result.category,
-    sleep_sub:              result.breakdown.sleepSub,
-    sleep_source:           result.breakdown.sleepSource,
+    sleep_sub:              sleepSub,
+    sleep_source:           sleepSource,
     blood_sub:              result.breakdown.bloodSub,
     oral_sub:               result.breakdown.oralSub,
     lifestyle_sub:          result.breakdown.lifestyleSub,

@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from "react"
 import { Nav } from "../components/nav"
 import { ScoreWheel, type ScoreWheelProps } from "../components/score-wheel"
 import { ScoreHistoryChart } from "../components/score-history-chart"
@@ -19,6 +20,15 @@ interface LabHistoryPoint {
 
 export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHistoryPoint[] }) {
   const { labHistory = [] } = props
+
+  // If WHOOP is connected but has never synced, trigger a one-time background sync.
+  // Handles cases where the OAuth callback backfill failed silently.
+  useEffect(() => {
+    if (props.whoopData?.connected && !props.whoopData?.lastSynced) {
+      fetch("/api/whoop/sync", { method: "POST" }).catch(() => {})
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <div className="min-h-svh bg-off-white">
