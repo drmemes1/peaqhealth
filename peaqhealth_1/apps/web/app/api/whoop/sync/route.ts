@@ -14,14 +14,14 @@ export async function POST() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  // 1. Fetch last 7 days of WHOOP data
-  const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .slice(0, 10)
+  // 1. Fetch last 7 days of WHOOP data (full ISO 8601 datetimes required by WHOOP API)
+  const startIso = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+  const endIso   = new Date().toISOString()
+  console.log(`[whoop-sync] syncing userId=${user.id} start=${startIso} end=${endIso}`)
 
   let records
   try {
-    records = await fetchWhoopSleepData(user.id, startDate)
+    records = await fetchWhoopSleepData(user.id, startIso, endIso)
   } catch (err) {
     console.error("[whoop-sync] fetch error:", err)
     return NextResponse.json({ error: "Failed to fetch WHOOP data" }, { status: 502 })

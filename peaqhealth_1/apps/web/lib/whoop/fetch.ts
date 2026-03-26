@@ -18,50 +18,66 @@ export interface WhoopSleepRecord {
 /** Fetch sleep + recovery data from WHOOP API for a given user and start date. */
 export async function fetchWhoopSleepData(
   userId: string,
-  startDate: string
+  startIso: string,   // full ISO 8601 datetime e.g. "2026-03-19T00:00:00.000Z"
+  endIso?: string     // defaults to now
 ): Promise<WhoopSleepRecord[]> {
   const token = await refreshWhoopToken(userId)
+  const end   = endIso ?? new Date().toISOString()
 
-  // Fetch sleep sessions
-  const sleepRes = await fetch(
-    `https://api.prod.whoop.com/developer/v1/activity/sleep?start=${startDate}&limit=25`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  )
-  if (!sleepRes.ok) throw new Error(`WHOOP sleep API error: ${sleepRes.status}`)
+  // ── Sleep sessions ─────────────────────────────────────────────────────────
+  const sleepParams = new URLSearchParams({ start: startIso, end, limit: "25" })
+  const sleepUrl    = `https://api.prod.whoop.com/developer/v1/activity/sleep?${sleepParams}`
+  console.log("[whoop-fetch] calling sleep:", sleepUrl)
+
+  const sleepRes = await fetch(sleepUrl, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!sleepRes.ok) {
+    const body = await sleepRes.text().catch(() => "")
+    throw new Error(`WHOOP sleep API ${sleepRes.status}: ${body}`)
+  }
   const sleepPayload = await sleepRes.json() as { records: Record<string, unknown>[] }
 
-  // Fetch recovery data for same range
-  const recoveryRes = await fetch(
-    `https://api.prod.whoop.com/developer/v1/recovery?start=${startDate}&limit=25`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  )
+  // ── Recovery records ───────────────────────────────────────────────────────
+  const recoveryParams = new URLSearchParams({ start: startIso, end, limit: "25" })
+  const recoveryUrl    = `https://api.prod.whoop.com/developer/v1/recovery?${recoveryParams}`
+  console.log("[whoop-fetch] calling recovery:", recoveryUrl)
+
+  const recoveryRes = await fetch(recoveryUrl, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
   const recoveryPayload = recoveryRes.ok
     ? (await recoveryRes.json() as { records: Record<string, unknown>[] })
     : { records: [] }
 
-  // Index recovery records by date
+  if (!recoveryRes.ok) {
+    console.warn("[whoop-fetch] recovery API non-OK:", recoveryRes.status, "— continuing without HRV")
+  }
+
+  // Index recovery records by date (created_at date)
   const recoveryByDate = new Map<string, Record<string, unknown>>()
   for (const rec of (recoveryPayload.records ?? [])) {
     const date = (rec.created_at as string)?.slice(0, 10)
     if (date) recoveryByDate.set(date, rec)
   }
 
-  // Map and merge
+  // ── Merge sleep + recovery ─────────────────────────────────────────────────
   const records: WhoopSleepRecord[] = []
   for (const sleep of (sleepPayload.records ?? [])) {
     const date = (sleep.start as string)?.slice(0, 10)
     if (!date) continue
 
-    const summary = (sleep.score as Record<string, unknown>)?.stage_summary as Record<string, number> | undefined
-    const score   = sleep.score as Record<string, unknown> | undefined
+    const summary  = (sleep.score as Record<string, unknown>)?.stage_summary as Record<string, number> | undefined
+    const score    = sleep.score as Record<string, unknown> | undefined
+    const recovery = recoveryByDate.get(date)
+
+    // HRV and resting HR are nested under recovery.score (not top-level)
+    const recScore = recovery?.score as Record<string, unknown> | undefined
 
     const totalInBedMs = summary?.total_in_bed_time_milli ?? 0
     const awakeMs      = summary?.total_awake_time_milli  ?? 0
     const deepMs       = summary?.total_slow_wave_sleep_time_milli ?? 0
     const remMs        = summary?.total_rem_sleep_time_milli       ?? 0
-
-    const recovery     = recoveryByDate.get(date)
-    const recScore     = recovery?.score as Record<string, unknown> | undefined
 
     records.push({
       date,
@@ -69,15 +85,16 @@ export async function fetchWhoopSleepData(
       deep_sleep_minutes:  deepMs / 60000,
       rem_sleep_minutes:   remMs / 60000,
       sleep_efficiency:    (score?.sleep_efficiency_percentage as number) ?? 0,
-      respiratory_rate:    (score?.respiratory_rate as number | null) ?? null,
-      hrv_rmssd:           recovery ? ((recovery.hrv_rmssd_milli as number ?? 0) / 1000) : null,
-      resting_heart_rate:  recovery ? ((recovery.resting_heart_rate as number | null) ?? null) : null,
-      spo2:                (score?.spo2_percentage as number | null) ?? null,
-      recovery_score:      recScore ? ((recScore.recovery_score as number | null) ?? null) : null,
+      respiratory_rate:    (score?.respiratory_rate            as number | null) ?? null,
+      hrv_rmssd:           recScore ? ((recScore.hrv_rmssd_milli as number ?? 0) / 1000) : null,
+      resting_heart_rate:  recScore ?  (recScore.resting_heart_rate as number | null) ?? null : null,
+      spo2:                (score?.spo2_percentage             as number | null) ?? null,
+      recovery_score:      recScore ? (recScore.recovery_score as number | null) ?? null : null,
       raw_sleep:           sleep,
       raw_recovery:        recovery ?? null,
     })
   }
 
+  console.log(`[whoop-fetch] fetched ${records.length} sleep records for user ${userId}`)
   return records
 }
