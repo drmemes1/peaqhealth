@@ -53,6 +53,17 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
   const pollCount = useRef(0)
   const MAX_POLLS = 12 // 12 × 10s = 2 minutes
 
+  // Auto-trigger WHOOP sync on first load if connected but never synced
+  useEffect(() => {
+    if (!props.whoopData?.connected) return
+    if (props.whoopData.lastSynced !== null) return  // already synced at least once
+    // Fire and forget — the polling loop will pick up score update
+    fetch("/api/whoop/sync", { method: "POST" })
+      .then(r => r.ok ? startPolling(liveScore) : null)
+      .catch(() => {})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Countdown timer for rate-limit display
   useEffect(() => {
     if (syncState !== "rate-limited" || !nextSyncAt) return

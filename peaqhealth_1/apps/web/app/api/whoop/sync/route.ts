@@ -58,10 +58,12 @@ export async function POST() {
   const spo2Dips      = spo2 >= 95 ? 0 : spo2 >= 92 ? 2 : 5  // estimate dips from SpO2
 
   // 4. Upsert aggregated metrics into wearable_connections (feeds score calc)
+  const now = new Date().toISOString()
   await serviceClient.from("wearable_connections").upsert({
     user_id:            user.id,
     provider:           "whoop",
     status:             "connected",
+    connected_at:       now,
     deep_sleep_pct:     deepPct,
     rem_pct:            remPct,
     sleep_efficiency:   efficiency,
@@ -69,8 +71,8 @@ export async function POST() {
     latest_resting_hr:  Math.round(restingHR) || null,
     latest_spo2_dips:   spo2Dips,
     nights_available:   validNights.length,
-    last_sync_at:       new Date().toISOString(),
-    updated_at:         new Date().toISOString(),
+    last_sync_at:       now,
+    updated_at:         now,
   }, { onConflict: "user_id,provider" })
 
   // 5. Update last_synced_at in whoop_connections

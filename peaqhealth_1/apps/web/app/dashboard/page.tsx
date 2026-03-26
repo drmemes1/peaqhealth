@@ -21,7 +21,7 @@ export default async function DashboardPage() {
     supabase.from("score_snapshots").select("*").eq("user_id", user.id).order("calculated_at", { ascending: false }).limit(1).single(),
     supabase.from("wearable_connections").select("*").eq("user_id", user.id).eq("status", "connected").order("connected_at", { ascending: false }).limit(1).single(),
     supabase.from("lab_results").select("*").eq("user_id", user.id).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).single(),
-    supabase.from("oral_kit_orders").select("id").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1).single(),
+    supabase.from("oral_kit_orders").select("id, results_data").eq("user_id", user.id).order("ordered_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("lifestyle_records").select("*").eq("user_id", user.id).single(),
     supabase.from("lab_history").select("locked_at, total_score, blood_score, collection_date, ldl_mgdl, hdl_mgdl, hs_crp_mgl, vitamin_d_ngml").eq("user_id", user.id).order("locked_at", { ascending: true }),
     supabase.from("whoop_connections").select("last_synced_at").eq("user_id", user.id).maybeSingle(),
@@ -32,12 +32,14 @@ export default async function DashboardPage() {
     .from("oral_kit_orders")
     .select("*")
     .eq("user_id", user.id)
-    .in("status", ["results_ready", "scored"])
+    .not("results_data", "is", null)
+    .order("ordered_at", { ascending: false })
+    .limit(1)
     .maybeSingle()
 
   // Backfill wearable_connections for legacy users who connected before the upsert fix.
-  // If sleep data contributed to their score but no wearable row exists, silently create one.
-  if (!wearable && Number(snapshot?.sleep_sub ?? 0) > 0) {
+  // Skip when a WHOOP connection exists — the sync will create the proper row with real data.
+  if (!wearable && !whoopConn && Number(snapshot?.sleep_sub ?? 0) > 0) {
     const ts = snapshot!.calculated_at
     await supabase.from("wearable_connections").upsert({
       user_id:      user.id,
@@ -180,7 +182,7 @@ export default async function DashboardPage() {
       updatedAt:       (lifestyle.updated_at        as string) ?? "",
     } : undefined,
     oralOrdered: !!oralAny,
-    oralKitStatus: (!oralAny ? "none" : !oral ? "ordered" : "complete") as "none" | "ordered" | "complete",
+    oralKitStatus: (!oralAny ? "none" : (oralAny as Record<string, unknown>).results_data != null ? "complete" : !oral ? "ordered" : "complete") as "none" | "ordered" | "complete",
     sleepNightsAvailable: (wearable?.nights_available as number | null) ?? 0,
     interactionsFired,
     peaqPercent:      (snapshot?.peaq_percent      as number | null) ?? undefined,
