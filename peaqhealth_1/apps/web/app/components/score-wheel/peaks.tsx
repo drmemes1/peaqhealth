@@ -74,7 +74,7 @@ export interface PeaksProps {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function PeaksVisualization({
-  breakdown, sleepConnected, hasBlood, oralActive, hasLifestyle, ageRange, onPeakHover,
+  breakdown, sleepConnected, hasBlood, oralActive, hasLifestyle, ageRange, onPeakHover, onPeakClick,
 }: PeaksProps) {
   const rawScores = [
     breakdown.sleepSub,
