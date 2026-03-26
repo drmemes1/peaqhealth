@@ -1247,7 +1247,7 @@ export function ScoreWheel({
     <div style={{ maxWidth: 720, margin: "0 auto", padding: "0 0 80px", display: "flex", flexDirection: "column", gap: 52 }}>
 
       {/* PEAKS */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", ...fadeUp("0s") }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative", zIndex: 10, ...fadeUp("0s") }}>
         {/* Score number */}
         <span
           className={scorePulse ? "score-pulse" : ""}
@@ -1282,34 +1282,30 @@ export function ScoreWheel({
 
         {/* Data completeness pill */}
         {peaqPercent !== undefined && (() => {
-          const panels = [
+          const panels: Array<{ key: string; label: string; status: string; statusText: string }> = [
             {
               key: "blood",
               label: "Blood panel",
-              sub: "labs uploaded",
-              color: "#4A7FB5",
               status: hasBlood ? "complete" : "missing",
+              statusText: hasBlood ? "Labs uploaded" : "No labs uploaded",
             },
             {
               key: "sleep",
               label: "Sleep panel",
-              sub: "wearable connected",
-              color: "#4A7FB5",
               status: sleepConnected ? "complete" : "missing",
+              statusText: sleepConnected ? "Wearable connected" : "No wearable connected",
             },
             {
               key: "oral",
               label: "Oral panel",
-              sub: "microbiome kit",
-              color: "#2E7D52",
               status: oralKitStatus === "complete" ? "complete" : oralKitStatus === "ordered" ? "partial" : "missing",
+              statusText: oralKitStatus === "complete" ? "Kit complete" : oralKitStatus === "ordered" ? "Kit processing" : "No kit ordered",
             },
             {
               key: "lifestyle",
               label: "Lifestyle",
-              sub: "questionnaire complete",
-              color: "#B8860B",
               status: lifestyleData ? "complete" : "missing",
+              statusText: lifestyleData ? "Questionnaire done" : "Not completed",
             },
           ]
           const dotColor = (s: string) =>
@@ -1357,12 +1353,12 @@ export function ScoreWheel({
                     position: "absolute", top: "calc(100% + 8px)", left: "50%",
                     transform: "translateX(-50%)",
                     width: 300, maxWidth: "90vw",
-                    background: "var(--color-background-primary, white)",
-                    border: "0.5px solid rgba(20,20,16,0.14)",
+                    background: "var(--off-white, #F5F3F0)",
+                    border: "0.5px solid rgba(20,20,16,0.18)",
                     borderRadius: 10,
                     padding: "16px 18px",
-                    zIndex: 50,
-                    boxShadow: "0 4px 24px rgba(20,20,16,0.08)",
+                    zIndex: 200,
+                    boxShadow: "0 8px 32px rgba(20,20,16,0.14)",
                     animation: "fadeUp 0.18s ease",
                   }}
                 >
@@ -1395,10 +1391,10 @@ export function ScoreWheel({
                         </span>
                         <span style={{
                           fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                          fontSize: 10, color: "var(--ink-40)",
-                          textTransform: "capitalize",
+                          fontSize: 10,
+                          color: p.status === "complete" ? "var(--ink-60)" : p.status === "partial" ? "var(--gold)" : "var(--ink-30)",
                         }}>
-                          {p.status === "complete" ? p.sub : p.status === "partial" ? "in progress" : "not connected"}
+                          {p.statusText}
                         </span>
                       </div>
                     ))}
