@@ -1,7 +1,7 @@
 "use client"
 import React, { useEffect, useImperativeHandle, useRef, useState } from "react"
 import { useCountUp } from "./use-count-up"
-import { PeaksVisualization } from "./peaks"
+import { PeaksVisualization, getAgeGroup, getOptimalScores } from "./peaks"
 import { HeroTitle } from "./hero-title"
 import { PendingBanner } from "./pending-banners"
 import { PanelGrid } from "./panel-grid"
@@ -1285,28 +1285,90 @@ export function ScoreWheel({
           ))}
         </div>
 
-        {/* Age-calibrated optimal summary */}
+        {/* Age-calibrated benchmark row + gap insight */}
         {lifestyleData?.ageRange && (() => {
-          const ar = lifestyleData.ageRange!
-          const isOver55 = ar === "60_69" || ar === "70_plus"
-          const is40to55 = ar === "40_49" || ar === "50_59"
-          const bloodOpt = isOver55 ? 24 : is40to55 ? 26 : 28
-          const sleepOpt = isOver55 ? 18 : is40to55 ? 20 : 22
-          let actualSum = 0, optimalSum = 0
-          if (sleepConnected && breakdown.sleepSub > 0)   { actualSum += breakdown.sleepSub;     optimalSum += sleepOpt }
-          if (hasBlood && breakdown.bloodSub > 0)         { actualSum += breakdown.bloodSub;     optimalSum += bloodOpt }
-          if (oralActive && breakdown.oralSub > 0)        { actualSum += breakdown.oralSub;      optimalSum += 22 }
-          if (lifestyleData && breakdown.lifestyleSub > 0) { actualSum += breakdown.lifestyleSub; optimalSum += 11 }
-          if (optimalSum === 0) return null
-          const pct = Math.round((actualSum / optimalSum) * 100)
-          const ageLabel = isOver55 ? "55+" : is40to55 ? "40–55" : "under 40"
+          const optimalScores = getOptimalScores(lifestyleData.ageRange)
+          const panels = [
+            { key: "sleep",     label: "SLEEP",     color: "#4A7FB5", actual: sleepConnected ? breakdown.sleepSub : null,     optimal: optimalScores[0] },
+            { key: "blood",     label: "BLOOD",     color: "#C0392B", actual: hasBlood       ? breakdown.bloodSub : null,     optimal: optimalScores[1] },
+            { key: "oral",      label: "ORAL",      color: "#2D6A4F", actual: oralActive     ? breakdown.oralSub  : null,     optimal: optimalScores[2] },
+            { key: "lifestyle", label: "LIFESTYLE", color: "#B8860B", actual: !!lifestyleData ? breakdown.lifestyleSub : null, optimal: optimalScores[3] },
+          ]
+
+          // Find panel with largest gap (only panels with data)
+          let worstPanel = ""
+          let worstGap = -1
+          for (const p of panels) {
+            if (p.actual !== null && p.actual >= 0 && p.optimal > 0) {
+              const gap = (p.optimal - p.actual) / p.optimal
+              if (gap > worstGap) { worstGap = gap; worstPanel = p.key }
+            }
+          }
+
+          const gapSentences: Record<string, string> = {
+            blood:     "Your blood markers have the most room to grow — that's where improving your score starts.",
+            sleep:     "Your sleep score has the most room to grow — small improvements there move your overall score meaningfully.",
+            oral:      "Your oral microbiome panel has the most room to grow — it's your biggest opportunity right now.",
+            lifestyle: "Your lifestyle score has the most room to grow — it's the fastest panel to improve.",
+          }
+
+          const ageGroup = getAgeGroup(lifestyleData.ageRange)
+          const ageLabel = ageGroup === "over55" ? "55+" : ageGroup === "40to55" ? "40–55" : "under 40"
+
           return (
-            <div style={{ marginTop: 14 }}>
-              <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "var(--ink-60)", margin: 0 }}>
-                You are <strong>{pct}%</strong> of the way to optimal for your age ({ageLabel})
-              </p>
-              <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, color: "var(--ink-40)", margin: "3px 0 0", letterSpacing: "0.02em" }}>
-                Based on published clinical reference ranges, not peer averages
+            <div style={{ marginTop: 20 }}>
+              {/* 4-column benchmark comparison row */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 16 }}>
+                {panels.map(p => (
+                  <div key={p.key} style={{ textAlign: "center" }}>
+                    <div style={{
+                      fontFamily: "'Cormorant Garamond', Georgia, serif",
+                      fontSize: 17, fontWeight: 300, lineHeight: 1.2,
+                    }}>
+                      <span style={{ color: p.color }}>
+                        {p.actual !== null ? (Number.isInteger(p.actual) ? p.actual : p.actual.toFixed(1)) : "—"}
+                      </span>
+                      <span style={{ color: "rgba(20,20,16,0.28)", fontSize: 13 }}>
+                        {" / "}{p.optimal}
+                      </span>
+                    </div>
+                    <div style={{
+                      fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                      fontSize: 9, letterSpacing: "0.1em",
+                      color: "rgba(20,20,16,0.35)", marginTop: 4,
+                      textTransform: "uppercase" as const,
+                    }}>
+                      {p.label}
+                    </div>
+                    <div style={{
+                      fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                      fontSize: 9, color: "rgba(20,20,16,0.28)", marginTop: 1,
+                    }}>
+                      optimal
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Gap insight sentence */}
+              {worstPanel && worstGap > 0.01 && (
+                <p style={{
+                  fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                  fontSize: 14, color: "var(--ink-60)",
+                  textAlign: "center", maxWidth: 480, margin: "0 auto 6px",
+                  lineHeight: 1.6,
+                }}>
+                  {gapSentences[worstPanel]}
+                </p>
+              )}
+
+              {/* Disclaimer */}
+              <p style={{
+                fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                fontSize: 11, color: "rgba(20,20,16,0.35)",
+                textAlign: "center", margin: 0, letterSpacing: "0.02em",
+              }}>
+                Optimal targets for age {ageLabel} · Based on published clinical reference ranges, not peer averages
               </p>
             </div>
           )
