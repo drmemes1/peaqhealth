@@ -129,7 +129,7 @@ const QUESTIONS: QuestionDef[] = [
     type: "choice",
     options: [
       { value: "none",     label: "None" },
-      { value: "fluoride", label: "Fluoride rinse" },
+      { value: "fluoride", label: "Fluoride or other" },
       { value: "natural",  label: "Natural or oil-pulling" },
       { value: "alcohol",  label: "Antiseptic (Listerine, etc.)" },
     ],
