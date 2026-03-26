@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient as createServiceClient } from "@supabase/supabase-js"
+import { fetchWhoopSleepData, type WhoopSleepRecord } from "../../../../../lib/whoop/fetch"
+import { recalculateScore } from "../../../../../lib/score/recalculate"
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
@@ -75,6 +77,56 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/dashboard?whoop=error`)
   }
 
-  // 4. Redirect to dashboard
+  // 4. Immediate 7-day backfill so user sees data on first dashboard load
+  try {
+    const startIso = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+    const endIso   = new Date().toISOString()
+    const records  = await fetchWhoopSleepData(userId, startIso, endIso)
+
+    if (records.length > 0) {
+      const rows = records.map(r => ({ ...r, user_id: userId }))
+      await serviceClient.from("whoop_sleep_data")
+        .upsert(rows, { onConflict: "user_id,date" })
+
+      const validNights = records.filter((r: WhoopSleepRecord) => r.sleep_efficiency > 0)
+      const n = validNights.length || 1
+      const avg = (key: keyof WhoopSleepRecord) =>
+        validNights.reduce((s: number, r: WhoopSleepRecord) => s + (Number(r[key]) || 0), 0) / n
+
+      const totalMin = avg("total_sleep_minutes")
+      const deepPct  = totalMin > 0 ? (avg("deep_sleep_minutes") / totalMin) * 100 : 0
+      const remPct   = totalMin > 0 ? (avg("rem_sleep_minutes")  / totalMin) * 100 : 0
+      const spo2     = avg("spo2")
+      const now      = new Date().toISOString()
+
+      await serviceClient.from("wearable_connections").upsert({
+        user_id:           userId,
+        provider:          "whoop",
+        status:            "connected",
+        connected_at:      now,
+        deep_sleep_pct:    deepPct,
+        rem_pct:           remPct,
+        sleep_efficiency:  avg("sleep_efficiency"),
+        hrv_rmssd:         avg("hrv_rmssd"),
+        latest_resting_hr: Math.round(avg("resting_heart_rate")) || null,
+        latest_spo2_dips:  spo2 >= 95 ? 0 : spo2 >= 92 ? 2 : 5,
+        nights_available:  validNights.length,
+        last_sync_at:      now,
+        updated_at:        now,
+      }, { onConflict: "user_id,provider" })
+
+      await serviceClient.from("whoop_connections")
+        .update({ last_synced_at: now })
+        .eq("user_id", userId)
+
+      await recalculateScore(userId, serviceClient)
+      console.log(`[whoop-callback] initial backfill complete — ${records.length} nights for user ${userId}`)
+    }
+  } catch (err) {
+    // Non-fatal — user still gets redirected; cron will sync overnight
+    console.warn("[whoop-callback] initial backfill failed (non-fatal):", err)
+  }
+
+  // 5. Redirect to dashboard
   return NextResponse.redirect(`${origin}/dashboard?whoop=connected`)
 }

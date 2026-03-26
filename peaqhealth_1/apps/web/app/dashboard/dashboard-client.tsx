@@ -53,17 +53,6 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
   const pollCount = useRef(0)
   const MAX_POLLS = 12 // 12 × 10s = 2 minutes
 
-  // Auto-trigger WHOOP sync on first load if connected but never synced
-  useEffect(() => {
-    if (!props.whoopData?.connected) return
-    if (props.whoopData.lastSynced !== null) return  // already synced at least once
-    // Fire and forget — the polling loop will pick up score update
-    fetch("/api/whoop/sync", { method: "POST" })
-      .then(r => r.ok ? startPolling(liveScore) : null)
-      .catch(() => {})
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
   // Countdown timer for rate-limit display
   useEffect(() => {
     if (syncState !== "rate-limited" || !nextSyncAt) return
@@ -160,15 +149,15 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
 
   // Button label / color
   const syncLabel =
-    syncState === "loading"     ? "Syncing..."
-    : syncState === "success"   ? "✓ Sync requested — updates in ~2 min"
-    : syncState === "rate-limited" ? `Synced recently — available in ${minsUntilSync}m`
-    : "↻ Sync now"
+    syncState === "loading"        ? "Refreshing..."
+    : syncState === "success"      ? "✓ Requested — updates in ~2 min"
+    : syncState === "rate-limited" ? `Available in ${minsUntilSync}m`
+    : "Refresh data"
 
   const syncColor =
-    syncState === "success"      ? "var(--gold)"
-    : syncState === "rate-limited" ? "rgba(20,20,16,0.25)"
-    : "rgba(20,20,16,0.4)"
+    syncState === "success"        ? "var(--gold)"
+    : syncState === "rate-limited" ? "rgba(20,20,16,0.20)"
+    : "rgba(20,20,16,0.30)"
 
   return (
     <div className="min-h-svh bg-off-white">
@@ -210,26 +199,30 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
               disabled={syncState === "loading" || syncState === "rate-limited"}
               style={{
                 background: "none",
-                border: "none",
-                padding: 0,
+                border: "0.5px solid rgba(20,20,16,0.12)",
+                borderRadius: 4,
+                padding: "3px 8px",
                 cursor: syncState === "loading" || syncState === "rate-limited"
                   ? "default"
                   : "pointer",
                 fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                fontSize: 11,
-                letterSpacing: "0.06em",
+                fontSize: 10,
+                letterSpacing: "0.05em",
                 color: syncColor,
-                transition: "color 0.2s ease",
+                transition: "color 0.2s ease, border-color 0.2s ease",
                 outline: "none",
               }}
               onMouseEnter={(e) => {
-                if (syncState === "idle")
-                  (e.currentTarget as HTMLButtonElement).style.color = "var(--gold)"
+                if (syncState === "idle") {
+                  (e.currentTarget as HTMLButtonElement).style.color = "var(--ink-60)"
+                  ;(e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(20,20,16,0.25)"
+                }
               }}
               onMouseLeave={(e) => {
-                if (syncState === "idle")
-                  (e.currentTarget as HTMLButtonElement).style.color =
-                    "rgba(20,20,16,0.4)"
+                if (syncState === "idle") {
+                  (e.currentTarget as HTMLButtonElement).style.color = syncColor
+                  ;(e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(20,20,16,0.12)"
+                }
               }}
             >
               {syncLabel}
