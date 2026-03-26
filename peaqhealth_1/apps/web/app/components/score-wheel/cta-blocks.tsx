@@ -58,7 +58,7 @@ export function CTABlocks({ sleepConnected, labFreshness, oralActive }: CTABlock
           points="+27 pts"
           features={["Deep sleep % — slow-wave and metabolic recovery","HRV RMSSD — autonomic recovery","SpO2 dips — sleep-breathing and OSA signal","REM % — cognitive processing","Unlocks 7 cross-panel interaction terms","7-night minimum to unlock"]}
           buttonLabel="Connect wearable — Oura, WHOOP, Garmin"
-          href="/onboarding"
+          href="/settings"
         />
       )}
       {bloodMissing && (

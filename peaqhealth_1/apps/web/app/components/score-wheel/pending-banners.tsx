@@ -12,7 +12,7 @@ const CONFIGS = {
     bg: "var(--sleep-bg)", border: "rgba(74,127,181,0.2)", iconBg: "rgba(74,127,181,0.12)",
     color: "var(--sleep-c)", subColor: "rgba(74,127,181,0.7)",
     title: "No wearable connected", sub: "27 pts locked · Connect Oura, WHOOP, or Garmin · Apple Watch via iOS app soon",
-    href: "/onboarding", breathe: true,
+    href: "/settings", breathe: true,
   },
   blood: {
     bg: "var(--blood-bg)", border: "rgba(192,57,43,0.2)", iconBg: "rgba(192,57,43,0.12)",
