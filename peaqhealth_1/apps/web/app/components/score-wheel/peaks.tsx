@@ -68,12 +68,13 @@ export interface PeaksProps {
   hasLifestyle:    boolean
   ageRange?:       string
   onPeakHover?:    (key: string | null) => void
+  onPeakClick?:    (key: string) => void
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function PeaksVisualization({
-  breakdown, sleepConnected, hasBlood, oralActive, hasLifestyle, ageRange, onPeakHover,
+  breakdown, sleepConnected, hasBlood, oralActive, hasLifestyle, ageRange, onPeakHover, onPeakClick,
 }: PeaksProps) {
   const rawScores = [
     breakdown.sleepSub,
@@ -187,7 +188,7 @@ export function PeaksVisualization({
               strokeLinejoin="round"
               strokeDasharray={isPending ? "6 4" : undefined}
               opacity={isPending ? 0.28 : 1}
-              style={{ cursor: "default", transition: "opacity 0.2s ease" }}
+              style={{ cursor: onPeakClick ? "pointer" : "default", transition: "opacity 0.2s ease" }}
               onMouseEnter={e => {
                 e.currentTarget.style.opacity = isPending ? "0.28" : "0.62"
                 onPeakHover?.(p.key)
@@ -196,6 +197,7 @@ export function PeaksVisualization({
                 e.currentTarget.style.opacity = isPending ? "0.28" : "1"
                 onPeakHover?.(null)
               }}
+              onClick={() => onPeakClick?.(p.key)}
             />
 
             {/* Apex dot + score + benchmark + labels — fade in after animation */}
