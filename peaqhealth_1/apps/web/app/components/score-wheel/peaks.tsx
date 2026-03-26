@@ -20,25 +20,6 @@ const PANELS = [
   { key: "lifestyle", label: "LIFESTYLE", max: 13, color: "#B8860B" },
 ] as const
 
-// ─── Age-based benchmark helpers ─────────────────────────────────────────────
-
-type AgeGroup = "under40" | "40to55" | "over55"
-
-export function getAgeGroup(ageRange: string | undefined): AgeGroup {
-  if (ageRange === "60_69" || ageRange === "70_plus") return "over55"
-  if (ageRange === "40_49" || ageRange === "50_59")   return "40to55"
-  return "under40"
-}
-
-// Returns [sleepOptimal, bloodOptimal, oralOptimal, lifestyleOptimal]
-// Sources: ACC/AHA 2019, AASM sleep guidelines, published oral microbiome studies
-export function getOptimalScores(ageRange: string | undefined): [number, number, number, number] {
-  const g = getAgeGroup(ageRange)
-  const blood = g === "under40" ? 28 : g === "40to55" ? 26 : 24
-  const sleep = g === "under40" ? 22 : g === "40to55" ? 20 : 18
-  return [sleep, blood, 22, 11]  // oral + lifestyle are age-independent
-}
-
 function easeOutCubic(t: number): number {
   return 1 - Math.pow(1 - t, 3)
 }
@@ -51,7 +32,6 @@ export interface PeaksProps {
   hasBlood:        boolean
   oralActive:      boolean
   hasLifestyle:    boolean
-  ageRange?:       string
   onPeakHover?:    (key: string | null) => void
   onPeakClick?:    (key: string) => void
 }
@@ -59,7 +39,7 @@ export interface PeaksProps {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function PeaksVisualization({
-  breakdown, sleepConnected, hasBlood, oralActive, hasLifestyle, ageRange, onPeakHover, onPeakClick,
+  breakdown, sleepConnected, hasBlood, oralActive, hasLifestyle, onPeakHover, onPeakClick,
 }: PeaksProps) {
   const rawScores = [
     breakdown.sleepSub,

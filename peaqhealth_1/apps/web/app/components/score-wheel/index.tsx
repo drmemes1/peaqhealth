@@ -1,7 +1,7 @@
 "use client"
 import React, { useEffect, useImperativeHandle, useRef, useState } from "react"
 import { useCountUp } from "./use-count-up"
-import { PeaksVisualization, getAgeGroup, getOptimalScores } from "./peaks"
+import { PeaksVisualization } from "./peaks"
 import { HeroTitle } from "./hero-title"
 import { PendingBanner } from "./pending-banners"
 import { PanelGrid } from "./panel-grid"
@@ -1257,71 +1257,10 @@ export function ScoreWheel({
             hasBlood={hasBlood}
             oralActive={oralActive}
             hasLifestyle={!!lifestyleData}
-            ageRange={lifestyleData?.ageRange}
             onPeakHover={setHoveredRing}
             onPeakClick={handlePeakClick}
           />
         </div>
-
-        {/* Age-calibrated benchmark row + gap insight */}
-        {lifestyleData?.ageRange && (() => {
-          const optimalScores = getOptimalScores(lifestyleData.ageRange)
-          const panels = [
-            { key: "sleep",     label: "SLEEP",     color: "#4A7FB5", actual: sleepConnected ? breakdown.sleepSub : null,     optimal: optimalScores[0] },
-            { key: "blood",     label: "BLOOD",     color: "#C0392B", actual: hasBlood       ? breakdown.bloodSub : null,     optimal: optimalScores[1] },
-            { key: "oral",      label: "ORAL",      color: "#2D6A4F", actual: oralActive     ? breakdown.oralSub  : null,     optimal: optimalScores[2] },
-            { key: "lifestyle", label: "LIFESTYLE", color: "#B8860B", actual: !!lifestyleData ? breakdown.lifestyleSub : null, optimal: optimalScores[3] },
-          ]
-
-          const ageGroup = getAgeGroup(lifestyleData.ageRange)
-          const ageLabel = ageGroup === "over55" ? "55+" : ageGroup === "40to55" ? "40–55" : "under 40"
-
-          return (
-            <div style={{ marginTop: 14 }}>
-              {/* 4-column benchmark comparison row */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 16 }}>
-                {panels.map(p => (
-                  <div key={p.key} style={{ textAlign: "center" }}>
-                    <div style={{
-                      fontFamily: "'Cormorant Garamond', Georgia, serif",
-                      fontSize: 17, fontWeight: 300, lineHeight: 1.2,
-                    }}>
-                      <span style={{ color: p.color }}>
-                        {p.actual !== null ? (Number.isInteger(p.actual) ? p.actual : p.actual.toFixed(1)) : "—"}
-                      </span>
-                      <span style={{ color: "rgba(20,20,16,0.28)", fontSize: 13 }}>
-                        {" / "}{p.optimal}
-                      </span>
-                    </div>
-                    <div style={{
-                      fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                      fontSize: 9, letterSpacing: "0.1em",
-                      color: "rgba(20,20,16,0.35)", marginTop: 4,
-                      textTransform: "uppercase" as const,
-                    }}>
-                      {p.label}
-                    </div>
-                    <div style={{
-                      fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                      fontSize: 9, color: "rgba(20,20,16,0.28)", marginTop: 1,
-                    }}>
-                      optimal
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Disclaimer */}
-              <p style={{
-                fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                fontSize: 11, color: "rgba(20,20,16,0.35)",
-                textAlign: "center", margin: 0, letterSpacing: "0.02em",
-              }}>
-                Optimal targets for age {ageLabel} · Based on published clinical reference ranges, not peer averages
-              </p>
-            </div>
-          )
-        })()}
 
         {/* Data completeness */}
         {peaqPercent !== undefined && (
