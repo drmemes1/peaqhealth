@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "../../../../lib/supabase/server"
 import { AzureOpenAI } from "openai"
+import { stripPII } from "../../../../lib/pii-scrub"
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -242,7 +243,10 @@ async function parseWithAzureOpenAI(fullText: string): Promise<Record<string, un
   const timeoutId = setTimeout(() => controller.abort(), 25000)
 
   try {
-    const normalizedText = normalizeLabText(fullText)
+    const originalLength = fullText.length
+    const scrubbedText = stripPII(fullText)
+    console.log("[pii-scrub] completed, text length before:", originalLength, "after:", scrubbedText.length)
+    const normalizedText = normalizeLabText(scrubbedText)
 
     const messages = [
         {
