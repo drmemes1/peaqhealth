@@ -45,6 +45,8 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
   )
   const [nextSyncAt, setNextSyncAt] = useState<string | null>(null)
   const [minsUntilSync, setMinsUntilSync] = useState(0)
+  const [disconnectConfirm, setDisconnectConfirm] = useState(false)
+  const [disconnecting, setDisconnecting] = useState(false)
 
   // Auto-refresh polling state
   const [isPolling, setIsPolling] = useState(false)
@@ -147,6 +149,16 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
     }
   }
 
+  const handleDisconnect = async () => {
+    setDisconnecting(true)
+    try {
+      await fetch("/api/auth/whoop/disconnect", { method: "POST" })
+      window.location.reload()
+    } catch {
+      setDisconnecting(false)
+    }
+  }
+
   // Button label / color
   const syncLabel =
     syncState === "loading"        ? "Refreshing..."
@@ -169,7 +181,7 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
           <div
             style={{
               display: "flex",
-              alignItems: "center",
+              alignItems: "flex-start",
               justifyContent: "space-between",
               marginBottom: 8,
               paddingBottom: 12,
@@ -182,6 +194,7 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
                 fontSize: 11,
                 letterSpacing: "0.04em",
                 color: "rgba(20,20,16,0.35)",
+                paddingTop: 2,
               }}
             >
               {lastSyncAt
@@ -194,39 +207,92 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
               )}
             </span>
 
-            <button
-              onClick={handleSync}
-              disabled={syncState === "loading" || syncState === "rate-limited"}
-              style={{
-                background: "none",
-                border: "0.5px solid rgba(20,20,16,0.12)",
-                borderRadius: 4,
-                padding: "3px 8px",
-                cursor: syncState === "loading" || syncState === "rate-limited"
-                  ? "default"
-                  : "pointer",
-                fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                fontSize: 10,
-                letterSpacing: "0.05em",
-                color: syncColor,
-                transition: "color 0.2s ease, border-color 0.2s ease",
-                outline: "none",
-              }}
-              onMouseEnter={(e) => {
-                if (syncState === "idle") {
-                  (e.currentTarget as HTMLButtonElement).style.color = "var(--ink-60)"
-                  ;(e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(20,20,16,0.25)"
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (syncState === "idle") {
-                  (e.currentTarget as HTMLButtonElement).style.color = syncColor
-                  ;(e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(20,20,16,0.12)"
-                }
-              }}
-            >
-              {syncLabel}
-            </button>
+            {/* Right side: Refresh + Disconnect */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flexShrink: 0 }}>
+              {disconnectConfirm ? (
+                <div style={{ textAlign: "right" }}>
+                  <p style={{
+                    fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                    fontSize: 11, color: "var(--ink-60)", marginBottom: 6,
+                    maxWidth: 240, lineHeight: 1.5,
+                  }}>
+                    Disconnect WHOOP? Your sleep data will remain but live sync will stop.
+                  </p>
+                  <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                    <button
+                      onClick={() => setDisconnectConfirm(false)}
+                      style={{
+                        fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                        fontSize: 11, color: "var(--ink-40)",
+                        background: "none", border: "none", padding: 0, cursor: "pointer",
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleDisconnect}
+                      disabled={disconnecting}
+                      style={{
+                        fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                        fontSize: 11, color: "#DC2626",
+                        background: "none", border: "none", padding: 0,
+                        cursor: disconnecting ? "default" : "pointer",
+                        opacity: disconnecting ? 0.5 : 1,
+                      }}
+                    >
+                      {disconnecting ? "Disconnecting…" : "Disconnect"}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <button
+                    onClick={handleSync}
+                    disabled={syncState === "loading" || syncState === "rate-limited"}
+                    style={{
+                      background: "none",
+                      border: "0.5px solid rgba(20,20,16,0.12)",
+                      borderRadius: 4,
+                      padding: "3px 8px",
+                      cursor: syncState === "loading" || syncState === "rate-limited" ? "default" : "pointer",
+                      fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                      fontSize: 10,
+                      letterSpacing: "0.05em",
+                      color: syncColor,
+                      transition: "color 0.2s ease, border-color 0.2s ease",
+                      outline: "none",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (syncState === "idle") {
+                        (e.currentTarget as HTMLButtonElement).style.color = "var(--ink-60)"
+                        ;(e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(20,20,16,0.25)"
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (syncState === "idle") {
+                        (e.currentTarget as HTMLButtonElement).style.color = syncColor
+                        ;(e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(20,20,16,0.12)"
+                      }
+                    }}
+                  >
+                    {syncLabel}
+                  </button>
+                  <button
+                    onClick={() => setDisconnectConfirm(true)}
+                    style={{
+                      fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                      fontSize: 11, color: "rgba(20,20,16,0.30)",
+                      background: "none", border: "none", padding: 0, cursor: "pointer",
+                      transition: "color 0.15s ease",
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.color = "rgba(20,20,16,0.55)")}
+                    onMouseLeave={e => (e.currentTarget.style.color = "rgba(20,20,16,0.30)")}
+                  >
+                    Disconnect
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         )}
 
