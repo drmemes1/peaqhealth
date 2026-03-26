@@ -7,14 +7,9 @@ import { recalculateScore } from "../../../../lib/score/recalculate"
  * POST /api/whoop/sync-all
  * Called by Vercel cron at 06:00 UTC daily.
  * Syncs all WHOOP-connected users and recalculates their scores.
- * Secured by CRON_SECRET (set in Vercel env vars).
+ * TODO: add proper auth before public launch.
  */
-export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get("authorization")
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
+export async function POST(_request: NextRequest) {
   const serviceClient = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
