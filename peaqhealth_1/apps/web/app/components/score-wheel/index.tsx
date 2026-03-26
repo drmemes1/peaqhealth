@@ -1163,12 +1163,6 @@ export function ScoreWheel({
   const hasBlood = labFreshness !== "none" && labFreshness !== "expired"
   const bloodLocked = !hasBlood
 
-  const LEGEND = [
-    { label: "Sleep",        color: "var(--sleep-c)", active: sleepConnected },
-    { label: "Blood",        color: "var(--blood-c)", active: hasBlood },
-    { label: `Oral${!oralActive ? " (pending)" : ""}`, color: "var(--oral-c)", active: oralActive },
-    { label: "Lifestyle",    color: "var(--gold)",    active: !!lifestyleData },
-  ]
 
   const subline = ""
 
@@ -1269,22 +1263,6 @@ export function ScoreWheel({
           />
         </div>
 
-        {/* Legend */}
-        <div style={{ display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap", justifyContent: "center", marginTop: 20 }}>
-          {LEGEND.map(({ label, color, active }) => (
-            <div key={label} style={{ display: "flex", alignItems: "center", gap: 7 }}>
-              {active ? (
-                <div style={{ width: 7, height: 7, borderRadius: "50%", background: color }} />
-              ) : (
-                <div style={{ width: 7, height: 7, borderRadius: "50%", border: `1.5px dashed ${color}`, opacity: 0.45 }} />
-              )}
-              <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "var(--ink-60)" }}>
-                {label}
-              </span>
-            </div>
-          ))}
-        </div>
-
         {/* Age-calibrated benchmark row + gap insight */}
         {lifestyleData?.ageRange && (() => {
           const optimalScores = getOptimalScores(lifestyleData.ageRange)
@@ -1295,28 +1273,11 @@ export function ScoreWheel({
             { key: "lifestyle", label: "LIFESTYLE", color: "#B8860B", actual: !!lifestyleData ? breakdown.lifestyleSub : null, optimal: optimalScores[3] },
           ]
 
-          // Find panel with largest gap (only panels with data)
-          let worstPanel = ""
-          let worstGap = -1
-          for (const p of panels) {
-            if (p.actual !== null && p.actual >= 0 && p.optimal > 0) {
-              const gap = (p.optimal - p.actual) / p.optimal
-              if (gap > worstGap) { worstGap = gap; worstPanel = p.key }
-            }
-          }
-
-          const gapSentences: Record<string, string> = {
-            blood:     "Your blood markers have the most room to grow — that's where improving your score starts.",
-            sleep:     "Your sleep score has the most room to grow — small improvements there move your overall score meaningfully.",
-            oral:      "Your oral microbiome panel has the most room to grow — it's your biggest opportunity right now.",
-            lifestyle: "Your lifestyle score has the most room to grow — it's the fastest panel to improve.",
-          }
-
           const ageGroup = getAgeGroup(lifestyleData.ageRange)
           const ageLabel = ageGroup === "over55" ? "55+" : ageGroup === "40to55" ? "40–55" : "under 40"
 
           return (
-            <div style={{ marginTop: 20 }}>
+            <div style={{ marginTop: 14 }}>
               {/* 4-column benchmark comparison row */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 16 }}>
                 {panels.map(p => (
@@ -1349,18 +1310,6 @@ export function ScoreWheel({
                   </div>
                 ))}
               </div>
-
-              {/* Gap insight sentence */}
-              {worstPanel && worstGap > 0.01 && (
-                <p style={{
-                  fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                  fontSize: 14, color: "var(--ink-60)",
-                  textAlign: "center", maxWidth: 480, margin: "0 auto 6px",
-                  lineHeight: 1.6,
-                }}>
-                  {gapSentences[worstPanel]}
-                </p>
-              )}
 
               {/* Disclaimer */}
               <p style={{

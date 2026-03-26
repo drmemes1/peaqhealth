@@ -2,14 +2,16 @@
 import { useEffect, useRef } from "react"
 
 // ─── Layout constants ────────────────────────────────────────────────────────
-// ViewBox 700 × 312; peaks centered in 40–660 range
-const BASELINE = 250
-const MAX_H    = 200   // 100% ratio → apex y=50; score label at y=36
-const HALF_W   = 44    // base width 88px; 155px spacing → 67px gaps between peaks
+// ViewBox 700 × 320; peaks centered in 40–660 range
+const BASELINE     = 256   // y-position of the baseline rule
+const MAX_H        = 200   // reference height for ratio calculations (not a hard cap)
+const TOP_PAD      = 58    // minimum clearance above tallest apex for score number
+const SCALE_TO     = 0.90  // tallest active peak fills this fraction of available space
+const HALF_W       = 44    // base half-width 44px → 88px total; 67px gaps between peaks
 const CENTERS: readonly [number, number, number, number] = [120, 275, 430, 585]
-const LIFESTYLE_CAP = 0.65   // lifestyle (13 pts) visually capped at 65% of max height
-const DURATION = 700         // ms each peak takes to rise
-const STAGGER  = 130         // ms between peaks
+const LIFESTYLE_CAP = 0.65  // lifestyle (13 pts) visually capped at 65% of max height
+const DURATION = 700        // ms each peak takes to rise
+const STAGGER  = 130        // ms between peaks
 
 const PANELS = [
   { key: "sleep",     label: "SLEEP",     max: 27, color: "#4A7FB5" },
@@ -67,12 +69,21 @@ export function PeaksVisualization({
   ]
   const pending = [!sleepConnected, !hasBlood, !oralActive, !hasLifestyle]
 
-  const finalHeights = rawScores.map((s, i) => {
-    if (pending[i] || s <= 0) return 10
-    const ratio = s / PANELS[i].max
-    const h = ratio * MAX_H
+  // Raw heights using MAX_H as reference scale (lifestyle capped)
+  const rawHeights = rawScores.map((s, i) => {
+    if (pending[i] || s <= 0) return 0
+    const h = (s / PANELS[i].max) * MAX_H
     return i === 3 ? Math.min(h, LIFESTYLE_CAP * MAX_H) : h
   })
+
+  // Dynamic scaling: tallest active peak fills SCALE_TO of available vertical space
+  const availableH = BASELINE - TOP_PAD
+  const maxRawH    = Math.max(10, ...rawHeights)
+  const scale      = (availableH * SCALE_TO) / maxRawH
+
+  const finalHeights = rawHeights.map((h, i) =>
+    (pending[i] || rawScores[i] <= 0) ? 10 : Math.max(h * scale, 10)
+  )
   const apexYs = finalHeights.map(h => BASELINE - h)
 
   const polyRefs  = useRef<(SVGPolygonElement | null)[]>([null, null, null, null])
@@ -116,7 +127,7 @@ export function PeaksVisualization({
 
   return (
     <svg
-      viewBox="0 0 700 312"
+      viewBox="0 0 700 320"
       width="100%"
       style={{ display: "block", overflow: "visible" }}
       aria-label="Score breakdown peaks"
@@ -190,7 +201,7 @@ export function PeaksVisualization({
 
               {/* Panel name below baseline */}
               <text
-                x={cx} y={BASELINE + 22}
+                x={cx} y={BASELINE + 20}
                 textAnchor="middle"
                 fontFamily="var(--font-body, 'Instrument Sans', sans-serif)"
                 fontSize={9}
@@ -202,7 +213,7 @@ export function PeaksVisualization({
 
               {/* /max */}
               <text
-                x={cx} y={BASELINE + 36}
+                x={cx} y={BASELINE + 34}
                 textAnchor="middle"
                 fontFamily="var(--font-body, 'Instrument Sans', sans-serif)"
                 fontSize={9}
