@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "../../../../../lib/supabase/server"
+import { createClient as createServiceClient } from "@supabase/supabase-js"
+import { recalculateScore } from "../../../../../lib/score/recalculate"
 
 export async function POST() {
   const supabase = await createClient()
@@ -39,6 +41,24 @@ export async function POST() {
   if (error) {
     console.error("[whoop-disconnect] delete failed:", error.message)
     return NextResponse.json({ error: "Failed to disconnect" }, { status: 500 })
+  }
+
+  // Also wipe the aggregated sleep metrics so sleep_sub → 0 on next score
+  const serviceClient = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  )
+  await serviceClient
+    .from("wearable_connections")
+    .delete()
+    .eq("user_id", user.id)
+    .eq("provider", "whoop")
+
+  // Recalculate score immediately so dashboard reflects 0 sleep
+  try {
+    await recalculateScore(user.id, serviceClient)
+  } catch (err) {
+    console.warn("[whoop-disconnect] recalculate failed (non-fatal):", err)
   }
 
   return NextResponse.json({ success: true })

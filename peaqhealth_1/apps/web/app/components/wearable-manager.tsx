@@ -1,15 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useVitalLink } from "@tryvital/vital-link"
 
 export interface WearableManagerProps {
   whoopConnected: boolean
   whoopLastSynced: string | null
-  lastSyncRequestedAt?: string | null
-  isPolling?: boolean
-  onSyncSuccess?: () => void
   onDisconnected?: () => void
 }
 
@@ -24,50 +21,15 @@ function relativeTime(iso: string): string {
   return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`
 }
 
-function minutesUntil(iso: string): number {
-  return Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 60000))
-}
-
 export function WearableManager({
   whoopConnected,
   whoopLastSynced,
-  lastSyncRequestedAt,
-  isPolling = false,
-  onSyncSuccess,
   onDisconnected,
 }: WearableManagerProps) {
-  type SyncState = "idle" | "loading" | "success" | "rate-limited"
-  const [syncState, setSyncState] = useState<SyncState>("idle")
-  const [nextSyncAt, setNextSyncAt] = useState<string | null>(null)
-  const [minsUntil, setMinsUntil] = useState(0)
   const [disconnectConfirm, setDisconnectConfirm] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
   const [junctionConnecting, setJunctionConnecting] = useState(false)
   const [junctionError, setJunctionError] = useState<string | null>(null)
-
-  // Detect existing rate limit on mount
-  useEffect(() => {
-    if (!whoopConnected || !lastSyncRequestedAt) return
-    const expiry = new Date(new Date(lastSyncRequestedAt).getTime() + 60 * 60000).toISOString()
-    const mins = minutesUntil(expiry)
-    if (mins > 0) {
-      setNextSyncAt(expiry)
-      setMinsUntil(mins)
-      setSyncState("rate-limited")
-    }
-  }, [whoopConnected, lastSyncRequestedAt])
-
-  // Countdown timer for rate-limit
-  useEffect(() => {
-    if (syncState !== "rate-limited" || !nextSyncAt) return
-    const interval = setInterval(() => {
-      const mins = minutesUntil(nextSyncAt)
-      setMinsUntil(mins)
-      if (mins <= 0) { setSyncState("idle"); clearInterval(interval) }
-    }, 30000)
-    setMinsUntil(minutesUntil(nextSyncAt))
-    return () => clearInterval(interval)
-  }, [syncState, nextSyncAt])
 
   const { open: openWidget, ready: widgetReady } = useVitalLink({
     onSuccess: async (metadata: { userId?: string; connected?: Array<{ providerSlug?: string; name?: string }> }) => {
@@ -82,7 +44,6 @@ export function WearableManager({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ provider: providerSlug, junctionUserId }),
         })
-        onSyncSuccess?.()
       } catch {
         setJunctionError("Connection saved but score update failed — please refresh.")
       } finally {
@@ -96,27 +57,6 @@ export function WearableManager({
     },
     env: (process.env.NEXT_PUBLIC_JUNCTION_ENV ?? "sandbox") as "sandbox" | "production",
   })
-
-  const handleSync = async () => {
-    setSyncState("loading")
-    try {
-      const res = await fetch("/api/wearable/resync", { method: "POST" })
-      const body = await res.json() as { next_sync_available_at?: string; error?: string }
-      if (res.status === 429 && body.next_sync_available_at) {
-        setNextSyncAt(body.next_sync_available_at)
-        setMinsUntil(minutesUntil(body.next_sync_available_at))
-        setSyncState("rate-limited")
-        return
-      }
-      if (!res.ok) { setSyncState("idle"); return }
-      if (body.next_sync_available_at) setNextSyncAt(body.next_sync_available_at)
-      setSyncState("success")
-      onSyncSuccess?.()
-      setTimeout(() => setSyncState("idle"), 5000)
-    } catch {
-      setSyncState("idle")
-    }
-  }
 
   const handleDisconnect = async () => {
     setDisconnecting(true)
@@ -148,12 +88,6 @@ export function WearableManager({
     }
   }
 
-  const syncLabel =
-    syncState === "loading"        ? "Refreshing..."
-    : syncState === "success"      ? "✓ Requested"
-    : syncState === "rate-limited" ? `Available in ${minsUntil}m`
-    : "Refresh data"
-
   const divider = <div style={{ height: "0.5px", background: "var(--ink-12)", margin: "0 16px" }} />
 
   const sharedBtnStyle: React.CSSProperties = {
@@ -179,8 +113,8 @@ export function WearableManager({
               <p className="mt-0.5 font-body text-xs" style={{ color: "var(--ink-60)" }}>
                 {whoopConnected
                   ? whoopLastSynced
-                    ? `Last synced ${relativeTime(whoopLastSynced)}${isPolling ? " · Waiting for new data..." : ""}`
-                    : "Connected — not yet synced"
+                    ? `Last synced ${relativeTime(whoopLastSynced)} · syncs nightly`
+                    : "Connected · syncs nightly"
                   : "Direct OAuth · Band 4.0 & 5.0"}
               </p>
             </div>
@@ -205,25 +139,10 @@ export function WearableManager({
                   </div>
                 </div>
               ) : (
-                <>
-                  <button
-                    onClick={handleSync}
-                    disabled={syncState === "loading" || syncState === "rate-limited"}
-                    style={{
-                      ...sharedBtnStyle,
-                      fontSize: 10, letterSpacing: "0.05em", borderRadius: 4, padding: "3px 8px",
-                      color: syncState === "success" ? "var(--gold)" : syncState === "rate-limited" ? "rgba(20,20,16,0.30)" : "var(--ink)",
-                      borderColor: syncState === "rate-limited" ? "rgba(20,20,16,0.12)" : "rgba(20,20,16,0.30)",
-                      cursor: syncState === "loading" || syncState === "rate-limited" ? "default" : "pointer",
-                    }}
-                  >
-                    {syncLabel}
-                  </button>
-                  <button onClick={() => setDisconnectConfirm(true)} className="font-body"
-                    style={{ fontSize: 11, color: "rgba(20,20,16,0.30)", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
-                    Disconnect
-                  </button>
-                </>
+                <button onClick={() => setDisconnectConfirm(true)} className="font-body"
+                  style={{ fontSize: 11, color: "rgba(20,20,16,0.30)", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
+                  Disconnect
+                </button>
               )
             ) : (
               <a href="/api/auth/whoop/connect"
