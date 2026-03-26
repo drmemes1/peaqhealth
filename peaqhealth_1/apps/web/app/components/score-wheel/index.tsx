@@ -1,5 +1,5 @@
 "use client"
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useImperativeHandle, useRef, useState } from "react"
 import { useCountUp } from "./use-count-up"
 import { PeaksVisualization } from "./peaks"
 import { HeroTitle } from "./hero-title"
@@ -691,17 +691,33 @@ function CrossPanelInteractions({
   )
 }
 
-function CollapsiblePanel({
-  title, score, maxScore, subtitle, statusDots, defaultOpen, delay, fadeUpFn, headerExtra, children,
-}: {
+export interface CollapsiblePanelHandle {
+  scrollAndOpen: () => void
+}
+
+const CollapsiblePanel = React.forwardRef<CollapsiblePanelHandle, {
   title: string; score?: number; maxScore?: number; subtitle?: string
   statusDots?: Flag[]; defaultOpen: boolean; delay: string
   fadeUpFn: (d: string) => React.CSSProperties; headerExtra?: React.ReactNode; children: React.ReactNode
-}) {
+}>(function CollapsiblePanel(
+  { title, score, maxScore, subtitle, statusDots, defaultOpen, delay, fadeUpFn, headerExtra, children },
+  ref
+) {
   const [open, setOpen] = useState(defaultOpen)
   const [hoverToggle, setHoverToggle] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+
+  useImperativeHandle(ref, () => ({
+    scrollAndOpen() {
+      setOpen(true)
+      setTimeout(() => {
+        rootRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+      }, 50)
+    },
+  }))
+
   return (
-    <div style={fadeUpFn(delay)}>
+    <div ref={rootRef} style={fadeUpFn(delay)}>
       <div
         style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -746,7 +762,7 @@ function CollapsiblePanel({
       </div>
     </div>
   )
-}
+})
 
 function OralSpeciesRow({ name, role, val, target, note, isPathogen, flagFn, learnWhat, learnWhy, learnCitation }: {
   name: string
@@ -1116,6 +1132,18 @@ export function ScoreWheel({
   const [displayLifestyle, setDisplayLifestyle] = useState(0)
   const [openMissingTooltip, setOpenMissingTooltip] = useState<string | null>(null)
 
+  const sleepPanelRef    = useRef<CollapsiblePanelHandle>(null)
+  const bloodPanelRef    = useRef<CollapsiblePanelHandle>(null)
+  const oralPanelRef     = useRef<CollapsiblePanelHandle>(null)
+  const lifestylePanelRef = useRef<CollapsiblePanelHandle>(null)
+
+  function handlePeakClick(key: string) {
+    const map: Record<string, React.RefObject<CollapsiblePanelHandle | null>> = {
+      sleep: sleepPanelRef, blood: bloodPanelRef, oral: oralPanelRef, lifestyle: lifestylePanelRef,
+    }
+    map[key]?.current?.scrollAndOpen()
+  }
+
   useCountUp(score, 1400, 200, setDisplayScore)
   useCountUp(breakdown.sleepSub, 900, 350, setDisplaySleep)
   useCountUp(breakdown.bloodSub, 900, 450, setDisplayBlood)
@@ -1237,6 +1265,7 @@ export function ScoreWheel({
             hasLifestyle={!!lifestyleData}
             ageRange={lifestyleData?.ageRange}
             onPeakHover={setHoveredRing}
+            onPeakClick={handlePeakClick}
           />
         </div>
 
@@ -1336,6 +1365,7 @@ export function ScoreWheel({
 
       {/* SLEEP MARKERS */}
       <CollapsiblePanel
+        ref={sleepPanelRef}
         title="Sleep"
         score={Math.round(breakdown.sleepSub * 10) / 10}
         maxScore={27}
@@ -1372,6 +1402,7 @@ export function ScoreWheel({
 
       {/* BLOOD MARKERS */}
       <CollapsiblePanel
+        ref={bloodPanelRef}
         title="Blood"
         score={breakdown.bloodSub}
         maxScore={33}
@@ -1569,6 +1600,7 @@ export function ScoreWheel({
 
       {/* ORAL MARKERS */}
       <CollapsiblePanel
+        ref={oralPanelRef}
         title="Oral Microbiome"
         score={breakdown.oralSub}
         maxScore={27}
@@ -1603,6 +1635,7 @@ export function ScoreWheel({
 
       {/* LIFESTYLE */}
       <CollapsiblePanel
+        ref={lifestylePanelRef}
         title="Lifestyle"
         score={Math.round(breakdown.lifestyleSub * 10) / 10}
         maxScore={13}
