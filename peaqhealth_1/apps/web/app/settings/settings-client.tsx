@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "../../lib/supabase/client"
+import { WearableManager } from "../components/wearable-manager"
 
 interface Props {
   userId: string
@@ -367,8 +368,6 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
   const [deleting, setDeleting] = useState(false)
 
   const [whoopConnected, setWhoopConnected] = useState(initialWhoopConnected)
-  const [whoopDisconnectConfirm, setWhoopDisconnectConfirm] = useState(false)
-  const [whoopDisconnecting, setWhoopDisconnecting] = useState(false)
 
   const memberSince = new Date(createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" })
   const initials = [firstName[0], lastName[0]].filter(Boolean).join("").toUpperCase() || email[0]?.toUpperCase() || "?"
@@ -423,17 +422,6 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
       // fail silently — user still gets the window
     } finally {
       setExporting(false)
-    }
-  }
-
-  const handleWhoopDisconnect = async () => {
-    setWhoopDisconnecting(true)
-    try {
-      await fetch("/api/auth/whoop/disconnect", { method: "POST" })
-      setWhoopConnected(false)
-      setWhoopDisconnectConfirm(false)
-    } finally {
-      setWhoopDisconnecting(false)
     }
   }
 
@@ -591,82 +579,11 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
       {/* ── Wearables ───────────────────────────────────────────────── */}
       <section className="mb-8 fade-up" style={{ animationDelay: "0.14s" }}>
         <SectionLabel>Wearables</SectionLabel>
-        <div className="overflow-hidden rounded-lg" style={{ border: "0.5px solid var(--ink-12)" }}>
-          <div className="flex items-start justify-between gap-4 px-4 py-4">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 mb-0.5">
-                <span
-                  style={{
-                    width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
-                    background: whoopConnected ? "#22C55E" : "rgba(20,20,16,0.22)",
-                    display: "inline-block",
-                  }}
-                />
-                <p className="font-body text-sm" style={{ color: "var(--ink)" }}>WHOOP</p>
-              </div>
-              <p className="font-body text-xs leading-relaxed" style={{ color: "var(--ink-60)", paddingLeft: 15 }}>
-                {whoopConnected
-                  ? whoopLastSynced
-                    ? `Last synced ${new Date(whoopLastSynced).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
-                    : "Connected — not yet synced"
-                  : "Connect to sync sleep and recovery data"}
-              </p>
-            </div>
-
-            <div className="shrink-0 flex flex-col items-end gap-2">
-              {whoopConnected ? (
-                <>
-                  {!whoopDisconnectConfirm ? (
-                    <button
-                      onClick={() => setWhoopDisconnectConfirm(true)}
-                      className="font-body"
-                      style={{
-                        fontSize: 11, color: "rgba(20,20,16,0.40)", background: "none",
-                        border: "none", padding: 0, cursor: "pointer",
-                      }}
-                    >
-                      Disconnect
-                    </button>
-                  ) : (
-                    <div style={{ textAlign: "right" }}>
-                      <p className="font-body" style={{ fontSize: 11, color: "var(--ink-60)", marginBottom: 6, maxWidth: 220, lineHeight: 1.5 }}>
-                        Disconnect WHOOP? Your sleep data will remain but live sync will stop.
-                      </p>
-                      <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                        <button
-                          onClick={() => setWhoopDisconnectConfirm(false)}
-                          className="font-body"
-                          style={{ fontSize: 11, color: "var(--ink-40)", background: "none", border: "none", padding: 0, cursor: "pointer" }}
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={handleWhoopDisconnect}
-                          disabled={whoopDisconnecting}
-                          className="font-body"
-                          style={{ fontSize: 11, color: "#DC2626", background: "none", border: "none", padding: 0, cursor: "pointer", opacity: whoopDisconnecting ? 0.5 : 1 }}
-                        >
-                          {whoopDisconnecting ? "Disconnecting…" : "Disconnect"}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <a
-                  href="/api/auth/whoop/connect"
-                  className="font-body"
-                  style={{
-                    fontSize: 11, color: "var(--ink)", textDecoration: "none",
-                    border: "0.5px solid var(--ink-30)", padding: "5px 12px",
-                  }}
-                >
-                  Connect
-                </a>
-              )}
-            </div>
-          </div>
-        </div>
+        <WearableManager
+          whoopConnected={whoopConnected}
+          whoopLastSynced={whoopLastSynced}
+          onDisconnected={() => setWhoopConnected(false)}
+        />
       </section>
 
       {/* ── Account ─────────────────────────────────────────────────── */}
