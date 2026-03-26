@@ -3,6 +3,8 @@ import { createClient } from "../../lib/supabase/server"
 import { DashboardClient } from "./dashboard-client"
 import type { ScoreWheelProps } from "../components/score-wheel"
 
+export const dynamic = "force-dynamic"
+
 export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
