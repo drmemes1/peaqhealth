@@ -186,7 +186,7 @@ Generate a response in this EXACT JSON format — no markdown, no backticks, sta
 "panels": ["panel1", "panel2"]
 }
 ],
-"trajectoryNote": "Only include if previous labs exist. 1-2 sentences on what improved or worsened and by how much. Omit this field entirely if no previous labs.",
+"trajectoryNote": "CONDITIONAL — only present when previous lab data was provided above. If no previous labs exist, DO NOT include this key at all — not as null, not as an empty string, not as placeholder text. When previous labs do exist: 1-2 sentences on what improved or worsened and by how much.",
 "allPanelsBonus": "Only include if all 4 panels have data. 1-2 sentences revealing the single most important pattern that ONLY becomes visible when all 4 panels are analyzed together. This is the insight that justifies having all 4 panels. Omit if any panel is missing."
 }
 

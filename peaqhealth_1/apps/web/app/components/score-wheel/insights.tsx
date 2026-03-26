@@ -223,7 +223,17 @@ export function Insights({ sleepConnected, hasBlood, oralActive, lifestyleActive
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
 
           {/* Trajectory banner */}
-          {data.trajectoryNote && (
+          {data.trajectoryNote && (() => {
+            const t = data.trajectoryNote!.trim()
+            // Reject empty, placeholder, or instructional text leaked from the prompt
+            const isTemplate = !t ||
+              t.toLowerCase().includes("only include if") ||
+              t.toLowerCase().includes("omit this field") ||
+              t.toLowerCase().includes("no previous labs") ||
+              t.toLowerCase().includes("previous labs exist") ||
+              t.toLowerCase().includes("conditional")
+            if (isTemplate) return null
+            return (
             <div style={{
               padding: "10px 14px",
               background: "rgba(184,134,11,0.06)",
@@ -241,10 +251,11 @@ export function Insights({ sleepConnected, hasBlood, oralActive, lifestyleActive
                 fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
                 fontSize: 12.5, lineHeight: 1.6, color: "rgba(20,20,16,0.6)", margin: 0,
               }}>
-                {data.trajectoryNote}
+                {t}
               </p>
             </div>
-          )}
+            )
+          })()}
 
           {/* Primary finding — larger */}
           <InsightCard item={data.primaryFinding} isPrimary />
