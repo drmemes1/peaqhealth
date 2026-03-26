@@ -18,6 +18,25 @@ const PANELS = [
   { key: "lifestyle", label: "LIFESTYLE", max: 13, color: "#B8860B" },
 ] as const
 
+// ─── Age-based benchmark helpers ─────────────────────────────────────────────
+
+type AgeGroup = "under40" | "40to55" | "over55"
+
+function getAgeGroup(ageRange: string | undefined): AgeGroup {
+  if (ageRange === "60_69" || ageRange === "70_plus") return "over55"
+  if (ageRange === "40_49" || ageRange === "50_59")   return "40to55"
+  return "under40"
+}
+
+// Returns [sleepOptimal, bloodOptimal, oralOptimal, lifestyleOptimal]
+// Sources: ACC/AHA 2019, AASM sleep guidelines, published oral microbiome studies
+function getOptimalScores(ageRange: string | undefined): [number, number, number, number] {
+  const g = getAgeGroup(ageRange)
+  const blood = g === "under40" ? 28 : g === "40to55" ? 26 : 24
+  const sleep = g === "under40" ? 22 : g === "40to55" ? 20 : 18
+  return [sleep, blood, 22, 11]  // oral + lifestyle are age-independent
+}
+
 function easeOutCubic(t: number): number {
   return 1 - Math.pow(1 - t, 3)
 }
@@ -47,13 +66,14 @@ export interface PeaksProps {
   hasBlood:        boolean
   oralActive:      boolean
   hasLifestyle:    boolean
+  ageRange?:       string
   onPeakHover?:    (key: string | null) => void
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function PeaksVisualization({
-  breakdown, sleepConnected, hasBlood, oralActive, hasLifestyle, onPeakHover,
+  breakdown, sleepConnected, hasBlood, oralActive, hasLifestyle, ageRange, onPeakHover,
 }: PeaksProps) {
   const rawScores = [
     breakdown.sleepSub,
@@ -70,6 +90,15 @@ export function PeaksVisualization({
     return i === 3 ? Math.min(h, LIFESTYLE_CAP * MAX_H) : h
   })
   const apexYs = finalHeights.map(h => BASELINE - h)
+
+  // Benchmark heights — age-calibrated optimal scores
+  const optimalScores = getOptimalScores(ageRange)
+  const benchmarkHeights = optimalScores.map((opt, i) => {
+    const ratio = opt / PANELS[i].max
+    const h = ratio * MAX_H
+    return i === 3 ? Math.min(h, LIFESTYLE_CAP * MAX_H) : h
+  })
+  const benchmarkYs = benchmarkHeights.map(h => BASELINE - h)
 
   const polyRefs  = useRef<(SVGPolygonElement | null)[]>([null, null, null, null])
   const curveRef  = useRef<SVGPathElement | null>(null)
@@ -140,6 +169,8 @@ export function PeaksVisualization({
         const isPending  = pending[i]
         const score      = rawScores[i]
         const apexY      = apexYs[i]
+        const benchmarkY = benchmarkYs[i]
+        const showBenchmark = !isPending && score > 0
         const displayVal = isPending || score <= 0
           ? "—"
           : Number.isInteger(score) ? String(score) : score.toFixed(1)
@@ -167,11 +198,45 @@ export function PeaksVisualization({
               }}
             />
 
-            {/* Apex dot + score + labels — fade in after animation */}
+            {/* Apex dot + score + benchmark + labels — fade in after animation */}
             <g
               ref={el => { decorRefs.current[i] = el }}
               style={{ opacity: 0, transition: "opacity 500ms ease" }}
             >
+              {/* Age-calibrated benchmark line */}
+              {showBenchmark && (
+                <g>
+                  <line
+                    x1={cx - HALF_W} y1={benchmarkY}
+                    x2={cx + HALF_W} y2={benchmarkY}
+                    stroke="rgba(184,134,11,0.55)"
+                    strokeWidth={0.75}
+                    strokeDasharray="3 3"
+                  />
+                  {/* "optimal" label to the right of the line */}
+                  <text
+                    x={cx + HALF_W + 5} y={benchmarkY + 3}
+                    textAnchor="start"
+                    fontFamily="var(--font-body, 'Instrument Sans', sans-serif)"
+                    fontSize={6.5}
+                    fill="rgba(184,134,11,0.65)"
+                    letterSpacing="0.05em"
+                  >
+                    optimal
+                  </text>
+                  <text
+                    x={cx + HALF_W + 5} y={benchmarkY + 11}
+                    textAnchor="start"
+                    fontFamily="var(--font-body, 'Instrument Sans', sans-serif)"
+                    fontSize={6}
+                    fill="rgba(184,134,11,0.45)"
+                    letterSpacing="0.04em"
+                  >
+                    for age
+                  </text>
+                </g>
+              )}
+
               {/* Apex dot */}
               <circle cx={cx} cy={apexY} r={4} fill={p.color} />
 
