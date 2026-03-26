@@ -15,6 +15,8 @@ export default async function DashboardPage() {
     { data: oralAny },
     { data: lifestyle },
     { data: labHistoryRows },
+    { data: whoopConn },
+    { data: whoopNights },
   ] = await Promise.all([
     supabase.from("score_snapshots").select("*").eq("user_id", user.id).order("calculated_at", { ascending: false }).limit(1).single(),
     supabase.from("wearable_connections").select("*").eq("user_id", user.id).eq("status", "connected").order("connected_at", { ascending: false }).limit(1).single(),
@@ -22,6 +24,8 @@ export default async function DashboardPage() {
     supabase.from("oral_kit_orders").select("id").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1).single(),
     supabase.from("lifestyle_records").select("*").eq("user_id", user.id).single(),
     supabase.from("lab_history").select("locked_at, total_score, blood_score, collection_date, ldl_mgdl, hdl_mgdl, hs_crp_mgl, vitamin_d_ngml").eq("user_id", user.id).order("locked_at", { ascending: true }),
+    supabase.from("whoop_connections").select("last_synced_at").eq("user_id", user.id).maybeSingle(),
+    supabase.from("whoop_sleep_data").select("date, total_sleep_minutes, hrv_rmssd").eq("user_id", user.id).order("date", { ascending: false }).limit(3),
   ])
 
   const { data: oral } = await supabase
@@ -187,6 +191,15 @@ export default async function DashboardPage() {
     labLockExpiresAt: (lab && !lab.is_locked && lab.lock_expires_at)
       ? (lab.lock_expires_at as string)
       : null,
+    whoopData: whoopConn ? {
+      connected:  true,
+      lastSynced: (whoopConn.last_synced_at as string | null) ?? null,
+      recentNights: (whoopNights ?? []).map(n => ({
+        date:             n.date as string,
+        totalSleepHours:  ((n.total_sleep_minutes as number) ?? 0) / 60,
+        hrv:              (n.hrv_rmssd as number) ?? 0,
+      })),
+    } : { connected: false, lastSynced: null, recentNights: [] },
   }
 
   return <DashboardClient {...props} labHistory={labHistoryRows ?? []} />

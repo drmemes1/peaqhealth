@@ -30,6 +30,7 @@ const sections = [
       "We do not use your health data to train AI models.",
       "We may use aggregated, de-identified statistics (e.g. 'average HRV across all users') internally to improve the scoring methodology. No individual can be identified from this data.",
       "We may send you transactional emails (score updates, kit shipping notifications) and, if you opt in, educational health content. You can unsubscribe at any time.",
+      "Our infrastructure follows HIPAA-compliant practices: data is encrypted at rest and in transit, access is role-based, and audit logging is enabled on all sensitive operations.",
     ],
   },
   {
@@ -44,10 +45,10 @@ const sections = [
   {
     title: "Your rights",
     body: [
-      "You can request a full export of your data at any time by emailing privacy@peaqhealth.com.",
+      "You can request a full export of your data at any time by emailing privacy@peaqhealth.me.",
       "You can request deletion of your account and all associated health data. Deletion is permanent and processed within 30 days.",
       "You can update or correct your lifestyle and demographic data in Settings at any time.",
-      "California residents have additional rights under CCPA, including the right to know, delete, and opt out of sale (we do not sell data). Requests can be directed to privacy@peaqhealth.com.",
+      "California residents have additional rights under CCPA, including the right to know, delete, and opt out of sale (we do not sell data). Requests can be directed to privacy@peaqhealth.me.",
     ],
   },
   {
@@ -66,7 +67,7 @@ const sections = [
   {
     title: "Contact",
     body: [
-      "Questions about this policy or how your data is handled: privacy@peaqhealth.com",
+      "Questions about this policy or how your data is handled: privacy@peaqhealth.me",
       "Peaq Health, Inc. · United States",
     ],
   },
@@ -187,7 +188,7 @@ export default function PrivacyPage() {
         }}>
           <LogoSvg size={36} color="var(--ink-30)" />
           <p className="font-body" style={{ fontSize: 11, color: "var(--ink-30)", margin: 0 }}>
-            © {new Date().getFullYear()} Peaq Health, Inc. · privacy@peaqhealth.com
+            © {new Date().getFullYear()} Peaq Health, Inc. · privacy@peaqhealth.me
           </p>
         </div>
       </main>

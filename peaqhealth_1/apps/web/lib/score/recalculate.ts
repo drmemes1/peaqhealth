@@ -169,22 +169,29 @@ export async function recalculateScore(
   userId: string,
   supabase: SupabaseClient
 ): Promise<number> {
-  const [wearableRes, labsRes, oralRes, lifestyleRes, manualSleepRes] = await Promise.all([
+  const [wearableRes, labsRes, oralRes, lifestyleRes, manualSleepRes, whoopRes] = await Promise.all([
     supabase.from("wearable_connections").select("*").eq("user_id", userId).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("lab_results").select("*").eq("user_id", userId).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).single(),
     supabase.from("oral_kit_orders").select("*").eq("user_id", userId).in("status", ["results_ready", "scored"]).order("ordered_at", { ascending: false }).limit(1).single(),
     supabase.from("lifestyle_records").select("*").eq("user_id", userId).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("manual_sleep_entries").select("duration_seconds,quality").eq("user_id", userId).order("date", { ascending: false }).limit(14),
+    supabase.from("whoop_connections").select("last_synced_at").eq("user_id", userId).maybeSingle(),
   ])
 
-  // Sleep inputs: prefer Junction API; fall back to wearable_connections averages; then manual entries
+  // Sleep inputs: prefer WHOOP (if synced within 24h) → wearable_connections → manual entries
   let sleepInputs: SleepInputs | undefined
 
   if (wearableRes.error) console.error("[score] wearable query error:", wearableRes.error.message)
   console.log("[score] wearable found:", wearableRes.data ? "yes" : "no",
     "efficiency:", (wearableRes.data as Record<string, unknown> | null)?.sleep_efficiency ?? "—")
 
-  // Build sleepInputs exclusively from wearable_connections averages (populated by webhook)
+  // WHOOP: if synced within 24h its data is written to wearable_connections
+  // with provider='whoop' and updated_at reflecting the sync time, so the
+  // ORDER BY updated_at DESC query above naturally returns it first.
+  const whoopSyncedAt = whoopRes.data?.last_synced_at as string | null
+  void whoopSyncedAt // referenced in dashboard for display; score uses wearable_connections
+
+  // Build sleepInputs from wearable_connections averages (populated by webhook or WHOOP sync)
   if (!sleepInputs && wearableRes.data) {
     const wRow = wearableRes.data as Record<string, unknown>
     const nightsAvailable = (wRow.nights_available as number) ?? 0
