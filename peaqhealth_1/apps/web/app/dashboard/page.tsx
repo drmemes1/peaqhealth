@@ -21,7 +21,7 @@ export default async function DashboardPage() {
     supabase.from("score_snapshots").select("*").eq("user_id", user.id).order("calculated_at", { ascending: false }).limit(1).single(),
     supabase.from("wearable_connections").select("*").eq("user_id", user.id).eq("status", "connected").order("connected_at", { ascending: false }).limit(1).single(),
     supabase.from("lab_results").select("*").eq("user_id", user.id).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).single(),
-    supabase.from("oral_kit_orders").select("id, results_data").eq("user_id", user.id).order("ordered_at", { ascending: false }).limit(1).maybeSingle(),
+    supabase.from("oral_kit_orders").select("id, shannon_diversity").eq("user_id", user.id).limit(1).maybeSingle(),
     supabase.from("lifestyle_records").select("*").eq("user_id", user.id).single(),
     supabase.from("lab_history").select("locked_at, total_score, blood_score, collection_date, ldl_mgdl, hdl_mgdl, hs_crp_mgl, vitamin_d_ngml").eq("user_id", user.id).order("locked_at", { ascending: true }),
     supabase.from("whoop_connections").select("last_synced_at").eq("user_id", user.id).maybeSingle(),
@@ -32,8 +32,7 @@ export default async function DashboardPage() {
     .from("oral_kit_orders")
     .select("*")
     .eq("user_id", user.id)
-    .not("results_data", "is", null)
-    .order("ordered_at", { ascending: false })
+    .not("shannon_diversity", "is", null)
     .limit(1)
     .maybeSingle()
 
@@ -182,7 +181,7 @@ export default async function DashboardPage() {
       updatedAt:       (lifestyle.updated_at        as string) ?? "",
     } : undefined,
     oralOrdered: !!oralAny,
-    oralKitStatus: (!oralAny ? "none" : (oralAny as Record<string, unknown>).results_data != null ? "complete" : !oral ? "ordered" : "complete") as "none" | "ordered" | "complete",
+    oralKitStatus: (!oralAny ? "none" : (oralAny as Record<string, unknown>).shannon_diversity != null ? "complete" : "ordered") as "none" | "ordered" | "complete",
     sleepNightsAvailable: (wearable?.nights_available as number | null) ?? 0,
     interactionsFired,
     peaqPercent:      (snapshot?.peaq_percent      as number | null) ?? undefined,
