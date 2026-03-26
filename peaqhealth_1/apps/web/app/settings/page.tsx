@@ -7,7 +7,7 @@ export default async function SettingsPage() {
 
   const [{ data: profile }, { data: whoopConn }] = await Promise.all([
     supabase.from("profiles").select("first_name, last_name").eq("id", user!.id).single(),
-    supabase.from("whoop_connections").select("last_synced_at").eq("user_id", user!.id).maybeSingle(),
+    supabase.from("whoop_connections").select("last_synced_at, needs_reconnect").eq("user_id", user!.id).maybeSingle(),
   ])
 
   return (
@@ -19,6 +19,7 @@ export default async function SettingsPage() {
       createdAt={user!.created_at}
       whoopConnected={!!whoopConn}
       whoopLastSynced={(whoopConn?.last_synced_at as string | null) ?? null}
+      whoopNeedsReconnect={(whoopConn?.needs_reconnect as boolean | null) ?? false}
     />
   )
 }

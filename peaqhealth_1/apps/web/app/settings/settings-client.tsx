@@ -14,6 +14,7 @@ interface Props {
   createdAt: string
   whoopConnected: boolean
   whoopLastSynced: string | null
+  whoopNeedsReconnect?: boolean
 }
 
 // ─── Small UI primitives ─────────────────────────────────────────────────────
@@ -349,7 +350,7 @@ function buildReportHtml(data: Record<string, unknown>, name: string, email: str
 
 // ─── Main settings component ─────────────────────────────────────────────────
 
-export function SettingsClient({ userId, email, firstName: initialFirst, lastName: initialLast, createdAt, whoopConnected: initialWhoopConnected, whoopLastSynced }: Props) {
+export function SettingsClient({ userId, email, firstName: initialFirst, lastName: initialLast, createdAt, whoopConnected: initialWhoopConnected, whoopLastSynced, whoopNeedsReconnect }: Props) {
   const router = useRouter()
   const supabase = createClient()
 
@@ -591,6 +592,7 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
         <WearableManager
           whoopConnected={whoopConnected}
           whoopLastSynced={whoopLastSynced}
+          whoopNeedsReconnect={whoopNeedsReconnect}
           onDisconnected={() => setWhoopConnected(false)}
         />
       </section>

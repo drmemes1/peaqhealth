@@ -7,6 +7,7 @@ import { useVitalLink } from "@tryvital/vital-link"
 export interface WearableManagerProps {
   whoopConnected: boolean
   whoopLastSynced: string | null
+  whoopNeedsReconnect?: boolean
   onDisconnected?: () => void
 }
 
@@ -24,6 +25,7 @@ function relativeTime(iso: string): string {
 export function WearableManager({
   whoopConnected,
   whoopLastSynced,
+  whoopNeedsReconnect = false,
   onDisconnected,
 }: WearableManagerProps) {
   const [disconnectConfirm, setDisconnectConfirm] = useState(false)
@@ -106,22 +108,33 @@ export function WearableManager({
           <div className="flex items-center gap-2.5 min-w-0">
             <span style={{
               width: 7, height: 7, borderRadius: "50%", flexShrink: 0, display: "inline-block",
-              background: whoopConnected ? "#22C55E" : "rgba(20,20,16,0.22)",
+              background: whoopNeedsReconnect
+                ? "#F59E0B"
+                : whoopConnected
+                  ? "#22C55E"
+                  : "rgba(20,20,16,0.22)",
             }} />
             <div className="min-w-0">
               <p className="font-body text-sm" style={{ color: "var(--ink)" }}>WHOOP</p>
               <p className="mt-0.5 font-body text-xs" style={{ color: "var(--ink-60)" }}>
-                {whoopConnected
-                  ? whoopLastSynced
-                    ? `Last synced ${relativeTime(whoopLastSynced)} · syncs nightly`
-                    : "Connected · syncs nightly"
-                  : "Direct OAuth · Band 4.0 & 5.0"}
+                {whoopNeedsReconnect
+                  ? "WHOOP connection expired"
+                  : whoopConnected
+                    ? whoopLastSynced
+                      ? `Last synced ${relativeTime(whoopLastSynced)} · syncs nightly`
+                      : "Connected · syncs nightly"
+                    : "Direct OAuth · Band 4.0 & 5.0"}
               </p>
             </div>
           </div>
 
           <div className="shrink-0 flex flex-col items-end gap-1.5">
-            {whoopConnected ? (
+            {whoopNeedsReconnect ? (
+              <a href="/api/auth/whoop/connect"
+                style={{ ...sharedBtnStyle, color: "#92400E", borderColor: "#F59E0B", textDecoration: "none", cursor: "pointer" }}>
+                Reconnect
+              </a>
+            ) : whoopConnected ? (
               disconnectConfirm ? (
                 <div style={{ textAlign: "right" }}>
                   <p className="font-body" style={{ fontSize: 11, color: "var(--ink-60)", marginBottom: 6, maxWidth: 220, lineHeight: 1.5 }}>
