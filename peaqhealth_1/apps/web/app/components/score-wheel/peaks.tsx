@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react"
 // ViewBox 700 × 320; peaks centered in 40–660 range
 const BASELINE     = 256   // y-position of the baseline rule
 const MAX_H        = 200   // reference height for ratio calculations (not a hard cap)
-const TOP_PAD      = 58    // minimum clearance above tallest apex for score number
+const TOP_PAD      = 64    // minimum clearance above tallest apex for score number
 const SCALE_TO     = 0.90  // tallest active peak fills this fraction of available space
 const HALF_W       = 44    // base half-width 44px → 88px total; 67px gaps between peaks
 const CENTERS: readonly [number, number, number, number] = [120, 275, 430, 585]
@@ -185,15 +185,15 @@ export function PeaksVisualization({
               style={{ opacity: 0, transition: "opacity 500ms ease" }}
             >
               {/* Apex dot */}
-              <circle cx={cx} cy={apexY} r={4} fill={p.color} />
+              <circle cx={cx} cy={apexY} r={4.5} fill={p.color} />
 
               {/* Score value above apex */}
               <text
-                x={cx} y={apexY - 14}
+                x={cx} y={apexY - 16}
                 textAnchor="middle"
                 fontFamily="'Cormorant Garamond', Georgia, serif"
-                fontSize={20}
-                fontWeight={300}
+                fontSize={26}
+                fontWeight={400}
                 fill={p.color}
               >
                 {displayVal}
@@ -201,23 +201,23 @@ export function PeaksVisualization({
 
               {/* Panel name below baseline */}
               <text
-                x={cx} y={BASELINE + 20}
+                x={cx} y={BASELINE + 22}
                 textAnchor="middle"
                 fontFamily="var(--font-body, 'Instrument Sans', sans-serif)"
-                fontSize={9}
-                letterSpacing="0.14em"
-                fill="rgba(20,20,16,0.50)"
+                fontSize={10}
+                letterSpacing="0.13em"
+                fill="rgba(20,20,16,0.55)"
               >
                 {p.label}
               </text>
 
               {/* /max */}
               <text
-                x={cx} y={BASELINE + 34}
+                x={cx} y={BASELINE + 36}
                 textAnchor="middle"
                 fontFamily="var(--font-body, 'Instrument Sans', sans-serif)"
-                fontSize={9}
-                fill="rgba(20,20,16,0.28)"
+                fontSize={10}
+                fill="rgba(20,20,16,0.32)"
               >
                 /{p.max}
               </text>

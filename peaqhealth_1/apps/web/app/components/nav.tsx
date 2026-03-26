@@ -21,21 +21,21 @@ export function Nav({ cartCount = 0, onCartOpen }: NavProps) {
   return (
     <nav className="sticky top-0 z-50 border-b bg-off-white/92 backdrop-blur-[12px]"
          style={{ borderBottomColor: "var(--ink-12)" }}>
-      <div className="mx-auto flex h-14 max-w-[1200px] items-center justify-between px-6">
+      <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-6">
         {/* Logo */}
         <Link href="/dashboard">
-          <LogoSvg size={44} color="var(--ink)" />
+          <LogoSvg size={52} color="var(--ink)" />
         </Link>
 
         {/* Center nav links */}
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-9">
           {links.map(({ href, label }) => {
             const active = pathname.startsWith(href);
             return (
               <Link
                 key={href}
                 href={href}
-                className="font-body text-[11px] uppercase tracking-[0.08em] transition-colors"
+                className="font-body text-[13px] uppercase tracking-[0.08em] transition-colors"
                 style={{
                   color: active ? "var(--ink)" : "var(--ink-60)",
                   textDecoration: active ? "underline" : "none",
@@ -51,7 +51,7 @@ export function Nav({ cartCount = 0, onCartOpen }: NavProps) {
 
         {/* Right — cart + avatar + date */}
         <div className="flex items-center gap-4">
-          <span className="hidden sm:block font-body text-[10px] uppercase tracking-widest" style={{ color: "var(--ink-30)" }}>
+          <span className="hidden sm:block font-body text-[11px] uppercase tracking-widest" style={{ color: "var(--ink-30)" }}>
             {today}
           </span>
           {onCartOpen && (
