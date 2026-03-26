@@ -1235,6 +1235,7 @@ export function ScoreWheel({
             hasBlood={hasBlood}
             oralActive={oralActive}
             hasLifestyle={!!lifestyleData}
+            ageRange={lifestyleData?.ageRange}
             onPeakHover={setHoveredRing}
           />
         </div>
@@ -1254,6 +1255,33 @@ export function ScoreWheel({
             </div>
           ))}
         </div>
+
+        {/* Age-calibrated optimal summary */}
+        {lifestyleData?.ageRange && (() => {
+          const ar = lifestyleData.ageRange!
+          const isOver55 = ar === "60_69" || ar === "70_plus"
+          const is40to55 = ar === "40_49" || ar === "50_59"
+          const bloodOpt = isOver55 ? 24 : is40to55 ? 26 : 28
+          const sleepOpt = isOver55 ? 18 : is40to55 ? 20 : 22
+          let actualSum = 0, optimalSum = 0
+          if (sleepConnected && breakdown.sleepSub > 0)   { actualSum += breakdown.sleepSub;     optimalSum += sleepOpt }
+          if (hasBlood && breakdown.bloodSub > 0)         { actualSum += breakdown.bloodSub;     optimalSum += bloodOpt }
+          if (oralActive && breakdown.oralSub > 0)        { actualSum += breakdown.oralSub;      optimalSum += 22 }
+          if (lifestyleData && breakdown.lifestyleSub > 0) { actualSum += breakdown.lifestyleSub; optimalSum += 11 }
+          if (optimalSum === 0) return null
+          const pct = Math.round((actualSum / optimalSum) * 100)
+          const ageLabel = isOver55 ? "55+" : is40to55 ? "40–55" : "under 40"
+          return (
+            <div style={{ marginTop: 14 }}>
+              <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "var(--ink-60)", margin: 0 }}>
+                You are <strong>{pct}%</strong> of the way to optimal for your age ({ageLabel})
+              </p>
+              <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, color: "var(--ink-40)", margin: "3px 0 0", letterSpacing: "0.02em" }}>
+                Based on published clinical reference ranges, not peer averages
+              </p>
+            </div>
+          )
+        })()}
 
         {/* Data completeness */}
         {peaqPercent !== undefined && (
