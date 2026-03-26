@@ -1136,6 +1136,8 @@ export function ScoreWheel({
   const [displayOral, setDisplayOral] = useState(0)
   const [displayLifestyle, setDisplayLifestyle] = useState(0)
   const [openMissingTooltip, setOpenMissingTooltip] = useState<string | null>(null)
+  const [completenessOpen, setCompletenessOpen] = useState(false)
+  const completenessRef = useRef<HTMLDivElement>(null)
 
   const sleepPanelRef    = useRef<CollapsiblePanelHandle>(null)
   const bloodPanelRef    = useRef<CollapsiblePanelHandle>(null)
@@ -1164,6 +1166,17 @@ export function ScoreWheel({
     }, 1800)
     return () => clearTimeout(t)
   }, [])
+
+  useEffect(() => {
+    if (!completenessOpen) return
+    function handleOutside(e: MouseEvent) {
+      if (completenessRef.current && !completenessRef.current.contains(e.target as Node)) {
+        setCompletenessOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleOutside)
+    return () => document.removeEventListener("mousedown", handleOutside)
+  }, [completenessOpen])
 
   const hasBlood = labFreshness !== "none" && labFreshness !== "expired"
   const bloodLocked = !hasBlood
@@ -1267,12 +1280,148 @@ export function ScoreWheel({
           />
         </div>
 
-        {/* Data completeness */}
-        {peaqPercent !== undefined && (
-          <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "var(--ink-60)", margin: "12px 0 0" }}>
-            {peaqPercent}% complete
-          </p>
-        )}
+        {/* Data completeness pill */}
+        {peaqPercent !== undefined && (() => {
+          const panels = [
+            {
+              key: "blood",
+              label: "Blood panel",
+              sub: "labs uploaded",
+              color: "#4A7FB5",
+              status: hasBlood ? "complete" : "missing",
+            },
+            {
+              key: "sleep",
+              label: "Sleep panel",
+              sub: "wearable connected",
+              color: "#4A7FB5",
+              status: sleepConnected ? "complete" : "missing",
+            },
+            {
+              key: "oral",
+              label: "Oral panel",
+              sub: "microbiome kit",
+              color: "#2E7D52",
+              status: oralKitStatus === "complete" ? "complete" : oralKitStatus === "ordered" ? "partial" : "missing",
+            },
+            {
+              key: "lifestyle",
+              label: "Lifestyle",
+              sub: "questionnaire complete",
+              color: "#B8860B",
+              status: lifestyleData ? "complete" : "missing",
+            },
+          ]
+          const dotColor = (s: string) =>
+            s === "complete" ? "#22C55E" : s === "partial" ? "#B8860B" : "rgba(20,20,16,0.22)"
+
+          return (
+            <div ref={completenessRef} style={{ position: "relative", marginTop: 14, alignSelf: "center" }}>
+              {/* Pill */}
+              <button
+                onClick={() => setCompletenessOpen(v => !v)}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 6,
+                  padding: "4px 12px",
+                  border: "1px solid rgba(20,20,16,0.14)",
+                  borderRadius: 999,
+                  background: "none",
+                  fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                  fontSize: 11, color: "var(--ink-40)",
+                  cursor: "pointer",
+                  transition: "border-color 0.15s ease, color 0.15s ease",
+                }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLElement).style.borderColor = "rgba(20,20,16,0.30)"
+                  ;(e.currentTarget as HTMLElement).style.color = "var(--ink-60)"
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLElement).style.borderColor = "rgba(20,20,16,0.14)"
+                  ;(e.currentTarget as HTMLElement).style.color = "var(--ink-40)"
+                }}
+              >
+                {/* Info icon */}
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ flexShrink: 0 }}>
+                  <circle cx="6" cy="6" r="5.25" stroke="currentColor" strokeWidth="1"/>
+                  <text x="6" y="9" textAnchor="middle"
+                    style={{ fontSize: 7, fontFamily: "Georgia, serif", fontWeight: 700 }}
+                    fill="currentColor">i</text>
+                </svg>
+                {peaqPercent}% complete
+              </button>
+
+              {/* Inline explanation card */}
+              {completenessOpen && (
+                <div
+                  style={{
+                    position: "absolute", top: "calc(100% + 8px)", left: "50%",
+                    transform: "translateX(-50%)",
+                    width: 300, maxWidth: "90vw",
+                    background: "var(--color-background-primary, white)",
+                    border: "0.5px solid rgba(20,20,16,0.14)",
+                    borderRadius: 10,
+                    padding: "16px 18px",
+                    zIndex: 50,
+                    boxShadow: "0 4px 24px rgba(20,20,16,0.08)",
+                    animation: "fadeUp 0.18s ease",
+                  }}
+                >
+                  <p style={{
+                    fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                    fontSize: 12, fontWeight: 600, color: "var(--ink)", margin: "0 0 6px",
+                  }}>
+                    What does {peaqPercent}% complete mean?
+                  </p>
+                  <p style={{
+                    fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                    fontSize: 11, color: "var(--ink-60)", margin: "0 0 14px", lineHeight: 1.6,
+                  }}>
+                    Your Peaq score is calculated across four panels. Completeness reflects how many data inputs have been provided. A higher completeness means your score is more accurate.
+                  </p>
+
+                  {/* Panel rows */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
+                    {panels.map(p => (
+                      <div key={p.key} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <span style={{
+                          width: 7, height: 7, borderRadius: "50%",
+                          background: dotColor(p.status), flexShrink: 0,
+                        }} />
+                        <span style={{
+                          fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                          fontSize: 11, color: "var(--ink)", flex: 1,
+                        }}>
+                          {p.label}
+                        </span>
+                        <span style={{
+                          fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                          fontSize: 10, color: "var(--ink-40)",
+                          textTransform: "capitalize",
+                        }}>
+                          {p.status === "complete" ? p.sub : p.status === "partial" ? "in progress" : "not connected"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* CTA */}
+                  <a
+                    href="/settings/wearables"
+                    style={{
+                      fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                      fontSize: 11, color: "var(--gold)",
+                      textDecoration: "none",
+                    }}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.textDecoration = "underline"}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.textDecoration = "none"}
+                  >
+                    Complete your profile →
+                  </a>
+                </div>
+              )}
+            </div>
+          )
+        })()}
       </div>
 
       {/* HERO */}
