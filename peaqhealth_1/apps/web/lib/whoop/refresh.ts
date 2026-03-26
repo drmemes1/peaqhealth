@@ -19,11 +19,24 @@ export async function refreshWhoopToken(userId: string): Promise<string> {
 
   if (error || !conn) throw new Error("No WHOOP connection found for user")
 
-  const expiresAt  = new Date(conn.token_expires_at as string).getTime()
-  const fiveMins   = 5 * 60 * 1000
+  const expiresAt    = new Date(conn.token_expires_at as string).getTime()
+  const fiveMins     = 5 * 60 * 1000
   const needsRefresh = expiresAt - Date.now() < fiveMins
 
+  console.log(
+    "[whoop-refresh] token_expires_at:", conn.token_expires_at,
+    "now:", new Date().toISOString(),
+    "needs_refresh:", needsRefresh
+  )
+
   if (!needsRefresh) return conn.access_token as string
+
+  // Guard: empty refresh token means user must reconnect
+  const refreshToken = conn.refresh_token as string | null
+  if (!refreshToken || refreshToken === "") {
+    console.log("[whoop-refresh] no refresh token available — user must reconnect WHOOP")
+    throw new Error("WHOOP reconnection required — no refresh token stored")
+  }
 
   // Refresh
   const res = await fetch("https://api.prod.whoop.com/oauth/oauth2/token", {
@@ -31,13 +44,17 @@ export async function refreshWhoopToken(userId: string): Promise<string> {
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
       grant_type:    "refresh_token",
-      refresh_token: conn.refresh_token as string,
+      refresh_token: refreshToken,
       client_id:     process.env.WHOOP_CLIENT_ID!,
       client_secret: process.env.WHOOP_CLIENT_SECRET!,
     }),
   })
 
-  if (!res.ok) throw new Error(`WHOOP token refresh failed: ${res.status}`)
+  if (!res.ok) {
+    const body = await res.text().catch(() => "")
+    console.log("[whoop-refresh] refresh failed status:", res.status, "body:", body)
+    throw new Error(`WHOOP token refresh failed: ${res.status}`)
+  }
 
   const tokens = await res.json() as {
     access_token: string; refresh_token: string; expires_in: number

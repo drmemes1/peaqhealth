@@ -24,6 +24,20 @@ export async function fetchWhoopSleepData(
   const token = await refreshWhoopToken(userId)
   const end   = endIso ?? new Date().toISOString()
 
+  console.log("[whoop-fetch] token preview:", token.substring(0, 20) + "...")
+
+  // ── Profile sanity check ───────────────────────────────────────────────────
+  const profileRes = await fetch(
+    "https://api.prod.whoop.com/developer/v1/user/profile/basic",
+    { headers: { Authorization: `Bearer ${token}` } }
+  )
+  console.log("[whoop-fetch] profile check status:", profileRes.status)
+  if (!profileRes.ok) {
+    const body = await profileRes.text().catch(() => "")
+    console.log("[whoop-fetch] profile error body:", body)
+    throw new Error(`WHOOP token invalid — profile check failed: ${profileRes.status}`)
+  }
+
   // ── Sleep sessions ─────────────────────────────────────────────────────────
   const sleepParams = new URLSearchParams({ start: startIso, end, limit: "25" })
   const sleepUrl    = `https://api.prod.whoop.com/developer/v1/activity/sleep?${sleepParams}`
@@ -34,6 +48,8 @@ export async function fetchWhoopSleepData(
   })
   if (!sleepRes.ok) {
     const body = await sleepRes.text().catch(() => "")
+    console.log("[whoop-fetch] error status:", sleepRes.status)
+    console.log("[whoop-fetch] error body:", body)
     throw new Error(`WHOOP sleep API ${sleepRes.status}: ${body}`)
   }
   const sleepPayload = await sleepRes.json() as { records: Record<string, unknown>[] }
