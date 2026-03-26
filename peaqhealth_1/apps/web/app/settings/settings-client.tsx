@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "../../lib/supabase/client"
@@ -369,6 +369,15 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
 
   const [whoopConnected, setWhoopConnected] = useState(initialWhoopConnected)
 
+  // Smooth-scroll to #wearables when arriving from a dashboard CTA
+  useEffect(() => {
+    if (window.location.hash === "#wearables") {
+      const el = document.getElementById("wearables")
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" })
+    }
+  }, [])
+
+
   const memberSince = new Date(createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" })
   const initials = [firstName[0], lastName[0]].filter(Boolean).join("").toUpperCase() || email[0]?.toUpperCase() || "?"
   const displayName = [firstName, lastName].filter(Boolean).join(" ").trim()
@@ -577,7 +586,7 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
       </section>
 
       {/* ── Wearables ───────────────────────────────────────────────── */}
-      <section className="mb-8 fade-up" style={{ animationDelay: "0.14s" }}>
+      <section id="wearables" className="mb-8 fade-up" style={{ animationDelay: "0.14s" }}>
         <SectionLabel>Wearables</SectionLabel>
         <WearableManager
           whoopConnected={whoopConnected}

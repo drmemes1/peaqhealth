@@ -1405,7 +1405,7 @@ export function ScoreWheel({
 
                   {/* CTA */}
                   <a
-                    href="/settings/wearables"
+                    href="/settings#wearables"
                     style={{
                       fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
                       fontSize: 11, color: "var(--gold)",
