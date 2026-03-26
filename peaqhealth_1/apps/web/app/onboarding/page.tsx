@@ -133,6 +133,11 @@ export default function OnboardingPage() {
     setStep("blood");
   }
 
+  function handleBloodComplete() {
+    setData((prev) => ({ ...prev, bloodUploaded: true }));
+    setStep("oral");
+  }
+
   function handleBloodSkip() {
     setStep("oral");
   }
@@ -164,7 +169,7 @@ export default function OnboardingPage() {
       case "wearable":
         return <StepWearable onConnect={handleWearableConnect} onSkip={handleWearableSkip} />;
       case "blood":
-        return <StepBlood onSkip={handleBloodSkip} />;
+        return <StepBlood onSkip={handleBloodSkip} onComplete={handleBloodComplete} />;
       case "oral":
         return <StepOral onOrder={handleOralOrder} onSkip={handleOralSkip} />;
       case "lifestyle":

@@ -68,6 +68,7 @@ export interface BloodMarkers {
 
 interface LabUploadProps {
   onSkip?: () => void
+  onComplete?: () => void
 }
 
 // ─── Category groups ─────────────────────────────────────────────────────────
@@ -251,7 +252,7 @@ function slugToName(slug: string): string {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export function LabUpload({ onSkip }: LabUploadProps) {
+export function LabUpload({ onSkip, onComplete }: LabUploadProps) {
   type Phase = "idle" | "parsing" | "confirm" | "saving" | "manual"
 
   const router = useRouter()
@@ -355,7 +356,8 @@ export function LabUpload({ onSkip }: LabUploadProps) {
       })
       const data = await res.json() as { score?: number; error?: string }
       if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`)
-      router.push("/dashboard")
+      if (onComplete) onComplete()
+      else router.push("/dashboard")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save")
       setPhase("confirm")

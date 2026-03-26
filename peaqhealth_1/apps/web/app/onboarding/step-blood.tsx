@@ -4,9 +4,10 @@ import { LabUpload } from "../components/lab-upload"
 
 interface Props {
   onSkip: () => void
+  onComplete: () => void
 }
 
-export function StepBlood({ onSkip }: Props) {
+export function StepBlood({ onSkip, onComplete }: Props) {
   return (
     <div className="flex flex-col items-center gap-8 w-full">
       <div className="text-center">
@@ -17,7 +18,7 @@ export function StepBlood({ onSkip }: Props) {
           Drop a PDF from any major lab. We&apos;ll extract your biomarkers automatically.
         </p>
       </div>
-      <LabUpload onSkip={onSkip} />
+      <LabUpload onSkip={onSkip} onComplete={onComplete} />
     </div>
   )
 }
