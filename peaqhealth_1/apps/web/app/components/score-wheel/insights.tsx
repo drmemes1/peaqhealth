@@ -181,6 +181,18 @@ function Skeleton({ isPrimary }: { isPrimary?: boolean }) {
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
+function isTemplateText(s: string): boolean {
+  const lower = s.toLowerCase()
+  return (
+    lower.includes("only include") ||
+    lower.includes("omit this") ||
+    lower.includes("if no previous") ||
+    lower.includes("previous labs exist") ||
+    lower.includes("1-2 sentences") ||
+    s.trim().length === 0
+  )
+}
+
 export function Insights({ sleepConnected, hasBlood, oralActive, lifestyleActive }: InsightsProps) {
   const [loading, setLoading] = useState(true)
   const [data, setData]       = useState<AIInsightData | null>(null)
@@ -223,7 +235,7 @@ export function Insights({ sleepConnected, hasBlood, oralActive, lifestyleActive
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
 
           {/* Trajectory banner */}
-          {data.trajectoryNote && (
+          {data.trajectoryNote && !isTemplateText(data.trajectoryNote) && (
             <div style={{
               padding: "10px 14px",
               background: "rgba(184,134,11,0.06)",

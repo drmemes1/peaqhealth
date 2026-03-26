@@ -22,7 +22,7 @@ const PANELS = [
 
 type AgeGroup = "under40" | "40to55" | "over55"
 
-function getAgeGroup(ageRange: string | undefined): AgeGroup {
+export function getAgeGroup(ageRange: string | undefined): AgeGroup {
   if (ageRange === "60_69" || ageRange === "70_plus") return "over55"
   if (ageRange === "40_49" || ageRange === "50_59")   return "40to55"
   return "under40"
@@ -30,7 +30,7 @@ function getAgeGroup(ageRange: string | undefined): AgeGroup {
 
 // Returns [sleepOptimal, bloodOptimal, oralOptimal, lifestyleOptimal]
 // Sources: ACC/AHA 2019, AASM sleep guidelines, published oral microbiome studies
-function getOptimalScores(ageRange: string | undefined): [number, number, number, number] {
+export function getOptimalScores(ageRange: string | undefined): [number, number, number, number] {
   const g = getAgeGroup(ageRange)
   const blood = g === "under40" ? 28 : g === "40to55" ? 26 : 24
   const sleep = g === "under40" ? 22 : g === "40to55" ? 20 : 18
@@ -39,23 +39,6 @@ function getOptimalScores(ageRange: string | undefined): [number, number, number
 
 function easeOutCubic(t: number): number {
   return 1 - Math.pow(1 - t, 3)
-}
-
-function catmullRomPath(pts: [number, number][]): string {
-  if (pts.length < 2) return ""
-  const ext: [number, number][] = [
-    [pts[0][0] * 2 - pts[1][0],         pts[0][1] * 2 - pts[1][1]],
-    ...pts,
-    [pts[pts.length-1][0] * 2 - pts[pts.length-2][0],
-     pts[pts.length-1][1] * 2 - pts[pts.length-2][1]],
-  ]
-  let d = `M ${pts[0][0]},${pts[0][1]}`
-  for (let i = 1; i < pts.length; i++) {
-    const [p0, p1, p2, p3] = [ext[i-1], ext[i], ext[i+1], ext[i+2]]
-    const s = 1 / 3
-    d += ` C ${p1[0]+(p2[0]-p0[0])*s},${p1[1]+(p2[1]-p0[1])*s} ${p2[0]-(p3[0]-p1[0])*s},${p2[1]-(p3[1]-p1[1])*s} ${p2[0]},${p2[1]}`
-  }
-  return d
 }
 
 // ─── Props ───────────────────────────────────────────────────────────────────
@@ -92,20 +75,8 @@ export function PeaksVisualization({
   })
   const apexYs = finalHeights.map(h => BASELINE - h)
 
-  // Benchmark heights — age-calibrated optimal scores
-  const optimalScores = getOptimalScores(ageRange)
-  const benchmarkHeights = optimalScores.map((opt, i) => {
-    const ratio = opt / PANELS[i].max
-    const h = ratio * MAX_H
-    return i === 3 ? Math.min(h, LIFESTYLE_CAP * MAX_H) : h
-  })
-  const benchmarkYs = benchmarkHeights.map(h => BASELINE - h)
-
   const polyRefs  = useRef<(SVGPolygonElement | null)[]>([null, null, null, null])
-  const curveRef  = useRef<SVGPathElement | null>(null)
   const decorRefs = useRef<(SVGGElement | null)[]>([null, null, null, null])
-
-  const curvePath = catmullRomPath(CENTERS.map((cx, i) => [cx, apexYs[i]] as [number, number]))
 
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = []
@@ -134,10 +105,9 @@ export function PeaksVisualization({
       timers.push(id)
     })
 
-    // Reveal curve + decorations after all peaks finish
+    // Reveal decorations after all peaks finish
     const revealAt = 100 + 3 * STAGGER + DURATION + 100
     timers.push(setTimeout(() => {
-      if (curveRef.current) curveRef.current.style.opacity = "1"
       decorRefs.current.forEach(el => { if (el) el.style.opacity = "1" })
     }, revealAt))
 
@@ -170,8 +140,6 @@ export function PeaksVisualization({
         const isPending  = pending[i]
         const score      = rawScores[i]
         const apexY      = apexYs[i]
-        const benchmarkY = benchmarkYs[i]
-        const showBenchmark = !isPending && score > 0
         const displayVal = isPending || score <= 0
           ? "—"
           : Number.isInteger(score) ? String(score) : score.toFixed(1)
@@ -200,45 +168,11 @@ export function PeaksVisualization({
               onClick={() => onPeakClick?.(p.key)}
             />
 
-            {/* Apex dot + score + benchmark + labels — fade in after animation */}
+            {/* Apex dot + score + labels — fade in after animation */}
             <g
               ref={el => { decorRefs.current[i] = el }}
               style={{ opacity: 0, transition: "opacity 500ms ease" }}
             >
-              {/* Age-calibrated benchmark line */}
-              {showBenchmark && (
-                <g>
-                  <line
-                    x1={cx - HALF_W} y1={benchmarkY}
-                    x2={cx + HALF_W} y2={benchmarkY}
-                    stroke="rgba(184,134,11,0.55)"
-                    strokeWidth={0.75}
-                    strokeDasharray="3 3"
-                  />
-                  {/* "optimal" label to the right of the line */}
-                  <text
-                    x={cx + HALF_W + 5} y={benchmarkY + 3}
-                    textAnchor="start"
-                    fontFamily="var(--font-body, 'Instrument Sans', sans-serif)"
-                    fontSize={6.5}
-                    fill="rgba(184,134,11,0.65)"
-                    letterSpacing="0.05em"
-                  >
-                    optimal
-                  </text>
-                  <text
-                    x={cx + HALF_W + 5} y={benchmarkY + 11}
-                    textAnchor="start"
-                    fontFamily="var(--font-body, 'Instrument Sans', sans-serif)"
-                    fontSize={6}
-                    fill="rgba(184,134,11,0.45)"
-                    letterSpacing="0.04em"
-                  >
-                    for age
-                  </text>
-                </g>
-              )}
-
               {/* Apex dot */}
               <circle cx={cx} cy={apexY} r={4} fill={p.color} />
 
@@ -280,17 +214,6 @@ export function PeaksVisualization({
           </g>
         )
       })}
-
-      {/* Skyline dashed curve */}
-      <path
-        ref={curveRef}
-        d={curvePath}
-        fill="none"
-        stroke="rgba(20,20,16,0.20)"
-        strokeWidth={1}
-        strokeDasharray="5 5"
-        style={{ opacity: 0, transition: "opacity 500ms ease" }}
-      />
     </svg>
   )
 }

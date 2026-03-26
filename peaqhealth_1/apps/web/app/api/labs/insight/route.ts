@@ -186,7 +186,7 @@ Generate a response in this EXACT JSON format — no markdown, no backticks, sta
 "panels": ["panel1", "panel2"]
 }
 ],
-"trajectoryNote": "Only include if previous labs exist. 1-2 sentences on what improved or worsened and by how much. Omit this field entirely if no previous labs.",
+"trajectoryNote": "ONLY include this key if previousLabs data was provided above. Write 1-2 sentences on what improved or worsened and by how much, citing the actual values. If no previousLabs data exists DO NOT include this key at all — not as empty string, not as null, not as placeholder text.",
 "allPanelsBonus": "Only include if all 4 panels have data. 1-2 sentences revealing the single most important pattern that ONLY becomes visible when all 4 panels are analyzed together. This is the insight that justifies having all 4 panels. Omit if any panel is missing."
 }
 
@@ -198,7 +198,7 @@ Rules you must follow:
 - urgency "act" = needs attention soon, "watch" = monitor this, "routine" = good to know
 - Never give directives — always frame clinical recommendations as things to consider discussing with their doctor
 - If a panel has no data, do not reference it or fabricate values
-- trajectoryNote only appears when previousLabs data is provided`
+- trajectoryNote: OMIT this key entirely when no previousLabs data is present. The key must not exist in the JSON response. If you include it with placeholder or instructional text you will have failed this task.`
 
   // ── Call Azure OpenAI ─────────────────────────────────────────────────────
   const azureKey = process.env.AZURE_OPENAI_KEY
