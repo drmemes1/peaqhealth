@@ -27,11 +27,11 @@ export function mapLifestyleRow(row: Record<string, unknown>): LifestyleInputs {
     smokingStatus:   (smokeMap[row.smoking_status as string] ?? "never")       as LifestyleInputs["smokingStatus"],
     knownHypertension: Boolean(row.known_hypertension),
     knownDiabetes:     Boolean(row.known_diabetes),
-    sleepDuration:   (durMap[row.sleep_duration   as string] ?? "7_to_8")      as LifestyleInputs["sleepDuration"],
-    sleepLatency:    (latMap[row.sleep_latency    as string] ?? "15_to_30min") as LifestyleInputs["sleepLatency"],
-    sleepQualSelf:   (qualMap[row.sleep_qual_self as string] ?? "fair")        as LifestyleInputs["sleepQualSelf"],
-    daytimeFatigue:  (fatMap[row.daytime_fatigue  as string] ?? "sometimes")   as LifestyleInputs["daytimeFatigue"],
-    nightWakings:    (wakeMap[row.night_wakings   as string] ?? "less_once_wk") as LifestyleInputs["nightWakings"],
+    sleepDuration:   (row.sleep_duration  ? durMap[row.sleep_duration   as string] : undefined) as LifestyleInputs["sleepDuration"],
+    sleepLatency:    (row.sleep_latency   ? latMap[row.sleep_latency    as string] : undefined) as LifestyleInputs["sleepLatency"],
+    sleepQualSelf:   (row.sleep_qual_self ? qualMap[row.sleep_qual_self as string] : undefined) as LifestyleInputs["sleepQualSelf"],
+    daytimeFatigue:  (row.daytime_fatigue ? fatMap[row.daytime_fatigue  as string] : undefined) as LifestyleInputs["daytimeFatigue"],
+    nightWakings:    (row.night_wakings   ? wakeMap[row.night_wakings   as string] : undefined) as LifestyleInputs["nightWakings"],
     sleepMedication: "never",
     // New optional fields (v4.2)
     hypertensionDx: row.hypertension_dx === "yes" || row.hypertension_dx === true ? true : undefined,
@@ -256,15 +256,11 @@ export async function recalculateScore(
   // Sleep panel requires real wearable data — if the engine fell back to questionnaire
   // estimation (sleepSource === "questionnaire"), discard that estimate so the sleep
   // panel shows 0 and users are prompted to connect a wearable.
-  const sleepSub = (!sleepInputs && result.breakdown.sleepSource === "questionnaire")
-    ? 0
-    : result.breakdown.sleepSub
-  const storedScore = (!sleepInputs && result.breakdown.sleepSource === "questionnaire")
+  const sleepSub = !sleepInputs ? 0 : result.breakdown.sleepSub
+  const storedScore = !sleepInputs
     ? Math.max(0, result.score - result.breakdown.sleepSub)
     : result.score
-  const sleepSource = (!sleepInputs && result.breakdown.sleepSource === "questionnaire")
-    ? "none"
-    : result.breakdown.sleepSource
+  const sleepSource = !sleepInputs ? "none" : result.breakdown.sleepSource
 
   console.log(`[recalculate] user=${userId} sleep=${sleepSub} blood=${result.breakdown.bloodSub} oral=${result.breakdown.oralSub} lifestyle=${result.breakdown.lifestyleSub} total=${storedScore} sleepSource=${sleepSource}`)
 
