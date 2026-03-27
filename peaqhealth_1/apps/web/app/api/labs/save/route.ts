@@ -42,7 +42,7 @@ async function generateBloodInsight(userId: string, supabase: SupabaseClient, bl
   // ── Sleep / wearable ───────────────────────────────────────────────────────
   const { data: wearable } = await supabase
     .from("wearable_connections")
-    .select("deep_sleep_pct, hrv_rmssd, spo2_dips, rem_pct, sleep_efficiency, nights_available, provider")
+    .select("deep_sleep_pct, hrv_rmssd, latest_spo2_dips, rem_pct, sleep_efficiency, nights_available, provider")
     .eq("user_id", userId)
     .eq("status", "connected")
     .order("connected_at", { ascending: false })
@@ -55,7 +55,7 @@ async function generateBloodInsight(userId: string, supabase: SupabaseClient, bl
     if (n(wearable.deep_sleep_pct))   sleepLines.push(`Deep sleep: ${wearable.deep_sleep_pct}%`)
     if (n(wearable.rem_pct))          sleepLines.push(`REM: ${wearable.rem_pct}%`)
     if (n(wearable.hrv_rmssd))        sleepLines.push(`HRV: ${wearable.hrv_rmssd} ms`)
-    if (n(wearable.spo2_dips))        sleepLines.push(`SpO2 dips: ${wearable.spo2_dips}`)
+    if (n(wearable.latest_spo2_dips)) sleepLines.push(`SpO2 dips: ${wearable.latest_spo2_dips}`)
   }
 
   // ── Oral microbiome ────────────────────────────────────────────────────────

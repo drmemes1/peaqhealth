@@ -32,7 +32,7 @@ export async function GET() {
       .single(),
     supabase
       .from("wearable_connections")
-      .select("provider, hrv_rmssd, sleep_efficiency, deep_sleep_pct, rem_pct, spo2_dips, last_sync_at")
+      .select("provider, hrv_rmssd, sleep_efficiency, deep_sleep_pct, rem_pct, latest_spo2_dips, last_sync_at")
       .eq("user_id", user.id)
       .eq("status", "connected")
       .order("connected_at", { ascending: false })
