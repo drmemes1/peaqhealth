@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient as createSupabaseClient } from "@supabase/supabase-js"
-import { createClient } from "../../../../../lib/supabase/server"
-import { recalculateScore } from "../../../../../lib/score/recalculate"
+import { createClient } from "../../../../lib/supabase/server"
+import { recalculateScore } from "../../../../lib/score/recalculate"
 
 export const dynamic = "force-dynamic"
 
