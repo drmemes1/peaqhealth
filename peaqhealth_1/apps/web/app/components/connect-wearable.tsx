@@ -175,9 +175,14 @@ export function ConnectWearable({ onSuccess, onSkip, mode }: ConnectWearableProp
           return (
             <div key={device.id} style={{ display: "flex", flexDirection: "column" }}>
               {isWhoop ? (
-                // WHOOP — direct OAuth redirect
+                // WHOOP — direct OAuth redirect.
+                // Onboarding passes returnTo so callback returns with ?whoop=connected
+                // signal instead of doing its own onboarding_completed check.
                 <a
-                  href="/api/auth/whoop/connect"
+                  href={mode === "onboarding"
+                    ? `/api/auth/whoop/connect?returnTo=${encodeURIComponent("/onboarding?whoop=connected")}`
+                    : "/api/auth/whoop/connect"
+                  }
                   style={{
                     display: "flex", flexDirection: "column", gap: 12,
                     padding: "18px 16px",

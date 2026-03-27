@@ -13,15 +13,33 @@ function svc() {
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
-  const code   = searchParams.get("code")
-  const userId = searchParams.get("state")
+  const code  = searchParams.get("code")
+  const state = searchParams.get("state")
 
-  if (!code || !userId) {
+  if (!code || !state) {
     console.error("[whoop-callback] missing code or state param")
     return NextResponse.redirect(`${origin}/dashboard`)
   }
 
-  console.log("[whoop-callback] userId:", userId)
+  // Parse state — new format: JSON {userId, returnTo}
+  // Legacy format: plain userId string (backward-compatible)
+  let userId: string
+  let returnTo = `${origin}/dashboard`
+
+  try {
+    const parsed = JSON.parse(state) as { userId?: string; returnTo?: string }
+    userId = parsed.userId ?? state
+    if (parsed.returnTo) {
+      returnTo = parsed.returnTo.startsWith("http")
+        ? parsed.returnTo
+        : `${origin}${parsed.returnTo}`
+    }
+  } catch {
+    // Legacy: state is just the userId
+    userId = state
+  }
+
+  console.log("[whoop-callback] userId:", userId, "returnTo:", returnTo)
 
   // 1. Exchange authorization code for tokens
   const tokenRes = await fetch("https://api.prod.whoop.com/oauth/oauth2/token", {
@@ -86,23 +104,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/dashboard?whoop=error`)
   }
 
-  // 4. Check onboarding status — profiles.onboarding_completed
-  const { data: userProfile } = await supabase
-    .from("profiles")
-    .select("onboarding_completed")
-    .eq("id", userId)
-    .single()
-
-  console.log("[whoop-callback] onboarding_completed:", userProfile?.onboarding_completed)
-
-  const redirectTo = userProfile?.onboarding_completed
-    ? `${origin}/dashboard?whoop=connected`
-    : `${origin}/onboarding`
-
-  console.log("[whoop-callback] redirecting to:", redirectTo)
-
-  // 5. Fire backfill via after() — Vercel keeps the lambda alive until this resolves.
-  //    Fire-and-forget (no await before redirect) would be killed by the serverless runtime.
+  // 4. Fire backfill via after() — Vercel keeps the lambda alive until this resolves.
+  //    Plain fire-and-forget is killed by the serverless runtime on redirect.
   console.log("[whoop-callback] registering backfill via after()")
   const capturedUserId = userId
   after(async () => {
@@ -118,6 +121,7 @@ export async function GET(request: NextRequest) {
     }
   })
 
-  // 6. Redirect immediately — after() work continues in the background
-  return NextResponse.redirect(redirectTo)
+  // 5. Redirect to returnTo — caller decides destination, not callback
+  console.log("[whoop-callback] redirecting to:", returnTo)
+  return NextResponse.redirect(returnTo)
 }

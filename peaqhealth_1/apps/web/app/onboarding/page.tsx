@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "../../lib/supabase/client";
 import type {
   OnboardingStep,
@@ -22,6 +22,7 @@ import { StepDone } from "./step-done";
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
 
   const [step, setStep] = useState<OnboardingStep>("welcome");
@@ -35,6 +36,15 @@ export default function OnboardingPage() {
       if (user) setUserId(user.id);
     });
   }, [supabase.auth]);
+
+  // If returning from WHOOP OAuth (?whoop=connected), mark wearable connected
+  // and advance past the wearable step so user doesn't reconnect in a loop.
+  useEffect(() => {
+    if (searchParams.get("whoop") === "connected") {
+      setData(prev => ({ ...prev, wearableProvider: "whoop" as WearableProvider, wearableConnected: true }));
+      setStep("blood");
+    }
+  }, [searchParams]);
 
   // Derive panel states from data
   const panels: PanelStates = {
