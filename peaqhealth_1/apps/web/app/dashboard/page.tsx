@@ -43,6 +43,13 @@ export default async function DashboardPage() {
   // Mutable reference — may be updated by the stale-zero healer below
   let snapshot = initialSnapshot
 
+  console.log("[dashboard] initialSnapshot:", snapshot
+    ? `score=${snapshot.score} sleep=${snapshot.sleep_sub} blood=${snapshot.blood_sub} lifestyle=${snapshot.lifestyle_sub} calculated_at=${snapshot.calculated_at}`
+    : "null")
+  console.log("[dashboard] wearable:", wearable ? `provider=${wearable.provider} status=${wearable.status}` : "null")
+  console.log("[dashboard] lab:", lab ? `collection_date=${lab.collection_date}` : "null")
+  console.log("[dashboard] lifestyle:", lifestyle ? "present" : "null")
+
   // Backfill wearable_connections for legacy users who connected before the upsert fix.
   // Skip when a WHOOP connection exists — the sync will create the proper row with real data.
   if (!wearable && !whoopConn && Number(snapshot?.sleep_sub ?? 0) > 0) {
@@ -56,10 +63,11 @@ export default async function DashboardPage() {
     }, { onConflict: "user_id,provider" })
   }
 
-  // Auto-heal stale zero snapshot. The disconnect regression wrote an all-zero snapshot;
-  // if the most recent row has score=0 but panel data exists, recalculate inline so this
-  // page load returns correct scores. This also fires if recalculateScore has never run.
+  // Auto-heal stale zero snapshot. Fires when:
+  // 1. No snapshot at all (first load ever)
+  // 2. score=0 but panel data exists (disconnect regression / cron race)
   const snapshotIsStaleZero = !snapshot || (Number(snapshot.score) === 0 && (!!lab || !!oral || !!lifestyle))
+  console.log("[dashboard] snapshotIsStaleZero:", snapshotIsStaleZero, "score:", Number(snapshot?.score ?? 0))
   if (snapshotIsStaleZero) {
     console.log("[dashboard] stale/zero snapshot — auto-recalculating for:", user.id)
     try {
@@ -101,6 +109,7 @@ export default async function DashboardPage() {
   const rawScore = Number(snapshot?.score ?? 0)
   const storedSleepSub = Number(snapshot?.sleep_sub ?? 0)
   const score = wearable ? rawScore : Math.max(0, rawScore - storedSleepSub)
+  console.log(`[dashboard] computed score=${score} rawScore=${rawScore} storedSleepSub=${storedSleepSub} wearable=${!!wearable}`)
 
   const breakdown = {
     sleepSub:        wearable ? storedSleepSub : 0,
