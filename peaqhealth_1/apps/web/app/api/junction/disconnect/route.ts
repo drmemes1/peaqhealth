@@ -64,6 +64,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Failed to disconnect" }, { status: 500 })
   }
 
+  // Delete whoop_sleep_data rows for this provider (best-effort, non-fatal)
+  const { error: wsdErr, count: wsdCount } = await serviceClient
+    .from("whoop_sleep_data")
+    .delete({ count: "exact" })
+    .eq("user_id", user.id)
+    .eq("provider", provider)
+  console.log(`[junction-disconnect] whoop_sleep_data deleted for provider=${provider}:`, { rows: wsdCount, error: wsdErr?.message ?? null })
+
   // NOTE: Do NOT call recalculateScore here — see /api/auth/whoop/disconnect for explanation.
   // Dashboard displays sleep_sub=0 when no wearable row exists. Next cron recalculates correctly.
 

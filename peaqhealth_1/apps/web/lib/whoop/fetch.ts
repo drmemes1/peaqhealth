@@ -5,6 +5,8 @@ import type { WhoopSleepRecord as WhoopApiSleepRecord, WhoopRecoveryRecord } fro
 // ── DB row shape (exported for backward-compat with admin/sync routes) ────────
 
 export interface WhoopSleepRecord {
+  sleep_id?:            string        // v2 UUID — used for deduplication on upsert
+  provider?:            string        // 'whoop' — written for multi-device support
   date:                 string
   total_sleep_minutes:  number
   deep_sleep_minutes:   number
@@ -27,8 +29,41 @@ function serviceClient() {
 }
 
 /**
- * Fetch sleep + recovery from WHOOP API and upsert into whoop_sleep_data.
+ * Fetch per-cycle recovery from WHOOP v2 API.
+ * Returns null if not found, not scored, or on any error.
+ */
+async function fetchRecoveryForCycle(
+  cycleId: number,
+  authHeader: { Authorization: string },
+): Promise<WhoopRecoveryRecord | null> {
+  const url = `https://api.prod.whoop.com/developer/v2/cycle/${cycleId}/recovery`
+  console.log(`[whoop-fetch] GET url=${url}`)
+  const res = await fetch(url, { headers: authHeader })
+  console.log(`[whoop-fetch] recovery status: ${res.status} for cycle=${cycleId}`)
+  if (!res.ok) {
+    console.log(`[whoop-fetch] recovery for cycle=${cycleId}: not scored or not found — storing nulls`)
+    return null
+  }
+  const data = await res.json() as WhoopRecoveryRecord
+  if (data.score_state !== "SCORED") {
+    console.log(`[whoop-fetch] recovery for cycle=${cycleId}: score_state=${data.score_state} — storing nulls`)
+    return null
+  }
+  console.log(
+    `[whoop-fetch] recovery for cycle=${cycleId}:`,
+    `hrv=${data.score?.hrv_rmssd_milli ?? null}`,
+    `spo2=${data.score?.spo2_percentage ?? null}`,
+    `rhr=${data.score?.resting_heart_rate ?? null}`,
+  )
+  return data
+}
+
+/**
+ * Fetch sleep + recovery from WHOOP v2 API and upsert into whoop_sleep_data.
  * Returns count of upserted records.
+ *
+ * daysBack=30 used for initial backfill on connect.
+ * daysBack=7 used for the nightly cron.
  */
 export async function fetchAndStoreWhoopData(
   userId: string,
@@ -45,59 +80,51 @@ export async function fetchAndStoreWhoopData(
 
   const authHeader = { Authorization: `Bearer ${token}` }
 
-  const sleepParams    = new URLSearchParams({ start: startIso, end: endIso, limit: "25" })
-  const recoveryParams = new URLSearchParams({ start: startIso, end: endIso, limit: "25" })
-
-  const sleepUrl    = `https://api.prod.whoop.com/developer/v1/activity/sleep?${sleepParams}`
-  const recoveryUrl = `https://api.prod.whoop.com/developer/v1/recovery?${recoveryParams}`
+  const sleepParams = new URLSearchParams({ start: startIso, end: endIso, limit: "25" })
+  const sleepUrl    = `https://api.prod.whoop.com/developer/v2/activity/sleep?${sleepParams}`
   console.log(`[whoop-fetch] GET url=${sleepUrl}`)
 
-  const [sleepRes, recoveryRes] = await Promise.all([
-    fetch(sleepUrl,    { headers: authHeader }),
-    fetch(recoveryUrl, { headers: authHeader }),
-  ])
+  const sleepRes = await fetch(sleepUrl, { headers: authHeader })
 
   if (!sleepRes.ok) {
     const body = await sleepRes.text().catch(() => "")
     if (sleepRes.status === 404) {
-      // WHOOP returns 404 when no data exists in the requested window (e.g. after account reset)
-      // Treat as empty result — connection is already saved, just no sleep data yet
       console.info(`[whoop-fetch] 404 from sleep endpoint — no data in window, treating as empty (user=${userId})`)
+      console.log("[whoop-fetch] 404 body:", body)
       return 0
     }
     throw new Error(`WHOOP sleep API ${sleepRes.status}: ${body}`)
   }
 
-  const sleepPayload    = await sleepRes.json() as { records: WhoopApiSleepRecord[] }
-  const recoveryPayload = recoveryRes.ok
-    ? (await recoveryRes.json() as { records: WhoopRecoveryRecord[] })
-    : { records: [] }
+  const sleepPayload = await sleepRes.json() as { records: WhoopApiSleepRecord[] }
 
-  if (!recoveryRes.ok) {
-    console.warn("[whoop-fetch] recovery API non-OK:", recoveryRes.status, "— continuing without HRV")
-  }
+  // Filter naps before recovery fetches to avoid unnecessary API calls
+  const mainSleeps = (sleepPayload.records ?? []).filter(s => s.nap !== true)
 
-  // Index recovery by date (created_at date)
-  const recoveryByDate = new Map<string, WhoopRecoveryRecord>()
-  for (const rec of (recoveryPayload.records ?? [])) {
-    const date = rec.created_at?.slice(0, 10)
-    if (date) recoveryByDate.set(date, rec)
-  }
+  // Fetch per-cycle recovery in parallel (v2: each sleep has a cycle_id)
+  const recoveryResults = await Promise.all(
+    mainSleeps.map(sleep => fetchRecoveryForCycle(sleep.cycle_id, authHeader))
+  )
 
   const rows: (WhoopSleepRecord & { user_id: string })[] = []
 
-  for (const sleep of (sleepPayload.records ?? [])) {
-    // Skip naps
-    if (sleep.nap === true) continue
+  for (let i = 0; i < mainSleeps.length; i++) {
+    const sleep    = mainSleeps[i]
+    const recovery = recoveryResults[i]
 
     const date = sleep.start?.slice(0, 10)
     if (!date) continue
 
     const summary  = sleep.score?.stage_summary
     const score    = sleep.score
-    const recovery = recoveryByDate.get(date)
     const recScore = recovery?.score
-    console.log("[whoop-fetch] hrv raw value:", recScore?.hrv_rmssd_milli, "date:", date)
+
+    console.log(
+      `[whoop-fetch] sleep record: ${sleep.id} date: ${date}`,
+      `cycle_id: ${sleep.cycle_id}`,
+      `hrv: ${recScore?.hrv_rmssd_milli ?? null}`,
+      `efficiency: ${score?.sleep_efficiency_percentage ?? null}`,
+    )
 
     const totalInBedMs = summary?.total_in_bed_time_milli ?? 0
     const awakeMs      = score?.awake_time_milli ?? (summary?.total_awake_time_milli ?? 0)
@@ -106,6 +133,8 @@ export async function fetchAndStoreWhoopData(
 
     rows.push({
       user_id:              userId,
+      sleep_id:             sleep.id,   // v2 UUID — deduplicated on upsert
+      provider:             'whoop',
       date,
       total_sleep_minutes:  Math.round((totalInBedMs - awakeMs) / 60000),
       deep_sleep_minutes:   Math.round(deepMs / 60000),
@@ -126,7 +155,7 @@ export async function fetchAndStoreWhoopData(
   if (rows.length > 0) {
     const { error } = await supabase
       .from("whoop_sleep_data")
-      .upsert(rows, { onConflict: "user_id,date" })
+      .upsert(rows, { onConflict: "user_id,date,provider" })
     if (error) console.error("[whoop-fetch] upsert error:", error.message)
   }
 
@@ -185,11 +214,10 @@ export async function fetchWhoopSleepData(
 
   console.log("[whoop-fetch] token preview:", token.substring(0, 8) + "...")
 
-  const sleepParams    = new URLSearchParams({ start: startIso, end, limit: "25" })
-  const recoveryParams = new URLSearchParams({ start: startIso, end, limit: "25" })
-  const authHeader     = { Authorization: `Bearer ${token}` }
+  const sleepParams = new URLSearchParams({ start: startIso, end, limit: "25" })
+  const authHeader  = { Authorization: `Bearer ${token}` }
 
-  const sleepUrl = `https://api.prod.whoop.com/developer/v1/activity/sleep?${sleepParams}`
+  const sleepUrl = `https://api.prod.whoop.com/developer/v2/activity/sleep?${sleepParams}`
   console.log(`[whoop-fetch] GET url=${sleepUrl}`)
 
   const sleepRes = await fetch(sleepUrl, { headers: authHeader })
@@ -197,39 +225,37 @@ export async function fetchWhoopSleepData(
     const body = await sleepRes.text().catch(() => "")
     if (sleepRes.status === 404) {
       console.info(`[whoop-fetch] 404 from sleep endpoint — no data in window, treating as empty (user=${userId})`)
+      console.log("[whoop-fetch] 404 body:", body)
       return []
     }
     throw new Error(`WHOOP sleep API ${sleepRes.status}: ${body}`)
   }
   const sleepPayload = await sleepRes.json() as { records: WhoopApiSleepRecord[] }
 
-  const recoveryRes = await fetch(
-    `https://api.prod.whoop.com/developer/v1/recovery?${recoveryParams}`,
-    { headers: authHeader },
+  // Filter naps, then fetch per-cycle recovery in parallel
+  const mainSleeps = (sleepPayload.records ?? []).filter(s => s.nap !== true)
+  const recoveryResults = await Promise.all(
+    mainSleeps.map(sleep => fetchRecoveryForCycle(sleep.cycle_id, authHeader))
   )
-  const recoveryPayload = recoveryRes.ok
-    ? (await recoveryRes.json() as { records: WhoopRecoveryRecord[] })
-    : { records: [] }
-
-  if (!recoveryRes.ok) {
-    console.warn("[whoop-fetch] recovery API non-OK:", recoveryRes.status, "— continuing without HRV")
-  }
-
-  const recoveryByDate = new Map<string, WhoopRecoveryRecord>()
-  for (const rec of (recoveryPayload.records ?? [])) {
-    const date = rec.created_at?.slice(0, 10)
-    if (date) recoveryByDate.set(date, rec)
-  }
 
   const records: WhoopSleepRecord[] = []
-  for (const sleep of (sleepPayload.records ?? [])) {
+  for (let i = 0; i < mainSleeps.length; i++) {
+    const sleep    = mainSleeps[i]
+    const recovery = recoveryResults[i]
+
     const date = sleep.start?.slice(0, 10)
     if (!date) continue
 
     const summary  = sleep.score?.stage_summary
     const score    = sleep.score
-    const recovery = recoveryByDate.get(date)
     const recScore = recovery?.score
+
+    console.log(
+      `[whoop-fetch] sleep record: ${sleep.id} date: ${date}`,
+      `cycle_id: ${sleep.cycle_id}`,
+      `hrv: ${recScore?.hrv_rmssd_milli ?? null}`,
+      `efficiency: ${score?.sleep_efficiency_percentage ?? null}`,
+    )
 
     const totalInBedMs = summary?.total_in_bed_time_milli ?? 0
     const awakeMs      = score?.awake_time_milli ?? (summary?.total_awake_time_milli ?? 0)
@@ -237,6 +263,8 @@ export async function fetchWhoopSleepData(
     const remMs        = summary?.total_rem_sleep_time_milli ?? 0
 
     records.push({
+      sleep_id:            sleep.id,    // v2 UUID
+      provider:            'whoop',
       date,
       total_sleep_minutes: Math.round((totalInBedMs - awakeMs) / 60000),
       deep_sleep_minutes:  Math.round(deepMs / 60000),

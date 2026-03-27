@@ -1,5 +1,6 @@
 export interface WhoopSleepRecord {
-  id: number
+  id: string            // UUID string in v2 (was integer in v1)
+  cycle_id: number      // integer — unchanged in v2
   user_id: number
   created_at: string
   updated_at: string
@@ -36,7 +37,7 @@ export interface WhoopSleepRecord {
 
 export interface WhoopRecoveryRecord {
   cycle_id: number
-  sleep_id: number
+  sleep_id: string      // UUID string in v2 (was integer in v1)
   user_id: number
   created_at: string
   updated_at: string

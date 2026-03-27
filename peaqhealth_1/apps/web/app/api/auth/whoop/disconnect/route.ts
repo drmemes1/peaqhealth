@@ -52,12 +52,13 @@ export async function POST() {
     .eq("user_id", user.id)
   if (snapErr) console.warn("[whoop-disconnect] score_snapshots update failed (non-fatal):", snapErr.message)
 
-  // Step 2: Delete wearable_connections (all providers including legacy "unknown")
-  console.log("[whoop-disconnect] step 2 — deleting wearable_connections")
+  // Step 2: Delete wearable_connections for WHOOP only (preserves Oura/Garmin rows)
+  console.log("[whoop-disconnect] step 2 — deleting wearable_connections for provider=whoop")
   const { error: wcErr, count: wcCount } = await svc
     .from("wearable_connections")
     .delete({ count: "exact" })
     .eq("user_id", user.id)
+    .eq("provider", "whoop")
   console.log("[whoop-disconnect] wearable_connections deleted:", { rows: wcCount, error: wcErr?.message ?? null })
 
   if (wcErr) {
@@ -65,12 +66,13 @@ export async function POST() {
     return NextResponse.json({ error: "Failed to disconnect" }, { status: 500 })
   }
 
-  // Step 3: Delete whoop_sleep_data
-  console.log("[whoop-disconnect] step 3 — deleting whoop_sleep_data")
+  // Step 3: Delete whoop_sleep_data for provider=whoop only (preserves Oura rows)
+  console.log("[whoop-disconnect] step 3 — deleting whoop_sleep_data for provider=whoop")
   const { error: wsdErr, count: wsdCount } = await svc
     .from("whoop_sleep_data")
     .delete({ count: "exact" })
     .eq("user_id", user.id)
+    .eq("provider", "whoop")
   console.log("[whoop-disconnect] whoop_sleep_data deleted:", { rows: wsdCount, error: wsdErr?.message ?? null })
 
   // Step 4: Delete whoop_connections

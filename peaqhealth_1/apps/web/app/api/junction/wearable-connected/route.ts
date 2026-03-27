@@ -1,8 +1,10 @@
+import { after } from "next/server"
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "../../../../lib/supabase/server"
 import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { getSleepSummaries, requestHistoricalPull } from "@peaq/api-client/junction"
 import { recalculateScore } from "../../../../lib/score/recalculate"
+import { fetchAndStoreOuraData } from "../../../../lib/oura/fetch"
 
 export async function POST(request: NextRequest) {
   console.log("[wearable] connected route called")
@@ -112,6 +114,25 @@ export async function POST(request: NextRequest) {
   } catch {
     // non-fatal — historical pull can fail silently; webhook will not fire
   }
+
+  // Backfill 30 days of Oura sleep data into whoop_sleep_data after response
+  const capturedUserId = user.id
+  const capturedProvider = provider
+  after(async () => {
+    console.log("[wearable] backfill starting for userId:", capturedUserId, "provider:", capturedProvider)
+    try {
+      const svc = createServiceClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      )
+      const count = await fetchAndStoreOuraData(capturedUserId, 30)
+      console.log("[wearable] backfill complete, records:", count)
+      await recalculateScore(capturedUserId, svc)
+      console.log("[wearable] score recalculated after backfill")
+    } catch (err) {
+      console.error("[wearable] backfill error:", err)
+    }
+  })
 
   return NextResponse.json({ connected: true, retroNights, score: newScore })
 }

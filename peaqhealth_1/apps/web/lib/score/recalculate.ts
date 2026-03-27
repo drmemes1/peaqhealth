@@ -1,6 +1,9 @@
 import { calculatePeaqScore, type LifestyleInputs, type BloodInputs, type OralInputs, type SleepInputs } from "@peaq/score-engine"
 import type { SupabaseClient } from "@supabase/supabase-js"
 
+// Provider priority for best-per-date selection (lower = preferred)
+const PROVIDER_PRIORITY: Record<string, number> = { whoop: 0, oura: 1, garmin: 2 }
+
 // ─── DB row → engine type mappers ─────────────────────────────────────────────
 
 export function mapLifestyleRow(row: Record<string, unknown>): LifestyleInputs {
@@ -172,53 +175,71 @@ export async function recalculateScore(
   userId: string,
   supabase: SupabaseClient
 ): Promise<number> {
-  const [wearableRes, labsRes, oralRes, lifestyleRes, manualSleepRes, whoopRes] = await Promise.all([
+  const [wearableRes, labsRes, oralRes, lifestyleRes, manualSleepRes, sleepNightsRes] = await Promise.all([
     supabase.from("wearable_connections").select("*").eq("user_id", userId).eq("status", "connected").order("updated_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("lab_results").select("*").eq("user_id", userId).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).single(),
     supabase.from("oral_kit_orders").select("*").eq("user_id", userId).not("shannon_diversity", "is", null).order("ordered_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("lifestyle_records").select("*").eq("user_id", userId).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("manual_sleep_entries").select("duration_seconds,quality").eq("user_id", userId).order("date", { ascending: false }).limit(14),
-    supabase.from("whoop_connections").select("last_synced_at").eq("user_id", userId).maybeSingle(),
+    supabase.from("whoop_sleep_data")
+      .select("date,provider,total_sleep_minutes,deep_sleep_minutes,rem_sleep_minutes,sleep_efficiency,hrv_rmssd,spo2")
+      .eq("user_id", userId)
+      .gt("sleep_efficiency", 0)
+      .order("date", { ascending: false })
+      .limit(30),
   ])
 
-  // Sleep inputs: prefer WHOOP (if synced within 24h) → wearable_connections → manual entries
+  // Sleep inputs: best wearable data per date (provider priority) → manual entries
   let sleepInputs: SleepInputs | undefined
+  let sleepSource = "none"
 
   if (wearableRes.error) console.error("[score] wearable query error:", wearableRes.error.message)
   console.log("[score] wearable found:", wearableRes.data ? "yes" : "no",
     "efficiency:", (wearableRes.data as Record<string, unknown> | null)?.sleep_efficiency ?? "—")
 
-  // WHOOP: if synced within 24h its data is written to wearable_connections
-  // with provider='whoop' and updated_at reflecting the sync time, so the
-  // ORDER BY updated_at DESC query above naturally returns it first.
-  const whoopSyncedAt = whoopRes.data?.last_synced_at as string | null
-  void whoopSyncedAt // referenced in dashboard for display; score uses wearable_connections
+  // ── Direct whoop_sleep_data query with provider priority ──────────────────
+  type SleepNight = {
+    date: string; provider: string
+    total_sleep_minutes: number; deep_sleep_minutes: number; rem_sleep_minutes: number
+    sleep_efficiency: number; hrv_rmssd: number | null; spo2: number | null
+  }
+  const allNights = (sleepNightsRes.data ?? []) as SleepNight[]
 
-  // Build sleepInputs from wearable_connections averages (populated by webhook or WHOOP sync)
-  if (!sleepInputs && wearableRes.data) {
-    const wRow = wearableRes.data as Record<string, unknown>
-    const nightsAvailable = (wRow.nights_available as number) ?? 0
-    const efficiency      = (wRow.sleep_efficiency as number) ?? 0
-    const deepPct         = (wRow.deep_sleep_pct   as number) ?? 0
-    const remPct          = (wRow.rem_pct           as number) ?? 0
-    const hrv             = (wRow.hrv_rmssd         as number) ?? 0
-    const spo2Dips        = (wRow.latest_spo2_dips  as number) ?? 0
-
-    // Accept data if we have ≥7 nights OR sleep_efficiency is present
-    const hasEnoughData = (nightsAvailable >= 7) || (efficiency > 0)
-
-    if (hasEnoughData) {
-      // Values stored as percentages (e.g. 87, 17.4, 20.1) — engine expects 0–100 scale
-      sleepInputs = {
-        deepSleepPct:       deepPct,
-        hrv_ms:             hrv,
-        spo2DipsPerNight:   spo2Dips,
-        remPct:             remPct,
-        sleepEfficiencyPct: efficiency,
-        nightsAvailable:    nightsAvailable || undefined,
-      }
-      console.log("[score] sleep from wearable_connections fallback — nights:", nightsAvailable, "eff:", efficiency, "deep:", deepPct, "rem:", remPct, "hrv:", hrv)
+  if (allNights.length > 0) {
+    // Pick best provider per date
+    const bestByDate = new Map<string, SleepNight>()
+    for (const night of allNights) {
+      const existing = bestByDate.get(night.date)
+      const nightPriority = PROVIDER_PRIORITY[night.provider] ?? 99
+      const existingPriority = existing ? (PROVIDER_PRIORITY[existing.provider] ?? 99) : Infinity
+      if (nightPriority < existingPriority) bestByDate.set(night.date, night)
     }
+
+    const bestNights = Array.from(bestByDate.values())
+    const n = bestNights.length
+    const avg = (key: keyof SleepNight) =>
+      bestNights.reduce((s, r) => s + (Number(r[key]) || 0), 0) / n
+
+    const totalMin = avg("total_sleep_minutes")
+    const spo2Avg  = avg("spo2")
+    const mostRecentProvider = bestNights[0]?.provider ?? "unknown"
+
+    sleepInputs = {
+      deepSleepPct:       totalMin > 0 ? (avg("deep_sleep_minutes") / totalMin) * 100 : 0,
+      remPct:             totalMin > 0 ? (avg("rem_sleep_minutes")  / totalMin) * 100 : 0,
+      sleepEfficiencyPct: avg("sleep_efficiency"),
+      hrv_ms:             avg("hrv_rmssd"),
+      spo2DipsPerNight:   spo2Avg >= 95 ? 0 : spo2Avg >= 92 ? 2 : 5,
+      nightsAvailable:    n,
+    }
+    sleepSource = mostRecentProvider
+
+    console.log(
+      "[score] sleep from whoop_sleep_data — nights:", n,
+      "provider:", mostRecentProvider,
+      "eff:", Math.round(avg("sleep_efficiency")),
+      "hrv:", Math.round(avg("hrv_rmssd") * 10) / 10,
+    )
   }
 
   if (!sleepInputs && manualSleepRes.data && manualSleepRes.data.length >= 7) {
@@ -260,9 +281,9 @@ export async function recalculateScore(
   const storedScore = !sleepInputs
     ? Math.max(0, result.score - result.breakdown.sleepSub)
     : result.score
-  const sleepSource = !sleepInputs ? "none" : result.breakdown.sleepSource
+  const storedSleepSource = !sleepInputs ? "none" : (sleepSource || result.breakdown.sleepSource)
 
-  console.log(`[recalculate] user=${userId} sleep=${sleepSub} blood=${result.breakdown.bloodSub} oral=${result.breakdown.oralSub} lifestyle=${result.breakdown.lifestyleSub} total=${storedScore} sleepSource=${sleepSource}`)
+  console.log(`[recalculate] user=${userId} sleep=${sleepSub} blood=${result.breakdown.bloodSub} oral=${result.breakdown.oralSub} lifestyle=${result.breakdown.lifestyleSub} total=${storedScore} sleepSource=${storedSleepSource}`)
 
   let insertError: unknown = null
   try { await supabase.from("score_snapshots").insert({
@@ -272,7 +293,7 @@ export async function recalculateScore(
     score:                  storedScore,
     category:               result.category,
     sleep_sub:              sleepSub,
-    sleep_source:           sleepSource,
+    sleep_source:           storedSleepSource,
     blood_sub:              result.breakdown.bloodSub,
     oral_sub:               result.breakdown.oralSub,
     lifestyle_sub:          result.breakdown.lifestyleSub,

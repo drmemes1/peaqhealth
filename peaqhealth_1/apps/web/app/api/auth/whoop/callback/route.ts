@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
   after(async () => {
     console.log("[whoop-callback] backfill starting for userId:", capturedUserId)
     try {
-      const count = await fetchAndStoreWhoopData(capturedUserId, 7)
+      const count = await fetchAndStoreWhoopData(capturedUserId, 30)
       console.log("[whoop-callback] backfill complete, records:", count)
       await recalculateScore(capturedUserId, svc())
       console.log("[whoop-callback] score recalculated")
