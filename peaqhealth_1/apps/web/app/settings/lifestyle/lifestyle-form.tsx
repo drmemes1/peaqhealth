@@ -732,7 +732,7 @@ export function LifestyleForm({ existing }: Props) {
                       {(answers["ageRange"] === "40_49" || answers["ageRange"] === "50_59" || answers["ageRange"] === "60_69" || answers["ageRange"] === "70_plus") && (
                         <div>
                           <p className="font-display text-[17px] font-light leading-snug text-ink mb-1">
-                            Are you up to date on colorectal cancer screening?
+                            Are you up to date on colorectal screening?
                           </p>
                           <p className="font-body text-[11px] text-ink/35 leading-relaxed mb-3 italic">
                             Consider discussing screening options (colonoscopy, Cologuard, or FIT) with your doctor. USPSTF recommends considering screening starting at age 45.
@@ -834,7 +834,7 @@ export function LifestyleForm({ existing }: Props) {
                        (answers["ageRange"] === "30_39" || answers["ageRange"] === "40_49" || answers["ageRange"] === "50_59" || answers["ageRange"] === "60_69") && (
                         <div>
                           <p className="font-display text-[17px] font-light leading-snug text-ink mb-1">
-                            Are you current on cervical cancer screening?
+                            Are you current on cervical screening (Pap / HPV)?
                           </p>
                           <p className="font-body text-[11px] text-ink/35 leading-relaxed mb-3 italic">
                             Consider discussing Pap smear or HPV testing schedules with your doctor (USPSTF).

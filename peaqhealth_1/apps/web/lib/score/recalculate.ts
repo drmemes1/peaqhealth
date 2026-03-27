@@ -141,6 +141,9 @@ export function mapOralRow(row: Record<string, unknown>): OralInputs | undefined
     if (typeof snap.osaBurden === 'number') base.osaBurden = snap.osaBurden
     if (typeof snap.periodontalBurden === 'number') base.periodontalBurden = snap.periodontalBurden
     if (typeof snap.highOsaRisk === 'boolean') base.highOsaRisk = snap.highOsaRisk
+    // D4: protective bacteria % — use from snapshot when available (engine v1.1+)
+    // osaTaxaPct field is repurposed to carry protective bacteria % for the score engine
+    if (typeof snap.protectivePct === 'number') base.osaTaxaPct = snap.protectivePct
   }
   return base
 }

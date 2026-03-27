@@ -32,10 +32,10 @@ const PRIORITY_BORDER: Record<string, string> = {
 }
 
 const WATCH_LABELS: Record<string, { label: string; citation: string }> = {
-  alzheimersRisk:  { label: "Alzheimer's risk signal", citation: "Dominy SS, et al. Science Advances. 2019." },
-  diabetesSignal:  { label: "Metabolic dysbiosis signal", citation: "Hajishengallis G. Nature Reviews. 2015." },
-  raSignal:        { label: "Rheumatoid arthritis signal", citation: "Scher JU, et al. eLife. 2012." },
-  colorectalSignal: { label: "Colorectal cancer signal", citation: "Castellarin M, et al. Genome Research. 2012." },
+  systemicInflammationSignal:   { label: "Systemic inflammation signal (P. gingivalis)", citation: "Hussain M, et al. Frontiers Immunology. 2023." },
+  metabolicDysbiosisSignal:     { label: "Metabolic dysbiosis signal", citation: "Hajishengallis G. Nature Reviews. 2015." },
+  autoimmuneInflammationSignal: { label: "Inflammatory periodontal burden", citation: "Hajishengallis G. Nature Reviews Immunology. 2015." },
+  gutOralAxisSignal:            { label: "Oral-gut axis signal (F. nucleatum)", citation: "Castellarin M, et al. Genome Research. 2012." },
 }
 
 function FindingCard({ finding }: { finding: OralFinding }) {
@@ -146,9 +146,9 @@ export function OralInsights({ oralScore, kitStatus }: OralInsightsProps) {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
         {[
           { label: "Shannon", value: oralScore.shannonDiversity.toFixed(2), sub: `${oralScore.shannonSub}/8 pts` },
-          { label: "Nitrate", value: `${oralScore.nitrateReducerPct.toFixed(1)}%`, sub: `${oralScore.nitrateSub}/6 pts` },
+          { label: "Nitrate", value: `${oralScore.nitrateReducerPct.toFixed(1)}%`, sub: `${oralScore.nitrateSub}/7 pts` },
           { label: "P. gingivalis", value: `${oralScore.pGingivalisPct.toFixed(2)}%`, sub: `${oralScore.periodontalSub}/7 pts` },
-          { label: "OSA burden", value: oralScore.osaBurden.toFixed(2), sub: `${oralScore.osaSub}/4 pts` },
+          { label: "Protective", value: `${oralScore.protectivePct?.toFixed(1) ?? "—"}%`, sub: `${oralScore.osaSub}/5 pts` },
         ].map(item => (
           <div key={item.label} style={{ background: "rgba(20,20,16,0.03)", borderRadius: 4, padding: "10px 12px" }}>
             <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(20,20,16,0.4)", margin: "0 0 4px" }}>{item.label}</p>

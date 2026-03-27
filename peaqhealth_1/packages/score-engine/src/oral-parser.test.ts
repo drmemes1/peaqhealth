@@ -55,8 +55,8 @@ test('nitrate < 3%', () => expect_val(mw.nitrateReducerPct).toBeLessThan(3))
 test('first finding is mouthwash-detected', () => expect_val(mw.findings[0].id).toBe('mouthwash-detected'))
 
 console.log('\nwatch signals:')
-test('alzheimers risk > 0 for dysbiotic', () => expect_val(dys.watchSignals.alzheimersRisk).toBeGreaterThan(0))
-test('colorectal signal > 0 for dysbiotic', () => expect_val(dys.watchSignals.colorectalSignal).toBeGreaterThan(0))
+test('systemic inflammation signal > 0 for dysbiotic', () => expect_val(dys.watchSignals.systemicInflammationSignal).toBeGreaterThan(0))
+test('gut-oral axis signal > 0 for dysbiotic', () => expect_val(dys.watchSignals.gutOralAxisSignal).toBeGreaterThan(0))
 
 console.log(`\n${passed} passed, ${failed} failed\n`)
 if (failed > 0) process.exit(1)

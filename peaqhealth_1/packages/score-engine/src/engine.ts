@@ -635,11 +635,37 @@ export function scoreBloodSubPanels(blood: BloodInputs): BloodPanelResult {
 }
 
 // ---- Oral scoring -----------------------------------------------------------
+// Dimension 1: Shannon diversity (8 pts max)
+// Thresholds: <2.0→0, 2.0-2.5→2, 2.5-3.0→4, 3.0-3.5→6, ≥3.5→8
+function scoreShannon(h: number): number { return h < 2.0 ? 0 : h < 2.5 ? 2 : h < 3.0 ? 4 : h < 3.5 ? 6 : 8 }
 
-function scoreShannon(h: number): number { return h < 2.0 ? 0 : h < 2.5 ? 2 : h < 3.0 ? 5 : h < 3.5 ? 7 : 9 }
-function scoreNitrateReducers(pct: number): number { return pct < 0.5 ? 0 : pct < 2 ? 2 : pct < 5 ? 4 : pct < 10 ? 6 : 7 }
-function scorePeriodontopathogen(pct: number): number { return pct >= 5 ? 0 : pct >= 2 ? 2 : pct >= 0.5 ? 5 : 7 }
-function scoreOsaTaxa(pct: number): number { return pct >= 3 ? 0 : pct >= 1 ? 2 : 4 }
+// Dimension 2: Nitrate-reducing bacteria (7 pts max)
+// Score = sum of relative abundance % for matching genera
+// Thresholds: <5%→0, 5-10%→2, 10-15%→4, 15-20%→6, ≥20%→7
+function scoreNitrateReducers(pct: number): number { return pct < 5 ? 0 : pct < 10 ? 2 : pct < 15 ? 4 : pct < 20 ? 6 : 7 }
+
+// Dimension 3: Periodontal pathogens — INVERSE score (7 pts max)
+// Uses P. gingivalis % (pGingivalisPct) and total burden %
+// P. gingivalis ≥1% OR total ≥5%→0, 0.5-1% OR 3.5-5%→1, 0.3-0.5% OR 2-3.5%→3,
+// 0.1-0.3% OR 1-2%→5, <0.1% AND <1%→7
+// This function takes the total periodontopathogen % as the primary input;
+// when pGingivalisPct is available via oral.pGingivalisPct, the caller applies the refined logic.
+function scorePeriodontopathogen(pct: number, pGingivalisPct?: number): number {
+  const pg = pGingivalisPct ?? 0
+  if (pg >= 1 || pct >= 5)         return 0
+  if (pg >= 0.5 || pct >= 3.5)    return 1
+  if (pg >= 0.3 || pct >= 2)      return 3
+  if (pg >= 0.1 || pct >= 1)      return 5
+  return 7
+}
+
+// Dimension 4: Protective bacteria (5 pts max)
+// Lactobacillus and Bifidobacterium match by genus; others exact:
+// Streptococcus sanguinis, Streptococcus salivarius, Faecalibacterium prausnitzii
+// Combined % abundance: <1%→0, 1-3%→2, 3-5%→3, 5-10%→4, ≥10%→5
+// When full oral snapshot is available (osaTaxaPct used as proxy for protective %),
+// fall back to osaTaxaPct for legacy compatibility.
+function scoreProtectiveBacteria(pct: number): number { return pct < 1 ? 0 : pct < 3 ? 2 : pct < 5 ? 3 : pct < 10 ? 4 : 5 }
 
 // ---- Interaction checks -----------------------------------------------------
 
@@ -798,13 +824,17 @@ export function calculatePeaqScore(sleep?: SleepInputs, blood?: BloodInputs, ora
     sleepSub = sleepRaw = psqiEstimate
   }
 
-  // Oral
+  // Oral — four dimensions, 27 pts max
+  // D1: Shannon diversity (8), D2: Nitrate-reducing bacteria (7),
+  // D3: Periodontal pathogens — inverse (7), D4: Protective bacteria (5)
   let shannonScore = 0, nitrateScore = 0, periodontScore = 0, osaScore = 0, oralSub = 0
   if (oral) {
     shannonScore   = scoreShannon(oral.shannonDiversity)
     nitrateScore   = scoreNitrateReducers(oral.nitrateReducersPct)
-    periodontScore = scorePeriodontopathogen(oral.periodontopathogenPct)
-    osaScore       = scoreOsaTaxa(oral.osaTaxaPct)
+    // Use pGingivalisPct (rich field) when available for refined periodontal scoring
+    periodontScore = scorePeriodontopathogen(oral.periodontopathogenPct, oral.pGingivalisPct)
+    // D4: protective bacteria — stored in osaTaxaPct field for backward compatibility
+    osaScore       = scoreProtectiveBacteria(oral.osaTaxaPct)
     oralSub        = shannonScore + nitrateScore + periodontScore + osaScore
   }
 

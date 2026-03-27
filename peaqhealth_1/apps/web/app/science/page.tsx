@@ -24,7 +24,7 @@ const citations: Record<number, { authors: string; title: string; journal: strin
   14: { authors: "Petersson J, et al.", title: "Gastroprotective and blood pressure lowering effects of dietary nitrate", journal: "Free Radical Biology & Medicine", year: "2009" },
   15: { authors: "Kapil V, et al.", title: "Dietary nitrate provides sustained blood pressure lowering in hypertension", journal: "Hypertension", year: "2015", n: "300" },
   16: { authors: "Hussain M, et al.", title: "Oral bacteria in cardiovascular specimens", journal: "Frontiers in Immunology", year: "2023", n: "1,791" },
-  17: { authors: "Dominy SS, et al.", title: "Porphyromonas gingivalis in Alzheimer's disease brains", journal: "Science Advances", year: "2019" },
+  17: { authors: "Dominy SS, et al.", title: "Porphyromonas gingivalis in human brain tissue", journal: "Science Advances", year: "2019" },
   18: { authors: "Chen X, et al.", title: "Oral microbiome as a potential biomarker for OSA", journal: "mSystems", year: "2022", n: "156" },
   19: { authors: "Dalton B, et al.", title: "Bidirectional relationship between oral microbiome and sleep quality", journal: "Sleep Medicine", year: "2025", n: "1,139" },
   20: { authors: "Park SY, et al.", title: "Association of toothbrushing with cardiovascular risk", journal: "European Journal of Preventive Cardiology", year: "2019", n: "247,696" },
@@ -526,7 +526,7 @@ export default function SciencePage() {
           title="Deep sleep (slow-wave)"
           target="≥17% of total sleep time"
           color="var(--sleep-c)"
-          body={<>Deep sleep drives growth hormone release, metabolic waste clearance via the glymphatic system, and immune consolidation. Below 15% is associated with elevated Alzheimer&rsquo;s biomarkers.<Cite n={1} /></>}
+          body={<>Deep sleep drives growth hormone release, metabolic waste clearance via the glymphatic system, and immune consolidation. Below 15% is associated with elevated neuroinflammation biomarkers and impaired glymphatic clearance.<Cite n={1} /></>}
           evidence="Xie et al., Science 2013. Walker, Why We Sleep, 2017."
         />
         <Marker
@@ -641,7 +641,7 @@ export default function SciencePage() {
           title="HbA1c"
           target="<5.4%"
           color="var(--blood-c)"
-          body={<>Glycated haemoglobin reflects average blood glucose over 90 days. Pre-diabetic range (5.7–6.4%) confers elevated risk of dementia, kidney disease, neuropathy, and cardiovascular events — often years before diagnosis.<Cite n={10} /></>}
+          body={<>Glycated haemoglobin reflects average blood glucose over 90 days. Pre-diabetic range (5.7–6.4%) confers elevated risk of kidney disease, neuropathy, and cardiovascular events — often years before diagnosis.<Cite n={10} /></>}
           evidence="Selvin et al., NEJM 2010. n=11,092."
         />
         <Marker
@@ -672,7 +672,7 @@ export default function SciencePage() {
 
         <FadeUp delay={60}>
           <p style={{ ...bodyTextStyle, marginBottom: 16 }}>
-            The oral microbiome is the least understood and most underutilised dimension of systemic health. The mouth is not isolated from the rest of the body — it shares blood supply with the heart, lungs, and brain. Dysbiosis in oral bacteria has been directly detected in coronary plaques, cerebrospinal fluid, and colorectal tumours.
+            The oral microbiome is the least understood and most underutilised dimension of systemic health. The mouth is not isolated from the rest of the body — it shares blood supply with the heart, lungs, and brain. Dysbiosis in oral bacteria has been directly detected in coronary plaques and systemic tissues in multiple autopsy and biopsy studies.
           </p>
           <p style={{ ...bodyTextStyle, marginBottom: 16 }}>
             Oral microbiome data comes from Zymo Research 16S rRNA sequencing. A simple at-home swab kit. Results in 10–14 days.

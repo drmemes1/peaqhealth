@@ -66,13 +66,16 @@ export interface OralScore {
   findings: OralFinding[]
   recommendations: string[]
 
-  // Watch signals
+  // Systemic inflammation signals (wellness framing — not disease diagnoses)
   watchSignals: {
-    alzheimersRisk: number
-    diabetesSignal: number
-    raSignal: number
-    colorectalSignal: number
+    systemicInflammationSignal: number   // formerly alzheimersRisk — P. gingivalis elevation
+    metabolicDysbiosisSignal: number     // formerly diabetesSignal
+    autoimmuneInflammationSignal: number // formerly raSignal — P. gingivalis-driven inflammation
+    gutOralAxisSignal: number            // formerly colorectalSignal — F. nucleatum elevation
   }
+
+  // Protective bacteria combined %
+  protectivePct: number
 
   // Meta
   sampleId: string
@@ -260,11 +263,11 @@ function generateFindings(
       priority: 'CRITICAL',
       panel: 'periodontal',
       title: 'P. gingivalis — Critical Level Detected',
-      body: `Porphyromonas gingivalis is the most systemically dangerous organism in the oral cavity. At ${pct}% of your oral reads, it is at a clinically significant level. P. gingivalis has been physically detected inside human coronary artery plaques (Hussain 2023, n=1,791) and in the brain tissue of 96% of Alzheimer's patients examined (Dominy 2019). Its unique virulence factor — gingipains — enables it to evade immune killing and translocate into the bloodstream. It also citrullinates host proteins, potentially triggering rheumatoid arthritis. This requires immediate action.`,
-      action: "Consider scheduling a dental cleaning and mentioning this finding to your dentist. Consider adding daily flossing or a water flosser to your routine.",
+      body: `Porphyromonas gingivalis is the primary inflammatory periodontal pathogen. At ${pct}% of your oral reads, it is at a clinically significant level. P. gingivalis has been directly detected inside human coronary artery plaques (Hussain 2023, n=1,791), demonstrating its ability to translocate from the oral cavity into the bloodstream and contribute to systemic inflammation. Its unique virulence factors — gingipains — enable it to evade immune clearance and dysregulate the host inflammatory response. This requires immediate attention.`,
+      action: "Schedule a dental cleaning and mention this finding to your dentist. Add daily flossing or a water flosser to your routine.",
       impact: "Professional debridement + daily flossing reduces P. gingivalis by 60–80% within 90 days.",
       retestDays: 90,
-      citation: "Hussain M, et al. Frontiers Immunology. 2023. Dominy SS, et al. Science Advances. 2019.",
+      citation: "Hussain M, et al. Frontiers Immunology. 2023. Hajishengallis G. Nature Reviews Immunology. 2015.",
     })
   } else if (pGingivalisPct > 0.5) {
     const pct = pGingivalisPct.toFixed(2)
@@ -273,7 +276,7 @@ function generateFindings(
       priority: 'HIGH',
       panel: 'periodontal',
       title: 'P. gingivalis — Elevated',
-      body: `P. gingivalis at ${pct}% is above the optimal threshold of <0.1%. This organism drives periodontal disease and has been directly detected in coronary artery plaques and Alzheimer's brain tissue. While not yet at critical levels, reducing its burden is your highest-priority oral health action.`,
+      body: `P. gingivalis at ${pct}% is above the optimal threshold of <0.1%. This organism is the primary driver of periodontal disease and systemic inflammation, and has been directly detected in coronary artery plaques in autopsy studies. Reducing its burden is your highest-priority oral health action.`,
       action: "Consider scheduling a dental cleaning and discussing this finding with your dentist. Consider adding daily flossing or a water flosser, and discuss mouthwash choices with your dentist.",
       impact: "Target <0.1% P. gingivalis within 90 days with consistent oral hygiene.",
       retestDays: 90,
@@ -331,7 +334,7 @@ function generateFindings(
       priority: 'POSITIVE',
       panel: 'periodontal',
       title: 'Excellent Periodontal Health',
-      body: "P. gingivalis is below detection threshold and your overall periodontal burden score is excellent. Frontiers in Immunology 2023 (n=1,791) detected P. gingivalis directly in coronary artery plaques — your low burden is a genuine cardiovascular protective factor. This reflects good oral hygiene habits.",
+      body: "P. gingivalis is below detection threshold and your overall periodontal burden score is excellent. Frontiers in Immunology 2023 (n=1,791) detected P. gingivalis directly in coronary artery plaques — your low burden indicates a healthy inflammatory profile and reflects good oral hygiene habits.",
       action: "Consider maintaining twice-daily brushing, daily flossing, and regular dental visits. Consider discussing mouthwash choices with your dentist.",
       impact: "Continue current habits. Retest in 90 days.",
       retestDays: 90,
@@ -345,6 +348,28 @@ function generateFindings(
   return findings
 }
 
+// Protective bacteria — match Lactobacillus/Bifidobacterium by genus prefix, others exact
+const PROTECTIVE_EXACT = new Set([
+  'Streptococcus sanguinis',
+  'Streptococcus salivarius',
+  'Faecalibacterium prausnitzii',
+])
+const PROTECTIVE_GENUS_PREFIX = ['Lactobacillus', 'Bifidobacterium']
+
+function calculateProtectivePct(taxonomy: Record<string, number>): number {
+  let total = 0
+  for (const [name, abundance] of Object.entries(taxonomy)) {
+    if (PROTECTIVE_EXACT.has(name)) {
+      total += abundance
+      continue
+    }
+    if (PROTECTIVE_GENUS_PREFIX.some(g => name.startsWith(g))) {
+      total += abundance
+    }
+  }
+  return total
+}
+
 function calculateWatchSignals(
   taxonomy: Record<string, number>,
   periodontalBurden: number,
@@ -353,10 +378,10 @@ function calculateWatchSignals(
   const fNucleatum = taxonomy['Fusobacterium nucleatum'] || 0
   const sMutans = taxonomy['Streptococcus mutans'] || 0
   return {
-    alzheimersRisk: Math.min(1, pGingivalis / 2.0),
-    diabetesSignal: Math.min(1, (sMutans / 5.0) * 0.5 + (periodontalBurden / 5.0) * 0.5),
-    raSignal: Math.min(1, pGingivalis / 1.5),
-    colorectalSignal: Math.min(1, fNucleatum / 5.0),
+    systemicInflammationSignal: Math.min(1, pGingivalis / 2.0),
+    metabolicDysbiosisSignal: Math.min(1, (sMutans / 5.0) * 0.5 + (periodontalBurden / 5.0) * 0.5),
+    autoimmuneInflammationSignal: Math.min(1, pGingivalis / 1.5),
+    gutOralAxisSignal: Math.min(1, fNucleatum / 5.0),
   }
 }
 
@@ -463,6 +488,9 @@ export function parseOralMicrobiome(report: ZymoReport): OralScore {
   // 11. Watch signals
   const watchSignals = calculateWatchSignals(taxonomy, periodontalBurden)
 
+  // 12. Protective bacteria combined %
+  const protectivePct = calculateProtectivePct(taxonomy)
+
   return {
     total,
     shannonSub,
@@ -486,10 +514,11 @@ export function parseOralMicrobiome(report: ZymoReport): OralScore {
     findings,
     recommendations,
     watchSignals,
+    protectivePct,
     sampleId: report.sample_id,
     collectionDate: report.collection_date,
     totalReads: report.total_reads,
     speciesCount: Object.keys(taxonomy).length,
-    engineVersion: '1.0',
+    engineVersion: '1.1',
   }
 }
