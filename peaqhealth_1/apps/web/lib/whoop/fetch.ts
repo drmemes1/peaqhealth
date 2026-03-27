@@ -5,6 +5,7 @@ import type { WhoopSleepRecord as WhoopApiSleepRecord, WhoopRecoveryRecord } fro
 // ── DB row shape (exported for backward-compat with admin/sync routes) ────────
 
 export interface WhoopSleepRecord {
+  sleep_id?:            string        // v2 UUID — used for deduplication on upsert
   date:                 string
   total_sleep_minutes:  number
   deep_sleep_minutes:   number
@@ -131,6 +132,7 @@ export async function fetchAndStoreWhoopData(
 
     rows.push({
       user_id:              userId,
+      sleep_id:             sleep.id,   // v2 UUID — deduplicated on upsert
       date,
       total_sleep_minutes:  Math.round((totalInBedMs - awakeMs) / 60000),
       deep_sleep_minutes:   Math.round(deepMs / 60000),
@@ -151,7 +153,7 @@ export async function fetchAndStoreWhoopData(
   if (rows.length > 0) {
     const { error } = await supabase
       .from("whoop_sleep_data")
-      .upsert(rows, { onConflict: "user_id,date" })
+      .upsert(rows, { onConflict: "sleep_id" })
     if (error) console.error("[whoop-fetch] upsert error:", error.message)
   }
 
@@ -259,6 +261,7 @@ export async function fetchWhoopSleepData(
     const remMs        = summary?.total_rem_sleep_time_milli ?? 0
 
     records.push({
+      sleep_id:            sleep.id,    // v2 UUID
       date,
       total_sleep_minutes: Math.round((totalInBedMs - awakeMs) / 60000),
       deep_sleep_minutes:  Math.round(deepMs / 60000),

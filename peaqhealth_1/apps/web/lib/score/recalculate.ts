@@ -1,5 +1,6 @@
 import { calculatePeaqScore, type LifestyleInputs, type BloodInputs, type OralInputs, type SleepInputs } from "@peaq/score-engine"
 import type { SupabaseClient } from "@supabase/supabase-js"
+import { normalizeWhoopSleep, normalizeOuraSleep, scoreSleep } from "../sleep/normalize"
 
 // ─── DB row → engine type mappers ─────────────────────────────────────────────
 
@@ -188,36 +189,23 @@ export async function recalculateScore(
   console.log("[score] wearable found:", wearableRes.data ? "yes" : "no",
     "efficiency:", (wearableRes.data as Record<string, unknown> | null)?.sleep_efficiency ?? "—")
 
-  // WHOOP: if synced within 24h its data is written to wearable_connections
-  // with provider='whoop' and updated_at reflecting the sync time, so the
-  // ORDER BY updated_at DESC query above naturally returns it first.
-  const whoopSyncedAt = whoopRes.data?.last_synced_at as string | null
-  void whoopSyncedAt // referenced in dashboard for display; score uses wearable_connections
+  // ── Normalize → score pipeline ────────────────────────────────────────────
+  // 1. WHOOP: normalize from raw whoop_sleep_data (v2 per-night records, most accurate)
+  if (!sleepInputs && whoopRes.data) {
+    const normalized = await normalizeWhoopSleep(userId, supabase)
+    if (normalized) {
+      sleepInputs = scoreSleep(normalized)
+      console.log("[score] sleep from normalizeWhoopSleep — nights:", normalized.nightsAvailable, "eff:", normalized.sleepEfficiencyPct, "hrv:", normalized.hrv_ms)
+    }
+  }
 
-  // Build sleepInputs from wearable_connections averages (populated by webhook or WHOOP sync)
+  // 2. Fallback: wearable_connections aggregates (Junction/Oura, or WHOOP before raw data is populated)
   if (!sleepInputs && wearableRes.data) {
-    const wRow = wearableRes.data as Record<string, unknown>
-    const nightsAvailable = (wRow.nights_available as number) ?? 0
-    const efficiency      = (wRow.sleep_efficiency as number) ?? 0
-    const deepPct         = (wRow.deep_sleep_pct   as number) ?? 0
-    const remPct          = (wRow.rem_pct           as number) ?? 0
-    const hrv             = (wRow.hrv_rmssd         as number) ?? 0
-    const spo2Dips        = (wRow.latest_spo2_dips  as number) ?? 0
-
-    // Accept data if we have ≥7 nights OR sleep_efficiency is present
-    const hasEnoughData = (nightsAvailable >= 7) || (efficiency > 0)
-
-    if (hasEnoughData) {
-      // Values stored as percentages (e.g. 87, 17.4, 20.1) — engine expects 0–100 scale
-      sleepInputs = {
-        deepSleepPct:       deepPct,
-        hrv_ms:             hrv,
-        spo2DipsPerNight:   spo2Dips,
-        remPct:             remPct,
-        sleepEfficiencyPct: efficiency,
-        nightsAvailable:    nightsAvailable || undefined,
-      }
-      console.log("[score] sleep from wearable_connections fallback — nights:", nightsAvailable, "eff:", efficiency, "deep:", deepPct, "rem:", remPct, "hrv:", hrv)
+    const provider = ((wearableRes.data as Record<string, unknown>).provider as string) ?? "unknown"
+    const normalized = await normalizeOuraSleep(userId, supabase, provider)
+    if (normalized) {
+      sleepInputs = scoreSleep(normalized)
+      console.log("[score] sleep from normalizeOuraSleep (provider=" + provider + ") — nights:", normalized.nightsAvailable, "eff:", normalized.sleepEfficiencyPct)
     }
   }
 

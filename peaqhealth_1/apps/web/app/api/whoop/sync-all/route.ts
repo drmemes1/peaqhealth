@@ -30,7 +30,7 @@ export async function POST(_request: NextRequest) {
 
   const results = await Promise.allSettled(
     userIds.map(async (userId) => {
-      const count = await fetchAndStoreWhoopData(userId, 1)
+      const count = await fetchAndStoreWhoopData(userId, 7) // nightly cron: 7 days (initial connect uses 30)
       await recalculateScore(userId, supabase)
       console.log(`[sync-all] user=${userId} records=${count}`)
       return { userId, records: count }
