@@ -87,6 +87,7 @@ export async function fetchAndStoreWhoopData(
     const score    = sleep.score
     const recovery = recoveryByDate.get(date)
     const recScore = recovery?.score
+    console.log("[whoop-fetch] hrv raw value:", recScore?.hrv_rmssd_milli, "date:", date)
 
     const totalInBedMs = summary?.total_in_bed_time_milli ?? 0
     const awakeMs      = score?.awake_time_milli ?? (summary?.total_awake_time_milli ?? 0)

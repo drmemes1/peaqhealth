@@ -43,7 +43,7 @@ export async function POST() {
     return NextResponse.json({ error: "Failed to disconnect" }, { status: 500 })
   }
 
-  // Also wipe the aggregated sleep metrics so sleep_sub → 0 on next score
+  // Wipe all cached sleep metrics (including legacy provider="unknown" rows) so sleep_sub → 0
   const serviceClient = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -52,7 +52,11 @@ export async function POST() {
     .from("wearable_connections")
     .delete()
     .eq("user_id", user.id)
-    .eq("provider", "whoop")
+
+  await serviceClient
+    .from("whoop_sleep_data")
+    .delete()
+    .eq("user_id", user.id)
 
   // Recalculate score immediately so dashboard reflects 0 sleep
   try {
