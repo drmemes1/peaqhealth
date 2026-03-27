@@ -105,32 +105,36 @@ const NITRATE_REDUCERS: Record<string, number> = {
   'Actinomyces viscosus': 0.35,
 }
 
+// Thresholds are in fractional abundance (0–1 scale) to match raw_otu_table values.
+// Clinical equivalents: 0.001 = 0.1%, 0.005 = 0.5%, 0.010 = 1.0%
 const PERIODONTAL_PATHOGENS: Record<string, { weight: number; threshold: number }> = {
-  'Porphyromonas gingivalis': { weight: 3.0, threshold: 0.1 },
-  'Treponema denticola': { weight: 2.0, threshold: 0.2 },
-  'Tannerella forsythia': { weight: 1.5, threshold: 0.3 },
-  'Fusobacterium nucleatum': { weight: 1.0, threshold: 1.0 },
-  'Fusobacterium periodonticum': { weight: 0.9, threshold: 0.8 },
-  'Prevotella intermedia': { weight: 0.8, threshold: 0.5 },
-  'Prevotella nigrescens': { weight: 0.7, threshold: 0.5 },
-  'Peptostreptococcus micros': { weight: 0.7, threshold: 0.3 },
-  'Micromonas micros': { weight: 0.65, threshold: 0.3 },
-  'Aggregatibacter actinomycetemcomitans': { weight: 1.2, threshold: 0.2 },
-  'Eikenella corrodens': { weight: 0.5, threshold: 0.5 },
-  'Campylobacter rectus': { weight: 0.6, threshold: 0.4 },
+  'Porphyromonas gingivalis': { weight: 3.0, threshold: 0.001 },
+  'Treponema denticola': { weight: 2.0, threshold: 0.002 },
+  'Tannerella forsythia': { weight: 1.5, threshold: 0.003 },
+  'Fusobacterium nucleatum': { weight: 1.0, threshold: 0.010 },
+  'Fusobacterium periodonticum': { weight: 0.9, threshold: 0.008 },
+  'Prevotella intermedia': { weight: 0.8, threshold: 0.005 },
+  'Prevotella nigrescens': { weight: 0.7, threshold: 0.005 },
+  'Peptostreptococcus micros': { weight: 0.7, threshold: 0.003 },
+  'Micromonas micros': { weight: 0.65, threshold: 0.003 },
+  'Aggregatibacter actinomycetemcomitans': { weight: 1.2, threshold: 0.002 },
+  'Eikenella corrodens': { weight: 0.5, threshold: 0.005 },
+  'Campylobacter rectus': { weight: 0.6, threshold: 0.004 },
 }
 
+// Thresholds are in fractional abundance (0–1 scale).
+// Clinical equivalents: 0.015 = 1.5%, 0.030 = 3.0%
 const OSA_TAXA: Record<string, { weight: number; threshold: number }> = {
-  'Prevotella melaninogenica': { weight: 1.5, threshold: 3.0 },
-  'Prevotella pallens': { weight: 1.3, threshold: 2.0 },
-  'Prevotella': { weight: 1.2, threshold: 3.0 },
-  'Fusobacterium nucleatum': { weight: 1.2, threshold: 1.5 },
-  'Fusobacterium': { weight: 1.0, threshold: 1.5 },
-  'Selenomonas sputigena': { weight: 0.8, threshold: 0.5 },
-  'Selenomonas': { weight: 0.7, threshold: 0.5 },
-  'Dialister invisus': { weight: 0.6, threshold: 0.5 },
-  'Dialister': { weight: 0.5, threshold: 0.5 },
-  'Megasphaera micronuciformis': { weight: 0.5, threshold: 0.3 },
+  'Prevotella melaninogenica': { weight: 1.5, threshold: 0.030 },
+  'Prevotella pallens': { weight: 1.3, threshold: 0.020 },
+  'Prevotella': { weight: 1.2, threshold: 0.030 },
+  'Fusobacterium nucleatum': { weight: 1.2, threshold: 0.015 },
+  'Fusobacterium': { weight: 1.0, threshold: 0.015 },
+  'Selenomonas sputigena': { weight: 0.8, threshold: 0.005 },
+  'Selenomonas': { weight: 0.7, threshold: 0.005 },
+  'Dialister invisus': { weight: 0.6, threshold: 0.005 },
+  'Dialister': { weight: 0.5, threshold: 0.005 },
+  'Megasphaera micronuciformis': { weight: 0.5, threshold: 0.003 },
 }
 
 const PROTECTIVE_SPECIES: Record<string, string> = {
@@ -204,12 +208,13 @@ function scoreShannon_parser(shannon: number): number {
   return 0
 }
 
+// pct is fractional (0–1). Clinical thresholds: 0.02=2%, 0.04=4%, 0.07=7%, 0.10=10%, 0.15=15%
 function scoreNitrate(pct: number): number {
-  if (pct >= 15) return 6
-  if (pct >= 10) return 5
-  if (pct >= 7) return 4
-  if (pct >= 4) return 2
-  if (pct >= 2) return 1
+  if (pct >= 0.15) return 6
+  if (pct >= 0.10) return 5
+  if (pct >= 0.07) return 4
+  if (pct >= 0.04) return 2
+  if (pct >= 0.02) return 1
   return 0
 }
 
@@ -241,7 +246,8 @@ function generateFindings(
   const findings: OralFinding[] = []
   const { nitrateReducerPct, pGingivalisPct, shannonDiversity, osaBurden, periodontalBurden } = partial
 
-  if (nitrateReducerPct < 2) {
+  // nitrateReducerPct and pGingivalisPct are fractional (0–1); multiply by 100 for display
+  if (nitrateReducerPct < 0.02) {
     findings.push({
       id: 'mouthwash-detected',
       priority: 'HIGH',
@@ -256,8 +262,8 @@ function generateFindings(
     })
   }
 
-  if (pGingivalisPct > 1.0) {
-    const pct = pGingivalisPct.toFixed(2)
+  if (pGingivalisPct > 0.010) {
+    const pct = (pGingivalisPct * 100).toFixed(2)
     findings.push({
       id: 'p-gingivalis-critical',
       priority: 'CRITICAL',
@@ -269,8 +275,8 @@ function generateFindings(
       retestDays: 90,
       citation: "Hussain M, et al. Frontiers Immunology. 2023. Hajishengallis G. Nature Reviews Immunology. 2015.",
     })
-  } else if (pGingivalisPct > 0.5) {
-    const pct = pGingivalisPct.toFixed(2)
+  } else if (pGingivalisPct > 0.005) {
+    const pct = (pGingivalisPct * 100).toFixed(2)
     findings.push({
       id: 'p-gingivalis-elevated',
       priority: 'HIGH',
@@ -313,8 +319,8 @@ function generateFindings(
     })
   }
 
-  if (nitrateReducerPct >= 10) {
-    const pct = nitrateReducerPct.toFixed(1)
+  if (nitrateReducerPct >= 0.10) {
+    const pct = (nitrateReducerPct * 100).toFixed(1)
     findings.push({
       id: 'excellent-nitrate',
       priority: 'POSITIVE',
@@ -328,7 +334,7 @@ function generateFindings(
     })
   }
 
-  if (pGingivalisPct < 0.05 && periodontalBurden < 0.5) {
+  if (pGingivalisPct < 0.0005 && periodontalBurden < 0.5) {
     findings.push({
       id: 'excellent-periodontal',
       priority: 'POSITIVE',
@@ -378,10 +384,10 @@ function calculateWatchSignals(
   const fNucleatum = taxonomy['Fusobacterium nucleatum'] || 0
   const sMutans = taxonomy['Streptococcus mutans'] || 0
   return {
-    systemicInflammationSignal: Math.min(1, pGingivalis / 2.0),
-    metabolicDysbiosisSignal: Math.min(1, (sMutans / 5.0) * 0.5 + (periodontalBurden / 5.0) * 0.5),
-    autoimmuneInflammationSignal: Math.min(1, pGingivalis / 1.5),
-    gutOralAxisSignal: Math.min(1, fNucleatum / 5.0),
+    systemicInflammationSignal: Math.min(1, pGingivalis / 0.02),
+    metabolicDysbiosisSignal: Math.min(1, (sMutans / 0.05) * 0.5 + (periodontalBurden / 5.0) * 0.5),
+    autoimmuneInflammationSignal: Math.min(1, pGingivalis / 0.015),
+    gutOralAxisSignal: Math.min(1, fNucleatum / 0.05),
   }
 }
 
@@ -409,7 +415,7 @@ function buildTopSpecies(
       if (name in PERIODONTAL_PATHOGENS) {
         significance = 'Periodontal pathogen associated with systemic disease'
         const { threshold } = PERIODONTAL_PATHOGENS[name]
-        if (name === 'Porphyromonas gingivalis' && abundance > 1.0) {
+        if (name === 'Porphyromonas gingivalis' && abundance > 0.010) {
           flag = 'critical'
         } else if (abundance > threshold) {
           flag = 'attention'
@@ -461,8 +467,8 @@ export function parseOralMicrobiome(report: ZymoReport): OralScore {
   const total = shannonSub + nitrateSub + periodontalSub + osaSub
 
   // 7. Inferred signals
-  const mouthwashDetected = nitrateReducerPct < 2
-  const highPeriodontalRisk = pGingivalisPct > 0.5
+  const mouthwashDetected = nitrateReducerPct < 0.02
+  const highPeriodontalRisk = pGingivalisPct > 0.005
   const highOsaRisk = osaBurden > 2.0
   const lowDiversity = shannonDiversity < 2.5
 
