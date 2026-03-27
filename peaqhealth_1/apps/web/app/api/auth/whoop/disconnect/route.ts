@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
 import { createClient } from "../../../../../lib/supabase/server"
 import { createClient as createServiceClient } from "@supabase/supabase-js"
-import { recalculateScore } from "../../../../../lib/score/recalculate"
 
 export async function POST() {
   const supabase = await createClient()
@@ -72,14 +71,12 @@ export async function POST() {
     return NextResponse.json({ error: "Failed to disconnect" }, { status: 500 })
   }
 
-  // Step 4: Recalculate score so sleep_sub → 0
-  console.log("[whoop-disconnect] step 4 — recalculating score")
-  try {
-    await recalculateScore(user.id, serviceClient)
-    console.log("[whoop-disconnect] score recalculated")
-  } catch (err) {
-    console.warn("[whoop-disconnect] recalculate failed (non-fatal):", err)
-  }
+  // NOTE: Do NOT call recalculateScore here. The dashboard already displays sleep_sub=0
+  // when no wearable_connections row exists (via the `wearable ? snapshot.sleep_sub : 0`
+  // logic in dashboard/page.tsx). Calling recalculate here caused a regression where
+  // blood/oral/lifestyle scores were zeroed in the new snapshot if those queries returned
+  // no data (e.g. oral kit status filter mismatch). The next cron run will correctly
+  // recalculate with all data present.
 
   console.log("[whoop-disconnect] complete")
   return NextResponse.json({ success: true })

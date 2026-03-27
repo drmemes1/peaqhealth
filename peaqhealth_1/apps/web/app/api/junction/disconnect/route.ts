@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "../../../../lib/supabase/server"
 import { createClient as createServiceClient } from "@supabase/supabase-js"
-import { recalculateScore } from "../../../../lib/score/recalculate"
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -65,12 +64,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Failed to disconnect" }, { status: 500 })
   }
 
-  // Recalculate score so sleep_sub → 0 immediately
-  try {
-    await recalculateScore(user.id, serviceClient)
-  } catch (err) {
-    console.warn("[junction-disconnect] recalculate failed (non-fatal):", err)
-  }
+  // NOTE: Do NOT call recalculateScore here — see /api/auth/whoop/disconnect for explanation.
+  // Dashboard displays sleep_sub=0 when no wearable row exists. Next cron recalculates correctly.
 
   return NextResponse.json({ success: true })
 }

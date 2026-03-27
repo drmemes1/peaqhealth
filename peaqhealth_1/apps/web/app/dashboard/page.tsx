@@ -66,9 +66,14 @@ export default async function DashboardPage() {
 
   const oralSub = snapshot?.oral_sub ?? 0
 
-  const score = Number(snapshot?.score ?? 0)
+  // When no wearable is connected, subtract the stored sleep_sub so the wheel total
+  // matches the panel breakdown (sleep panel shows 0, wheel shows blood+oral+lifestyle only).
+  const rawScore = Number(snapshot?.score ?? 0)
+  const storedSleepSub = Number(snapshot?.sleep_sub ?? 0)
+  const score = wearable ? rawScore : Math.max(0, rawScore - storedSleepSub)
+
   const breakdown = {
-    sleepSub:        wearable ? (snapshot?.sleep_sub ?? 0) : 0,
+    sleepSub:        wearable ? storedSleepSub : 0,
     bloodSub:        snapshot?.blood_sub ?? 0,
     oralSub,
     lifestyleSub:    snapshot?.lifestyle_sub ?? 0,
