@@ -8,12 +8,22 @@ export async function POST() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
+  console.log("[whoop-disconnect] starting for user:", user.id)
+
+  // Use service client for all deletes to bypass RLS
+  const serviceClient = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  )
+
   // Fetch the access token so we can revoke it with WHOOP
-  const { data: conn } = await supabase
+  const { data: conn } = await serviceClient
     .from("whoop_connections")
     .select("access_token")
     .eq("user_id", user.id)
     .maybeSingle()
+
+  console.log("[whoop-disconnect] whoop_connections row found:", !!conn)
 
   // Best-effort token revocation — don't fail if WHOOP rejects it
   if (conn?.access_token) {
@@ -27,43 +37,50 @@ export async function POST() {
           client_secret: process.env.WHOOP_CLIENT_SECRET!,
         }),
       })
+      console.log("[whoop-disconnect] token revoked")
     } catch (err) {
       console.warn("[whoop-disconnect] revocation request failed (non-fatal):", err)
     }
   }
 
-  // Delete the connection row — this frees the test user slot
-  const { error } = await supabase
-    .from("whoop_connections")
-    .delete()
+  // Step 1: Delete wearable_connections (all providers including legacy "unknown")
+  console.log("[whoop-disconnect] step 1 — deleting wearable_connections")
+  const { error: wcErr, count: wcCount } = await serviceClient
+    .from("wearable_connections")
+    .delete({ count: "exact" })
     .eq("user_id", user.id)
+  console.log("[whoop-disconnect] wearable_connections deleted:", { rows: wcCount, error: wcErr?.message ?? null })
 
-  if (error) {
-    console.error("[whoop-disconnect] delete failed:", error.message)
+  // Step 2: Delete whoop_sleep_data
+  console.log("[whoop-disconnect] step 2 — deleting whoop_sleep_data")
+  const { error: wsdErr, count: wsdCount } = await serviceClient
+    .from("whoop_sleep_data")
+    .delete({ count: "exact" })
+    .eq("user_id", user.id)
+  console.log("[whoop-disconnect] whoop_sleep_data deleted:", { rows: wsdCount, error: wsdErr?.message ?? null })
+
+  // Step 3: Delete whoop_connections
+  console.log("[whoop-disconnect] step 3 — deleting whoop_connections")
+  const { error: whoopErr, count: whoopCount } = await serviceClient
+    .from("whoop_connections")
+    .delete({ count: "exact" })
+    .eq("user_id", user.id)
+  console.log("[whoop-disconnect] whoop_connections deleted:", { rows: whoopCount, error: whoopErr?.message ?? null })
+
+  if (whoopErr) {
+    console.error("[whoop-disconnect] whoop_connections delete failed:", whoopErr.message)
     return NextResponse.json({ error: "Failed to disconnect" }, { status: 500 })
   }
 
-  // Wipe all cached sleep metrics (including legacy provider="unknown" rows) so sleep_sub → 0
-  const serviceClient = createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  )
-  await serviceClient
-    .from("wearable_connections")
-    .delete()
-    .eq("user_id", user.id)
-
-  await serviceClient
-    .from("whoop_sleep_data")
-    .delete()
-    .eq("user_id", user.id)
-
-  // Recalculate score immediately so dashboard reflects 0 sleep
+  // Step 4: Recalculate score so sleep_sub → 0
+  console.log("[whoop-disconnect] step 4 — recalculating score")
   try {
     await recalculateScore(user.id, serviceClient)
+    console.log("[whoop-disconnect] score recalculated")
   } catch (err) {
     console.warn("[whoop-disconnect] recalculate failed (non-fatal):", err)
   }
 
+  console.log("[whoop-disconnect] complete")
   return NextResponse.json({ success: true })
 }
