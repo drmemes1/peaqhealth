@@ -66,14 +66,14 @@ export async function POST() {
     return NextResponse.json({ error: "Failed to disconnect" }, { status: 500 })
   }
 
-  // Step 3: Delete whoop_sleep_data for provider=whoop only (preserves Oura rows)
-  console.log("[whoop-disconnect] step 3 — deleting whoop_sleep_data for provider=whoop")
+  // Step 3: Delete sleep_data for source=whoop only (preserves Oura rows)
+  console.log("[whoop-disconnect] step 3 — deleting sleep_data for source=whoop")
   const { error: wsdErr, count: wsdCount } = await svc
-    .from("whoop_sleep_data")
+    .from("sleep_data")
     .delete({ count: "exact" })
     .eq("user_id", user.id)
-    .eq("provider", "whoop")
-  console.log("[whoop-disconnect] whoop_sleep_data deleted:", { rows: wsdCount, error: wsdErr?.message ?? null })
+    .eq("source", "whoop")
+  console.log("[whoop-disconnect] sleep_data deleted:", { rows: wsdCount, error: wsdErr?.message ?? null })
 
   // Step 4: Delete whoop_connections
   console.log("[whoop-disconnect] step 4 — deleting whoop_connections")

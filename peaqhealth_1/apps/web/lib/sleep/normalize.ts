@@ -25,7 +25,7 @@ export function scoreSleep(normalized: NormalizedSleep): SleepInputs {
 }
 
 /**
- * Normalize WHOOP sleep data from whoop_sleep_data (raw nightly records).
+ * Normalize WHOOP sleep data from sleep_data (raw nightly records).
  * Reads up to 30 most recent valid nights and computes weighted averages.
  * Returns null if no scored nights exist.
  */
@@ -34,7 +34,7 @@ export async function normalizeWhoopSleep(
   supabase: SupabaseClient,
 ): Promise<NormalizedSleep | null> {
   const { data: nights, error } = await supabase
-    .from("whoop_sleep_data")
+    .from("sleep_data")
     .select("total_sleep_minutes, deep_sleep_minutes, rem_sleep_minutes, sleep_efficiency, hrv_rmssd, spo2")
     .eq("user_id", userId)
     .gt("sleep_efficiency", 0)
@@ -42,7 +42,7 @@ export async function normalizeWhoopSleep(
     .limit(30)
 
   if (error) {
-    console.error("[normalize] whoop_sleep_data query error:", error.message)
+    console.error("[normalize] sleep_data query error:", error.message)
     return null
   }
 

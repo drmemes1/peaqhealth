@@ -43,10 +43,10 @@ export async function POST(request: NextRequest) {
   }
 
   // Upsert individual records
-  const rows = records.map(r => ({ ...r, user_id: body.userId, provider: 'whoop' }))
+  const rows = records.map(r => ({ ...r, user_id: body.userId, source: 'whoop' }))
   const { error: upsertErr } = await serviceClient
-    .from("whoop_sleep_data")
-    .upsert(rows, { onConflict: "user_id,date,provider" })
+    .from("sleep_data")
+    .upsert(rows, { onConflict: "user_id,date,source" })
   if (upsertErr) console.error("[admin-whoop-sync] upsert error:", upsertErr.message)
 
   // Compute aggregates

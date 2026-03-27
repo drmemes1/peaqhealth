@@ -9,7 +9,7 @@ function serviceClient() {
 
 /**
  * Fetch sleep data from Vital/Junction API for an Oura (or other Junction-connected) user
- * and upsert into whoop_sleep_data with provider='oura'.
+ * and upsert into sleep_data with source='oura'.
  * Returns count of upserted records.
  */
 export async function fetchAndStoreOuraData(
@@ -75,7 +75,7 @@ export async function fetchAndStoreOuraData(
 
   type SleepRow = {
     user_id:              string
-    provider:             string
+    source:               string
     sleep_id:             string | null
     date:                 string
     total_sleep_minutes:  number
@@ -110,7 +110,7 @@ export async function fetchAndStoreOuraData(
 
     return {
       user_id:              userId,
-      provider:             "oura",
+      source:               "oura",
       sleep_id:             sleepId,
       date,
       total_sleep_minutes:  Math.round(total / 60),
@@ -128,9 +128,10 @@ export async function fetchAndStoreOuraData(
   }).filter(r => r.date)
 
   const { error } = await supabase
-    .from("whoop_sleep_data")
-    .upsert(rows, { onConflict: "user_id,date,provider" })
+    .from("sleep_data")
+    .upsert(rows, { onConflict: "user_id,date,source" })
   if (error) console.error("[oura-fetch] upsert error:", error.message)
+  else console.log("[oura-fetch] upserted:", rows.length, "rows to sleep_data")
 
   // Update wearable_connections aggregates
   const validNights = rows.filter(r => r.sleep_efficiency > 0)

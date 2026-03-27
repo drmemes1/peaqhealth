@@ -29,7 +29,7 @@ export default async function DashboardPage() {
     supabase.from("lifestyle_records").select("*").eq("user_id", user.id).single(),
     supabase.from("lab_history").select("locked_at, total_score, blood_score, collection_date, ldl_mgdl, hdl_mgdl, hs_crp_mgl, vitamin_d_ngml").eq("user_id", user.id).order("locked_at", { ascending: true }),
     supabase.from("whoop_connections").select("last_synced_at").eq("user_id", user.id).maybeSingle(),
-    supabase.from("whoop_sleep_data").select("date, total_sleep_minutes, hrv_rmssd").eq("user_id", user.id).order("date", { ascending: false }).limit(3),
+    supabase.from("sleep_data").select("date, total_sleep_minutes, hrv_rmssd").eq("user_id", user.id).order("date", { ascending: false }).limit(3),
   ])
 
   const { data: oral } = await supabase
