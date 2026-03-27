@@ -266,15 +266,10 @@ export async function recalculateScore(
     ? "none"
     : result.breakdown.sleepSource
 
-  console.log("[score] breakdown:", JSON.stringify({
-    sleep: sleepSub,
-    blood: result.breakdown.bloodSub,
-    oral:  result.breakdown.oralSub,
-    lifestyle: result.breakdown.lifestyleSub,
-    total: storedScore,
-    sleepSource,
-  }))
-  await supabase.from("score_snapshots").insert({
+  console.log(`[recalculate] user=${userId} sleep=${sleepSub} blood=${result.breakdown.bloodSub} oral=${result.breakdown.oralSub} lifestyle=${result.breakdown.lifestyleSub} total=${storedScore} sleepSource=${sleepSource}`)
+
+  let insertError: unknown = null
+  try { await supabase.from("score_snapshots").insert({
     user_id:                userId,
     calculated_at:          new Date().toISOString(),
     engine_version:         result.version,
@@ -298,7 +293,8 @@ export async function recalculateScore(
     hscrp_retest_flag:      result.hsCRPRetestFlag,
     blood_recency_multiplier: result.bloodRecencyMultiplier,
     interactions_fired:     result.interactionsFired,
-  })
+  }) } catch (e) { insertError = e }
+  if (insertError) console.error("[recalculate] snapshot insert failed for user:", userId, insertError)
 
   return result.score
 }

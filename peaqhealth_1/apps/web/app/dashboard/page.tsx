@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation"
 import { createClient } from "../../lib/supabase/server"
+import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { DashboardClient } from "./dashboard-client"
 import type { ScoreWheelProps } from "../components/score-wheel"
+import { recalculateScore } from "../../lib/score/recalculate"
 
 export const dynamic = "force-dynamic"
 
@@ -11,7 +13,7 @@ export default async function DashboardPage() {
   if (!user) redirect("/login")
 
   const [
-    { data: snapshot },
+    { data: initialSnapshot },
     { data: wearable },
     { data: lab },
     { data: oralAny },
@@ -38,6 +40,9 @@ export default async function DashboardPage() {
     .limit(1)
     .maybeSingle()
 
+  // Mutable reference — may be updated by the stale-zero healer below
+  let snapshot = initialSnapshot
+
   // Backfill wearable_connections for legacy users who connected before the upsert fix.
   // Skip when a WHOOP connection exists — the sync will create the proper row with real data.
   if (!wearable && !whoopConn && Number(snapshot?.sleep_sub ?? 0) > 0) {
@@ -49,6 +54,31 @@ export default async function DashboardPage() {
       connected_at: ts,
       last_sync_at: ts,
     }, { onConflict: "user_id,provider" })
+  }
+
+  // Auto-heal stale zero snapshot. The disconnect regression wrote an all-zero snapshot;
+  // if the most recent row has score=0 but panel data exists, recalculate inline so this
+  // page load returns correct scores. This also fires if recalculateScore has never run.
+  const snapshotIsStaleZero = !snapshot || (Number(snapshot.score) === 0 && (!!lab || !!oral || !!lifestyle))
+  if (snapshotIsStaleZero) {
+    console.log("[dashboard] stale/zero snapshot — auto-recalculating for:", user.id)
+    try {
+      const svc = createServiceClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      )
+      await recalculateScore(user.id, svc)
+      const { data: fresh } = await svc
+        .from("score_snapshots")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("calculated_at", { ascending: false })
+        .limit(1)
+        .single()
+      if (fresh) snapshot = fresh
+    } catch (err) {
+      console.error("[dashboard] auto-recalculate failed:", err)
+    }
   }
 
   // Compute lab freshness
