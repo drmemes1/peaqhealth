@@ -33,6 +33,7 @@ export interface ScoreWheelProps {
     nightsAvg: number
     device: string
     lastSync: string
+    providerSlug?: string
   }
   bloodData?: {
     hsCRP: number
@@ -1501,29 +1502,36 @@ export function ScoreWheel({
             />
           ))}
 
-          {/* WHOOP connection card */}
+          {/* Wearable connection card */}
           {(() => {
             const font = "var(--font-body, 'Instrument Sans', sans-serif)"
-            if (whoopData?.connected) {
-              const lastSynced = whoopData.lastSynced
+            // Show connected card for any wearable (Junction-based or legacy WHOOP)
+            const isConnected = !!sleepData || whoopData?.connected
+            if (isConnected) {
+              const providerSlug = sleepData?.providerSlug ?? (whoopData?.connected ? "whoop" : "unknown")
+              const deviceLabel = sleepData?.device || "Wearable"
+              const lastSyncRaw = sleepData?.lastSync || whoopData?.lastSynced
+              const lastSynced = lastSyncRaw
                 ? (() => {
-                    const diffMs = Date.now() - new Date(whoopData.lastSynced!).getTime()
+                    const diffMs = Date.now() - new Date(lastSyncRaw).getTime()
                     const hrs = Math.round(diffMs / 3600000)
                     return hrs < 1 ? "just now" : hrs === 1 ? "1 hour ago" : `${hrs} hours ago`
                   })()
                 : "never"
+              const syncEndpoint = providerSlug === "whoop" ? "/api/whoop/sync" : "/api/junction/sync"
               return (
                 <div style={{ marginTop: 16, padding: "12px 14px", borderRadius: 6, background: "rgba(74,127,181,0.04)", border: "0.5px solid rgba(74,127,181,0.2)" }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                       <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#2D6A4F", flexShrink: 0, display: "inline-block" }} />
-                      <span style={{ fontFamily: font, fontSize: 11, fontWeight: 500, color: "var(--ink)", letterSpacing: "0.02em" }}>WHOOP connected</span>
+                      <span style={{ fontFamily: font, fontSize: 11, fontWeight: 500, color: "var(--ink)", letterSpacing: "0.02em" }}>{deviceLabel} connected</span>
                     </div>
                     <span style={{ fontFamily: font, fontSize: 10, color: "rgba(20,20,16,0.35)" }}>
                       Last synced {lastSynced}
                     </span>
                   </div>
-                  {whoopData.recentNights.length > 0 && (
+                  {/* Recent nights — only available for legacy WHOOP connections */}
+                  {whoopData?.connected && whoopData.recentNights.length > 0 && (
                     <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
                       {whoopData.recentNights.map(n => (
                         <div key={n.date} style={{ flex: 1, padding: "7px 8px", background: "white", border: "0.5px solid rgba(74,127,181,0.2)", borderRadius: 4 }}>
@@ -1543,7 +1551,7 @@ export function ScoreWheel({
                     </div>
                   )}
                   <button
-                    onClick={() => fetch("/api/whoop/sync", { method: "POST" }).then(() => window.location.reload())}
+                    onClick={() => fetch(syncEndpoint, { method: "POST" }).then(() => window.location.reload())}
                     style={{
                       fontFamily: font, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em",
                       color: "var(--sleep-c)", background: "none", border: "0.5px solid rgba(74,127,181,0.3)",
@@ -1557,12 +1565,12 @@ export function ScoreWheel({
             }
             return (
               <div style={{ marginTop: 16, padding: "12px 14px", borderRadius: 6, background: "rgba(20,20,16,0.03)", border: "0.5px solid var(--ink-12)" }}>
-                <p style={{ fontFamily: font, fontSize: 11, fontWeight: 500, color: "var(--ink)", margin: "0 0 3px" }}>Connect WHOOP</p>
+                <p style={{ fontFamily: font, fontSize: 11, fontWeight: 500, color: "var(--ink)", margin: "0 0 3px" }}>Connect a wearable</p>
                 <p style={{ fontFamily: font, fontSize: 11, color: "rgba(20,20,16,0.45)", margin: "0 0 10px", lineHeight: 1.5 }}>
                   Sync your sleep, HRV, and recovery data automatically.
                 </p>
                 <a
-                  href="/api/auth/whoop/connect"
+                  href="/settings#wearables"
                   style={{
                     display: "inline-block", fontFamily: font, fontSize: 10,
                     textTransform: "uppercase", letterSpacing: "0.08em",
@@ -1570,7 +1578,7 @@ export function ScoreWheel({
                     padding: "7px 14px", textDecoration: "none", borderRadius: 3,
                   }}
                 >
-                  Connect WHOOP
+                  Connect wearable
                 </a>
               </div>
             )

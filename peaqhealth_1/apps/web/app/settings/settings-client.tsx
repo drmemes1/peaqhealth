@@ -180,7 +180,7 @@ function buildReportHtml(data: Record<string, unknown>, name: string, email: str
     ["Sleep Efficiency", wearable?.sleep_efficiency, "%"],
     ["Deep Sleep", wearable?.deep_sleep_pct, "%"],
     ["REM Sleep", wearable?.rem_pct, "%"],
-    ["SpO₂ Dips >3%", wearable?.spo2_dips, "events/night"],
+    ["SpO₂ Dips >3%", wearable?.latest_spo2_dips ?? wearable?.spo2_dips, "events/night"],
   ].filter(row => row[1] != null)
 
   const score = Number(snapshot?.score ?? 0)

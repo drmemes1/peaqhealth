@@ -87,12 +87,13 @@ export default async function DashboardPage() {
     sleepData: wearable ? {
       deepPct:    wearable.deep_sleep_pct ?? 0,
       hrv:        wearable.hrv_rmssd ?? 0,
-      spo2Dips:   wearable.spo2_dips ?? 0,
+      spo2Dips:   wearable.latest_spo2_dips ?? wearable.spo2_dips ?? 0,
       remPct:     wearable.rem_pct ?? 0,
       efficiency: wearable.sleep_efficiency ?? 0,
       nightsAvg:  (wearable.nights_available as number) ?? 0,
       device:     ({ oura: "Oura Ring", whoop: "WHOOP", garmin: "Garmin", apple_health: "Apple Health", fitbit: "Fitbit" } as Record<string, string>)[wearable.provider as string] ?? (wearable.junction_user_id ? "Wearable" : ""),
       lastSync:   wearable.last_sync_at ?? "",
+      providerSlug: (wearable.provider as string) ?? "unknown",
     } : undefined,
     bloodData: lab ? {
       hsCRP:          (lab.hs_crp_mgl         as number) ?? 0,
