@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse, after } from "next/server"
 import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { fetchAndStoreWhoopData } from "../../../../../lib/whoop/fetch"
 import { recalculateScore } from "../../../../../lib/score/recalculate"
 import type { WhoopTokenResponse, WhoopProfileResponse } from "../../../../../lib/whoop/types"
 
-function serviceClient() {
+function svc() {
   return createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -18,8 +18,10 @@ export async function GET(request: NextRequest) {
 
   if (!code || !userId) {
     console.error("[whoop-callback] missing code or state param")
-    return NextResponse.redirect(`${origin}/settings?error=whoop_callback_failed`)
+    return NextResponse.redirect(`${origin}/dashboard`)
   }
+
+  console.log("[whoop-callback] userId:", userId)
 
   // 1. Exchange authorization code for tokens
   const tokenRes = await fetch("https://api.prod.whoop.com/oauth/oauth2/token", {
@@ -34,54 +36,88 @@ export async function GET(request: NextRequest) {
     }),
   })
 
+  console.log("[whoop-callback] token exchange:", tokenRes.ok ? "success" : "failed", tokenRes.status)
+
   if (!tokenRes.ok) {
-    console.error("[whoop-callback] token exchange failed:", tokenRes.status)
-    return NextResponse.redirect(`${origin}/settings?error=whoop_callback_failed`)
+    const errBody = await tokenRes.text().catch(() => "")
+    console.error("[whoop-callback] token error:", errBody)
+    return NextResponse.redirect(`${origin}/dashboard?whoop=error`)
   }
 
-  const rawTokens = await tokenRes.json() as WhoopTokenResponse
-  console.log("[whoop-callback] token received, first 8:", rawTokens.access_token.substring(0, 8))
+  const tokens = await tokenRes.json() as WhoopTokenResponse
+  console.log("[whoop-callback] access_token first 8:", tokens.access_token?.substring(0, 8))
+  console.log("[whoop-callback] has refresh_token:", !!tokens.refresh_token)
+  console.log("[whoop-callback] expires_in:", tokens.expires_in)
 
-  const tokenExpiresAt = new Date(Date.now() + rawTokens.expires_in * 1000).toISOString()
+  const tokenExpiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString()
 
-  // 2. Fetch WHOOP user profile
+  // 2. Fetch WHOOP user profile — non-fatal if it fails
+  let whoopUserId = "unknown"
   const profileRes = await fetch("https://api.prod.whoop.com/developer/v1/user/profile/basic", {
-    headers: { Authorization: `Bearer ${rawTokens.access_token}` },
+    headers: { Authorization: `Bearer ${tokens.access_token}` },
   })
+  console.log("[whoop-callback] profile fetch:", profileRes.ok ? "success" : "failed", profileRes.status)
 
-  if (!profileRes.ok) {
-    console.error("[whoop-callback] profile fetch failed:", profileRes.status)
-    return NextResponse.redirect(`${origin}/settings?error=whoop_callback_failed`)
+  if (profileRes.ok) {
+    const profile = await profileRes.json() as WhoopProfileResponse
+    whoopUserId = String(profile.user_id)
+  } else {
+    console.warn("[whoop-callback] profile fetch failed — continuing with unknown whoop_user_id")
   }
 
-  const profile = await profileRes.json() as WhoopProfileResponse
-  const whoopUserId = String(profile.user_id)
+  // 3. Upsert into whoop_connections using service client to bypass RLS
+  const supabase = svc()
 
-  // 3. Upsert into whoop_connections (service client — bypasses RLS)
-  const supabase = serviceClient()
-
-  const { error } = await supabase.from("whoop_connections").upsert({
+  const { error: upsertError } = await supabase.from("whoop_connections").upsert({
     user_id:          userId,
     whoop_user_id:    whoopUserId,
-    access_token:     rawTokens.access_token,
-    refresh_token:    rawTokens.refresh_token ?? "",
+    access_token:     tokens.access_token,
+    refresh_token:    tokens.refresh_token?.trim() || "",
     token_expires_at: tokenExpiresAt,
     needs_reconnect:  false,
     last_sync_error:  null,
-    scopes:           rawTokens.scope?.split(" ") ?? [],
+    scopes:           tokens.scope?.split(" ") ?? [],
     connected_at:     new Date().toISOString(),
   }, { onConflict: "user_id" })
 
-  if (error) {
-    console.error("[whoop-callback] upsert error:", error.message)
-    return NextResponse.redirect(`${origin}/settings?error=whoop_callback_failed`)
+  console.log("[whoop-callback] upsert:", upsertError ? "failed: " + upsertError.message : "success")
+
+  if (upsertError) {
+    return NextResponse.redirect(`${origin}/dashboard?whoop=error`)
   }
 
-  // 4. Fire-and-forget 7-day backfill — redirect immediately, don't await
-  fetchAndStoreWhoopData(userId, 7)
-    .then(() => recalculateScore(userId, serviceClient()))
-    .catch(e => console.error("[callback] backfill error:", (e as Error).message))
+  // 4. Check onboarding status — profiles.onboarding_completed
+  const { data: userProfile } = await supabase
+    .from("profiles")
+    .select("onboarding_completed")
+    .eq("id", userId)
+    .single()
 
-  // 5. Redirect to dashboard
-  return NextResponse.redirect(`${origin}/dashboard?whoop=connected`)
+  console.log("[whoop-callback] onboarding_completed:", userProfile?.onboarding_completed)
+
+  const redirectTo = userProfile?.onboarding_completed
+    ? `${origin}/dashboard?whoop=connected`
+    : `${origin}/onboarding`
+
+  console.log("[whoop-callback] redirecting to:", redirectTo)
+
+  // 5. Fire backfill via after() — Vercel keeps the lambda alive until this resolves.
+  //    Fire-and-forget (no await before redirect) would be killed by the serverless runtime.
+  console.log("[whoop-callback] registering backfill via after()")
+  const capturedUserId = userId
+  after(async () => {
+    console.log("[whoop-callback] backfill starting for userId:", capturedUserId)
+    try {
+      const count = await fetchAndStoreWhoopData(capturedUserId, 7)
+      console.log("[whoop-callback] backfill complete, records:", count)
+      await recalculateScore(capturedUserId, svc())
+      console.log("[whoop-callback] score recalculated")
+    } catch (e) {
+      console.error("[whoop-callback] backfill failed:", (e as Error).message)
+      console.error("[whoop-callback] stack:", (e as Error).stack)
+    }
+  })
+
+  // 6. Redirect immediately — after() work continues in the background
+  return NextResponse.redirect(redirectTo)
 }
