@@ -10,7 +10,7 @@ export async function GET(request: Request) {
     client_id:     process.env.WHOOP_CLIENT_ID!,
     redirect_uri:  process.env.WHOOP_REDIRECT_URI!,
     response_type: "code",
-    scope:         "read:recovery read:cycles read:sleep read:workout read:profile",
+    scope:         "read:recovery read:cycles read:sleep read:workout read:profile offline",
     state:         user.id,
   })
 
