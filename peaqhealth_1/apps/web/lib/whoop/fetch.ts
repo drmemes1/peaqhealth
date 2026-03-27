@@ -63,6 +63,7 @@ export async function fetchAndStoreWhoopData(
       // WHOOP returns 404 when no data exists in the requested window (e.g. after account reset)
       // Treat as empty result — connection is already saved, just no sleep data yet
       console.info(`[whoop-fetch] 404 from sleep endpoint — no data in window, treating as empty (user=${userId})`)
+      console.log("[whoop-fetch] 404 body:", body)
       return 0
     }
     throw new Error(`WHOOP sleep API ${sleepRes.status}: ${body}`)
@@ -197,6 +198,7 @@ export async function fetchWhoopSleepData(
     const body = await sleepRes.text().catch(() => "")
     if (sleepRes.status === 404) {
       console.info(`[whoop-fetch] 404 from sleep endpoint — no data in window, treating as empty (user=${userId})`)
+      console.log("[whoop-fetch] 404 body:", body)
       return []
     }
     throw new Error(`WHOOP sleep API ${sleepRes.status}: ${body}`)
