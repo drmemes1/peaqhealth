@@ -68,7 +68,7 @@ export default async function DashboardPage() {
 
   const score = Number(snapshot?.score ?? 0)
   const breakdown = {
-    sleepSub:        snapshot?.sleep_sub ?? 0,
+    sleepSub:        wearable ? (snapshot?.sleep_sub ?? 0) : 0,
     bloodSub:        snapshot?.blood_sub ?? 0,
     oralSub,
     lifestyleSub:    snapshot?.lifestyle_sub ?? 0,
@@ -81,7 +81,7 @@ export default async function DashboardPage() {
     breakdown,
     lastSyncAt:            (wearable?.last_sync_at as string | null) ?? null,
     lastSyncRequestedAt:   (wearable?.last_sync_requested_at as string | null) ?? null,
-    sleepConnected: !!wearable || Number(snapshot?.sleep_sub ?? 0) > 0,
+    sleepConnected: !!wearable,
     labFreshness,
     oralActive: !!oral,
     sleepData: wearable ? {

@@ -1481,9 +1481,14 @@ export function ScoreWheel({
       >
         <div style={{ borderTop: "0.5px solid var(--ink-12)" }}>
 
-          {sleepData && (
-            <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "var(--ink-30)", padding: "8px 0 0", margin: 0 }}>
-              Via {sleepData.device} · Last sync {sleepData.lastSync ? new Date(sleepData.lastSync).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}
+          {(sleepData || whoopData?.connected) && (
+            <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "var(--ink-40)", padding: "8px 0 0", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#22C55E", display: "inline-block", flexShrink: 0 }} />
+              {sleepData?.device || "Wearable"} connected
+              {(() => {
+                const raw = sleepData?.lastSync || whoopData?.lastSynced
+                return raw ? ` · Last sync ${new Date(raw).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : ""
+              })()}
             </p>
           )}
           {[
@@ -1502,87 +1507,15 @@ export function ScoreWheel({
             />
           ))}
 
-          {/* Wearable connection card */}
-          {(() => {
-            const font = "var(--font-body, 'Instrument Sans', sans-serif)"
-            // Show connected card for any wearable (Junction-based or legacy WHOOP)
-            const isConnected = !!sleepData || whoopData?.connected
-            if (isConnected) {
-              const providerSlug = sleepData?.providerSlug ?? (whoopData?.connected ? "whoop" : "unknown")
-              const deviceLabel = sleepData?.device || "Wearable"
-              const lastSyncRaw = sleepData?.lastSync || whoopData?.lastSynced
-              const lastSynced = lastSyncRaw
-                ? (() => {
-                    const diffMs = Date.now() - new Date(lastSyncRaw).getTime()
-                    const hrs = Math.round(diffMs / 3600000)
-                    return hrs < 1 ? "just now" : hrs === 1 ? "1 hour ago" : `${hrs} hours ago`
-                  })()
-                : "never"
-              const syncEndpoint = providerSlug === "whoop" ? "/api/whoop/sync" : "/api/junction/sync"
-              return (
-                <div style={{ marginTop: 16, padding: "12px 14px", borderRadius: 6, background: "rgba(74,127,181,0.04)", border: "0.5px solid rgba(74,127,181,0.2)" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                      <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#2D6A4F", flexShrink: 0, display: "inline-block" }} />
-                      <span style={{ fontFamily: font, fontSize: 11, fontWeight: 500, color: "var(--ink)", letterSpacing: "0.02em" }}>{deviceLabel} connected</span>
-                    </div>
-                    <span style={{ fontFamily: font, fontSize: 10, color: "rgba(20,20,16,0.35)" }}>
-                      Last synced {lastSynced}
-                    </span>
-                  </div>
-                  {/* Recent nights — only available for legacy WHOOP connections */}
-                  {whoopData?.connected && whoopData.recentNights.length > 0 && (
-                    <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
-                      {whoopData.recentNights.map(n => (
-                        <div key={n.date} style={{ flex: 1, padding: "7px 8px", background: "white", border: "0.5px solid rgba(74,127,181,0.2)", borderRadius: 4 }}>
-                          <p style={{ fontFamily: font, fontSize: 9, color: "rgba(20,20,16,0.4)", margin: "0 0 3px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                            {new Date(n.date).toLocaleDateString("en-US", { weekday: "short" })}
-                          </p>
-                          <p style={{ fontFamily: font, fontSize: 12, fontWeight: 500, color: "var(--ink)", margin: "0 0 1px" }}>
-                            {n.totalSleepHours.toFixed(1)}h
-                          </p>
-                          {n.hrv > 0 && (
-                            <p style={{ fontFamily: font, fontSize: 9, color: "var(--sleep-c)", margin: 0 }}>
-                              {Math.round(n.hrv)} ms HRV
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <button
-                    onClick={() => fetch(syncEndpoint, { method: "POST" }).then(() => window.location.reload())}
-                    style={{
-                      fontFamily: font, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em",
-                      color: "var(--sleep-c)", background: "none", border: "0.5px solid rgba(74,127,181,0.3)",
-                      padding: "5px 10px", borderRadius: 3, cursor: "pointer",
-                    }}
-                  >
-                    Sync now
-                  </button>
-                </div>
-              )
-            }
-            return (
-              <div style={{ marginTop: 16, padding: "12px 14px", borderRadius: 6, background: "rgba(20,20,16,0.03)", border: "0.5px solid var(--ink-12)" }}>
-                <p style={{ fontFamily: font, fontSize: 11, fontWeight: 500, color: "var(--ink)", margin: "0 0 3px" }}>Connect a wearable</p>
-                <p style={{ fontFamily: font, fontSize: 11, color: "rgba(20,20,16,0.45)", margin: "0 0 10px", lineHeight: 1.5 }}>
-                  Sync your sleep, HRV, and recovery data automatically.
-                </p>
-                <a
-                  href="/settings#wearables"
-                  style={{
-                    display: "inline-block", fontFamily: font, fontSize: 10,
-                    textTransform: "uppercase", letterSpacing: "0.08em",
-                    background: "#141410", color: "#B8860B",
-                    padding: "7px 14px", textDecoration: "none", borderRadius: 3,
-                  }}
-                >
-                  Connect wearable
-                </a>
-              </div>
-            )
-          })()}
+          {/* Wearable status */}
+          {!sleepData && !whoopData?.connected && (
+            <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "rgba(20,20,16,0.45)", marginTop: 12 }}>
+              No wearable connected —{" "}
+              <a href="/settings#wearables" style={{ color: "var(--sleep-c)", textDecoration: "none" }}>
+                Go to Settings →
+              </a>
+            </p>
+          )}
         </div>
       </CollapsiblePanel>
 
