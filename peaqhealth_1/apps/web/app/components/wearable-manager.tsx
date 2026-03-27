@@ -45,15 +45,18 @@ export function WearableManager({
     onSuccess: async (metadata: Record<string, unknown>) => {
       setJunctionError(null)
       console.log("[junction] onSuccess raw metadata:", JSON.stringify(metadata))
-      // Junction widget may use providerSlug, slug, or source.slug depending on SDK version
+      // Vital Link widget sends connected[].source.slug for the provider
       const connectedArr = (metadata.connected as Array<Record<string, unknown>> | undefined)
+      const firstConnected = connectedArr?.[0]
+      const sourceObj = firstConnected?.source as Record<string, unknown> | undefined
       const providerSlug: string =
-        (connectedArr?.[0]?.providerSlug as string | undefined) ??
-        (connectedArr?.[0]?.slug as string | undefined) ??
-        ((metadata.source as Record<string, unknown> | undefined)?.slug as string | undefined) ??
-        (connectedArr?.[0]?.name as string | undefined)?.toLowerCase().replace(/\s+/g, "_") ??
+        (sourceObj?.slug as string | undefined) ??
+        (firstConnected?.providerSlug as string | undefined) ??
+        (firstConnected?.slug as string | undefined) ??
+        (firstConnected?.sourceType as string | undefined) ??
+        (firstConnected?.name as string | undefined)?.toLowerCase().replace(/\s+/g, "_") ??
         "unknown"
-      // userId may be camelCase or snake_case
+      // userId may be camelCase or snake_case; server falls back to profile lookup if empty
       const junctionUserId: string =
         (metadata.userId as string | undefined) ??
         (metadata.user_id as string | undefined) ??
@@ -63,7 +66,7 @@ export function WearableManager({
         await fetch("/api/junction/wearable-connected", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ provider: providerSlug, junctionUserId }),
+          body: JSON.stringify({ provider: providerSlug, junctionUserId, rawMetadata: metadata }),
         })
       } catch {
         setJunctionError("Connection saved but score update failed — please refresh.")

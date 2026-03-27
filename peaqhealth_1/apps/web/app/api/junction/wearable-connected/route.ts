@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json() as Record<string, unknown>
     console.log("[wearable] full body:", JSON.stringify(body))
+    console.log("[wearable] rawMetadata:", JSON.stringify(body.rawMetadata ?? "(not sent)"))
     provider = (body.provider as string) ?? ""
     junctionUserId = (body.junctionUserId as string) ?? ""
   } catch {
@@ -28,9 +29,29 @@ export async function POST(request: NextRequest) {
 
   console.log("[wearable] step 1 — auth OK, userId:", user.id)
 
-  if (!provider || !junctionUserId) {
-    return NextResponse.json({ error: "Missing provider or junctionUserId" }, { status: 400 })
+  if (!provider) {
+    console.error("[wearable] missing provider in body — cannot save connection")
+    return NextResponse.json({ error: "Missing provider" }, { status: 400 })
   }
+
+  // If junctionUserId not sent by client widget, fall back to profile lookup
+  // (it was stored there during link-token creation)
+  if (!junctionUserId) {
+    console.log("[wearable] junctionUserId missing from body — looking up from profile")
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("junction_user_id")
+      .eq("id", user.id)
+      .single()
+    junctionUserId = (profile?.junction_user_id as string | null) ?? ""
+    console.log("[wearable] profile junction_user_id lookup:", junctionUserId || "(not found)")
+  }
+
+  if (!junctionUserId) {
+    console.error("[wearable] junctionUserId not found in body or profile — aborting")
+    return NextResponse.json({ error: "Missing junctionUserId" }, { status: 400 })
+  }
+
   console.log("[wearable] step 2 — body parsed, provider:", provider, "junctionUserId:", junctionUserId)
 
   // Step 3: stamp profile with junction_user_id so webhook lookups resolve correctly
