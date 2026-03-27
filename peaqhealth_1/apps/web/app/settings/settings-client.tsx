@@ -15,6 +15,8 @@ interface Props {
   whoopConnected: boolean
   whoopLastSynced: string | null
   whoopNeedsReconnect?: boolean
+  ouraConnected?: boolean
+  ouraLastSynced?: string | null
 }
 
 // ─── Small UI primitives ─────────────────────────────────────────────────────
@@ -350,7 +352,7 @@ function buildReportHtml(data: Record<string, unknown>, name: string, email: str
 
 // ─── Main settings component ─────────────────────────────────────────────────
 
-export function SettingsClient({ userId, email, firstName: initialFirst, lastName: initialLast, createdAt, whoopConnected: initialWhoopConnected, whoopLastSynced, whoopNeedsReconnect }: Props) {
+export function SettingsClient({ userId, email, firstName: initialFirst, lastName: initialLast, createdAt, whoopConnected: initialWhoopConnected, whoopLastSynced, whoopNeedsReconnect, ouraConnected: initialOuraConnected = false, ouraLastSynced = null }: Props) {
   const router = useRouter()
   const supabase = createClient()
 
@@ -369,6 +371,7 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
   const [deleting, setDeleting] = useState(false)
 
   const [whoopConnected, setWhoopConnected] = useState(initialWhoopConnected)
+  const [ouraConnected, setOuraConnected] = useState(initialOuraConnected)
 
   // Smooth-scroll to #wearables when arriving from a dashboard CTA
   useEffect(() => {
@@ -593,7 +596,10 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
           whoopConnected={whoopConnected}
           whoopLastSynced={whoopLastSynced}
           whoopNeedsReconnect={whoopNeedsReconnect}
+          ouraConnected={ouraConnected}
+          ouraLastSynced={ouraLastSynced}
           onDisconnected={() => setWhoopConnected(false)}
+          onJunctionDisconnected={() => setOuraConnected(false)}
         />
       </section>
 
