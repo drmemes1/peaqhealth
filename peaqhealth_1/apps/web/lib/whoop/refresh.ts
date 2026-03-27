@@ -28,16 +28,18 @@ export async function refreshWhoopToken(userId: string): Promise<string> {
     throw new WhoopReconnectError(userId)
   }
 
-  // Case A — token valid for 5+ minutes
-  if (conn.token_expires_at) {
-    const expiresAt = new Date(conn.token_expires_at as string).getTime()
-    if (expiresAt - Date.now() > 5 * 60 * 1000) {
-      return conn.access_token as string
-    }
+  // Case A — token valid for 5+ minutes (null token_expires_at → treat as expired)
+  const isExpired = conn.token_expires_at
+    ? new Date(conn.token_expires_at as string).getTime() - Date.now() < 5 * 60 * 1000
+    : true
+  const hasRefreshToken = !!(conn.refresh_token && (conn.refresh_token as string).trim() !== "")
+
+  if (!isExpired) {
+    return conn.access_token as string
   }
 
-  // Case B — try refresh
-  if (!conn.refresh_token) {
+  // Case B — no refresh token: mark needs_reconnect before throwing
+  if (!hasRefreshToken) {
     await supabase.from("whoop_connections").update({
       needs_reconnect: true,
       last_sync_error: "No refresh token available",
