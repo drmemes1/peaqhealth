@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { fetchAndStoreWhoopData, WhoopReconnectError } from "../../../../lib/whoop/fetch"
+import { fetchAndStoreOuraData } from "../../../../lib/oura/fetch"
 import { recalculateScore } from "../../../../lib/score/recalculate"
 
 /**
@@ -55,5 +56,32 @@ export async function POST(_request: NextRequest) {
   )
 
   console.log(`[sync-all] done — ${succeeded} succeeded, ${failed} failed`)
-  return NextResponse.json({ succeeded, failed, total: userIds.length })
+
+  // ── Oura (Junction) daily sync — 1 day lookback ──────────────────────────
+  const { data: ouraConnections } = await supabase
+    .from("wearable_connections")
+    .select("user_id")
+    .eq("provider", "oura")
+    .eq("status", "connected")
+
+  const ouraUserIds = (ouraConnections ?? []).map(c => c.user_id as string)
+  console.log(`[sync-all] syncing ${ouraUserIds.length} Oura users`)
+
+  const ouraResults = await Promise.allSettled(
+    ouraUserIds.map(async (userId) => {
+      const count = await fetchAndStoreOuraData(userId, 1)
+      await recalculateScore(userId, supabase)
+      console.log(`[sync-all] oura user=${userId} records=${count}`)
+      return { userId, records: count }
+    })
+  )
+
+  const ouraSucceeded = ouraResults.filter(r => r.status === "fulfilled").length
+  const ouraFailed    = ouraResults.filter(r => r.status === "rejected").length
+  console.log(`[sync-all] oura done — ${ouraSucceeded} succeeded, ${ouraFailed} failed`)
+
+  return NextResponse.json({
+    whoop:  { succeeded, failed, total: userIds.length },
+    oura:   { succeeded: ouraSucceeded, failed: ouraFailed, total: ouraUserIds.length },
+  })
 }
