@@ -1473,7 +1473,15 @@ export function ScoreWheel({
         title="Sleep"
         score={Math.round(breakdown.sleepSub * 10) / 10}
         maxScore={27}
-        subtitle={sleepData ? `${sleepData.nightsAvg}-NIGHT AVG · ${sleepData.device.toUpperCase()}` : "NO DATA"}
+        subtitle={sleepData ? (() => {
+          const n = sleepData.nightsAvg
+          const dev = sleepData.device.toUpperCase()
+          if (n >= 14) return `30-DAY WEIGHTED AVG · ${dev}`
+          if (n >= 7)  return `${n}-NIGHT AVG · ${dev}`
+          if (n >= 3)  return `${n} NIGHTS · ACCURACY IMPROVES WITH MORE DATA`
+          if (n >= 1)  return `${n} NIGHT · WEAR DEVICE FOR 7+ NIGHTS`
+          return `NO DATA · CONNECT ${dev}`
+        })() : "NO DATA"}
         statusDots={sf ? [sf.deep, sf.hrv, sf.spo2Dips, sf.rem] : undefined}
         defaultOpen={sleepConnected}
         delay="0.14s"

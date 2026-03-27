@@ -6,7 +6,7 @@ import type { WhoopSleepRecord as WhoopApiSleepRecord, WhoopRecoveryRecord } fro
 
 export interface WhoopSleepRecord {
   sleep_id?:            string        // v2 UUID — used for deduplication on upsert
-  provider?:            string        // 'whoop' — written for multi-device support
+  source?:              string        // 'whoop' | 'oura' | 'garmin'
   date:                 string
   total_sleep_minutes:  number
   deep_sleep_minutes:   number
@@ -59,7 +59,7 @@ async function fetchRecoveryForCycle(
 }
 
 /**
- * Fetch sleep + recovery from WHOOP v2 API and upsert into whoop_sleep_data.
+ * Fetch sleep + recovery from WHOOP v2 API and upsert into sleep_data.
  * Returns count of upserted records.
  *
  * daysBack=30 used for initial backfill on connect.
@@ -134,7 +134,7 @@ export async function fetchAndStoreWhoopData(
     rows.push({
       user_id:              userId,
       sleep_id:             sleep.id,   // v2 UUID — deduplicated on upsert
-      provider:             'whoop',
+      source:               'whoop',
       date,
       total_sleep_minutes:  Math.round((totalInBedMs - awakeMs) / 60000),
       deep_sleep_minutes:   Math.round(deepMs / 60000),
@@ -154,9 +154,10 @@ export async function fetchAndStoreWhoopData(
 
   if (rows.length > 0) {
     const { error } = await supabase
-      .from("whoop_sleep_data")
-      .upsert(rows, { onConflict: "user_id,date,provider" })
+      .from("sleep_data")
+      .upsert(rows, { onConflict: "user_id,date,source" })
     if (error) console.error("[whoop-fetch] upsert error:", error.message)
+    else console.log("[whoop-fetch] upserted:", rows.length, "rows to sleep_data")
   }
 
   // Update wearable_connections aggregates
@@ -264,7 +265,7 @@ export async function fetchWhoopSleepData(
 
     records.push({
       sleep_id:            sleep.id,    // v2 UUID
-      provider:            'whoop',
+      source:              'whoop',
       date,
       total_sleep_minutes: Math.round((totalInBedMs - awakeMs) / 60000),
       deep_sleep_minutes:  Math.round(deepMs / 60000),

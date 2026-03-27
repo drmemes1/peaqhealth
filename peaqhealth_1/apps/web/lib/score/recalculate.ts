@@ -181,12 +181,12 @@ export async function recalculateScore(
     supabase.from("oral_kit_orders").select("*").eq("user_id", userId).not("shannon_diversity", "is", null).order("ordered_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("lifestyle_records").select("*").eq("user_id", userId).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("manual_sleep_entries").select("duration_seconds,quality").eq("user_id", userId).order("date", { ascending: false }).limit(14),
-    supabase.from("whoop_sleep_data")
-      .select("date,provider,total_sleep_minutes,deep_sleep_minutes,rem_sleep_minutes,sleep_efficiency,hrv_rmssd,spo2")
+    supabase.from("sleep_data")
+      .select("date,source,total_sleep_minutes,deep_sleep_minutes,rem_sleep_minutes,sleep_efficiency,hrv_rmssd,spo2")
       .eq("user_id", userId)
       .gt("sleep_efficiency", 0)
-      .order("date", { ascending: false })
-      .limit(30),
+      .gte("date", (() => { const d = new Date(); d.setDate(d.getDate() - 30); return d.toISOString().slice(0, 10) })())
+      .order("date", { ascending: false }),
   ])
 
   // Sleep inputs: best wearable data per date (provider priority) → manual entries
@@ -197,48 +197,67 @@ export async function recalculateScore(
   console.log("[score] wearable found:", wearableRes.data ? "yes" : "no",
     "efficiency:", (wearableRes.data as Record<string, unknown> | null)?.sleep_efficiency ?? "—")
 
-  // ── Direct whoop_sleep_data query with provider priority ──────────────────
+  // ── Direct sleep_data query with source priority ──────────────────────────
   type SleepNight = {
-    date: string; provider: string
+    date: string; source: string
     total_sleep_minutes: number; deep_sleep_minutes: number; rem_sleep_minutes: number
     sleep_efficiency: number; hrv_rmssd: number | null; spo2: number | null
   }
-  const allNights = (sleepNightsRes.data ?? []) as SleepNight[]
+  const allNights = (sleepNightsRes.data ?? []) as unknown as SleepNight[]
 
   if (allNights.length > 0) {
-    // Pick best provider per date
+    // Pick best source per date (whoop > oura > garmin)
     const bestByDate = new Map<string, SleepNight>()
     for (const night of allNights) {
       const existing = bestByDate.get(night.date)
-      const nightPriority = PROVIDER_PRIORITY[night.provider] ?? 99
-      const existingPriority = existing ? (PROVIDER_PRIORITY[existing.provider] ?? 99) : Infinity
+      const nightPriority = PROVIDER_PRIORITY[night.source] ?? 99
+      const existingPriority = existing ? (PROVIDER_PRIORITY[existing.source] ?? 99) : Infinity
       if (nightPriority < existingPriority) bestByDate.set(night.date, night)
     }
 
     const bestNights = Array.from(bestByDate.values())
+      .sort((a, b) => b.date.localeCompare(a.date))
     const n = bestNights.length
-    const avg = (key: keyof SleepNight) =>
-      bestNights.reduce((s, r) => s + (Number(r[key]) || 0), 0) / n
 
-    const totalMin = avg("total_sleep_minutes")
-    const spo2Avg  = avg("spo2")
-    const mostRecentProvider = bestNights[0]?.provider ?? "unknown"
+    // Recency-weighted average: last 7 nights = 3x, days 8-14 = 2x, days 15-30 = 1x
+    const getWeight = (i: number) => i < 7 ? 3.0 : i < 14 ? 2.0 : 1.0
+    const weightedAvg = (key: keyof SleepNight): number => {
+      let sum = 0, total = 0
+      bestNights.forEach((night, i) => {
+        const v = Number(night[key])
+        if (!isNaN(v) && v !== 0) { const w = getWeight(i); sum += v * w; total += w }
+      })
+      return total > 0 ? sum / total : 0
+    }
+
+    const totalMin  = weightedAvg("total_sleep_minutes")
+    const spo2Avg   = weightedAvg("spo2")
+    const mostRecentSource = bestNights[0]?.source ?? "unknown"
+
+    // Confidence tiers
+    const sleepConfidence =
+      n >= 14 ? "high" :
+      n >= 7  ? "good" :
+      n >= 3  ? "low"  :
+      n >= 1  ? "minimal" : "none"
 
     sleepInputs = {
-      deepSleepPct:       totalMin > 0 ? (avg("deep_sleep_minutes") / totalMin) * 100 : 0,
-      remPct:             totalMin > 0 ? (avg("rem_sleep_minutes")  / totalMin) * 100 : 0,
-      sleepEfficiencyPct: avg("sleep_efficiency"),
-      hrv_ms:             avg("hrv_rmssd"),
+      deepSleepPct:       totalMin > 0 ? (weightedAvg("deep_sleep_minutes") / totalMin) * 100 : 0,
+      remPct:             totalMin > 0 ? (weightedAvg("rem_sleep_minutes")  / totalMin) * 100 : 0,
+      sleepEfficiencyPct: weightedAvg("sleep_efficiency"),
+      hrv_ms:             weightedAvg("hrv_rmssd"),
       spo2DipsPerNight:   spo2Avg >= 95 ? 0 : spo2Avg >= 92 ? 2 : 5,
       nightsAvailable:    n,
     }
-    sleepSource = mostRecentProvider
+    sleepSource = mostRecentSource
 
     console.log(
-      "[score] sleep from whoop_sleep_data — nights:", n,
-      "provider:", mostRecentProvider,
-      "eff:", Math.round(avg("sleep_efficiency")),
-      "hrv:", Math.round(avg("hrv_rmssd") * 10) / 10,
+      "[score] sleep from sleep_data — nights:", n,
+      "confidence:", sleepConfidence,
+      "source:", mostRecentSource,
+      "weighted eff:", Math.round(weightedAvg("sleep_efficiency") * 10) / 10,
+      "weighted hrv:", Math.round(weightedAvg("hrv_rmssd") * 10) / 10,
+      "weighted deep%:", Math.round(sleepInputs.deepSleepPct * 10) / 10,
     )
   }
 

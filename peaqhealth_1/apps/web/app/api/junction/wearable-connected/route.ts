@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
     // non-fatal — historical pull can fail silently; webhook will not fire
   }
 
-  // Backfill 30 days of Oura sleep data into whoop_sleep_data after response
+  // Backfill 30 days of Oura sleep data into sleep_data after response
   const capturedUserId = user.id
   const capturedProvider = provider
   after(async () => {
