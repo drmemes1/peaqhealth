@@ -48,13 +48,23 @@ export async function fetchAndStoreWhoopData(
   const sleepParams    = new URLSearchParams({ start: startIso, end: endIso, limit: "25" })
   const recoveryParams = new URLSearchParams({ start: startIso, end: endIso, limit: "25" })
 
+  const sleepUrl    = `https://api.prod.whoop.com/developer/v1/activity/sleep?${sleepParams}`
+  const recoveryUrl = `https://api.prod.whoop.com/developer/v1/recovery?${recoveryParams}`
+  console.log(`[whoop-fetch] GET url=${sleepUrl}`)
+
   const [sleepRes, recoveryRes] = await Promise.all([
-    fetch(`https://api.prod.whoop.com/developer/v1/activity/sleep?${sleepParams}`, { headers: authHeader }),
-    fetch(`https://api.prod.whoop.com/developer/v1/recovery?${recoveryParams}`, { headers: authHeader }),
+    fetch(sleepUrl,    { headers: authHeader }),
+    fetch(recoveryUrl, { headers: authHeader }),
   ])
 
   if (!sleepRes.ok) {
     const body = await sleepRes.text().catch(() => "")
+    if (sleepRes.status === 404) {
+      // WHOOP returns 404 when no data exists in the requested window (e.g. after account reset)
+      // Treat as empty result — connection is already saved, just no sleep data yet
+      console.info(`[whoop-fetch] 404 from sleep endpoint — no data in window, treating as empty (user=${userId})`)
+      return 0
+    }
     throw new Error(`WHOOP sleep API ${sleepRes.status}: ${body}`)
   }
 
@@ -179,12 +189,16 @@ export async function fetchWhoopSleepData(
   const recoveryParams = new URLSearchParams({ start: startIso, end, limit: "25" })
   const authHeader     = { Authorization: `Bearer ${token}` }
 
-  const sleepRes = await fetch(
-    `https://api.prod.whoop.com/developer/v1/activity/sleep?${sleepParams}`,
-    { headers: authHeader },
-  )
+  const sleepUrl = `https://api.prod.whoop.com/developer/v1/activity/sleep?${sleepParams}`
+  console.log(`[whoop-fetch] GET url=${sleepUrl}`)
+
+  const sleepRes = await fetch(sleepUrl, { headers: authHeader })
   if (!sleepRes.ok) {
     const body = await sleepRes.text().catch(() => "")
+    if (sleepRes.status === 404) {
+      console.info(`[whoop-fetch] 404 from sleep endpoint — no data in window, treating as empty (user=${userId})`)
+      return []
+    }
     throw new Error(`WHOOP sleep API ${sleepRes.status}: ${body}`)
   }
   const sleepPayload = await sleepRes.json() as { records: WhoopApiSleepRecord[] }
