@@ -34,12 +34,23 @@ export function WearableManager({
   const [junctionError, setJunctionError] = useState<string | null>(null)
 
   const { open: openWidget, ready: widgetReady } = useVitalLink({
-    onSuccess: async (metadata: { userId?: string; connected?: Array<{ providerSlug?: string; name?: string }> }) => {
+    onSuccess: async (metadata: Record<string, unknown>) => {
       setJunctionError(null)
-      const providerSlug = metadata.connected?.[0]?.providerSlug
-        ?? metadata.connected?.[0]?.name?.toLowerCase().replace(/\s+/g, "_")
-        ?? "unknown"
-      const junctionUserId = metadata.userId ?? ""
+      console.log("[junction] onSuccess raw metadata:", JSON.stringify(metadata))
+      // Junction widget may use providerSlug, slug, or source.slug depending on SDK version
+      const connectedArr = (metadata.connected as Array<Record<string, unknown>> | undefined)
+      const providerSlug: string =
+        (connectedArr?.[0]?.providerSlug as string | undefined) ??
+        (connectedArr?.[0]?.slug as string | undefined) ??
+        ((metadata.source as Record<string, unknown> | undefined)?.slug as string | undefined) ??
+        (connectedArr?.[0]?.name as string | undefined)?.toLowerCase().replace(/\s+/g, "_") ??
+        "unknown"
+      // userId may be camelCase or snake_case
+      const junctionUserId: string =
+        (metadata.userId as string | undefined) ??
+        (metadata.user_id as string | undefined) ??
+        ""
+      console.log("[junction] extracted provider:", providerSlug, "junctionUserId:", junctionUserId)
       try {
         await fetch("/api/junction/wearable-connected", {
           method: "POST",
