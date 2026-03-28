@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "../../lib/supabase/client"
-import { WearableManager } from "../components/wearable-manager"
+import { WearableManager, type JunctionConnection } from "../components/wearable-manager"
 
 interface Props {
   userId: string
@@ -15,8 +15,7 @@ interface Props {
   whoopConnected: boolean
   whoopLastSynced: string | null
   whoopNeedsReconnect?: boolean
-  ouraConnected?: boolean
-  ouraLastSynced?: string | null
+  junctionConnections?: JunctionConnection[]
 }
 
 // ─── Small UI primitives ─────────────────────────────────────────────────────
@@ -352,7 +351,7 @@ function buildReportHtml(data: Record<string, unknown>, name: string, email: str
 
 // ─── Main settings component ─────────────────────────────────────────────────
 
-export function SettingsClient({ userId, email, firstName: initialFirst, lastName: initialLast, createdAt, whoopConnected: initialWhoopConnected, whoopLastSynced, whoopNeedsReconnect, ouraConnected: initialOuraConnected = false, ouraLastSynced = null }: Props) {
+export function SettingsClient({ userId, email, firstName: initialFirst, lastName: initialLast, createdAt, whoopConnected: initialWhoopConnected, whoopLastSynced, whoopNeedsReconnect, junctionConnections: initialJunctionConnections = [] }: Props) {
   const router = useRouter()
   const supabase = createClient()
 
@@ -371,7 +370,7 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
   const [deleting, setDeleting] = useState(false)
 
   const [whoopConnected, setWhoopConnected] = useState(initialWhoopConnected)
-  const [ouraConnected, setOuraConnected] = useState(initialOuraConnected)
+  const [junctionConnections, setJunctionConnections] = useState<JunctionConnection[]>(initialJunctionConnections)
 
   // Smooth-scroll to #wearables when arriving from a dashboard CTA
   useEffect(() => {
@@ -596,10 +595,11 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
           whoopConnected={whoopConnected}
           whoopLastSynced={whoopLastSynced}
           whoopNeedsReconnect={whoopNeedsReconnect}
-          ouraConnected={ouraConnected}
-          ouraLastSynced={ouraLastSynced}
+          junctionConnections={junctionConnections}
           onDisconnected={() => setWhoopConnected(false)}
-          onJunctionDisconnected={() => setOuraConnected(false)}
+          onJunctionDisconnected={(provider) =>
+            setJunctionConnections(prev => prev.filter(c => c.provider !== provider))
+          }
         />
       </section>
 
