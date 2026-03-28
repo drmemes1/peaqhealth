@@ -22,6 +22,8 @@ export interface ScoreWheelProps {
     lifestyleSub: number
   }
   sleepConnected: boolean
+  isSyncing?: boolean
+  wearableProvider?: string
   labFreshness: "fresh" | "aging" | "stale" | "expired" | "none"
   oralActive: boolean
   sleepData?: {
@@ -1177,7 +1179,7 @@ function BacteriaGroup({ title, rows, mounted }: {
 }
 
 export function ScoreWheel({
-  score, breakdown, sleepConnected, labFreshness, oralActive,
+  score, breakdown, sleepConnected, isSyncing, wearableProvider, labFreshness, oralActive,
   sleepData, bloodData, oralData, lifestyleData, interactionsFired,
   lastSyncAt, lastSyncRequestedAt,
   peaqPercent, peaqPercentLabel, lpaFlag, hsCRPRetestFlag, additionalMarkers,
@@ -1348,7 +1350,8 @@ export function ScoreWheel({
       <div style={fadeUp("0.08s")}>
         <PanelGrid
           displaySleep={displaySleep} displayBlood={displayBlood} displayOral={displayOral} displayLifestyle={displayLifestyle}
-          sleepConnected={sleepConnected} labFreshness={labFreshness} oralActive={oralActive} lifestyleActive={!!lifestyleData}
+          sleepConnected={sleepConnected} isSyncing={isSyncing} wearableProvider={wearableProvider}
+          labFreshness={labFreshness} oralActive={oralActive} lifestyleActive={!!lifestyleData}
           lifestyleSub={breakdown.lifestyleSub}
           sleepDesc={sleepDesc} bloodDesc={bloodDesc} oralDesc={oralDesc}
           staleBadge={staleBadge} mounted={mounted} hoveredRing={hoveredRing}

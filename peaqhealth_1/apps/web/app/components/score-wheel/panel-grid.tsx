@@ -70,12 +70,65 @@ function PanelCard({ label, color, trackColor, score, max, active, locked, desc,
   )
 }
 
+function SyncingCard({ provider }: { provider?: string }) {
+  const deviceName =
+    provider === "whoop"  ? "WHOOP" :
+    provider === "oura"   ? "Oura Ring" :
+    provider === "garmin" ? "Garmin" :
+    "your wearable"
+
+  return (
+    <div style={{
+      background: "white",
+      border: "0.5px solid var(--ink-12)",
+      borderTop: "2px solid var(--sleep-c)",
+      borderRadius: 4,
+      padding: "14px 16px",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6,
+      minHeight: 110,
+    }}>
+      <div style={{
+        width: 8,
+        height: 8,
+        borderRadius: "50%",
+        background: "var(--sleep-c)",
+        animation: "sleep-pulse 2s ease infinite",
+      }} />
+      <p style={{
+        fontFamily: "'Cormorant Garamond', Georgia, serif",
+        fontSize: 15,
+        fontWeight: 400,
+        color: "var(--color-text-primary, var(--ink))",
+        margin: 0,
+        textAlign: "center",
+      }}>
+        Syncing your sleep data
+      </p>
+      <p style={{
+        fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+        fontSize: 12,
+        color: "var(--color-text-tertiary, var(--ink-30))",
+        margin: 0,
+        textAlign: "center",
+      }}>
+        Pulling 30 nights from {deviceName}…
+      </p>
+    </div>
+  )
+}
+
 interface PanelGridProps {
   displaySleep: number
   displayBlood: number
   displayOral: number
   displayLifestyle: number
   sleepConnected: boolean
+  isSyncing?: boolean
+  wearableProvider?: string
   labFreshness: string
   oralActive: boolean
   lifestyleActive: boolean
@@ -91,7 +144,7 @@ interface PanelGridProps {
 
 export function PanelGrid({
   displaySleep, displayBlood, displayOral, displayLifestyle,
-  sleepConnected, labFreshness, oralActive, lifestyleActive,
+  sleepConnected, isSyncing, wearableProvider, labFreshness, oralActive, lifestyleActive,
   sleepDesc, bloodDesc, oralDesc, staleBadge,
   mounted, hoveredRing,
 }: PanelGridProps) {
@@ -105,7 +158,10 @@ export function PanelGrid({
         <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-30)" }}>Score composition</span>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
-        <PanelCard label="Sleep" color="var(--sleep-c)" trackColor="var(--sleep-bg)" score={displaySleep} max={27} active={sleepConnected} locked={!sleepConnected} desc={sleepDesc} mounted={mounted} highlighted={hoveredRing === "sleep"} />
+        {isSyncing
+          ? <SyncingCard provider={wearableProvider} />
+          : <PanelCard label="Sleep" color="var(--sleep-c)" trackColor="var(--sleep-bg)" score={displaySleep} max={27} active={sleepConnected} locked={!sleepConnected} desc={sleepDesc} mounted={mounted} highlighted={hoveredRing === "sleep"} />
+        }
         <PanelCard label="Blood" color="var(--blood-c)" trackColor="var(--blood-bg)" score={displayBlood} max={33} active={hasBlood} locked={bloodLocked} desc={bloodDesc} staleBadge={staleBadge} mounted={mounted} highlighted={hoveredRing === "blood"} />
         <PanelCard label="Oral Microbiome" color="var(--oral-c)" trackColor="var(--oral-bg)" score={displayOral} max={27} active={oralActive} locked={!oralActive} desc={oralDesc} mounted={mounted} highlighted={hoveredRing === "oral"} />
         <PanelCard label="Lifestyle" color="var(--gold)" trackColor="var(--warm-100)" score={displayLifestyle} max={13} active={lifestyleActive} locked={!lifestyleActive} desc="" mounted={mounted} highlighted={hoveredRing === "lifestyle"} />

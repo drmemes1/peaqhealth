@@ -145,6 +145,7 @@ export default async function DashboardPage() {
     lastSyncAt:            (wearable?.last_synced_at as string | null) ?? null,
     lastSyncRequestedAt:   null,
     sleepConnected: !!wearable,
+    wearableProvider: wearable?.provider ?? undefined,
     labFreshness,
     oralActive: !!oral,
     sleepData: computedSleepData,
