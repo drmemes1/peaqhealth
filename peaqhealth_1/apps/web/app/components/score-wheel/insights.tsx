@@ -1,20 +1,15 @@
 "use client"
 import { useEffect, useRef, useState } from "react"
 
-interface InsightItem {
-  title: string
-  finding: string
+interface InsightCardData {
+  id: string
+  panels: string[]
+  headline: string
+  body: string
   mechanism: string
   action: string
-  urgency: "routine" | "watch" | "act"
-  panels: string[]
-}
-
-interface AIInsightData {
-  primaryFinding?: InsightItem
-  insights?: InsightItem[]
-  trajectoryNote?: string
-  allPanelsBonus?: string
+  category: "ROUTINE" | "WATCH" | "OPTIMIZE"
+  priority: number
 }
 
 export interface InsightsProps {
@@ -22,11 +17,10 @@ export interface InsightsProps {
   hasBlood: boolean
   oralActive: boolean
   lifestyleActive?: boolean
-  // legacy individual props — kept for call-site compat, unused in rendering
   [key: string]: unknown
 }
 
-// ── Panel & urgency styling ────────────────────────────────────────────────────
+// ── Panel & category styling ───────────────────────────────────────────────────
 
 const PANEL_COLOR: Record<string, string> = {
   blood:     "var(--blood-c)",
@@ -35,10 +29,10 @@ const PANEL_COLOR: Record<string, string> = {
   lifestyle: "var(--gold)",
 }
 
-const URGENCY: Record<string, { bg: string; text: string; label: string }> = {
-  routine: { bg: "rgba(20,20,16,0.06)",    text: "rgba(20,20,16,0.4)", label: "Routine" },
-  watch:   { bg: "rgba(184,134,11,0.12)",  text: "#92400E",            label: "Watch"   },
-  act:     { bg: "rgba(220,38,38,0.08)",   text: "#991B1B",            label: "Act"     },
+const CATEGORY: Record<string, { bg: string; text: string; label: string }> = {
+  ROUTINE:  { bg: "rgba(20,20,16,0.06)",    text: "rgba(20,20,16,0.4)", label: "Routine"  },
+  WATCH:    { bg: "rgba(184,134,11,0.12)",  text: "#92400E",            label: "Watch"    },
+  OPTIMIZE: { bg: "rgba(99,102,241,0.08)",  text: "#4338CA",            label: "Optimize" },
 }
 
 function PanelTag({ panel }: { panel: string }) {
@@ -54,22 +48,22 @@ function PanelTag({ panel }: { panel: string }) {
   )
 }
 
-function UrgencyBadge({ urgency }: { urgency: string }) {
-  const u = URGENCY[urgency] ?? URGENCY.routine
+function CategoryBadge({ category }: { category: string }) {
+  const c = CATEGORY[category] ?? CATEGORY.ROUTINE
   return (
     <span style={{
       fontSize: 9, textTransform: "uppercase" as const, letterSpacing: "0.06em",
-      padding: "3px 8px", background: u.bg, color: u.text,
+      padding: "3px 8px", background: c.bg, color: c.text,
       fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
     }}>
-      {u.label}
+      {c.label}
     </span>
   )
 }
 
-// ── AI insight card ────────────────────────────────────────────────────────────
+// ── AI insight card ─────────────────────────────────────────────────────────────
 
-function InsightCard({ item, isPrimary }: { item: InsightItem; isPrimary?: boolean }) {
+function InsightCard({ item, isPrimary }: { item: InsightCardData; isPrimary?: boolean }) {
   const el = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
 
@@ -100,29 +94,29 @@ function InsightCard({ item, isPrimary }: { item: InsightItem; isPrimary?: boole
         transition: "opacity 0.55s ease",
       }}
     >
-      {/* Panels + urgency */}
+      {/* Panels + category */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: isPrimary ? 10 : 7, flexWrap: "wrap", gap: 6 }}>
         <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
           {item.panels.map(p => <PanelTag key={p} panel={p} />)}
         </div>
-        <UrgencyBadge urgency={item.urgency} />
+        <CategoryBadge category={item.category} />
       </div>
 
-      {/* Title */}
+      {/* Headline */}
       <p style={{
         fontFamily: "'Cormorant Garamond', Georgia, serif",
         fontSize: isPrimary ? 21 : 17, fontWeight: 400,
         color: "var(--ink)", margin: "0 0 8px", lineHeight: 1.25,
       }}>
-        {item.title}
+        {item.headline}
       </p>
 
-      {/* Finding */}
+      {/* Body */}
       <p style={{
         fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
         fontSize: 12.5, lineHeight: 1.75, color: "var(--ink-60)", margin: "0 0 8px",
       }}>
-        {item.finding}
+        {item.body}
       </p>
 
       {/* Mechanism */}
@@ -181,29 +175,21 @@ function Skeleton({ isPrimary }: { isPrimary?: boolean }) {
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-function isTemplateText(s: string): boolean {
-  const lower = s.toLowerCase()
-  return (
-    lower.includes("only include") ||
-    lower.includes("omit this") ||
-    lower.includes("if no previous") ||
-    lower.includes("previous labs exist") ||
-    lower.includes("1-2 sentences") ||
-    s.trim().length === 0
-  )
-}
-
 export function Insights({ sleepConnected, hasBlood, oralActive, lifestyleActive }: InsightsProps) {
   const [loading, setLoading] = useState(true)
-  const [data, setData]       = useState<AIInsightData | null>(null)
+  const [cards, setCards]     = useState<InsightCardData[]>([])
 
   const anyData = sleepConnected || hasBlood || oralActive || !!lifestyleActive
 
   useEffect(() => {
     if (!anyData) { setLoading(false); return }
     fetch("/api/labs/insight")
-      .then(r => r.ok ? r.json() as Promise<AIInsightData> : Promise.reject())
-      .then(d => { setData(d); setLoading(false) })
+      .then(r => r.ok ? r.json() as Promise<InsightCardData[]> : Promise.reject())
+      .then(d => {
+        const sorted = Array.isArray(d) ? [...d].sort((a, b) => a.priority - b.priority) : []
+        setCards(sorted)
+        setLoading(false)
+      })
       .catch(() => setLoading(false))
   }, [anyData])
 
@@ -230,74 +216,12 @@ export function Insights({ sleepConnected, hasBlood, oralActive, lifestyleActive
         </div>
       )}
 
-      {/* AI insights */}
-      {!loading && data?.primaryFinding && (
+      {/* AI insight cards */}
+      {!loading && cards.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-
-          {/* Trajectory banner */}
-          {data.trajectoryNote && !isTemplateText(data.trajectoryNote) && (
-            <div style={{
-              padding: "10px 14px",
-              background: "rgba(184,134,11,0.06)",
-              border: "0.5px solid rgba(184,134,11,0.22)",
-            }}>
-              <span style={{
-                display: "block", marginBottom: 3,
-                fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                fontSize: 9, fontWeight: 600, textTransform: "uppercase",
-                letterSpacing: "0.08em", color: "#B8860B",
-              }}>
-                Since your last labs
-              </span>
-              <p style={{
-                fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                fontSize: 12.5, lineHeight: 1.6, color: "rgba(20,20,16,0.6)", margin: 0,
-              }}>
-                {data.trajectoryNote}
-              </p>
-            </div>
-          )}
-
-          {/* Primary finding — larger */}
-          <InsightCard item={data.primaryFinding} isPrimary />
-
-          {/* Supporting insights */}
-          {(data.insights ?? []).map((insight, i) => (
-            <InsightCard key={i} item={insight} />
+          {cards.map((card, i) => (
+            <InsightCard key={card.id ?? i} item={card} isPrimary={i === 0} />
           ))}
-
-          {/* Full Peaqture Unlocked */}
-          {data.allPanelsBonus && (
-            <div style={{
-              background: "rgba(184,134,11,0.035)",
-              border: "1px solid var(--gold)",
-              padding: "20px 22px 18px",
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 10 }}>
-                <span style={{ fontSize: 11, color: "var(--gold)" }}>✦</span>
-                <span style={{
-                  fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                  fontSize: 9, textTransform: "uppercase", letterSpacing: "0.12em",
-                  color: "var(--gold)", fontWeight: 600,
-                }}>
-                  Full Peaqture Unlocked
-                </span>
-              </div>
-              <p style={{
-                fontFamily: "'Cormorant Garamond', Georgia, serif",
-                fontSize: 18, fontWeight: 400, color: "var(--ink)",
-                margin: "0 0 9px", lineHeight: 1.3,
-              }}>
-                The complete picture
-              </p>
-              <p style={{
-                fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                fontSize: 12.5, lineHeight: 1.75, color: "var(--ink-60)", margin: 0,
-              }}>
-                {data.allPanelsBonus}
-              </p>
-            </div>
-          )}
         </div>
       )}
     </div>

@@ -2,13 +2,19 @@ import { NextResponse } from "next/server"
 import { createClient } from "../../../../lib/supabase/server"
 import { AzureOpenAI } from "openai"
 
-const SYSTEM_PROMPT = `You are a world-class preventive medicine physician — the kind patients fly across the country to see. You specialize in the intersection of cardiovascular medicine, sleep medicine, metabolic health, and the oral-systemic axis. You have just reviewed this patient's complete data across all panels. Your job is to tell them the most important things in their data that no standard doctor visit would ever surface — connections between panels, hidden risks, and early signals that are actionable right now. You speak like a brilliant, warm doctor talking directly to a motivated patient — never clinical, never vague, never generic. Every sentence you write contains this patient's actual numbers. You always frame clinical recommendations as things the patient should consider discussing with their doctor — Peaq provides health information, not medical advice. Use language like 'consider asking your doctor about...' or 'it may be worth discussing with your physician...'.`
+const SYSTEM_PROMPT = `You are the clinical insight engine for Peaq Health, a longevity platform built by a cardiologist and dentist. Generate cross-panel insights that connect blood biomarkers, sleep physiology, oral microbiome, and lifestyle data in ways that reveal risk or opportunity that no single data source could show alone.
 
-function fmtVal(val: unknown, unit: string): string | null {
-  if (val === null || val === undefined) return null
-  const n = Number(val)
-  if (isNaN(n) || n <= 0) return null
-  return `${n} ${unit}`
+RULES:
+1. Every insight MUST reference data from at least 2 panels. Single-panel observations are forbidden.
+2. Use the user's actual values and numbers — never generic ranges.
+3. Reveal non-obvious biological connections — the kind a cardiologist and periodontist would discuss together.
+4. Never use disease language. Use wellness and optimization framing.
+5. Write in warm, plain language a motivated patient can understand.
+6. Return ONLY a valid JSON array. No markdown, no backticks, no preamble.`
+
+function num(v: unknown): number | undefined {
+  const n = Number(v)
+  return !isNaN(n) && n > 0 ? n : undefined
 }
 
 export async function GET() {
@@ -16,189 +22,156 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const [labRes, labHistRes, wearableRes, oralRes, lifestyleRes] = await Promise.all([
+  const [labRes, sleepRes, wearableRes, oralRes, lifestyleRes] = await Promise.all([
     supabase.from("lab_results").select("*").eq("user_id", user.id).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).maybeSingle(),
-    supabase.from("lab_history").select("locked_at, collection_date, ldl_mgdl, hdl_mgdl, hs_crp_mgl, vitamin_d_ngml, total_score, blood_score").eq("user_id", user.id).order("locked_at", { ascending: false }).limit(5),
-    supabase.from("wearable_connections").select("*").eq("user_id", user.id).eq("status", "connected").order("connected_at", { ascending: false }).limit(1).maybeSingle(),
-    supabase.from("oral_kit_orders").select("*").eq("user_id", user.id).in("status", ["results_ready", "scored"]).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+    supabase.from("sleep_data").select("date,source,total_sleep_minutes,deep_sleep_minutes,rem_sleep_minutes,sleep_efficiency,hrv_rmssd,spo2,resting_heart_rate").eq("user_id", user.id).order("date", { ascending: false }).limit(15),
+    supabase.from("wearable_connections_v2").select("provider").eq("user_id", user.id).eq("needs_reconnect", false).order("connected_at", { ascending: false }).limit(1).maybeSingle(),
+    supabase.from("oral_kit_orders").select("*").eq("user_id", user.id).not("shannon_diversity", "is", null).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("lifestyle_records").select("*").eq("user_id", user.id).maybeSingle(),
   ])
 
   const lab       = labRes.data
-  const labHist   = labHistRes.data ?? []
+  const sleepRows = sleepRes.data ?? []
   const wearable  = wearableRes.data
   const oral      = oralRes.data
   const lifestyle = lifestyleRes.data
 
-  const hasSomething = !!(lab || wearable || oral || lifestyle)
+  const hasSomething = !!(lab || sleepRows.length > 0 || oral || lifestyle)
   if (!hasSomething) return NextResponse.json({ error: "No data" }, { status: 422 })
 
-  // ── Blood markers ──────────────────────────────────────────────────────────
-  const bloodMarkers: Record<string, string> = {}
+  // ── Blood panel ────────────────────────────────────────────────────────────
+  type BloodData = Record<string, number | string | null>
+  let bloodData: BloodData | null = null
   if (lab) {
-    const pairs: [string, unknown, string][] = [
-      ["hsCRP",              lab.hs_crp_mgl,           "mg/L"],
-      ["LDL Cholesterol",    lab.ldl_mgdl,              "mg/dL"],
-      ["HDL Cholesterol",    lab.hdl_mgdl,              "mg/dL"],
-      ["ApoB",               lab.apob_mgdl,             "mg/dL"],
-      ["Triglycerides",      lab.triglycerides_mgdl,    "mg/dL"],
-      ["Glucose (fasting)",  lab.glucose_mgdl,          "mg/dL"],
-      ["HbA1c",              lab.hba1c_pct,             "%"],
-      ["Vitamin D",          lab.vitamin_d_ngml,        "ng/mL"],
-      ["eGFR",               lab.egfr_mlmin,            "mL/min"],
-      ["Lp(a)",              lab.lpa_mgdl,              "mg/dL"],
-      ["Hemoglobin",         lab.hemoglobin_gdl,        "g/dL"],
-      ["ALT",                lab.alt_ul,                "U/L"],
-      ["AST",                lab.ast_ul,                "U/L"],
-      ["Albumin",            lab.albumin_gdl,           "g/dL"],
-      ["WBC",                lab.wbc_kul,               "K/µL"],
-      ["Homocysteine",       lab.homocysteine_umoll,    "µmol/L"],
-      ["Ferritin",           lab.ferritin_ngml,         "ng/mL"],
-      ["TSH",                lab.tsh_uiuml,             "µIU/mL"],
-      ["Free T4",            lab.free_t4_ngdl,          "ng/dL"],
-      ["DHEA-S",             lab.dhea_s_ugdl,           "µg/dL"],
-      ["IGF-1",              lab.igf1_ngml,             "ng/mL"],
-      ["PSA",                lab.psa_ngml,              "ng/mL"],
-    ]
-    for (const [name, val, unit] of pairs) {
-      const f = fmtVal(val, unit)
-      if (f) bloodMarkers[name] = f
+    bloodData = {
+      hsCRP_mgL:        num(lab.hs_crp_mgl)         ?? null,
+      LDL_mgdL:         num(lab.ldl_mgdl)            ?? null,
+      HDL_mgdL:         num(lab.hdl_mgdl)            ?? null,
+      ApoB_mgdL:        num(lab.apob_mgdl)           ?? null,
+      triglycerides_mgdL: num(lab.triglycerides_mgdl) ?? null,
+      glucose_mgdL:     num(lab.glucose_mgdl)        ?? null,
+      HbA1c_pct:        num(lab.hba1c_pct)           ?? null,
+      vitaminD_ngmL:    num(lab.vitamin_d_ngml)      ?? null,
+      eGFR:             num(lab.egfr_mlmin)           ?? null,
+      Lpa_mgdL:         num(lab.lpa_mgdl)            ?? null,
+      hemoglobin_gdL:   num(lab.hemoglobin_gdl)      ?? null,
+      homocysteine_umolL: num(lab.homocysteine_umoll) ?? null,
+      collectionDate:   lab.collection_date ?? null,
+    }
+    // Remove nulls to keep prompt concise
+    for (const k of Object.keys(bloodData)) {
+      if (bloodData[k] === null) delete bloodData[k]
     }
   }
 
-  // ── Previous labs (from lab_history, second most recent entry) ────────────
-  let previousLabs: Record<string, string> | undefined
-  let previousCollectionDate: string | undefined
-  if (labHist.length > 1) {
-    const prev = labHist[1]
-    const prevPairs: [string, unknown, string][] = [
-      ["LDL Cholesterol", prev.ldl_mgdl,     "mg/dL"],
-      ["HDL Cholesterol", prev.hdl_mgdl,     "mg/dL"],
-      ["hsCRP",           prev.hs_crp_mgl,   "mg/L"],
-      ["Vitamin D",       prev.vitamin_d_ngml,"ng/mL"],
-    ]
-    const prevObj: Record<string, string> = {}
-    for (const [name, val, unit] of prevPairs) {
-      const f = fmtVal(val, unit)
-      if (f) prevObj[name] = f
+  // ── Sleep panel ────────────────────────────────────────────────────────────
+  type SleepData = { provider: string; nights: number; deepSleepPct: number | null; remPct: number | null; hrv: number | null; spo2: number | null; efficiency: number | null; restingHR: number | null }
+  let sleepData: SleepData | null = null
+  if (sleepRows.length > 0) {
+    const avg = (key: string): number | null => {
+      const vals = sleepRows.map(r => num((r as Record<string, unknown>)[key])).filter((v): v is number => v !== undefined && v > 0)
+      return vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : null
     }
-    if (Object.keys(prevObj).length > 0) {
-      previousLabs = prevObj
-      previousCollectionDate = prev.collection_date ?? prev.locked_at?.slice(0, 10)
+    const totalAvg = avg("total_sleep_minutes") ?? 0
+    const deepAvg  = avg("deep_sleep_minutes")  ?? 0
+    const remAvg   = avg("rem_sleep_minutes")   ?? 0
+    sleepData = {
+      provider:    wearable?.provider ?? sleepRows[0].source ?? "wearable",
+      nights:      sleepRows.length,
+      deepSleepPct: totalAvg > 0 ? (deepAvg / totalAvg) * 100 : null,
+      remPct:       totalAvg > 0 ? (remAvg  / totalAvg) * 100 : null,
+      hrv:          avg("hrv_rmssd"),
+      spo2:         avg("spo2"),
+      efficiency:   avg("sleep_efficiency"),
+      restingHR:    avg("resting_heart_rate"),
     }
   }
 
-  // ── Sleep ─────────────────────────────────────────────────────────────────
-  const nightsAvailable = Number(wearable?.nights_available ?? 0)
-  const deepSleepPct    = fmtVal(wearable?.deep_sleep_pct,    "%")    ?? "—"
-  const remPct          = fmtVal(wearable?.rem_pct,           "%")    ?? "—"
-  const sleepEfficiency = fmtVal(wearable?.sleep_efficiency,  "%")    ?? "—"
-  const hrv             = fmtVal(wearable?.hrv_rmssd,         "ms")   ?? "—"
-  const restingHr       = fmtVal(wearable?.latest_resting_hr, "bpm")  ?? "—"
+  // ── Oral panel ─────────────────────────────────────────────────────────────
+  type OralData = { shannon: number | null; nitrateReducerPct: number | null; periodontalBurden: number | null }
+  let oralData: OralData | null = null
+  if (oral) {
+    oralData = {
+      shannon:           num(oral.shannon_diversity) ?? null,
+      nitrateReducerPct: oral.nitrate_reducers_pct != null ? Number(oral.nitrate_reducers_pct) * 100 : null,
+      periodontalBurden: oral.periodontopathogen_pct != null ? Number(oral.periodontopathogen_pct) * 100 : null,
+    }
+  }
 
-  // ── Oral ──────────────────────────────────────────────────────────────────
-  const shannonDiv      = fmtVal(oral?.shannon_diversity,           "")   ?? "—"
-  const nitrateReducing = fmtVal(oral?.nitrate_reducers_pct,        "%")  ?? "—"
-  const periodontalPath = fmtVal(oral?.periodont_path_pct ?? oral?.periodontopathogen_pct, "%") ?? "—"
-  const osaTaxa         = fmtVal(oral?.osa_taxa_pct,                "%")  ?? "—"
+  // ── Lifestyle panel ────────────────────────────────────────────────────────
+  type LifestyleData = Record<string, unknown>
+  let lifestyleData: LifestyleData | null = null
+  if (lifestyle) {
+    lifestyleData = {
+      ageRange:        lifestyle.age_range,
+      biologicalSex:   lifestyle.biological_sex,
+      exerciseLevel:   lifestyle.exercise_level,
+      smokingStatus:   lifestyle.smoking_status,
+      alcoholPerWeek:  lifestyle.alcohol_drinks_per_week,
+      stressLevel:     lifestyle.stress_level,
+      mouthwashType:   lifestyle.mouthwash_type,
+      fermentedFoods:  lifestyle.fermented_foods_frequency,
+      onStatins:       lifestyle.on_statins,
+      onBPMeds:        lifestyle.on_bp_meds,
+      knownHypertension: lifestyle.known_hypertension,
+      knownDiabetes:   lifestyle.known_diabetes,
+      vegServingsPerDay: lifestyle.vegetable_servings_per_day,
+      processedFoodFreq: lifestyle.processed_food_frequency,
+    }
+    // Strip nulls
+    for (const k of Object.keys(lifestyleData)) {
+      if (lifestyleData[k] == null) delete lifestyleData[k]
+    }
+  }
 
-  // ── Lifestyle ─────────────────────────────────────────────────────────────
-  const exMap: Record<string, string> = { active: "Very active (>300 min/week)", moderate: "Moderately active (150–300 min/week)", light: "Lightly active (<150 min/week)", sedentary: "Sedentary (<60 min/week)" }
-  const exerciseFreq = exMap[lifestyle?.exercise_level ?? ""] ?? (lifestyle?.exercise_level ?? "not reported")
-  const smoking      = lifestyle?.smoking_status ?? "not reported"
-  const dietQuality  = lifestyle?.diet_quality ?? "not reported"
-  const alcoholNum   = lifestyle?.alcohol_drinks_per_week
-  const alcohol      = alcoholNum != null ? `${alcoholNum} drinks/week` : "not reported"
+  // ── User prompt ────────────────────────────────────────────────────────────
+  const userPrompt = `Generate 6 cross-panel longevity insights for this user.
+Every insight must connect at least 2 of the 4 panels below.
+Only generate insights where the user's actual data supports the signal.
+If a panel is unavailable, do not reference it.
 
-  const medsList: string[] = []
-  if (lifestyle?.on_statins === true)      medsList.push("statin therapy")
-  if (lifestyle?.on_bp_meds === true)      medsList.push("antihypertensive medication")
-  if (lifestyle?.on_diabetes_meds === true) medsList.push("diabetes medication")
-  const medications = medsList.length > 0 ? medsList.join(", ") : "none reported"
+BLOOD PANEL:
+${bloodData ? JSON.stringify(bloodData, null, 2) : "Not available"}
 
-  // ── User prompt ───────────────────────────────────────────────────────────
-  const collectionDate = lab?.collection_date ?? "unknown"
-  const labName        = lab?.lab_name ?? "lab"
+SLEEP PANEL (${sleepData?.provider ?? "none"}, ${sleepData?.nights ?? 0} nights avg):
+- Deep sleep: ${sleepData?.deepSleepPct?.toFixed(1) ?? "N/A"}% (target ≥17%)
+- REM: ${sleepData?.remPct?.toFixed(1) ?? "N/A"}% (target ≥18%)
+- HRV: ${sleepData?.hrv?.toFixed(1) ?? "N/A"} ms (target ≥50ms)
+- SpO2: ${sleepData?.spo2?.toFixed(1) ?? "N/A"}% (target ≥96%)
+- Efficiency: ${sleepData?.efficiency?.toFixed(1) ?? "N/A"}% (target ≥85%)
 
-  const bloodSection = lab
-    ? `BLOOD BIOMARKERS (collected ${collectionDate} via ${labName}):
-${Object.entries(bloodMarkers).map(([k, v]) => `- ${k}: ${v}`).join("\n")}`
-    : "BLOOD BIOMARKERS: No blood panel on file."
-
-  const sleepSection = wearable
-    ? `SLEEP DATA (${nightsAvailable} nights tracked via wearable):
-- Deep sleep: ${deepSleepPct} (target >20%)
-- REM sleep: ${remPct} (target >20%)
-- Sleep efficiency: ${sleepEfficiency} (target >85%)
-- HRV (RMSSD): ${hrv}
-- Resting HR: ${restingHr}`
-    : "SLEEP DATA: No wearable data on file."
-
-  const oralSection = oral
-    ? `ORAL MICROBIOME (Zymo 16S sequencing):
-- Shannon diversity index: ${shannonDiv} (target ≥3.0 — low = dysbiosis)
-- Nitrate-reducing bacteria: ${nitrateReducing} reads (target ≥5% — low = BP risk)
-- Periodontal pathogens (P. gingivalis, T. denticola): ${periodontalPath} reads (target <0.5%)
-- OSA-associated taxa (Prevotella, Fusobacterium): ${osaTaxa} reads (target <1%)`
-    : "ORAL MICROBIOME: No oral microbiome data on file."
-
-  const previousSection = previousLabs && previousCollectionDate
-    ? `\nPREVIOUS LABS (${previousCollectionDate}):
-${Object.entries(previousLabs).map(([k, v]) => `- ${k}: ${v}`).join("\n")}`
-    : ""
-
-  const userPrompt = `Here is my complete health data. Analyze everything together and find the most important cross-panel patterns.
-
-${bloodSection}
-
-${sleepSection}
-
-${oralSection}
+ORAL MICROBIOME:
+- Shannon diversity: ${oralData?.shannon ?? "N/A"} (target ≥3.0)
+- Nitrate reducers: ${oralData?.nitrateReducerPct?.toFixed(1) ?? "N/A"}% (target ≥20%)
+- Periodontal burden: ${oralData?.periodontalBurden?.toFixed(1) ?? "N/A"}% (target <0.5%)
 
 LIFESTYLE:
-- Age range: ${lifestyle?.age_range ?? "not reported"}
-- Biological sex: ${lifestyle?.biological_sex ?? "not reported"}
-- Smoking: ${smoking}
-- Exercise: ${exerciseFreq}
-- Diet: ${dietQuality}
-- Alcohol: ${alcohol}
-- Medications: ${medications}
-${previousSection}
+${lifestyleData ? JSON.stringify(lifestyleData, null, 2) : "Not available"}
 
-Generate a response in this EXACT JSON format — no markdown, no backticks, start with { and end with }:
+CROSS-PANEL SIGNALS TO PRIORITIZE (only if user data supports):
+- Low nitrate reducers + low HRV + elevated BP markers → nitric oxide / vasodilation pathway
+- Elevated Lp(a) + high periodontal burden + poor sleep efficiency → inflammation convergence
+- Low HRV + elevated hsCRP + low protective bacteria → systemic inflammation triple signal
+- Low deep sleep + elevated glucose + low Shannon diversity → metabolic dysregulation
+- P. gingivalis burden + elevated ApoB + poor sleep → atherogenic triple signal
+- Low REM + low nitrate reducers + elevated LDL → cardiovascular recovery deficit
 
-{
-"primaryFinding": {
-"title": "5-7 word headline that would make them stop scrolling",
-"finding": "2-3 sentences connecting their specific numbers across at least 2 panels. Include the actual values. This should be something their doctor has never told them.",
-"mechanism": "1-2 sentences explaining the biological reason this matters — specific pathway, not generic advice.",
-"action": "One specific, concrete action they can take this week. Not a suggestion — a directive with a reason.",
-"urgency": "routine",
-"panels": ["blood", "sleep"]
-},
-"insights": [
-{
-"title": "compelling short title",
-"finding": "1-2 sentences with their actual numbers",
-"mechanism": "1 sentence — the biological why",
-"action": "one specific next step",
-"urgency": "routine",
-"panels": ["panel1", "panel2"]
-}
-],
-"trajectoryNote": "ONLY include this key if previousLabs data was provided above. Write 1-2 sentences on what improved or worsened and by how much, citing the actual values. If no previousLabs data exists DO NOT include this key at all — not as empty string, not as null, not as placeholder text.",
-"allPanelsBonus": "Only include if all 4 panels have data. 1-2 sentences revealing the single most important pattern that ONLY becomes visible when all 4 panels are analyzed together. This is the insight that justifies having all 4 panels. Omit if any panel is missing."
-}
+Return a JSON array of exactly 6 insight objects:
+[
+  {
+    "id": "unique_string",
+    "panels": ["blood", "sleep"],
+    "headline": "5-8 word headline specific to this user's values",
+    "body": "2-3 sentences connecting panels using actual numbers",
+    "mechanism": "one sentence explaining the biological pathway",
+    "action": "one concrete specific recommendation",
+    "category": "ROUTINE",
+    "priority": 1
+  }
+]
 
-Rules you must follow:
-- Every insight must contain at least one of the patient's actual numbers
-- Primary finding must connect at least 2 panels
-- Generate 2-3 supporting insights (not 4 — quality over quantity)
-- If all 4 panels have data, allPanelsBonus is REQUIRED and must be genuinely surprising
-- urgency "act" = needs attention soon, "watch" = monitor this, "routine" = good to know
-- Never give directives — always frame clinical recommendations as things to consider discussing with their doctor
-- If a panel has no data, do not reference it or fabricate values
-- trajectoryNote: OMIT this key entirely when no previousLabs data is present. The key must not exist in the JSON response. If you include it with placeholder or instructional text you will have failed this task.`
+category must be exactly one of: "ROUTINE", "WATCH", "OPTIMIZE"
+Priority 1 = most clinically relevant. panels array must have at least 2 entries.`
 
   // ── Call Azure OpenAI ─────────────────────────────────────────────────────
   const azureKey = process.env.AZURE_OPENAI_KEY
@@ -214,11 +187,8 @@ Rules you must follow:
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 30000)
 
-  // HIPAA: PHI-free payload — numeric values only.
-  // Sent:     anonymous numeric biomarkers, lab collection date (date of blood draw — not DOB),
-  //           lab facility name (not patient name), age range (not exact DOB/age),
-  //           biological sex, lifestyle categories, wearable metrics.
-  // NOT sent: user_id, name, email, exact date of birth, address, or device identifier.
+  // HIPAA: PHI-free payload — numeric biomarkers, age range (not exact DOB),
+  // biological sex, lifestyle categories. No user_id, name, email, or DOB.
   let raw: string
   try {
     const resp = await openai.chat.completions.create({
@@ -228,7 +198,7 @@ Rules you must follow:
         { role: "user",   content: userPrompt },
       ],
       temperature: 0.72,
-      max_tokens:  1400,
+      max_tokens:  2000,
     }, { signal: controller.signal })
     raw = resp.choices[0]?.message.content ?? ""
   } catch (err) {
@@ -238,14 +208,26 @@ Rules you must follow:
     clearTimeout(timeout)
   }
 
+  // ── Parse + validate ───────────────────────────────────────────────────────
   const cleaned = raw.replace(/```json/gi, "").replace(/```/g, "").trim()
-  let parsed: Record<string, unknown>
+  let parsed: unknown[]
   try {
-    parsed = JSON.parse(cleaned)
+    const p = JSON.parse(cleaned)
+    parsed = Array.isArray(p) ? p : []
   } catch {
     console.error("[insight] JSON parse failed, raw:", raw.slice(0, 200))
     return NextResponse.json({ error: "Parse failed" }, { status: 500 })
   }
 
-  return NextResponse.json(parsed)
+  // Enforce: every card must reference at least 2 panels
+  const valid = parsed.filter((item) => {
+    const i = item as Record<string, unknown>
+    return Array.isArray(i.panels) && (i.panels as unknown[]).length >= 2
+  })
+
+  if (valid.length < 4) {
+    console.warn(`[insight] only ${valid.length} insights passed the 2-panel filter (raw count: ${parsed.length})`)
+  }
+
+  return NextResponse.json(valid)
 }
