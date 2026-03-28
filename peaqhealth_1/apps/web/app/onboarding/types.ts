@@ -1,28 +1,28 @@
 export type OnboardingStep =
   | "welcome"
+  | "lifestyle"
   | "wearable"
   | "blood"
   | "oral"
-  | "lifestyle"
   | "score"
   | "done";
 
 export const STEPS: OnboardingStep[] = [
   "welcome",
+  "lifestyle",
   "wearable",
   "blood",
   "oral",
-  "lifestyle",
   "score",
   "done",
 ];
 
 export const STEP_LABELS: Record<OnboardingStep, string> = {
   welcome: "Welcome",
+  lifestyle: "Lifestyle",
   wearable: "Wearable",
   blood: "Blood labs",
   oral: "Oral kit",
-  lifestyle: "Lifestyle",
   score: "Your score",
   done: "Done",
 };
@@ -67,6 +67,7 @@ export interface LifestyleAnswers {
   onStatins: string;
   familyHistoryCVD: string;
   // Nutrition
+  fermentedFoodsFrequency: string;
   vegetableServings: string;
   fruitServings: string;
   processedFood: string;

@@ -125,13 +125,13 @@ const QUESTIONS: QuestionDef[] = [
   {
     key: "mouthwashType", dbKey: "mouthwash_type",
     label: "What type of oral rinse do you use regularly?",
-    context: "Antiseptic mouthwash eliminates nitrate-reducing bacteria, raising blood pressure risk by 85% (Tribble et al., SOALS 2020).",
+    context: "Antiseptic mouthwashes — like Listerine, Scope, and prescription chlorhexidine — are designed to kill bacteria broadly. While this reduces harmful bacteria, it also eliminates the beneficial nitrate-reducing bacteria responsible for producing nitric oxide — a molecule that regulates blood pressure and vascular health. Fluoride mouthwashes clean teeth without this effect. (Kapil et al., 2013)",
     type: "choice",
     options: [
       { value: "none",     label: "None" },
       { value: "fluoride", label: "Fluoride or other" },
       { value: "natural",  label: "Natural or oil-pulling" },
-      { value: "alcohol",  label: "Antiseptic (Listerine, etc.)" },
+      { value: "alcohol",  label: "Antiseptic (Listerine, Scope, chlorhexidine)" },
     ],
   },
   {
