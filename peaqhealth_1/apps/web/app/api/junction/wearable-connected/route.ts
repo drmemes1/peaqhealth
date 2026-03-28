@@ -73,22 +73,19 @@ export async function POST(request: NextRequest) {
   }
   console.log("[wearable] step 4 — retro nights fetched:", retroNights)
 
-  // Step 5: upsert wearable_connections row
-  const { data: wearableRow, error: insertError } = await supabase
-    .from("wearable_connections")
+  // Step 5: upsert wearable_connections_v2 row
+  const { error: insertError } = await supabase
+    .from("wearable_connections_v2")
     .upsert({
-      user_id: user.id,
+      user_id:          user.id,
       provider,
-      junction_user_id: junctionUserId,
-      status: "connected",
-      connected_at: new Date().toISOString(),
-      last_sync_at: new Date().toISOString(),
-      retro_nights: retroNights,
+      external_user_id: junctionUserId,
+      connected_at:     new Date().toISOString(),
+      last_synced_at:   new Date().toISOString(),
+      needs_reconnect:  false,
     }, { onConflict: "user_id,provider" })
-    .select()
-    .single()
 
-  console.log("[wearable] step 5 — upsert result:", insertError ?? "success", "row id:", wearableRow?.id)
+  console.log("[wearable] step 5 — upsert result:", insertError ?? "success")
   if (insertError) {
     console.error("[wearable] upsert error:", insertError.message, insertError.code)
     return NextResponse.json({ error: "Failed to save connection" }, { status: 500 })

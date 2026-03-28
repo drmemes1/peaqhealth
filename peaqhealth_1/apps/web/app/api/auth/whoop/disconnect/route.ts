@@ -52,22 +52,8 @@ export async function POST() {
     .eq("user_id", user.id)
   if (snapErr) console.warn("[whoop-disconnect] score_snapshots update failed (non-fatal):", snapErr.message)
 
-  // Step 2: Delete wearable_connections for WHOOP only (preserves Oura/Garmin rows)
-  console.log("[whoop-disconnect] step 2 — deleting wearable_connections for provider=whoop")
-  const { error: wcErr, count: wcCount } = await svc
-    .from("wearable_connections")
-    .delete({ count: "exact" })
-    .eq("user_id", user.id)
-    .eq("provider", "whoop")
-  console.log("[whoop-disconnect] wearable_connections deleted:", { rows: wcCount, error: wcErr?.message ?? null })
-
-  if (wcErr) {
-    console.error("[whoop-disconnect] wearable_connections delete failed:", wcErr.message)
-    return NextResponse.json({ error: "Failed to disconnect" }, { status: 500 })
-  }
-
-  // Step 3: Delete sleep_data for source=whoop only (preserves Oura rows)
-  console.log("[whoop-disconnect] step 3 — deleting sleep_data for source=whoop")
+  // Step 2: Delete sleep_data for source=whoop only (preserves Oura rows)
+  console.log("[whoop-disconnect] step 2 — deleting sleep_data for source=whoop")
   const { error: wsdErr, count: wsdCount } = await svc
     .from("sleep_data")
     .delete({ count: "exact" })
@@ -75,16 +61,17 @@ export async function POST() {
     .eq("source", "whoop")
   console.log("[whoop-disconnect] sleep_data deleted:", { rows: wsdCount, error: wsdErr?.message ?? null })
 
-  // Step 4: Delete whoop_connections
-  console.log("[whoop-disconnect] step 4 — deleting whoop_connections")
+  // Step 3: Delete connection from unified table
+  console.log("[whoop-disconnect] step 3 — deleting wearable_connections_v2 for provider=whoop")
   const { error: whoopErr, count: whoopCount } = await svc
-    .from("whoop_connections")
+    .from("wearable_connections_v2")
     .delete({ count: "exact" })
     .eq("user_id", user.id)
-  console.log("[whoop-disconnect] whoop_connections deleted:", { rows: whoopCount, error: whoopErr?.message ?? null })
+    .eq("provider", "whoop")
+  console.log("[whoop-disconnect] wearable_connections_v2 deleted:", { rows: whoopCount, error: whoopErr?.message ?? null })
 
   if (whoopErr) {
-    console.error("[whoop-disconnect] whoop_connections delete failed:", whoopErr.message)
+    console.error("[whoop-disconnect] wearable_connections_v2 delete failed:", whoopErr.message)
     return NextResponse.json({ error: "Failed to disconnect" }, { status: 500 })
   }
 

@@ -21,22 +21,22 @@ export async function POST(request: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   )
 
-  // Fetch the junction_user_id so we can call the Vital API
+  // Fetch the external_user_id (junction_user_id) so we can call the Vital API
   const { data: conn } = await serviceClient
-    .from("wearable_connections")
-    .select("junction_user_id")
+    .from("wearable_connections_v2")
+    .select("external_user_id")
     .eq("user_id", user.id)
     .eq("provider", provider)
     .maybeSingle()
 
   // Best-effort: unlink the provider from the Vital/Junction user
-  if (conn?.junction_user_id) {
+  if (conn?.external_user_id) {
     const baseUrl = process.env.JUNCTION_ENV === "production"
       ? "https://api.tryvital.io"
       : "https://api.sandbox.tryvital.io"
     try {
       const res = await fetch(
-        `${baseUrl}/v2/user/${conn.junction_user_id}/providers/${provider}`,
+        `${baseUrl}/v2/user/${conn.external_user_id}/providers/${provider}`,
         {
           method: "DELETE",
           headers: { "x-vital-api-key": process.env.JUNCTION_API_KEY! },
@@ -45,16 +45,16 @@ export async function POST(request: NextRequest) {
       if (!res.ok) {
         console.warn(`[junction-disconnect] Vital unlink returned ${res.status} (non-fatal)`)
       } else {
-        console.log(`[junction-disconnect] Vital unlink OK for provider:${provider} junctionUserId:${conn.junction_user_id}`)
+        console.log(`[junction-disconnect] Vital unlink OK for provider:${provider} junctionUserId:${conn.external_user_id}`)
       }
     } catch (err) {
       console.warn("[junction-disconnect] Vital unlink request failed (non-fatal):", err)
     }
   }
 
-  // Delete the wearable_connections row
+  // Delete the connection from unified table
   const { error } = await serviceClient
-    .from("wearable_connections")
+    .from("wearable_connections_v2")
     .delete()
     .eq("user_id", user.id)
     .eq("provider", provider)

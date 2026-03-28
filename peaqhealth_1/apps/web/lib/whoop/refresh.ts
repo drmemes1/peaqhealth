@@ -19,9 +19,10 @@ export async function refreshWhoopToken(userId: string): Promise<string> {
   const supabase = serviceClient()
 
   const { data: conn, error } = await supabase
-    .from("whoop_connections")
+    .from("wearable_connections_v2")
     .select("access_token, refresh_token, token_expires_at")
     .eq("user_id", userId)
+    .eq("provider", "whoop")
     .maybeSingle()
 
   if (error || !conn) {
@@ -40,10 +41,10 @@ export async function refreshWhoopToken(userId: string): Promise<string> {
 
   // Case B — no refresh token: mark needs_reconnect before throwing
   if (!hasRefreshToken) {
-    await supabase.from("whoop_connections").update({
+    await supabase.from("wearable_connections_v2").update({
       needs_reconnect: true,
       last_sync_error: "No refresh token available",
-    }).eq("user_id", userId)
+    }).eq("user_id", userId).eq("provider", "whoop")
     throw new WhoopReconnectError(userId)
   }
 
@@ -67,21 +68,21 @@ export async function refreshWhoopToken(userId: string): Promise<string> {
     const tokens = await res.json() as WhoopTokenResponse
     const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString()
 
-    await supabase.from("whoop_connections").update({
+    await supabase.from("wearable_connections_v2").update({
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token ?? conn.refresh_token,
       token_expires_at: expiresAt,
       needs_reconnect: false,
       last_sync_error: null,
-    }).eq("user_id", userId)
+    }).eq("user_id", userId).eq("provider", "whoop")
 
     return tokens.access_token
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
-    await supabase.from("whoop_connections").update({
+    await supabase.from("wearable_connections_v2").update({
       needs_reconnect: true,
       last_sync_error: message,
-    }).eq("user_id", userId)
+    }).eq("user_id", userId).eq("provider", "whoop")
     throw new WhoopReconnectError(userId)
   }
 }

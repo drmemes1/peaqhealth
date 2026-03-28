@@ -160,42 +160,12 @@ export async function fetchAndStoreWhoopData(
     else console.log("[whoop-fetch] upserted:", rows.length, "rows to sleep_data")
   }
 
-  // Update wearable_connections aggregates
-  const validNights = rows.filter(r => r.sleep_efficiency > 0)
-  if (validNights.length > 0) {
-    const n = validNights.length
-    const avg = (key: keyof WhoopSleepRecord) =>
-      validNights.reduce((s, r) => s + (Number(r[key]) || 0), 0) / n
-
-    const totalMin = avg("total_sleep_minutes")
-    const deepPct  = totalMin > 0 ? (avg("deep_sleep_minutes") / totalMin) * 100 : 0
-    const remPct   = totalMin > 0 ? (avg("rem_sleep_minutes")  / totalMin) * 100 : 0
-    const spo2     = avg("spo2")
-    const now      = new Date().toISOString()
-
-    await supabase.from("wearable_connections").upsert({
-      user_id:           userId,
-      provider:          "whoop",
-      status:            "connected",
-      connected_at:      now,
-      deep_sleep_pct:    deepPct,
-      rem_pct:           remPct,
-      sleep_efficiency:  avg("sleep_efficiency"),
-      hrv_rmssd:         avg("hrv_rmssd"),
-      latest_resting_hr: Math.round(avg("resting_heart_rate")) || null,
-      latest_spo2_dips:  spo2 >= 95 ? 0 : spo2 >= 92 ? 2 : 5,
-      nights_available:  validNights.length,
-      last_sync_at:      now,
-      updated_at:        now,
-    }, { onConflict: "user_id,provider" })
-  }
-
-  // Mark connection as synced
-  await supabase.from("whoop_connections").update({
+  // Mark connection as synced in unified connections table
+  await supabase.from("wearable_connections_v2").update({
     last_synced_at:  new Date().toISOString(),
     needs_reconnect: false,
     last_sync_error: null,
-  }).eq("user_id", userId)
+  }).eq("user_id", userId).eq("provider", "whoop")
 
   console.log(`[whoop-fetch] stored ${rows.length} records for user ${userId}`)
   return rows.length

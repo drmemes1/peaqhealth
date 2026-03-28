@@ -18,19 +18,28 @@ export async function fetchAndStoreOuraData(
 ): Promise<number> {
   const supabase = serviceClient()
 
-  // Look up junction_user_id from profiles or wearable_connections
-  const { data: profile, error: profileErr } = await supabase
-    .from("profiles")
-    .select("junction_user_id")
-    .eq("id", userId)
+  // Look up junction_user_id from wearable_connections_v2 (external_user_id), fall back to profiles
+  let junctionUserId: string | null = null
+
+  const { data: conn } = await supabase
+    .from("wearable_connections_v2")
+    .select("external_user_id")
+    .eq("user_id", userId)
+    .eq("provider", "oura")
     .maybeSingle()
 
-  if (profileErr) {
-    console.error("[oura-fetch] profile lookup error:", profileErr.message)
-    throw new Error(`Profile lookup failed: ${profileErr.message}`)
+  junctionUserId = (conn?.external_user_id as string | null) ?? null
+
+  if (!junctionUserId) {
+    // Fallback: profiles table (populated during link-token creation)
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("junction_user_id")
+      .eq("id", userId)
+      .maybeSingle()
+    junctionUserId = (profile?.junction_user_id as string | null) ?? null
   }
 
-  const junctionUserId = profile?.junction_user_id as string | null
   if (!junctionUserId) {
     console.log("[oura-fetch] no junction_user_id for user:", userId)
     return 0
@@ -133,34 +142,11 @@ export async function fetchAndStoreOuraData(
   if (error) console.error("[oura-fetch] upsert error:", error.message)
   else console.log("[oura-fetch] upserted:", rows.length, "rows to sleep_data")
 
-  // Update wearable_connections aggregates
-  const validNights = rows.filter(r => r.sleep_efficiency > 0)
-  if (validNights.length > 0) {
-    const n   = validNights.length
-    const avg = (key: keyof SleepRow) =>
-      validNights.reduce((s, r) => s + (Number(r[key]) || 0), 0) / n
-
-    const totalMin = avg("total_sleep_minutes")
-    const deepPct  = totalMin > 0 ? (avg("deep_sleep_minutes") / totalMin) * 100 : 0
-    const remPct   = totalMin > 0 ? (avg("rem_sleep_minutes")  / totalMin) * 100 : 0
-    const spo2     = avg("spo2")
-    const now      = new Date().toISOString()
-
-    await supabase.from("wearable_connections").upsert({
-      user_id:           userId,
-      provider:          "oura",
-      status:            "connected",
-      connected_at:      now,
-      deep_sleep_pct:    deepPct,
-      rem_pct:           remPct,
-      sleep_efficiency:  avg("sleep_efficiency"),
-      hrv_rmssd:         avg("hrv_rmssd"),
-      latest_resting_hr: Math.round(avg("resting_heart_rate")) || null,
-      latest_spo2_dips:  spo2 >= 95 ? 0 : spo2 >= 92 ? 2 : 5,
-      nights_available:  validNights.length,
-      last_sync_at:      now,
-      updated_at:        now,
-    }, { onConflict: "user_id,provider" })
+  // Mark connection as synced in unified connections table
+  if (rows.length > 0) {
+    await supabase.from("wearable_connections_v2").update({
+      last_synced_at: new Date().toISOString(),
+    }).eq("user_id", userId).eq("provider", "oura")
   }
 
   console.log(`[oura-fetch] stored ${rows.length} records for user ${userId}`)

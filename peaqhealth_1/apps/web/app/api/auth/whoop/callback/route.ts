@@ -83,12 +83,13 @@ export async function GET(request: NextRequest) {
     console.warn("[whoop-callback] profile fetch failed — continuing with unknown whoop_user_id")
   }
 
-  // 3. Upsert into whoop_connections using service client to bypass RLS
+  // 3. Upsert into wearable_connections_v2 using service client to bypass RLS
   const supabase = svc()
 
-  const { error: upsertError } = await supabase.from("whoop_connections").upsert({
+  const { error: upsertError } = await supabase.from("wearable_connections_v2").upsert({
     user_id:          userId,
-    whoop_user_id:    whoopUserId,
+    provider:         "whoop",
+    external_user_id: whoopUserId,
     access_token:     tokens.access_token,
     refresh_token:    tokens.refresh_token?.trim() || "",
     token_expires_at: tokenExpiresAt,
@@ -96,7 +97,7 @@ export async function GET(request: NextRequest) {
     last_sync_error:  null,
     scopes:           tokens.scope?.split(" ") ?? [],
     connected_at:     new Date().toISOString(),
-  }, { onConflict: "user_id" })
+  }, { onConflict: "user_id,provider" })
 
   console.log("[whoop-callback] upsert:", upsertError ? "failed: " + upsertError.message : "success")
 

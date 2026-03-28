@@ -7,7 +7,7 @@ import { recalculateScore } from "../../../../lib/score/recalculate"
 /**
  * POST /api/whoop/sync-all
  * Called by Vercel cron at 06:00 UTC daily.
- * Syncs all WHOOP-connected users (needs_reconnect = false) and recalculates scores.
+ * Syncs all connected wearable users (WHOOP + Oura) and recalculates scores.
  */
 export async function POST(_request: NextRequest) {
   const supabase = createServiceClient(
@@ -15,56 +15,58 @@ export async function POST(_request: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   )
 
-  // Fetch all WHOOP-connected users that don't need reconnection
-  const { data: connections, error } = await supabase
-    .from("whoop_connections")
+  // ── WHOOP sync ─────────────────────────────────────────────────────────────
+  const { data: whoopConns, error } = await supabase
+    .from("wearable_connections_v2")
     .select("user_id")
+    .eq("provider", "whoop")
     .eq("needs_reconnect", false)
 
   if (error) {
-    console.error("[sync-all] failed to fetch connections:", error.message)
+    console.error("[sync-all] failed to fetch WHOOP connections:", error.message)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  const userIds = (connections ?? []).map(c => c.user_id as string)
-  console.log(`[sync-all] syncing ${userIds.length} WHOOP users`)
+  const whoopUserIds = (whoopConns ?? []).map(c => c.user_id as string)
+  console.log(`[sync-all] syncing ${whoopUserIds.length} WHOOP users`)
 
-  const results = await Promise.allSettled(
-    userIds.map(async (userId) => {
-      const count = await fetchAndStoreWhoopData(userId, 7) // nightly cron: 7 days (initial connect uses 30)
+  const whoopResults = await Promise.allSettled(
+    whoopUserIds.map(async (userId) => {
+      const count = await fetchAndStoreWhoopData(userId, 7) // nightly cron: 7 days
       await recalculateScore(userId, supabase)
-      console.log(`[sync-all] user=${userId} records=${count}`)
+      console.log(`[sync-all] whoop user=${userId} records=${count}`)
       return { userId, records: count }
     })
   )
 
-  const succeeded = results.filter(r => r.status === "fulfilled").length
-  const failed    = results.filter(r => r.status === "rejected").length
+  const whoopSucceeded = whoopResults.filter(r => r.status === "fulfilled").length
+  const whoopFailed    = whoopResults.filter(r => r.status === "rejected").length
 
   await Promise.all(
-    results.map(async (r, i) => {
+    whoopResults.map(async (r, i) => {
       if (r.status === "rejected") {
-        const userId = userIds[i]
-        console.error(`[sync-all] failed for user ${userId}:`, r.reason)
+        const userId = whoopUserIds[i]
+        console.error(`[sync-all] WHOOP failed for user ${userId}:`, r.reason)
         if (r.reason instanceof WhoopReconnectError) {
-          await supabase.from("whoop_connections")
+          await supabase.from("wearable_connections_v2")
             .update({ needs_reconnect: true, last_sync_error: "Reconnect required — token refresh failed" })
             .eq("user_id", userId)
+            .eq("provider", "whoop")
         }
       }
     })
   )
 
-  console.log(`[sync-all] done — ${succeeded} succeeded, ${failed} failed`)
+  console.log(`[sync-all] WHOOP done — ${whoopSucceeded} succeeded, ${whoopFailed} failed`)
 
-  // ── Oura (Junction) daily sync — 1 day lookback ──────────────────────────
-  const { data: ouraConnections } = await supabase
-    .from("wearable_connections")
+  // ── Oura daily sync ────────────────────────────────────────────────────────
+  const { data: ouraConns } = await supabase
+    .from("wearable_connections_v2")
     .select("user_id")
     .eq("provider", "oura")
-    .eq("status", "connected")
+    .eq("needs_reconnect", false)
 
-  const ouraUserIds = (ouraConnections ?? []).map(c => c.user_id as string)
+  const ouraUserIds = (ouraConns ?? []).map(c => c.user_id as string)
   console.log(`[sync-all] syncing ${ouraUserIds.length} Oura users`)
 
   const ouraResults = await Promise.allSettled(
@@ -78,10 +80,10 @@ export async function POST(_request: NextRequest) {
 
   const ouraSucceeded = ouraResults.filter(r => r.status === "fulfilled").length
   const ouraFailed    = ouraResults.filter(r => r.status === "rejected").length
-  console.log(`[sync-all] oura done — ${ouraSucceeded} succeeded, ${ouraFailed} failed`)
+  console.log(`[sync-all] Oura done — ${ouraSucceeded} succeeded, ${ouraFailed} failed`)
 
   return NextResponse.json({
-    whoop:  { succeeded, failed, total: userIds.length },
-    oura:   { succeeded: ouraSucceeded, failed: ouraFailed, total: ouraUserIds.length },
+    whoop: { succeeded: whoopSucceeded, failed: whoopFailed, total: whoopUserIds.length },
+    oura:  { succeeded: ouraSucceeded,  failed: ouraFailed,  total: ouraUserIds.length },
   })
 }
