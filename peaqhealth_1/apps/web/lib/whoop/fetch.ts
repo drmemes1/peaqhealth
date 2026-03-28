@@ -155,29 +155,11 @@ export async function fetchAndStoreWhoopData(
   console.log("[whoop-fetch] using service role client (bypasses RLS)")
 
   if (rows.length > 0) {
-    // Split rows: those with a sleep_id use the partial unique index to deduplicate;
-    // those without fall back to (user_id, date, source). This avoids the
-    // "duplicate key violates unique constraint whoop_sleep_data_sleep_id_key" error
-    // when reconnecting WHOOP or switching between Oura and WHOOP.
-    const rowsWithId    = rows.filter(r => r.sleep_id)
-    const rowsWithoutId = rows.filter(r => !r.sleep_id)
-
     console.log("[whoop-fetch] sample row:", JSON.stringify(rows[0], null, 2))
-    console.log("[whoop-fetch] rowsWithId:", rowsWithId.length, "rowsWithoutId:", rowsWithoutId.length)
-
-    if (rowsWithId.length > 0) {
-      const { error: e1 } = await supabase
-        .from("sleep_data")
-        .upsert(rowsWithId, { onConflict: "sleep_id" })
-      console.log("[whoop-fetch] pass1 upsert:", rowsWithId.length, "rows error:", e1?.message ?? "none")
-    }
-    if (rowsWithoutId.length > 0) {
-      const { error: e2 } = await supabase
-        .from("sleep_data")
-        .upsert(rowsWithoutId, { onConflict: "user_id,date,source" })
-      console.log("[whoop-fetch] pass2 upsert:", rowsWithoutId.length, "rows error:", e2?.message ?? "none")
-    }
-    console.log("[whoop-fetch] upserted:", rows.length, "rows to sleep_data")
+    const { error } = await supabase
+      .from("sleep_data")
+      .upsert(rows, { onConflict: "user_id,date,source" })
+    console.log("[whoop-fetch] upsert:", rows.length, "rows error:", error?.message ?? "none")
   }
 
   // Mark connection as synced in unified connections table
