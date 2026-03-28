@@ -46,5 +46,13 @@ export async function POST(request: NextRequest) {
   const newScore = await recalculateScore(user.id, serviceClient)
   console.log("[lifestyle/save] recalculated score:", newScore, "for user:", user.id)
 
-  return NextResponse.json({ score: newScore })
+  const { data: snap } = await serviceClient
+    .from("score_snapshots")
+    .select("lifestyle_sub")
+    .eq("user_id", user.id)
+    .order("calculated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  return NextResponse.json({ score: newScore, lifestyleSub: snap?.lifestyle_sub ?? 0 })
 }

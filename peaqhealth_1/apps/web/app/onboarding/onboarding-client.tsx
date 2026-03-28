@@ -30,12 +30,22 @@ export default function OnboardingClient() {
   const [userId, setUserId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // Load session on mount
+  // Load session on mount — redirect returning users who already completed lifestyle
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) setUserId(user.id);
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return;
+      setUserId(user.id);
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("onboarding_completed")
+        .eq("id", user.id)
+        .single();
+      if (profile?.onboarding_completed) {
+        router.push("/dashboard");
+      }
     });
-  }, [supabase.auth]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // If returning from WHOOP OAuth (?whoop=connected), mark wearable connected
   // and advance past the wearable step so user doesn't reconnect in a loop.
@@ -48,10 +58,16 @@ export default function OnboardingClient() {
 
   // Derive panel states from data
   const panels: PanelStates = {
-    sleep: data.wearableConnected ? "active" : step === "wearable" ? "pending" : "skipped",
-    blood: data.bloodUploaded ? "active" : step === "blood" || step === "welcome" || step === "wearable" ? "pending" : "skipped",
-    oral: data.oralOrdered ? "active" : step === "oral" || step === "welcome" || step === "wearable" || step === "blood" ? "pending" : "skipped",
-    lifestyle: data.lifestyleCompleted ? "active" : step === "lifestyle" || step === "welcome" || step === "wearable" || step === "blood" || step === "oral" ? "pending" : "skipped",
+    sleep: data.wearableConnected ? "active"
+      : ["welcome", "lifestyle", "wearable"].includes(step) ? "pending"
+      : "skipped",
+    blood: data.bloodUploaded ? "active"
+      : ["welcome", "lifestyle", "wearable", "blood"].includes(step) ? "pending"
+      : "skipped",
+    oral: data.oralOrdered ? "active"
+      : ["welcome", "lifestyle", "wearable", "blood", "oral"].includes(step) ? "pending"
+      : "skipped",
+    lifestyle: data.lifestyleCompleted ? "active" : "pending",
   };
 
   // wearable_connections_v2 is written by /api/junction/wearable-connected — no need to upsert here
@@ -69,53 +85,10 @@ export default function OnboardingClient() {
     });
   }, [userId, supabase]);
 
-  // Persist lifestyle answers — map camelCase UI keys to snake_case DB columns
-  const persistLifestyle = useCallback(async (answers: LifestyleAnswers) => {
-    if (!userId) return;
-    const toInt = (v: string) => (v !== "" ? parseInt(v, 10) : null);
-    const toBool = (v: string | boolean) => {
-      if (v === true  || v === "yes" || v === "true")  return true;
-      if (v === false || v === "no"  || v === "false") return false;
-      return null;
-    };
-    const row = {
-      age_range:                  answers.ageRange        || null,
-      biological_sex:             answers.biologicalSex   || null,
-      exercise_level:             answers.exerciseLevel   || null,
-      brushing_freq:              answers.brushingFreq    || null,
-      flossing_freq:              answers.flossingFreq    || null,
-      mouthwash_type:             answers.mouthwashType   || null,
-      last_dental_visit:          answers.lastDentalVisit || null,
-      smoking_status:             answers.smokingStatus   || null,
-      known_hypertension:         answers.knownHypertension,
-      known_diabetes:             answers.knownDiabetes,
-      sleep_duration:             answers.sleepDuration   || null,
-      sleep_latency:              answers.sleepLatency    || null,
-      sleep_qual_self:            answers.sleepQualSelf   || null,
-      night_wakings:              answers.nightWakings    || null,
-      daytime_fatigue:            answers.daytimeFatigue  || null,
-      sleep_medication:           "never",
-      hypertension_dx:            toBool(answers.hypertensionDx),
-      on_bp_meds:                 toBool(answers.onBPMeds),
-      on_statins:                 toBool(answers.onStatins),
-      family_history_cvd:         toBool(answers.familyHistoryCVD),
-      vegetable_servings_per_day: toInt(answers.vegetableServings),
-      fruit_servings_per_day:     toInt(answers.fruitServings),
-      processed_food_frequency:   toInt(answers.processedFood),
-      sugary_drinks_per_week:     toInt(answers.sugaryDrinks),
-      alcohol_drinks_per_week:    toInt(answers.alcoholDrinks),
-      stress_level:               answers.stressLevel     || null,
-    };
-    await fetch("/api/lifestyle/save", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(row),
-    });
-  }, [userId]);
-
-  // Complete onboarding
+  // Complete onboarding — called from StepDone after all steps
   const completeOnboarding = useCallback(async () => {
     setSaving(true);
+    // onboarding_completed was already set after the lifestyle step; navigate to dashboard
     if (userId) {
       await supabase
         .from("profiles")
@@ -148,35 +121,36 @@ export default function OnboardingClient() {
   function handleOralOrder() {
     setData((prev) => ({ ...prev, oralOrdered: true }));
     persistOral();
-    setStep("lifestyle");
+    setStep("score");
   }
 
   function handleOralSkip() {
-    setStep("lifestyle");
+    setStep("score");
   }
 
+  // Lifestyle is required and handles its own API save.
+  // After the completion screen the user clicks Continue → this is called.
+  // We set onboarding_completed here so dashboard is accessible immediately.
   function handleLifestyleComplete(answers: LifestyleAnswers) {
     setData((prev) => ({ ...prev, lifestyleCompleted: true, lifestyleAnswers: answers }));
-    persistLifestyle(answers);
-    setStep("score");
-  }
-
-  function handleLifestyleSkip() {
-    setStep("score");
+    if (userId) {
+      supabase.from("profiles").update({ onboarding_completed: true }).eq("id", userId);
+    }
+    setStep("wearable");
   }
 
   function renderStep() {
     switch (step) {
       case "welcome":
-        return <StepWelcome onNext={() => setStep("wearable")} />;
+        return <StepWelcome onNext={() => setStep("lifestyle")} />;
+      case "lifestyle":
+        return <StepLifestyle onComplete={handleLifestyleComplete} />;
       case "wearable":
         return <StepWearable onConnect={handleWearableConnect} onSkip={handleWearableSkip} />;
       case "blood":
         return <StepBlood onSkip={handleBloodSkip} onComplete={handleBloodComplete} />;
       case "oral":
         return <StepOral onOrder={handleOralOrder} onSkip={handleOralSkip} />;
-      case "lifestyle":
-        return <StepLifestyle onComplete={handleLifestyleComplete} onSkip={handleLifestyleSkip} />;
       case "score":
         return <StepScore data={data} onNext={() => setStep("done")} />;
       case "done":
