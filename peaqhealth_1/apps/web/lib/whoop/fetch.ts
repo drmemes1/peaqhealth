@@ -150,7 +150,9 @@ export async function fetchAndStoreWhoopData(
     })
   }
 
+  // Service role client — bypasses RLS so INSERT is always permitted
   const supabase = serviceClient()
+  console.log("[whoop-fetch] using service role client (bypasses RLS)")
 
   if (rows.length > 0) {
     // Split rows: those with a sleep_id use the partial unique index to deduplicate;
@@ -160,17 +162,20 @@ export async function fetchAndStoreWhoopData(
     const rowsWithId    = rows.filter(r => r.sleep_id)
     const rowsWithoutId = rows.filter(r => !r.sleep_id)
 
+    console.log("[whoop-fetch] sample row:", JSON.stringify(rows[0], null, 2))
+    console.log("[whoop-fetch] rowsWithId:", rowsWithId.length, "rowsWithoutId:", rowsWithoutId.length)
+
     if (rowsWithId.length > 0) {
-      const { error } = await supabase
+      const { error: e1 } = await supabase
         .from("sleep_data")
         .upsert(rowsWithId, { onConflict: "sleep_id" })
-      if (error) console.error("[whoop-fetch] upsert(sleep_id) error:", error.message)
+      console.log("[whoop-fetch] pass1 upsert:", rowsWithId.length, "rows error:", e1?.message ?? "none")
     }
     if (rowsWithoutId.length > 0) {
-      const { error } = await supabase
+      const { error: e2 } = await supabase
         .from("sleep_data")
         .upsert(rowsWithoutId, { onConflict: "user_id,date,source" })
-      if (error) console.error("[whoop-fetch] upsert(user_id,date,source) error:", error.message)
+      console.log("[whoop-fetch] pass2 upsert:", rowsWithoutId.length, "rows error:", e2?.message ?? "none")
     }
     console.log("[whoop-fetch] upserted:", rows.length, "rows to sleep_data")
   }
