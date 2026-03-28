@@ -60,7 +60,7 @@ export async function GET() {
     svc.from("lab_results").select("*").eq("user_id", user.id).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).maybeSingle(),
     svc.from("sleep_data").select("date,source,total_sleep_minutes,deep_sleep_minutes,rem_sleep_minutes,sleep_efficiency,hrv_rmssd,spo2,resting_heart_rate").eq("user_id", user.id).order("date", { ascending: false }).limit(15),
     svc.from("wearable_connections_v2").select("provider").eq("user_id", user.id).eq("needs_reconnect", false).order("connected_at", { ascending: false }).limit(1).maybeSingle(),
-    svc.from("oral_kit_orders").select("shannon_diversity,nitrate_reducers_pct,periodontopathogen_pct,osa_taxa_pct,raw_otu_table").eq("user_id", user.id).in("status", ["results_ready", "scored"]).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+    svc.from("oral_kit_orders").select("oral_score_snapshot,shannon_diversity,nitrate_reducers_pct,periodontopathogen_pct,osa_taxa_pct").eq("user_id", user.id).eq("status", "results_ready").order("ordered_at", { ascending: false }).limit(1).maybeSingle(),
     svc.from("lifestyle_records").select("*").eq("user_id", user.id).maybeSingle(),
   ])
 
@@ -122,26 +122,19 @@ export async function GET() {
   }
 
   // ── Oral panel ─────────────────────────────────────────────────────────────
-  type OralData = { shannon: number | null; nitrateReducerPct: number | null; periodontalBurden: number | null; protectivePct: number | null }
+  type OralData = { shannon: number | null; nitrateReducerPct: number | null; periodontalBurden: number | null; osaBurden: number | null; protectivePct: number | null; mouthwashDetected: boolean }
   let oralData: OralData | null = null
   if (oral) {
-    // Protective bacteria: Rothia + Neisseria genera from raw OTU table (summed, *100 for %)
-    let protectivePct: number | null = null
-    const rawOtu = oral.raw_otu_table as Record<string, number> | null
-    if (rawOtu) {
-      const protective = Object.entries(rawOtu)
-        .filter(([k]) => k.toLowerCase().startsWith("rothia") || k.toLowerCase().startsWith("neisseria"))
-        .reduce((sum, [, v]) => sum + v, 0)
-      protectivePct = protective * 100
-    }
+    const snap = oral.oral_score_snapshot as Record<string, unknown> | null
     oralData = {
-      shannon:           oral.shannon_diversity != null ? Number(oral.shannon_diversity) : null,
-      nitrateReducerPct: oral.nitrate_reducers_pct != null ? Number(oral.nitrate_reducers_pct) * 100 : null,
-      periodontalBurden: oral.periodontopathogen_pct != null ? Number(oral.periodontopathogen_pct) * 100 : null,
-      protectivePct,
+      shannon:           (snap?.shannonDiversity as number | null) ?? (oral.shannon_diversity != null ? Number(oral.shannon_diversity) : null),
+      nitrateReducerPct: (snap?.nitrateReducerPct as number | null) ?? (oral.nitrate_reducers_pct != null ? Number(oral.nitrate_reducers_pct) * 100 : null),
+      periodontalBurden: (snap?.periodontalBurden as number | null) ?? (oral.periodontopathogen_pct != null ? Number(oral.periodontopathogen_pct) * 100 : null),
+      osaBurden:         (snap?.osaBurden as number | null) ?? (oral.osa_taxa_pct != null ? Number(oral.osa_taxa_pct) * 100 : null),
+      protectivePct:     (snap?.protectiveSpecies as number | null) ?? null,
+      mouthwashDetected: (snap?.mouthwashDetected as boolean | null) ?? false,
     }
   }
-  console.log(`[insight] user=${user.id.slice(0, 8)} oral=${oralData ? JSON.stringify(oralData) : "null"} | oralRow=${oral ? "present" : "null"}`)
 
   // ── Lifestyle panel ────────────────────────────────────────────────────────
   type LifestyleData = Record<string, unknown>
@@ -194,7 +187,9 @@ ORAL MICROBIOME:
 ${oralData ? `- Shannon diversity: ${oralData.shannon ?? "N/A"} (target ≥3.0)
 - Nitrate reducers: ${oralData.nitrateReducerPct?.toFixed(1) ?? "N/A"}% (target ≥20%)
 - Periodontal burden: ${oralData.periodontalBurden?.toFixed(1) ?? "N/A"}% (target <0.5%)
-- Protective bacteria (Rothia + Neisseria): ${oralData.protectivePct?.toFixed(1) ?? "N/A"}% (target ≥10%)` : "Not available"}
+- OSA-associated taxa: ${oralData.osaBurden?.toFixed(1) ?? "N/A"}% (target <1%)
+- Protective bacteria (Rothia + Neisseria): ${oralData.protectivePct?.toFixed(1) ?? "N/A"}% (target ≥10%)
+- Mouthwash detected: ${oralData.mouthwashDetected ? "yes" : "no"}` : "Not available — do not reference oral panel in any insight"}
 
 LIFESTYLE:
 ${lifestyleData ? JSON.stringify(lifestyleData) : "Not available"}
@@ -245,7 +240,7 @@ Priority 1 = most interesting or relevant. Oral panel must appear in at least 2 
   // ── Pre-call panel data log ────────────────────────────────────────────────
   console.log(
     `[insight] user=${user.id.slice(0, 8)}`,
-    `oral=${oralData ? `shannon=${oralData.shannon}/nitrate=${oralData.nitrateReducerPct?.toFixed(1)}/perio=${oralData.periodontalBurden?.toFixed(1)}/protective=${oralData.protectivePct?.toFixed(1)}` : "null"}`,
+    `oral=${oralData ? `shannon=${oralData.shannon} nitrate=${oralData.nitrateReducerPct?.toFixed(1)}% periodontal=${oralData.periodontalBurden?.toFixed(1)}% mouthwash=${oralData.mouthwashDetected}` : "null"}`,
     `| sleep=${sleepData ? `deep=${sleepData.deepSleepPct?.toFixed(1)}%/rem=${sleepData.remPct?.toFixed(1)}%/hrv=${sleepData.hrv?.toFixed(1)}` : "null"}`,
     `| blood=${bloodData ? "present" : "null"}`,
     `| lifestyle=${lifestyleData ? "present" : "null"}`,
