@@ -14,23 +14,23 @@ export default async function DashboardPage() {
 
   const [
     { data: initialSnapshot },
-    { data: wearable },
+    { data: wearableConn },
     { data: lab },
     { data: oralAny },
     { data: lifestyle },
     { data: labHistoryRows },
-    { data: whoopConn },
-    { data: whoopNights },
+    { data: sleepNights },
   ] = await Promise.all([
     supabase.from("score_snapshots").select("*").eq("user_id", user.id).order("calculated_at", { ascending: false }).limit(1).single(),
-    supabase.from("wearable_connections").select("*").eq("user_id", user.id).eq("status", "connected").order("connected_at", { ascending: false }).limit(1).single(),
+    supabase.from("wearable_connections_v2").select("provider,last_synced_at,needs_reconnect").eq("user_id", user.id).eq("needs_reconnect", false).order("connected_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("lab_results").select("*").eq("user_id", user.id).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).single(),
     supabase.from("oral_kit_orders").select("id, shannon_diversity").eq("user_id", user.id).limit(1).maybeSingle(),
     supabase.from("lifestyle_records").select("*").eq("user_id", user.id).single(),
     supabase.from("lab_history").select("locked_at, total_score, blood_score, collection_date, ldl_mgdl, hdl_mgdl, hs_crp_mgl, vitamin_d_ngml").eq("user_id", user.id).order("locked_at", { ascending: true }),
-    supabase.from("whoop_connections").select("last_synced_at").eq("user_id", user.id).maybeSingle(),
-    supabase.from("sleep_data").select("date, total_sleep_minutes, hrv_rmssd").eq("user_id", user.id).order("date", { ascending: false }).limit(3),
+    supabase.from("sleep_data").select("date,source,total_sleep_minutes,deep_sleep_minutes,rem_sleep_minutes,sleep_efficiency,hrv_rmssd,spo2").eq("user_id", user.id).order("date", { ascending: false }).limit(30),
   ])
+
+  const wearable = wearableConn  // unified connection (replaces old wearable_connections + whoop_connections)
 
   const { data: oral } = await supabase
     .from("oral_kit_orders")
@@ -46,22 +46,41 @@ export default async function DashboardPage() {
   console.log("[dashboard] initialSnapshot:", snapshot
     ? `score=${snapshot.score} sleep=${snapshot.sleep_sub} blood=${snapshot.blood_sub} lifestyle=${snapshot.lifestyle_sub} calculated_at=${snapshot.calculated_at}`
     : "null")
-  console.log("[dashboard] wearable:", wearable ? `provider=${wearable.provider} status=${wearable.status}` : "null")
+  console.log("[dashboard] wearable:", wearable ? `provider=${wearable.provider}` : "null")
   console.log("[dashboard] lab:", lab ? `collection_date=${lab.collection_date}` : "null")
   console.log("[dashboard] lifestyle:", lifestyle ? "present" : "null")
 
-  // Backfill wearable_connections for legacy users who connected before the upsert fix.
-  // Skip when a WHOOP connection exists — the sync will create the proper row with real data.
-  if (!wearable && !whoopConn && Number(snapshot?.sleep_sub ?? 0) > 0) {
-    const ts = snapshot!.calculated_at
-    await supabase.from("wearable_connections").upsert({
-      user_id:      user.id,
-      provider:     "unknown",
-      status:       "connected",
-      connected_at: ts,
-      last_sync_at: ts,
-    }, { onConflict: "user_id,provider" })
+  // Compute sleep metrics from sleep_data (best provider per date, last 30 nights)
+  const PROVIDER_PRIORITY: Record<string, number> = { whoop: 0, oura: 1, garmin: 2 }
+  type SleepRow = { date: string; source: string; total_sleep_minutes: number; deep_sleep_minutes: number; rem_sleep_minutes: number; sleep_efficiency: number; hrv_rmssd: number | null; spo2: number | null }
+  const allNights = (sleepNights ?? []) as unknown as SleepRow[]
+  const bestByDate = new Map<string, SleepRow>()
+  for (const n of allNights) {
+    const existing = bestByDate.get(n.date)
+    const p = PROVIDER_PRIORITY[n.source] ?? 99
+    const ep = existing ? (PROVIDER_PRIORITY[existing.source] ?? 99) : Infinity
+    if (p < ep) bestByDate.set(n.date, n)
   }
+  const bestNights = Array.from(bestByDate.values()).sort((a, b) => b.date.localeCompare(a.date))
+  const getWeight = (i: number) => i < 7 ? 3 : i < 14 ? 2 : 1
+  const wavg = (key: keyof SleepRow): number => {
+    let sum = 0, tot = 0
+    bestNights.forEach((r, i) => { const v = Number(r[key]); if (!isNaN(v) && v !== 0) { const w = getWeight(i); sum += v * w; tot += w } })
+    return tot > 0 ? sum / tot : 0
+  }
+  const sleepNightsCount = bestNights.length
+  const totalMin = wavg("total_sleep_minutes")
+  const computedSleepData = sleepNightsCount > 0 ? {
+    deepPct:    totalMin > 0 ? (wavg("deep_sleep_minutes") / totalMin) * 100 : 0,
+    remPct:     totalMin > 0 ? (wavg("rem_sleep_minutes")  / totalMin) * 100 : 0,
+    efficiency: wavg("sleep_efficiency"),
+    hrv:        wavg("hrv_rmssd"),
+    spo2Dips:   (() => { const s = wavg("spo2"); return s >= 95 ? 0 : s >= 92 ? 2 : s > 0 ? 5 : 0 })(),
+    nightsAvg:  sleepNightsCount,
+    device:     ({ oura: "Oura Ring", whoop: "WHOOP", garmin: "Garmin", apple_health: "Apple Health", fitbit: "Fitbit" } as Record<string, string>)[bestNights[0]?.source ?? ""] ?? "Wearable",
+    lastSync:   wearable?.last_synced_at ?? "",
+    providerSlug: bestNights[0]?.source ?? (wearable?.provider ?? "unknown"),
+  } : undefined
 
   // Auto-heal stale zero snapshot. Fires when:
   // 1. No snapshot at all (first load ever)
@@ -123,22 +142,12 @@ export default async function DashboardPage() {
   const props: ScoreWheelProps = {
     score,
     breakdown,
-    lastSyncAt:            (wearable?.last_sync_at as string | null) ?? null,
-    lastSyncRequestedAt:   (wearable?.last_sync_requested_at as string | null) ?? null,
+    lastSyncAt:            (wearable?.last_synced_at as string | null) ?? null,
+    lastSyncRequestedAt:   null,
     sleepConnected: !!wearable,
     labFreshness,
     oralActive: !!oral,
-    sleepData: wearable ? {
-      deepPct:    wearable.deep_sleep_pct ?? 0,
-      hrv:        wearable.hrv_rmssd ?? 0,
-      spo2Dips:   wearable.latest_spo2_dips ?? wearable.spo2_dips ?? 0,
-      remPct:     wearable.rem_pct ?? 0,
-      efficiency: wearable.sleep_efficiency ?? 0,
-      nightsAvg:  (wearable.nights_available as number) ?? 0,
-      device:     ({ oura: "Oura Ring", whoop: "WHOOP", garmin: "Garmin", apple_health: "Apple Health", fitbit: "Fitbit" } as Record<string, string>)[wearable.provider as string] ?? (wearable.junction_user_id ? "Wearable" : ""),
-      lastSync:   wearable.last_sync_at ?? "",
-      providerSlug: (wearable.provider as string) ?? "unknown",
-    } : undefined,
+    sleepData: computedSleepData,
     bloodData: lab ? {
       hsCRP:          (lab.hs_crp_mgl         as number) ?? 0,
       vitaminD:       (lab.vitamin_d_ngml      as number) ?? 0,
@@ -229,7 +238,7 @@ export default async function DashboardPage() {
     } : undefined,
     oralOrdered: !!oralAny,
     oralKitStatus: (!oralAny ? "none" : (oralAny as Record<string, unknown>).shannon_diversity != null ? "complete" : "ordered") as "none" | "ordered" | "complete",
-    sleepNightsAvailable: (wearable?.nights_available as number | null) ?? 0,
+    sleepNightsAvailable: sleepNightsCount,
     interactionsFired,
     peaqPercent:      (snapshot?.peaq_percent      as number | null) ?? undefined,
     peaqPercentLabel: (snapshot?.peaq_percent_label as string | null) ?? undefined,
@@ -239,13 +248,13 @@ export default async function DashboardPage() {
     labLockExpiresAt: (lab && !lab.is_locked && lab.lock_expires_at)
       ? (lab.lock_expires_at as string)
       : null,
-    whoopData: whoopConn ? {
+    whoopData: wearable?.provider === "whoop" ? {
       connected:  true,
-      lastSynced: (whoopConn.last_synced_at as string | null) ?? null,
-      recentNights: (whoopNights ?? []).map(n => ({
-        date:             n.date as string,
-        totalSleepHours:  ((n.total_sleep_minutes as number) ?? 0) / 60,
-        hrv:              (n.hrv_rmssd as number) ?? 0,
+      lastSynced: (wearable.last_synced_at as string | null) ?? null,
+      recentNights: bestNights.filter(n => n.source === "whoop").slice(0, 3).map(n => ({
+        date:             n.date,
+        totalSleepHours:  (n.total_sleep_minutes ?? 0) / 60,
+        hrv:              n.hrv_rmssd ?? 0,
       })),
     } : { connected: false, lastSynced: null, recentNights: [] },
   }

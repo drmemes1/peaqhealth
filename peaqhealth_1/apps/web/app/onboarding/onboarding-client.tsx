@@ -54,17 +54,10 @@ export default function OnboardingClient() {
     lifestyle: data.lifestyleCompleted ? "active" : step === "lifestyle" || step === "welcome" || step === "wearable" || step === "blood" || step === "oral" ? "pending" : "skipped",
   };
 
-  // Persist wearable connection
-  const persistWearable = useCallback(async (provider: WearableProvider) => {
-    if (!userId) return;
-    await supabase.from("wearable_connections").upsert({
-      user_id: userId,
-      provider,
-      access_token: "onboarding_placeholder",
-      refresh_token: "onboarding_placeholder",
-      token_expires_at: new Date(Date.now() + 86400000).toISOString(),
-    }, { onConflict: "user_id,provider" }).select();
-  }, [userId, supabase]);
+  // wearable_connections_v2 is written by /api/junction/wearable-connected — no need to upsert here
+  const persistWearable = useCallback(async (_provider: WearableProvider) => {
+    // no-op: connection row is created by the wearable-connected API route
+  }, []);
 
   // Persist oral kit order
   const persistOral = useCallback(async () => {

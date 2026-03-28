@@ -175,14 +175,13 @@ export async function recalculateScore(
   userId: string,
   supabase: SupabaseClient
 ): Promise<number> {
-  const [wearableRes, labsRes, oralRes, lifestyleRes, manualSleepRes, sleepNightsRes] = await Promise.all([
-    supabase.from("wearable_connections").select("*").eq("user_id", userId).eq("status", "connected").order("updated_at", { ascending: false }).limit(1).maybeSingle(),
+  const [labsRes, oralRes, lifestyleRes, manualSleepRes, sleepNightsRes] = await Promise.all([
     supabase.from("lab_results").select("*").eq("user_id", userId).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).single(),
     supabase.from("oral_kit_orders").select("*").eq("user_id", userId).not("shannon_diversity", "is", null).order("ordered_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("lifestyle_records").select("*").eq("user_id", userId).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("manual_sleep_entries").select("duration_seconds,quality").eq("user_id", userId).order("date", { ascending: false }).limit(14),
     supabase.from("sleep_data")
-      .select("date,source,total_sleep_minutes,deep_sleep_minutes,rem_sleep_minutes,sleep_efficiency,hrv_rmssd,spo2")
+      .select("date,source,total_sleep_minutes,deep_sleep_minutes,rem_sleep_minutes,sleep_efficiency,hrv_rmssd,spo2,resting_heart_rate")
       .eq("user_id", userId)
       .gt("sleep_efficiency", 0)
       .gte("date", (() => { const d = new Date(); d.setDate(d.getDate() - 30); return d.toISOString().slice(0, 10) })())
@@ -193,15 +192,12 @@ export async function recalculateScore(
   let sleepInputs: SleepInputs | undefined
   let sleepSource = "none"
 
-  if (wearableRes.error) console.error("[score] wearable query error:", wearableRes.error.message)
-  console.log("[score] wearable found:", wearableRes.data ? "yes" : "no",
-    "efficiency:", (wearableRes.data as Record<string, unknown> | null)?.sleep_efficiency ?? "—")
-
   // ── Direct sleep_data query with source priority ──────────────────────────
   type SleepNight = {
     date: string; source: string
     total_sleep_minutes: number; deep_sleep_minutes: number; rem_sleep_minutes: number
     sleep_efficiency: number; hrv_rmssd: number | null; spo2: number | null
+    resting_heart_rate: number | null
   }
   const allNights = (sleepNightsRes.data ?? []) as unknown as SleepNight[]
 
@@ -281,11 +277,10 @@ export async function recalculateScore(
     if (!bloodInputs.hba1c_pct)        missingPremium.push("HbA1c")
   }
 
-  // Merge wearable biometrics (resting HR, VO2 max) into lifestyle inputs
-  if (lifestyleInputs && wearableRes.data) {
-    const wRow = wearableRes.data as Record<string, unknown>
-    if (typeof wRow.latest_resting_hr === "number") lifestyleInputs.restingHR = wRow.latest_resting_hr
-    if (typeof wRow.latest_vo2max === "number") lifestyleInputs.vo2max = wRow.latest_vo2max
+  // Merge wearable biometrics (resting HR) into lifestyle inputs from most recent sleep night
+  if (lifestyleInputs && allNights.length > 0) {
+    const latestRhr = (allNights[0] as SleepNight).resting_heart_rate
+    if (typeof latestRhr === "number" && latestRhr > 0) lifestyleInputs.restingHR = latestRhr
   }
 
   console.log("[score] sleep inputs:", JSON.stringify(sleepInputs ?? null))
@@ -319,7 +314,7 @@ export async function recalculateScore(
     interaction_pool:       result.breakdown.interactionPool,
     lab_result_id:          labsRes.data?.id     ?? null,
     oral_kit_id:            oralRes.data?.id     ?? null,
-    wearable_connection_id: wearableRes.data?.id ?? null,
+    wearable_connection_id: null,
     lifestyle_record_id:    lifestyleRes.data?.id ?? null,
     lab_freshness:          result.labFreshness,
     // v5.0 new fields

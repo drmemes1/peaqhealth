@@ -5,11 +5,13 @@ export default async function SettingsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const [{ data: profile }, { data: whoopConn }, { data: ouraConn }] = await Promise.all([
+  const [{ data: profile }, { data: wearableConns }] = await Promise.all([
     supabase.from("profiles").select("first_name, last_name").eq("id", user!.id).single(),
-    supabase.from("whoop_connections").select("last_synced_at, needs_reconnect").eq("user_id", user!.id).maybeSingle(),
-    supabase.from("wearable_connections").select("last_sync_at").eq("user_id", user!.id).eq("provider", "oura").maybeSingle(),
+    supabase.from("wearable_connections_v2").select("provider,last_synced_at,needs_reconnect").eq("user_id", user!.id),
   ])
+
+  const whoopConn = (wearableConns ?? []).find(c => c.provider === "whoop")
+  const ouraConn  = (wearableConns ?? []).find(c => c.provider === "oura")
 
   return (
     <SettingsClient
@@ -22,7 +24,7 @@ export default async function SettingsPage() {
       whoopLastSynced={(whoopConn?.last_synced_at as string | null) ?? null}
       whoopNeedsReconnect={(whoopConn?.needs_reconnect as boolean | null) ?? false}
       ouraConnected={!!ouraConn}
-      ouraLastSynced={(ouraConn?.last_sync_at as string | null) ?? null}
+      ouraLastSynced={(ouraConn?.last_synced_at as string | null) ?? null}
     />
   )
 }
