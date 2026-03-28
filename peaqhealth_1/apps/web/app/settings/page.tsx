@@ -10,8 +10,10 @@ export default async function SettingsPage() {
     supabase.from("wearable_connections_v2").select("provider,last_synced_at,needs_reconnect").eq("user_id", user!.id),
   ])
 
-  const whoopConn = (wearableConns ?? []).find(c => c.provider === "whoop")
-  const ouraConn  = (wearableConns ?? []).find(c => c.provider === "oura")
+  const whoopConn      = (wearableConns ?? []).find(c => c.provider === "whoop")
+  const junctionConns  = (wearableConns ?? [])
+    .filter(c => c.provider !== "whoop")
+    .map(c => ({ provider: c.provider, lastSynced: (c.last_synced_at as string | null) ?? null }))
 
   return (
     <SettingsClient
@@ -23,8 +25,7 @@ export default async function SettingsPage() {
       whoopConnected={!!whoopConn}
       whoopLastSynced={(whoopConn?.last_synced_at as string | null) ?? null}
       whoopNeedsReconnect={(whoopConn?.needs_reconnect as boolean | null) ?? false}
-      ouraConnected={!!ouraConn}
-      ouraLastSynced={(ouraConn?.last_synced_at as string | null) ?? null}
+      junctionConnections={junctionConns}
     />
   )
 }

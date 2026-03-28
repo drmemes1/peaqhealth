@@ -4,14 +4,43 @@ import Link from "next/link"
 import { useState } from "react"
 import { useVitalLink } from "@tryvital/vital-link"
 
+export interface JunctionConnection {
+  provider: string
+  lastSynced: string | null
+}
+
 export interface WearableManagerProps {
   whoopConnected: boolean
   whoopLastSynced: string | null
   whoopNeedsReconnect?: boolean
-  ouraConnected?: boolean
-  ouraLastSynced?: string | null
+  junctionConnections?: JunctionConnection[]
   onDisconnected?: () => void
-  onJunctionDisconnected?: () => void
+  onJunctionDisconnected?: (provider: string) => void
+}
+
+const PROVIDER_LABELS: Record<string, string> = {
+  oura:         "Oura Ring",
+  garmin:       "Garmin",
+  fitbit:       "Fitbit",
+  samsung:      "Samsung Health",
+  polar:        "Polar",
+  apple_health: "Apple Health",
+}
+
+const PROVIDER_SUBS: Record<string, string> = {
+  oura:    "Via Junction · Gen 3 & 4",
+  garmin:  "Via Junction",
+  fitbit:  "Via Junction",
+  samsung: "Via Junction",
+  polar:   "Via Junction",
+}
+
+function providerLabel(p: string): string {
+  return PROVIDER_LABELS[p] ?? p.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())
+}
+
+function providerSub(p: string): string {
+  return PROVIDER_SUBS[p] ?? "Via Junction"
 }
 
 function relativeTime(iso: string): string {
@@ -29,15 +58,14 @@ export function WearableManager({
   whoopConnected,
   whoopLastSynced,
   whoopNeedsReconnect = false,
-  ouraConnected = false,
-  ouraLastSynced = null,
+  junctionConnections = [],
   onDisconnected,
   onJunctionDisconnected,
 }: WearableManagerProps) {
   const [disconnectConfirm, setDisconnectConfirm] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
-  const [ouraDisconnectConfirm, setOuraDisconnectConfirm] = useState(false)
-  const [ouraDisconnecting, setOuraDisconnecting] = useState(false)
+  const [confirmProvider, setConfirmProvider] = useState<string | null>(null)
+  const [disconnectingProvider, setDisconnectingProvider] = useState<string | null>(null)
   const [junctionConnecting, setJunctionConnecting] = useState(false)
   const [junctionError, setJunctionError] = useState<string | null>(null)
 
@@ -45,7 +73,6 @@ export function WearableManager({
     onSuccess: async (metadata: Record<string, unknown>) => {
       setJunctionError(null)
       console.log("[junction] onSuccess raw metadata:", JSON.stringify(metadata))
-      // Vital Link widget sends connected[].source.slug for the provider
       const connectedArr = (metadata.connected as Array<Record<string, unknown>> | undefined)
       const firstConnected = connectedArr?.[0]
       const sourceObj = firstConnected?.source as Record<string, unknown> | undefined
@@ -56,7 +83,6 @@ export function WearableManager({
         (firstConnected?.sourceType as string | undefined) ??
         (firstConnected?.name as string | undefined)?.toLowerCase().replace(/\s+/g, "_") ??
         "unknown"
-      // userId may be camelCase or snake_case; server falls back to profile lookup if empty
       const junctionUserId: string =
         (metadata.userId as string | undefined) ??
         (metadata.user_id as string | undefined) ??
@@ -82,7 +108,7 @@ export function WearableManager({
     env: (process.env.NEXT_PUBLIC_JUNCTION_ENV ?? "sandbox") as "sandbox" | "production",
   })
 
-  const handleDisconnect = async () => {
+  const handleWhoopDisconnect = async () => {
     setDisconnecting(true)
     try {
       await fetch("/api/auth/whoop/disconnect", { method: "POST" })
@@ -92,14 +118,22 @@ export function WearableManager({
     }
   }
 
-  const handleOuraDisconnect = async () => {
-    setOuraDisconnecting(true)
+  const handleJunctionDisconnect = async (provider: string) => {
+    setDisconnectingProvider(provider)
     try {
-      await fetch("/api/auth/oura/disconnect", { method: "POST" })
-      onJunctionDisconnected?.()
+      if (provider === "oura") {
+        await fetch("/api/auth/oura/disconnect", { method: "POST" })
+      } else {
+        await fetch("/api/wearable/disconnect", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ provider }),
+        })
+      }
+      onJunctionDisconnected?.(provider)
     } finally {
-      setOuraDisconnecting(false)
-      setOuraDisconnectConfirm(false)
+      setDisconnectingProvider(null)
+      setConfirmProvider(null)
     }
   }
 
@@ -178,7 +212,7 @@ export function WearableManager({
                       style={{ fontSize: 11, color: "var(--ink-40)", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
                       Cancel
                     </button>
-                    <button onClick={handleDisconnect} disabled={disconnecting} className="font-body"
+                    <button onClick={handleWhoopDisconnect} disabled={disconnecting} className="font-body"
                       style={{ fontSize: 11, color: "#DC2626", background: "none", border: "none", padding: 0, cursor: "pointer", opacity: disconnecting ? 0.5 : 1 }}>
                       {disconnecting ? "Disconnecting…" : "Disconnect"}
                     </button>
@@ -199,64 +233,66 @@ export function WearableManager({
           </div>
         </div>
 
-        {divider}
+        {/* ── Junction-connected devices (dynamic) ── */}
+        {junctionConnections.map((conn) => (
+          <div key={conn.provider}>
+            {divider}
+            <div className="flex items-start justify-between gap-4 px-4 py-4">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span style={{ width: 7, height: 7, borderRadius: "50%", flexShrink: 0, display: "inline-block", background: "#22C55E" }} />
+                <div className="min-w-0">
+                  <p className="font-body text-sm" style={{ color: "var(--ink)" }}>{providerLabel(conn.provider)}</p>
+                  <p className="mt-0.5 font-body text-xs" style={{ color: "var(--ink-60)" }}>
+                    {conn.lastSynced
+                      ? `Last synced ${relativeTime(conn.lastSynced)} · syncs nightly`
+                      : `${providerSub(conn.provider)} · syncs nightly`}
+                  </p>
+                </div>
+              </div>
 
-        {/* ── Oura Ring ── */}
-        <div className="flex items-start justify-between gap-4 px-4 py-4">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <span style={{ width: 7, height: 7, borderRadius: "50%", flexShrink: 0, display: "inline-block", background: ouraConnected ? "#22C55E" : "rgba(20,20,16,0.22)" }} />
-            <div className="min-w-0">
-              <p className="font-body text-sm" style={{ color: "var(--ink)" }}>Oura Ring</p>
-              <p className="mt-0.5 font-body text-xs" style={{ color: "var(--ink-60)" }}>
-                {ouraConnected
-                  ? ouraLastSynced
-                    ? `Last synced ${relativeTime(ouraLastSynced)} · syncs nightly`
-                    : "Connected · syncs nightly"
-                  : "Via Junction · Gen 3 & 4"}
-              </p>
+              <div className="shrink-0 flex flex-col items-end gap-1.5">
+                {confirmProvider === conn.provider ? (
+                  <div style={{ textAlign: "right" }}>
+                    <p className="font-body" style={{ fontSize: 11, color: "var(--ink-60)", marginBottom: 6, maxWidth: 220, lineHeight: 1.5 }}>
+                      Disconnect {providerLabel(conn.provider)}? Your sleep data will remain but live sync will stop.
+                    </p>
+                    <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                      <button onClick={() => setConfirmProvider(null)} className="font-body"
+                        style={{ fontSize: 11, color: "var(--ink-40)", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => handleJunctionDisconnect(conn.provider)}
+                        disabled={disconnectingProvider === conn.provider}
+                        className="font-body"
+                        style={{ fontSize: 11, color: "#DC2626", background: "none", border: "none", padding: 0, cursor: "pointer", opacity: disconnectingProvider === conn.provider ? 0.5 : 1 }}
+                      >
+                        {disconnectingProvider === conn.provider ? "Disconnecting…" : "Disconnect"}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button onClick={() => setConfirmProvider(conn.provider)} className="font-body"
+                    style={{ fontSize: 11, color: "rgba(20,20,16,0.30)", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
+                    Disconnect
+                  </button>
+                )}
+              </div>
             </div>
           </div>
-
-          <div className="shrink-0 flex flex-col items-end gap-1.5">
-            {ouraConnected ? (
-              ouraDisconnectConfirm ? (
-                <div style={{ textAlign: "right" }}>
-                  <p className="font-body" style={{ fontSize: 11, color: "var(--ink-60)", marginBottom: 6, maxWidth: 220, lineHeight: 1.5 }}>
-                    Disconnect Oura? Your sleep data will remain but live sync will stop.
-                  </p>
-                  <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                    <button onClick={() => setOuraDisconnectConfirm(false)} className="font-body"
-                      style={{ fontSize: 11, color: "var(--ink-40)", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
-                      Cancel
-                    </button>
-                    <button onClick={handleOuraDisconnect} disabled={ouraDisconnecting} className="font-body"
-                      style={{ fontSize: 11, color: "#DC2626", background: "none", border: "none", padding: 0, cursor: "pointer", opacity: ouraDisconnecting ? 0.5 : 1 }}>
-                      {ouraDisconnecting ? "Disconnecting…" : "Disconnect"}
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <button onClick={() => setOuraDisconnectConfirm(true)} className="font-body"
-                  style={{ fontSize: 11, color: "rgba(20,20,16,0.30)", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
-                  Disconnect
-                </button>
-              )
-            ) : (
-              <button onClick={handleJunction} disabled={!widgetReady || junctionConnecting}
-                style={{ ...sharedBtnStyle, color: "var(--ink)", cursor: !widgetReady || junctionConnecting ? "default" : "pointer", opacity: !widgetReady ? 0.4 : 1 }}>
-                {junctionConnecting ? "Loading…" : "Connect"}
-              </button>
-            )}
-          </div>
-        </div>
+        ))}
 
         {divider}
 
-        {/* ── More devices ── */}
+        {/* ── Connect via Junction ── */}
         <div className="flex items-center justify-between gap-4 px-4 py-4">
           <div>
-            <p className="font-body text-sm" style={{ color: "var(--ink)" }}>More devices</p>
-            <p className="mt-0.5 font-body text-xs" style={{ color: "var(--ink-60)" }}>Garmin · Fitbit · Samsung Health · Polar</p>
+            <p className="font-body text-sm" style={{ color: "var(--ink)" }}>
+              {junctionConnections.length > 0 ? "Add another device" : "More devices"}
+            </p>
+            <p className="mt-0.5 font-body text-xs" style={{ color: "var(--ink-60)" }}>
+              Oura Ring · Garmin · Fitbit · Samsung · Polar
+            </p>
           </div>
           <button onClick={handleJunction} disabled={!widgetReady || junctionConnecting}
             style={{ ...sharedBtnStyle, color: "var(--ink-60)", borderColor: "rgba(20,20,16,0.20)", cursor: !widgetReady || junctionConnecting ? "default" : "pointer", opacity: !widgetReady || junctionConnecting ? 0.4 : 1 }}>
