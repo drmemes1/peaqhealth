@@ -184,12 +184,12 @@ SLEEP PANEL (${sleepData?.provider ?? "none"}, ${sleepData?.nights ?? 0} nights 
 - Efficiency: ${sleepData?.efficiency?.toFixed(1) ?? "N/A"}% (target ≥85%)
 
 ORAL MICROBIOME:
-${oralData ? `- Shannon diversity: ${oralData.shannon ?? "N/A"} (target ≥3.0)
-- Nitrate reducers: ${oralData.nitrateReducerPct?.toFixed(1) ?? "N/A"}% (target ≥20%)
-- Periodontal burden: ${oralData.periodontalBurden?.toFixed(1) ?? "N/A"}% (target <0.5%)
-- OSA-associated taxa: ${oralData.osaBurden?.toFixed(1) ?? "N/A"}% (target <1%)
-- Protective bacteria (Rothia + Neisseria): ${oralData.protectivePct?.toFixed(1) ?? "N/A"}% (target ≥10%)
-- Mouthwash detected: ${oralData.mouthwashDetected ? "yes" : "no"}` : "Not available — do not reference oral panel in any insight"}
+${oralData ? `- Shannon diversity: ${oralData.shannon?.toFixed(2)} (target ≥3.0)
+- Nitrate reducers: ${oralData.nitrateReducerPct?.toFixed(1)}% (target ≥20%)
+- Periodontal burden: ${oralData.periodontalBurden?.toFixed(1)}% (target <0.5%)
+- OSA-associated taxa: ${oralData.osaBurden?.toFixed(1)}% (target <1%)
+- Protective bacteria: ${oralData.protectivePct?.toFixed(1) ?? "not scored"}%
+- Antiseptic mouthwash detected: ${oralData.mouthwashDetected ? "yes — note that antiseptic mouthwash suppresses nitrate-reducing bacteria" : "no"}` : "Not available — do not reference oral panel in any insight"}
 
 LIFESTYLE:
 ${lifestyleData ? JSON.stringify(lifestyleData) : "Not available"}
@@ -238,9 +238,12 @@ category must be exactly one of: "POSITIVE", "WATCH", "EXPLORE"
 Priority 1 = most interesting or relevant. Oral panel must appear in at least 2 cards. At least 2 cards must be POSITIVE category.`
 
   // ── Pre-call panel data log ────────────────────────────────────────────────
+  console.log("[insight] oral data:", oralData
+    ? `shannon=${oralData.shannon} nitrate=${oralData.nitrateReducerPct?.toFixed(1)}% periodontal=${oralData.periodontalBurden?.toFixed(1)}% mouthwash=${oralData.mouthwashDetected}`
+    : "none"
+  )
   console.log(
     `[insight] user=${user.id.slice(0, 8)}`,
-    `oral=${oralData ? `shannon=${oralData.shannon} nitrate=${oralData.nitrateReducerPct?.toFixed(1)}% periodontal=${oralData.periodontalBurden?.toFixed(1)}% mouthwash=${oralData.mouthwashDetected}` : "null"}`,
     `| sleep=${sleepData ? `deep=${sleepData.deepSleepPct?.toFixed(1)}%/rem=${sleepData.remPct?.toFixed(1)}%/hrv=${sleepData.hrv?.toFixed(1)}` : "null"}`,
     `| blood=${bloodData ? "present" : "null"}`,
     `| lifestyle=${lifestyleData ? "present" : "null"}`,
