@@ -95,11 +95,7 @@ export function WearableManager({
   const handleOuraDisconnect = async () => {
     setOuraDisconnecting(true)
     try {
-      await fetch("/api/junction/disconnect", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider: "oura" }),
-      })
+      await fetch("/api/auth/oura/disconnect", { method: "POST" })
       onJunctionDisconnected?.()
     } finally {
       setOuraDisconnecting(false)

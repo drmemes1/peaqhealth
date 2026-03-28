@@ -2,8 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { LogoSvg } from "../components/logo-svg";
+import { Nav } from "../components/nav";
 
 /* ───────────────────────── citations ───────────────────────── */
 
@@ -252,43 +251,8 @@ export default function SciencePage() {
 
   return (
     <>
-      {/* ── Minimal nav ─────────────────────────────────── */}
-      <nav
-        className="sticky top-0 z-50 border-b bg-off-white/92 backdrop-blur-[12px]"
-        style={{ borderBottomColor: "var(--ink-12)" }}
-      >
-        <div className="mx-auto flex h-14 max-w-[1200px] items-center justify-between px-6">
-          <Link href="/dashboard">
-            <LogoSvg size={44} color="var(--ink)" />
-          </Link>
-          <div className="flex items-center gap-8">
-            {[
-              { href: "/dashboard", label: "Dashboard" },
-              { href: "/shop", label: "Shop" },
-              { href: "/science", label: "Science" },
-              { href: "/settings", label: "Settings" },
-            ].map(({ href, label }) => {
-              const active = href === "/science";
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className="font-body text-[11px] uppercase tracking-[0.08em] transition-colors"
-                  style={{
-                    color: active ? "var(--ink)" : "var(--ink-60)",
-                    textDecoration: active ? "underline" : "none",
-                    textUnderlineOffset: "4px",
-                    textDecorationThickness: "0.5px",
-                  }}
-                >
-                  {label}
-                </Link>
-              );
-            })}
-          </div>
-          <div style={{ width: 44 }} />
-        </div>
-      </nav>
+      {/* ── Nav ─────────────────────────────────── */}
+      <Nav />
 
       {/* ── Page body ────────────────────────────────────── */}
       <main style={{ maxWidth: 680, margin: "0 auto", padding: "64px 24px 120px" }}>

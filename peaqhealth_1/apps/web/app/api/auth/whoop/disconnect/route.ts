@@ -18,12 +18,13 @@ export async function POST() {
 
   // Fetch the access token so we can revoke it with WHOOP
   const { data: conn } = await svc
-    .from("whoop_connections")
+    .from("wearable_connections_v2")
     .select("access_token")
     .eq("user_id", user.id)
+    .eq("provider", "whoop")
     .maybeSingle()
 
-  console.log("[whoop-disconnect] whoop_connections row found:", !!conn)
+  console.log("[whoop-disconnect] wearable_connections_v2 row found:", !!conn)
 
   // Best-effort token revocation — don't fail if WHOOP rejects it
   if (conn?.access_token) {
