@@ -62,6 +62,9 @@ export function mapLifestyleRow(row: Record<string, unknown>): LifestyleInputs {
     dexaDone:               row.dexa_done === true ? true : undefined,
     psaDiscussed:           row.psa_discussed === true ? true : undefined,
     cervicalScreeningDone:  row.cervical_screening_done === true ? true : undefined,
+    fermentedFoodsFrequency: (["rarely", "sometimes", "daily"] as const).includes(row.fermented_foods_frequency as "rarely" | "sometimes" | "daily")
+      ? (row.fermented_foods_frequency as "rarely" | "sometimes" | "daily")
+      : undefined,
   }
 }
 

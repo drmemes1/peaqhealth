@@ -73,6 +73,8 @@ export interface ScoreWheelProps {
     processedFood?: number
     ageRange?: string
     biologicalSex?: string
+    mouthwashType?: string
+    fermentedFoods?: string
     updatedAt: string
   }
   interactionsFired?: string[]
@@ -389,6 +391,7 @@ function CrossPanelInteractions({
   oralData,
   bloodData,
   sleepData,
+  lifestyleData,
   fadeUpFn,
 }: {
   oralKitStatus?: "none" | "ordered" | "complete"
@@ -398,6 +401,7 @@ function CrossPanelInteractions({
   oralData?: ScoreWheelProps["oralData"]
   bloodData?: ScoreWheelProps["bloodData"]
   sleepData?: ScoreWheelProps["sleepData"]
+  lifestyleData?: ScoreWheelProps["lifestyleData"]
   fadeUpFn: (d: string) => React.CSSProperties
 }) {
   const [open, setOpen] = useState(true)
@@ -509,6 +513,53 @@ function CrossPanelInteractions({
             "Recheck hsCRP in 90 days after sleep optimization",
           ],
           citation: "Irwin et al., Biological Psychiatry, 2016. Meta-analysis, n=72 studies.",
+        },
+      })
+    }
+  }
+
+  // Oral + Lifestyle fermented foods interactions
+  const lowFermented = !lifestyleData?.fermentedFoods || lifestyleData.fermentedFoods === "rarely"
+  if (oralActive && oralData && lifestyleActive && lifestyleData) {
+    // oral-lifestyle-fermented: low D4 protective bacteria + low fermented food intake
+    if (oralData.osaTaxaPct < 3 && lowFermented) {
+      computed.push({
+        key: "oralLifestyleFermented",
+        title: "Low protective bacteria — diet may help",
+        body: "Your protective oral bacteria are depleted. Lactobacillus, S. salivarius, and Bifidobacterium — the bacteria that support oral health — are directly enriched by fermented food consumption. Adding yogurt, kefir, or kimchi 3–5 times per week may improve this score at your next test.",
+        panels: ["Oral", "Lifestyle"],
+        severity: "medium",
+        learnMore: {
+          science: "A 17-week randomized trial found that high-fermented food diets increased microbiome diversity and reduced 19 inflammatory proteins including IL-6 and IL-12p70. The effect was dose-dependent and detectable within 4 weeks (Wastyk et al., Cell 2021, n=36).",
+          meaning: `Your D4 protective bacteria score is ${oralData.osaTaxaPct.toFixed(1)}% — below the 3% threshold. Low protective bacteria abundance is associated with reduced oral immune defence and higher pathogen colonisation risk.`,
+          actions: [
+            "Add 1–2 servings of fermented foods daily: yogurt, kefir, kimchi, sauerkraut, miso, or kombucha",
+            "Avoid antiseptic mouthwash — it kills beneficial bacteria alongside pathogens",
+            "Retest oral microbiome in 90 days after dietary changes",
+          ],
+          citation: "Wastyk et al., Cell 2021. n=36, 17-week randomised trial. High-fermented food diet vs. high-fibre diet.",
+        },
+      })
+    }
+    // oral-lifestyle-mouthwash-fermented: low D2 nitrate reducers + antiseptic mouthwash + low fermented foods
+    const usesAntiseptic = lifestyleData.mouthwashType === "alcohol" || lifestyleData.mouthwashType === "antiseptic"
+    if (oralData.nitrateReducersPct < 2 && usesAntiseptic && lowFermented) {
+      computed.push({
+        key: "oralLifestyleMouthwashFermented",
+        title: "Three factors depleting your oral microbiome",
+        body: "Antiseptic mouthwash, low fermented food intake, and depleted nitrate-reducing bacteria are compounding. Switching to fluoride mouthwash and adding fermented foods addresses two of these simultaneously — and both changes are visible at your next microbiome test in 90 days.",
+        panels: ["Oral", "Lifestyle"],
+        severity: "high",
+        learnMore: {
+          science: "Antiseptic mouthwash eliminates nitrate-reducing bacteria within days, raising systolic blood pressure by 2–3.5 mmHg (SOALS 2020). Fermented food consumption rebuilds commensal populations and increases microbiome diversity independently of antibiotic exposure (Wastyk et al., Cell 2021).",
+          meaning: `Your nitrate-reducing bacteria are at ${oralData.nitrateReducersPct.toFixed(1)}% — well below the 2% minimum. Combined with antiseptic mouthwash use and low fermented food intake, your oral microbiome is facing three simultaneous depletion pressures.`,
+          actions: [
+            "Switch from antiseptic to fluoride or natural mouthwash immediately — the effect on bacteria is reversible within 2–4 weeks",
+            "Add fermented foods 3–5× per week: yogurt, kefir, kimchi, sauerkraut, or kombucha",
+            "Increase dietary nitrates: beetroot, arugula, spinach, celery to support NO pathway recovery",
+            "Retest oral microbiome in 90 days",
+          ],
+          citation: "Tribble et al., SOALS 2020 (mouthwash & BP); Wastyk et al., Cell 2021 (fermented foods & microbiome diversity).",
         },
       })
     }
@@ -1466,6 +1517,7 @@ export function ScoreWheel({
         oralData={oralData}
         bloodData={bloodData}
         sleepData={sleepData}
+        lifestyleData={lifestyleData}
         fadeUpFn={fadeUp}
       />
 

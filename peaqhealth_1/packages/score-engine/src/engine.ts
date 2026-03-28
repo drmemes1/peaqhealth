@@ -41,6 +41,7 @@ export type SleepDuration = "gte_8" | "7_to_8" | "6_to_7" | "lt_6"
 export type SleepLatency  = "lt_15min" | "15_to_30min" | "30_to_60min" | "gt_60min"
 export type SleepQualSelf = "very_good" | "good" | "fair" | "poor"
 export type DaytimeFatigue= "never" | "sometimes" | "often" | "always"
+export type FermentedFoodsFrequency = "rarely" | "sometimes" | "daily"
 
 export interface LifestyleInputs {
   exerciseLevel:    ExerciseLevel
@@ -53,8 +54,9 @@ export interface LifestyleInputs {
   knownDiabetes:    boolean
   sleepDuration:    SleepDuration
   sleepLatency:     SleepLatency
-  sleepQualSelf:    SleepQualSelf
+  sleepQualSelf?:   SleepQualSelf
   daytimeFatigue:   DaytimeFatigue
+  fermentedFoodsFrequency?: FermentedFoodsFrequency
   nightWakings:     "never" | "less_once_wk" | "once_twice_wk" | "3plus_wk"
   sleepMedication:  "never" | "less_once_wk" | "once_twice_wk" | "3plus_wk"
   hypertensionDx?:  boolean
@@ -314,6 +316,12 @@ function scoreNutrition(ls: LifestyleInputs): number {
   return Math.min(1.5, pts)
 }
 
+function scoreFermentedFoods(freq?: FermentedFoodsFrequency): number {
+  if (freq === "daily")     return 2
+  if (freq === "sometimes") return 1
+  return 0
+}
+
 function scoreAlcohol(drinks?: number): number {
   if (drinks === undefined) return 0
   if (drinks <= 7)  return 0.5
@@ -416,7 +424,7 @@ export function estimateSleepFromQuestionnaire(ls: LifestyleInputs): number {
   const wake: Record<string, number>         = { never: 4, less_once_wk: 3, once_twice_wk: 1, "3plus_wk": 0 }
   const fat: Record<DaytimeFatigue, number>  = { never: 3, sometimes: 2, often: 1, always: 0 }
   return Math.min(21, Math.max(0,
-    dur[ls.sleepDuration] + lat[ls.sleepLatency] + qual[ls.sleepQualSelf] +
+    dur[ls.sleepDuration] + lat[ls.sleepLatency] + (ls.sleepQualSelf ? qual[ls.sleepQualSelf] : 3) +
     (wake[ls.nightWakings] ?? 0) + fat[ls.daytimeFatigue]
   ))
 }
@@ -851,8 +859,9 @@ export function calculatePeaqScore(sleep?: SleepInputs, blood?: BloodInputs, ora
     vo2maxScore      = scoreVO2Max(lifestyle.vo2max, lifestyle.biologicalSex)
     nutritionScore   = scoreNutrition(lifestyle)
     alcoholScore     = scoreAlcohol(lifestyle.alcoholDrinksPerWeek)
-    const screeningScore = scorePreventiveScreening(lifestyle)
-    const raw        = exerciseScore + oralHygieneScore + dentalVisitScore + heartScore + restingHRScore + vo2maxScore + nutritionScore + alcoholScore + screeningScore
+    const screeningScore     = scorePreventiveScreening(lifestyle)
+    const fermentedFoodsScore = scoreFermentedFoods(lifestyle.fermentedFoodsFrequency)
+    const raw        = exerciseScore + oralHygieneScore + dentalVisitScore + heartScore + restingHRScore + vo2maxScore + nutritionScore + alcoholScore + screeningScore + fermentedFoodsScore
     const penalty    = medicalHistoryPenalty(lifestyle)
     const net        = raw - penalty
     lifestyleSub     = Math.max(0, Math.min(13, Math.round(net * (13 / 8) * 2) / 2))

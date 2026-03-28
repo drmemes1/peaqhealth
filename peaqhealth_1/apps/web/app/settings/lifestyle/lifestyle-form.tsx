@@ -48,14 +48,14 @@ const SECTIONS: {
     subtitle: "Self-reported sleep calibrates your baseline and drives interaction scoring",
     ptsLabel: "sleep estimate",
     color: "#4A7FB5",
-    keys: ["sleepDuration", "sleepLatency", "sleepQualSelf", "nightWakings", "daytimeFatigue"],
+    keys: ["sleepDuration", "sleepLatency", "nightWakings", "daytimeFatigue"],
   },
   {
     title: "Diet & Nutrition",
     subtitle: "Dietary patterns modulate glycemic control, inflammation, and microbiome composition",
-    ptsLabel: "up to 1.5 pts",
+    ptsLabel: "up to 3.5 pts",
     color: "#B8860B",
-    keys: ["vegetableServings", "fruitServings", "processedFood", "sugaryDrinks", "dietQuality", "omegaFrequency"],
+    keys: ["vegetableServings", "fruitServings", "processedFood", "sugaryDrinks", "dietQuality", "omegaFrequency", "fermentedFoods"],
   },
   {
     title: "Alcohol & Stress",
@@ -282,6 +282,17 @@ const QUESTIONS: QuestionDef[] = [
       { value: "weekly", label: "Once per week" },
       { value: "often",  label: "2–3× per week" },
       { value: "daily",  label: "Daily" },
+    ],
+  },
+  {
+    key: "fermentedFoods", dbKey: "fermented_foods_frequency",
+    label: "How often do you eat fermented foods?",
+    context: "Fermented food consumption increased microbiome diversity and reduced inflammatory markers in a 17-week RCT (Wastyk et al., Cell 2021).",
+    type: "choice",
+    options: [
+      { value: "rarely",    label: "Rarely or never" },
+      { value: "sometimes", label: "A few times a week", sub: "Yogurt, kefir, kimchi, sauerkraut, miso, kombucha" },
+      { value: "daily",     label: "Daily" },
     ],
   },
   // ── Alcohol & Stress ──────────────────────────────────────────────────────
