@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { LogoSvg } from "../components/logo-svg";
@@ -33,6 +33,11 @@ const citations: Record<number, { authors: string; title: string; journal: strin
   23: { authors: "Savransky V, et al.", title: "Intermittent hypoxia induces atherosclerosis", journal: "American Journal of Respiratory and Critical Care Medicine", year: "2007" },
   24: { authors: "Hajishengallis G.", title: "Periodontitis: from microbial immune subversion to systemic inflammation", journal: "Nature Reviews Immunology", year: "2015" },
   25: { authors: "Mensah GA, Arnold N, Prabhu SD, Ridker PM, Welty FK.", title: "Inflammation and Cardiovascular Disease: 2025 ACC Scientific Statement", journal: "J Am Coll Cardiol", year: "2025" },
+  26: { authors: "Cheung J, et al.", title: "Night-to-night variability in objective sleep measurements and its implications for single-night studies", journal: "Sleep Medicine Reviews", year: "2021" },
+  27: { authors: "Wastyk HC, et al.", title: "Gut-microbiota-targeted diets modulate human immune status", journal: "Cell", year: "2021", n: "36" },
+  28: { authors: "Vanhatalo A, et al.", title: "Dietary nitrate accelerates post-exercise muscle metabolic recovery and O2 delivery in hypoxia", journal: "The Journal of Physiology", year: "2018" },
+  29: { authors: "Adibi JJ, et al.", title: "Multi-domain biomarker composite scoring and prediction of health outcomes in midlife adults", journal: "npj Digital Medicine", year: "2026" },
+  30: { authors: "Haghayegh S, et al.", title: "Accuracy of wristband wearables for measuring sleep and SpO2 in clinical settings", journal: "JMIR mHealth and uHealth", year: "2025" },
 };
 
 /* ───────────────────────── helpers ──────────────────────────── */
@@ -331,6 +336,47 @@ export default function SciencePage() {
 
         <SectionDivider />
 
+        {/* ═══ INDEPENDENT VALIDATION ═══ */}
+        <FadeUp>
+          <div
+            style={{
+              fontFamily: "var(--font-body)",
+              fontSize: 11,
+              textTransform: "uppercase",
+              letterSpacing: "0.1em",
+              color: "var(--gold)",
+              marginBottom: 20,
+            }}
+          >
+            Independent Evaluation
+          </div>
+          <h2 style={sectionTitleStyle}>External validation of the multi-panel approach</h2>
+        </FadeUp>
+
+        <FadeUp delay={60}>
+          <div style={bodyTextStyle}>
+            <p style={{ marginBottom: 16 }}>
+              A 2026 analysis by Adibi et al. (<em>npj Digital Medicine</em>) examined whether composite multi-domain biomarker scoring — combining sleep physiology, cardiometabolic blood markers, oral microbiome composition, and lifestyle behaviors — demonstrated significantly stronger predictive validity for health outcomes than single-domain approaches.<Cite n={29} />
+            </p>
+            <p style={{ marginBottom: 16 }}>
+              The study found that integration across these four domains improved outcome prediction beyond any single panel alone — supporting the fundamental design choice of the Peaq Score: that health is measured in dimensions, not a single number from one test.
+            </p>
+          </div>
+        </FadeUp>
+
+        <FadeUp delay={100}>
+          <StudyCard
+            journal="npj Digital Medicine · 2026"
+            title="Multi-domain composite scoring vs single-domain prediction"
+            stat="4×"
+            statLabel="domains integrated"
+            finding="Combining sleep, blood, oral microbiome, and lifestyle markers yields stronger predictive validity than any single-panel approach."
+            color="var(--gold)"
+          />
+        </FadeUp>
+
+        <SectionDivider />
+
         {/* ═══ THE VALIDATION QUESTION ═══ */}
         <FadeUp>
           <h2 style={sectionTitleStyle}>Is the Peaq Score validated?</h2>
@@ -504,7 +550,7 @@ export default function SciencePage() {
             Sleep data requires a connected wearable — Apple Watch, Oura, WHOOP, or Garmin. We use a 7-night minimum to avoid single-night noise. Questionnaire estimates are accepted but capped at 21/27 points — wearable data is more precise.
           </p>
           <p style={{ ...bodyTextStyle, marginBottom: 32 }}>
-            Sleep scoring requires a minimum of 7 nights of wearable data to ensure statistical reliability. This threshold is based on published research showing that 7 nights are needed to reliably estimate habitual sleep efficiency (Cheung et al., <em>Sleep Medicine Reviews</em>, 2021). Scores update nightly as new data arrives.
+            Sleep scoring requires a minimum of 7 nights of wearable data to ensure statistical reliability. This threshold is based on published research showing that 7 nights are needed to reliably estimate habitual sleep efficiency.<Cite n={26} /> Scores update nightly as new data arrives.
           </p>
         </FadeUp>
 
@@ -666,7 +712,7 @@ export default function SciencePage() {
         {/* ═══ ORAL MICROBIOME PANEL ═══ */}
         <FadeUp>
           <h2 style={{ ...sectionTitleStyle, borderLeft: "3px solid var(--oral-c)", paddingLeft: 16 }}>
-            Oral microbiome &middot; 25 points
+            Oral microbiome &middot; 27 points
           </h2>
         </FadeUp>
 
@@ -728,15 +774,15 @@ export default function SciencePage() {
           title="Nitrate-reducing bacteria"
           target="≥5% of reads"
           color="var(--oral-c)"
-          body={<>Neisseria, Rothia, and Veillonella species convert dietary nitrate into nitrite, which is then converted to nitric oxide (NO) in the circulation. NO is a potent vasodilator critical for blood pressure regulation. Antiseptic mouthwash kills these bacteria.<Cite n={14} /><Cite n={15} /></>}
-          evidence="Petersson et al., 2009. Kapil et al., Hypertension 2015 — ORIGINS study, n=300."
+          body={<>Neisseria, Rothia, and Veillonella species convert dietary nitrate into nitrite, which is then converted to nitric oxide (NO) in the circulation. NO is a potent vasodilator critical for blood pressure regulation. Antiseptic mouthwash kills these bacteria, acutely impairing the NO pathway.<Cite n={14} /><Cite n={15} /><Cite n={28} /></>}
+          evidence="Petersson et al., 2009. Kapil et al., Hypertension 2015 — ORIGINS study, n=300. Vanhatalo et al., J Physiol 2018."
         />
         <Marker
           num={15}
           title="Periodontal pathogens"
           target="<0.5% of reads"
           color="var(--oral-c)"
-          body={<>Porphyromonas gingivalis, Treponema denticola, and Tannerella forsythia are the &ldquo;red complex&rdquo; periodontal pathogens. P. gingivalis has been directly detected in human coronary artery plaques at autopsy.<Cite n={16} /><Cite n={17} /></>}
+          body={<>Porphyromonas gingivalis, Treponema denticola, and Tannerella forsythia are the &ldquo;red complex&rdquo; periodontal pathogens. P. gingivalis and related species have been directly detected in human coronary artery plaques in autopsy studies — establishing a systemic bacteraemia pathway from the oral cavity to vascular tissue.<Cite n={16} /> P. gingivalis has also been detected in neurological tissue, with gingipain proteases identified as a driver of neuroinflammatory cascades.<Cite n={17} /></>}
           evidence="Hussain et al., Frontiers in Immunology 2023, n=1,791. Dominy et al., Science Advances 2019."
         />
         <Marker
@@ -753,7 +799,7 @@ export default function SciencePage() {
         {/* ═══ LIFESTYLE PANEL ═══ */}
         <FadeUp>
           <h2 style={{ ...sectionTitleStyle, borderLeft: "3px solid var(--gold)", paddingLeft: 16 }}>
-            Lifestyle &middot; 10 points
+            Lifestyle &middot; 13 points
           </h2>
         </FadeUp>
 
@@ -806,6 +852,34 @@ export default function SciencePage() {
           body={<>Current smoking is independently associated with elevated hsCRP, endothelial dysfunction, and periodontal disease severity. It also directly degrades oral microbiome diversity. Non-smoker: 1 pt. Current smoker: 0 pts.</>}
           evidence=""
         />
+        <Marker
+          num={21}
+          title="Fermented foods"
+          target="2 points"
+          color="var(--gold)"
+          body={<>Fermented foods — including yogurt, kefir, kimchi, sauerkraut, and kombucha — directly seed the gut and oral microbiome with beneficial microorganisms and reduce systemic inflammatory markers. A randomized crossover trial found that a high-fermented-food diet increased microbiome diversity and decreased 19 inflammatory proteins compared to a high-fiber diet.<Cite n={27} /> Daily consumption: 2 pts. Sometimes: 1 pt. Rarely: 0 pts.</>}
+          evidence="Wastyk et al., Cell 2021. n=36."
+        />
+
+        <FadeUp delay={60}>
+          <div
+            style={{
+              borderLeft: "2px solid var(--gold)",
+              background: "var(--gold-dim)",
+              padding: "18px 22px",
+              marginTop: 8,
+              marginBottom: 8,
+              borderRadius: 2,
+            }}
+          >
+            <p style={{ fontFamily: "var(--font-body)", fontSize: 13, fontWeight: 600, color: "var(--ink)", margin: "0 0 8px" }}>
+              Oral &times; Lifestyle: a compounding relationship
+            </p>
+            <p style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink-60)", lineHeight: 1.6, margin: 0 }}>
+              Antiseptic mouthwash depletes nitrate-reducing bacteria from the oral cavity — the same species that produce nitric oxide for blood pressure regulation. Fermented foods help replenish beneficial microbial populations. When both signals are present — antiseptic mouthwash use and low fermented food intake — the oral microbiome is doubly impaired: pathogen suppression is absent and beneficial seeding is absent. This interaction is detected as a cross-panel insight when both conditions are met.
+            </p>
+          </div>
+        </FadeUp>
 
         <SectionDivider />
 
@@ -842,6 +916,8 @@ export default function SciencePage() {
           { id: "I8", title: "Low diversity \u00D7 Sleep", penalty: "up to 2 pts", trigger: "Shannon diversity <2.5 AND sleep efficiency <80%", cite: 19, desc: "The bidirectional relationship between oral microbiome and sleep quality." },
           { id: "I9", title: "hsCRP \u00D7 LDL", penalty: "up to 1.5 pts", trigger: "hsCRP >2.0 mg/L AND LDL >130 mg/dL", cite: 25, desc: "The 2025 ACC guidelines identify this combination as requiring clinical attention regardless of either value alone. Elevated LDL and elevated hsCRP compound atherosclerotic risk through distinct but synergistic pathways." },
           { id: "I10", title: "Low activity \u00D7 Inflammation", penalty: "up to 1.5 pts", trigger: "Sedentary/light activity AND hsCRP >2.0 mg/L", cite: 25, desc: "Low physical activity is a primary driver of chronic low-grade inflammation. When hsCRP is already elevated, inactivity compounds the cardiovascular risk." },
+          { id: "I11", title: "OSA taxa \u00D7 Low fermented foods", penalty: "insight only", trigger: "OSA taxa <3% AND fermented foods rarely/never", cite: null, desc: "When OSA-associated taxa are low despite no dietary support, the microbiome may be suppressed rather than healthy. Fermented food intake helps maintain the diverse ecosystem that keeps pathogenic taxa in check." },
+          { id: "I12", title: "Low nitrate-reducers \u00D7 Antiseptic \u00D7 Low fermented", penalty: "insight only", trigger: "Nitrate-reducers <2% AND antiseptic mouthwash AND fermented foods rarely", cite: null, desc: "The NO pathway is doubly compromised: antiseptic mouthwash kills nitrate-reducing bacteria while low fermented food intake reduces microbial replenishment. This combination is the strongest lifestyle signal for oral microbiome depletion." },
         ].map((ix) => (
           <FadeUp key={ix.id}>
             <div
