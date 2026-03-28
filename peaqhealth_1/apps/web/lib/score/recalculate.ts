@@ -204,17 +204,27 @@ export async function recalculateScore(
   }
   const allNights = (sleepNightsRes.data ?? []) as unknown as SleepNight[]
 
+  // Priority-selected best night per date — hoisted so resting-HR merge can reuse it
+  let bestNights: SleepNight[] = []
+
   if (allNights.length > 0) {
     // Pick best source per date (whoop > oura > garmin)
     const bestByDate = new Map<string, SleepNight>()
     for (const night of allNights) {
       const existing = bestByDate.get(night.date)
-      const nightPriority = PROVIDER_PRIORITY[night.source] ?? 99
+      const nightPriority    = PROVIDER_PRIORITY[night.source]    ?? 99
       const existingPriority = existing ? (PROVIDER_PRIORITY[existing.source] ?? 99) : Infinity
       if (nightPriority < existingPriority) bestByDate.set(night.date, night)
     }
 
-    const bestNights = Array.from(bestByDate.values())
+    console.log("[score] priority selection:",
+      Array.from(bestByDate.entries())
+        .sort((a, b) => b[0].localeCompare(a[0]))
+        .slice(0, 3)
+        .map(([date, row]) => `${date}:${row.source}`)
+    )
+
+    bestNights = Array.from(bestByDate.values())
       .sort((a, b) => b.date.localeCompare(a.date))
     const n = bestNights.length
 
@@ -280,9 +290,10 @@ export async function recalculateScore(
     if (!bloodInputs.hba1c_pct)        missingPremium.push("HbA1c")
   }
 
-  // Merge wearable biometrics (resting HR) into lifestyle inputs from most recent sleep night
-  if (lifestyleInputs && allNights.length > 0) {
-    const latestRhr = (allNights[0] as SleepNight).resting_heart_rate
+  // Merge wearable biometrics (resting HR) from the priority-selected most recent night.
+  // Use bestNights (not raw allNights) so WHOOP wins over Oura when both are connected.
+  if (lifestyleInputs && bestNights.length > 0) {
+    const latestRhr = bestNights[0].resting_heart_rate
     if (typeof latestRhr === "number" && latestRhr > 0) lifestyleInputs.restingHR = latestRhr
   }
 
