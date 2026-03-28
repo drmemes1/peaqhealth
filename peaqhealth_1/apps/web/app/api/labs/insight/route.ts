@@ -26,12 +26,18 @@ STRICT RULES:
 APPROVED BIOLOGICAL RELATIONSHIPS you may reference (frame as interesting patterns, not diagnoses):
 - Oral nitrate-reducing bacteria and nitric oxide availability
 - Periodontal bacteria and systemic inflammation markers like hsCRP
-- Sleep architecture (deep sleep, REM) and metabolic markers
+- Deep sleep and inflammatory tone (hsCRP) — well-established, not lipid levels
 - HRV as a reflection of autonomic balance and recovery
 - Shannon diversity and overall microbiome resilience
 - Lp(a) as a genetically influenced cardiovascular marker
 - Sleep efficiency and next-day inflammatory tone
-- Protective oral bacteria and systemic immune balance`
+- Protective oral bacteria and systemic immune balance
+- REM sleep and metabolic recovery (glucose markers)
+
+PROHIBITED ASSOCIATIONS — never generate insights based on these:
+- Sleep stages and lipid levels (LDL, HDL, triglycerides, ApoB) — not established enough
+- Any connection described as "may suggest" or "could be linked" in a POSITIVE card
+- Oral microbiome and lipid markers directly`
 
 function num(v: unknown): number | undefined {
   const n = Number(v)
@@ -200,11 +206,24 @@ Interesting cross-panel connections (frame with curiosity, not alarm):
 - Low HRV alongside sleep efficiency and oral diversity — autonomic balance touches multiple systems
 - Glucose markers alongside sleep architecture — sleep and metabolic markers are increasingly understood to be connected
 
-Positive patterns worth celebrating:
-- Strong deep sleep alongside healthy lipid markers — great combination
-- Good sleep efficiency alongside low inflammatory markers — worth recognizing
-- Healthy protective bacteria alongside strong blood panel — oral and systemic health moving together
-- High Shannon diversity alongside good metabolic markers — microbiome resilience reflected systemically
+POSITIVE cards (generate only when genuinely supported — do not manufacture to fill a quota):
+A POSITIVE card is valid ONLY when:
+- A metric is meaningfully above its target (not just within range)
+- AND a second panel has a related metric also in a good range
+- AND the connection is well-established
+
+Valid POSITIVE examples:
+- Strong deep sleep (≥20%) + low hsCRP → sleep and inflammation moving together
+- High Shannon diversity + low hsCRP → oral microbiome resilience reflected systemically
+- Good HRV (≥50ms) + low hsCRP → autonomic balance and low inflammation
+- Healthy glucose + strong REM → metabolic and cognitive recovery aligned
+
+Invalid POSITIVE examples (do not generate these):
+- Any card connecting sleep stages to lipid levels (LDL, HDL, triglycerides, ApoB)
+- Any card where both values are merely "within range" rather than genuinely strong
+- Any card framed as "may suggest" or "could be linked" — POSITIVE cards require established connections
+
+If fewer than 2 valid POSITIVE cards exist in the user's data, generate 1 POSITIVE and use the remaining slot for a well-evidenced WATCH or EXPLORE card. Do not invent positive associations to meet the quota.
 
 Return a JSON array of exactly 6 insight objects:
 [
@@ -292,6 +311,11 @@ Priority 1 = most interesting or relevant. Oral panel must appear in at least 2 
     "recovery capacity deficit", "inflammatory load index",
     "you are experiencing", "you suffer from",
     "clinical recommendation", "medical advice",
+    // Clinician-flagged: sleep-lipid association not established enough (flagged 2026-03-28)
+    "deep sleep supports your lipid",
+    "slow-wave sleep.*ldl", "slow-wave sleep.*triglyceride",
+    "deep sleep.*ldl", "deep sleep.*triglyceride", "deep sleep.*apob",
+    "sleep.*lipid clearance", "hepatic lipid",
   ]
   const validated = twoPanel.filter((item) => {
     const c = item as Record<string, unknown>
