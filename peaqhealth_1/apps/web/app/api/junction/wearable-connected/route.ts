@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
     // non-fatal — historical pull can fail silently; webhook will not fire
   }
 
-  // Backfill 30 days of Oura sleep data into sleep_data after response
+  // Backfill 30 days of sleep data into sleep_data after response (provider-specific)
   const capturedUserId = user.id
   const capturedProvider = provider
   after(async () => {
@@ -122,8 +122,12 @@ export async function POST(request: NextRequest) {
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!,
       )
-      const count = await fetchAndStoreOuraData(capturedUserId, 30)
-      console.log("[wearable] backfill complete, records:", count)
+      if (capturedProvider === "oura") {
+        const count = await fetchAndStoreOuraData(capturedUserId, 30)
+        console.log("[wearable] oura backfill complete, records:", count)
+      } else {
+        console.log("[wearable] no dedicated fetch function for provider:", capturedProvider, "— skipping backfill")
+      }
       await recalculateScore(capturedUserId, svc)
       console.log("[wearable] score recalculated after backfill")
     } catch (err) {
