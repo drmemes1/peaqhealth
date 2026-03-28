@@ -3,13 +3,13 @@ import { createClient } from "../../../../lib/supabase/server"
 import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { recalculateScore } from "../../../../lib/score/recalculate"
 import type { BloodMarkers } from "../../../components/lab-upload"
-import { AzureOpenAI } from "openai"
+import OpenAI from "openai"
 import type { SupabaseClient } from "@supabase/supabase-js"
 
 type DbRow = Record<string, number | string | null | undefined>
 
 async function generateBloodInsight(userId: string, supabase: SupabaseClient, bloodRow: DbRow): Promise<string | null> {
-  const key = process.env.AZURE_OPENAI_KEY
+  const key = process.env.OPENAI_API_KEY
   if (!key) return null
 
   const n = (v: unknown) => typeof v === "number" && v > 0
@@ -111,28 +111,27 @@ ${sleepLines.length > 0 ? `\nSleep data: ${sleepLines.join(", ")}` : ""}
 ${oralLines.length > 0 ? `\nOral microbiome: ${oralLines.join(", ")}` : ""}
 ${lifestyleLines.length > 0 ? `\nLifestyle: ${lifestyleLines.join(", ")}` : ""}`.trim()
 
+  // HIPAA BAA signed 2026-03-28. Zero Data Retention active. Confirmation: uKTeFVcJ3x
   try {
-    const client = new AzureOpenAI({
-      apiKey: key,
-      endpoint: process.env.AZURE_OPENAI_ENDPOINT,
-      apiVersion: "2024-08-01-preview",
-      deployment: process.env.AZURE_OPENAI_DEPLOYMENT,
-    })
+    const client = new OpenAI({ apiKey: key })
+    const model  = process.env.OPENAI_MODEL ?? "gpt-4.1-mini"
+    console.log("[labs-save] generating blood insight, model:", model)
     const res = await client.chat.completions.create({
-      model: process.env.AZURE_OPENAI_DEPLOYMENT!,
+      model,
       max_tokens: 150,
       temperature: 0.7,
+      store: false,  // ZDR — never store
       messages: [
         { role: "system" as const, content: systemPrompt },
         { role: "user"   as const, content: userMessage },
       ],
     })
     const insight = res.choices[0]?.message?.content?.trim() ?? null
-    console.log("[insight] finish_reason:", res.choices[0]?.finish_reason)
-    console.log("[insight] generated:", insight)
+    console.log("[labs-save] blood insight generated, tokens:", res.usage?.total_tokens)
     return insight
   } catch (err) {
-    console.error("[insight] error:", err)
+    const e = err as { message?: string }
+    console.error("[labs-save] insight error:", e.message)
     return null
   }
 }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "../../../../lib/supabase/server"
 import { createClient as createServiceClient } from "@supabase/supabase-js"
-import { AzureOpenAI } from "openai"
+import OpenAI from "openai"
 
 const SYSTEM_PROMPT = `You are the insight engine for Peaq Health, a longevity platform built by a cardiologist and periodontist. Your job is to surface interesting cross-panel patterns in a user's data — connections between their blood biomarkers, sleep, oral microbiome, and lifestyle that they would not see by looking at any single panel alone.
 
@@ -238,27 +238,24 @@ category must be exactly one of: "POSITIVE", "WATCH", "EXPLORE"
 Priority 1 = most interesting or relevant. Oral panel must appear in at least 2 cards. At least 2 cards must be POSITIVE category.`
 
   // ── Pre-call panel data log ────────────────────────────────────────────────
-  console.log("[insight] oral data:", oralData
-    ? `shannon=${oralData.shannon} nitrate=${oralData.nitrateReducerPct?.toFixed(1)}% periodontal=${oralData.periodontalBurden?.toFixed(1)}% mouthwash=${oralData.mouthwashDetected}`
-    : "none"
-  )
   console.log(
-    `[insight] user=${user.id.slice(0, 8)}`,
-    `| sleep=${sleepData ? `deep=${sleepData.deepSleepPct?.toFixed(1)}%/rem=${sleepData.remPct?.toFixed(1)}%/hrv=${sleepData.hrv?.toFixed(1)}` : "null"}`,
-    `| blood=${bloodData ? "present" : "null"}`,
-    `| lifestyle=${lifestyleData ? "present" : "null"}`,
+    `[labs-insight] generating insight for user: ${user.id.slice(0, 8)}`,
+    `| panels: blood=${!!bloodData} sleep=${!!sleepData} oral=${!!oralData} lifestyle=${!!lifestyleData}`,
   )
 
-  // ── Call Azure OpenAI ─────────────────────────────────────────────────────
-  const azureKey = process.env.AZURE_OPENAI_KEY
-  if (!azureKey) return NextResponse.json({ error: "No AI key" }, { status: 503 })
+  // ── Call OpenAI ───────────────────────────────────────────────────────────
+  // HIPAA BAA signed 2026-03-28. Zero Data Retention active.
+  // ZDR eligible endpoint: /v1/chat/completions only. Confirmation: uKTeFVcJ3x
+  // PHI must never appear in logs.
+  const openaiKey = process.env.OPENAI_API_KEY
+  if (!openaiKey) {
+    console.error("[labs-insight] OPENAI_API_KEY not set")
+    return NextResponse.json({ error: "No AI key" }, { status: 503 })
+  }
 
-  const openai = new AzureOpenAI({
-    apiKey:     azureKey,
-    endpoint:   process.env.AZURE_OPENAI_ENDPOINT,
-    apiVersion: "2024-08-01-preview",
-    deployment: process.env.AZURE_OPENAI_DEPLOYMENT,
-  })
+  const openai = new OpenAI({ apiKey: openaiKey })
+  const model  = process.env.OPENAI_MODEL ?? "gpt-4.1-mini"
+  console.log("[labs-insight] calling model:", model, "| api key present:", true)
 
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 30000)
@@ -268,17 +265,20 @@ Priority 1 = most interesting or relevant. Oral panel must appear in at least 2 
   let raw: string
   try {
     const resp = await openai.chat.completions.create({
-      model:       process.env.AZURE_OPENAI_DEPLOYMENT!,
+      model,
       messages:    [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user",   content: userPrompt },
       ],
       temperature: 0.72,
       max_tokens:  2000,
+      store:       false,  // ZDR — never store
     }, { signal: controller.signal })
     raw = resp.choices[0]?.message.content ?? ""
+    console.log("[labs-insight] response received, tokens:", resp.usage?.total_tokens)
   } catch (err) {
-    console.error("[insight] OpenAI error:", err)
+    const e = err as { message?: string }
+    console.error("[labs-insight] error:", e.message)
     return NextResponse.json({ error: "AI timeout" }, { status: 504 })
   } finally {
     clearTimeout(timeout)
@@ -291,7 +291,7 @@ Priority 1 = most interesting or relevant. Oral panel must appear in at least 2 
     const p = JSON.parse(cleaned)
     parsed = Array.isArray(p) ? p : []
   } catch {
-    console.error("[insight] JSON parse failed, raw:", raw.slice(0, 200))
+    console.error("[labs-insight] JSON parse failed")
     return NextResponse.json({ error: "Parse failed" }, { status: 500 })
   }
 
@@ -320,7 +320,7 @@ Priority 1 = most interesting or relevant. Oral panel must appear in at least 2 
     const text = `${c.headline ?? ""} ${c.body ?? ""} ${c.mechanism ?? ""} ${c.action ?? ""}`.toLowerCase()
     const hit = BANNED_TERMS.find(term => text.includes(term.toLowerCase()))
     if (hit) {
-      console.warn("[insight] removed card with banned language:", c.headline, "| term:", hit)
+      console.warn("[labs-insight] removed card with banned term:", hit)
       return false
     }
     return true
@@ -329,15 +329,10 @@ Priority 1 = most interesting or relevant. Oral panel must appear in at least 2 
   // Composition warnings
   const oralCards     = validated.filter(c => Array.isArray((c as Record<string, unknown>).panels) && ((c as Record<string, unknown>).panels as string[]).includes("oral"))
   const positiveCards = validated.filter(c => (c as Record<string, unknown>).category === "POSITIVE")
-  if (oralCards.length < 2)     console.warn(`[insight] only ${oralCards.length} oral cards — oral data may be missing`)
-  if (positiveCards.length < 2) console.warn(`[insight] only ${positiveCards.length} positive cards generated`)
-  if (validated.length < 4)     console.warn(`[insight] only ${validated.length} valid insights after filtering (raw: ${parsed.length})`)
-
-  // Log all cards for clinician review
-  validated.forEach(item => {
-    const c = item as Record<string, unknown>
-    console.log(`[insight] "${c.headline}" panels=${(c.panels as string[]).join("+")} category=${c.category}`)
-  })
+  if (oralCards.length < 2)     console.warn(`[labs-insight] only ${oralCards.length} oral cards — oral data may be missing`)
+  if (positiveCards.length < 2) console.warn(`[labs-insight] only ${positiveCards.length} positive cards generated`)
+  if (validated.length < 4)     console.warn(`[labs-insight] only ${validated.length} valid insights after filtering (raw: ${parsed.length})`)
+  console.log(`[labs-insight] insight generated successfully — cards: ${validated.length}`)
 
   return NextResponse.json(validated)
 }

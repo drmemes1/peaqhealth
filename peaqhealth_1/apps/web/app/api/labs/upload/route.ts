@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "../../../../lib/supabase/server"
-import { AzureOpenAI } from "openai"
+import OpenAI from "openai"
 import { stripPII } from "../../../../lib/pii-scrub"
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -229,15 +229,11 @@ async function extractTextDirect(buffer: Buffer): Promise<string> {
 }
 
 async function parseWithAzureOpenAI(fullText: string): Promise<Record<string, unknown> | null> {
-  const azureOpenAIKey = process.env.AZURE_OPENAI_KEY
-  if (!azureOpenAIKey) return null
+  const openaiKey = process.env.OPENAI_API_KEY
+  if (!openaiKey) return null
 
-  const openai = new AzureOpenAI({
-    apiKey: azureOpenAIKey,
-    endpoint: process.env.AZURE_OPENAI_ENDPOINT,
-    apiVersion: "2024-08-01-preview",
-    deployment: process.env.AZURE_OPENAI_DEPLOYMENT,
-  })
+  // HIPAA BAA signed 2026-03-28. Zero Data Retention active. Confirmation: uKTeFVcJ3x
+  const openai = new OpenAI({ apiKey: openaiKey })
 
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 25000)
@@ -366,16 +362,16 @@ ${normalizedText}`,
         },
     ]
     const response = await openai.chat.completions.create({
-      model: process.env.AZURE_OPENAI_DEPLOYMENT!,
-      max_tokens: 4096,
+      model:       process.env.OPENAI_MODEL ?? "gpt-4.1-mini",
+      max_tokens:  4096,
       temperature: 0.1,
-      user: `parse-${Date.now()}`,
+      store:       false,  // ZDR — never store
       messages,
     }, { signal: controller.signal })
 
     const raw = response.choices[0]?.message?.content
     const finishReason = response.choices[0]?.finish_reason
-    console.log("[azure-openai] finish_reason:", finishReason)
+    console.log("[labs-upload] finish_reason:", finishReason)
     if (!raw) return null
 
     const clean = raw
@@ -387,7 +383,7 @@ ${normalizedText}`,
     return parsed
   } catch (err) {
     const e = err as { message?: string; status?: number; code?: string }
-    console.error("[azure-openai] error:", e.message, "status:", e.status, "code:", e.code)
+    console.error("[labs-upload] openai error:", e.message)
     return null
   } finally {
     clearTimeout(timeoutId)
@@ -529,7 +525,7 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  if (!process.env.AZURE_OPENAI_KEY || !process.env.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT) {
+  if (!process.env.OPENAI_API_KEY || !process.env.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT) {
     return NextResponse.json({ error: "Lab parser not configured" }, { status: 500 })
   }
 
