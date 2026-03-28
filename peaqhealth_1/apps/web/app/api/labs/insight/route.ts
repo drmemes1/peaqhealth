@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { createClient } from "../../../../lib/supabase/server"
+import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { AzureOpenAI } from "openai"
 
 const SYSTEM_PROMPT = `You are the insight engine for Peaq Health, a longevity platform built by a cardiologist and periodontist. Your job is to surface interesting cross-panel patterns in a user's data — connections between their blood biomarkers, sleep, oral microbiome, and lifestyle that they would not see by looking at any single panel alone.
@@ -38,16 +39,23 @@ function num(v: unknown): number | undefined {
 }
 
 export async function GET() {
+  // Session client — used only for auth.getUser()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
+  // Service client — bypasses RLS for all data reads (matches recalculate.ts pattern)
+  const svc = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  )
+
   const [labRes, sleepRes, wearableRes, oralRes, lifestyleRes] = await Promise.all([
-    supabase.from("lab_results").select("*").eq("user_id", user.id).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).maybeSingle(),
-    supabase.from("sleep_data").select("date,source,total_sleep_minutes,deep_sleep_minutes,rem_sleep_minutes,sleep_efficiency,hrv_rmssd,spo2,resting_heart_rate").eq("user_id", user.id).order("date", { ascending: false }).limit(15),
-    supabase.from("wearable_connections_v2").select("provider").eq("user_id", user.id).eq("needs_reconnect", false).order("connected_at", { ascending: false }).limit(1).maybeSingle(),
-    supabase.from("oral_kit_orders").select("*").eq("user_id", user.id).not("shannon_diversity", "is", null).order("created_at", { ascending: false }).limit(1).maybeSingle(),
-    supabase.from("lifestyle_records").select("*").eq("user_id", user.id).maybeSingle(),
+    svc.from("lab_results").select("*").eq("user_id", user.id).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).maybeSingle(),
+    svc.from("sleep_data").select("date,source,total_sleep_minutes,deep_sleep_minutes,rem_sleep_minutes,sleep_efficiency,hrv_rmssd,spo2,resting_heart_rate").eq("user_id", user.id).order("date", { ascending: false }).limit(15),
+    svc.from("wearable_connections_v2").select("provider").eq("user_id", user.id).eq("needs_reconnect", false).order("connected_at", { ascending: false }).limit(1).maybeSingle(),
+    svc.from("oral_kit_orders").select("shannon_diversity,nitrate_reducers_pct,periodontopathogen_pct,osa_taxa_pct,raw_otu_table").eq("user_id", user.id).in("status", ["results_ready", "scored"]).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+    svc.from("lifestyle_records").select("*").eq("user_id", user.id).maybeSingle(),
   ])
 
   const lab       = labRes.data
@@ -108,15 +116,26 @@ export async function GET() {
   }
 
   // ── Oral panel ─────────────────────────────────────────────────────────────
-  type OralData = { shannon: number | null; nitrateReducerPct: number | null; periodontalBurden: number | null }
+  type OralData = { shannon: number | null; nitrateReducerPct: number | null; periodontalBurden: number | null; protectivePct: number | null }
   let oralData: OralData | null = null
   if (oral) {
+    // Protective bacteria: Rothia + Neisseria genera from raw OTU table (summed, *100 for %)
+    let protectivePct: number | null = null
+    const rawOtu = oral.raw_otu_table as Record<string, number> | null
+    if (rawOtu) {
+      const protective = Object.entries(rawOtu)
+        .filter(([k]) => k.toLowerCase().startsWith("rothia") || k.toLowerCase().startsWith("neisseria"))
+        .reduce((sum, [, v]) => sum + v, 0)
+      protectivePct = protective * 100
+    }
     oralData = {
-      shannon:           num(oral.shannon_diversity) ?? null,
+      shannon:           oral.shannon_diversity != null ? Number(oral.shannon_diversity) : null,
       nitrateReducerPct: oral.nitrate_reducers_pct != null ? Number(oral.nitrate_reducers_pct) * 100 : null,
       periodontalBurden: oral.periodontopathogen_pct != null ? Number(oral.periodontopathogen_pct) * 100 : null,
+      protectivePct,
     }
   }
+  console.log(`[insight] user=${user.id.slice(0, 8)} oral=${oralData ? JSON.stringify(oralData) : "null"} | oralRow=${oral ? "present" : "null"}`)
 
   // ── Lifestyle panel ────────────────────────────────────────────────────────
   type LifestyleData = Record<string, unknown>
@@ -166,9 +185,10 @@ SLEEP PANEL (${sleepData?.provider ?? "none"}, ${sleepData?.nights ?? 0} nights 
 - Efficiency: ${sleepData?.efficiency?.toFixed(1) ?? "N/A"}% (target ≥85%)
 
 ORAL MICROBIOME:
-- Shannon diversity: ${oralData?.shannon ?? "N/A"} (target ≥3.0)
-- Nitrate reducers: ${oralData?.nitrateReducerPct?.toFixed(1) ?? "N/A"}% (target ≥20%)
-- Periodontal burden: ${oralData?.periodontalBurden?.toFixed(1) ?? "N/A"}% (target <0.5%)
+${oralData ? `- Shannon diversity: ${oralData.shannon ?? "N/A"} (target ≥3.0)
+- Nitrate reducers: ${oralData.nitrateReducerPct?.toFixed(1) ?? "N/A"}% (target ≥20%)
+- Periodontal burden: ${oralData.periodontalBurden?.toFixed(1) ?? "N/A"}% (target <0.5%)
+- Protective bacteria (Rothia + Neisseria): ${oralData.protectivePct?.toFixed(1) ?? "N/A"}% (target ≥10%)` : "Not available"}
 
 LIFESTYLE:
 ${lifestyleData ? JSON.stringify(lifestyleData) : "Not available"}
@@ -202,6 +222,15 @@ Return a JSON array of exactly 6 insight objects:
 
 category must be exactly one of: "POSITIVE", "WATCH", "EXPLORE"
 Priority 1 = most interesting or relevant. Oral panel must appear in at least 2 cards. At least 2 cards must be POSITIVE category.`
+
+  // ── Pre-call panel data log ────────────────────────────────────────────────
+  console.log(
+    `[insight] user=${user.id.slice(0, 8)}`,
+    `oral=${oralData ? `shannon=${oralData.shannon}/nitrate=${oralData.nitrateReducerPct?.toFixed(1)}/perio=${oralData.periodontalBurden?.toFixed(1)}/protective=${oralData.protectivePct?.toFixed(1)}` : "null"}`,
+    `| sleep=${sleepData ? `deep=${sleepData.deepSleepPct?.toFixed(1)}%/rem=${sleepData.remPct?.toFixed(1)}%/hrv=${sleepData.hrv?.toFixed(1)}` : "null"}`,
+    `| blood=${bloodData ? "present" : "null"}`,
+    `| lifestyle=${lifestyleData ? "present" : "null"}`,
+  )
 
   // ── Call Azure OpenAI ─────────────────────────────────────────────────────
   const azureKey = process.env.AZURE_OPENAI_KEY
