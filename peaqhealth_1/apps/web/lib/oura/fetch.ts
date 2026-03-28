@@ -52,7 +52,10 @@ export async function fetchAndStoreOuraData(
 
   console.log(`[oura-fetch] user=${userId} junction=${junctionUserId} start=${startDate} end=${endDate}`)
 
-  const url = `https://api.tryvital.io/v2/summary/sleep/${junctionUserId}?start_date=${startDate}&end_date=${endDate}`
+  const baseUrl = process.env.JUNCTION_ENV === "production"
+    ? "https://api.tryvital.io"
+    : "https://api.sandbox.tryvital.io"
+  const url = `${baseUrl}/v2/summary/sleep/${junctionUserId}?start_date=${startDate}&end_date=${endDate}`
   console.log(`[oura-fetch] GET url=${url}`)
 
   const res = await fetch(url, {
