@@ -139,11 +139,24 @@ export async function fetchAndStoreOuraData(
     }
   }).filter(r => r.date)
 
-  const { error } = await supabase
-    .from("sleep_data")
-    .upsert(rows, { onConflict: "user_id,date,source" })
-  if (error) console.error("[oura-fetch] upsert error:", error.message)
-  else console.log("[oura-fetch] upserted:", rows.length, "rows to sleep_data")
+  // Split rows: those with a sleep_id deduplicate on the partial unique index;
+  // those without fall back to (user_id, date, source).
+  const rowsWithId    = rows.filter(r => r.sleep_id)
+  const rowsWithoutId = rows.filter(r => !r.sleep_id)
+
+  if (rowsWithId.length > 0) {
+    const { error } = await supabase
+      .from("sleep_data")
+      .upsert(rowsWithId, { onConflict: "sleep_id" })
+    if (error) console.error("[oura-fetch] upsert(sleep_id) error:", error.message)
+  }
+  if (rowsWithoutId.length > 0) {
+    const { error } = await supabase
+      .from("sleep_data")
+      .upsert(rowsWithoutId, { onConflict: "user_id,date,source" })
+    if (error) console.error("[oura-fetch] upsert(user_id,date,source) error:", error.message)
+  }
+  console.log("[oura-fetch] upserted:", rows.length, "rows to sleep_data")
 
   // Mark connection as synced in unified connections table
   if (rows.length > 0) {

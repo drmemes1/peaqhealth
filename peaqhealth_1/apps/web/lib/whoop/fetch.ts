@@ -153,11 +153,26 @@ export async function fetchAndStoreWhoopData(
   const supabase = serviceClient()
 
   if (rows.length > 0) {
-    const { error } = await supabase
-      .from("sleep_data")
-      .upsert(rows, { onConflict: "user_id,date,source" })
-    if (error) console.error("[whoop-fetch] upsert error:", error.message)
-    else console.log("[whoop-fetch] upserted:", rows.length, "rows to sleep_data")
+    // Split rows: those with a sleep_id use the partial unique index to deduplicate;
+    // those without fall back to (user_id, date, source). This avoids the
+    // "duplicate key violates unique constraint whoop_sleep_data_sleep_id_key" error
+    // when reconnecting WHOOP or switching between Oura and WHOOP.
+    const rowsWithId    = rows.filter(r => r.sleep_id)
+    const rowsWithoutId = rows.filter(r => !r.sleep_id)
+
+    if (rowsWithId.length > 0) {
+      const { error } = await supabase
+        .from("sleep_data")
+        .upsert(rowsWithId, { onConflict: "sleep_id" })
+      if (error) console.error("[whoop-fetch] upsert(sleep_id) error:", error.message)
+    }
+    if (rowsWithoutId.length > 0) {
+      const { error } = await supabase
+        .from("sleep_data")
+        .upsert(rowsWithoutId, { onConflict: "user_id,date,source" })
+      if (error) console.error("[whoop-fetch] upsert(user_id,date,source) error:", error.message)
+    }
+    console.log("[whoop-fetch] upserted:", rows.length, "rows to sleep_data")
   }
 
   // Mark connection as synced in unified connections table
