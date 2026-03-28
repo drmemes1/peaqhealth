@@ -27,7 +27,7 @@ export interface ScoreWheelProps {
   sleepData?: {
     deepPct: number
     hrv: number
-    spo2Dips: number
+    spo2Avg: number
     remPct: number
     efficiency: number
     nightsAvg: number
@@ -179,7 +179,7 @@ function formatValue(value: number): string {
 
 // Status dot colors
 const STATUS_COLORS: Record<Flag, string> = {
-  good: "#2D6A4F", watch: "#B8860B", attention: "#C0392B", pending: "rgba(20,20,16,0.15)", not_tested: "rgba(20,20,16,0.15)",
+  good: "#2D6A4F", watch: "#B8860B", attention: "#C2510A", elevated: "#C0392B", pending: "rgba(20,20,16,0.15)", not_tested: "rgba(20,20,16,0.15)",
 }
 
 // Spectrum bar marker row — positioned dot on track with optional optimal zone
@@ -793,7 +793,8 @@ function OralSpeciesRow({ name, role, val, target, note, isPathogen, flagFn, lea
   const BADGE: Record<Flag, { bg: string; text: string; label: string }> = {
     good:       { bg: "#EAF3DE", text: "#2D6A4F",              label: "Optimal"      },
     watch:      { bg: "#FEF3C7", text: "#92400E",              label: "Watch"        },
-    attention:  { bg: "#FEE2E2", text: "#991B1B",              label: "Attention"    },
+    attention:  { bg: "#FEF0E6", text: "#C2510A",              label: "Attention"    },
+    elevated:   { bg: "#FEECEC", text: "#C0392B",              label: "Elevated"     },
     not_tested: { bg: "#F7F5F0", text: "rgba(20,20,16,0.4)",   label: "Not detected" },
     pending:    { bg: "#F7F5F0", text: "rgba(20,20,16,0.5)",   label: "—"            },
   }
@@ -1207,7 +1208,11 @@ export function ScoreWheel({
   const sf = sleepData ? {
     deep:       flag(sleepData.deepPct >= 17, sleepData.deepPct >= 13),
     hrv:        flag(sleepData.hrv >= 50, sleepData.hrv >= 35),
-    spo2Dips:   flag(sleepData.spo2Dips <= 2, sleepData.spo2Dips <= 5),
+    spo2Avg:    sleepData.spo2Avg === 0 ? "not_tested" as Flag
+                  : sleepData.spo2Avg >= 96 ? "good" as Flag
+                  : sleepData.spo2Avg >= 95 ? "watch" as Flag
+                  : sleepData.spo2Avg >= 93 ? "attention" as Flag
+                  : "elevated" as Flag,
     rem:        flag(sleepData.remPct >= 18, sleepData.remPct >= 14),
     efficiency: flag(sleepData.efficiency >= 85, sleepData.efficiency >= 78),
   } : null
@@ -1482,7 +1487,7 @@ export function ScoreWheel({
           if (n >= 1)  return `${n} NIGHT · WEAR DEVICE FOR 7+ NIGHTS`
           return `NO DATA · CONNECT ${dev}`
         })() : "NO DATA"}
-        statusDots={sf ? [sf.deep, sf.hrv, sf.spo2Dips, sf.rem] : undefined}
+        statusDots={sf ? [sf.deep, sf.hrv, sf.spo2Avg, sf.rem] : undefined}
         defaultOpen={sleepConnected}
         delay="0.14s"
         fadeUpFn={fadeUp}
@@ -1502,7 +1507,7 @@ export function ScoreWheel({
           {[
             { name: "Deep sleep",       sub: "Slow-wave · target ≥17%",    val: sleepData?.deepPct,   unit: "% of TST",  flagKey: "deep",       max: 30 },
             { name: "HRV",              sub: "RMSSD · target ≥50 ms",      val: sleepData?.hrv,       unit: "ms RMSSD",  flagKey: "hrv",        max: 100 },
-            { name: "SpO2 dips",        sub: "Events <90% · target ≤2",    val: sleepData?.spo2Dips,  unit: "per night", flagKey: "spo2Dips",   max: 10 },
+            { name: "SpO2",              sub: "Avg saturation · target ≥96%", val: sleepData?.spo2Avg, unit: "%",         flagKey: "spo2Avg",    max: 100 },
             { name: "REM",              sub: "Target ≥18%",                 val: sleepData?.remPct,    unit: "% of TST",  flagKey: "rem",        max: 30 },
             { name: "Sleep efficiency", sub: "Target ≥85%",                 val: sleepData?.efficiency,unit: "% in bed",  flagKey: "efficiency", max: 100 },
           ].map(row => (

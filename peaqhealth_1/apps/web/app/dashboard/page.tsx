@@ -75,7 +75,7 @@ export default async function DashboardPage() {
     remPct:     totalMin > 0 ? (wavg("rem_sleep_minutes")  / totalMin) * 100 : 0,
     efficiency: wavg("sleep_efficiency"),
     hrv:        wavg("hrv_rmssd"),
-    spo2Dips:   (() => { const s = wavg("spo2"); return s >= 95 ? 0 : s >= 92 ? 2 : s > 0 ? 5 : 0 })(),
+    spo2Avg:    wavg("spo2"),
     nightsAvg:  sleepNightsCount,
     device:     ({ oura: "Oura Ring", whoop: "WHOOP", garmin: "Garmin", apple_health: "Apple Health", fitbit: "Fitbit" } as Record<string, string>)[bestNights[0]?.source ?? ""] ?? "Wearable",
     lastSync:   wearable?.last_synced_at ?? "",

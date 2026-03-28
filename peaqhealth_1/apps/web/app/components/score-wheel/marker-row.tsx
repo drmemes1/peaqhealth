@@ -1,13 +1,14 @@
 "use client"
 import { useState } from "react"
 
-export type Flag = "good" | "watch" | "attention" | "pending" | "not_tested"
+export type Flag = "good" | "watch" | "attention" | "elevated" | "pending" | "not_tested"
 
 const FLAG_STYLES: Record<Flag, { bg: string; text: string; label: string }> = {
-  good:       { bg: "#EAF3DE", text: "#2D6A4F", label: "Good" },
-  watch:      { bg: "#FEF3C7", text: "#92400E", label: "Watch" },
-  attention:  { bg: "#FEE2E2", text: "#991B1B", label: "Attention" },
-  pending:    { bg: "#F7F5F0", text: "rgba(20,20,16,0.6)", label: "Pending" },
+  good:       { bg: "#EAF3DE", text: "#2D6A4F",          label: "Good" },
+  watch:      { bg: "#FEF3C7", text: "#92400E",          label: "Watch" },
+  attention:  { bg: "#FEF0E6", text: "#C2510A",          label: "Attention" },
+  elevated:   { bg: "#FEECEC", text: "#C0392B",          label: "Elevated" },
+  pending:    { bg: "#F7F5F0", text: "rgba(20,20,16,0.6)",  label: "Pending" },
   not_tested: { bg: "#F7F5F0", text: "rgba(20,20,16,0.35)", label: "—" },
 }
 
@@ -72,9 +73,13 @@ export function MarkerRow({ name, sub, value, unit, flag, barPct, color, trackCo
           <>
             <span style={{
               fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 14,
-              color: isPending ? "var(--ink-30)" : effectiveFlag === "good" ? color : effectiveFlag === "attention" ? "#991B1B" : "#92400E",
+              color: isPending ? "var(--ink-30)"
+                : effectiveFlag === "good"      ? color
+                : effectiveFlag === "elevated"  ? "#C0392B"
+                : effectiveFlag === "attention" ? "#C2510A"
+                : "#92400E",
             }}>
-              {isPending ? "—" : value}
+              {isPending ? "—" : typeof value === "number" ? (Math.round(value * 10) / 10) : value}
             </span>
             {!isPending && <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, color: "var(--ink-30)", marginLeft: 3 }}>{unit}</span>}
           </>
