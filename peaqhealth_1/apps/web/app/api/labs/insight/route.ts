@@ -2,15 +2,35 @@ import { NextResponse } from "next/server"
 import { createClient } from "../../../../lib/supabase/server"
 import { AzureOpenAI } from "openai"
 
-const SYSTEM_PROMPT = `You are the clinical insight engine for Peaq Health, a longevity platform built by a cardiologist and dentist. Generate cross-panel insights that connect blood biomarkers, sleep physiology, oral microbiome, and lifestyle data in ways that reveal risk or opportunity that no single data source could show alone.
+const SYSTEM_PROMPT = `You are the insight engine for Peaq Health, a longevity platform built by a cardiologist and periodontist. Your job is to surface interesting cross-panel patterns in a user's data — connections between their blood biomarkers, sleep, oral microbiome, and lifestyle that they would not see by looking at any single panel alone.
 
-RULES:
-1. Every insight MUST reference data from at least 2 panels. Single-panel observations are forbidden.
-2. Use the user's actual values and numbers — never generic ranges.
-3. Reveal non-obvious biological connections — the kind a cardiologist and periodontist would discuss together.
-4. Never use disease language. Use wellness and optimization framing.
-5. Write in warm, plain language a motivated patient can understand.
-6. Return ONLY a valid JSON array. No markdown, no backticks, no preamble.`
+You are NOT a doctor. You do NOT give medical advice. You do NOT diagnose, treat, or make clinical recommendations. You surface patterns and ask interesting questions. You celebrate strengths. You note things worth paying attention to.
+
+VOICE:
+- Curious and observational, not clinical or alarming
+- Warm and motivating — like a knowledgeable friend reviewing your data
+- Specific to this person's actual numbers, never generic
+- Honest about uncertainty — use language like "may suggest", "is worth noting", "could be connected", "interesting to watch"
+
+STRICT RULES:
+1. Every insight must connect at least 2 panels. Single-panel observations are forbidden.
+2. At least 2 of 6 insights must include the oral panel.
+3. At least 2 of 6 insights must be POSITIVE — celebrating something the user is doing well across panels.
+4. Only reference established biological relationships. Never invent terminology or mechanisms.
+5. Never say: "you have", "you are at risk", "indicates that you", "this means you have", "you should see a doctor", "you need to", or any diagnostic language.
+6. Instead say: "your data shows", "this pattern may suggest", "worth keeping an eye on", "an interesting connection", "something to explore with your doctor if curious"
+7. Actions must be lifestyle observations, not medical instructions. Frame as "something worth exploring" not "you must do X."
+8. Return ONLY valid JSON. No markdown, no backticks, no commentary.
+
+APPROVED BIOLOGICAL RELATIONSHIPS you may reference (frame as interesting patterns, not diagnoses):
+- Oral nitrate-reducing bacteria and nitric oxide availability
+- Periodontal bacteria and systemic inflammation markers like hsCRP
+- Sleep architecture (deep sleep, REM) and metabolic markers
+- HRV as a reflection of autonomic balance and recovery
+- Shannon diversity and overall microbiome resilience
+- Lp(a) as a genetically influenced cardiovascular marker
+- Sleep efficiency and next-day inflammatory tone
+- Protective oral bacteria and systemic immune balance`
 
 function num(v: unknown): number | undefined {
   const n = Number(v)
@@ -125,13 +145,18 @@ export async function GET() {
   }
 
   // ── User prompt ────────────────────────────────────────────────────────────
-  const userPrompt = `Generate 6 cross-panel longevity insights for this user.
-Every insight must connect at least 2 of the 4 panels below.
-Only generate insights where the user's actual data supports the signal.
-If a panel is unavailable, do not reference it.
+  const userPrompt = `Generate 6 cross-panel insights for this user's Peaq Health data.
+
+MANDATORY COMPOSITION:
+- Every insight connects at least 2 panels
+- At least 2 insights include the ORAL panel
+- At least 2 insights are POSITIVE — celebrating strong cross-panel patterns
+- Remaining insights note interesting patterns worth watching, framed with curiosity not alarm
+- Only generate insights supported by the user's actual data
+- Skip any panel that is unavailable
 
 BLOOD PANEL:
-${bloodData ? JSON.stringify(bloodData, null, 2) : "Not available"}
+${bloodData ? JSON.stringify(bloodData) : "Not available"}
 
 SLEEP PANEL (${sleepData?.provider ?? "none"}, ${sleepData?.nights ?? 0} nights avg):
 - Deep sleep: ${sleepData?.deepSleepPct?.toFixed(1) ?? "N/A"}% (target ≥17%)
@@ -146,32 +171,37 @@ ORAL MICROBIOME:
 - Periodontal burden: ${oralData?.periodontalBurden?.toFixed(1) ?? "N/A"}% (target <0.5%)
 
 LIFESTYLE:
-${lifestyleData ? JSON.stringify(lifestyleData, null, 2) : "Not available"}
+${lifestyleData ? JSON.stringify(lifestyleData) : "Not available"}
 
-CROSS-PANEL SIGNALS TO PRIORITIZE (only if user data supports):
-- Low nitrate reducers + low HRV + elevated BP markers → nitric oxide / vasodilation pathway
-- Elevated Lp(a) + high periodontal burden + poor sleep efficiency → inflammation convergence
-- Low HRV + elevated hsCRP + low protective bacteria → systemic inflammation triple signal
-- Low deep sleep + elevated glucose + low Shannon diversity → metabolic dysregulation
-- P. gingivalis burden + elevated ApoB + poor sleep → atherogenic triple signal
-- Low REM + low nitrate reducers + elevated LDL → cardiovascular recovery deficit
+PATTERNS TO LOOK FOR:
+Interesting cross-panel connections (frame with curiosity, not alarm):
+- Low nitrate reducers alongside cardiovascular markers — the relationship between oral bacteria and nitric oxide availability is an emerging area
+- Elevated periodontal burden alongside hsCRP — these two often trend together and the connection is worth noting
+- Low HRV alongside sleep efficiency and oral diversity — autonomic balance touches multiple systems
+- Glucose markers alongside sleep architecture — sleep and metabolic markers are increasingly understood to be connected
+
+Positive patterns worth celebrating:
+- Strong deep sleep alongside healthy lipid markers — great combination
+- Good sleep efficiency alongside low inflammatory markers — worth recognizing
+- Healthy protective bacteria alongside strong blood panel — oral and systemic health moving together
+- High Shannon diversity alongside good metabolic markers — microbiome resilience reflected systemically
 
 Return a JSON array of exactly 6 insight objects:
 [
   {
     "id": "unique_string",
-    "panels": ["blood", "sleep"],
-    "headline": "5-8 word headline specific to this user's values",
-    "body": "2-3 sentences connecting panels using actual numbers",
-    "mechanism": "one sentence explaining the biological pathway",
-    "action": "one concrete specific recommendation",
-    "category": "ROUTINE",
+    "panels": ["oral", "blood"],
+    "headline": "5-8 words, specific to this user's values, not alarming",
+    "body": "2-3 sentences. Observational tone. Use actual numbers. Use language like 'may suggest', 'worth noting', 'interesting pattern'. For positive cards, be warm and affirming.",
+    "mechanism": "one sentence describing the biological relationship in plain language — frame as 'research suggests' or 'these two are thought to be connected through...'",
+    "action": "one gentle suggestion framed as 'worth exploring' or 'something to discuss if you're curious' — never a medical instruction",
+    "category": "POSITIVE",
     "priority": 1
   }
 ]
 
-category must be exactly one of: "ROUTINE", "WATCH", "OPTIMIZE"
-Priority 1 = most clinically relevant. panels array must have at least 2 entries.`
+category must be exactly one of: "POSITIVE", "WATCH", "EXPLORE"
+Priority 1 = most interesting or relevant. Oral panel must appear in at least 2 cards. At least 2 cards must be POSITIVE category.`
 
   // ── Call Azure OpenAI ─────────────────────────────────────────────────────
   const azureKey = process.env.AZURE_OPENAI_KEY
@@ -220,14 +250,43 @@ Priority 1 = most clinically relevant. panels array must have at least 2 entries
   }
 
   // Enforce: every card must reference at least 2 panels
-  const valid = parsed.filter((item) => {
+  const twoPanel = parsed.filter((item) => {
     const i = item as Record<string, unknown>
     return Array.isArray(i.panels) && (i.panels as unknown[]).length >= 2
   })
 
-  if (valid.length < 4) {
-    console.warn(`[insight] only ${valid.length} insights passed the 2-panel filter (raw count: ${parsed.length})`)
-  }
+  // Remove cards containing banned diagnostic or alarming language
+  const BANNED_TERMS = [
+    "you have", "you are at risk", "indicates that you",
+    "this means you", "you should see", "you need to",
+    "lipid recovery strain", "metabolic recovery efficiency",
+    "recovery capacity deficit", "inflammatory load index",
+    "you are experiencing", "you suffer from",
+    "clinical recommendation", "medical advice",
+  ]
+  const validated = twoPanel.filter((item) => {
+    const c = item as Record<string, unknown>
+    const text = `${c.headline ?? ""} ${c.body ?? ""} ${c.mechanism ?? ""} ${c.action ?? ""}`.toLowerCase()
+    const hit = BANNED_TERMS.find(term => text.includes(term.toLowerCase()))
+    if (hit) {
+      console.warn("[insight] removed card with banned language:", c.headline, "| term:", hit)
+      return false
+    }
+    return true
+  })
 
-  return NextResponse.json(valid)
+  // Composition warnings
+  const oralCards     = validated.filter(c => Array.isArray((c as Record<string, unknown>).panels) && ((c as Record<string, unknown>).panels as string[]).includes("oral"))
+  const positiveCards = validated.filter(c => (c as Record<string, unknown>).category === "POSITIVE")
+  if (oralCards.length < 2)     console.warn(`[insight] only ${oralCards.length} oral cards — oral data may be missing`)
+  if (positiveCards.length < 2) console.warn(`[insight] only ${positiveCards.length} positive cards generated`)
+  if (validated.length < 4)     console.warn(`[insight] only ${validated.length} valid insights after filtering (raw: ${parsed.length})`)
+
+  // Log all cards for clinician review
+  validated.forEach(item => {
+    const c = item as Record<string, unknown>
+    console.log(`[insight] "${c.headline}" panels=${(c.panels as string[]).join("+")} category=${c.category}`)
+  })
+
+  return NextResponse.json(validated)
 }

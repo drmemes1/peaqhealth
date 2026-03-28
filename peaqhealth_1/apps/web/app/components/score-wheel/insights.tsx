@@ -8,7 +8,7 @@ interface InsightCardData {
   body: string
   mechanism: string
   action: string
-  category: "ROUTINE" | "WATCH" | "OPTIMIZE"
+  category: "POSITIVE" | "WATCH" | "EXPLORE"
   priority: number
 }
 
@@ -29,10 +29,10 @@ const PANEL_COLOR: Record<string, string> = {
   lifestyle: "var(--gold)",
 }
 
-const CATEGORY: Record<string, { bg: string; text: string; label: string }> = {
-  ROUTINE:  { bg: "rgba(20,20,16,0.06)",    text: "rgba(20,20,16,0.4)", label: "Routine"  },
-  WATCH:    { bg: "rgba(184,134,11,0.12)",  text: "#92400E",            label: "Watch"    },
-  OPTIMIZE: { bg: "rgba(99,102,241,0.08)",  text: "#4338CA",            label: "Optimize" },
+const CATEGORY: Record<string, { bg: string; text: string; label: string; border: string }> = {
+  POSITIVE: { bg: "rgba(34,197,94,0.06)",   text: "#15803D", label: "Positive", border: "#22c55e" },
+  WATCH:    { bg: "rgba(184,134,11,0.08)",  text: "#92400E", label: "Watch",    border: "#b8860b" },
+  EXPLORE:  { bg: "rgba(59,130,246,0.06)",  text: "#1D4ED8", label: "Explore",  border: "#3b82f6" },
 }
 
 function PanelTag({ panel }: { panel: string }) {
@@ -49,7 +49,7 @@ function PanelTag({ panel }: { panel: string }) {
 }
 
 function CategoryBadge({ category }: { category: string }) {
-  const c = CATEGORY[category] ?? CATEGORY.ROUTINE
+  const c = CATEGORY[category] ?? CATEGORY.EXPLORE
   return (
     <span style={{
       fontSize: 9, textTransform: "uppercase" as const, letterSpacing: "0.06em",
@@ -78,7 +78,10 @@ function InsightCard({ item, isPrimary }: { item: InsightCardData; isPrimary?: b
     return () => obs.disconnect()
   }, [])
 
-  const accentColor = item.panels[0]
+  const cat         = CATEGORY[item.category] ?? CATEGORY.EXPLORE
+  const borderColor = cat.border
+  // Panel color still used for the Action label
+  const panelColor  = item.panels[0]
     ? (PANEL_COLOR[item.panels[0].toLowerCase()] ?? "var(--gold)")
     : "var(--gold)"
 
@@ -88,7 +91,7 @@ function InsightCard({ item, isPrimary }: { item: InsightCardData; isPrimary?: b
       style={{
         background: "white",
         border: "0.5px solid var(--ink-12)",
-        borderLeft: `3px solid ${accentColor}`,
+        borderLeft: `3px solid ${borderColor}`,
         padding: isPrimary ? "20px 22px 18px" : "16px 18px 14px",
         opacity: visible ? 1 : 0,
         transition: "opacity 0.55s ease",
@@ -133,7 +136,7 @@ function InsightCard({ item, isPrimary }: { item: InsightCardData; isPrimary?: b
         <span style={{
           fontSize: 9, fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
           textTransform: "uppercase", letterSpacing: "0.08em",
-          color: accentColor, marginTop: 2, flexShrink: 0,
+          color: panelColor, marginTop: 2, flexShrink: 0,
         }}>
           Action
         </span>
