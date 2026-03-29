@@ -1343,17 +1343,65 @@ export function ScoreWheel({
           YOUR PEAQ SCORE · {new Date().toLocaleString("en-US", { month: "long", year: "numeric" }).toUpperCase()}
         </p>
 
-        {/* Mountain peaks chart */}
-        <div style={{ width: "100%", marginTop: 40 }}>
-          <PeaksVisualization
-            breakdown={breakdown}
-            sleepConnected={sleepConnected}
-            hasBlood={hasBlood}
-            oralActive={oralActive}
-            hasLifestyle={!!lifestyleData}
-            onPeakHover={setHoveredRing}
-            onPeakClick={handlePeakClick}
-          />
+        {/* Mountain peaks chart with hero backdrop */}
+        <div style={{ width: "100%", marginTop: 40, position: "relative" }}>
+          {/* Hero image — snow-capped mountains behind the peaks */}
+          <div style={{
+            position: "absolute",
+            top: "-60px",
+            left: "-48px",
+            right: "-48px",
+            bottom: "-20px",
+            zIndex: 0,
+            overflow: "hidden",
+            borderRadius: "8px",
+          }}>
+            <img
+              src="/images/snowcapped.jpg"
+              alt=""
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                objectPosition: "center 30%",
+                filter: "blur(2px) saturate(0.7) brightness(1.08)",
+                opacity: 0.28,
+                transform: "scale(1.05)",
+              }}
+            />
+            {/* Fade edges to blend with background */}
+            <div style={{
+              position: "absolute",
+              inset: 0,
+              background: `
+                linear-gradient(to bottom,
+                  var(--off-white) 0%,
+                  transparent 25%,
+                  transparent 55%,
+                  var(--off-white) 100%
+                ),
+                linear-gradient(to right,
+                  var(--off-white) 0%,
+                  transparent 15%,
+                  transparent 85%,
+                  var(--off-white) 100%
+                )
+              `,
+              pointerEvents: "none",
+            }} />
+          </div>
+
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <PeaksVisualization
+              breakdown={breakdown}
+              sleepConnected={sleepConnected}
+              hasBlood={hasBlood}
+              oralActive={oralActive}
+              hasLifestyle={!!lifestyleData}
+              onPeakHover={setHoveredRing}
+              onPeakClick={handlePeakClick}
+            />
+          </div>
         </div>
 
       </div>

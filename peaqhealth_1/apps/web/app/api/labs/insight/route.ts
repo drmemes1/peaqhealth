@@ -60,6 +60,7 @@ BANNED LANGUAGE — never use these patterns:
 - "can contribute" immediately after "often" — one qualifier per claim
 - Never say something is elevated AND simultaneously say it is not a concern in the same sentence
 - Never stack three hedges in a row — one qualifier maximum per claim
+- Never cite a raw percentage for periodontal burden or OSA-associated taxa in any headline or body — use qualitative descriptors only: "elevated", "within target", "mildly elevated", "notably elevated"
 
 APPROVED BIOLOGICAL RELATIONSHIPS you may reference (frame as interesting patterns, not diagnoses):
 - Oral nitrate-reducing bacteria and nitric oxide availability
@@ -76,6 +77,14 @@ PROHIBITED ASSOCIATIONS — never generate insights based on these:
 - Sleep stages and lipid levels (LDL, HDL, triglycerides, ApoB) — not established enough
 - Any connection described as "may suggest" or "could be linked" in a POSITIVE card
 - Oral microbiome and lipid markers directly`
+
+function burdenLevel(pct: number | null): string {
+  if (pct === null) return "not scored"
+  if (pct < 0.5)   return "within target"
+  if (pct < 2)     return "mildly elevated"
+  if (pct < 5)     return "elevated"
+  return "notably elevated"
+}
 
 function num(v: unknown): number | undefined {
   const n = Number(v)
@@ -245,8 +254,8 @@ SLEEP PANEL (${sleepData?.provider ?? "none"}, ${sleepData?.nights ?? 0} nights 
 ORAL MICROBIOME:
 ${oralData ? `- Shannon diversity: ${fmt(oralData.shannon, 2)} (target ≥3.0)
 - Nitrate reducers: ${fmt(oralData.nitrateReducerPct)}% (target ≥20%)
-- Periodontal burden: ${fmt(oralData.periodontalBurden)}% (target <0.5%)
-- OSA-associated taxa: ${fmt(oralData.osaBurden)}% (target <1%)
+- Periodontal burden: ${burdenLevel(oralData.periodontalBurden)} (target <0.5%)
+- OSA-associated taxa: ${burdenLevel(oralData.osaBurden)} (target <1%)
 - Protective bacteria: ${oralData.protectivePct != null ? fmt(oralData.protectivePct) + "%" : "not scored"}
 - Antiseptic mouthwash detected: ${oralData.mouthwashDetected ? "yes — note that antiseptic mouthwash suppresses nitrate-reducing bacteria" : "no"}` : "Not available — do not reference oral panel in any insight"}
 
@@ -304,9 +313,11 @@ Priority 1 = most interesting or relevant. Oral panel must appear in at least 2 
   )
   if (oralData) {
     console.log(
-      `[insight] periodontalBurden raw value: ${oralData.periodontalBurden}`,
-      `| nitrateReducerPct: ${oralData.nitrateReducerPct}`,
-      `| osaBurden: ${oralData.osaBurden}`,
+      "[insight] oral values passed to prompt:",
+      `shannon=${oralData.shannon}`,
+      `nitrate=${fmt(oralData.nitrateReducerPct)}%`,
+      `periodontal=${oralData.periodontalBurden} → ${burdenLevel(oralData.periodontalBurden)}`,
+      `osa=${oralData.osaBurden} → ${burdenLevel(oralData.osaBurden)}`,
     )
   }
 
