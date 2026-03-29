@@ -1364,8 +1364,8 @@ export function ScoreWheel({
                 height: "100%",
                 objectFit: "cover",
                 objectPosition: "center 30%",
-                filter: "blur(2px) saturate(0.7) brightness(1.08)",
-                opacity: 0.28,
+                filter: "blur(0.5px) saturate(0.85) brightness(1.04)",
+                opacity: 0.38,
                 transform: "scale(1.05)",
               }}
             />
