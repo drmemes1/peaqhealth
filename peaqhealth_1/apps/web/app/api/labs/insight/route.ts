@@ -23,18 +23,43 @@ STRICT RULES:
 7. Actions must be lifestyle observations, not medical instructions. Frame as "something worth exploring" not "you must do X."
 8. Return ONLY valid JSON. No markdown, no backticks, no commentary.
 
+CATEGORY DECISION RULES — apply these exactly:
+
+POSITIVE when:
+- The headline metric is above its target AND
+- The connected panel metric is also in a good range AND
+- The overall message is affirming
+Examples that MUST be POSITIVE:
+  - REM ≥18% + glucose in healthy range → POSITIVE
+  - Deep sleep ≥17% + low hsCRP → POSITIVE
+  - Strong HRV (≥50ms) + low inflammation → POSITIVE
+  - High Shannon diversity + low hsCRP → POSITIVE
+Never assign EXPLORE or WATCH when both values are clearly above their targets. That is always POSITIVE.
+
+WATCH when:
+- One or more values are outside their target range AND
+- The pattern is worth monitoring over time
+- Not alarming, just notable
+
+EXPLORE when:
+- Data is ambiguous or one panel's data is partially missing AND
+- The connection is interesting but not clearly positive or negative
+Never use EXPLORE when both values are clearly above their targets.
+
 TONE MUST MATCH CATEGORY:
-- POSITIVE cards must use affirming, celebratory language: "This is a strong combination", "This reflects well on your overall pattern", "This alignment is worth maintaining", "Your data shows a healthy connection between..."
-- WATCH/EXPLORE cards use neutral monitoring language: "worth keeping an eye on", "these often trend together", "research suggests a connection worth noting"
-- Never use exploratory or investigative language ("worth exploring", "interesting to investigate") inside a POSITIVE card. POSITIVE = celebratory, not curious.
+- POSITIVE body: affirming and specific — "Your REM at 26.7% and glucose at 83 mg/dL are moving together well", "This is a strong combination"
+- POSITIVE action: one sentence, direct, no hedging — "Keep your current sleep routine — your numbers show it's working" NOT "could be beneficial and is worth maintaining"
+- WATCH/EXPLORE body: neutral monitoring — "worth keeping an eye on", "these often trend together"
+- WATCH/EXPLORE action: one gentle suggestion
 
 BANNED LANGUAGE — never use these patterns:
 - "relatively low" or "moderately low" — if a value is low, say "low"
-- "appears beneficial" — say "is worth continuing" or "is a strong pattern"
+- "appears beneficial" — say "is a strong pattern" or just state the finding
 - "if you're curious" — remove entirely, it undercuts the action
-- "can contribute" immediately after using "often" — pick one qualifier, not both
+- "could be beneficial and is worth maintaining" — pick one, not both
+- "can contribute" immediately after "often" — one qualifier per claim
 - Never say something is elevated AND simultaneously say it is not a concern in the same sentence
-- Never hedge a clear finding with three qualifiers in a row — one qualifier maximum per claim
+- Never stack three hedges in a row — one qualifier maximum per claim
 
 APPROVED BIOLOGICAL RELATIONSHIPS you may reference (frame as interesting patterns, not diagnoses):
 - Oral nitrate-reducing bacteria and nitric oxide availability
