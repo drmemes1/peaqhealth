@@ -208,7 +208,6 @@ export function TrendsClient() {
   const [stress, setStress] = useState<string | null>(null)
   const [alcohol, setAlcohol] = useState<string | null>(null)
   const [sleepPriority, setSleepPriority] = useState<string | null>(null)
-  const [notes, setNotes] = useState("")
 
   useEffect(() => {
     fetch("/api/trends")
@@ -230,7 +229,6 @@ export function TrendsClient() {
           stress_level: stress,
           alcohol_frequency: alcohol,
           sleep_priority: sleepPriority,
-          notes: notes || null,
         }),
       })
       setCheckinSaved(true)
@@ -486,23 +484,6 @@ export function TrendsClient() {
                         value={sleepPriority}
                         onChange={setSleepPriority}
                         previous={isFirstCheckin ? undefined : prevCheckin?.sleep_priority}
-                      />
-                    </div>
-
-                    {/* Notes */}
-                    <div>
-                      <p style={{ fontFamily: body, fontSize: 11, color: "var(--ink-50)", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.06em" }}>Anything else worth noting?</p>
-                      <textarea
-                        value={notes}
-                        onChange={e => setNotes(e.target.value)}
-                        placeholder="Optional"
-                        rows={2}
-                        style={{
-                          width: "100%", fontFamily: body, fontSize: 13, color: C.ink,
-                          border: "0.5px solid var(--ink-12)", borderRadius: 4,
-                          padding: "10px 12px", background: "var(--off-white)",
-                          resize: "vertical", outline: "none",
-                        }}
                       />
                     </div>
 
