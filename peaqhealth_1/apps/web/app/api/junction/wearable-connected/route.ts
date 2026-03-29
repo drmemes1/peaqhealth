@@ -21,8 +21,24 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json() as Record<string, unknown>
     console.log("[wearable] full body:", JSON.stringify(body))
-    console.log("[wearable] rawMetadata:", JSON.stringify(body.rawMetadata ?? "(not sent)"))
-    provider = (body.provider as string) ?? ""
+    const rawMetadata = body.rawMetadata as Record<string, unknown> | undefined
+    console.log("[wearable] rawMetadata:", JSON.stringify(rawMetadata ?? "(not sent)"))
+
+    // Extract provider with fallback chain — widget sometimes sends "unknown"
+    // so we dig into rawMetadata.source_slug which reliably contains "oura" etc.
+    const bodyProvider = body.provider as string | undefined
+    provider = (
+      bodyProvider && bodyProvider !== "unknown" ? bodyProvider : null
+    ) ??
+      (rawMetadata?.source_slug as string | undefined)?.toLowerCase() ??
+      (rawMetadata?.source    as string | undefined)?.toLowerCase() ??
+      (((body.connected as Array<Record<string, unknown>>)?.[0]?.source as Record<string, unknown>)?.slug as string | undefined) ??
+      "unknown"
+
+    console.log("[wearable] extracted provider:", provider,
+      "| from source_slug:", rawMetadata?.source_slug,
+      "| from source:", rawMetadata?.source)
+
     junctionUserId = (body.junctionUserId as string) ?? ""
   } catch {
     console.error("[wearable] failed to parse request body")
@@ -31,8 +47,8 @@ export async function POST(request: NextRequest) {
 
   console.log("[wearable] step 1 — auth OK, userId:", user.id)
 
-  if (!provider) {
-    console.error("[wearable] missing provider in body — cannot save connection")
+  if (!provider || provider === "unknown") {
+    console.error("[wearable] could not resolve provider from body — cannot save connection")
     return NextResponse.json({ error: "Missing provider" }, { status: 400 })
   }
 
@@ -108,8 +124,9 @@ export async function POST(request: NextRequest) {
   try {
     await requestHistoricalPull(junctionUserId, { days: 90 })
     console.log("[wearable] historical pull requested for junctionUserId:", junctionUserId)
-  } catch {
-    // non-fatal — historical pull can fail silently; webhook will not fire
+  } catch (err) {
+    // non-fatal — 405 in sandbox is expected; webhook backfill still fires
+    console.warn("[wearable] historical pull request failed (non-fatal):", err instanceof Error ? err.message : err)
   }
 
   // Backfill 30 days of sleep data into sleep_data after response (provider-specific)
