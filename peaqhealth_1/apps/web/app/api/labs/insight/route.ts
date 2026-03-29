@@ -28,6 +28,14 @@ TONE MUST MATCH CATEGORY:
 - WATCH/EXPLORE cards use neutral monitoring language: "worth keeping an eye on", "these often trend together", "research suggests a connection worth noting"
 - Never use exploratory or investigative language ("worth exploring", "interesting to investigate") inside a POSITIVE card. POSITIVE = celebratory, not curious.
 
+BANNED LANGUAGE — never use these patterns:
+- "relatively low" or "moderately low" — if a value is low, say "low"
+- "appears beneficial" — say "is worth continuing" or "is a strong pattern"
+- "if you're curious" — remove entirely, it undercuts the action
+- "can contribute" immediately after using "often" — pick one qualifier, not both
+- Never say something is elevated AND simultaneously say it is not a concern in the same sentence
+- Never hedge a clear finding with three qualifiers in a row — one qualifier maximum per claim
+
 APPROVED BIOLOGICAL RELATIONSHIPS you may reference (frame as interesting patterns, not diagnoses):
 - Oral nitrate-reducing bacteria and nitric oxide availability
 - Periodontal bacteria and systemic inflammation markers like hsCRP
@@ -56,18 +64,18 @@ const fmt = (v: unknown, decimals = 1): string => {
   return isNaN(n) ? "N/A" : n.toFixed(decimals)
 }
 
-// Convert oral DB value to a percentage (0–100), capped at 100.
-// Handles two storage patterns:
-//   • JSONB snap values — already percentages (e.g. 3.84)
-//   • Flat columns — fractions (e.g. 0.0384); but some rows store percentages directly
-// Heuristic: if value > 1, treat as already a percentage; otherwise multiply × 100.
+// Convert an oral DB value to a display percentage (0–100).
+// Both JSONB snap and flat columns may store values as fractions (0–1) OR
+// as already-percentages (e.g. 9.0). Unified heuristic: if value > 1 treat
+// as already a percentage; if ≤ 1 multiply × 100. Capped at 100.
 const toOralPct = (snapVal: unknown, flatVal: unknown): number | null => {
+  const toP = (v: number) => Math.min(v > 1 ? v : v * 100, 100)
   const s = snapVal != null ? Number(snapVal) : NaN
-  if (!isNaN(s)) return Math.min(s, 100)
+  if (!isNaN(s)) return toP(s)
   if (flatVal == null) return null
   const f = Number(flatVal)
   if (isNaN(f)) return null
-  return Math.min(f > 1 ? f : f * 100, 100)
+  return toP(f)
 }
 
 export async function GET() {
@@ -269,6 +277,13 @@ Priority 1 = most interesting or relevant. Oral panel must appear in at least 2 
     `[labs-insight] generating insight for user: ${user.id.slice(0, 8)}`,
     `| panels: blood=${!!bloodData} sleep=${!!sleepData} oral=${!!oralData} lifestyle=${!!lifestyleData}`,
   )
+  if (oralData) {
+    console.log(
+      `[insight] periodontalBurden raw value: ${oralData.periodontalBurden}`,
+      `| nitrateReducerPct: ${oralData.nitrateReducerPct}`,
+      `| osaBurden: ${oralData.osaBurden}`,
+    )
+  }
 
   // ── Call OpenAI ───────────────────────────────────────────────────────────
   // HIPAA BAA signed 2026-03-28. Zero Data Retention active.
