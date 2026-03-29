@@ -12,6 +12,9 @@ VOICE:
 - Warm and motivating — like a knowledgeable friend reviewing your data
 - Specific to this person's actual numbers, never generic
 - Honest about uncertainty — use language like "may suggest", "is worth noting", "could be connected", "interesting to watch"
+- Use the interpretation labels provided with each blood value exactly as given — do not relabel values as "low" when they are marked "low-normal" or "worth monitoring"
+- Be consistent: if a value is described the same way in two cards, use the same language in both
+- Never call hsCRP "low" if it is above 1.0 mg/L
 
 STRICT RULES:
 1. Every insight must connect at least 2 panels. Single-panel observations are forbidden.
@@ -84,6 +87,39 @@ function burdenLevel(pct: number | null): string {
   if (pct < 2)     return "mildly elevated"
   if (pct < 5)     return "elevated"
   return "notably elevated"
+}
+
+function hsCRPContext(val: number | null): string {
+  if (val === null) return "not available"
+  if (val < 0.5)   return `${val} mg/L — optimal`
+  if (val < 1.0)   return `${val} mg/L — good`
+  if (val < 2.0)   return `${val} mg/L — low-normal, worth monitoring`
+  if (val < 3.0)   return `${val} mg/L — mildly elevated`
+  return             `${val} mg/L — elevated`
+}
+
+function lpAContext(val: number | null): string {
+  if (val === null) return "not available"
+  if (val < 30)    return `${val} mg/dL — within normal range`
+  if (val < 50)    return `${val} mg/dL — borderline, worth noting`
+  return             `${val} mg/dL — elevated`
+}
+
+function ldlContext(val: number | null): string {
+  if (val === null) return "not available"
+  if (val < 70)    return `${val} mg/dL — optimal`
+  if (val < 100)   return `${val} mg/dL — good`
+  if (val < 130)   return `${val} mg/dL — acceptable`
+  if (val < 160)   return `${val} mg/dL — borderline high`
+  return             `${val} mg/dL — elevated`
+}
+
+function glucoseContext(val: number | null): string {
+  if (val === null) return "not available"
+  if (val < 85)    return `${val} mg/dL — optimal`
+  if (val < 100)   return `${val} mg/dL — good`
+  if (val < 110)   return `${val} mg/dL — low-normal, worth monitoring`
+  return             `${val} mg/dL — elevated`
 }
 
 function num(v: unknown): number | undefined {
@@ -241,7 +277,19 @@ MANDATORY COMPOSITION:
 - Skip any panel that is unavailable
 
 BLOOD PANEL:
-${bloodData ? JSON.stringify(bloodData) : "Not available"}
+${bloodData ? `- hsCRP: ${hsCRPContext(bloodData.hsCRP_mgL as number | null)}
+- Lp(a): ${lpAContext(bloodData.Lpa_mgdL as number | null)}
+- LDL: ${ldlContext(bloodData.LDL_mgdL as number | null)}
+- Glucose: ${glucoseContext(bloodData.glucose_mgdL as number | null)}
+- HDL: ${bloodData.HDL_mgdL != null ? `${bloodData.HDL_mgdL} mg/dL` : "not available"}
+- ApoB: ${bloodData.ApoB_mgdL != null ? `${bloodData.ApoB_mgdL} mg/dL` : "not available"}
+- Triglycerides: ${bloodData.triglycerides_mgdL != null ? `${bloodData.triglycerides_mgdL} mg/dL` : "not available"}
+- HbA1c: ${bloodData.HbA1c_pct != null ? `${bloodData.HbA1c_pct}%` : "not available"}
+- Vitamin D: ${bloodData.vitaminD_ngmL != null ? `${bloodData.vitaminD_ngmL} ng/mL` : "not available"}
+- eGFR: ${bloodData.eGFR != null ? `${bloodData.eGFR} mL/min` : "not available"}
+- Homocysteine: ${bloodData.homocysteine_umolL != null ? `${bloodData.homocysteine_umolL} µmol/L` : "not available"}
+- Hemoglobin: ${bloodData.hemoglobin_gdL != null ? `${bloodData.hemoglobin_gdL} g/dL` : "not available"}
+- Collection date: ${bloodData.collectionDate ?? "unknown"}` : "Not available"}
 
 SLEEP PANEL (${sleepData?.provider ?? "none"}, ${sleepData?.nights ?? 0} nights avg):
 - Deep sleep: ${sleepData ? fmt(sleepData.deepSleepPct) : "N/A"}% (target ≥17%)
