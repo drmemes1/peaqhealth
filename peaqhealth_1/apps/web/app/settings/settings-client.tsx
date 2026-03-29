@@ -355,7 +355,7 @@ function buildReportHtml(data: Record<string, unknown>, name: string, email: str
 export function SettingsClient({ userId, email, firstName: initialFirst, lastName: initialLast, createdAt, whoopConnected: initialWhoopConnected, whoopLastSynced, whoopNeedsReconnect, junctionConnections: initialJunctionConnections = [] }: Props) {
   const router = useRouter()
   const supabase = createClient()
-  const { theme, setTheme } = useTheme()
+  const { setTheme, resolvedTheme } = useTheme()
 
   const [firstName, setFirstName] = useState(initialFirst)
   const [lastName, setLastName] = useState(initialLast)
@@ -649,28 +649,29 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
         <SectionLabel>Appearance</SectionLabel>
         <div className="overflow-hidden rounded-lg p-5" style={{ border: "0.5px solid var(--ink-12)", background: "var(--warm-50)" }}>
           <p className="font-body text-sm" style={{ color: "var(--ink)" }}>Theme</p>
-          <p className="mt-1 mb-4 font-body text-xs" style={{ color: "var(--ink-60)" }}>
-            Choose your preferred color scheme
-          </p>
-          <div style={{ display: "flex", gap: 8 }}>
-            {(["light", "system", "dark"] as const).map(t => (
-              <button
-                key={t}
-                onClick={() => setTheme(t)}
-                className="font-body text-[12px] transition-all"
-                style={{
-                  padding: "8px 18px",
-                  borderRadius: 6,
-                  border: theme === t ? "1.5px solid var(--ink)" : "0.5px solid var(--ink-20)",
-                  background: theme === t ? "var(--ink)" : "transparent",
-                  color: theme === t ? "var(--off-white)" : "var(--ink-60)",
-                  cursor: "pointer",
-                  textTransform: "capitalize",
-                }}
-              >
-                {t}
-              </button>
-            ))}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <p className="font-body text-xs" style={{ color: "var(--ink-60)", margin: 0 }}>
+              {resolvedTheme === "dark" ? "Dark mode" : "Light mode"}
+            </p>
+            <button
+              onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+              className="transition-all"
+              style={{
+                width: 44, height: 24, borderRadius: 12,
+                background: resolvedTheme === "dark" ? "var(--gold)" : "var(--ink-12)",
+                border: "none", cursor: "pointer", position: "relative",
+                padding: 0,
+              }}
+            >
+              <div style={{
+                width: 18, height: 18, borderRadius: "50%",
+                background: "var(--white)",
+                position: "absolute", top: 3,
+                left: resolvedTheme === "dark" ? 23 : 3,
+                transition: "left 0.2s ease",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
+              }} />
+            </button>
           </div>
         </div>
       </section>
