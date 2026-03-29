@@ -11,6 +11,10 @@
     {
       "path": "/api/whoop/sync-all",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/weekly-snapshots",
+      "schedule": "0 7 * * 1"
     }
   ]
 }

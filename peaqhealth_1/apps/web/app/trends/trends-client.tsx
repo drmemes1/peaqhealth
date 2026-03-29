@@ -11,6 +11,31 @@ import { Nav } from "../components/nav"
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 
+interface WeeklySnapshot {
+  week_start:            string
+  generated_at:          string
+  total_score:           number | null
+  sleep_sub:             number | null
+  blood_sub:             number | null
+  oral_sub:              number | null
+  lifestyle_sub:         number | null
+  prev_total_score:      number | null
+  avg_hrv:               number | null
+  avg_efficiency:        number | null
+  avg_deep_pct:          number | null
+  avg_rem_pct:           number | null
+  nights_tracked:        number
+  hrv_trend_pct:         number | null
+  headline:              string | null
+  body:                  string | null
+  trend_direction:       "improving" | "stable" | "declining" | null
+  retest_recommendation: string | null
+  raw_response:          {
+    positive_highlight?: string | null
+    watch_note?:         string | null
+  } | null
+}
+
 interface Snapshot {
   date: string
   total: number
@@ -349,11 +374,99 @@ function MiniChart({
   )
 }
 
+// ─── WeeklySnapshotCard ─────────────────────────────────────────────────────────
+
+function WeeklySnapshotCard({ snapshot }: { snapshot: WeeklySnapshot | null }) {
+  if (!snapshot?.headline) return null
+
+  const trendColor = snapshot.trend_direction === "improving" ? "#1D9E75"
+    : snapshot.trend_direction === "declining" ? "#C0392B"
+    : "#B8860B"
+
+  const trendLabel = snapshot.trend_direction === "improving" ? "Trending up"
+    : snapshot.trend_direction === "declining" ? "Worth watching"
+    : "Holding steady"
+
+  const trendArrow = snapshot.trend_direction === "improving" ? "▲"
+    : snapshot.trend_direction === "declining" ? "▼"
+    : "—"
+
+  const metrics = [
+    { label: "Nights",      value: snapshot.nights_tracked > 0 ? String(snapshot.nights_tracked) : null,         unit: "" },
+    { label: "Avg HRV",     value: snapshot.avg_hrv       != null ? fmt(snapshot.avg_hrv, 1)       : null,         unit: " ms" },
+    { label: "Efficiency",  value: snapshot.avg_efficiency != null ? fmt(snapshot.avg_efficiency, 1) : null,        unit: "%" },
+    { label: "Deep sleep",  value: snapshot.avg_deep_pct  != null ? fmt(snapshot.avg_deep_pct, 1)  : null,         unit: "%" },
+  ].filter(m => m.value != null)
+
+  return (
+    <div style={{ ...card, marginBottom: 24 }}>
+      {/* Week label + trend */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+        <span style={{ fontFamily: body, fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--ink-40)" }}>
+          Week of {new Date(snapshot.week_start + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+        </span>
+        <span style={{ fontFamily: body, fontSize: 11, color: trendColor, fontWeight: 500, display: "flex", alignItems: "center", gap: 4 }}>
+          <span style={{ fontSize: 8 }}>{trendArrow}</span>
+          {trendLabel}
+        </span>
+      </div>
+
+      {/* Headline */}
+      <p style={{ fontFamily: serif, fontSize: 22, fontWeight: 300, color: C.ink, lineHeight: 1.3, margin: "0 0 10px" }}>
+        {snapshot.headline}
+      </p>
+
+      {/* Body */}
+      <p style={{ fontFamily: body, fontSize: 13, color: "var(--ink-60)", lineHeight: 1.65, margin: snapshot.retest_recommendation ? "0 0 16px" : "0" }}>
+        {snapshot.body}
+      </p>
+
+      {/* Positive highlight */}
+      {snapshot.raw_response?.positive_highlight && (
+        <div style={{ marginTop: 14, padding: "10px 14px", background: "rgba(29,158,117,0.07)", borderRadius: 8, borderLeft: "3px solid #1D9E75", fontFamily: body, fontSize: 13, color: "var(--ink-60)", lineHeight: 1.5 }}>
+          {snapshot.raw_response.positive_highlight}
+        </div>
+      )}
+
+      {/* Watch note */}
+      {snapshot.raw_response?.watch_note && (
+        <div style={{ marginTop: 10, padding: "10px 14px", background: "rgba(184,134,11,0.07)", borderRadius: 8, borderLeft: `3px solid ${C.lifestyle}`, fontFamily: body, fontSize: 13, color: "var(--ink-60)", lineHeight: 1.5 }}>
+          {snapshot.raw_response.watch_note}
+        </div>
+      )}
+
+      {/* Retest recommendation */}
+      {snapshot.retest_recommendation && (
+        <div style={{ marginTop: 14, paddingTop: 14, borderTop: "0.5px solid var(--ink-08)", fontFamily: body, fontSize: 12, color: "var(--ink-40)", lineHeight: 1.55, fontStyle: "italic" }}>
+          {snapshot.retest_recommendation}
+        </div>
+      )}
+
+      {/* Sleep metrics summary */}
+      {metrics.length > 0 && (
+        <div style={{ display: "flex", gap: 20, marginTop: 16, paddingTop: 14, borderTop: "0.5px solid var(--ink-08)", flexWrap: "wrap" }}>
+          {metrics.map(m => (
+            <div key={m.label}>
+              <div style={{ fontFamily: body, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--ink-40)", marginBottom: 2 }}>
+                {m.label}
+              </div>
+              <div style={{ fontFamily: serif, fontSize: 16, color: C.sleep }}>
+                {m.value}{m.unit}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Component ──────────────────────────────────────────────────────────────────
 
 export function TrendsClient() {
   const [data, setData] = useState<TrendsData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [weeklySnapshot, setWeeklySnapshot] = useState<WeeklySnapshot | null>(null)
 
   // Check-in form state
   const [lifestyleChanged, setLifestyleChanged] = useState<boolean | null>(null)
@@ -377,6 +490,13 @@ export function TrendsClient() {
       .then(r => r.json())
       .then(d => { setData(d); setLoading(false) })
       .catch(() => setLoading(false))
+  }, [])
+
+  useEffect(() => {
+    fetch("/api/trends/weekly-snapshot")
+      .then(r => r.json())
+      .then(d => { if (d.snapshot) setWeeklySnapshot(d.snapshot as WeeklySnapshot) })
+      .catch(() => {})
   }, [])
 
   async function handleNoChange() {
@@ -475,6 +595,8 @@ export function TrendsClient() {
             </p>
           </div>
         )}
+
+        <WeeklySnapshotCard snapshot={weeklySnapshot} />
 
         {data && data.snapshots.length > 0 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
