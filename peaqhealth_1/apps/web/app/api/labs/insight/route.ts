@@ -44,6 +44,13 @@ function num(v: unknown): number | undefined {
   return !isNaN(n) && n > 0 ? n : undefined
 }
 
+// Safe formatter — wraps any value in Number() before calling toFixed()
+// so null / undefined / string values from DB never throw
+const fmt = (v: unknown, decimals = 1): string => {
+  const n = Number(v)
+  return isNaN(n) ? "N/A" : n.toFixed(decimals)
+}
+
 export async function GET() {
   // Session client — used only for auth.getUser()
   const supabase = await createClient()
@@ -177,18 +184,18 @@ BLOOD PANEL:
 ${bloodData ? JSON.stringify(bloodData) : "Not available"}
 
 SLEEP PANEL (${sleepData?.provider ?? "none"}, ${sleepData?.nights ?? 0} nights avg):
-- Deep sleep: ${sleepData?.deepSleepPct?.toFixed(1) ?? "N/A"}% (target ≥17%)
-- REM: ${sleepData?.remPct?.toFixed(1) ?? "N/A"}% (target ≥18%)
-- HRV: ${sleepData?.hrv?.toFixed(1) ?? "N/A"} ms (target ≥50ms)
-- SpO2: ${sleepData?.spo2?.toFixed(1) ?? "N/A"}% (target ≥96%)
-- Efficiency: ${sleepData?.efficiency?.toFixed(1) ?? "N/A"}% (target ≥85%)
+- Deep sleep: ${sleepData ? fmt(sleepData.deepSleepPct) : "N/A"}% (target ≥17%)
+- REM: ${sleepData ? fmt(sleepData.remPct) : "N/A"}% (target ≥18%)
+- HRV: ${sleepData ? fmt(sleepData.hrv) : "N/A"} ms (target ≥50ms)
+- SpO2: ${sleepData ? fmt(sleepData.spo2) : "N/A"}% (target ≥96%)
+- Efficiency: ${sleepData ? fmt(sleepData.efficiency) : "N/A"}% (target ≥85%)
 
 ORAL MICROBIOME:
-${oralData ? `- Shannon diversity: ${oralData.shannon?.toFixed(2)} (target ≥3.0)
-- Nitrate reducers: ${oralData.nitrateReducerPct?.toFixed(1)}% (target ≥20%)
-- Periodontal burden: ${oralData.periodontalBurden?.toFixed(1)}% (target <0.5%)
-- OSA-associated taxa: ${oralData.osaBurden?.toFixed(1)}% (target <1%)
-- Protective bacteria: ${oralData.protectivePct?.toFixed(1) ?? "not scored"}%
+${oralData ? `- Shannon diversity: ${fmt(oralData.shannon, 2)} (target ≥3.0)
+- Nitrate reducers: ${fmt(oralData.nitrateReducerPct)}% (target ≥20%)
+- Periodontal burden: ${fmt(oralData.periodontalBurden)}% (target <0.5%)
+- OSA-associated taxa: ${fmt(oralData.osaBurden)}% (target <1%)
+- Protective bacteria: ${oralData.protectivePct != null ? fmt(oralData.protectivePct) + "%" : "not scored"}
 - Antiseptic mouthwash detected: ${oralData.mouthwashDetected ? "yes — note that antiseptic mouthwash suppresses nitrate-reducing bacteria" : "no"}` : "Not available — do not reference oral panel in any insight"}
 
 LIFESTYLE:
