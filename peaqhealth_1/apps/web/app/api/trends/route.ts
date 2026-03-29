@@ -29,7 +29,7 @@ export async function GET() {
     // Sleep nightly detail — last 30 nights
     supabase
       .from("sleep_data")
-      .select("date, hrv_rmssd, sleep_efficiency, deep_sleep_minutes, rem_sleep_minutes, total_sleep_minutes, spo2, source")
+      .select("date, hrv_rmssd, sleep_efficiency, deep_sleep_minutes, rem_sleep_minutes, total_sleep_minutes, spo2, resting_heart_rate, source")
       .eq("user_id", userId)
       .order("date", { ascending: false })
       .limit(30),
@@ -123,6 +123,7 @@ export async function GET() {
       : null,
     totalMinutes: r.total_sleep_minutes ?? null,
     spo2: r.spo2 ?? null,
+    restingHeartRate: r.resting_heart_rate ?? null,
     provider: r.source ?? null,
   }))
 

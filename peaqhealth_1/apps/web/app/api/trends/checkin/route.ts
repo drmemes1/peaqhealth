@@ -11,12 +11,15 @@ export async function POST(req: Request) {
     .from("lifestyle_checkins")
     .insert({
       user_id:            user.id,
-      exercise_frequency: body.exercise_frequency ?? null,
-      diet_quality:       body.diet_quality       ?? null,
-      alcohol_frequency:  body.alcohol_frequency  ?? null,
-      stress_level:       body.stress_level       ?? null,
-      sleep_priority:     body.sleep_priority     ?? null,
-      smoking:            body.smoking            ?? null,
+      exercise_frequency:     body.exercise_frequency     ?? null,
+      diet_quality:           body.diet_quality           ?? null,
+      alcohol_frequency:      body.alcohol_frequency      ?? null,
+      stress_level:           body.stress_level           ?? null,
+      sleep_priority:         body.sleep_priority         ?? null,
+      smoking:                body.smoking                ?? null,
+      energy_level:           body.energy_level           ?? null,
+      blood_pressure_feeling: body.blood_pressure_feeling ?? null,
+      supplements:            body.supplements            ?? [],
     })
 
   if (error) return Response.json({ error: error.message }, { status: 500 })

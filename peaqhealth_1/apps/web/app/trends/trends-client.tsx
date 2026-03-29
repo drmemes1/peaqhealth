@@ -28,6 +28,7 @@ interface SleepNight {
   remPct: number | null
   totalMinutes: number | null
   spo2: number | null
+  restingHeartRate: number | null
   provider: string | null
 }
 
@@ -44,6 +45,9 @@ interface CheckinRecord {
   stress_level: string | null
   alcohol_frequency: string | null
   sleep_priority: string | null
+  energy_level: string | null
+  blood_pressure_feeling: string | null
+  supplements: string[] | null
 }
 
 interface TrendsData {
@@ -58,7 +62,7 @@ interface TrendsData {
   daysSinceLastLab: number | null
   lastLabDate: string | null
   lastOralDate: string | null
-  lastCheckin: (CheckinRecord & { notes?: string }) | null
+  lastCheckin: CheckinRecord | null
   checkinHistory: CheckinRecord[]
   shouldPromptCheckin: boolean
   showCrossPanelAlert: boolean
@@ -158,6 +162,60 @@ function SleepTooltip({ active, payload, label }: { active?: boolean; payload?: 
   )
 }
 
+// ─── CollapsibleSection ─────────────────────────────────────────────────────────
+
+function CollapsibleSection({
+  title,
+  defaultOpen = false,
+  children,
+  badge,
+}: {
+  title: string
+  defaultOpen?: boolean
+  children: React.ReactNode
+  badge?: string
+}) {
+  const [open, setOpen] = useState(defaultOpen)
+
+  return (
+    <div style={{ marginBottom: 4 }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center",
+          padding: "14px 0", background: "transparent", border: "none",
+          borderBottom: "0.5px solid var(--ink-08)", cursor: "pointer",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{
+            fontFamily: body, fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase",
+            color: "var(--ink-50)", fontWeight: 500,
+          }}>
+            {title}
+          </span>
+          {badge && (
+            <span style={{
+              fontFamily: body, fontSize: 10, padding: "2px 7px", borderRadius: 4,
+              background: "var(--ink-06)", color: "var(--ink-40)",
+            }}>
+              {badge}
+            </span>
+          )}
+        </div>
+        <span style={{ fontFamily: serif, fontSize: 18, color: "var(--ink-30)", lineHeight: 1 }}>
+          {open ? "−" : "+"}
+        </span>
+      </button>
+      {open && (
+        <div style={{ paddingTop: 16 }}>
+          {children}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── CheckinRow ─────────────────────────────────────────────────────────────────
 
 function CheckinRow({ label, options, value, onChange, previous }: {
@@ -171,13 +229,13 @@ function CheckinRow({ label, options, value, onChange, previous }: {
     <div style={{ marginBottom: 18 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
         <span style={{
-          fontSize: 10, fontWeight: 500, letterSpacing: "0.08em",
-          textTransform: "uppercase", color: "var(--ink-40)", fontFamily: body,
+          fontFamily: body, fontSize: 10, fontWeight: 500, letterSpacing: "0.08em",
+          textTransform: "uppercase", color: "var(--ink-40)",
         }}>
           {label}
         </span>
         {previous && (
-          <span style={{ fontSize: 11, color: "var(--ink-20)", fontFamily: body }}>
+          <span style={{ fontFamily: body, fontSize: 11, color: "var(--ink-20)" }}>
             Last time: {previous}
           </span>
         )}
@@ -190,9 +248,9 @@ function CheckinRow({ label, options, value, onChange, previous }: {
               key={opt.value}
               onClick={() => onChange(opt.value)}
               style={{
-                padding: "7px 14px", borderRadius: 20, fontFamily: body, fontSize: 13,
-                border: active ? `1.5px solid ${C.ink}` : "0.5px solid var(--ink-20)",
-                background: active ? C.ink : "transparent",
+                fontFamily: body, padding: "7px 14px", borderRadius: 20, fontSize: 13,
+                border: active ? `1.5px solid var(--ink)` : "0.5px solid var(--ink-20)",
+                background: active ? "var(--ink)" : "transparent",
                 color: active ? "var(--off-white)" : "var(--ink-60)",
                 cursor: "pointer", transition: "all 0.15s ease",
               }}
@@ -202,6 +260,91 @@ function CheckinRow({ label, options, value, onChange, previous }: {
           )
         })}
       </div>
+    </div>
+  )
+}
+
+// ─── SupplementPicker ───────────────────────────────────────────────────────────
+
+const SUPPLEMENTS = ["Fish oil", "Magnesium", "Vitamin D", "Creatine", "Berberine", "Statin", "None"]
+
+function SupplementPicker({ value, onChange }: {
+  value: string[]
+  onChange: (v: string[]) => void
+}) {
+  return (
+    <div style={{ marginBottom: 18 }}>
+      <div style={{ fontFamily: body, fontSize: 10, fontWeight: 500, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--ink-40)", marginBottom: 8 }}>
+        Supplements
+      </div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {SUPPLEMENTS.map(s => {
+          const active = value.includes(s)
+          return (
+            <button
+              key={s}
+              onClick={() => {
+                const updated = active ? value.filter(x => x !== s) : [...value, s]
+                onChange(updated)
+              }}
+              style={{
+                fontFamily: body, padding: "7px 14px", borderRadius: 20, fontSize: 13,
+                border: active ? `1.5px solid var(--ink)` : "0.5px solid var(--ink-20)",
+                background: active ? "var(--ink)" : "transparent",
+                color: active ? "var(--off-white)" : "var(--ink-60)",
+                cursor: "pointer", transition: "all 0.15s ease",
+              }}
+            >
+              {s}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ─── MiniChart ──────────────────────────────────────────────────────────────────
+
+function MiniChart({
+  data, dataKey, color, refY, label, unit, domain,
+}: {
+  data: Array<Record<string, unknown>>
+  dataKey: string
+  color: string
+  refY: number
+  label: string
+  unit: string
+  domain: [number, number]
+}) {
+  return (
+    <div style={{ ...card, marginBottom: 12 }}>
+      <p style={{ fontFamily: body, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-40)", margin: "0 0 12px" }}>
+        {label} <span style={{ color: "var(--ink-20)" }}>· {unit}</span>
+      </p>
+      <ResponsiveContainer width="100%" height={120}>
+        <AreaChart data={data} margin={{ top: 4, right: 8, left: -24, bottom: 0 }}>
+          <XAxis
+            dataKey="label"
+            tick={{ fontFamily: serif, fontSize: 11, fill: "var(--ink-30)" }}
+            axisLine={false} tickLine={false}
+            interval={Math.max(0, Math.floor(data.length / 8))}
+          />
+          <YAxis
+            domain={domain}
+            tick={{ fontFamily: serif, fontSize: 11, fill: "var(--ink-30)" }}
+            axisLine={false} tickLine={false} tickCount={4}
+          />
+          <Tooltip content={<SleepTooltip />} cursor={{ stroke: "var(--ink-12)", strokeWidth: 1 }} />
+          <ReferenceLine y={refY} stroke="var(--ink-15)" strokeDasharray="4 4" />
+          <Area
+            type="monotone" dataKey={dataKey}
+            stroke={color} strokeWidth={1.5}
+            fill={color} fillOpacity={0.08}
+            dot={false} connectNulls={false}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
     </div>
   )
 }
@@ -219,11 +362,14 @@ export function TrendsClient() {
   const [checkinSubmitting, setCheckinSubmitting] = useState(false)
   const [checkinResult, setCheckinResult] = useState<{ shouldUpdateQuestionnaire: boolean; changeDirection: string; message: string } | null>(null)
   const [checkin, setCheckin] = useState({
-    exercise_frequency: null as string | null,
-    diet_quality:       null as string | null,
-    stress_level:       null as string | null,
-    alcohol_frequency:  null as string | null,
-    sleep_priority:     null as string | null,
+    exercise_frequency:     null as string | null,
+    diet_quality:           null as string | null,
+    stress_level:           null as string | null,
+    alcohol_frequency:      null as string | null,
+    sleep_priority:         null as string | null,
+    energy_level:           null as string | null,
+    blood_pressure_feeling: null as string | null,
+    supplements:            [] as string[],
   })
 
   useEffect(() => {
@@ -240,11 +386,8 @@ export function TrendsClient() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        exercise_frequency: "same",
-        diet_quality:       "same",
-        stress_level:       "same",
-        alcohol_frequency:  "same",
-        sleep_priority:     "same",
+        exercise_frequency: "same", diet_quality: "same", stress_level: "same",
+        alcohol_frequency: "same", sleep_priority: "same",
       }),
     })
   }
@@ -298,12 +441,20 @@ export function TrendsClient() {
     ? Math.floor((Date.now() - new Date(prevCheckin.checked_in_at).getTime()) / 86400000)
     : null
 
+  // Sleep chart data
+  const sleepChartData = hasSleep
+    ? [...data!.sleepNights].map(n => ({ ...n, label: fmtDate(n.date) }))
+    : []
+
+  const hasSpO2    = sleepChartData.some(n => n.spo2 != null)
+  const hasRHR     = sleepChartData.some(n => n.restingHeartRate != null)
+
   return (
     <div className="min-h-svh bg-off-white">
       <Nav />
       <main className="mx-auto max-w-[720px] px-6 pt-14 pb-20">
 
-        {/* ─── 4a HEADER ───────────────────────────────── */}
+        {/* ─── HEADER ──────────────────────────────────────── */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 40 }}>
           <h1 style={{ fontFamily: serif, fontSize: 34, fontWeight: 300, color: C.ink, margin: 0 }}>
             Trends
@@ -313,7 +464,7 @@ export function TrendsClient() {
           </span>
         </div>
 
-        {/* ─── EMPTY STATE ─────────────────────────────── */}
+        {/* ─── EMPTY STATE ─────────────────────────────────── */}
         {noData && (
           <div style={{ ...card, textAlign: "center", padding: "60px 24px" }}>
             <p style={{ fontFamily: serif, fontSize: 22, fontWeight: 300, color: C.ink, margin: "0 0 12px" }}>
@@ -326,102 +477,11 @@ export function TrendsClient() {
         )}
 
         {data && data.snapshots.length > 0 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
 
-            {/* ─── 4b LAST NIGHT CARD ──────────────────── */}
-            {hasSleep && lastNightRecent && lastNight && (
-              <div style={{ ...card, borderLeft: `3px solid ${C.sleep}`, padding: "16px 20px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                  <div>
-                    <p style={{ fontFamily: body, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-40)", margin: "0 0 8px" }}>
-                      LAST NIGHT{data.wearableProvider ? ` · ${data.wearableProvider.toUpperCase()}` : ""}
-                    </p>
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
-                      {[
-                        { label: `Deep ${fmt(lastNight.deepPct, 1)}%`, ok: (lastNight.deepPct ?? 0) >= 17 },
-                        { label: `REM ${fmt(lastNight.remPct, 1)}%`, ok: (lastNight.remPct ?? 0) >= 18 },
-                        { label: `Eff ${fmt(lastNight.efficiency, 1)}%`, ok: (lastNight.efficiency ?? 0) >= 85 },
-                        { label: `HRV ${fmt(lastNight.hrv, 1)} ms`, ok: (lastNight.hrv ?? 0) >= 50 },
-                      ].map(({ label, ok }) => (
-                        <span key={label} style={{
-                          fontFamily: body, fontSize: 11, padding: "3px 10px",
-                          borderRadius: 12,
-                          background: ok ? `${C.sleep}12` : "var(--ink-04)",
-                          color: ok ? C.sleep : "var(--ink-40)",
-                        }}>
-                          {label}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <div style={{ textAlign: "right", flexShrink: 0 }}>
-                    <p style={{ fontFamily: serif, fontSize: 28, fontWeight: 300, color: C.sleep, margin: 0, lineHeight: 1 }}>
-                      {fmt(data.current?.sleep, 0)}
-                    </p>
-                    <p style={{ fontFamily: body, fontSize: 9, color: "var(--ink-30)", margin: "4px 0 0", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                      Sleep /27
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ─── 4c STREAK + 7-DAY AVG ───────────────── */}
-            {hasSleep && (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                {/* Streak */}
-                <div style={card}>
-                  <p style={{ fontFamily: body, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-40)", margin: "0 0 8px" }}>
-                    STREAK
-                  </p>
-                  <p style={{ fontFamily: serif, fontSize: 32, fontWeight: 300, color: C.ink, margin: "0 0 8px", lineHeight: 1 }}>
-                    {fmt(data!.streak, 0)}<span style={{ fontSize: 16, color: "var(--ink-30)", marginLeft: 4 }}>nights</span>
-                  </p>
-                  <div style={{ display: "flex", gap: 4 }}>
-                    {Array.from({ length: 7 }).map((_, i) => {
-                      const filled = i < Math.min(data!.streak, 7)
-                      return (
-                        <div key={i} style={{
-                          width: 8, height: 8, borderRadius: "50%",
-                          background: filled ? C.sleep : "var(--ink-08)",
-                        }} />
-                      )
-                    })}
-                  </div>
-                </div>
-
-                {/* 7-day avg HRV */}
-                <div style={card}>
-                  <p style={{ fontFamily: body, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-40)", margin: "0 0 8px" }}>
-                    7-DAY AVG HRV
-                  </p>
-                  <p style={{ fontFamily: serif, fontSize: 32, fontWeight: 300, color: C.sleep, margin: "0 0 4px", lineHeight: 1 }}>
-                    {fmt(data!.avgHrv, 1)}<span style={{ fontSize: 14, color: "var(--ink-30)", marginLeft: 4 }}>ms</span>
-                  </p>
-                  <p style={{ fontFamily: body, fontSize: 11, color: "var(--ink-30)", margin: 0 }}>
-                    Target: 50 ms
-                    {data!.hrvTrendPct != null && (
-                      <span style={{ marginLeft: 8, color: data!.hrvTrendPct >= 0 ? "#2D6A4F" : "#C0392B" }}>
-                        {data!.hrvTrendPct >= 0 ? "+" : ""}{fmt(data!.hrvTrendPct, 1)}% vs last week
-                      </span>
-                    )}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* No sleep empty state */}
-            {!hasSleep && (
-              <div style={{ ...card, textAlign: "center", padding: "32px 24px" }}>
-                <p style={{ fontFamily: body, fontSize: 13, color: "var(--ink-40)", margin: 0, lineHeight: 1.7 }}>
-                  Connect a wearable in <Link href="/settings" style={{ color: C.sleep, textDecoration: "none" }}>Settings</Link> to see nightly sleep trends.
-                </p>
-              </div>
-            )}
-
-            {/* ─── 4d CROSS-PANEL ALERT ────────────────── */}
+            {/* ─── CROSS-PANEL ALERT (always visible) ──────── */}
             {data!.showCrossPanelAlert && (
-              <div style={{ ...card, borderLeft: `3px solid ${C.lifestyle}`, padding: "16px 20px" }}>
+              <div style={{ ...card, borderLeft: `3px solid ${C.lifestyle}`, padding: "16px 20px", marginBottom: 24 }}>
                 <p style={{ fontFamily: body, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em", color: C.lifestyle, margin: "0 0 8px" }}>
                   CROSS-PANEL SIGNAL
                 </p>
@@ -431,421 +491,450 @@ export function TrendsClient() {
               </div>
             )}
 
-            {/* ─── 4e LIFESTYLE CHECK-IN ───────────────── */}
-            {data!.shouldPromptCheckin && !checkinSaved && (
-              <div style={{ ...card, border: "0.5px solid var(--ink-12)" }}>
-                <p style={{ fontFamily: serif, fontSize: 20, fontWeight: 300, color: C.ink, margin: "0 0 4px" }}>
-                  Has your lifestyle changed recently?
-                </p>
-                <p style={{ fontFamily: body, fontSize: 12, color: "var(--ink-30)", margin: "0 0 20px" }}>
-                  {isFirstCheckin ? "First check-in" : `Last check-in ${daysSinceCheckin} days ago`}
-                </p>
-
-                {/* Step 1 — Yes / No gate */}
-                <div style={{ display: "flex", gap: 10 }}>
-                  <button
-                    onClick={handleNoChange}
-                    style={{
-                      padding: "10px 24px", borderRadius: 8, fontFamily: body, fontSize: 14,
-                      border: lifestyleChanged === false ? `1.5px solid ${C.ink}` : "0.5px solid var(--ink-20)",
-                      background: lifestyleChanged === false ? C.ink : "transparent",
-                      color: lifestyleChanged === false ? "var(--off-white)" : "var(--ink-60)",
-                      cursor: "pointer",
-                    }}
-                  >
-                    No, about the same
-                  </button>
-                  <button
-                    onClick={() => { setLifestyleChanged(true); setExpanded(true) }}
-                    style={{
-                      padding: "10px 24px", borderRadius: 8, fontFamily: body, fontSize: 14,
-                      border: lifestyleChanged === true ? `1.5px solid ${C.ink}` : "0.5px solid var(--ink-20)",
-                      background: lifestyleChanged === true ? C.ink : "transparent",
-                      color: lifestyleChanged === true ? "var(--off-white)" : "var(--ink-60)",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Yes, things have changed
-                  </button>
-                </div>
-
-                {/* "No" confirmation */}
-                {lifestyleChanged === false && (
-                  <div style={{
-                    marginTop: 16, fontSize: 13, fontFamily: body, color: "var(--ink-40)",
-                    borderTop: "0.5px solid var(--ink-08)", paddingTop: 14,
-                  }}>
-                    Got it — we&apos;ll check in again in 30 days. Your lifestyle score stays the same.
-                  </div>
-                )}
-
-                {/* Step 2 — expanded detail form */}
-                {expanded && (
-                  <div style={{ marginTop: 24, borderTop: "0.5px solid var(--ink-08)", paddingTop: 20 }}>
-                    <CheckinRow
-                      label="Exercise"
-                      options={[
-                        { value: "less", label: "Less than before" },
-                        { value: "same", label: "Same" },
-                        { value: "more", label: "More than before" },
-                      ]}
-                      value={checkin.exercise_frequency}
-                      onChange={v => setCheckin(c => ({ ...c, exercise_frequency: v }))}
-                      previous={isFirstCheckin ? undefined : prevCheckin?.exercise_frequency}
-                    />
-                    <CheckinRow
-                      label="Diet"
-                      options={[
-                        { value: "worse", label: "Worse" },
-                        { value: "same", label: "Same" },
-                        { value: "better", label: "Better" },
-                      ]}
-                      value={checkin.diet_quality}
-                      onChange={v => setCheckin(c => ({ ...c, diet_quality: v }))}
-                      previous={isFirstCheckin ? undefined : prevCheckin?.diet_quality}
-                    />
-                    <CheckinRow
-                      label="Stress"
-                      options={[
-                        { value: "higher", label: "Higher" },
-                        { value: "same", label: "Same" },
-                        { value: "lower", label: "Lower" },
-                      ]}
-                      value={checkin.stress_level}
-                      onChange={v => setCheckin(c => ({ ...c, stress_level: v }))}
-                      previous={isFirstCheckin ? undefined : prevCheckin?.stress_level}
-                    />
-                    <CheckinRow
-                      label="Alcohol"
-                      options={[
-                        { value: "more", label: "More" },
-                        { value: "same", label: "Same" },
-                        { value: "less", label: "Less" },
-                        { value: "none", label: "None" },
-                      ]}
-                      value={checkin.alcohol_frequency}
-                      onChange={v => setCheckin(c => ({ ...c, alcohol_frequency: v }))}
-                      previous={isFirstCheckin ? undefined : prevCheckin?.alcohol_frequency}
-                    />
-                    <CheckinRow
-                      label="Sleep focus"
-                      options={[
-                        { value: "less", label: "Less priority" },
-                        { value: "same", label: "Same" },
-                        { value: "more", label: "More priority" },
-                      ]}
-                      value={checkin.sleep_priority}
-                      onChange={v => setCheckin(c => ({ ...c, sleep_priority: v }))}
-                      previous={isFirstCheckin ? undefined : prevCheckin?.sleep_priority}
-                    />
-                    <button
-                      onClick={handleSubmitCheckin}
-                      disabled={checkinSubmitting}
-                      style={{
-                        marginTop: 4, padding: "12px 28px", fontFamily: body, fontSize: 14,
-                        background: C.ink, color: "var(--off-white)",
-                        border: "none", borderRadius: 8,
-                        cursor: checkinSubmitting ? "wait" : "pointer",
-                        opacity: checkinSubmitting ? 0.6 : 1,
-                        width: "100%",
-                        transition: "opacity 0.15s ease",
-                      }}
-                    >
-                      {checkinSubmitting ? "Saving..." : "Save check-in"}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Check-in confirmation — after "Yes" submit */}
-            {checkinSaved && checkinResult && (
-              <div style={{ ...card, borderLeft: `3px solid #2D6A4F`, padding: "20px 24px" }}>
-                <p style={{ fontFamily: body, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.08em", color: "#2D6A4F", margin: "0 0 10px" }}>
-                  ✓ Check-in saved
-                </p>
-                {checkinResult.shouldUpdateQuestionnaire ? (
-                  <>
-                    <p style={{ fontFamily: body, fontSize: 13, color: "var(--ink-60)", margin: "0 0 16px", lineHeight: 1.7 }}>
-                      {checkinResult.changeDirection === "positive"
-                        ? "A lot has changed since your last assessment. Want to update your full lifestyle score?"
-                        : "Your lifestyle has shifted. Updating your full assessment will keep your score accurate."
-                      }{" "}
-                      It takes about 2 minutes.
-                    </p>
-                    <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                      <Link
-                        href="/settings/lifestyle"
-                        style={{
-                          fontFamily: body, fontSize: 12, fontWeight: 500,
-                          padding: "8px 18px", background: C.ink, color: "var(--off-white)",
-                          textDecoration: "none", borderRadius: 4,
-                        }}
-                      >
-                        Update lifestyle score →
-                      </Link>
-                      <button
-                        onClick={() => setCheckinResult(null)}
-                        style={{ fontFamily: body, fontSize: 12, color: "var(--ink-30)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
-                      >
-                        Maybe later
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <p style={{ fontFamily: body, fontSize: 13, color: "var(--ink-60)", margin: 0, lineHeight: 1.7 }}>
-                    Your lifestyle looks consistent — no score update needed.
-                    <br />We&apos;ll check in again in 30 days.
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* ─── 4f HRV CHART ────────────────────────── */}
+            {/* ─── LAST NIGHT ──────────────────────────────── */}
             {hasSleep && (
-              <div>
-                <h2 style={{ fontFamily: serif, fontSize: 22, fontWeight: 300, color: C.ink, margin: "0 0 16px" }}>
-                  Sleep detail
-                </h2>
-                <div style={{ ...card, marginBottom: 12 }}>
-                  <p style={{ fontFamily: body, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-40)", margin: "0 0 12px" }}>
-                    Nightly HRV <span style={{ color: "var(--ink-20)" }}>· ms</span>
+              <CollapsibleSection
+                title="Last night"
+                defaultOpen={!!lastNightRecent}
+                badge={lastNight ? fmtDate(lastNight.date) : undefined}
+              >
+                {lastNightRecent && lastNight ? (
+                  <div style={{ ...card, borderLeft: `3px solid ${C.sleep}`, padding: "16px 20px", marginBottom: 8 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                      <div>
+                        <p style={{ fontFamily: body, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-40)", margin: "0 0 8px" }}>
+                          {data.wearableProvider ? data.wearableProvider.toUpperCase() : "WEARABLE"}
+                        </p>
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
+                          {[
+                            { label: `Deep ${fmt(lastNight.deepPct, 1)}%`, ok: (lastNight.deepPct ?? 0) >= 17 },
+                            { label: `REM ${fmt(lastNight.remPct, 1)}%`, ok: (lastNight.remPct ?? 0) >= 18 },
+                            { label: `Eff ${fmt(lastNight.efficiency, 1)}%`, ok: (lastNight.efficiency ?? 0) >= 85 },
+                            { label: `HRV ${fmt(lastNight.hrv, 1)} ms`, ok: (lastNight.hrv ?? 0) >= 50 },
+                          ].map(({ label, ok }) => (
+                            <span key={label} style={{
+                              fontFamily: body, fontSize: 11, padding: "3px 10px", borderRadius: 12,
+                              background: ok ? `${C.sleep}12` : "var(--ink-04)",
+                              color: ok ? C.sleep : "var(--ink-40)",
+                            }}>
+                              {label}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: "right", flexShrink: 0 }}>
+                        <p style={{ fontFamily: serif, fontSize: 28, fontWeight: 300, color: C.sleep, margin: 0, lineHeight: 1 }}>
+                          {fmt(data.current?.sleep, 0)}
+                        </p>
+                        <p style={{ fontFamily: body, fontSize: 9, color: "var(--ink-30)", margin: "4px 0 0", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                          Sleep /27
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p style={{ fontFamily: body, fontSize: 13, color: "var(--ink-40)", padding: "8px 0 16px", lineHeight: 1.7 }}>
+                    No data from last night yet — check back after your next sync.
                   </p>
-                  <ResponsiveContainer width="100%" height={130}>
-                    <AreaChart
-                      data={data!.sleepNights.map(n => ({ ...n, label: fmtDate(n.date) }))}
-                      margin={{ top: 4, right: 8, left: -24, bottom: 0 }}
-                    >
-                      <XAxis
-                        dataKey="label"
-                        tick={{ fontFamily: serif, fontSize: 11, fill: "var(--ink-30)" }}
-                        axisLine={false} tickLine={false}
-                        interval={Math.max(0, Math.floor(data!.sleepNights.length / 8))}
-                      />
-                      <YAxis
-                        domain={[0, 80]}
-                        tick={{ fontFamily: serif, fontSize: 11, fill: "var(--ink-30)" }}
-                        axisLine={false} tickLine={false} tickCount={4}
-                      />
-                      <Tooltip content={<SleepTooltip />} cursor={{ stroke: "var(--ink-12)", strokeWidth: 1 }} />
-                      <ReferenceLine y={50} stroke="var(--ink-15)" strokeDasharray="4 4" />
-                      <Area
-                        type="monotone" dataKey="hrv"
-                        stroke={C.sleep} strokeWidth={1.5}
-                        fill={C.sleep} fillOpacity={0.08}
-                        dot={false} connectNulls={false}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
+                )}
+              </CollapsibleSection>
+            )}
 
-                {/* ─── 4g SLEEP EFFICIENCY ──────────────── */}
-                <div style={card}>
-                  <p style={{ fontFamily: body, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-40)", margin: "0 0 12px" }}>
-                    Sleep efficiency <span style={{ color: "var(--ink-20)" }}>· %</span>
-                  </p>
-                  <ResponsiveContainer width="100%" height={130}>
-                    <AreaChart
-                      data={data!.sleepNights.map(n => ({ ...n, label: fmtDate(n.date) }))}
-                      margin={{ top: 4, right: 8, left: -24, bottom: 0 }}
-                    >
-                      <XAxis
-                        dataKey="label"
-                        tick={{ fontFamily: serif, fontSize: 11, fill: "var(--ink-30)" }}
-                        axisLine={false} tickLine={false}
-                        interval={Math.max(0, Math.floor(data!.sleepNights.length / 8))}
-                      />
-                      <YAxis
-                        domain={[60, 100]}
-                        tick={{ fontFamily: serif, fontSize: 11, fill: "var(--ink-30)" }}
-                        axisLine={false} tickLine={false} tickCount={4}
-                      />
-                      <Tooltip content={<SleepTooltip />} cursor={{ stroke: "var(--ink-12)", strokeWidth: 1 }} />
-                      <ReferenceLine y={85} stroke="var(--ink-15)" strokeDasharray="4 4" />
-                      <Area
-                        type="monotone" dataKey="efficiency"
-                        stroke={C.sleep} strokeWidth={1.5}
-                        fill={C.sleep} fillOpacity={0.08}
-                        dot={false} connectNulls={false}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
+            {/* ─── SLEEP STREAK ────────────────────────────── */}
+            {hasSleep && (
+              <CollapsibleSection title="Sleep streak" defaultOpen={true}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 8 }}>
+                  <div style={card}>
+                    <p style={{ fontFamily: body, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-40)", margin: "0 0 8px" }}>
+                      STREAK
+                    </p>
+                    <p style={{ fontFamily: serif, fontSize: 32, fontWeight: 300, color: C.ink, margin: "0 0 8px", lineHeight: 1 }}>
+                      {fmt(data!.streak, 0)}<span style={{ fontSize: 16, color: "var(--ink-30)", marginLeft: 4 }}>nights</span>
+                    </p>
+                    <div style={{ display: "flex", gap: 4 }}>
+                      {Array.from({ length: 7 }).map((_, i) => {
+                        const filled = i < Math.min(data!.streak, 7)
+                        return <div key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: filled ? C.sleep : "var(--ink-08)" }} />
+                      })}
+                    </div>
+                  </div>
+                  <div style={card}>
+                    <p style={{ fontFamily: body, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-40)", margin: "0 0 8px" }}>
+                      7-DAY AVG HRV
+                    </p>
+                    <p style={{ fontFamily: serif, fontSize: 32, fontWeight: 300, color: C.sleep, margin: "0 0 4px", lineHeight: 1 }}>
+                      {fmt(data!.avgHrv, 1)}<span style={{ fontSize: 14, color: "var(--ink-30)", marginLeft: 4 }}>ms</span>
+                    </p>
+                    <p style={{ fontFamily: body, fontSize: 11, color: "var(--ink-30)", margin: 0 }}>
+                      Target: 50 ms
+                      {data!.hrvTrendPct != null && (
+                        <span style={{ marginLeft: 8, color: data!.hrvTrendPct >= 0 ? "#2D6A4F" : "#C0392B" }}>
+                          {data!.hrvTrendPct >= 0 ? "+" : ""}{fmt(data!.hrvTrendPct, 1)}% vs last week
+                        </span>
+                      )}
+                    </p>
+                  </div>
                 </div>
+              </CollapsibleSection>
+            )}
+
+            {/* ─── SLEEP TRENDS ────────────────────────────── */}
+            {hasSleep && (
+              <CollapsibleSection title="Sleep trends · 30 nights" defaultOpen={false}>
+                <div style={{ marginBottom: 8 }}>
+                  <MiniChart
+                    data={sleepChartData}
+                    dataKey="hrv"
+                    color={C.sleep}
+                    refY={50}
+                    label="Nightly HRV"
+                    unit="ms"
+                    domain={[0, 80]}
+                  />
+                  <MiniChart
+                    data={sleepChartData}
+                    dataKey="efficiency"
+                    color={C.sleep}
+                    refY={85}
+                    label="Sleep efficiency"
+                    unit="%"
+                    domain={[60, 100]}
+                  />
+                  {hasSpO2 && (
+                    <MiniChart
+                      data={sleepChartData}
+                      dataKey="spo2"
+                      color={C.sleep}
+                      refY={96}
+                      label="SpO2 nightly avg"
+                      unit="%"
+                      domain={[88, 100]}
+                    />
+                  )}
+                  {hasRHR && (
+                    <MiniChart
+                      data={sleepChartData}
+                      dataKey="restingHeartRate"
+                      color={C.blood}
+                      refY={60}
+                      label="Resting heart rate"
+                      unit="bpm"
+                      domain={[40, 90]}
+                    />
+                  )}
+                </div>
+              </CollapsibleSection>
+            )}
+
+            {/* No sleep empty state */}
+            {!hasSleep && (
+              <div style={{ ...card, textAlign: "center", padding: "32px 24px", marginBottom: 4 }}>
+                <p style={{ fontFamily: body, fontSize: 13, color: "var(--ink-40)", margin: 0, lineHeight: 1.7 }}>
+                  Connect a wearable in <Link href="/settings" style={{ color: C.sleep, textDecoration: "none" }}>Settings</Link> to see nightly sleep trends.
+                </p>
               </div>
             )}
 
-            {/* ─── 4h SCORE OVER TIME ──────────────────── */}
-            <div>
-              <h2 style={{ fontFamily: serif, fontSize: 22, fontWeight: 300, color: C.ink, margin: "0 0 16px" }}>
-                Score over time
-              </h2>
-
-              {/* Legend */}
-              <div style={{ display: "flex", gap: 20, marginBottom: 12, flexWrap: "wrap" }}>
-                {[
-                  { l: "Total", c: C.ink },
-                  { l: "Sleep", c: C.sleep },
-                  { l: "Blood", c: C.blood },
-                  { l: "Oral", c: C.oral },
-                  { l: "Lifestyle", c: C.lifestyle },
-                ].map(({ l, c }) => (
-                  <div key={l} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <div style={{ width: 12, height: 2, background: c, borderRadius: 1 }} />
-                    <span style={{ fontFamily: body, fontSize: 11, color: "var(--ink-50)" }}>{l}</span>
-                  </div>
-                ))}
-              </div>
-
-              {(() => {
-                const snaps = data!.snapshots
-                if (snaps.length <= 1) return (
-                  <div style={{ ...card, textAlign: "center", padding: "40px 24px" }}>
-                    <p style={{ fontFamily: body, fontSize: 13, color: "var(--ink-40)", margin: 0, lineHeight: 1.7 }}>
-                      {snaps.length === 0
-                        ? "No snapshots yet."
-                        : "One data point so far. More snapshots will appear as you update your data."}
-                    </p>
-                  </div>
-                )
-                const firstDate = new Date(snaps[0].date).getTime()
-                const lastDate  = new Date(snaps[snaps.length - 1].date).getTime()
-                const spanDays  = (lastDate - firstDate) / 86400000
-                if (spanDays < 7) return (
-                  <div style={{ ...card, textAlign: "center", padding: "40px 24px" }}>
-                    <p style={{ fontFamily: body, fontSize: 13, color: "var(--ink-40)", margin: 0, lineHeight: 1.7 }}>
-                      Your score history will build here over time. Check back after your next data update.
-                    </p>
-                  </div>
-                )
-                return (
-                <div style={card}>
-                  <ResponsiveContainer width="100%" height={180}>
-                    <ComposedChart
-                      data={data!.snapshots.map(s => ({ ...s, label: fmtDate(s.date) }))}
-                      margin={{ top: 8, right: 16, left: -20, bottom: 0 }}
-                    >
-                      <XAxis
-                        dataKey="label"
-                        tick={{ fontFamily: serif, fontSize: 12, fill: "var(--ink-40)" }}
-                        axisLine={false} tickLine={false}
-                      />
-                      <YAxis
-                        domain={[0, 100]}
-                        tick={{ fontFamily: serif, fontSize: 12, fill: "var(--ink-40)" }}
-                        axisLine={false} tickLine={false} tickCount={5}
-                      />
-                      <Tooltip content={<ScoreTooltip />} cursor={{ stroke: "var(--ink-12)", strokeWidth: 1 }} />
-
-                      {/* Event markers */}
-                      {data!.events.map((ev, i) => {
-                        const evDate = fmtDate(ev.date)
-                        const color = ev.type === "blood" ? C.blood : ev.type === "oral" ? C.oral : C.sleep
-                        return <ReferenceLine key={`ev-${i}`} x={evDate} stroke={color} strokeDasharray="3 3" strokeOpacity={0.35} />
-                      })}
-
-                      <Area type="monotone" dataKey="total" stroke={C.ink} strokeWidth={2} fill={C.ink} fillOpacity={0.04}
-                        dot={{ r: 3, fill: C.ink, stroke: "var(--white)", strokeWidth: 1.5 }}
-                        activeDot={{ r: 5, fill: C.ink, stroke: "var(--white)", strokeWidth: 2 }}
-                        connectNulls={false}
-                      />
-                      <Line type="monotone" dataKey="sleep" stroke={C.sleep} strokeWidth={1.25}
-                        dot={{ r: 2.5, fill: C.sleep, stroke: "var(--white)", strokeWidth: 1 }} connectNulls={false} />
-                      <Line type="monotone" dataKey="blood" stroke={C.blood} strokeWidth={1.25}
-                        dot={{ r: 2.5, fill: C.blood, stroke: "var(--white)", strokeWidth: 1 }} connectNulls={false} />
-                      <Line type="monotone" dataKey="oral" stroke={C.oral} strokeWidth={1.25}
-                        dot={{ r: 2.5, fill: C.oral, stroke: "var(--white)", strokeWidth: 1 }} connectNulls={false} />
-                      <Line type="monotone" dataKey="lifestyle" stroke={C.lifestyle} strokeWidth={1.25}
-                        dot={{ r: 2.5, fill: C.lifestyle, stroke: "var(--white)", strokeWidth: 1 }} connectNulls={false} />
-                    </ComposedChart>
-                  </ResponsiveContainer>
+            {/* ─── SCORE HISTORY ───────────────────────────── */}
+            <CollapsibleSection title="Score history" defaultOpen={false}>
+              <div style={{ marginBottom: 8 }}>
+                {/* Legend */}
+                <div style={{ display: "flex", gap: 20, marginBottom: 12, flexWrap: "wrap" }}>
+                  {[
+                    { l: "Total", c: C.ink }, { l: "Sleep", c: C.sleep },
+                    { l: "Blood", c: C.blood }, { l: "Oral", c: C.oral },
+                    { l: "Lifestyle", c: C.lifestyle },
+                  ].map(({ l, c }) => (
+                    <div key={l} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <div style={{ width: 12, height: 2, background: c, borderRadius: 1 }} />
+                      <span style={{ fontFamily: body, fontSize: 11, color: "var(--ink-50)" }}>{l}</span>
+                    </div>
+                  ))}
                 </div>
-              )})()}
-            </div>
 
-            {/* ─── 4i SNAPSHOT COMPARISON ───────────────── */}
-            <div>
-              <h2 style={{ fontFamily: serif, fontSize: 22, fontWeight: 300, color: C.ink, margin: "0 0 16px" }}>
-                Snapshots
-              </h2>
-
-              {/* Delta cards */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 16 }}>
-                {([
-                  { key: "total" as const, label: "TOTAL", max: 100 },
-                  { key: "sleep" as const, label: "SLEEP", max: 27 },
-                  { key: "blood" as const, label: "BLOOD", max: 33 },
-                  { key: "oral" as const, label: "ORAL", max: 27 },
-                ]).map(panel => {
-                  const cur = data!.current?.[panel.key] ?? 0
-                  const prev = data!.previous?.[panel.key]
-                  const d = delta(cur, prev, data!.previous == null)
-                  const color = C[panel.key as keyof typeof C] ?? C.ink
-                  return (
-                    <div key={panel.key} style={{ ...card, borderTop: `2px solid ${color}`, padding: "14px 14px 12px" }}>
-                      <p style={{ fontFamily: body, fontSize: 8, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-40)", margin: "0 0 6px" }}>
-                        {panel.label} {panel.key !== "total" && <span style={{ color: "var(--ink-20)" }}>/{panel.max}</span>}
+                {(() => {
+                  const snaps = data!.snapshots
+                  if (snaps.length <= 1) return (
+                    <div style={{ ...card, textAlign: "center", padding: "40px 24px" }}>
+                      <p style={{ fontFamily: body, fontSize: 13, color: "var(--ink-40)", margin: 0, lineHeight: 1.7 }}>
+                        {snaps.length === 0
+                          ? "No snapshots yet."
+                          : "One data point so far. More snapshots will appear as you update your data."}
                       </p>
-                      <p style={{ fontFamily: serif, fontSize: 28, fontWeight: 300, color, margin: "0 0 4px", lineHeight: 1 }}>
-                        {fmt(cur, 0)}
-                      </p>
-                      <p style={{ fontFamily: body, fontSize: 10, color: d.color, margin: 0 }}>{d.text}</p>
                     </div>
                   )
-                })}
+                  const firstDate = new Date(snaps[0].date).getTime()
+                  const lastDate  = new Date(snaps[snaps.length - 1].date).getTime()
+                  const spanDays  = (lastDate - firstDate) / 86400000
+                  if (spanDays < 7) return (
+                    <div style={{ ...card, textAlign: "center", padding: "40px 24px" }}>
+                      <p style={{ fontFamily: body, fontSize: 13, color: "var(--ink-40)", margin: 0, lineHeight: 1.7 }}>
+                        Your score history will build here over time. Check back after your next data update.
+                      </p>
+                    </div>
+                  )
+                  return (
+                    <div style={card}>
+                      <ResponsiveContainer width="100%" height={180}>
+                        <ComposedChart
+                          data={data!.snapshots.map(s => ({ ...s, label: fmtDate(s.date) }))}
+                          margin={{ top: 8, right: 16, left: -20, bottom: 0 }}
+                        >
+                          <XAxis dataKey="label" tick={{ fontFamily: serif, fontSize: 12, fill: "var(--ink-40)" }} axisLine={false} tickLine={false} />
+                          <YAxis domain={[0, 100]} tick={{ fontFamily: serif, fontSize: 12, fill: "var(--ink-40)" }} axisLine={false} tickLine={false} tickCount={5} />
+                          <Tooltip content={<ScoreTooltip />} cursor={{ stroke: "var(--ink-12)", strokeWidth: 1 }} />
+                          {data!.events.map((ev, i) => {
+                            const evDate = fmtDate(ev.date)
+                            const color = ev.type === "blood" ? C.blood : ev.type === "oral" ? C.oral : C.sleep
+                            return <ReferenceLine key={`ev-${i}`} x={evDate} stroke={color} strokeDasharray="3 3" strokeOpacity={0.35} />
+                          })}
+                          <Area type="monotone" dataKey="total" stroke={C.ink} strokeWidth={2} fill={C.ink} fillOpacity={0.04}
+                            dot={{ r: 3, fill: C.ink, stroke: "var(--white)", strokeWidth: 1.5 }}
+                            activeDot={{ r: 5, fill: C.ink, stroke: "var(--white)", strokeWidth: 2 }}
+                            connectNulls={false}
+                          />
+                          <Line type="monotone" dataKey="sleep" stroke={C.sleep} strokeWidth={1.25} dot={{ r: 2.5, fill: C.sleep, stroke: "var(--white)", strokeWidth: 1 }} connectNulls={false} />
+                          <Line type="monotone" dataKey="blood" stroke={C.blood} strokeWidth={1.25} dot={{ r: 2.5, fill: C.blood, stroke: "var(--white)", strokeWidth: 1 }} connectNulls={false} />
+                          <Line type="monotone" dataKey="oral" stroke={C.oral} strokeWidth={1.25} dot={{ r: 2.5, fill: C.oral, stroke: "var(--white)", strokeWidth: 1 }} connectNulls={false} />
+                          <Line type="monotone" dataKey="lifestyle" stroke={C.lifestyle} strokeWidth={1.25} dot={{ r: 2.5, fill: C.lifestyle, stroke: "var(--white)", strokeWidth: 1 }} connectNulls={false} />
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )
+                })()}
               </div>
+            </CollapsibleSection>
 
-              <div style={{ display: "grid", gridTemplateColumns: data!.previous ? "1fr 1fr" : "1fr", gap: 12 }}>
-                {/* Current */}
-                <div style={{ ...card, borderLeft: `3px solid ${C.ink}` }}>
-                  <p style={{ fontFamily: body, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-40)", margin: "0 0 10px" }}>
-                    Current · {data!.current?.date ? fmtMonthYear(data!.current.date) : "—"}
-                  </p>
-                  <p style={{ fontFamily: serif, fontSize: 32, fontWeight: 300, color: C.ink, margin: "0 0 12px", lineHeight: 1 }}>
-                    {fmt(data!.current?.total, 0)}
-                  </p>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    {(["sleep", "blood", "oral", "lifestyle"] as const).map(k => (
-                      <span key={k} style={{
-                        fontFamily: body, fontSize: 10, padding: "3px 10px",
-                        borderRadius: 12, background: `${C[k]}12`, color: C[k], fontWeight: 500,
-                      }}>
-                        {k.charAt(0).toUpperCase() + k.slice(1)} {fmt(data!.current?.[k], 0)}
-                      </span>
-                    ))}
+            {/* ─── CHECK-INS ───────────────────────────────── */}
+            <CollapsibleSection
+              title="Check-ins"
+              defaultOpen={data!.shouldPromptCheckin && !checkinSaved}
+              badge={checkinSaved ? "Saved" : data!.shouldPromptCheckin ? "Due" : daysSinceCheckin != null ? `${daysSinceCheckin}d ago` : undefined}
+            >
+              <div style={{ marginBottom: 8 }}>
+                {!checkinSaved ? (
+                  <div style={{ ...card, border: "0.5px solid var(--ink-12)" }}>
+                    <p style={{ fontFamily: serif, fontSize: 20, fontWeight: 300, color: C.ink, margin: "0 0 4px" }}>
+                      Has your lifestyle changed recently?
+                    </p>
+                    <p style={{ fontFamily: body, fontSize: 12, color: "var(--ink-30)", margin: "0 0 20px" }}>
+                      {isFirstCheckin ? "First check-in" : `Last check-in ${daysSinceCheckin} days ago`}
+                    </p>
+
+                    {/* Yes / No gate */}
+                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                      <button
+                        onClick={handleNoChange}
+                        style={{
+                          fontFamily: body, padding: "10px 24px", borderRadius: 8, fontSize: 14,
+                          border: lifestyleChanged === false ? `1.5px solid var(--ink)` : "0.5px solid var(--ink-20)",
+                          background: lifestyleChanged === false ? "var(--ink)" : "transparent",
+                          color: lifestyleChanged === false ? "var(--off-white)" : "var(--ink-60)",
+                          cursor: "pointer",
+                        }}
+                      >
+                        No, about the same
+                      </button>
+                      <button
+                        onClick={() => { setLifestyleChanged(true); setExpanded(true) }}
+                        style={{
+                          fontFamily: body, padding: "10px 24px", borderRadius: 8, fontSize: 14,
+                          border: lifestyleChanged === true ? `1.5px solid var(--ink)` : "0.5px solid var(--ink-20)",
+                          background: lifestyleChanged === true ? "var(--ink)" : "transparent",
+                          color: lifestyleChanged === true ? "var(--off-white)" : "var(--ink-60)",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Yes, things have changed
+                      </button>
+                    </div>
+
+                    {/* "No" confirmation */}
+                    {lifestyleChanged === false && (
+                      <div style={{ marginTop: 16, fontFamily: body, fontSize: 13, color: "var(--ink-40)", borderTop: "0.5px solid var(--ink-08)", paddingTop: 14 }}>
+                        Got it — we&apos;ll check in again in 30 days. Your lifestyle score stays the same.
+                      </div>
+                    )}
+
+                    {/* Expanded detail form */}
+                    {expanded && (
+                      <div style={{ marginTop: 24, borderTop: "0.5px solid var(--ink-08)", paddingTop: 20 }}>
+                        <CheckinRow
+                          label="Exercise"
+                          options={[{ value: "less", label: "Less than before" }, { value: "same", label: "Same" }, { value: "more", label: "More than before" }]}
+                          value={checkin.exercise_frequency}
+                          onChange={v => setCheckin(c => ({ ...c, exercise_frequency: v }))}
+                          previous={isFirstCheckin ? undefined : prevCheckin?.exercise_frequency}
+                        />
+                        <CheckinRow
+                          label="Diet"
+                          options={[{ value: "worse", label: "Worse" }, { value: "same", label: "Same" }, { value: "better", label: "Better" }]}
+                          value={checkin.diet_quality}
+                          onChange={v => setCheckin(c => ({ ...c, diet_quality: v }))}
+                          previous={isFirstCheckin ? undefined : prevCheckin?.diet_quality}
+                        />
+                        <CheckinRow
+                          label="Stress"
+                          options={[{ value: "higher", label: "Higher" }, { value: "same", label: "Same" }, { value: "lower", label: "Lower" }]}
+                          value={checkin.stress_level}
+                          onChange={v => setCheckin(c => ({ ...c, stress_level: v }))}
+                          previous={isFirstCheckin ? undefined : prevCheckin?.stress_level}
+                        />
+                        <CheckinRow
+                          label="Alcohol"
+                          options={[{ value: "more", label: "More" }, { value: "same", label: "Same" }, { value: "less", label: "Less" }, { value: "none", label: "None" }]}
+                          value={checkin.alcohol_frequency}
+                          onChange={v => setCheckin(c => ({ ...c, alcohol_frequency: v }))}
+                          previous={isFirstCheckin ? undefined : prevCheckin?.alcohol_frequency}
+                        />
+                        <CheckinRow
+                          label="Sleep focus"
+                          options={[{ value: "less", label: "Less priority" }, { value: "same", label: "Same" }, { value: "more", label: "More priority" }]}
+                          value={checkin.sleep_priority}
+                          onChange={v => setCheckin(c => ({ ...c, sleep_priority: v }))}
+                          previous={isFirstCheckin ? undefined : prevCheckin?.sleep_priority}
+                        />
+                        <CheckinRow
+                          label="Energy & mood"
+                          options={[{ value: "lower", label: "Lower than usual" }, { value: "normal", label: "About normal" }, { value: "better", label: "Better than usual" }]}
+                          value={checkin.energy_level}
+                          onChange={v => setCheckin(c => ({ ...c, energy_level: v }))}
+                          previous={isFirstCheckin ? undefined : prevCheckin?.energy_level}
+                        />
+                        <CheckinRow
+                          label="Blood pressure"
+                          options={[{ value: "higher", label: "Feeling higher" }, { value: "normal", label: "Seems normal" }, { value: "lower", label: "Feeling lower" }]}
+                          value={checkin.blood_pressure_feeling}
+                          onChange={v => setCheckin(c => ({ ...c, blood_pressure_feeling: v }))}
+                          previous={isFirstCheckin ? undefined : prevCheckin?.blood_pressure_feeling}
+                        />
+                        <SupplementPicker
+                          value={checkin.supplements}
+                          onChange={v => setCheckin(c => ({ ...c, supplements: v }))}
+                        />
+                        <button
+                          onClick={handleSubmitCheckin}
+                          disabled={checkinSubmitting}
+                          style={{
+                            fontFamily: body, marginTop: 4, padding: "12px 28px", fontSize: 14,
+                            background: "var(--ink)", color: "var(--off-white)",
+                            border: "none", borderRadius: 8,
+                            cursor: checkinSubmitting ? "wait" : "pointer",
+                            opacity: checkinSubmitting ? 0.6 : 1,
+                            width: "100%", transition: "opacity 0.15s ease",
+                          }}
+                        >
+                          {checkinSubmitting ? "Saving..." : "Save check-in"}
+                        </button>
+                      </div>
+                    )}
                   </div>
+                ) : checkinResult ? (
+                  <div style={{ ...card, borderLeft: `3px solid #2D6A4F`, padding: "20px 24px" }}>
+                    <p style={{ fontFamily: body, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.08em", color: "#2D6A4F", margin: "0 0 10px" }}>
+                      ✓ Check-in saved
+                    </p>
+                    {checkinResult.shouldUpdateQuestionnaire ? (
+                      <>
+                        <p style={{ fontFamily: body, fontSize: 13, color: "var(--ink-60)", margin: "0 0 16px", lineHeight: 1.7 }}>
+                          {checkinResult.changeDirection === "positive"
+                            ? "A lot has changed since your last assessment. Want to update your full lifestyle score?"
+                            : "Your lifestyle has shifted. Updating your full assessment will keep your score accurate."
+                          }{" "}It takes about 2 minutes.
+                        </p>
+                        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                          <Link href="/settings/lifestyle" style={{ fontFamily: body, fontSize: 12, fontWeight: 500, padding: "8px 18px", background: "var(--ink)", color: "var(--off-white)", textDecoration: "none", borderRadius: 4 }}>
+                            Update lifestyle score →
+                          </Link>
+                          <button onClick={() => setCheckinResult(null)} style={{ fontFamily: body, fontSize: 12, color: "var(--ink-30)", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                            Maybe later
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <p style={{ fontFamily: body, fontSize: 13, color: "var(--ink-60)", margin: 0, lineHeight: 1.7 }}>
+                        Your lifestyle looks consistent — no score update needed.
+                        <br />We&apos;ll check in again in 30 days.
+                      </p>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            </CollapsibleSection>
+
+            {/* ─── SNAPSHOTS ───────────────────────────────── */}
+            <CollapsibleSection title="Snapshots" defaultOpen={false}>
+              <div style={{ marginBottom: 8 }}>
+                {/* Delta cards */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 16 }}>
+                  {([
+                    { key: "total" as const, label: "TOTAL", max: 100 },
+                    { key: "sleep" as const, label: "SLEEP", max: 27 },
+                    { key: "blood" as const, label: "BLOOD", max: 33 },
+                    { key: "oral" as const, label: "ORAL", max: 27 },
+                  ]).map(panel => {
+                    const cur = data!.current?.[panel.key] ?? 0
+                    const prev = data!.previous?.[panel.key]
+                    const d = delta(cur, prev, data!.previous == null)
+                    const color = C[panel.key as keyof typeof C] ?? C.ink
+                    return (
+                      <div key={panel.key} style={{ ...card, borderTop: `2px solid ${color}`, padding: "14px 14px 12px" }}>
+                        <p style={{ fontFamily: body, fontSize: 8, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-40)", margin: "0 0 6px" }}>
+                          {panel.label} {panel.key !== "total" && <span style={{ color: "var(--ink-20)" }}>/{panel.max}</span>}
+                        </p>
+                        <p style={{ fontFamily: serif, fontSize: 28, fontWeight: 300, color, margin: "0 0 4px", lineHeight: 1 }}>
+                          {fmt(cur, 0)}
+                        </p>
+                        <p style={{ fontFamily: body, fontSize: 10, color: d.color, margin: 0 }}>{d.text}</p>
+                      </div>
+                    )
+                  })}
                 </div>
 
-                {/* Previous */}
-                {data!.previous && (
-                  <div style={{ ...card, borderLeft: "3px solid var(--ink-12)", opacity: 0.7 }}>
+                <div style={{ display: "grid", gridTemplateColumns: data!.previous ? "1fr 1fr" : "1fr", gap: 12 }}>
+                  <div style={{ ...card, borderLeft: `3px solid var(--ink)` }}>
                     <p style={{ fontFamily: body, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-40)", margin: "0 0 10px" }}>
-                      Previous · {fmtMonthYear(data!.previous.date)}
+                      Current · {data!.current?.date ? fmtMonthYear(data!.current.date) : "—"}
                     </p>
-                    <p style={{ fontFamily: serif, fontSize: 32, fontWeight: 300, color: "var(--ink-40)", margin: "0 0 12px", lineHeight: 1 }}>
-                      {fmt(data!.previous.total, 0)}
+                    <p style={{ fontFamily: serif, fontSize: 32, fontWeight: 300, color: C.ink, margin: "0 0 12px", lineHeight: 1 }}>
+                      {fmt(data!.current?.total, 0)}
                     </p>
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                       {(["sleep", "blood", "oral", "lifestyle"] as const).map(k => (
-                        <span key={k} style={{
-                          fontFamily: body, fontSize: 10, padding: "3px 10px",
-                          borderRadius: 12, background: "var(--ink-06)", color: "var(--ink-40)", fontWeight: 500,
-                        }}>
-                          {k.charAt(0).toUpperCase() + k.slice(1)} {fmt(data!.previous![k], 0)}
+                        <span key={k} style={{ fontFamily: body, fontSize: 10, padding: "3px 10px", borderRadius: 12, background: `${C[k]}12`, color: C[k], fontWeight: 500 }}>
+                          {k.charAt(0).toUpperCase() + k.slice(1)} {fmt(data!.current?.[k], 0)}
                         </span>
                       ))}
                     </div>
                   </div>
+                  {data!.previous && (
+                    <div style={{ ...card, borderLeft: "3px solid var(--ink-12)", opacity: 0.7 }}>
+                      <p style={{ fontFamily: body, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-40)", margin: "0 0 10px" }}>
+                        Previous · {fmtMonthYear(data!.previous.date)}
+                      </p>
+                      <p style={{ fontFamily: serif, fontSize: 32, fontWeight: 300, color: "var(--ink-40)", margin: "0 0 12px", lineHeight: 1 }}>
+                        {fmt(data!.previous.total, 0)}
+                      </p>
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        {(["sleep", "blood", "oral", "lifestyle"] as const).map(k => (
+                          <span key={k} style={{ fontFamily: body, fontSize: 10, padding: "3px 10px", borderRadius: 12, background: "var(--ink-06)", color: "var(--ink-40)", fontWeight: 500 }}>
+                            {k.charAt(0).toUpperCase() + k.slice(1)} {fmt(data!.previous![k], 0)}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {!data!.previous && (
+                  <p style={{ fontFamily: body, fontSize: 12, color: "var(--ink-30)", marginTop: 12, fontStyle: "italic" }}>
+                    More snapshots will appear as you update your data.
+                  </p>
                 )}
               </div>
-              {!data!.previous && (
-                <p style={{ fontFamily: body, fontSize: 12, color: "var(--ink-30)", marginTop: 12, fontStyle: "italic" }}>
-                  More snapshots will appear as you update your data.
-                </p>
-              )}
-            </div>
+            </CollapsibleSection>
 
-            {/* ─── 4j NEXT SNAPSHOT + PROGRESS BAR ─────── */}
-            <div style={{ ...card, background: "var(--off-white)" }}>
+            {/* ─── NEXT SNAPSHOT (always visible) ──────────── */}
+            <div style={{ ...card, background: "var(--off-white)", marginTop: 20 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
                 <p style={{ fontFamily: body, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-40)", margin: 0 }}>
                   Next full snapshot
@@ -861,19 +950,11 @@ export function TrendsClient() {
                 }
                 {data!.lastOralDate && ` Oral kit submitted ${fmtDate(data!.lastOralDate)}.`}
               </p>
-
-              {/* Progress bar */}
               {data!.daysSinceLastLab != null && (
                 <div style={{ marginBottom: 16 }}>
-                  <div style={{
-                    height: 6, borderRadius: 3,
-                    background: "var(--ink-06)",
-                    overflow: "hidden",
-                  }}>
+                  <div style={{ height: 6, borderRadius: 3, background: "var(--ink-06)", overflow: "hidden" }}>
                     <div style={{
-                      height: "100%", borderRadius: 3,
-                      background: C.ink,
-                      opacity: 0.25,
+                      height: "100%", borderRadius: 3, background: "var(--ink)", opacity: 0.25,
                       width: `${Math.min((data!.daysSinceLastLab / 90) * 100, 100)}%`,
                       transition: "width 0.5s ease",
                     }} />
@@ -883,18 +964,11 @@ export function TrendsClient() {
                   </p>
                 </div>
               )}
-
               <div style={{ display: "flex", gap: 16 }}>
-                <Link href="/dashboard/blood" style={{
-                  fontFamily: body, fontSize: 12, color: C.blood,
-                  textDecoration: "none", letterSpacing: "0.02em",
-                }}>
+                <Link href="/dashboard/blood" style={{ fontFamily: body, fontSize: 12, color: C.blood, textDecoration: "none", letterSpacing: "0.02em" }}>
                   Upload labs →
                 </Link>
-                <Link href="/shop" style={{
-                  fontFamily: body, fontSize: 12, color: C.oral,
-                  textDecoration: "none", letterSpacing: "0.02em",
-                }}>
+                <Link href="/shop" style={{ fontFamily: body, fontSize: 12, color: C.oral, textDecoration: "none", letterSpacing: "0.02em" }}>
                   Order oral kit →
                 </Link>
               </div>

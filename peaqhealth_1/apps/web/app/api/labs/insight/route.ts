@@ -165,7 +165,7 @@ export async function GET() {
     svc.from("wearable_connections_v2").select("provider").eq("user_id", user.id).eq("needs_reconnect", false).order("connected_at", { ascending: false }).limit(1).maybeSingle(),
     svc.from("oral_kit_orders").select("oral_score_snapshot,shannon_diversity,nitrate_reducers_pct,periodontopathogen_pct,osa_taxa_pct").eq("user_id", user.id).eq("status", "results_ready").order("ordered_at", { ascending: false }).limit(1).maybeSingle(),
     svc.from("lifestyle_records").select("*").eq("user_id", user.id).maybeSingle(),
-    svc.from("lifestyle_checkins").select("exercise_frequency,diet_quality,stress_level,alcohol_frequency,checked_in_at").eq("user_id", user.id).order("checked_in_at", { ascending: false }).limit(1).maybeSingle(),
+    svc.from("lifestyle_checkins").select("exercise_frequency,diet_quality,stress_level,alcohol_frequency,sleep_priority,energy_level,blood_pressure_feeling,supplements,checked_in_at").eq("user_id", user.id).order("checked_in_at", { ascending: false }).limit(1).maybeSingle(),
   ])
 
   const lab         = labRes.data
@@ -314,8 +314,16 @@ LIFESTYLE SELF-REPORT (most recent check-in: ${recentCheckin?.checked_in_at ?? "
 ${recentCheckin ? `- Exercise: ${recentCheckin.exercise_frequency ?? "not reported"}
 - Diet: ${recentCheckin.diet_quality ?? "not reported"}
 - Stress: ${recentCheckin.stress_level ?? "not reported"}
-- Alcohol: ${recentCheckin.alcohol_frequency ?? "not reported"}` : "No check-in data available"}
-Note: these are self-reported relative changes, not absolute values. Use them to add context to insights but do not make strong claims from them. Example: if exercise is "more" and HRV is trending up, that is worth noting as an interesting pattern.
+- Alcohol: ${recentCheckin.alcohol_frequency ?? "not reported"}
+- Sleep focus: ${(recentCheckin as Record<string, unknown>).sleep_priority ?? "not reported"}
+- Energy level: ${(recentCheckin as Record<string, unknown>).energy_level ?? "not reported"}
+- Blood pressure feeling: ${(recentCheckin as Record<string, unknown>).blood_pressure_feeling ?? "not reported"}
+- Supplements: ${Array.isArray((recentCheckin as Record<string, unknown>).supplements) && ((recentCheckin as Record<string, unknown>).supplements as string[]).length > 0 ? ((recentCheckin as Record<string, unknown>).supplements as string[]).join(", ") : "none reported"}` : "No check-in data available"}
+Note: these are self-reported relative changes, not absolute values. Use them to add context to insights but do not make strong claims from them.
+SUPPLEMENT CONTEXT (apply when relevant):
+- If taking a statin: LDL and ApoB values may be lower than baseline due to treatment — note this as context rather than attributing the value solely to lifestyle
+- If taking fish oil: omega-3 supplementation is relevant to triglycerides and inflammatory markers like hsCRP — worth noting as a contributing factor if both are in a good range
+- If taking Vitamin D: relevant to immune function and inflammatory tone
 
 PATTERNS TO LOOK FOR:
 Interesting cross-panel connections (frame with curiosity, not alarm):
