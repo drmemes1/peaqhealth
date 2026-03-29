@@ -159,19 +159,21 @@ export async function GET() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   )
 
-  const [labRes, sleepRes, wearableRes, oralRes, lifestyleRes] = await Promise.all([
+  const [labRes, sleepRes, wearableRes, oralRes, lifestyleRes, checkinRes] = await Promise.all([
     svc.from("lab_results").select("*").eq("user_id", user.id).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).maybeSingle(),
     svc.from("sleep_data").select("date,source,total_sleep_minutes,deep_sleep_minutes,rem_sleep_minutes,sleep_efficiency,hrv_rmssd,spo2,resting_heart_rate").eq("user_id", user.id).order("date", { ascending: false }).limit(15),
     svc.from("wearable_connections_v2").select("provider").eq("user_id", user.id).eq("needs_reconnect", false).order("connected_at", { ascending: false }).limit(1).maybeSingle(),
     svc.from("oral_kit_orders").select("oral_score_snapshot,shannon_diversity,nitrate_reducers_pct,periodontopathogen_pct,osa_taxa_pct").eq("user_id", user.id).eq("status", "results_ready").order("ordered_at", { ascending: false }).limit(1).maybeSingle(),
     svc.from("lifestyle_records").select("*").eq("user_id", user.id).maybeSingle(),
+    svc.from("lifestyle_checkins").select("exercise_frequency,diet_quality,stress_level,alcohol_frequency,checked_in_at").eq("user_id", user.id).order("checked_in_at", { ascending: false }).limit(1).maybeSingle(),
   ])
 
-  const lab       = labRes.data
-  const sleepRows = sleepRes.data ?? []
-  const wearable  = wearableRes.data
-  const oral      = oralRes.data
-  const lifestyle = lifestyleRes.data
+  const lab         = labRes.data
+  const sleepRows   = sleepRes.data ?? []
+  const wearable    = wearableRes.data
+  const oral        = oralRes.data
+  const lifestyle   = lifestyleRes.data
+  const recentCheckin = checkinRes.data
 
   const hasSomething = !!(lab || sleepRows.length > 0 || oral || lifestyle)
   if (!hasSomething) return NextResponse.json({ error: "No data" }, { status: 422 })
@@ -307,6 +309,13 @@ ${oralData ? `- Shannon diversity: ${fmt(oralData.shannon, 2)} (target ≥3.0)
 
 LIFESTYLE:
 ${lifestyleData ? JSON.stringify(lifestyleData) : "Not available"}
+
+LIFESTYLE SELF-REPORT (most recent check-in: ${recentCheckin?.checked_in_at ?? "none"}):
+${recentCheckin ? `- Exercise: ${recentCheckin.exercise_frequency ?? "not reported"}
+- Diet: ${recentCheckin.diet_quality ?? "not reported"}
+- Stress: ${recentCheckin.stress_level ?? "not reported"}
+- Alcohol: ${recentCheckin.alcohol_frequency ?? "not reported"}` : "No check-in data available"}
+Note: these are self-reported relative changes, not absolute values. Use them to add context to insights but do not make strong claims from them. Example: if exercise is "more" and HRV is trending up, that is worth noting as an interesting pattern.
 
 PATTERNS TO LOOK FOR:
 Interesting cross-panel connections (frame with curiosity, not alarm):

@@ -203,6 +203,7 @@ export function TrendsClient() {
   const [checkinOpen, setCheckinOpen] = useState(true)
   const [checkinSaved, setCheckinSaved] = useState(false)
   const [checkinSubmitting, setCheckinSubmitting] = useState(false)
+  const [checkinResult, setCheckinResult] = useState<{ shouldUpdateQuestionnaire: boolean; changeDirection: string; message: string } | null>(null)
   const [exercise, setExercise] = useState<string | null>(null)
   const [diet, setDiet] = useState<string | null>(null)
   const [stress, setStress] = useState<string | null>(null)
@@ -220,17 +221,19 @@ export function TrendsClient() {
     if (checkinSubmitting) return
     setCheckinSubmitting(true)
     try {
-      await fetch("/api/trends/checkin", {
+      const res = await fetch("/api/trends/checkin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           exercise_frequency: exercise,
-          diet_quality: diet,
-          stress_level: stress,
-          alcohol_frequency: alcohol,
-          sleep_priority: sleepPriority,
+          diet_quality:       diet,
+          stress_level:       stress,
+          alcohol_frequency:  alcohol,
+          sleep_priority:     sleepPriority,
         }),
       })
+      const result = await res.json() as { shouldUpdateQuestionnaire: boolean; changeDirection: string; message: string }
+      setCheckinResult(result)
       setCheckinSaved(true)
       setCheckinOpen(false)
     } catch {
@@ -510,10 +513,44 @@ export function TrendsClient() {
 
             {/* Check-in confirmation */}
             {checkinSaved && (
-              <div style={{ ...card, borderLeft: `3px solid #2D6A4F`, padding: "14px 20px" }}>
-                <p style={{ fontFamily: body, fontSize: 13, color: "#2D6A4F", margin: 0 }}>
-                  Check-in saved — we'll factor this into your next insights.
+              <div style={{ ...card, borderLeft: `3px solid #2D6A4F`, padding: "20px 24px" }}>
+                <p style={{ fontFamily: body, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.08em", color: "#2D6A4F", margin: "0 0 10px" }}>
+                  ✓ Check-in saved
                 </p>
+                {checkinResult?.shouldUpdateQuestionnaire ? (
+                  <>
+                    <p style={{ fontFamily: body, fontSize: 13, color: "var(--ink-60)", margin: "0 0 16px", lineHeight: 1.7 }}>
+                      {checkinResult.changeDirection === "positive"
+                        ? "A lot has changed since your last assessment. Want to update your full lifestyle score?"
+                        : "Your lifestyle has shifted. Updating your full assessment will keep your score accurate."
+                      }{" "}
+                      It takes about 2 minutes.
+                    </p>
+                    <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                      <Link
+                        href="/settings/lifestyle"
+                        style={{
+                          fontFamily: body, fontSize: 12, fontWeight: 500,
+                          padding: "8px 18px", background: C.ink, color: "var(--off-white)",
+                          textDecoration: "none", borderRadius: 4,
+                        }}
+                      >
+                        Update lifestyle score →
+                      </Link>
+                      <button
+                        onClick={() => setCheckinResult(null)}
+                        style={{ fontFamily: body, fontSize: 12, color: "var(--ink-30)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                      >
+                        Maybe later
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <p style={{ fontFamily: body, fontSize: 13, color: "var(--ink-60)", margin: 0, lineHeight: 1.7 }}>
+                    Your lifestyle looks consistent — no score update needed.
+                    <br />We&apos;ll check in again in 30 days.
+                  </p>
+                )}
               </div>
             )}
 
