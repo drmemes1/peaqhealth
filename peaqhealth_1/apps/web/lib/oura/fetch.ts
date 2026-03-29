@@ -107,7 +107,15 @@ export async function fetchAndStoreOuraData(
     const total    = (s.total    as number | undefined) ?? (s.duration as number | undefined) ?? 0
     const deep     = (s.deep     as number | undefined) ?? 0
     const rem      = (s.rem      as number | undefined) ?? 0
-    const hrv      = (s.hrv_rmssd as number | undefined) ?? (s.hrv as number | undefined) ?? null
+    const raw      = s.raw_sleep as Record<string, unknown> | undefined
+    // Vital's Oura summary has average_hrv at the top level or inside raw_sleep
+    const hrv      = (s.hrv_rmssd    as number | undefined)
+                  ?? (s.average_hrv  as number | undefined)
+                  ?? (raw?.average_hrv as number | undefined)
+                  ?? null
+    const respRate = (s.respiratory_rate      as number | undefined)
+                  ?? (raw?.respiratory_rate   as number | undefined)
+                  ?? null
     const rhr      = (s.hr_lowest as number | undefined) ?? null
     const spo2     = (s.spo2_avg  as number | undefined) ?? null
     const eff      = (s.efficiency as number | undefined) ?? 0
@@ -117,6 +125,7 @@ export async function fetchAndStoreOuraData(
     console.log(
       `[oura-fetch] sleep record: ${sleepId} date: ${date}`,
       `hrv: ${hrv}`,
+      `respiratory_rate: ${respRate}`,
       `efficiency: ${eff}`,
     )
 
@@ -129,7 +138,7 @@ export async function fetchAndStoreOuraData(
       deep_sleep_minutes:   Math.round(deep  / 60),
       rem_sleep_minutes:    Math.round(rem   / 60),
       sleep_efficiency:     eff,
-      respiratory_rate:     null,
+      respiratory_rate:     respRate,
       hrv_rmssd:            hrv,
       resting_heart_rate:   rhr,
       spo2,

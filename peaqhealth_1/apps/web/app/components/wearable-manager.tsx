@@ -77,11 +77,13 @@ export function WearableManager({
       const firstConnected = connectedArr?.[0]
       const sourceObj = firstConnected?.source as Record<string, unknown> | undefined
       const providerSlug: string =
-        (sourceObj?.slug as string | undefined) ??
-        (firstConnected?.providerSlug as string | undefined) ??
-        (firstConnected?.slug as string | undefined) ??
-        (firstConnected?.sourceType as string | undefined) ??
+        (sourceObj?.slug as string | undefined)?.toLowerCase() ??
+        (firstConnected?.providerSlug as string | undefined)?.toLowerCase() ??
+        (firstConnected?.slug as string | undefined)?.toLowerCase() ??
+        (firstConnected?.sourceType as string | undefined)?.toLowerCase() ??
         (firstConnected?.name as string | undefined)?.toLowerCase().replace(/\s+/g, "_") ??
+        (metadata.source_slug as string | undefined)?.toLowerCase() ??
+        (metadata.source as string | undefined)?.toLowerCase() ??
         "unknown"
       const junctionUserId: string =
         (metadata.userId as string | undefined) ??

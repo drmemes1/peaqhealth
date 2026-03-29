@@ -47,6 +47,13 @@ export async function POST(request: NextRequest) {
 
   console.log("[wearable] step 1 — auth OK, userId:", user.id)
 
+  // Hard guard: WHOOP has its own OAuth callback and must never reach this handler.
+  // If it does, something in the frontend routing is broken.
+  if (provider === "whoop") {
+    console.error("[wearable] ERROR: WHOOP connect should not reach this handler — use /api/auth/whoop/callback")
+    return NextResponse.json({ error: "Wrong handler for WHOOP" }, { status: 400 })
+  }
+
   if (!provider || provider === "unknown") {
     console.error("[wearable] could not resolve provider from body — cannot save connection")
     return NextResponse.json({ error: "Missing provider" }, { status: 400 })
