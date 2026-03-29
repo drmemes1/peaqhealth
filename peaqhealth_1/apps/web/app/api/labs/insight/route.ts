@@ -15,8 +15,8 @@ VOICE:
 
 STRICT RULES:
 1. Every insight must connect at least 2 panels. Single-panel observations are forbidden.
-2. At least 2 of 6 insights must include the oral panel.
-3. At least 2 of 6 insights must be POSITIVE — celebrating something the user is doing well across panels.
+2. Generate exactly 3 insight cards — never more, never fewer.
+3. Order is fixed: card 1 = POSITIVE, card 2 = WATCH, card 3 = EXPLORE.
 4. Only reference established biological relationships. Never invent terminology or mechanisms.
 5. Never say: "you have", "you are at risk", "indicates that you", "this means you have", "you should see a doctor", "you need to", or any diagnostic language.
 6. Instead say: "your data shows", "this pattern may suggest", "worth keeping an eye on", "an interesting connection", "something to explore with your doctor if curious"
@@ -25,10 +25,10 @@ STRICT RULES:
 
 CATEGORY DECISION RULES — apply these exactly:
 
-POSITIVE when:
+POSITIVE (card 1) — a genuine strength across 2+ panels:
 - The headline metric is above its target AND
 - The connected panel metric is also in a good range AND
-- The overall message is affirming
+- The overall message is affirming and builds trust
 Examples that MUST be POSITIVE:
   - REM ≥18% + glucose in healthy range → POSITIVE
   - Deep sleep ≥17% + low hsCRP → POSITIVE
@@ -36,15 +36,15 @@ Examples that MUST be POSITIVE:
   - High Shannon diversity + low hsCRP → POSITIVE
 Never assign EXPLORE or WATCH when both values are clearly above their targets. That is always POSITIVE.
 
-WATCH when:
+WATCH (card 2) — the most clinically interesting cross-panel signal worth monitoring:
 - One or more values are outside their target range AND
 - The pattern is worth monitoring over time
-- Not alarming, just notable
+- Not alarming, just notable — the most interesting signal in the data
 
-EXPLORE when:
-- Data is ambiguous or one panel's data is partially missing AND
-- The connection is interesting but not clearly positive or negative
-Never use EXPLORE when both values are clearly above their targets.
+EXPLORE (card 3) — something actionable the user can do based on their data:
+- A specific lifestyle or behavior change connected to at least 2 panels
+- Framed as a practical action, not a diagnosis
+- Even if data is strong overall, find the most useful thing worth trying
 
 TONE MUST MATCH CATEGORY:
 - POSITIVE body: affirming and specific — "Your REM at 26.7% and glucose at 83 mg/dL are moving together well", "This is a strong combination"
@@ -231,13 +231,12 @@ export async function GET() {
   }
 
   // ── User prompt ────────────────────────────────────────────────────────────
-  const userPrompt = `Generate 6 cross-panel insights for this user's Peaq Health data.
+  const userPrompt = `Generate exactly 3 cross-panel insights in this order: 1 POSITIVE, 1 WATCH, 1 EXPLORE.
 
 MANDATORY COMPOSITION:
+- Exactly 3 cards — no more, no fewer
+- Fixed order: card 1 = POSITIVE, card 2 = WATCH, card 3 = EXPLORE
 - Every insight connects at least 2 panels
-- At least 2 insights include the ORAL panel
-- At least 2 insights are POSITIVE — celebrating strong cross-panel patterns
-- Remaining insights note interesting patterns worth watching, framed with curiosity not alarm
 - Only generate insights supported by the user's actual data
 - Skip any panel that is unavailable
 
@@ -269,7 +268,7 @@ Interesting cross-panel connections (frame with curiosity, not alarm):
 - Low HRV alongside sleep efficiency and oral diversity — autonomic balance touches multiple systems
 - Glucose markers alongside sleep architecture — sleep and metabolic markers are increasingly understood to be connected
 
-POSITIVE cards (generate only when genuinely supported — do not manufacture to fill a quota):
+POSITIVE card guidance:
 A POSITIVE card is valid ONLY when:
 - A metric is meaningfully above its target (not just within range)
 - AND a second panel has a related metric also in a good range
@@ -286,9 +285,9 @@ Invalid POSITIVE examples (do not generate these):
 - Any card where both values are merely "within range" rather than genuinely strong
 - Any card framed as "may suggest" or "could be linked" — POSITIVE cards require established connections
 
-If fewer than 2 valid POSITIVE cards exist in the user's data, generate 1 POSITIVE and use the remaining slot for a well-evidenced WATCH or EXPLORE card. Do not invent positive associations to meet the quota.
+If no strong POSITIVE signal exists, pick the best available strength and frame it warmly. Do not invent connections that aren't there.
 
-Return a JSON array of exactly 6 insight objects:
+Return a JSON array of exactly 3 insight objects in this order: POSITIVE, WATCH, EXPLORE:
 [
   {
     "id": "unique_string",
@@ -296,7 +295,7 @@ Return a JSON array of exactly 6 insight objects:
     "headline": "5-8 words, specific to this user's values, not alarming",
     "body": "2-3 sentences. Observational tone. Use actual numbers. Use language like 'may suggest', 'worth noting', 'interesting pattern'. For positive cards, be warm and affirming.",
     "mechanism": "one sentence describing the biological relationship in plain language — frame as 'research suggests' or 'these two are thought to be connected through...'",
-    "action": "one gentle suggestion framed as 'worth exploring' or 'something to discuss if you're curious' — never a medical instruction",
+    "action": "one direct sentence — for POSITIVE: affirming and specific, no hedging. For WATCH/EXPLORE: one gentle, actionable suggestion.",
     "category": "POSITIVE",
     "priority": 1,
     "citations": ["1-3 real published studies most relevant to this specific insight. Format: Author et al., Journal Name, Year. Only include studies you are highly confident exist — omit if uncertain."]
@@ -304,7 +303,7 @@ Return a JSON array of exactly 6 insight objects:
 ]
 
 category must be exactly one of: "POSITIVE", "WATCH", "EXPLORE"
-Priority 1 = most interesting or relevant. Oral panel must appear in at least 2 cards. At least 2 cards must be POSITIVE category.`
+Array order is fixed: index 0 = POSITIVE, index 1 = WATCH, index 2 = EXPLORE.`
 
   // ── Pre-call panel data log ────────────────────────────────────────────────
   console.log(
@@ -349,7 +348,7 @@ Priority 1 = most interesting or relevant. Oral panel must appear in at least 2 
         { role: "user",   content: userPrompt },
       ],
       temperature: 0.72,
-      max_tokens:  2000,
+      max_tokens:  1200,
       store:       false,  // ZDR — never store
     }, { signal: controller.signal })
     raw = resp.choices[0]?.message.content ?? ""
@@ -373,12 +372,6 @@ Priority 1 = most interesting or relevant. Oral panel must appear in at least 2 
     return NextResponse.json({ error: "Parse failed" }, { status: 500 })
   }
 
-  // Enforce: every card must reference at least 2 panels
-  const twoPanel = parsed.filter((item) => {
-    const i = item as Record<string, unknown>
-    return Array.isArray(i.panels) && (i.panels as unknown[]).length >= 2
-  })
-
   // Remove cards containing banned diagnostic or alarming language
   const BANNED_TERMS = [
     "you have", "you are at risk", "indicates that you",
@@ -393,23 +386,20 @@ Priority 1 = most interesting or relevant. Oral panel must appear in at least 2 
     "deep sleep.*ldl", "deep sleep.*triglyceride", "deep sleep.*apob",
     "sleep.*lipid clearance", "hepatic lipid",
   ]
-  const validated = twoPanel.filter((item) => {
-    const c = item as Record<string, unknown>
-    const text = `${c.headline ?? ""} ${c.body ?? ""} ${c.mechanism ?? ""} ${c.action ?? ""}`.toLowerCase()
-    const hit = BANNED_TERMS.find(term => text.includes(term.toLowerCase()))
-    if (hit) {
-      console.warn("[labs-insight] removed card with banned term:", hit)
-      return false
-    }
-    return true
-  })
 
-  // Composition warnings
-  const oralCards     = validated.filter(c => Array.isArray((c as Record<string, unknown>).panels) && ((c as Record<string, unknown>).panels as string[]).includes("oral"))
-  const positiveCards = validated.filter(c => (c as Record<string, unknown>).category === "POSITIVE")
-  if (oralCards.length < 2)     console.warn(`[labs-insight] only ${oralCards.length} oral cards — oral data may be missing`)
-  if (positiveCards.length < 2) console.warn(`[labs-insight] only ${positiveCards.length} positive cards generated`)
-  if (validated.length < 4)     console.warn(`[labs-insight] only ${validated.length} valid insights after filtering (raw: ${parsed.length})`)
+  // Take first 3 valid cards (2+ panels, no banned language)
+  const validated = parsed
+    .filter((item) => {
+      const c = item as Record<string, unknown>
+      if (!Array.isArray(c.panels) || (c.panels as unknown[]).length < 2) return false
+      const text = `${c.headline ?? ""} ${c.body ?? ""} ${c.mechanism ?? ""} ${c.action ?? ""}`.toLowerCase()
+      const hit = BANNED_TERMS.find(term => text.includes(term.toLowerCase()))
+      if (hit) { console.warn("[labs-insight] removed card with banned term:", hit); return false }
+      return true
+    })
+    .slice(0, 3)
+
+  if (validated.length < 3) console.warn(`[labs-insight] fewer than 3 valid cards: ${validated.length}`)
   console.log(`[labs-insight] insight generated successfully — cards: ${validated.length}`)
 
   return NextResponse.json(validated)

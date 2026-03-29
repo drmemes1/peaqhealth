@@ -225,8 +225,7 @@ export function Insights({ sleepConnected, hasBlood, oralActive, lifestyleActive
     fetch("/api/labs/insight")
       .then(r => r.ok ? r.json() as Promise<InsightCardData[]> : Promise.reject())
       .then(d => {
-        const sorted = Array.isArray(d) ? [...d].sort((a, b) => a.priority - b.priority) : []
-        setCards(sorted)
+        setCards(Array.isArray(d) ? d : [])
         setLoading(false)
       })
       .catch(() => setLoading(false))
