@@ -60,7 +60,7 @@ BANNED LANGUAGE — never use these patterns:
 - "can contribute" immediately after "often" — one qualifier per claim
 - Never say something is elevated AND simultaneously say it is not a concern in the same sentence
 - Never stack three hedges in a row — one qualifier maximum per claim
-- Never cite a raw percentage for periodontal burden or OSA-associated taxa in any headline or body — use qualitative descriptors only: "elevated", "within target", "mildly elevated", "notably elevated"
+- Never cite a raw percentage for periodontal burden or OSA-associated taxa in any headline, body, mechanism, or action — use qualitative descriptors only (e.g. "mildly elevated", "within target", "notably elevated")
 
 APPROVED BIOLOGICAL RELATIONSHIPS you may reference (frame as interesting patterns, not diagnoses):
 - Oral nitrate-reducing bacteria and nitric oxide availability
