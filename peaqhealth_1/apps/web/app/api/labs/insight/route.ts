@@ -23,6 +23,11 @@ STRICT RULES:
 7. Actions must be lifestyle observations, not medical instructions. Frame as "something worth exploring" not "you must do X."
 8. Return ONLY valid JSON. No markdown, no backticks, no commentary.
 
+TONE MUST MATCH CATEGORY:
+- POSITIVE cards must use affirming, celebratory language: "This is a strong combination", "This reflects well on your overall pattern", "This alignment is worth maintaining", "Your data shows a healthy connection between..."
+- WATCH/EXPLORE cards use neutral monitoring language: "worth keeping an eye on", "these often trend together", "research suggests a connection worth noting"
+- Never use exploratory or investigative language ("worth exploring", "interesting to investigate") inside a POSITIVE card. POSITIVE = celebratory, not curious.
+
 APPROVED BIOLOGICAL RELATIONSHIPS you may reference (frame as interesting patterns, not diagnoses):
 - Oral nitrate-reducing bacteria and nitric oxide availability
 - Periodontal bacteria and systemic inflammation markers like hsCRP
@@ -49,6 +54,20 @@ function num(v: unknown): number | undefined {
 const fmt = (v: unknown, decimals = 1): string => {
   const n = Number(v)
   return isNaN(n) ? "N/A" : n.toFixed(decimals)
+}
+
+// Convert oral DB value to a percentage (0–100), capped at 100.
+// Handles two storage patterns:
+//   • JSONB snap values — already percentages (e.g. 3.84)
+//   • Flat columns — fractions (e.g. 0.0384); but some rows store percentages directly
+// Heuristic: if value > 1, treat as already a percentage; otherwise multiply × 100.
+const toOralPct = (snapVal: unknown, flatVal: unknown): number | null => {
+  const s = snapVal != null ? Number(snapVal) : NaN
+  if (!isNaN(s)) return Math.min(s, 100)
+  if (flatVal == null) return null
+  const f = Number(flatVal)
+  if (isNaN(f)) return null
+  return Math.min(f > 1 ? f : f * 100, 100)
 }
 
 export async function GET() {
@@ -135,10 +154,10 @@ export async function GET() {
     const snap = oral.oral_score_snapshot as Record<string, unknown> | null
     oralData = {
       shannon:           (snap?.shannonDiversity as number | null) ?? (oral.shannon_diversity != null ? Number(oral.shannon_diversity) : null),
-      nitrateReducerPct: (snap?.nitrateReducerPct as number | null) ?? (oral.nitrate_reducers_pct != null ? Number(oral.nitrate_reducers_pct) * 100 : null),
-      periodontalBurden: (snap?.periodontalBurden as number | null) ?? (oral.periodontopathogen_pct != null ? Number(oral.periodontopathogen_pct) * 100 : null),
-      osaBurden:         (snap?.osaBurden as number | null) ?? (oral.osa_taxa_pct != null ? Number(oral.osa_taxa_pct) * 100 : null),
-      protectivePct:     (snap?.protectiveSpecies as number | null) ?? null,
+      nitrateReducerPct: toOralPct(snap?.nitrateReducerPct, oral.nitrate_reducers_pct),
+      periodontalBurden: toOralPct(snap?.periodontalBurden, oral.periodontopathogen_pct),
+      osaBurden:         toOralPct(snap?.osaBurden,         oral.osa_taxa_pct),
+      protectivePct:     toOralPct(snap?.protectiveSpecies, null),
       mouthwashDetected: (snap?.mouthwashDetected as boolean | null) ?? false,
     }
   }
@@ -237,7 +256,8 @@ Return a JSON array of exactly 6 insight objects:
     "mechanism": "one sentence describing the biological relationship in plain language — frame as 'research suggests' or 'these two are thought to be connected through...'",
     "action": "one gentle suggestion framed as 'worth exploring' or 'something to discuss if you're curious' — never a medical instruction",
     "category": "POSITIVE",
-    "priority": 1
+    "priority": 1,
+    "citations": ["1-3 real published studies most relevant to this specific insight. Format: Author et al., Journal Name, Year. Only include studies you are highly confident exist — omit if uncertain."]
   }
 ]
 

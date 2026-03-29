@@ -284,8 +284,9 @@ type ComputedInteraction = {
 }
 
 function InteractionCard({ interaction }: { interaction: ComputedInteraction }) {
-  const [learnOpen, setLearnOpen] = useState(false)
-  const [hoverLearn, setHoverLearn] = useState(false)
+  const [learnOpen, setLearnOpen]     = useState(false)
+  const [hoverLearn, setHoverLearn]   = useState(false)
+  const [sourcesOpen, setSourcesOpen] = useState(false)
   const { learnMore: lm } = interaction
   const font = "var(--font-body, 'Instrument Sans', sans-serif)"
   return (
@@ -320,29 +321,56 @@ function InteractionCard({ interaction }: { interaction: ComputedInteraction }) 
       <p style={{ fontFamily: font, fontSize: 13, color: "rgba(20,20,16,0.6)", margin: "0 0 10px", lineHeight: 1.5 }}>
         {interaction.body}
       </p>
-      <button
-        onClick={e => { e.stopPropagation(); setLearnOpen(o => !o) }}
-        onMouseEnter={() => setHoverLearn(true)}
-        onMouseLeave={() => setHoverLearn(false)}
-        style={{
-          fontFamily: font, fontSize: 11,
-          color: hoverLearn ? "rgba(20,20,16,0.7)" : "rgba(20,20,16,0.4)",
-          background: "none", border: "none", cursor: "pointer", padding: 0,
-          display: "flex", alignItems: "center", gap: 5,
-          transition: "color 0.15s ease",
-        }}
-      >
-        <span style={{
-          width: 14, height: 14, borderRadius: "50%",
-          border: `0.5px solid ${hoverLearn ? "rgba(20,20,16,0.35)" : "rgba(20,20,16,0.2)"}`,
-          display: "inline-flex", alignItems: "center", justifyContent: "center",
-          fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 12, lineHeight: 1,
-          flexShrink: 0, transition: "border-color 0.15s ease",
+      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <button
+          onClick={e => { e.stopPropagation(); setLearnOpen(o => !o) }}
+          onMouseEnter={() => setHoverLearn(true)}
+          onMouseLeave={() => setHoverLearn(false)}
+          style={{
+            fontFamily: font, fontSize: 11,
+            color: hoverLearn ? "rgba(20,20,16,0.7)" : "rgba(20,20,16,0.4)",
+            background: "none", border: "none", cursor: "pointer", padding: 0,
+            display: "flex", alignItems: "center", gap: 5,
+            transition: "color 0.15s ease",
+          }}
+        >
+          <span style={{
+            width: 14, height: 14, borderRadius: "50%",
+            border: `0.5px solid ${hoverLearn ? "rgba(20,20,16,0.35)" : "rgba(20,20,16,0.2)"}`,
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+            fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 12, lineHeight: 1,
+            flexShrink: 0, transition: "border-color 0.15s ease",
+          }}>
+            {learnOpen ? "−" : "+"}
+          </span>
+          Learn more
+        </button>
+        {lm.citation && (
+          <button
+            onClick={e => { e.stopPropagation(); setSourcesOpen(o => !o) }}
+            style={{
+              fontFamily: font, fontSize: 11, color: "rgba(20,20,16,0.35)",
+              background: "none", border: "none", cursor: "pointer", padding: 0,
+            }}
+          >
+            Sources {sourcesOpen ? "↑" : "↓"}
+          </button>
+        )}
+      </div>
+      {lm.citation && (
+        <div style={{
+          maxHeight: sourcesOpen ? 100 : 0, overflow: "hidden",
+          transition: "max-height 0.3s ease, opacity 0.3s ease",
+          opacity: sourcesOpen ? 1 : 0,
         }}>
-          {learnOpen ? "−" : "+"}
-        </span>
-        Learn more
-      </button>
+          <p style={{
+            fontFamily: font, fontSize: 11, fontStyle: "italic",
+            color: "rgba(20,20,16,0.35)", margin: "8px 0 0", lineHeight: 1.4,
+          }}>
+            {lm.citation}
+          </p>
+        </div>
+      )}
       <div style={{
         maxHeight: learnOpen ? 900 : 0, overflow: "hidden",
         transition: "max-height 0.35s ease, opacity 0.35s ease", opacity: learnOpen ? 1 : 0,

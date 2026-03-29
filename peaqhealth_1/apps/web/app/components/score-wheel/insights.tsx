@@ -10,6 +10,7 @@ interface InsightCardData {
   action: string
   category: "POSITIVE" | "WATCH" | "EXPLORE"
   priority: number
+  citations?: string[]
 }
 
 export interface InsightsProps {
@@ -65,7 +66,9 @@ function CategoryBadge({ category }: { category: string }) {
 
 function InsightCard({ item, isPrimary }: { item: InsightCardData; isPrimary?: boolean }) {
   const el = useRef<HTMLDivElement>(null)
-  const [visible, setVisible] = useState(false)
+  const [visible, setVisible]   = useState(false)
+  const [sourcesOpen, setSourcesOpen] = useState(false)
+  const hasCitations = Array.isArray(item.citations) && item.citations.length > 0
 
   useEffect(() => {
     const node = el.current
@@ -147,6 +150,39 @@ function InsightCard({ item, isPrimary }: { item: InsightCardData; isPrimary?: b
           {item.action}
         </p>
       </div>
+
+      {/* Sources toggle */}
+      {hasCitations && (
+        <div style={{ marginTop: 12 }}>
+          <button
+            onClick={() => setSourcesOpen(o => !o)}
+            style={{
+              fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+              fontSize: 11, color: "rgba(20,20,16,0.35)",
+              background: "none", border: "none", cursor: "pointer", padding: 0,
+            }}
+          >
+            Sources {sourcesOpen ? "↑" : "↓"}
+          </button>
+          <div style={{
+            maxHeight: sourcesOpen ? 300 : 0, overflow: "hidden",
+            transition: "max-height 0.3s ease, opacity 0.3s ease",
+            opacity: sourcesOpen ? 1 : 0,
+          }}>
+            <div style={{ paddingTop: 6, display: "flex", flexDirection: "column", gap: 4 }}>
+              {item.citations!.map((c, i) => (
+                <p key={i} style={{
+                  fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                  fontSize: 11, fontStyle: "italic", color: "rgba(20,20,16,0.35)",
+                  margin: 0, lineHeight: 1.4,
+                }}>
+                  {c}
+                </p>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -205,9 +241,24 @@ export function Insights({ sleepConnected, hasBlood, oralActive, lifestyleActive
         <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 22, fontWeight: 300, color: "var(--ink)", margin: 0 }}>
           Insights
         </h3>
-        <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--ink-30)" }}>
-          {loading ? "Analyzing your data…" : "AI · Tailored to your data"}
-        </span>
+        {loading ? (
+          <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
+            <style>{`
+              @keyframes dotPulse{0%,100%{opacity:.2}50%{opacity:1}}
+            `}</style>
+            {[0, 0.4, 0.8].map((delay, i) => (
+              <span key={i} style={{
+                fontSize: 24, color: "rgba(20,20,16,0.3)",
+                animation: `dotPulse 1.2s ease-in-out ${delay}s infinite`,
+                lineHeight: 1,
+              }}>·</span>
+            ))}
+          </span>
+        ) : (
+          <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--ink-30)" }}>
+            AI · Tailored to your data
+          </span>
+        )}
       </div>
 
       {/* Loading skeletons */}
