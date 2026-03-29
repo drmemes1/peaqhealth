@@ -69,7 +69,7 @@ const PANEL_COLOR: Record<string, string> = {
   periodontal: "#C0392B",
   osa:        "#B8860B",
   diversity:  "#2D6A4F",
-  general:    "rgba(20,20,16,0.4)",
+  general:    "var(--ink-40)",
 }
 
 const PANEL_LABEL: Record<string, string> = {
@@ -140,7 +140,7 @@ function SpeciesRow({ name, role, val, target, isPathogen, note, learnWhat, lear
     optimal:   { bg: "#EAF3DE", color: "#2D6A4F", label: isPathogen ? "Low — Good" : "Optimal" },
     watch:     { bg: "#FEF3C7", color: "#92400E", label: "Watch" },
     attention: { bg: "#FEE2E2", color: "#991B1B", label: isPathogen ? "Elevated" : "Low" },
-    pending:   { bg: "#F7F5F0", color: "rgba(20,20,16,0.35)", label: "—" },
+    pending:   { bg: "#F7F5F0", color: "var(--ink-35)", label: "—" },
   }
   const fs = flagStyle[flag]
   const dotColor = flag === "optimal" ? "#2D6A4F" : flag === "watch" ? "#B8860B" : "#C0392B"
@@ -283,7 +283,7 @@ export function OralPanelClient({ oral, snapshot }: Props) {
             href="/dashboard"
             style={{ fontFamily: "var(--font-body)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--ink-30)", textDecoration: "none" }}
             onMouseEnter={(e) => { e.currentTarget.style.color = "#B8860B" }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(20,20,16,0.3)" }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = "var(--ink-30)" }}
           >
             ← Dashboard
           </Link>
@@ -309,7 +309,7 @@ export function OralPanelClient({ oral, snapshot }: Props) {
         {topFinding && (
           <p style={{
             fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: 17,
-            color: "rgba(20,20,16,0.65)", lineHeight: 1.55, margin: "0 0 24px",
+            color: "var(--ink-65)", lineHeight: 1.55, margin: "0 0 24px",
           }}>
             {topFinding.body}
           </p>
@@ -363,7 +363,7 @@ export function OralPanelClient({ oral, snapshot }: Props) {
             </p>
             {secondaryFindings.map(f => {
               const ps = PRIORITY_STYLE[f.priority] ?? PRIORITY_STYLE.LOW
-              const panelColor = PANEL_COLOR[f.panel] ?? "rgba(20,20,16,0.4)"
+              const panelColor = PANEL_COLOR[f.panel] ?? "var(--ink-40)"
               const panelLabel = PANEL_LABEL[f.panel] ?? f.panel
               return (
                 <div key={f.id} style={{ border: "0.5px solid var(--ink-12)", borderLeft: `3px solid ${panelColor}`, padding: "14px 16px", marginBottom: 10 }}>
@@ -502,7 +502,7 @@ export function OralPanelClient({ oral, snapshot }: Props) {
                     </div>
                   </div>
                 )}
-                <p style={{ margin: "10px 0 0", fontFamily: "var(--font-body)", fontSize: 12, color: "rgba(20,20,16,0.5)", lineHeight: 1.6 }}>
+                <p style={{ margin: "10px 0 0", fontFamily: "var(--font-body)", fontSize: 12, color: "var(--ink-50)", lineHeight: 1.6 }}>
                   Higher diversity generally indicates a more resilient oral microbiome with better resistance to pathogen colonization. A Shannon index below 2.0 is associated with dysbiosis-related systemic risk.
                 </p>
               </div>

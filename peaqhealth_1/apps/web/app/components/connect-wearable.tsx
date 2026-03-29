@@ -186,8 +186,8 @@ export function ConnectWearable({ onSuccess, onSkip, mode }: ConnectWearableProp
                   style={{
                     display: "flex", flexDirection: "column", gap: 12,
                     padding: "18px 16px",
-                    background: "white",
-                    border: "1px solid rgba(20,20,16,0.14)",
+                    background: "var(--white)",
+                    border: "1px solid var(--ink-12)",
                     textDecoration: "none",
                     transition: "border-color 0.18s ease, box-shadow 0.18s ease",
                     cursor: "pointer",
@@ -197,7 +197,7 @@ export function ConnectWearable({ onSuccess, onSkip, mode }: ConnectWearableProp
                     ;(e.currentTarget as HTMLElement).style.boxShadow = "0 2px 12px rgba(74,127,181,0.10)"
                   }}
                   onMouseLeave={e => {
-                    (e.currentTarget as HTMLElement).style.borderColor = "rgba(20,20,16,0.14)"
+                    (e.currentTarget as HTMLElement).style.borderColor = "var(--ink-12)"
                     ;(e.currentTarget as HTMLElement).style.boxShadow = "none"
                   }}
                 >
@@ -237,8 +237,8 @@ export function ConnectWearable({ onSuccess, onSkip, mode }: ConnectWearableProp
                   style={{
                     display: "flex", flexDirection: "column", gap: 12,
                     padding: "18px 16px", textAlign: "left",
-                    background: "white",
-                    border: "1px solid rgba(20,20,16,0.14)",
+                    background: "var(--white)",
+                    border: "1px solid var(--ink-12)",
                     cursor: ready && !connecting ? "pointer" : "default",
                     opacity: connecting && connecting !== "junction" ? 0.5 : 1,
                     transition: "border-color 0.18s ease, box-shadow 0.18s ease",
@@ -250,7 +250,7 @@ export function ConnectWearable({ onSuccess, onSkip, mode }: ConnectWearableProp
                     }
                   }}
                   onMouseLeave={e => {
-                    (e.currentTarget as HTMLElement).style.borderColor = "rgba(20,20,16,0.14)"
+                    (e.currentTarget as HTMLElement).style.borderColor = "var(--ink-12)"
                     ;(e.currentTarget as HTMLElement).style.boxShadow = "none"
                   }}
                 >

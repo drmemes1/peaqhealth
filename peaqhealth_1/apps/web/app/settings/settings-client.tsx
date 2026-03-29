@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "../../lib/supabase/client"
 import { WearableManager, type JunctionConnection } from "../components/wearable-manager"
+import { useTheme } from "../components/theme-provider"
 
 interface Props {
   userId: string
@@ -354,6 +355,7 @@ function buildReportHtml(data: Record<string, unknown>, name: string, email: str
 export function SettingsClient({ userId, email, firstName: initialFirst, lastName: initialLast, createdAt, whoopConnected: initialWhoopConnected, whoopLastSynced, whoopNeedsReconnect, junctionConnections: initialJunctionConnections = [] }: Props) {
   const router = useRouter()
   const supabase = createClient()
+  const { theme, setTheme } = useTheme()
 
   const [firstName, setFirstName] = useState(initialFirst)
   const [lastName, setLastName] = useState(initialLast)
@@ -537,8 +539,8 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
           <button
             onClick={saveProfile}
             disabled={saving}
-            className="h-10 px-6 font-body text-[11px] uppercase tracking-[0.1em] font-medium text-white transition-opacity hover:opacity-85 disabled:opacity-40"
-            style={{ background: "var(--ink)" }}
+            className="h-10 px-6 font-body text-[11px] uppercase tracking-[0.1em] font-medium transition-opacity hover:opacity-85 disabled:opacity-40"
+            style={{ background: "var(--ink)", color: "var(--white)" }}
           >
             {saving ? "Saving…" : saved ? "Saved ✓" : "Save changes"}
           </button>
@@ -642,6 +644,37 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
         </div>
       </section>
 
+      {/* ── Appearance ─────────────────────────────────────────────── */}
+      <section className="mb-8 fade-up" style={{ animationDelay: "0.18s" }}>
+        <SectionLabel>Appearance</SectionLabel>
+        <div className="overflow-hidden rounded-lg p-5" style={{ border: "0.5px solid var(--ink-12)", background: "var(--warm-50)" }}>
+          <p className="font-body text-sm" style={{ color: "var(--ink)" }}>Theme</p>
+          <p className="mt-1 mb-4 font-body text-xs" style={{ color: "var(--ink-60)" }}>
+            Choose your preferred color scheme
+          </p>
+          <div style={{ display: "flex", gap: 8 }}>
+            {(["light", "system", "dark"] as const).map(t => (
+              <button
+                key={t}
+                onClick={() => setTheme(t)}
+                className="font-body text-[12px] transition-all"
+                style={{
+                  padding: "8px 18px",
+                  borderRadius: 6,
+                  border: theme === t ? "1.5px solid var(--ink)" : "0.5px solid var(--ink-20)",
+                  background: theme === t ? "var(--ink)" : "transparent",
+                  color: theme === t ? "var(--off-white)" : "var(--ink-60)",
+                  cursor: "pointer",
+                  textTransform: "capitalize",
+                }}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── Danger zone ─────────────────────────────────────────────── */}
       <section className="mb-20 fade-up" style={{ animationDelay: "0.2s" }}>
         <SectionLabel danger>Danger zone</SectionLabel>
@@ -682,8 +715,8 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
                 <button
                   onClick={deleteAccount}
                   disabled={deleteInput !== "DELETE" || deleting}
-                  className="h-9 px-4 font-body text-[10px] uppercase tracking-[0.1em] font-medium text-white transition-opacity disabled:opacity-40"
-                  style={{ background: "var(--blood-c)" }}
+                  className="h-9 px-4 font-body text-[10px] uppercase tracking-[0.1em] font-medium transition-opacity disabled:opacity-40"
+                  style={{ background: "var(--blood-c)", color: "var(--white)" }}
                 >
                   {deleting ? "Deleting…" : "Confirm"}
                 </button>

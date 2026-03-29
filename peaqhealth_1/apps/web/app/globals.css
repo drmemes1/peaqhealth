@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  /* ─── Core palette (light) ─────────────────────────────────────────────── */
   --white: #FFFFFF;
   --off-white: #FAFAF8;
   --warm-50: #F7F5F0;
@@ -9,20 +10,29 @@
   --ink: #141410;
   --ink-80: rgba(20,20,16,0.80);
   --ink-60: rgba(20,20,16,0.60);
+  --ink-40: rgba(20,20,16,0.40);
   --ink-30: rgba(20,20,16,0.30);
+  --ink-25: rgba(20,20,16,0.25);
+  --ink-20: rgba(20,20,16,0.20);
   --ink-12: rgba(20,20,16,0.12);
+  --ink-08: rgba(20,20,16,0.08);
   --ink-06: rgba(20,20,16,0.06);
+  --ink-04: rgba(20,20,16,0.04);
   --gold: #B8860B;
   --gold-dim: rgba(184,134,11,0.15);
   --gold-light: #F5E6B8;
+
+  /* Panel colors — identical in both modes */
   --sleep-c: #4A7FB5;
   --sleep-bg: #EBF2FA;
   --blood-c: #C0392B;
   --blood-bg: #FDECEA;
   --oral-c: #2D6A4F;
   --oral-bg: #EAF3DE;
+
   --font-display: "Cormorant Garamond", Georgia, serif;
   --font-body: "Instrument Sans", system-ui, sans-serif;
+
   --amber: #92400E;
   --amber-bg: #FEF3C7;
   --status-optimal: #2D6A4F;
@@ -30,6 +40,96 @@
   --status-watch: #B8860B;
   --status-attention: #C0392B;
   --status-muted: rgba(20,20,16,0.2);
+
+  /* ─── Semantic aliases (used in new components) ────────────────────────── */
+  --peaq-bg: #FAFAF8;
+  --peaq-bg-secondary: #F0EFE8;
+  --peaq-bg-card: #FFFFFF;
+  --peaq-bg-muted: #F5F4F0;
+  --peaq-ink: #141410;
+  --peaq-ink-secondary: #5F5E5A;
+  --peaq-ink-tertiary: #888780;
+  --peaq-ink-faint: #B4B2A9;
+  --peaq-border: rgba(20,20,16,0.1);
+  --peaq-border-strong: rgba(20,20,16,0.2);
+}
+
+/* ─── Dark mode: system preference ───────────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --white: #161614;
+    --off-white: #0E0E0C;
+    --warm-50: #1A1A16;
+    --warm-100: #242420;
+    --warm-200: #2E2E28;
+    --ink: #F0EFE8;
+    --ink-80: rgba(240,239,232,0.80);
+    --ink-60: rgba(240,239,232,0.60);
+    --ink-40: rgba(240,239,232,0.40);
+    --ink-30: rgba(240,239,232,0.30);
+    --ink-25: rgba(240,239,232,0.25);
+    --ink-20: rgba(240,239,232,0.20);
+    --ink-12: rgba(240,239,232,0.07);
+    --ink-08: rgba(240,239,232,0.05);
+    --ink-06: rgba(240,239,232,0.04);
+    --ink-04: rgba(240,239,232,0.02);
+    --gold-dim: rgba(184,134,11,0.20);
+    --gold-light: #302810;
+    --sleep-bg: #0A1620;
+    --blood-bg: #200A0A;
+    --oral-bg: #0A2018;
+    --amber-bg: #201408;
+    --status-muted: rgba(240,239,232,0.15);
+
+    --peaq-bg: #0E0E0C;
+    --peaq-bg-secondary: #161614;
+    --peaq-bg-card: #161614;
+    --peaq-bg-muted: #1A1A16;
+    --peaq-ink: #F0EFE8;
+    --peaq-ink-secondary: #8E8E86;
+    --peaq-ink-tertiary: #4A4A46;
+    --peaq-ink-faint: #2A2A26;
+    --peaq-border: rgba(240,239,232,0.07);
+    --peaq-border-strong: rgba(240,239,232,0.14);
+  }
+}
+
+/* ─── Dark mode: manual override ─────────────────────────────────────────── */
+[data-theme="dark"] {
+  --white: #161614;
+  --off-white: #0E0E0C;
+  --warm-50: #1A1A16;
+  --warm-100: #242420;
+  --warm-200: #2E2E28;
+  --ink: #F0EFE8;
+  --ink-80: rgba(240,239,232,0.80);
+  --ink-60: rgba(240,239,232,0.60);
+  --ink-40: rgba(240,239,232,0.40);
+  --ink-30: rgba(240,239,232,0.30);
+  --ink-25: rgba(240,239,232,0.25);
+  --ink-20: rgba(240,239,232,0.20);
+  --ink-12: rgba(240,239,232,0.07);
+  --ink-08: rgba(240,239,232,0.05);
+  --ink-06: rgba(240,239,232,0.04);
+  --ink-04: rgba(240,239,232,0.02);
+  --gold-dim: rgba(184,134,11,0.20);
+  --gold-light: #302810;
+  --sleep-bg: #0A1620;
+  --blood-bg: #200A0A;
+  --oral-bg: #0A2018;
+  --amber-bg: #201408;
+  --status-muted: rgba(240,239,232,0.15);
+
+  --peaq-bg: #0E0E0C;
+  --peaq-bg-secondary: #161614;
+  --peaq-bg-card: #161614;
+  --peaq-bg-muted: #1A1A16;
+  --peaq-ink: #F0EFE8;
+  --peaq-ink-secondary: #8E8E86;
+  --peaq-ink-tertiary: #4A4A46;
+  --peaq-ink-faint: #2A2A26;
+  --peaq-border: rgba(240,239,232,0.07);
+  --peaq-border-strong: rgba(240,239,232,0.14);
 }
 
 @theme inline {
@@ -91,4 +191,22 @@ body {
 @keyframes sleep-pulse {
   0%, 100% { opacity: 0.4; transform: scale(1); }
   50%       { opacity: 1.0; transform: scale(1.3); }
+}
+
+/* Mountain hero backdrop — dark mode treatment */
+.hero-mountain {
+  filter: blur(0.5px) saturate(0.85) brightness(1.04);
+  opacity: 0.38;
+}
+
+[data-theme="dark"] .hero-mountain {
+  filter: blur(0.5px) saturate(0.2) brightness(0.4);
+  opacity: 0.45;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .hero-mountain {
+    filter: blur(0.5px) saturate(0.2) brightness(0.4);
+    opacity: 0.45;
+  }
 }

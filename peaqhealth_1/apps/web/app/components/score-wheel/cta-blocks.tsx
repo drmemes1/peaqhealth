@@ -17,10 +17,10 @@ function CTABlock({ color, title, points, features, buttonLabel, href }: CTABloc
   return (
     <div style={{ borderRadius: 4, overflow: "hidden" }}>
       <div style={{ background: color, padding: "16px 20px", display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
-        <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 20, fontWeight: 300, color: "white", margin: 0 }}>{title}</h3>
+        <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 20, fontWeight: 300, color: "var(--white)", margin: 0 }}>{title}</h3>
         <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, textTransform: "uppercase", color: "rgba(255,255,255,0.65)" }}>{points} available</span>
       </div>
-      <div style={{ background: "white", border: "0.5px solid var(--ink-12)", borderTop: "none", borderRadius: "0 0 4px 4px", padding: "16px 20px" }}>
+      <div style={{ background: "var(--white)", border: "0.5px solid var(--ink-12)", borderTop: "none", borderRadius: "0 0 4px 4px", padding: "16px 20px" }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 24px", marginBottom: 16 }}>
           {features.map(f => (
             <div key={f} style={{ display: "flex", gap: 6 }}>
@@ -32,7 +32,7 @@ function CTABlock({ color, title, points, features, buttonLabel, href }: CTABloc
         <button
           onClick={() => { haptics.medium(); router.push(href) }}
           onTouchStart={() => haptics.medium()}
-          style={{ width: "100%", background: color, color: "white", fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, textTransform: "uppercase", letterSpacing: "0.08em", padding: "12px", borderRadius: 2, cursor: "pointer", border: "none" }}
+          style={{ width: "100%", background: color, color: "var(--white)", fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, textTransform: "uppercase", letterSpacing: "0.08em", padding: "12px", borderRadius: 2, cursor: "pointer", border: "none" }}
         >
           {buttonLabel}
         </button>

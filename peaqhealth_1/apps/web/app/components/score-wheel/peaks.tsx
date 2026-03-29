@@ -124,7 +124,7 @@ export function PeaksVisualization({
 
       {/* Baseline rule */}
       <line x1={36} y1={BASELINE} x2={664} y2={BASELINE}
-        stroke="rgba(20,20,16,0.10)" strokeWidth={0.75} />
+        stroke="var(--ink-12)" strokeWidth={0.75} />
 
       {PANELS.map((p, i) => {
         const cx         = CENTERS[i]
@@ -186,7 +186,7 @@ export function PeaksVisualization({
                 fontFamily="var(--font-body, 'Instrument Sans', sans-serif)"
                 fontSize={10}
                 letterSpacing="0.13em"
-                fill="rgba(20,20,16,0.55)"
+                fill="var(--ink-60)"
               >
                 {p.label}
               </text>
@@ -197,7 +197,7 @@ export function PeaksVisualization({
                 textAnchor="middle"
                 fontFamily="var(--font-body, 'Instrument Sans', sans-serif)"
                 fontSize={10}
-                fill="rgba(20,20,16,0.32)"
+                fill="var(--ink-30)"
               >
                 /{p.max}
               </text>

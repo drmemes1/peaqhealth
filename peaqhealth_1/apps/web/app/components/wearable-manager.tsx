@@ -181,7 +181,7 @@ export function WearableManager({
                 ? "#F59E0B"
                 : whoopConnected
                   ? "#22C55E"
-                  : "rgba(20,20,16,0.22)",
+                  : "var(--ink-20)",
             }} />
             <div className="min-w-0">
               <p className="font-body text-sm" style={{ color: "var(--ink)" }}>WHOOP</p>
@@ -222,7 +222,7 @@ export function WearableManager({
                 </div>
               ) : (
                 <button onClick={() => setDisconnectConfirm(true)} className="font-body"
-                  style={{ fontSize: 11, color: "rgba(20,20,16,0.30)", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
+                  style={{ fontSize: 11, color: "var(--ink-30)", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
                   Disconnect
                 </button>
               )
@@ -275,7 +275,7 @@ export function WearableManager({
                   </div>
                 ) : (
                   <button onClick={() => setConfirmProvider(conn.provider)} className="font-body"
-                    style={{ fontSize: 11, color: "rgba(20,20,16,0.30)", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
+                    style={{ fontSize: 11, color: "var(--ink-30)", background: "none", border: "none", padding: 0, cursor: "pointer" }}>
                     Disconnect
                   </button>
                 )}
@@ -297,7 +297,7 @@ export function WearableManager({
             </p>
           </div>
           <button onClick={handleJunction} disabled={!widgetReady || junctionConnecting}
-            style={{ ...sharedBtnStyle, color: "var(--ink-60)", borderColor: "rgba(20,20,16,0.20)", cursor: !widgetReady || junctionConnecting ? "default" : "pointer", opacity: !widgetReady || junctionConnecting ? 0.4 : 1 }}>
+            style={{ ...sharedBtnStyle, color: "var(--ink-60)", borderColor: "var(--ink-20)", cursor: !widgetReady || junctionConnecting ? "default" : "pointer", opacity: !widgetReady || junctionConnecting ? 0.4 : 1 }}>
             {junctionConnecting ? "Loading…" : "Browse →"}
           </button>
         </div>

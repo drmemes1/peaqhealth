@@ -78,8 +78,8 @@ export function NextSteps({
           <div
             key={i}
             style={{
-              background: "#FAFAF8",
-              border: "0.5px solid rgba(20,20,16,0.1)",
+              background: "var(--off-white)",
+              border: "0.5px solid var(--ink-12)",
               borderLeft: `3px solid ${PANEL_COLOR[item.panel]}`,
               borderRadius: 8,
               padding: 16,

@@ -177,13 +177,13 @@ export function LoginForm({ defaultTab = "signin" }: { defaultTab?: Tab }) {
 
   const inputStyle: React.CSSProperties = {
     height: 48, padding: "0 14px", width: "100%", boxSizing: "border-box",
-    fontFamily: font, fontSize: 14, color: "#141410",
-    background: "#FAFAF8", border: "1px solid #D4D4CF",
+    fontFamily: font, fontSize: 14, color: "var(--ink)",
+    background: "var(--off-white)", border: "1px solid #D4D4CF",
     outline: "none", transition: "border-color 0.15s ease",
   }
   const labelStyle: React.CSSProperties = {
     fontFamily: font, fontSize: 10, textTransform: "uppercase",
-    letterSpacing: "0.1em", color: "rgba(20,20,16,0.5)", display: "block", marginBottom: 6,
+    letterSpacing: "0.1em", color: "var(--ink-50)", display: "block", marginBottom: 6,
   }
 
   return (
@@ -275,14 +275,14 @@ export function LoginForm({ defaultTab = "signin" }: { defaultTab?: Tab }) {
 
       {/* ── RIGHT PANEL ────────────────────────────────────────────────────── */}
       <div style={{
-        flex: 1, background: "#FAFAF8",
+        flex: 1, background: "var(--off-white)",
         display: "flex", flexDirection: "column",
         alignItems: "center", justifyContent: "center",
         padding: "48px 40px",
       }}>
         {/* Mobile logo */}
         <div style={{ marginBottom: 32, display: "none" }} className="lg:hidden">
-          <LogoSvg size={44} color="#141410" />
+          <LogoSvg size={44} color="var(--ink)" />
         </div>
 
         <div style={{ width: "100%", maxWidth: 380 }}>
@@ -296,8 +296,8 @@ export function LoginForm({ defaultTab = "signin" }: { defaultTab?: Tab }) {
                 className="auth-tab"
                 style={{
                   fontFamily: font, fontSize: 14, fontWeight: tab === t ? 500 : 400,
-                  color: tab === t ? "#141410" : "rgba(20,20,16,0.38)",
-                  background: "none", border: "none", borderBottom: `2px solid ${tab === t ? "#141410" : "transparent"}`,
+                  color: tab === t ? "var(--ink)" : "var(--ink-38)",
+                  background: "none", border: "none", borderBottom: `2px solid ${tab === t ? "var(--ink)" : "transparent"}`,
                   padding: "0 0 14px", marginRight: 28, cursor: "pointer",
                   marginBottom: -1,
                 }}
@@ -338,7 +338,7 @@ export function LoginForm({ defaultTab = "signin" }: { defaultTab?: Tab }) {
                       position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)",
                       background: "none", border: "none", cursor: "pointer",
                       fontFamily: font, fontSize: 10, letterSpacing: "0.06em",
-                      color: "rgba(20,20,16,0.38)", textTransform: "uppercase",
+                      color: "var(--ink-38)", textTransform: "uppercase",
                     }}
                   >
                     {showPw ? "Hide" : "Show"}
@@ -353,7 +353,7 @@ export function LoginForm({ defaultTab = "signin" }: { defaultTab?: Tab }) {
               <button
                 type="submit" disabled={loading}
                 style={{
-                  height: 48, background: "#141410", color: "#FAFAF8",
+                  height: 48, background: "var(--ink)", color: "var(--off-white)",
                   fontFamily: font, fontSize: 12, fontWeight: 500,
                   letterSpacing: "0.08em", textTransform: "uppercase",
                   border: "none", cursor: loading ? "not-allowed" : "pointer",
@@ -413,7 +413,7 @@ export function LoginForm({ defaultTab = "signin" }: { defaultTab?: Tab }) {
                       position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)",
                       background: "none", border: "none", cursor: "pointer",
                       fontFamily: font, fontSize: 10, letterSpacing: "0.06em",
-                      color: "rgba(20,20,16,0.38)", textTransform: "uppercase",
+                      color: "var(--ink-38)", textTransform: "uppercase",
                     }}
                   >
                     {showPw ? "Hide" : "Show"}
@@ -431,7 +431,7 @@ export function LoginForm({ defaultTab = "signin" }: { defaultTab?: Tab }) {
               <button
                 type="submit" disabled={loading}
                 style={{
-                  height: 48, background: "#141410", color: "#FAFAF8",
+                  height: 48, background: "var(--ink)", color: "var(--off-white)",
                   fontFamily: font, fontSize: 12, fontWeight: 500,
                   letterSpacing: "0.08em", textTransform: "uppercase",
                   border: "none", cursor: loading ? "not-allowed" : "pointer",
@@ -442,7 +442,7 @@ export function LoginForm({ defaultTab = "signin" }: { defaultTab?: Tab }) {
                 {loading ? "Creating account…" : "Continue"}
               </button>
 
-              <p style={{ fontFamily: font, fontSize: 11, color: "rgba(20,20,16,0.4)", margin: 0, lineHeight: 1.6 }}>
+              <p style={{ fontFamily: font, fontSize: 11, color: "var(--ink-40)", margin: 0, lineHeight: 1.6 }}>
                 By continuing you agree to our Privacy Policy. Your health data is encrypted and never sold.
               </p>
             </form>
@@ -451,7 +451,7 @@ export function LoginForm({ defaultTab = "signin" }: { defaultTab?: Tab }) {
           {/* ── OR divider ── */}
           <div style={{ display: "flex", alignItems: "center", gap: 14, margin: "24px 0" }}>
             <div style={{ flex: 1, height: "0.5px", background: "#E8E8E4" }} />
-            <span style={{ fontFamily: font, fontSize: 11, color: "rgba(20,20,16,0.3)", letterSpacing: "0.06em" }}>or</span>
+            <span style={{ fontFamily: font, fontSize: 11, color: "var(--ink-30)", letterSpacing: "0.06em" }}>or</span>
             <div style={{ flex: 1, height: "0.5px", background: "#E8E8E4" }} />
           </div>
 
@@ -461,8 +461,8 @@ export function LoginForm({ defaultTab = "signin" }: { defaultTab?: Tab }) {
             className="google-btn"
             style={{
               height: 48, width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-              background: "#FAFAF8", border: "1px solid #D4D4CF",
-              fontFamily: font, fontSize: 13, color: "#141410",
+              background: "var(--off-white)", border: "1px solid #D4D4CF",
+              fontFamily: font, fontSize: 13, color: "var(--ink)",
               cursor: "pointer", transition: "background 0.15s ease",
             }}
           >
@@ -478,7 +478,7 @@ export function LoginForm({ defaultTab = "signin" }: { defaultTab?: Tab }) {
           {/* HIPAA footer */}
           <p style={{
             fontFamily: font, fontSize: 10, letterSpacing: "0.07em", textTransform: "uppercase",
-            color: "rgba(20,20,16,0.25)", textAlign: "center", marginTop: 32,
+            color: "var(--ink-25)", textAlign: "center", marginTop: 32,
           }}>
             HIPAA-compliant infrastructure · Azure + Supabase
           </p>

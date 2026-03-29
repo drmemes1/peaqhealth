@@ -183,7 +183,7 @@ function formatValue(value: number): string {
 
 // Status dot colors
 const STATUS_COLORS: Record<Flag, string> = {
-  good: "#2D6A4F", watch: "#B8860B", attention: "#C2510A", elevated: "#C0392B", pending: "rgba(20,20,16,0.15)", not_tested: "rgba(20,20,16,0.15)",
+  good: "#2D6A4F", watch: "#B8860B", attention: "#C2510A", elevated: "#C0392B", pending: "var(--ink-12)", not_tested: "var(--ink-12)",
 }
 
 // Spectrum bar marker row — positioned dot on track with optional optimal zone
@@ -196,9 +196,9 @@ function SpectrumRow({ name, value, unit, f, min, max, optMin, optMax }: {
   const pct = clamp(((value - min) / (max - min)) * 100)
   const optMinPct = clamp(((optMin - min) / (max - min)) * 100)
   const optMaxPct = clamp(((optMax - min) / (max - min)) * 100)
-  const dotColor = f === "good" ? "#2D6A4F" : f === "watch" ? "#B8860B" : f === "attention" ? "#C0392B" : "rgba(20,20,16,0.3)"
-  const badgeBg   = f === "good" ? "#EAF3DE" : f === "watch" ? "#FEF3C7" : f === "attention" ? "#FEE2E2" : "#F7F5F0"
-  const badgeText = f === "good" ? "#2D6A4F" : f === "watch" ? "#92400E" : f === "attention" ? "#991B1B" : "rgba(20,20,16,0.6)"
+  const dotColor = f === "good" ? "#2D6A4F" : f === "watch" ? "#B8860B" : f === "attention" ? "#C0392B" : "var(--ink-30)"
+  const badgeBg   = f === "good" ? "#EAF3DE" : f === "watch" ? "#FEF3C7" : f === "attention" ? "#FEE2E2" : "var(--warm-50)"
+  const badgeText = f === "good" ? "#2D6A4F" : f === "watch" ? "#92400E" : f === "attention" ? "#991B1B" : "var(--ink-60)"
   const badgeLabel = f === "good" ? "Optimal" : f === "watch" ? "Watch" : f === "attention" ? "Attention" : "—"
 
   return (
@@ -216,11 +216,11 @@ function SpectrumRow({ name, value, unit, f, min, max, optMin, optMax }: {
         </div>
       </div>
       {/* Track */}
-      <div style={{ position: "relative", height: 4, borderRadius: 2, background: "rgba(20,20,16,0.07)", margin: "0 0 2px" }}>
+      <div style={{ position: "relative", height: 4, borderRadius: 2, background: "var(--ink-08)", margin: "0 0 2px" }}>
         {/* Optimal zone */}
         <div style={{ position: "absolute", top: 0, bottom: 0, left: `${optMinPct}%`, width: `${optMaxPct - optMinPct}%`, background: "rgba(45,106,79,0.15)", borderRadius: 2 }} />
         {/* Dot */}
-        <div style={{ position: "absolute", top: "50%", left: `${pct}%`, transform: "translate(-50%, -50%)", width: 8, height: 8, borderRadius: "50%", background: dotColor, border: "1.5px solid white", boxShadow: "0 1px 3px rgba(0,0,0,0.2)", zIndex: 1 }} />
+        <div style={{ position: "absolute", top: "50%", left: `${pct}%`, transform: "translate(-50%, -50%)", width: 8, height: 8, borderRadius: "50%", background: dotColor, border: "1.5px solid var(--white)", boxShadow: "0 1px 3px rgba(0,0,0,0.2)", zIndex: 1 }} />
       </div>
     </div>
   )
@@ -318,7 +318,7 @@ function InteractionCard({ interaction }: { interaction: ComputedInteraction }) 
           </div>
         </div>
       </div>
-      <p style={{ fontFamily: font, fontSize: 13, color: "rgba(20,20,16,0.6)", margin: "0 0 10px", lineHeight: 1.5 }}>
+      <p style={{ fontFamily: font, fontSize: 13, color: "var(--ink-60)", margin: "0 0 10px", lineHeight: 1.5 }}>
         {interaction.body}
       </p>
       <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
@@ -328,7 +328,7 @@ function InteractionCard({ interaction }: { interaction: ComputedInteraction }) 
           onMouseLeave={() => setHoverLearn(false)}
           style={{
             fontFamily: font, fontSize: 11,
-            color: hoverLearn ? "rgba(20,20,16,0.7)" : "rgba(20,20,16,0.4)",
+            color: hoverLearn ? "var(--ink-80)" : "var(--ink-40)",
             background: "none", border: "none", cursor: "pointer", padding: 0,
             display: "flex", alignItems: "center", gap: 5,
             transition: "color 0.15s ease",
@@ -336,7 +336,7 @@ function InteractionCard({ interaction }: { interaction: ComputedInteraction }) 
         >
           <span style={{
             width: 14, height: 14, borderRadius: "50%",
-            border: `0.5px solid ${hoverLearn ? "rgba(20,20,16,0.35)" : "rgba(20,20,16,0.2)"}`,
+            border: `0.5px solid ${hoverLearn ? "var(--ink-30)" : "var(--ink-20)"}`,
             display: "inline-flex", alignItems: "center", justifyContent: "center",
             fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 12, lineHeight: 1,
             flexShrink: 0, transition: "border-color 0.15s ease",
@@ -349,7 +349,7 @@ function InteractionCard({ interaction }: { interaction: ComputedInteraction }) 
           <button
             onClick={e => { e.stopPropagation(); setSourcesOpen(o => !o) }}
             style={{
-              fontFamily: font, fontSize: 11, color: "rgba(20,20,16,0.35)",
+              fontFamily: font, fontSize: 11, color: "var(--ink-30)",
               background: "none", border: "none", cursor: "pointer", padding: 0,
             }}
           >
@@ -365,7 +365,7 @@ function InteractionCard({ interaction }: { interaction: ComputedInteraction }) 
         }}>
           <p style={{
             fontFamily: font, fontSize: 11, fontStyle: "italic",
-            color: "rgba(20,20,16,0.35)", margin: "8px 0 0", lineHeight: 1.4,
+            color: "var(--ink-30)", margin: "8px 0 0", lineHeight: 1.4,
           }}>
             {lm.citation}
           </p>
@@ -377,34 +377,34 @@ function InteractionCard({ interaction }: { interaction: ComputedInteraction }) 
       }}>
         <div style={{ paddingTop: 14, display: "flex", flexDirection: "column", gap: 12 }}>
           <div>
-            <p style={{ fontFamily: font, fontSize: 9, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "rgba(20,20,16,0.35)", margin: "0 0 4px", fontWeight: 600 }}>
+            <p style={{ fontFamily: font, fontSize: 9, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "var(--ink-30)", margin: "0 0 4px", fontWeight: 600 }}>
               The science
             </p>
-            <p style={{ fontFamily: font, fontSize: 12, color: "rgba(20,20,16,0.6)", margin: 0, lineHeight: 1.6 }}>
+            <p style={{ fontFamily: font, fontSize: 12, color: "var(--ink-60)", margin: 0, lineHeight: 1.6 }}>
               {lm.science}
             </p>
           </div>
           <div>
-            <p style={{ fontFamily: font, fontSize: 9, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "rgba(20,20,16,0.35)", margin: "0 0 4px", fontWeight: 600 }}>
+            <p style={{ fontFamily: font, fontSize: 9, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "var(--ink-30)", margin: "0 0 4px", fontWeight: 600 }}>
               What this means for you
             </p>
-            <p style={{ fontFamily: font, fontSize: 12, color: "rgba(20,20,16,0.6)", margin: 0, lineHeight: 1.6 }}>
+            <p style={{ fontFamily: font, fontSize: 12, color: "var(--ink-60)", margin: 0, lineHeight: 1.6 }}>
               {lm.meaning}
             </p>
           </div>
           <div>
-            <p style={{ fontFamily: font, fontSize: 9, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "rgba(20,20,16,0.35)", margin: "0 0 6px", fontWeight: 600 }}>
+            <p style={{ fontFamily: font, fontSize: 9, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "var(--ink-30)", margin: "0 0 6px", fontWeight: 600 }}>
               What you can do
             </p>
             <ol style={{ margin: 0, paddingLeft: 18, display: "flex", flexDirection: "column", gap: 4 }}>
               {lm.actions.map((action, i) => (
-                <li key={i} style={{ fontFamily: font, fontSize: 12, color: "rgba(20,20,16,0.6)", lineHeight: 1.5 }}>
+                <li key={i} style={{ fontFamily: font, fontSize: 12, color: "var(--ink-60)", lineHeight: 1.5 }}>
                   {action}
                 </li>
               ))}
             </ol>
           </div>
-          <p style={{ fontFamily: font, fontSize: 11, fontStyle: "italic", color: "rgba(20,20,16,0.35)", margin: 0, lineHeight: 1.4 }}>
+          <p style={{ fontFamily: font, fontSize: 11, fontStyle: "italic", color: "var(--ink-30)", margin: 0, lineHeight: 1.4 }}>
             {lm.citation}
           </p>
         </div>
@@ -694,10 +694,10 @@ function CrossPanelInteractions({
           {/* Oral active but no patterns */}
           {oralActive && !hasComputed && (
             <div>
-              <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", fontSize: 18, color: "rgba(20,20,16,0.45)", margin: "0 0 6px", lineHeight: 1.3 }}>
+              <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", fontSize: 18, color: "var(--ink-40)", margin: "0 0 6px", lineHeight: 1.3 }}>
                 No patterns detected — your panels look balanced.
               </p>
-              <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "rgba(20,20,16,0.4)", margin: 0, lineHeight: 1.5 }}>
+              <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink-40)", margin: 0, lineHeight: 1.5 }}>
                 We continuously monitor your data for cross-panel signals. Check back as your data updates.
               </p>
             </div>
@@ -712,10 +712,10 @@ function CrossPanelInteractions({
                   <path d="M5.5 7V5a2.5 2.5 0 015 0v2" stroke="#B8860B" strokeWidth="1.2" strokeLinecap="round"/>
                 </svg>
                 <div>
-                  <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", fontSize: 18, color: "#141410", margin: "0 0 4px", lineHeight: 1.3 }}>
+                  <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", fontSize: 18, color: "var(--ink)", margin: "0 0 4px", lineHeight: 1.3 }}>
                     Your cross-panel intelligence is waiting.
                   </p>
-                  <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "rgba(20,20,16,0.5)", margin: 0, lineHeight: 1.5 }}>
+                  <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink-60)", margin: 0, lineHeight: 1.5 }}>
                     The oral microbiome is the missing piece. Spit, send, and wait for your full Peaqture.
                   </p>
                 </div>
@@ -727,7 +727,7 @@ function CrossPanelInteractions({
                   border: "1px solid #B8860B", color: "#B8860B", background: "transparent",
                   padding: "8px 16px", borderRadius: 4, textDecoration: "none", whiteSpace: "nowrap", display: "inline-block",
                 }}
-                onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = "#B8860B"; (e.currentTarget as HTMLAnchorElement).style.color = "#FAFAF8" }}
+                onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = "#B8860B"; (e.currentTarget as HTMLAnchorElement).style.color = "var(--off-white)" }}
                 onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = "transparent"; (e.currentTarget as HTMLAnchorElement).style.color = "#B8860B" }}
               >
                 Order oral kit
@@ -740,10 +740,10 @@ function CrossPanelInteractions({
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#B8860B", flexShrink: 0, animation: "cpPulse 2s infinite", display: "inline-block" }} />
               <div>
-                <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", fontSize: 18, color: "#141410", margin: "0 0 4px", lineHeight: 1.3 }}>
+                <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", fontSize: 18, color: "var(--ink)", margin: "0 0 4px", lineHeight: 1.3 }}>
                   Your sample is on its way.
                 </p>
-                <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "rgba(20,20,16,0.5)", margin: 0, lineHeight: 1.5 }}>
+                <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink-60)", margin: 0, lineHeight: 1.5 }}>
                   Results arrive in 10–14 days. Cross-panel insights unlock then.
                 </p>
               </div>
@@ -768,7 +768,7 @@ function CrossPanelInteractions({
                         ))}
                       </div>
                     </div>
-                    <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "rgba(20,20,16,0.6)", margin: 0, lineHeight: 1.5 }}>{insight.body}</p>
+                    <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink-60)", margin: 0, lineHeight: 1.5 }}>{insight.body}</p>
                   </div>
                 )
               })}
@@ -834,8 +834,8 @@ const CollapsiblePanel = React.forwardRef<CollapsiblePanelHandle, {
             onMouseLeave={() => setHoverToggle(false)}
             style={{
               width: 20, height: 20, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
-              border: `0.5px solid ${hoverToggle ? "var(--gold)" : "rgba(20,20,16,0.2)"}`,
-              color: hoverToggle ? "var(--gold)" : "rgba(20,20,16,0.5)",
+              border: `0.5px solid ${hoverToggle ? "var(--gold)" : "var(--ink-20)"}`,
+              color: hoverToggle ? "var(--gold)" : "var(--ink-60)",
               fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 16, lineHeight: 1,
               transition: "border-color 0.2s ease, color 0.2s ease", flexShrink: 0,
             }}
@@ -876,8 +876,8 @@ function OralSpeciesRow({ name, role, val, target, note, isPathogen, flagFn, lea
     watch:      { bg: "#FEF3C7", text: "#92400E",              label: "Watch"        },
     attention:  { bg: "#FEF0E6", text: "#C2510A",              label: "Attention"    },
     elevated:   { bg: "#FEECEC", text: "#C0392B",              label: "Elevated"     },
-    not_tested: { bg: "#F7F5F0", text: "rgba(20,20,16,0.4)",   label: "Not detected" },
-    pending:    { bg: "#F7F5F0", text: "rgba(20,20,16,0.5)",   label: "—"            },
+    not_tested: { bg: "var(--warm-50)", text: "var(--ink-40)",   label: "Not detected" },
+    pending:    { bg: "var(--warm-50)", text: "var(--ink-60)",   label: "—"            },
   }
   const bs = BADGE[effectiveFlag]
   const leftBorder = effectiveFlag === "attention" ? "#C0392B" : effectiveFlag === "watch" ? "#B8860B" : effectiveFlag === "good" ? "#2D6A4F" : "transparent"
@@ -897,7 +897,7 @@ function OralSpeciesRow({ name, role, val, target, note, isPathogen, flagFn, lea
     >
       <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ margin: 0, fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 13, fontStyle: "italic", color: notDetected ? "rgba(20,20,16,0.35)" : "var(--ink)", lineHeight: 1.3 }}>
+          <p style={{ margin: 0, fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 13, fontStyle: "italic", color: notDetected ? "var(--ink-30)" : "var(--ink)", lineHeight: 1.3 }}>
             {name}
           </p>
           <p style={{ margin: "2px 0 0", fontFamily: font, fontSize: 11, color: "var(--ink-60)", lineHeight: 1.3 }}>
@@ -906,13 +906,13 @@ function OralSpeciesRow({ name, role, val, target, note, isPathogen, flagFn, lea
         </div>
         <div style={{ textAlign: "right", flexShrink: 0 }}>
           {notDetected ? (
-            <p style={{ margin: 0, fontFamily: font, fontSize: 11, fontStyle: "italic", color: "rgba(20,20,16,0.35)" }}>Not detected</p>
+            <p style={{ margin: 0, fontFamily: font, fontSize: 11, fontStyle: "italic", color: "var(--ink-30)" }}>Not detected</p>
           ) : (
             <p style={{ margin: 0, fontFamily: font, fontSize: 13, color: valueColor }}>
               {val < 0.01 ? "<0.01" : val.toFixed(2)}%
             </p>
           )}
-          <p style={{ margin: "1px 0 0", fontFamily: font, fontSize: 10, color: "rgba(20,20,16,0.3)" }}>{target}</p>
+          <p style={{ margin: "1px 0 0", fontFamily: font, fontSize: 10, color: "var(--ink-30)" }}>{target}</p>
         </div>
         <span style={{
           fontFamily: font, fontSize: 9, textTransform: "uppercase" as const, letterSpacing: "0.05em",
@@ -923,20 +923,20 @@ function OralSpeciesRow({ name, role, val, target, note, isPathogen, flagFn, lea
         </span>
       </div>
       {note && !notDetected && (
-        <p style={{ margin: "5px 0 6px", fontFamily: font, fontSize: 11, color: "rgba(20,20,16,0.45)", fontStyle: "italic", lineHeight: 1.4 }}>
+        <p style={{ margin: "5px 0 6px", fontFamily: font, fontSize: 11, color: "var(--ink-40)", fontStyle: "italic", lineHeight: 1.4 }}>
           {note}
         </p>
       )}
       <button
         onClick={e => { e.stopPropagation(); setExpanded(o => !o) }}
         style={{
-          marginTop: 4, fontFamily: font, fontSize: 10, color: "rgba(20,20,16,0.35)",
+          marginTop: 4, fontFamily: font, fontSize: 10, color: "var(--ink-30)",
           background: "none", border: "none", cursor: "pointer", padding: 0,
           display: "flex", alignItems: "center", gap: 4,
         }}
       >
         <span style={{
-          width: 12, height: 12, borderRadius: "50%", border: "0.5px solid rgba(20,20,16,0.2)",
+          width: 12, height: 12, borderRadius: "50%", border: "0.5px solid var(--ink-20)",
           display: "inline-flex", alignItems: "center", justifyContent: "center",
           fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 10, lineHeight: 1, flexShrink: 0,
         }}>
@@ -947,14 +947,14 @@ function OralSpeciesRow({ name, role, val, target, note, isPathogen, flagFn, lea
       <div style={{ maxHeight: expanded ? 350 : 0, overflow: "hidden", transition: "max-height 0.3s ease, opacity 0.3s ease", opacity: expanded ? 1 : 0 }}>
         <div style={{ paddingTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
           <div>
-            <p style={{ fontFamily: font, fontSize: 9, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "rgba(20,20,16,0.3)", margin: "0 0 3px", fontWeight: 600 }}>What it does</p>
-            <p style={{ fontFamily: font, fontSize: 12, color: "rgba(20,20,16,0.6)", margin: 0, lineHeight: 1.5 }}>{learnWhat}</p>
+            <p style={{ fontFamily: font, fontSize: 9, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "var(--ink-30)", margin: "0 0 3px", fontWeight: 600 }}>What it does</p>
+            <p style={{ fontFamily: font, fontSize: 12, color: "var(--ink-60)", margin: 0, lineHeight: 1.5 }}>{learnWhat}</p>
           </div>
           <div>
-            <p style={{ fontFamily: font, fontSize: 9, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "rgba(20,20,16,0.3)", margin: "0 0 3px", fontWeight: 600 }}>Why it matters</p>
-            <p style={{ fontFamily: font, fontSize: 12, color: "rgba(20,20,16,0.6)", margin: 0, lineHeight: 1.5 }}>{learnWhy}</p>
+            <p style={{ fontFamily: font, fontSize: 9, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "var(--ink-30)", margin: "0 0 3px", fontWeight: 600 }}>Why it matters</p>
+            <p style={{ fontFamily: font, fontSize: 12, color: "var(--ink-60)", margin: 0, lineHeight: 1.5 }}>{learnWhy}</p>
           </div>
-          <p style={{ fontFamily: font, fontSize: 11, fontStyle: "italic", color: "rgba(20,20,16,0.3)", margin: 0, lineHeight: 1.4 }}>{learnCitation}</p>
+          <p style={{ fontFamily: font, fontSize: 11, fontStyle: "italic", color: "var(--ink-30)", margin: 0, lineHeight: 1.4 }}>{learnCitation}</p>
         </div>
       </div>
     </div>
@@ -1016,7 +1016,7 @@ function CompleteMicrobiomePanel({ species, shannonDiversity }: {
             Complete Microbiome Panel
           </span>
           {!open && (
-            <p style={{ margin: "2px 0 0", fontFamily: font, fontSize: 11, color: "rgba(20,20,16,0.4)" }}>
+            <p style={{ margin: "2px 0 0", fontFamily: font, fontSize: 11, color: "var(--ink-40)" }}>
               8 sections · species-level detail
             </p>
           )}
@@ -1143,7 +1143,7 @@ function CompleteMicrobiomePanel({ species, shannonDiversity }: {
               </div>
             )}
             {/* Diversity context note */}
-            <p style={{ margin: "10px 0 0", fontFamily: font, fontSize: 12, color: "rgba(20,20,16,0.5)", lineHeight: 1.6 }}>
+            <p style={{ margin: "10px 0 0", fontFamily: font, fontSize: 12, color: "var(--ink-60)", lineHeight: 1.6 }}>
               Higher diversity generally indicates a more resilient oral microbiome with better resistance to pathogen colonization. A Shannon index below 2.0 is associated with dysbiosis-related systemic risk.
             </p>
           </div>
@@ -1176,8 +1176,8 @@ function BacteriaGroup({ title, rows, mounted }: {
           onMouseLeave={() => setHov(false)}
           style={{
             width: 16, height: 16, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
-            border: `0.5px solid ${hov ? "var(--gold)" : "rgba(20,20,16,0.2)"}`,
-            color: hov ? "var(--gold)" : "rgba(20,20,16,0.5)",
+            border: `0.5px solid ${hov ? "var(--gold)" : "var(--ink-20)"}`,
+            color: hov ? "var(--gold)" : "var(--ink-60)",
             fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 13, lineHeight: 1,
             transition: "border-color 0.2s ease, color 0.2s ease", flexShrink: 0,
           }}
@@ -1359,13 +1359,12 @@ export function ScoreWheel({
             <img
               src="/images/snowcapped.jpg"
               alt=""
+              className="hero-mountain"
               style={{
                 width: "100%",
                 height: "100%",
                 objectFit: "cover",
                 objectPosition: "center 30%",
-                filter: "blur(0.5px) saturate(0.85) brightness(1.04)",
-                opacity: 0.38,
                 transform: "scale(1.05)",
               }}
             />
@@ -1501,7 +1500,7 @@ export function ScoreWheel({
 
           {/* Wearable status */}
           {!sleepData && !whoopData?.connected && (
-            <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "rgba(20,20,16,0.45)", marginTop: 12 }}>
+            <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "var(--ink-40)", marginTop: 12 }}>
               No wearable connected —{" "}
               <a href="/settings#wearables" style={{ color: "var(--sleep-c)", textDecoration: "none" }}>
                 Go to Settings →
@@ -1531,12 +1530,12 @@ export function ScoreWheel({
               fontSize: 11,
               fontVariant: "small-caps",
               letterSpacing: "0.04em",
-              color: "rgba(20,20,16,0.4)",
+              color: "var(--ink-40)",
               textDecoration: "none",
               transition: "color 0.2s ease",
             }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "#B8860B" }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "rgba(20,20,16,0.4)" }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--ink-40)" }}
           >
             ↑ re-upload labs
           </a>
@@ -1561,7 +1560,7 @@ export function ScoreWheel({
         )}
 
         {bloodData?.bloodInsight && (
-          <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", fontSize: 16, color: "rgba(20,20,16,0.7)", lineHeight: 1.55, margin: "0 0 14px", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+          <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", fontSize: 16, color: "var(--ink-80)", lineHeight: 1.55, margin: "0 0 14px", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
             {bloodData.bloodInsight}
           </p>
         )}
@@ -1630,12 +1629,12 @@ export function ScoreWheel({
           const font = "var(--font-body, 'Instrument Sans', sans-serif)"
           return (
             <div style={{ marginTop: 16 }}>
-              <p style={{ fontFamily: font, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "rgba(20,20,16,0.4)", margin: "0 0 8px" }}>
+              <p style={{ fontFamily: font, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--ink-40)", margin: "0 0 8px" }}>
                 Consider testing
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {missing.map(m => (
-                  <div key={m.label} style={{ background: "white", border: "0.5px solid var(--ink-12)", borderRadius: 8, padding: "14px 16px" }}>
+                  <div key={m.label} style={{ background: "var(--white)", border: "0.5px solid var(--ink-12)", borderRadius: 8, padding: "14px 16px" }}>
                     {/* Name row */}
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>

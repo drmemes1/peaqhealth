@@ -74,7 +74,7 @@ const C = {
   blood: "#C0392B",
   oral: "#2D6A4F",
   lifestyle: "#B8860B",
-  ink: "#141410",
+  ink: "var(--ink)",
 } as const
 
 const serif = "'Cormorant Garamond', Georgia, serif"
@@ -84,7 +84,7 @@ const card: React.CSSProperties = {
   border: "0.5px solid var(--ink-08)",
   borderRadius: 6,
   padding: "20px 24px",
-  background: "white",
+  background: "var(--white)",
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────────
@@ -123,9 +123,9 @@ function ScoreTooltip({ active, payload }: { active?: boolean; payload?: Array<{
   const pt = payload[0].payload
   return (
     <div style={{
-      background: "white", border: "0.5px solid var(--ink-12)", borderRadius: 4,
+      background: "var(--white)", border: "0.5px solid var(--ink-12)", borderRadius: 4,
       padding: "10px 14px", fontFamily: body, fontSize: 12, color: C.ink,
-      boxShadow: "0 4px 16px rgba(20,20,16,0.06)", minWidth: 140,
+      boxShadow: "0 4px 16px var(--ink-06)", minWidth: 140,
     }}>
       <p style={{ margin: "0 0 6px", fontWeight: 600, color: "var(--ink-60)" }}>{pt.label}</p>
       {[
@@ -148,9 +148,9 @@ function SleepTooltip({ active, payload, label }: { active?: boolean; payload?: 
   if (!active || !payload?.length) return null
   return (
     <div style={{
-      background: "white", border: "0.5px solid var(--ink-12)", borderRadius: 4,
+      background: "var(--white)", border: "0.5px solid var(--ink-12)", borderRadius: 4,
       padding: "8px 12px", fontFamily: body, fontSize: 12, color: C.ink,
-      boxShadow: "0 4px 16px rgba(20,20,16,0.06)",
+      boxShadow: "0 4px 16px var(--ink-06)",
     }}>
       <p style={{ margin: 0, color: "var(--ink-60)" }}>{label}</p>
       <p style={{ margin: "2px 0 0", fontWeight: 500 }}>{payload[0].value != null ? fmt(payload[0].value, 1) : "—"}</p>
@@ -618,17 +618,17 @@ export function TrendsClient() {
                     >
                       <XAxis
                         dataKey="label"
-                        tick={{ fontFamily: serif, fontSize: 11, fill: "rgba(20,20,16,0.3)" }}
+                        tick={{ fontFamily: serif, fontSize: 11, fill: "var(--ink-30)" }}
                         axisLine={false} tickLine={false}
                         interval={Math.max(0, Math.floor(data!.sleepNights.length / 8))}
                       />
                       <YAxis
                         domain={[0, 80]}
-                        tick={{ fontFamily: serif, fontSize: 11, fill: "rgba(20,20,16,0.3)" }}
+                        tick={{ fontFamily: serif, fontSize: 11, fill: "var(--ink-30)" }}
                         axisLine={false} tickLine={false} tickCount={4}
                       />
                       <Tooltip content={<SleepTooltip />} cursor={{ stroke: "var(--ink-12)", strokeWidth: 1 }} />
-                      <ReferenceLine y={50} stroke="rgba(20,20,16,0.15)" strokeDasharray="4 4" />
+                      <ReferenceLine y={50} stroke="var(--ink-15)" strokeDasharray="4 4" />
                       <Area
                         type="monotone" dataKey="hrv"
                         stroke={C.sleep} strokeWidth={1.5}
@@ -651,17 +651,17 @@ export function TrendsClient() {
                     >
                       <XAxis
                         dataKey="label"
-                        tick={{ fontFamily: serif, fontSize: 11, fill: "rgba(20,20,16,0.3)" }}
+                        tick={{ fontFamily: serif, fontSize: 11, fill: "var(--ink-30)" }}
                         axisLine={false} tickLine={false}
                         interval={Math.max(0, Math.floor(data!.sleepNights.length / 8))}
                       />
                       <YAxis
                         domain={[60, 100]}
-                        tick={{ fontFamily: serif, fontSize: 11, fill: "rgba(20,20,16,0.3)" }}
+                        tick={{ fontFamily: serif, fontSize: 11, fill: "var(--ink-30)" }}
                         axisLine={false} tickLine={false} tickCount={4}
                       />
                       <Tooltip content={<SleepTooltip />} cursor={{ stroke: "var(--ink-12)", strokeWidth: 1 }} />
-                      <ReferenceLine y={85} stroke="rgba(20,20,16,0.15)" strokeDasharray="4 4" />
+                      <ReferenceLine y={85} stroke="var(--ink-15)" strokeDasharray="4 4" />
                       <Area
                         type="monotone" dataKey="efficiency"
                         stroke={C.sleep} strokeWidth={1.5}
@@ -726,12 +726,12 @@ export function TrendsClient() {
                     >
                       <XAxis
                         dataKey="label"
-                        tick={{ fontFamily: serif, fontSize: 12, fill: "rgba(20,20,16,0.4)" }}
+                        tick={{ fontFamily: serif, fontSize: 12, fill: "var(--ink-40)" }}
                         axisLine={false} tickLine={false}
                       />
                       <YAxis
                         domain={[0, 100]}
-                        tick={{ fontFamily: serif, fontSize: 12, fill: "rgba(20,20,16,0.4)" }}
+                        tick={{ fontFamily: serif, fontSize: 12, fill: "var(--ink-40)" }}
                         axisLine={false} tickLine={false} tickCount={5}
                       />
                       <Tooltip content={<ScoreTooltip />} cursor={{ stroke: "var(--ink-12)", strokeWidth: 1 }} />
@@ -744,18 +744,18 @@ export function TrendsClient() {
                       })}
 
                       <Area type="monotone" dataKey="total" stroke={C.ink} strokeWidth={2} fill={C.ink} fillOpacity={0.04}
-                        dot={{ r: 3, fill: C.ink, stroke: "white", strokeWidth: 1.5 }}
-                        activeDot={{ r: 5, fill: C.ink, stroke: "white", strokeWidth: 2 }}
+                        dot={{ r: 3, fill: C.ink, stroke: "var(--white)", strokeWidth: 1.5 }}
+                        activeDot={{ r: 5, fill: C.ink, stroke: "var(--white)", strokeWidth: 2 }}
                         connectNulls={false}
                       />
                       <Line type="monotone" dataKey="sleep" stroke={C.sleep} strokeWidth={1.25}
-                        dot={{ r: 2.5, fill: C.sleep, stroke: "white", strokeWidth: 1 }} connectNulls={false} />
+                        dot={{ r: 2.5, fill: C.sleep, stroke: "var(--white)", strokeWidth: 1 }} connectNulls={false} />
                       <Line type="monotone" dataKey="blood" stroke={C.blood} strokeWidth={1.25}
-                        dot={{ r: 2.5, fill: C.blood, stroke: "white", strokeWidth: 1 }} connectNulls={false} />
+                        dot={{ r: 2.5, fill: C.blood, stroke: "var(--white)", strokeWidth: 1 }} connectNulls={false} />
                       <Line type="monotone" dataKey="oral" stroke={C.oral} strokeWidth={1.25}
-                        dot={{ r: 2.5, fill: C.oral, stroke: "white", strokeWidth: 1 }} connectNulls={false} />
+                        dot={{ r: 2.5, fill: C.oral, stroke: "var(--white)", strokeWidth: 1 }} connectNulls={false} />
                       <Line type="monotone" dataKey="lifestyle" stroke={C.lifestyle} strokeWidth={1.25}
-                        dot={{ r: 2.5, fill: C.lifestyle, stroke: "white", strokeWidth: 1 }} connectNulls={false} />
+                        dot={{ r: 2.5, fill: C.lifestyle, stroke: "var(--white)", strokeWidth: 1 }} connectNulls={false} />
                     </ComposedChart>
                   </ResponsiveContainer>
                 </div>

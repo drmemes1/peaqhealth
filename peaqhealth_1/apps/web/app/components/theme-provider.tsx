@@ -2,33 +2,50 @@
 
 import { createContext, useContext, useEffect, useState } from "react"
 
-type Theme = "light" | "dark"
+type Theme = "light" | "dark" | "system"
 
 interface ThemeContextValue {
   theme: Theme
-  toggle: () => void
+  setTheme: (t: Theme) => void
+  resolvedTheme: "light" | "dark"
 }
 
-const ThemeContext = createContext<ThemeContextValue>({ theme: "light", toggle: () => {} })
+const ThemeContext = createContext<ThemeContextValue>({
+  theme: "system",
+  setTheme: () => {},
+  resolvedTheme: "light",
+})
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("light")
+  const [theme, setThemeState] = useState<Theme>("system")
+  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light")
 
   useEffect(() => {
-    const stored = (localStorage.getItem("peaq-theme") as Theme | null) ?? "light"
-    setTheme(stored)
-    document.documentElement.setAttribute("data-theme", stored)
+    const stored = localStorage.getItem("peaq-theme") as Theme | null
+    if (stored && ["light", "dark", "system"].includes(stored)) {
+      setThemeState(stored)
+    }
   }, [])
 
-  const toggle = () => {
-    const next: Theme = theme === "light" ? "dark" : "light"
-    setTheme(next)
-    localStorage.setItem("peaq-theme", next)
-    document.documentElement.setAttribute("data-theme", next)
-  }
+  useEffect(() => {
+    const apply = (t: Theme) => {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
+      const resolved = t === "system" ? (prefersDark ? "dark" : "light") : t
+      document.documentElement.setAttribute("data-theme", resolved)
+      setResolvedTheme(resolved)
+    }
+
+    apply(theme)
+    localStorage.setItem("peaq-theme", theme)
+
+    const mq = window.matchMedia("(prefers-color-scheme: dark)")
+    const handler = () => { if (theme === "system") apply("system") }
+    mq.addEventListener("change", handler)
+    return () => mq.removeEventListener("change", handler)
+  }, [theme])
 
   return (
-    <ThemeContext.Provider value={{ theme, toggle }}>
+    <ThemeContext.Provider value={{ theme, setTheme: setThemeState, resolvedTheme }}>
       {children}
     </ThemeContext.Provider>
   )

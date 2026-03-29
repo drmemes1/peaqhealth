@@ -464,7 +464,7 @@ export function LabUpload({ onSkip, onComplete }: LabUploadProps) {
             {parsedLabName ? ` · ${parsedLabName}` : ""}
             {parsedCollectionDate ? ` · ${parsedCollectionDate}` : ""}
           </p>
-          <p className="font-body text-[13px]" style={{ color: "var(--ink-40, rgba(20,20,16,0.4))" }}>
+          <p className="font-body text-[13px]" style={{ color: "var(--ink-40)" }}>
             Review and edit your results before saving
           </p>
         </div>
@@ -475,15 +475,15 @@ export function LabUpload({ onSkip, onComplete }: LabUploadProps) {
             {/* Category header */}
             <div
               className="flex items-center justify-between px-1 pb-1.5 mb-0.5"
-              style={{ borderBottom: "0.5px solid rgba(20,20,16,0.08)" }}
+              style={{ borderBottom: "0.5px solid var(--ink-08)" }}
             >
               <span
                 className="font-body text-[11px] uppercase tracking-widest"
-                style={{ color: "rgba(20,20,16,0.4)", fontVariant: "small-caps" }}
+                style={{ color: "var(--ink-40)", fontVariant: "small-caps" }}
               >
                 {cat.name}
               </span>
-              <span className="font-body text-[10px]" style={{ color: "rgba(20,20,16,0.3)" }}>
+              <span className="font-body text-[10px]" style={{ color: "var(--ink-30)" }}>
                 {cat.found.length} found
               </span>
             </div>
@@ -499,8 +499,8 @@ export function LabUpload({ onSkip, onComplete }: LabUploadProps) {
                     key={m.slug}
                     className="flex items-center gap-3 px-3 py-2"
                     style={{
-                      borderBottom: isLast ? "none" : "0.5px solid var(--ink-06, #f8f8f8)",
-                      background: "white",
+                      borderBottom: isLast ? "none" : "0.5px solid var(--ink-06)",
+                      background: "var(--white)",
                     }}
                   >
                     <span style={{ color: "var(--blood-c)", fontSize: 10, flexShrink: 0 }}>✓</span>
@@ -548,12 +548,12 @@ export function LabUpload({ onSkip, onComplete }: LabUploadProps) {
                     key={m.slug}
                     className="flex items-center gap-3 px-3 py-2"
                     style={{
-                      borderBottom: isLast ? "none" : "0.5px solid var(--ink-06, #f8f8f8)",
-                      background: "rgba(20,20,16,0.015)",
+                      borderBottom: isLast ? "none" : "0.5px solid var(--ink-06)",
+                      background: "var(--ink-04)",
                     }}
                   >
                     <span style={{ color: "var(--ink-30)", fontSize: 11, flexShrink: 0 }}>+</span>
-                    <span className="font-body text-sm flex-1" style={{ color: "var(--ink-40, rgba(20,20,16,0.4))" }}>{m.name}</span>
+                    <span className="font-body text-sm flex-1" style={{ color: "var(--ink-40)" }}>{m.name}</span>
                     <input
                       type="number"
                       step="0.01"
@@ -628,7 +628,7 @@ export function LabUpload({ onSkip, onComplete }: LabUploadProps) {
       <div className="flex flex-col gap-4">
         <div
           className="flex items-center gap-3 px-4 py-3"
-          style={{ border: "0.5px solid var(--ink-12)", borderRadius: 4, background: "white" }}
+          style={{ border: "0.5px solid var(--ink-12)", borderRadius: 4, background: "var(--white)" }}
         >
           <span className="font-body text-sm flex-1" style={{ color: "var(--ink)" }}>Date of blood draw</span>
           <input
@@ -648,7 +648,7 @@ export function LabUpload({ onSkip, onComplete }: LabUploadProps) {
         </div>
 
         {DISPLAY_MARKERS.map((m) => (
-          <div key={m.slug} className="grid items-center gap-2 p-3" style={{ gridTemplateColumns: "1fr 110px 52px", border: "0.5px solid var(--ink-12)", borderRadius: 4, background: "white" }}>
+          <div key={m.slug} className="grid items-center gap-2 p-3" style={{ gridTemplateColumns: "1fr 110px 52px", border: "0.5px solid var(--ink-12)", borderRadius: 4, background: "var(--white)" }}>
             <span className="font-body text-sm" style={{ color: "var(--ink)" }}>{m.name}</span>
             <input
               type="number" step="0.1" min="0" placeholder={m.placeholder}
@@ -687,8 +687,8 @@ export function LabUpload({ onSkip, onComplete }: LabUploadProps) {
         }}
         className="flex w-full cursor-pointer flex-col items-center gap-4 px-8 py-14 transition-colors"
         style={{
-          border: dragOver ? "0.5px dashed var(--gold)" : "0.5px dashed rgba(20,20,16,0.2)",
-          background: dragOver ? "rgba(184,134,11,0.04)" : "white",
+          border: dragOver ? "0.5px dashed var(--gold)" : "0.5px dashed var(--ink-20)",
+          background: dragOver ? "rgba(184,134,11,0.04)" : "var(--white)",
           borderRadius: 4,
         }}
       >
@@ -724,7 +724,7 @@ export function LabUpload({ onSkip, onComplete }: LabUploadProps) {
             <div
               key={f.name}
               className="flex items-center gap-3 px-4 py-2.5"
-              style={{ border: "0.5px solid var(--ink-12)", borderRadius: 4, background: "white" }}
+              style={{ border: "0.5px solid var(--ink-12)", borderRadius: 4, background: "var(--white)" }}
             >
               <span className="font-body text-xs" style={{ color: "var(--ink-30)" }}>📄</span>
               <span className="font-body text-sm flex-1" style={{ color: "var(--ink)" }}>{f.name}</span>
@@ -764,7 +764,7 @@ export function LabUpload({ onSkip, onComplete }: LabUploadProps) {
         </button>
       )}
 
-      <div className="w-full text-center" style={{ borderTop: "0.5px solid var(--ink-08, #f2f2f2)", paddingTop: 14 }}>
+      <div className="w-full text-center" style={{ borderTop: "0.5px solid var(--ink-08)", paddingTop: 14 }}>
         <button
           onClick={() => { setError(null); setPhase("manual") }}
           className="font-body text-xs uppercase tracking-widest transition-opacity hover:opacity-70"

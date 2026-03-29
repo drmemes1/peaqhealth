@@ -138,7 +138,7 @@ function NotifyForm({ productId, source }: { productId: string; source: string }
       <button
         onClick={() => setOpen(true)}
         className="font-body text-[10px] uppercase tracking-[0.08em] px-4 py-2.5 transition-opacity hover:opacity-80"
-        style={{ background: "var(--ink)", color: "white" }}
+        style={{ background: "var(--ink)", color: "var(--white)" }}
       >
         Notify me
       </button>
@@ -154,8 +154,8 @@ function NotifyForm({ productId, source }: { productId: string; source: string }
         value={email}
         onChange={e => setEmail(e.target.value)}
         placeholder="you@example.com"
-        className="h-9 border bg-white px-3 font-body text-xs outline-none transition-colors"
-        style={{ borderColor: "var(--ink-30)", color: "var(--ink)" }}
+        className="h-9 border px-3 font-body text-xs outline-none transition-colors"
+        style={{ borderColor: "var(--ink-30)", color: "var(--ink)", background: "var(--white)" }}
         onFocus={e => (e.target.style.borderColor = "var(--ink)")}
         onBlur={e => (e.target.style.borderColor = "var(--ink-30)")}
       />
@@ -164,7 +164,7 @@ function NotifyForm({ productId, source }: { productId: string; source: string }
           type="submit"
           disabled={loading}
           className="flex-1 h-9 font-body text-[10px] uppercase tracking-[0.08em] transition-opacity disabled:opacity-50 hover:opacity-80"
-          style={{ background: "var(--ink)", color: "white" }}
+          style={{ background: "var(--ink)", color: "var(--white)" }}
         >
           {loading ? "Saving…" : "Notify me"}
         </button>
@@ -188,8 +188,8 @@ function ProductCard({ product }: { product: Product }) {
 
   return (
     <div
-      className="flex flex-col bg-white transition-all duration-150"
-      style={{ border: "0.5px solid var(--ink-12)", borderRadius: 4 }}
+      className="flex flex-col transition-all duration-150"
+      style={{ border: "0.5px solid var(--ink-12)", borderRadius: 4, background: "var(--white)" }}
       onMouseEnter={e => ((e.currentTarget as HTMLElement).style.borderColor = "var(--ink-30)")}
       onMouseLeave={e => ((e.currentTarget as HTMLElement).style.borderColor = "var(--ink-12)")}
     >
@@ -323,7 +323,7 @@ function StarterKitBundle() {
               </span>
             </div>
 
-            <h2 className="font-display text-4xl md:text-5xl font-light leading-tight" style={{ color: "#FAFAF8" }}>
+            <h2 className="font-display text-4xl md:text-5xl font-light leading-tight" style={{ color: "var(--off-white)" }}>
               Peaq Starter Kit
             </h2>
 
@@ -371,7 +371,7 @@ function StarterKitBundle() {
                 Bundle price
               </p>
               <div className="flex items-baseline gap-3">
-                <span className="font-display text-6xl font-light" style={{ color: "#FAFAF8" }}>
+                <span className="font-display text-6xl font-light" style={{ color: "var(--off-white)" }}>
                   $239
                 </span>
                 <span className="font-body text-sm" style={{ color: "var(--gold)" }}>
@@ -405,7 +405,7 @@ function StarterKitBundle() {
                     style={{
                       borderColor: "rgba(250,250,248,0.2)",
                       background: "rgba(250,250,248,0.06)",
-                      color: "#FAFAF8",
+                      color: "var(--off-white)",
                     }}
                     onFocus={e => (e.target.style.borderColor = "var(--gold)")}
                     onBlur={e => (e.target.style.borderColor = "rgba(250,250,248,0.2)")}
@@ -558,7 +558,7 @@ export default function ShopPage() {
                 className="font-body text-[10px] uppercase tracking-[0.08em] px-4 py-2 transition-all duration-150"
                 style={{
                   background: category === cat ? "var(--ink)" : "var(--warm-50)",
-                  color: category === cat ? "white" : "var(--ink-60)",
+                  color: category === cat ? "var(--white)" : "var(--ink-60)",
                   border:
                     category === cat
                       ? "0.5px solid var(--ink)"

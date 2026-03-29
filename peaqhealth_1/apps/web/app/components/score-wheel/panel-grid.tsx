@@ -26,14 +26,14 @@ function PanelCard({ label, color, trackColor, score, max, active, locked, desc,
       onMouseLeave={() => setHovered(false)}
       onTouchStart={() => haptics.light()}
       style={{
-        background: "white",
-        border: `0.5px solid ${highlighted ? color + "66" : hovered && active ? "rgba(20,20,16,0.20)" : "var(--ink-12)"}`,
+        background: "var(--white)",
+        border: `0.5px solid ${highlighted ? color + "66" : hovered && active ? "var(--ink-20)" : "var(--ink-12)"}`,
         borderTop: `2px solid ${locked ? "transparent" : active ? color : color + "44"}`,
         borderRadius: 4,
         padding: "14px 16px",
         opacity: locked ? 0.52 : 1,
         transform: hovered && active ? "translateY(-2px)" : "none",
-        boxShadow: hovered && active ? "0 4px 16px rgba(20,20,16,0.06)" : "none",
+        boxShadow: hovered && active ? "0 4px 16px var(--ink-06)" : "none",
         transition: "transform 0.2s cubic-bezier(.16,1,.3,1), border-color 0.2s ease, box-shadow 0.2s ease",
         cursor: active ? "default" : "pointer",
       }}
@@ -79,7 +79,7 @@ function SyncingCard({ provider }: { provider?: string }) {
 
   return (
     <div style={{
-      background: "white",
+      background: "var(--white)",
       border: "0.5px solid var(--ink-12)",
       borderTop: "2px solid var(--sleep-c)",
       borderRadius: 4,

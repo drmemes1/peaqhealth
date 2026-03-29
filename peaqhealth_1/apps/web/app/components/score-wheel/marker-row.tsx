@@ -8,8 +8,8 @@ const FLAG_STYLES: Record<Flag, { bg: string; text: string; label: string }> = {
   watch:      { bg: "#FEF3C7", text: "#92400E",          label: "Watch" },
   attention:  { bg: "#FEF0E6", text: "#C2510A",          label: "Attention" },
   elevated:   { bg: "#FEECEC", text: "#C0392B",          label: "Elevated" },
-  pending:    { bg: "#F7F5F0", text: "rgba(20,20,16,0.6)",  label: "Pending" },
-  not_tested: { bg: "#F7F5F0", text: "rgba(20,20,16,0.35)", label: "—" },
+  pending:    { bg: "var(--warm-50)", text: "var(--ink-60)",  label: "Pending" },
+  not_tested: { bg: "var(--warm-50)", text: "var(--ink-30)", label: "—" },
 }
 
 interface MarkerRowProps {

@@ -98,7 +98,7 @@ const STATUS_STYLES: Record<MarkerStatus, { bg: string; text: string; label: str
   watch:      { bg: "#FEF3C7", text: "#92400E", label: "Watch",     dot: "#B8860B" },
   attention:  { bg: "#FEE2E2", text: "#991B1B", label: "Attention", dot: "#C0392B" },
   retest:     { bg: "#FEF3C7", text: "#92400E", label: "Retest",    dot: "#B8860B" },
-  not_tested: { bg: "#F7F5F0", text: "rgba(20,20,16,0.35)", label: "—", dot: "rgba(20,20,16,0.2)" },
+  not_tested: { bg: "#F7F5F0", text: "var(--ink-35)", label: "—", dot: "var(--ink-20)" },
 }
 
 function getStatus(val: number | null, def: MarkerDef, isHsCRP?: boolean): MarkerStatus {
@@ -193,7 +193,7 @@ function MarkerRow({ val, def, isHsCRP }: { val: number | null; def: MarkerDef; 
           </p>
           {/* Spectrum bar */}
           <div style={{ margin: "6px 0 0 18px", position: "relative", height: 12 }}>
-            <div style={{ position: "absolute", top: 5, left: 0, right: 0, height: 1, background: "rgba(20,20,16,0.08)" }} />
+            <div style={{ position: "absolute", top: 5, left: 0, right: 0, height: 1, background: "var(--ink-08)" }} />
             {/* Optimal zone */}
             <div style={{
               position: "absolute", top: 3, height: 5, borderRadius: 2,
@@ -312,7 +312,7 @@ export function BloodPanelClient({ lab, snapshot, history, ageRange, stressLevel
             href="/settings/labs"
             style={{ fontFamily: "var(--font-body)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--ink-30)", textDecoration: "none" }}
             onMouseEnter={(e) => { e.currentTarget.style.color = "#B8860B" }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(20,20,16,0.3)" }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = "var(--ink-30)" }}
           >
             ↑ Re-upload labs
           </Link>
@@ -347,7 +347,7 @@ export function BloodPanelClient({ lab, snapshot, history, ageRange, stressLevel
         {bloodInsight && (
           <p style={{
             fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: 17,
-            color: "rgba(20,20,16,0.65)", lineHeight: 1.55, margin: "0 0 24px",
+            color: "var(--ink-65)", lineHeight: 1.55, margin: "0 0 24px",
             display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden",
           }}>
             {bloodInsight}
@@ -425,7 +425,7 @@ export function BloodPanelClient({ lab, snapshot, history, ageRange, stressLevel
                   {openMissingTooltip === m.key && (
                     <div style={{
                       position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 20,
-                      padding: "10px 12px", background: "white",
+                      padding: "10px 12px", background: "var(--white)",
                       border: "0.5px solid rgba(184,134,11,0.4)", borderRadius: 4,
                       fontSize: 12, fontFamily: "var(--font-body)", color: "var(--ink)",
                       lineHeight: 1.55, minWidth: 220, maxWidth: 320,

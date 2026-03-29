@@ -37,7 +37,7 @@ const CATEGORY: Record<string, { bg: string; text: string; label: string; border
 }
 
 function PanelTag({ panel }: { panel: string }) {
-  const color = PANEL_COLOR[panel.toLowerCase()] ?? "rgba(20,20,16,0.3)"
+  const color = PANEL_COLOR[panel.toLowerCase()] ?? "var(--ink-30)"
   return (
     <span style={{
       fontSize: 9, textTransform: "uppercase" as const, letterSpacing: "0.06em",
@@ -92,7 +92,7 @@ function InsightCard({ item, isPrimary }: { item: InsightCardData; isPrimary?: b
     <div
       ref={el}
       style={{
-        background: "white",
+        background: "var(--white)",
         border: "0.5px solid var(--ink-12)",
         borderLeft: `3px solid ${borderColor}`,
         padding: isPrimary ? "20px 22px 18px" : "16px 18px 14px",
@@ -128,7 +128,7 @@ function InsightCard({ item, isPrimary }: { item: InsightCardData; isPrimary?: b
       {/* Mechanism */}
       <p style={{
         fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-        fontSize: 12, lineHeight: 1.65, color: "rgba(20,20,16,0.42)",
+        fontSize: 12, lineHeight: 1.65, color: "var(--ink-40)",
         margin: "0 0 10px", fontStyle: "italic",
       }}>
         {item.mechanism}
@@ -158,7 +158,7 @@ function InsightCard({ item, isPrimary }: { item: InsightCardData; isPrimary?: b
             onClick={() => setSourcesOpen(o => !o)}
             style={{
               fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-              fontSize: 11, color: "rgba(20,20,16,0.35)",
+              fontSize: 11, color: "var(--ink-30)",
               background: "none", border: "none", cursor: "pointer", padding: 0,
             }}
           >
@@ -173,7 +173,7 @@ function InsightCard({ item, isPrimary }: { item: InsightCardData; isPrimary?: b
               {item.citations!.map((c, i) => (
                 <p key={i} style={{
                   fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                  fontSize: 11, fontStyle: "italic", color: "rgba(20,20,16,0.35)",
+                  fontSize: 11, fontStyle: "italic", color: "var(--ink-30)",
                   margin: 0, lineHeight: 1.4,
                 }}>
                   {c}
@@ -192,7 +192,7 @@ function InsightCard({ item, isPrimary }: { item: InsightCardData; isPrimary?: b
 function Skeleton({ isPrimary }: { isPrimary?: boolean }) {
   return (
     <div style={{
-      background: "white",
+      background: "var(--white)",
       border: "0.5px solid var(--ink-12)",
       borderLeft: "3px solid var(--ink-12)",
       padding: isPrimary ? "20px 22px 18px" : "16px 18px 14px",
@@ -247,7 +247,7 @@ export function Insights({ sleepConnected, hasBlood, oralActive, lifestyleActive
             `}</style>
             {[0, 0.4, 0.8].map((delay, i) => (
               <span key={i} style={{
-                fontSize: 24, color: "rgba(20,20,16,0.3)",
+                fontSize: 24, color: "var(--ink-30)",
                 animation: `dotPulse 1.2s ease-in-out ${delay}s infinite`,
                 lineHeight: 1,
               }}>·</span>
