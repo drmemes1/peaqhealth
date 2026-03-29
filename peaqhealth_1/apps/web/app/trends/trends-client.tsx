@@ -93,7 +93,7 @@ function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" })
 }
 function fmtMonthYear(iso: string) {
-  return new Date(iso).toLocaleDateString("en-US", { month: "short", year: "numeric" })
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
 }
 function fmtWeekday(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })
@@ -649,13 +649,28 @@ export function TrendsClient() {
                 ))}
               </div>
 
-              {data!.snapshots.length === 1 ? (
-                <div style={{ ...card, textAlign: "center", padding: "40px 24px" }}>
-                  <p style={{ fontFamily: body, fontSize: 13, color: "var(--ink-40)", margin: 0, lineHeight: 1.7 }}>
-                    One data point so far. More snapshots will appear as you update your data.
-                  </p>
-                </div>
-              ) : (
+              {(() => {
+                const snaps = data!.snapshots
+                if (snaps.length <= 1) return (
+                  <div style={{ ...card, textAlign: "center", padding: "40px 24px" }}>
+                    <p style={{ fontFamily: body, fontSize: 13, color: "var(--ink-40)", margin: 0, lineHeight: 1.7 }}>
+                      {snaps.length === 0
+                        ? "No snapshots yet."
+                        : "One data point so far. More snapshots will appear as you update your data."}
+                    </p>
+                  </div>
+                )
+                const firstDate = new Date(snaps[0].date).getTime()
+                const lastDate  = new Date(snaps[snaps.length - 1].date).getTime()
+                const spanDays  = (lastDate - firstDate) / 86400000
+                if (spanDays < 7) return (
+                  <div style={{ ...card, textAlign: "center", padding: "40px 24px" }}>
+                    <p style={{ fontFamily: body, fontSize: 13, color: "var(--ink-40)", margin: 0, lineHeight: 1.7 }}>
+                      Your score history will build here over time. Check back after your next data update.
+                    </p>
+                  </div>
+                )
+                return (
                 <div style={card}>
                   <ResponsiveContainer width="100%" height={180}>
                     <ComposedChart
@@ -697,7 +712,7 @@ export function TrendsClient() {
                     </ComposedChart>
                   </ResponsiveContainer>
                 </div>
-              )}
+              )})()}
             </div>
 
             {/* ─── 4i SNAPSHOT COMPARISON ───────────────── */}

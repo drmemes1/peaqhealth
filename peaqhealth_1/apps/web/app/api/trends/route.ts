@@ -79,8 +79,23 @@ export async function GET() {
       .maybeSingle(),
   ])
 
-  // ─── Snapshots ──────────────────────────────────────────────────────────────
-  const snapshots = (snapshotRows ?? []).map(r => ({
+  // ─── Snapshots — deduplicate to one row per calendar day ───────────────────
+  // Every recalculate() call creates a new row, so testing creates dozens of
+  // same-day points. Keep only the latest snapshot per calendar date.
+  const allRows = snapshotRows ?? []
+  const byDay = new Map<string, typeof allRows[0]>()
+  for (const r of allRows) {
+    const day = r.calculated_at.slice(0, 10) // "YYYY-MM-DD"
+    const existing = byDay.get(day)
+    if (!existing || r.calculated_at > existing.calculated_at) {
+      byDay.set(day, r)
+    }
+  }
+  const dedupedRows = Array.from(byDay.values()).sort((a, b) =>
+    a.calculated_at < b.calculated_at ? -1 : 1
+  )
+
+  const snapshots = dedupedRows.map(r => ({
     date: r.calculated_at,
     total: r.score ?? 0,
     sleep: r.sleep_sub ?? 0,
@@ -89,9 +104,9 @@ export async function GET() {
     lifestyle: r.lifestyle_sub ?? 0,
   }))
 
-  const current = snapshots.length > 0 ? snapshots[snapshots.length - 1] : null
+  const current  = snapshots.length > 0  ? snapshots[snapshots.length - 1] : null
   const previous = snapshots.length >= 2 ? snapshots[snapshots.length - 2] : null
-  const first = snapshots.length > 0 ? snapshots[0] : null
+  const first    = snapshots.length > 0  ? snapshots[0] : null
 
   // ─── Sleep processing ───────────────────────────────────────────────────────
   const rawSleep = sleepRows ?? []
