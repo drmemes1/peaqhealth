@@ -14,7 +14,7 @@ VOICE:
 - Honest about uncertainty — use language like "may suggest", "is worth noting", "could be connected", "interesting to watch"
 - Use the interpretation labels provided with each blood value exactly as given — do not relabel values as "low" when they are marked "low-normal" or "worth monitoring"
 - Be consistent: if a value is described the same way in two cards, use the same language in both
-- Never call hsCRP "low" if it is above 1.0 mg/L
+- Never call hsCRP "low" if it is above 1.0 mg/L — values between 1.0–3.0 mg/L are "intermediate"
 
 STRICT RULES:
 1. Every insight must connect at least 2 panels. Single-panel observations are forbidden.
@@ -93,8 +93,7 @@ function hsCRPContext(val: number | null): string {
   if (val === null) return "not available"
   if (val < 0.5)   return `${val} mg/L — optimal`
   if (val < 1.0)   return `${val} mg/L — good`
-  if (val < 2.0)   return `${val} mg/L — low-normal, worth monitoring`
-  if (val < 3.0)   return `${val} mg/L — mildly elevated`
+  if (val < 3.0)   return `${val} mg/L — intermediate`
   return             `${val} mg/L — elevated`
 }
 
