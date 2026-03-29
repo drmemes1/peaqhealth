@@ -53,6 +53,39 @@ async function fetchSleepSessions(
   }
 }
 
+// ── Helper: map a Vital sleep session to a sleep_data row ─────────────────────
+function buildSleepDataRow(session: Record<string, unknown>, userId: string): Record<string, unknown> | null {
+  const date = session.calendar_date as string | undefined
+  if (!date) return null
+  const totalSecs = (session.total as number) || (session.duration as number) || 0
+  if (totalSecs === 0) return null
+
+  const deepSecs  = (session.deep  as number) || 0
+  const remSecs   = (session.rem   as number) || 0
+  const efficiency = (session.efficiency as number) || 0
+  const hrv       = (session.hrv_rmssd ?? session.hrv ?? null) as number | null
+  const hrLowest  = (session.hr_lowest as number) || 0
+  const spo2Avg   = (session.spo2_avg as number) || 0
+  // Normalize source from Vital API (may be "Oura", "oura", etc.)
+  const rawSource = (session.source as string | undefined) ?? "oura"
+  const source    = rawSource.toLowerCase().includes("oura") ? "oura"
+    : rawSource.toLowerCase().includes("whoop") ? "whoop"
+    : rawSource.toLowerCase()
+
+  return {
+    user_id:             userId,
+    date,
+    source,
+    total_sleep_minutes: Math.round(totalSecs / 60),
+    deep_sleep_minutes:  deepSecs   > 0 ? Math.round(deepSecs  / 60) : null,
+    rem_sleep_minutes:   remSecs    > 0 ? Math.round(remSecs   / 60) : null,
+    sleep_efficiency:    efficiency > 0 ? Math.round(efficiency * 10) / 10 : null,
+    hrv_rmssd:           hrv !== null && hrv > 0 ? Math.round(hrv * 10) / 10 : null,
+    resting_heart_rate:  hrLowest   > 0 ? hrLowest : null,
+    spo2:                spo2Avg    > 0 ? spo2Avg  : null,
+  }
+}
+
 // ── Helper: build wearable update payload from a single sleep session ──────────
 function buildSleepUpdatePayload(session: Record<string, unknown>): Record<string, unknown> {
   // Vital API v2 short field names: total, deep, rem, light, efficiency
@@ -459,18 +492,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true, nightsAvailable })
     }
 
+    // Write each full session to sleep_data (primary upsert)
+    const sleepRows = fullSessions
+      .map(s => buildSleepDataRow(s, userId))
+      .filter((r): r is Record<string, unknown> => r !== null)
+
+    console.log("[sleep] upserting to sleep_data:", sleepRows.length, "rows")
+    const { data: upsertedRows, error: sleepErr } = await supabase
+      .from("sleep_data")
+      .upsert(sleepRows, { onConflict: "user_id,date,source" })
+      .select("id")
+    console.log("[sleep] sleep_data upsert result:", upsertedRows?.length ?? 0, "rows | error:", sleepErr?.message ?? "none")
+
+    // Also update wearable_connections for UI status
     const updatePayload = buildAveragedSleepPayload(sessions)
-    if (!updatePayload) {
-      console.log("[sleep] no averaged payload — skipping update for user:", userId)
-      return NextResponse.json({ received: true })
+    if (updatePayload) {
+      const { error: connErr } = await supabase
+        .from("wearable_connections")
+        .update(updatePayload)
+        .eq("junction_user_id", junctionUserId)
+      if (connErr) console.error("[webhook] wearable_connections update error:", connErr.message)
     }
-
-    const { error: updateErr } = await supabase
-      .from("wearable_connections")
-      .update(updatePayload)
-      .eq("junction_user_id", junctionUserId)
-
-    if (updateErr) console.error("[webhook] wearable_connections upsert error:", updateErr.message)
 
     const newScore = await recalculateScore(userId, supabase)
     console.log("[webhook] historical.data.sleep.created — recalculated score:", newScore, "for user:", userId)
@@ -518,11 +560,23 @@ export async function POST(request: NextRequest) {
       .filter(([k]) => k !== "last_sync_at" && k !== "status")
       .map(([k, v]) => `${k}: ${v}`).join(", "), "for user:", userId)
 
+    // Write all full sessions to sleep_data
+    const sleepRows = fullSessions
+      .map(s => buildSleepDataRow(s, userId))
+      .filter((r): r is Record<string, unknown> => r !== null)
+
+    console.log("[sleep-cycle] upserting to sleep_data:", sleepRows.length, "rows")
+    const { data: upsertedRows, error: sleepErr } = await supabase
+      .from("sleep_data")
+      .upsert(sleepRows, { onConflict: "user_id,date,source" })
+      .select("id")
+    console.log("[sleep-cycle] sleep_data upsert result:", upsertedRows?.length ?? 0, "rows | error:", sleepErr?.message ?? "none")
+
+    // Also update wearable_connections for UI status
     const { error: updateErr } = await supabase
       .from("wearable_connections")
       .update(updatePayload)
       .eq("junction_user_id", junctionUserId)
-
     if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
 
     const newScore = await recalculateScore(userId, supabase)
@@ -635,6 +689,36 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ received: true, event: "lab_report.parsing_job.updated" })
+  }
+
+  // ── daily.data.sleep.created/updated: single session → sleep_data ────────────
+  if (
+    event_type === "daily.data.sleep.created" ||
+    event_type === "daily.data.sleep.updated"
+  ) {
+    const session = body.data as Record<string, unknown> | undefined
+    if (session) {
+      const row = buildSleepDataRow(session, userId)
+      if (row) {
+        console.log("[sleep] daily — upserting to sleep_data: date:", row.date, "source:", row.source)
+        const { data: upsertedRows, error: sleepErr } = await supabase
+          .from("sleep_data")
+          .upsert([row], { onConflict: "user_id,date,source" })
+          .select("id")
+        console.log("[sleep] daily — sleep_data upsert result:", upsertedRows?.length ?? 0, "rows | error:", sleepErr?.message ?? "none")
+      } else {
+        console.log("[sleep] daily —", event_type, "— no calendar_date or duration in payload, skipping")
+      }
+    }
+
+    await supabase
+      .from("wearable_connections")
+      .update({ last_sync_at: new Date().toISOString(), status: "connected" })
+      .eq("junction_user_id", junctionUserId)
+
+    const newScore = await recalculateScore(userId, supabase)
+    console.log("[webhook]", event_type, "— recalculated score:", newScore, "for user:", userId)
+    return NextResponse.json({ status: "processed", event: event_type })
   }
 
   // ── All other sleep events: update last_sync_at + biometrics + recalculate ─
