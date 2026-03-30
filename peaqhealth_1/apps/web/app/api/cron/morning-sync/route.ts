@@ -56,6 +56,15 @@ export async function GET(req: Request) {
       }
 
       await recalculateScore(user_id, svc)
+
+      // Invalidate sleep narrative cache so it regenerates with fresh data on next /trends load
+      await svc
+        .from("sleep_narratives")
+        .delete()
+        .eq("user_id", user_id)
+        .eq("period_end", new Date().toISOString().split("T")[0])
+      console.log(`[morning-sync] invalidated sleep narrative for user=${user_id.slice(0, 8)}`)
+
       results.succeeded.push(user_id)
 
     } catch (err) {

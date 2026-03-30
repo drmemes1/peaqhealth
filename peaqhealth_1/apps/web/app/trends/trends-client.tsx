@@ -490,6 +490,133 @@ function WeeklySnapshotCard({ snapshot }: { snapshot: WeeklySnapshot | null }) {
   )
 }
 
+// ─── Sleep Narrative Card ────────────────────────────────────────────────────────
+
+type SleepNarrativeRow = {
+  headline: string | null
+  narrative: string | null
+  positive_signal: string | null
+  watch_signal: string | null
+  nights_analyzed: number | null
+  avg_hrv: number | null
+  avg_efficiency: number | null
+  avg_deep_pct: number | null
+  avg_rem_pct: number | null
+  raw_response: { trend_summary?: string } | null
+}
+
+function SleepNarrativeCard() {
+  const [narrative, setNarrative] = useState<SleepNarrativeRow | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch("/api/trends/sleep-narrative")
+      .then(r => r.json())
+      .then((d: { narrative: SleepNarrativeRow | null }) => {
+        setNarrative(d.narrative)
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [])
+
+  if (loading) return (
+    <div style={{
+      background: "var(--white)",
+      border: "0.5px solid var(--ink-12)",
+      borderRadius: 4,
+      padding: "20px 24px",
+      marginBottom: 12,
+      color: "var(--ink-30)",
+      fontSize: 13,
+      fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+    }}>
+      Analyzing your sleep...
+    </div>
+  )
+
+  if (!narrative) return null
+
+  const trendSummary = narrative.raw_response?.trend_summary
+  const trendColor = trendSummary === "improving" ? "#1D9E75"
+    : trendSummary === "declining" ? "#C0392B"
+    : "#B8860B"
+  const trendLabel = trendSummary === "improving" ? "↑ Improving"
+    : trendSummary === "declining" ? "↓ Worth watching"
+    : "→ Holding steady"
+
+  const metrics = [
+    { label: "Avg HRV",    value: narrative.avg_hrv,        unit: "ms", ok: (v: number) => v >= 50 },
+    { label: "Efficiency", value: narrative.avg_efficiency,  unit: "%",  ok: (v: number) => v >= 85 },
+    { label: "Deep sleep", value: narrative.avg_deep_pct,    unit: "%",  ok: (v: number) => v >= 17 },
+    { label: "REM",        value: narrative.avg_rem_pct,     unit: "%",  ok: (v: number) => v >= 18 },
+  ].filter(m => m.value != null)
+
+  return (
+    <div style={{
+      background: "var(--white)",
+      border: "0.5px solid var(--ink-12)",
+      borderLeft: "3px solid var(--sleep-c)",
+      borderRadius: 4,
+      padding: "20px 24px",
+      marginBottom: 12,
+    }}>
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--ink-40)" }}>
+          Sleep · last {narrative.nights_analyzed} nights
+        </span>
+        <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: trendColor, fontWeight: 500 }}>
+          {trendLabel}
+        </span>
+      </div>
+
+      {/* Headline */}
+      {narrative.headline && (
+        <div style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 20, fontWeight: 300, color: "var(--ink)", lineHeight: 1.3, marginBottom: 10 }}>
+          {narrative.headline}
+        </div>
+      )}
+
+      {/* Narrative */}
+      {narrative.narrative && (
+        <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 14, color: "var(--ink-60)", lineHeight: 1.65, marginBottom: 14, margin: "0 0 14px" }}>
+          {narrative.narrative}
+        </p>
+      )}
+
+      {/* Positive signal */}
+      {narrative.positive_signal && (
+        <div style={{ padding: "10px 14px", background: "rgba(29,158,117,0.07)", borderRadius: 6, borderLeft: "3px solid #1D9E75", fontSize: 13, fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", color: "var(--ink-60)", lineHeight: 1.5, marginBottom: 8 }}>
+          {narrative.positive_signal}
+        </div>
+      )}
+
+      {/* Watch signal */}
+      {narrative.watch_signal && (
+        <div style={{ padding: "10px 14px", background: "rgba(184,134,11,0.07)", borderRadius: 6, borderLeft: "3px solid #B8860B", fontSize: 13, fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", color: "var(--ink-60)", lineHeight: 1.5, marginBottom: 14 }}>
+          {narrative.watch_signal}
+        </div>
+      )}
+
+      {/* Metrics row */}
+      {metrics.length > 0 && (
+        <div style={{ display: "flex", gap: 20, flexWrap: "wrap", paddingTop: 14, borderTop: "0.5px solid var(--ink-12)" }}>
+          {metrics.map(m => (
+            <div key={m.label}>
+              <div style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, color: "var(--ink-40)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 2 }}>
+                {m.label}
+              </div>
+              <div style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 18, fontWeight: 300, color: m.ok(m.value!) ? "var(--sleep-c)" : "var(--ink-60)" }}>
+                {m.value!.toFixed(1)}{m.unit}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Component ──────────────────────────────────────────────────────────────────
 
 export function TrendsClient() {
@@ -730,43 +857,8 @@ export function TrendsClient() {
               )
             })()}
 
-            {/* ─── SLEEP STREAK ────────────────────────────── */}
-            {hasSleep && (
-              <CollapsibleSection title="Sleep streak" defaultOpen={true}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 8 }}>
-                  <div style={card}>
-                    <p style={{ fontFamily: body, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-40)", margin: "0 0 8px" }}>
-                      STREAK
-                    </p>
-                    <p style={{ fontFamily: serif, fontSize: 32, fontWeight: 300, color: C.ink, margin: "0 0 8px", lineHeight: 1 }}>
-                      {fmt(data!.streak, 0)}<span style={{ fontSize: 16, color: "var(--ink-30)", marginLeft: 4 }}>nights</span>
-                    </p>
-                    <div style={{ display: "flex", gap: 4 }}>
-                      {Array.from({ length: 7 }).map((_, i) => {
-                        const filled = i < Math.min(data!.streak, 7)
-                        return <div key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: filled ? C.sleep : "var(--ink-08)" }} />
-                      })}
-                    </div>
-                  </div>
-                  <div style={card}>
-                    <p style={{ fontFamily: body, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-40)", margin: "0 0 8px" }}>
-                      7-DAY AVG HRV
-                    </p>
-                    <p style={{ fontFamily: serif, fontSize: 32, fontWeight: 300, color: C.sleep, margin: "0 0 4px", lineHeight: 1 }}>
-                      {fmt(data!.avgHrv, 1)}<span style={{ fontSize: 14, color: "var(--ink-30)", marginLeft: 4 }}>ms</span>
-                    </p>
-                    <p style={{ fontFamily: body, fontSize: 11, color: "var(--ink-30)", margin: 0 }}>
-                      Target: 50 ms
-                      {data!.hrvTrendPct != null && (
-                        <span style={{ marginLeft: 8, color: data!.hrvTrendPct >= 0 ? "#2D6A4F" : "#C0392B" }}>
-                          {data!.hrvTrendPct >= 0 ? "+" : ""}{fmt(data!.hrvTrendPct, 1)}% vs last week
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                </div>
-              </CollapsibleSection>
-            )}
+            {/* ─── SLEEP NARRATIVE ─────────────────────────── */}
+            {hasSleep && <SleepNarrativeCard />}
 
             {/* ─── CROSS-PANEL ALERT ───────────────────────── */}
             {data!.showCrossPanelAlert && (
