@@ -148,7 +148,7 @@ export async function generateWeeklySnapshot(userId: string): Promise<Record<str
     snap?.shannonDiversity != null ? `Shannon diversity: ${Number(snap.shannonDiversity).toFixed(2)}` : null,
     nitrateForPrompt     != null ? `Nitrate reducers: ${nitrateForPrompt.toFixed(1)}%` : null,
     periodontalForPrompt != null
-      ? `Periodontal burden: ${periodontalForPrompt > 0.5 ? "elevated" : "within target"} (${periodontalForPrompt.toFixed(2)}%)`
+      ? `Periodontal burden: ${periodontalForPrompt > 2 ? "elevated" : "within target"} (${periodontalForPrompt.toFixed(2)}%)`
       : null,
   ].filter(Boolean).join("\n") : "No oral data on file"
 
@@ -214,7 +214,7 @@ Total: ${currentSnapshot?.score ?? "no data"}/100
 Sleep: ${currentSnapshot?.sleep_sub ?? "no data"}/30
 Blood: ${currentSnapshot?.blood_sub ?? "no data"}/40
 Oral: ${currentSnapshot?.oral_sub ?? "no data"}/30
-Lifestyle: ${currentSnapshot?.lifestyle_sub ?? "no data"}/13
+Lifestyle: contextual only (not scored — informs insights)
 
 PREVIOUS WEEK:
 Previous total score: ${prevWeekRow?.total_score ?? "no prior data"}
@@ -272,7 +272,7 @@ Return exactly this JSON (no other keys):
       sleep_sub:        currentSnapshot?.sleep_sub    ?? null,
       blood_sub:        currentSnapshot?.blood_sub    ?? null,
       oral_sub:         currentSnapshot?.oral_sub     ?? null,
-      lifestyle_sub:    currentSnapshot?.lifestyle_sub ?? null,
+      lifestyle_sub:    0, // no longer scored — contextual only
       prev_total_score: prevWeekRow?.total_score      ?? null,
       avg_hrv:          avgHrv,
       avg_efficiency:   avgEfficiency,
