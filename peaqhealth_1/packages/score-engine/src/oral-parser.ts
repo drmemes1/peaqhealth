@@ -174,27 +174,24 @@ function calculateNitrateReducerPct(taxonomy: Record<string, number>): number {
   return total
 }
 
+// Periodontal burden = simple sum of all periodontal pathogen abundances (fractional 0–1)
+// Downstream consumers (burdenLevel, dimensions-v2, modifiers) multiply by 100 for display
 function calculatePeriodontalBurden(taxonomy: Record<string, number>): number {
   let burden = 0
   for (const [name, abundance] of Object.entries(taxonomy)) {
     if (name in PERIODONTAL_PATHOGENS) {
-      const { weight, threshold } = PERIODONTAL_PATHOGENS[name]
-      if (abundance > threshold) {
-        burden += ((abundance - threshold) / threshold) * weight
-      }
+      burden += abundance
     }
   }
   return burden
 }
 
+// OSA burden = simple sum of all OSA-associated taxa abundances (fractional 0–1)
 function calculateOsaBurden(taxonomy: Record<string, number>): number {
   let burden = 0
   for (const [name, abundance] of Object.entries(taxonomy)) {
     if (name in OSA_TAXA) {
-      const { weight, threshold } = OSA_TAXA[name]
-      if (abundance > threshold) {
-        burden += ((abundance - threshold) / threshold) * weight
-      }
+      burden += abundance
     }
   }
   return burden
@@ -218,19 +215,22 @@ function scoreNitrate(pct: number): number {
   return 0
 }
 
+// burden is now simple sum of pathogen fractional abundances (0–1 scale)
+// 0.01 = 1% total pathogen load, 0.05 = 5%, 0.10 = 10%
 function scorePeriodontal(burden: number): number {
-  if (burden < 0.5) return 7
-  if (burden < 1.5) return 5
-  if (burden < 3.0) return 3
-  if (burden < 5.0) return 1
-  return 0
+  if (burden < 0.005) return 7   // <0.5% — excellent
+  if (burden < 0.02)  return 5   // <2%
+  if (burden < 0.05)  return 3   // <5%
+  if (burden < 0.10)  return 1   // <10%
+  return 0                       // ≥10% — high pathogen load
 }
 
+// burden is simple sum of OSA-associated taxa fractional abundances
 function scoreOsa(burden: number): number {
-  if (burden < 1.0) return 4
-  if (burden < 2.0) return 3
-  if (burden < 3.5) return 1
-  return 0
+  if (burden < 0.02) return 4    // <2%
+  if (burden < 0.05) return 3    // <5%
+  if (burden < 0.10) return 1    // <10%
+  return 0                       // ≥10%
 }
 
 function generateFindings(

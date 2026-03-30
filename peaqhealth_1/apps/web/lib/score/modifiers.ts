@@ -52,7 +52,7 @@ export function calculateModifiers(inputs: PanelInputs): {
 
   // Triple cardiovascular stack — check first, prevents double-penalizing
   if (
-    inputs.periodontal_burden !== null && inputs.periodontal_burden > 0.5 &&
+    inputs.periodontal_burden !== null && inputs.periodontal_burden > 0.02 &&
     inputs.hrv_ms !== null && inputs.hrv_ms < 40 &&
     inputs.lpA !== null && inputs.lpA >= 40
   ) {
@@ -67,7 +67,7 @@ export function calculateModifiers(inputs: PanelInputs): {
   } else {
     // Oral + Blood: periodontal + hsCRP
     if (
-      inputs.periodontal_burden !== null && inputs.periodontal_burden > 0.5 &&
+      inputs.periodontal_burden !== null && inputs.periodontal_burden > 0.02 &&
       inputs.hsCRP !== null && inputs.hsCRP > 1.0
     ) {
       modifiers.push({
@@ -82,7 +82,7 @@ export function calculateModifiers(inputs: PanelInputs): {
 
     // Oral + Blood: periodontal + Lp(a)
     if (
-      inputs.periodontal_burden !== null && inputs.periodontal_burden > 0.5 &&
+      inputs.periodontal_burden !== null && inputs.periodontal_burden > 0.02 &&
       inputs.lpA !== null && inputs.lpA >= 40 &&
       !modifiers.find(m => m.id === "oral_systemic_inflammation")
     ) {

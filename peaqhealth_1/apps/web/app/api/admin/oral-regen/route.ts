@@ -61,6 +61,19 @@ export async function POST(request: NextRequest) {
   // Reparse
   const oralScore = parseOralMicrobiome(zymoReport)
 
+  // Override mouthwash detection with lifestyle_records (not biochemical inference)
+  const { data: lifestyleRec } = await svc
+    .from("lifestyle_records")
+    .select("mouthwash_type")
+    .eq("user_id", body.userId)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  const mouthwashFromLifestyle = lifestyleRec?.mouthwash_type != null
+    && lifestyleRec.mouthwash_type !== "none"
+  oralScore.mouthwashDetected = mouthwashFromLifestyle
+
   console.log("[oral-regen] parsed:", {
     periodontalBurden: oralScore.periodontalBurden,
     osaBurden: oralScore.osaBurden,
@@ -70,6 +83,8 @@ export async function POST(request: NextRequest) {
     nitrateReducerPct: oralScore.nitrateReducerPct,
     shannonDiversity: oralScore.shannonDiversity,
     protectivePct: oralScore.protectivePct,
+    mouthwashDetected: oralScore.mouthwashDetected,
+    mouthwashType: lifestyleRec?.mouthwash_type ?? "not set",
   })
 
   // Update the oral kit order with regenerated snapshot

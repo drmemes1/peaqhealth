@@ -283,10 +283,15 @@ export function OralPanelClient({ oral, snapshot }: Props) {
   const periodontalPct = sp("Porphyromonas gingivalis") + sp("Treponema denticola") + sp("Tannerella forsythia")
   const osaPct = sp("Prevotella melaninogenica") + sp("Fusobacterium nucleatum")
 
-  // D5–D7 emerging-research dimension values
-  const neuroSignalPct = (oral.neuro_signal_pct as number | null) ?? null
-  const metabolicSignalPct = (oral.metabolic_signal_pct as number | null) ?? null
-  const proliferativeSignalPct = (oral.proliferative_signal_pct as number | null) ?? null
+  // D5–D7 emerging-research dimension values (stored as fractions 0–1, display as %)
+  const neuroSignalRaw = (oral.neuro_signal_pct as number | null) ?? null
+  const metabolicSignalRaw = (oral.metabolic_signal_pct as number | null) ?? null
+  const proliferativeSignalRaw = (oral.proliferative_signal_pct as number | null) ?? null
+  // Convert to percentage for display — values > 1 are already percentages
+  const toDisplayPct = (v: number | null) => v === null ? null : (v > 1 ? v : v * 100)
+  const neuroSignalPct = toDisplayPct(neuroSignalRaw)
+  const metabolicSignalPct = toDisplayPct(metabolicSignalRaw)
+  const proliferativeSignalPct = toDisplayPct(proliferativeSignalRaw)
 
   // Derive insights from findings (sorted by priority)
   const PRIORITY_ORDER = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "POSITIVE"] as const
@@ -399,10 +404,10 @@ export function OralPanelClient({ oral, snapshot }: Props) {
               </div>
               <span style={{
                 fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "2px 6px",
-                background: neuroSignalPct < 0.05 ? "#EAF3DE" : neuroSignalPct < 0.5 ? "#FEF3C7" : "#FEE2E2",
-                color: neuroSignalPct < 0.05 ? "#2D6A4F" : neuroSignalPct < 0.5 ? "#92400E" : "#991B1B",
+                background: neuroSignalPct < 0.1 ? "#EAF3DE" : neuroSignalPct < 0.5 ? "#FEF3C7" : "#FEE2E2",
+                color: neuroSignalPct < 0.1 ? "#2D6A4F" : neuroSignalPct < 0.5 ? "#92400E" : "#991B1B",
               }}>
-                {neuroSignalPct < 0.05 ? "Optimal" : neuroSignalPct < 0.5 ? "Watch" : "Attention"}
+                {neuroSignalPct < 0.1 ? "Optimal" : neuroSignalPct < 0.5 ? "Watch" : "Attention"}
               </span>
               <p style={{ margin: "8px 0 0", fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", fontStyle: "italic" }}>
                 Based on emerging research — see Science page for details.

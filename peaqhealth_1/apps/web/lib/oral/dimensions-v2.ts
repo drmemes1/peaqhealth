@@ -75,12 +75,13 @@ export function scoreOralV2(inputs: OralDimensionInputs): OralScoreBreakdown {
     nitrateNorm >= 5  ? 1 : 0
 
   // D3 — Periodontal pathogens inverse (5pts)
-  // periodontalBurden is a weighted score from the parser, not a raw percentage
+  // periodontalBurden is now simple sum of pathogen fractional abundances (0–1)
+  // 0.005 = 0.5%, 0.02 = 2%, 0.05 = 5%, 0.10 = 10%
   const d3 = inputs.periodontalBurden === null ? 3 : // neutral if no data
-    inputs.periodontalBurden < 0.1  ? 5 :
-    inputs.periodontalBurden < 0.5  ? 4 :
-    inputs.periodontalBurden < 1.0  ? 2 :
-    inputs.periodontalBurden < 5.0  ? 1 : 0
+    inputs.periodontalBurden < 0.005 ? 5 :   // <0.5% — excellent
+    inputs.periodontalBurden < 0.02  ? 4 :   // <2%
+    inputs.periodontalBurden < 0.05  ? 2 :   // <5%
+    inputs.periodontalBurden < 0.10  ? 1 : 0 // ≥10%
 
   // D4 — Protective bacteria (4pts)
   // protectivePct is fractional (0-1) from parser

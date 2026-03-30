@@ -81,11 +81,13 @@ PROHIBITED ASSOCIATIONS — never generate insights based on these:
 - Any connection described as "may suggest" or "could be linked" in a POSITIVE card
 - Oral microbiome and lipid markers directly`
 
-function burdenLevel(pct: number | null): string {
-  if (pct === null) return "not scored"
-  if (pct < 0.5)   return "within target"
-  if (pct < 2)     return "mildly elevated"
-  if (pct < 5)     return "elevated"
+// burden is now simple sum of fractional abundances (0–1 scale)
+// 0.005 = 0.5%, 0.02 = 2%, 0.05 = 5%, 0.10 = 10%
+function burdenLevel(burden: number | null): string {
+  if (burden === null) return "not scored"
+  if (burden < 0.005) return "within target"
+  if (burden < 0.02)  return "mildly elevated"
+  if (burden < 0.05)  return "elevated"
   return "notably elevated"
 }
 
