@@ -31,15 +31,6 @@ function getHRVTarget(age: number): { optimal: number; good: number; watch: numb
   return { optimal: 35, good: 25, watch: 18 }
 }
 
-function scoreHRVAgeAdjusted(hrv: number | null, age: number): number {
-  if (hrv === null || hrv <= 0) return 0
-  const targets = getHRVTarget(age)
-  if (hrv >= targets.optimal) return 8
-  if (hrv >= targets.good) return 5
-  if (hrv >= targets.watch) return 2
-  return 0
-}
-
 // ─── DB row → engine type mappers ─────────────────────────────────────────────
 
 export function mapLifestyleRow(row: Record<string, unknown>): LifestyleInputs {
@@ -291,23 +282,49 @@ export async function recalculateScore(
   const bloodSubRaw = legacyResult.breakdown.bloodSub
   const bloodSub = Math.round(Math.min(40, bloodSubRaw * (40 / 33)) * 10) / 10
 
-  // ── SLEEP: scale 27 → 30, with age-adjusted HRV ──────────────────────────
+  // ── SLEEP: v2 direct scoring (30 pts) ──────────────────────────────────────
+  // Deep 8 + REM 7 + Efficiency 6 + HRV 5 (age-adjusted) + SpO2 4 = 30
   let sleepSub = 0
   if (sleepInputs && (sleepInputs.nightsAvailable ?? 7) >= 7) {
-    // Get legacy sleep sub and replace HRV component with age-adjusted version
-    const legacySleepSub = legacyResult.breakdown.sleepSub
-    const legacyHrvScore = legacyResult.metrics.hrvScore
+    const deep = sleepInputs.deepSleepPct
+    const rem  = sleepInputs.remPct
+    const eff  = sleepInputs.sleepEfficiencyPct
+    const hrv  = sleepInputs.hrv_ms
+    const spo2 = sleepInputs.spo2DipsPerNight
 
-    // Age-adjusted HRV score (max 8 pts same as legacy)
-    const ageAdjHrv = scoreHRVAgeAdjusted(sleepInputs.hrv_ms, userAge)
+    // D1 — Deep sleep (8pts, most important — direct SWS measure)
+    const deepPts = deep >= 22 ? 8 : deep >= 18 ? 6 : deep >= 15 ? 4 : deep >= 10 ? 2 : 0
+
+    // D2 — REM (7pts)
+    const remPts = rem >= 24 ? 7 : rem >= 20 ? 6 : rem >= 17 ? 4 : rem >= 13 ? 2 : 0
+
+    // D3 — Sleep efficiency (6pts)
+    const effPts = eff >= 90 ? 6 : eff >= 85 ? 5 : eff >= 80 ? 3 : eff >= 75 ? 1 : 0
+
+    // D4 — HRV (5pts, recovery signal — age-adjusted)
     const hrvTarget = getHRVTarget(userAge)
-    console.log(`[sleep-engine] hrv age-adjusted: age=${userAge} target_optimal=${hrvTarget.optimal} hrv=${sleepInputs.hrv_ms?.toFixed(1)} → ${ageAdjHrv} pts`)
+    const hrvPts: number | null = (hrv == null || hrv <= 0) ? null :
+      hrv >= hrvTarget.optimal ? 5 :
+      hrv >= hrvTarget.good    ? 3 :
+      hrv >= hrvTarget.watch   ? 1 : 0
+    console.log(`[sleep-engine] hrv age-adjusted: age=${userAge} target_optimal=${hrvTarget.optimal} hrv=${hrv?.toFixed(1)} → ${hrvPts ?? "null"} pts`)
 
-    // Swap HRV component: remove legacy, add age-adjusted
-    const sleepWithNewHrv = legacySleepSub - legacyHrvScore + ageAdjHrv
+    // D5 — SpO2 (4pts)
+    // spo2DipsPerNight: 0 = good SpO2, higher = worse. avgSpo2 mapped in aggregation.
+    const spo2Pts: number | null = (spo2 == null) ? null :
+      spo2 <= 0 ? 4 :   // no dips = excellent
+      spo2 <= 2 ? 3 :
+      spo2 <= 5 ? 1 : 0
 
-    // Scale 27 → 30
-    sleepSub = Math.round(Math.min(30, sleepWithNewHrv * (30 / 27)) * 10) / 10
+    // Proportional scaling if HRV or SpO2 is null
+    const nullPts = (hrvPts === null ? 5 : 0) + (spo2Pts === null ? 4 : 0)
+    const rawMax = 30 - nullPts
+    const rawScore = deepPts + remPts + effPts + (hrvPts ?? 0) + (spo2Pts ?? 0)
+    sleepSub = rawMax < 30 && rawMax > 0
+      ? Math.round((rawScore / rawMax) * 30 * 10) / 10
+      : rawScore
+
+    console.log(`[sleep-engine] v2: deep=${deep.toFixed(1)}%→${deepPts} rem=${rem.toFixed(1)}%→${remPts} eff=${eff.toFixed(1)}%→${effPts} hrv=${hrv?.toFixed(1)}→${hrvPts ?? "null"} spo2dips=${spo2}→${spo2Pts ?? "null"} raw=${rawScore}/${rawMax} final=${sleepSub}`)
   }
 
   // ── ORAL: v2 scoring (30 pts) ─────────────────────────────────────────────
