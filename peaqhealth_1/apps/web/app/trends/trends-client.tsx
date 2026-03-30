@@ -490,6 +490,36 @@ function WeeklySnapshotCard({ snapshot }: { snapshot: WeeklySnapshot | null }) {
   )
 }
 
+// ─── Sleep metric info definitions ──────────────────────────────────────────────
+
+const SLEEP_METRIC_INFO: Record<string, { why: string; target: string; source: string }> = {
+  hrv: {
+    why: "Heart rate variability measures the beat-to-beat variation in your heart rate during sleep. Higher HRV reflects a well-recovered autonomic nervous system — your body's ability to adapt to stress.",
+    target: "≥50 ms is associated with strong recovery. Below 30 ms may indicate accumulating stress or fatigue.",
+    source: "Plews et al., International Journal of Sports Physiology and Performance, 2013",
+  },
+  efficiency: {
+    why: "Sleep efficiency is the percentage of time in bed you actually spend asleep. Low efficiency often reflects fragmented sleep — frequent wake-ups, restless periods, or trouble falling asleep.",
+    target: "≥85% is considered restorative. Below 80% may suggest poor sleep quality or unaddressed disruptions.",
+    source: "Ohayon et al., Sleep Medicine Reviews, 2017",
+  },
+  deep_sleep: {
+    why: "Deep (slow-wave) sleep is when your body repairs tissue, consolidates memory, and clears metabolic waste from the brain via the glymphatic system. It's the most physically restorative stage.",
+    target: "≥17% of total sleep time. Most adults get 13–23%, declining with age.",
+    source: "Walker, Why We Sleep, Scribner, 2017; Xie et al., Science, 2013",
+  },
+  rem: {
+    why: "REM sleep supports emotional processing, creativity, and long-term memory consolidation. It increases in later sleep cycles, so cutting sleep short disproportionately reduces REM.",
+    target: "≥18% of total sleep time. Most adults average 20–25% when well-rested.",
+    source: "Stickgold, Nature, 2005; Walker, Why We Sleep, Scribner, 2017",
+  },
+  spo2: {
+    why: "SpO₂ measures blood oxygen saturation during sleep. Drops below 90% may indicate sleep apnea or other breathing disruptions that fragment sleep and stress the cardiovascular system.",
+    target: "≥95% throughout the night. Repeated dips below 90% warrant evaluation.",
+    source: "American Academy of Sleep Medicine, ICSD-3, 2014",
+  },
+}
+
 // ─── Sleep Narrative Card ────────────────────────────────────────────────────────
 
 type SleepNarrativeRow = {
@@ -508,6 +538,11 @@ type SleepNarrativeRow = {
 function SleepNarrativeCard() {
   const [narrative, setNarrative] = useState<SleepNarrativeRow | null>(null)
   const [loading, setLoading] = useState(true)
+  const [expandedMetric, setExpandedMetric] = useState<string | null>(null)
+
+  function toggleMetric(key: string) {
+    setExpandedMetric(prev => prev === key ? null : key)
+  }
 
   useEffect(() => {
     fetch("/api/trends/sleep-narrative")
@@ -545,10 +580,10 @@ function SleepNarrativeCard() {
     : "→ Holding steady"
 
   const metrics = [
-    { label: "Avg HRV",    value: narrative.avg_hrv,        unit: "ms", ok: (v: number) => v >= 50 },
-    { label: "Efficiency", value: narrative.avg_efficiency,  unit: "%",  ok: (v: number) => v >= 85 },
-    { label: "Deep sleep", value: narrative.avg_deep_pct,    unit: "%",  ok: (v: number) => v >= 17 },
-    { label: "REM",        value: narrative.avg_rem_pct,     unit: "%",  ok: (v: number) => v >= 18 },
+    { key: "hrv",        label: "Avg HRV",    value: narrative.avg_hrv,        unit: "ms", ok: (v: number) => v >= 50 },
+    { key: "efficiency", label: "Efficiency", value: narrative.avg_efficiency,  unit: "%",  ok: (v: number) => v >= 85 },
+    { key: "deep_sleep", label: "Deep sleep", value: narrative.avg_deep_pct,    unit: "%",  ok: (v: number) => v >= 17 },
+    { key: "rem",        label: "REM",        value: narrative.avg_rem_pct,     unit: "%",  ok: (v: number) => v >= 18 },
   ].filter(m => m.value != null)
 
   return (
@@ -598,19 +633,68 @@ function SleepNarrativeCard() {
         </div>
       )}
 
-      {/* Metrics row */}
+      {/* Metrics rows with expandable info */}
       {metrics.length > 0 && (
-        <div style={{ display: "flex", gap: 20, flexWrap: "wrap", paddingTop: 14, borderTop: "0.5px solid var(--ink-12)" }}>
-          {metrics.map(m => (
-            <div key={m.label}>
-              <div style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, color: "var(--ink-40)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 2 }}>
-                {m.label}
+        <div style={{ paddingTop: 14, borderTop: "0.5px solid var(--ink-12)" }}>
+          {metrics.map((m, i) => {
+            const info = SLEEP_METRIC_INFO[m.key]
+            const isOpen = expandedMetric === m.key
+            return (
+              <div key={m.key} style={{ borderBottom: i < metrics.length - 1 ? "0.5px solid var(--ink-06)" : "none" }}>
+                {/* Metric row */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, color: "var(--ink-40)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                      {m.label}
+                    </span>
+                    {info && (
+                      <button
+                        onClick={() => toggleMetric(m.key)}
+                        style={{
+                          width: 14, height: 14, borderRadius: "50%",
+                          border: `0.5px solid ${isOpen ? "var(--sleep-c)" : "var(--ink-20)"}`,
+                          background: isOpen ? "var(--sleep-c)" : "transparent",
+                          cursor: "pointer", fontSize: 8,
+                          color: isOpen ? "var(--white)" : "var(--ink-40)",
+                          display: "inline-flex", alignItems: "center", justifyContent: "center",
+                          lineHeight: 1, flexShrink: 0, padding: 0,
+                          fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                          transition: "background 0.15s, border-color 0.15s",
+                        }}
+                        aria-label={`About ${m.label}`}
+                        aria-expanded={isOpen}
+                      >
+                        i
+                      </button>
+                    )}
+                  </div>
+                  <div style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 18, fontWeight: 300, color: m.ok(m.value!) ? "var(--sleep-c)" : "var(--ink-60)" }}>
+                    {m.value!.toFixed(1)}{m.unit}
+                  </div>
+                </div>
+                {/* Expandable info drawer */}
+                {info && isOpen && (
+                  <div style={{
+                    margin: "0 0 10px",
+                    padding: "12px 14px",
+                    background: "var(--ink-02, rgba(0,0,0,0.02))",
+                    borderRadius: 4,
+                    borderLeft: "3px solid var(--sleep-c)",
+                  }}>
+                    <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "var(--ink-60)", lineHeight: 1.65, margin: "0 0 6px" }}>
+                      {info.why}
+                    </p>
+                    <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "var(--ink-40)", lineHeight: 1.55, margin: "0 0 6px" }}>
+                      <strong style={{ color: "var(--ink-60)", fontWeight: 500 }}>Target:</strong> {info.target}
+                    </p>
+                    <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, color: "var(--ink-30)", lineHeight: 1.5, margin: 0, fontStyle: "italic" }}>
+                      {info.source}
+                    </p>
+                  </div>
+                )}
               </div>
-              <div style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 18, fontWeight: 300, color: m.ok(m.value!) ? "var(--sleep-c)" : "var(--ink-60)" }}>
-                {m.value!.toFixed(1)}{m.unit}
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
