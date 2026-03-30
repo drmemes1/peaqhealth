@@ -207,6 +207,13 @@ STRICT RULES:
 - Keep body under 80 words — punchy, not exhaustive
 - Return ONLY valid JSON, no markdown, no backticks
 
+SCOPE:
+- This snapshot covers the FULL cross-panel picture — blood, oral, and sleep together
+- Do NOT generate a sleep-only summary — a dedicated sleep narrative card already handles that
+- Focus on cross-panel connections: how oral health affects sleep, how blood markers relate to recovery, how all three panels interact
+- If sleep is the only interesting signal, connect it to at least one other panel (blood or oral)
+- Never lead with sleep metrics alone
+
 BODY RULES:
 - Do not summarize what the user can already see on their dashboard
 - Surface one non-obvious cross-panel connection if data supports it

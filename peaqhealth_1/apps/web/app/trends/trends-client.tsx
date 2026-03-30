@@ -420,13 +420,6 @@ function WeeklySnapshotCard({ snapshot }: { snapshot: WeeklySnapshot | null }) {
     : snapshot.trend_direction === "declining" ? "▼"
     : "—"
 
-  const metrics = [
-    { label: "Nights",      value: snapshot.nights_tracked > 0 ? String(snapshot.nights_tracked) : null,         unit: "" },
-    { label: "Avg HRV",     value: snapshot.avg_hrv       != null ? fmt(snapshot.avg_hrv, 1)       : null,         unit: " ms" },
-    { label: "Efficiency",  value: snapshot.avg_efficiency != null ? fmt(snapshot.avg_efficiency, 1) : null,        unit: "%" },
-    { label: "Deep sleep",  value: snapshot.avg_deep_pct  != null ? fmt(snapshot.avg_deep_pct, 1)  : null,         unit: "%" },
-  ].filter(m => m.value != null)
-
   return (
     <div style={{ ...card, marginBottom: 24 }}>
       {/* Week label + trend */}
@@ -471,21 +464,6 @@ function WeeklySnapshotCard({ snapshot }: { snapshot: WeeklySnapshot | null }) {
         </div>
       )}
 
-      {/* Sleep metrics summary */}
-      {metrics.length > 0 && (
-        <div style={{ display: "flex", gap: 20, marginTop: 16, paddingTop: 14, borderTop: "0.5px solid var(--ink-08)", flexWrap: "wrap" }}>
-          {metrics.map(m => (
-            <div key={m.label}>
-              <div style={{ fontFamily: body, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--ink-40)", marginBottom: 2 }}>
-                {m.label}
-              </div>
-              <div style={{ fontFamily: serif, fontSize: 16, color: C.sleep }}>
-                {m.value}{m.unit}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   )
 }
@@ -707,6 +685,8 @@ export function TrendsClient() {
   const [data, setData] = useState<TrendsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [weeklySnapshot, setWeeklySnapshot] = useState<WeeklySnapshot | null>(null)
+
+  const [syncing, setSyncing] = useState(false)
 
   // Check-in form state
   const [lifestyleChanged, setLifestyleChanged] = useState<boolean | null>(null)
@@ -933,9 +913,34 @@ export function TrendsClient() {
                     </p>
                   )}
                   {daysSince !== null && daysSince > 1 && lastNight && (
-                    <p style={{ fontFamily: body, fontSize: 12, color: "var(--ink-40)", margin: "0 0 12px", fontStyle: "italic" }}>
-                      No new data since {new Date(lastNight.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}. Open your {providerName} app to sync.
-                    </p>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "0 0 12px", flexWrap: "wrap" }}>
+                      <span style={{ fontFamily: body, fontSize: 12, color: "var(--ink-30)", fontStyle: "italic" }}>
+                        No new data since {new Date(lastNight.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}. Open your {providerName} app to sync.
+                      </span>
+                      <button
+                        onClick={async () => {
+                          setSyncing(true)
+                          try {
+                            const res = await fetch("/api/sync/now", { method: "POST" })
+                            const result = await res.json() as { success?: boolean }
+                            if (result.success) window.location.reload()
+                          } catch (e) {
+                            console.error("sync failed", e)
+                          } finally {
+                            setSyncing(false)
+                          }
+                        }}
+                        disabled={syncing}
+                        style={{
+                          fontSize: 11, padding: "4px 12px",
+                          border: "0.5px solid var(--ink-20)", borderRadius: 20,
+                          background: "transparent", color: "var(--ink-40)",
+                          cursor: syncing ? "not-allowed" : "pointer", fontFamily: body,
+                        }}
+                      >
+                        {syncing ? "Syncing…" : "Sync now"}
+                      </button>
+                    </div>
                   )}
                 </CollapsibleSection>
               )
