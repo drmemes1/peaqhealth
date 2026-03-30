@@ -215,10 +215,9 @@ export default function SciencePage() {
   /* scroll-reveal for all FadeUp elements handled inline */
 
   const panelBars = [
-    { label: "Sleep", pts: 27, color: "var(--sleep-c)", pct: 27 },
-    { label: "Blood", pts: 33, color: "var(--blood-c)", pct: 33 },
-    { label: "Oral microbiome", pts: 27, color: "var(--oral-c)", pct: 27 },
-    { label: "Lifestyle", pts: 13, color: "var(--gold)", pct: 13 },
+    { label: "Blood", pts: 40, color: "var(--blood-c)", pct: 40 },
+    { label: "Sleep", pts: 30, color: "var(--sleep-c)", pct: 30 },
+    { label: "Oral microbiome", pts: 30, color: "var(--oral-c)", pct: 30 },
   ];
 
   const scoreCategories = [
@@ -391,7 +390,7 @@ export default function SciencePage() {
 
         <FadeUp delay={60}>
           <p style={{ ...bodyTextStyle, marginBottom: 32 }}>
-            The Peaq Score runs from 0 to 100. It is composed of four panels that sum directly to 100 points. Each panel is independently meaningful — you receive partial scores as data becomes available. Cross-panel interactions are detected and surfaced as insight cards but do not affect your numeric score.
+            The Peaq Score runs from 0 to 100. It is composed of three measured panels — Blood (40 pts), Sleep (30 pts), and Oral Microbiome (30 pts) — that sum to a base score. Cross-panel modifiers then adjust the total up or down (capped at &minus;10 to +8) based on multi-panel signal combinations. Lifestyle data informs your insights but is not scored — only objective, measured data contributes to your Peaq Score.
           </p>
         </FadeUp>
 
@@ -411,14 +410,14 @@ export default function SciencePage() {
                 </span>
               </div>
             ))}
-            {/* Interactions note */}
+            {/* Modifiers note */}
             <div style={{ display: "flex", alignItems: "center", marginBottom: 8, opacity: 0.5 }}>
               <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "var(--ink-60)", width: 120, flexShrink: 0 }}>
-                Interactions
+                Cross-panel
               </span>
               <div style={{ flex: 1, height: 14, borderBottom: "1px dashed var(--ink-12)" }} />
               <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "var(--ink-60)", width: 60, textAlign: "right", flexShrink: 0 }}>
-                14 pts
+                &minus;10 / +8
               </span>
             </div>
             {/* Total */}
@@ -436,7 +435,7 @@ export default function SciencePage() {
 
         <FadeUp delay={140}>
           <p style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", lineHeight: 1.5, marginBottom: 32 }}>
-            Interaction pool starts full. Penalty terms subtract from it when two signals compound.
+            Cross-panel modifiers apply bonuses or penalties when signals from multiple panels compound. Penalties cap at &minus;10, bonuses at +8.
           </p>
         </FadeUp>
 
@@ -502,7 +501,7 @@ export default function SciencePage() {
         {/* ═══ SLEEP PANEL ═══ */}
         <FadeUp>
           <h2 style={{ ...sectionTitleStyle, borderLeft: "3px solid var(--sleep-c)", paddingLeft: 16 }}>
-            Sleep &middot; 27 points
+            Sleep &middot; 30 points
           </h2>
         </FadeUp>
 
@@ -511,7 +510,7 @@ export default function SciencePage() {
             Sleep is the foundation of the Peaq Score. Poor sleep quality is not merely a performance issue — it is a systemic health signal that drives inflammation, glucose dysregulation, immune suppression, and accelerated biological aging. We weight it accordingly.
           </p>
           <p style={{ ...bodyTextStyle, marginBottom: 16 }}>
-            Sleep data requires a connected wearable — Apple Watch, Oura, WHOOP, or Garmin. We use a 7-night minimum to avoid single-night noise. Questionnaire estimates are accepted but capped at 21/27 points — wearable data is more precise.
+            Sleep data requires a connected wearable — Apple Watch, Oura, WHOOP, or Garmin. We use a 7-night minimum to avoid single-night noise. Deep sleep is weighted most heavily (8 pts) as the most clinically meaningful sleep quality indicator, followed by REM (7 pts), efficiency (6 pts), HRV (5 pts, age-adjusted), and SpO2 (4 pts).
           </p>
           <p style={{ ...bodyTextStyle, marginBottom: 32 }}>
             Sleep scoring requires a minimum of 7 nights of wearable data to ensure statistical reliability. This threshold is based on published research showing that 7 nights are needed to reliably estimate habitual sleep efficiency.<Cite n={26} /> Scores update nightly as new data arrives.
@@ -541,10 +540,10 @@ export default function SciencePage() {
         />
         <Marker
           num={2}
-          title="HRV (RMSSD)"
-          target="≥50 ms"
+          title="HRV (RMSSD) — age-adjusted"
+          target="Age-dependent (e.g. ≥48 ms at 40–49, ≥35 ms at 60+)"
           color="var(--sleep-c)"
-          body={<>Heart rate variability is the most sensitive non-invasive marker of autonomic nervous system function. Low HRV independently predicts all-cause mortality, cardiovascular events, and poor stress resilience.<Cite n={2} /></>}
+          body={<>Heart rate variability is the most sensitive non-invasive marker of autonomic nervous system function. Low HRV independently predicts all-cause mortality, cardiovascular events, and poor stress resilience. HRV naturally declines with age, so the Peaq Score uses age-adjusted targets: optimal thresholds range from 60 ms for under-30s to 35 ms for 60+.<Cite n={2} /></>}
           evidence="Thayer et al., Neuroscience & Biobehavioral Reviews 2012. Billman, Frontiers in Physiology 2011."
         />
         <Marker
@@ -577,7 +576,7 @@ export default function SciencePage() {
         {/* ═══ BLOOD PANEL ═══ */}
         <FadeUp>
           <h2 style={{ ...sectionTitleStyle, borderLeft: "3px solid var(--blood-c)", paddingLeft: 16 }}>
-            Blood &middot; 33 points
+            Blood &middot; 40 points
           </h2>
         </FadeUp>
 
@@ -676,7 +675,7 @@ export default function SciencePage() {
         {/* ═══ ORAL MICROBIOME PANEL ═══ */}
         <FadeUp>
           <h2 style={{ ...sectionTitleStyle, borderLeft: "3px solid var(--oral-c)", paddingLeft: 16 }}>
-            Oral microbiome &middot; 27 points
+            Oral microbiome &middot; 30 points
           </h2>
         </FadeUp>
 
@@ -758,18 +757,66 @@ export default function SciencePage() {
           evidence="Chen et al., mSystems 2022, n=156. Dalton et al., Sleep Medicine 2025, n=1,139."
         />
 
+        <FadeUp delay={60}>
+          <div
+            style={{
+              borderLeft: "2px solid var(--oral-c)",
+              background: "rgba(45,106,79,0.04)",
+              padding: "18px 22px",
+              marginTop: 8,
+              marginBottom: 28,
+              borderRadius: 2,
+            }}
+          >
+            <p style={{ fontFamily: "var(--font-body)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--oral-c)", fontWeight: 600, marginBottom: 10 }}>
+              Emerging research dimensions (D5&ndash;D7)
+            </p>
+            <p style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink-60)", lineHeight: 1.6, margin: "0 0 12px" }}>
+              Three additional oral dimensions are scored based on emerging research. They use qualitative descriptors rather than raw percentages, and are clearly labelled as emerging. These dimensions contribute to the 30-point oral sub-score.
+            </p>
+          </div>
+        </FadeUp>
+
+        <Marker
+          num={17}
+          title="Neurological balance"
+          target="P. gingivalis + T. denticola combined <0.1%"
+          color="var(--oral-c)"
+          body={<>P. gingivalis has been detected in human brain tissue in Alzheimer&rsquo;s disease patients, with its gingipain proteases identified as a potential driver of neuroinflammatory cascades. T. denticola compounds the burden. We frame this as &ldquo;neurological balance&rdquo; — a wellness signal, not a disease prediction.<Cite n={17} /></>}
+          evidence="Dominy et al., Science Advances 2019. Emerging research — effect sizes not yet established for oral screening."
+        />
+        <Marker
+          num={18}
+          title="Metabolic balance"
+          target="Prevotella group <3%"
+          color="var(--oral-c)"
+          body={<>Certain Prevotella species are associated with metabolic health pathways. Elevated Prevotella abundance has been observed in metabolic dysbiosis states. A diet rich in diverse plant fibers supports a balanced oral microbiome.</>}
+          evidence="Emerging research — observational associations, not yet causal."
+        />
+        <Marker
+          num={19}
+          title="Cellular environment"
+          target="Fusobacterium group <0.5%"
+          color="var(--oral-c)"
+          body={<>Fusobacterium nucleatum is being studied in connection with cellular health pathways, including its role in tissue adhesion and immune modulation. Regular dental cleaning, good oral hygiene, and dietary fiber support a balanced microbiome.</>}
+          evidence="Emerging research — mechanisms under active investigation."
+        />
+
         <SectionDivider />
 
-        {/* ═══ LIFESTYLE PANEL ═══ */}
+        {/* ═══ LIFESTYLE CONTEXT ═══ */}
         <FadeUp>
           <h2 style={{ ...sectionTitleStyle, borderLeft: "3px solid var(--gold)", paddingLeft: 16 }}>
-            Lifestyle &middot; 13 points
+            Lifestyle &middot; contextual
           </h2>
         </FadeUp>
 
         <FadeUp delay={60}>
+          <p style={{ ...bodyTextStyle, marginBottom: 16 }}>
+            Lifestyle data is no longer scored numerically. Your Peaq Score is based entirely on objective, measured data — blood labs, wearable sleep data, and oral microbiome sequencing. Lifestyle information (exercise, diet, oral hygiene, smoking, stress) informs your insights and cross-panel analysis but does not contribute points to your total score.
+          </p>
           <p style={{ ...bodyTextStyle, marginBottom: 32 }}>
-            The lifestyle panel is always active from day one — no devices or lab results required. It captures the daily behaviours with the strongest evidence for systemic health outcomes.
+            This design choice reflects a core principle: self-reported behaviours are valuable context, but measured biomarkers are more reliable for scoring. Lifestyle context helps us generate more personalised insights — connecting your habits to your numbers — without inflating your score based on questionnaire answers.
           </p>
         </FadeUp>
 
@@ -860,10 +907,10 @@ export default function SciencePage() {
               This is what makes the Peaq Score different from any other consumer health product.
             </p>
             <p style={{ marginBottom: 16 }}>
-              Cross-panel interactions are detected silently and surfaced as insight cards on your dashboard. They do not subtract from your score — they expand your understanding.
+              Cross-panel modifiers detect when signals from multiple panels compound — either amplifying risk (penalties) or reinforcing protection (bonuses). Unlike v1 where interactions were insight-only, modifiers now directly adjust your score: penalties up to &minus;10 points, bonuses up to +8 points.
             </p>
             <p style={{ marginBottom: 32 }}>
-              This models how biology actually works. Inflammation and poor sleep are not independent risks you simply add together. They amplify each other through shared pathways. When an interaction fires, you see it explained in plain language with the relevant panels tagged.
+              This models how biology actually works. Inflammation and poor sleep are not independent risks you simply add together. They amplify each other through shared pathways. When a modifier fires, you see it on your dashboard with the panels involved and the point impact.
             </p>
           </div>
         </FadeUp>
@@ -1003,7 +1050,7 @@ export default function SciencePage() {
               margin: "0 auto",
             }}
           >
-            Peaq Health is not a medical device. The Peaq Score is for informational purposes only and does not constitute medical advice, diagnosis, or treatment. Always consult a licensed healthcare provider regarding your health. Score engine version 4.0 &middot; Last updated March 2026.
+            Peaq Health is not a medical device. The Peaq Score is for informational purposes only and does not constitute medical advice, diagnosis, or treatment. Always consult a licensed healthcare provider regarding your health. Score engine version 8.1 &middot; Last updated March 2026.
           </p>
         </FadeUp>
       </main>
