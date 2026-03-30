@@ -187,6 +187,32 @@ function flag(good: boolean, ok: boolean): Flag {
   return good ? "optimal" : ok ? "watch" : "attention"
 }
 
+// ─── Wellness-framed narrative (no disease language) ─────────────────────────
+
+function generateOralNarrative(periodontalBurden: number, nitrateReducerPct: number, shannonDiversity: number): string {
+  const issues: string[] = []
+  const positives: string[] = []
+
+  if (periodontalBurden > 0.5)   issues.push("elevated periodontal bacteria")
+  if (nitrateReducerPct < 10)    issues.push("low nitrate-reducing bacteria")
+  if (shannonDiversity < 2.5)    issues.push("reduced microbiome diversity")
+  if (nitrateReducerPct >= 15)   positives.push("good nitrate-reducing bacteria")
+  if (shannonDiversity >= 3.0)   positives.push("healthy microbiome diversity")
+
+  if (issues.length === 0) {
+    const positiveText = positives.length > 0
+      ? ` Notably, your ${positives.join(" and ")} are supporting systemic health.`
+      : ""
+    return `Your oral microbiome is in good balance.${positiveText}`
+  }
+
+  const issueText = issues.join(" and ")
+  const positiveText = positives.length > 0
+    ? ` Your ${positives.join(" and ")} ${positives.length > 1 ? "are" : "is"} a positive sign.`
+    : ""
+  return `Your oral microbiome shows ${issueText} — worth keeping an eye on and discussing with your dentist at your next visit.${positiveText}`
+}
+
 // ─── Metric card ─────────────────────────────────────────────────────────────
 
 function MetricCard({ label, sub, value, unit, color, status, statusLabel }: {
@@ -241,12 +267,14 @@ export function OralPanelClient({ oral, snapshot }: Props) {
   const rawOtu = oral.raw_otu_table as Record<string, number> | null
   const reportDate = oral.report_date as string | null
 
-  const sp = (key: string) => (rawOtu ? (rawOtu[key] ?? 0) * 100 : 0)
+  // raw_otu_table stores values already as percentages (0.22 = 0.22% of reads)
+  // — the scoring engine converts fractions→% before storage, so no *100 here
+  const sp = (key: string) => (rawOtu ? (rawOtu[key] ?? 0) : 0)
   const genus = (prefix: string) =>
     rawOtu
       ? Object.entries(rawOtu)
           .filter(([k]) => k.toLowerCase().startsWith(prefix.toLowerCase()))
-          .reduce((sum, [, v]) => sum + v, 0) * 100
+          .reduce((sum, [, v]) => sum + v, 0)
       : 0
 
   const shannon = (oral.shannon_diversity as number | null) ?? 0
@@ -266,7 +294,6 @@ export function OralPanelClient({ oral, snapshot }: Props) {
   const sortedFindings = [...findings].sort(
     (a, b) => PRIORITY_ORDER.indexOf(a.priority) - PRIORITY_ORDER.indexOf(b.priority)
   )
-  const topFinding = sortedFindings[0]
   const secondaryFindings = sortedFindings.slice(1, 4)
 
   const speciesCount = oralScore?.speciesCount ?? (rawOtu ? Object.values(rawOtu).filter(v => v > 0).length : 0)
@@ -310,15 +337,13 @@ export function OralPanelClient({ oral, snapshot }: Props) {
           </div>
         )}
 
-        {/* Top insight */}
-        {topFinding && (
-          <p style={{
-            fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: 17,
-            color: "var(--ink-65)", lineHeight: 1.55, margin: "0 0 24px",
-          }}>
-            {topFinding.body}
-          </p>
-        )}
+        {/* Top narrative — wellness-framed, generated from live dimension values */}
+        <p style={{
+          fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: 17,
+          color: "var(--ink-65)", lineHeight: 1.55, margin: "0 0 24px",
+        }}>
+          {generateOralNarrative(periodontalPct, nitratePct, shannon)}
+        </p>
 
         {/* 4 key metrics */}
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 32 }}>
