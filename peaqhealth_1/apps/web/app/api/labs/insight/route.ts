@@ -163,7 +163,7 @@ export async function GET() {
     svc.from("lab_results").select("*").eq("user_id", user.id).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).maybeSingle(),
     svc.from("sleep_data").select("date,source,total_sleep_minutes,deep_sleep_minutes,rem_sleep_minutes,sleep_efficiency,hrv_rmssd,spo2,resting_heart_rate").eq("user_id", user.id).order("date", { ascending: false }).limit(15),
     svc.from("wearable_connections_v2").select("provider").eq("user_id", user.id).eq("needs_reconnect", false).order("connected_at", { ascending: false }).limit(1).maybeSingle(),
-    svc.from("oral_kit_orders").select("oral_score_snapshot,shannon_diversity,nitrate_reducers_pct,periodontopathogen_pct,osa_taxa_pct").eq("user_id", user.id).eq("status", "results_ready").order("ordered_at", { ascending: false }).limit(1).maybeSingle(),
+    svc.from("oral_kit_orders").select("oral_score_snapshot,shannon_diversity,nitrate_reducers_pct,periodontopathogen_pct,osa_taxa_pct,neuro_signal_pct,metabolic_signal_pct,proliferative_signal_pct").eq("user_id", user.id).eq("status", "results_ready").order("ordered_at", { ascending: false }).limit(1).maybeSingle(),
     svc.from("lifestyle_records").select("*").eq("user_id", user.id).maybeSingle(),
     svc.from("lifestyle_checkins").select("exercise_frequency,diet_quality,stress_level,alcohol_frequency,sleep_priority,energy_level,blood_pressure_feeling,supplements,checked_in_at").eq("user_id", user.id).order("checked_in_at", { ascending: false }).limit(1).maybeSingle(),
   ])
@@ -174,6 +174,17 @@ export async function GET() {
   const oral        = oralRes.data
   const lifestyle   = lifestyleRes.data
   const recentCheckin = checkinRes.data
+
+  // ── Cross-panel modifiers ──────────────────────────────────────────────────
+  const { data: latestSnapshot } = await svc
+    .from("score_snapshots")
+    .select("modifiers_applied")
+    .eq("user_id", user.id)
+    .order("calculated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  const modifiersApplied = (latestSnapshot?.modifiers_applied ?? []) as Array<{direction: string, points: number, label: string}>
 
   const hasSomething = !!(lab || sleepRows.length > 0 || oral || lifestyle)
   if (!hasSomething) return NextResponse.json({ error: "No data" }, { status: 422 })
@@ -227,7 +238,7 @@ export async function GET() {
   }
 
   // ── Oral panel ─────────────────────────────────────────────────────────────
-  type OralData = { shannon: number | null; nitrateReducerPct: number | null; periodontalBurden: number | null; osaBurden: number | null; protectivePct: number | null; mouthwashDetected: boolean }
+  type OralData = { shannon: number | null; nitrateReducerPct: number | null; periodontalBurden: number | null; osaBurden: number | null; protectivePct: number | null; mouthwashDetected: boolean; neuroPct: number | null; prevotellaPct: number | null; fusobacteriumPct: number | null }
   let oralData: OralData | null = null
   if (oral) {
     const snap = oral.oral_score_snapshot as Record<string, unknown> | null
@@ -237,7 +248,10 @@ export async function GET() {
       periodontalBurden: toOralPct(snap?.periodontalBurden, oral.periodontopathogen_pct),
       osaBurden:         toOralPct(snap?.osaBurden,         oral.osa_taxa_pct),
       protectivePct:     toOralPct(snap?.protectiveSpecies, null),
-      mouthwashDetected: (snap?.mouthwashDetected as boolean | null) ?? false,
+      mouthwashDetected: (snap?.mouthwashDetected as boolean | null) ?? (lifestyle?.mouthwash_type != null && lifestyle.mouthwash_type !== "none"),
+      neuroPct:          (snap?.neuroSignalPct as number | null) ?? (oral.neuro_signal_pct != null ? Number(oral.neuro_signal_pct) : null),
+      prevotellaPct:     (snap?.metabolicSignalPct as number | null) ?? (oral.metabolic_signal_pct != null ? Number(oral.metabolic_signal_pct) : null),
+      fusobacteriumPct:  (snap?.proliferativeSignalPct as number | null) ?? (oral.proliferative_signal_pct != null ? Number(oral.proliferative_signal_pct) : null),
     }
   }
 
@@ -250,6 +264,8 @@ export async function GET() {
       biologicalSex:   lifestyle.biological_sex,
       exerciseLevel:   lifestyle.exercise_level,
       smokingStatus:   lifestyle.smoking_status,
+      brushingFreq:    lifestyle.brushing_freq,
+      flossingFreq:    lifestyle.flossing_freq,
       alcoholPerWeek:  lifestyle.alcohol_drinks_per_week,
       stressLevel:     lifestyle.stress_level,
       mouthwashType:   lifestyle.mouthwash_type,
@@ -299,16 +315,29 @@ SLEEP PANEL (${sleepData?.provider ?? "none"}, ${sleepData?.nights ?? 0} nights 
 - SpO2: ${sleepData ? fmt(sleepData.spo2) : "N/A"}% (target ≥96%)
 - Efficiency: ${sleepData ? fmt(sleepData.efficiency) : "N/A"}% (target ≥85%)
 
-ORAL MICROBIOME:
+ORAL MICROBIOME (v2 — 7 dimensions):
 ${oralData ? `- Shannon diversity: ${fmt(oralData.shannon, 2)} (target ≥3.0)
 - Nitrate reducers: ${fmt(oralData.nitrateReducerPct)}% (target ≥20%)
-- Periodontal burden: ${burdenLevel(oralData.periodontalBurden)} (target <0.5%)
-- OSA-associated taxa: ${burdenLevel(oralData.osaBurden)} (target <1%)
+- Periodontal burden: ${burdenLevel(oralData.periodontalBurden)}
 - Protective bacteria: ${oralData.protectivePct != null ? fmt(oralData.protectivePct) + "%" : "not scored"}
+- Neurological balance signal: ${oralData.neuroPct !== null ? oralData.neuroPct.toFixed(2) + "% (P. gingivalis + T. denticola)" : "not detected"}
+- Metabolic balance signal: ${oralData.prevotellaPct !== null ? oralData.prevotellaPct.toFixed(1) + "% Prevotella" : "not detected"}
+- Cellular environment signal: ${oralData.fusobacteriumPct !== null ? oralData.fusobacteriumPct.toFixed(1) + "% Fusobacterium" : "not detected"}
 - Antiseptic mouthwash detected: ${oralData.mouthwashDetected ? "yes — note that antiseptic mouthwash suppresses nitrate-reducing bacteria" : "no"}` : "Not available — do not reference oral panel in any insight"}
 
-LIFESTYLE:
-${lifestyleData ? JSON.stringify(lifestyleData) : "Not available"}
+ACTIVE CROSS-PANEL MODIFIERS:
+${modifiersApplied.length > 0
+  ? modifiersApplied.map(m => `${m.direction === 'bonus' ? '+' : '-'}${m.points} ${m.label}`).join('\n')
+  : 'None active'}
+
+LIFESTYLE CONTEXT (not scored — informational only):
+${lifestyleData ? `- Age range: ${lifestyleData.ageRange ?? "not provided"}
+- Exercise: ${lifestyleData.exerciseLevel ?? "not provided"}
+- Smoking: ${lifestyleData.smokingStatus ?? "not provided"}
+- Brushing frequency: ${lifestyleData.brushingFreq ?? "not provided"}
+- Flossing frequency: ${lifestyleData.flossingFreq ?? "not provided"}
+- Mouthwash: ${lifestyleData.mouthwashType ?? "not provided"}
+- Stress: ${lifestyleData.stressLevel ?? "not provided"}` : "Not available"}
 
 LIFESTYLE SELF-REPORT (most recent check-in: ${recentCheckin?.checked_in_at ?? "none"}):
 ${recentCheckin ? `- Exercise: ${recentCheckin.exercise_frequency ?? "not reported"}

@@ -255,6 +255,11 @@ export function OralPanelClient({ oral, snapshot }: Props) {
   const periodontalPct = sp("Porphyromonas gingivalis") + sp("Treponema denticola") + sp("Tannerella forsythia")
   const osaPct = sp("Prevotella melaninogenica") + sp("Fusobacterium nucleatum")
 
+  // D5–D7 emerging-research dimension values
+  const neuroSignalPct = (oral.neuro_signal_pct as number | null) ?? null
+  const metabolicSignalPct = (oral.metabolic_signal_pct as number | null) ?? null
+  const proliferativeSignalPct = (oral.proliferative_signal_pct as number | null) ?? null
+
   // Derive insights from findings (sorted by priority)
   const PRIORITY_ORDER = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "POSITIVE"] as const
   const findings = oralScore?.findings ?? []
@@ -353,6 +358,123 @@ export function OralPanelClient({ oral, snapshot }: Props) {
             status={osaPct < 1 ? "optimal" : osaPct < 3 ? "watch" : "attention"}
             statusLabel={osaPct < 1 ? "Optimal" : osaPct < 3 ? "Watch" : "Elevated"}
           />
+
+          {/* D5 — Neurological balance */}
+          {neuroSignalPct !== null ? (
+            <div style={{ flex: "1 1 calc(50% - 6px)", border: "0.5px solid var(--ink-12)", padding: "12px 14px", minWidth: 0 }}>
+              <p style={{ margin: "0 0 2px", fontFamily: "var(--font-body)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em", color: "#2D6A4F" }}>
+                Neurological balance
+              </p>
+              <p style={{ margin: "0 0 4px", fontFamily: "var(--font-body)", fontSize: 10, color: "var(--ink-30)" }}>
+                P. gingivalis + T. denticola — target combined &lt;0.1%
+              </p>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 300, color: "var(--ink)" }}>{neuroSignalPct.toFixed(2)}</span>
+                <span style={{ fontFamily: "var(--font-body)", fontSize: 10, color: "var(--ink-30)" }}>% combined</span>
+              </div>
+              <span style={{
+                fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "2px 6px",
+                background: neuroSignalPct < 0.05 ? "#EAF3DE" : neuroSignalPct < 0.5 ? "#FEF3C7" : "#FEE2E2",
+                color: neuroSignalPct < 0.05 ? "#2D6A4F" : neuroSignalPct < 0.5 ? "#92400E" : "#991B1B",
+              }}>
+                {neuroSignalPct < 0.05 ? "Optimal" : neuroSignalPct < 0.5 ? "Watch" : "Attention"}
+              </span>
+              <p style={{ margin: "8px 0 0", fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", fontStyle: "italic" }}>
+                Based on emerging research — see Science page for details.
+              </p>
+            </div>
+          ) : (
+            <div style={{ flex: "1 1 calc(50% - 6px)", border: "0.5px solid var(--ink-12)", padding: "12px 14px", minWidth: 0 }}>
+              <p style={{ margin: "0 0 2px", fontFamily: "var(--font-body)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em", color: "#2D6A4F" }}>
+                Neurological balance
+              </p>
+              <p style={{ margin: "0 0 4px", fontFamily: "var(--font-body)", fontSize: 10, color: "var(--ink-30)" }}>
+                Oral bacteria linked to brain health pathways
+              </p>
+              <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink-30)" }}>Not detected</p>
+              <p style={{ margin: "8px 0 0", fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", fontStyle: "italic" }}>
+                Based on emerging research — see Science page for details.
+              </p>
+            </div>
+          )}
+
+          {/* D6 — Metabolic balance */}
+          {metabolicSignalPct !== null ? (
+            <div style={{ flex: "1 1 calc(50% - 6px)", border: "0.5px solid var(--ink-12)", padding: "12px 14px", minWidth: 0 }}>
+              <p style={{ margin: "0 0 2px", fontFamily: "var(--font-body)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em", color: "#2D6A4F" }}>
+                Metabolic balance
+              </p>
+              <p style={{ margin: "0 0 4px", fontFamily: "var(--font-body)", fontSize: 10, color: "var(--ink-30)" }}>
+                Prevotella group — target &lt;3%
+              </p>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 300, color: "var(--ink)" }}>{metabolicSignalPct.toFixed(2)}</span>
+                <span style={{ fontFamily: "var(--font-body)", fontSize: 10, color: "var(--ink-30)" }}>% reads</span>
+              </div>
+              <span style={{
+                fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "2px 6px",
+                background: metabolicSignalPct < 1 ? "#EAF3DE" : metabolicSignalPct < 3 ? "#FEF3C7" : "#FEE2E2",
+                color: metabolicSignalPct < 1 ? "#2D6A4F" : metabolicSignalPct < 3 ? "#92400E" : "#991B1B",
+              }}>
+                {metabolicSignalPct < 1 ? "Optimal" : metabolicSignalPct < 3 ? "Watch" : "Attention"}
+              </span>
+              <p style={{ margin: "8px 0 0", fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", fontStyle: "italic" }}>
+                Based on emerging research — see Science page for details.
+              </p>
+            </div>
+          ) : (
+            <div style={{ flex: "1 1 calc(50% - 6px)", border: "0.5px solid var(--ink-12)", padding: "12px 14px", minWidth: 0 }}>
+              <p style={{ margin: "0 0 2px", fontFamily: "var(--font-body)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em", color: "#2D6A4F" }}>
+                Metabolic balance
+              </p>
+              <p style={{ margin: "0 0 4px", fontFamily: "var(--font-body)", fontSize: 10, color: "var(--ink-30)" }}>
+                Oral bacteria associated with metabolic pathways
+              </p>
+              <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink-30)" }}>Not detected</p>
+              <p style={{ margin: "8px 0 0", fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", fontStyle: "italic" }}>
+                Based on emerging research — see Science page for details.
+              </p>
+            </div>
+          )}
+
+          {/* D7 — Cellular environment */}
+          {proliferativeSignalPct !== null ? (
+            <div style={{ flex: "1 1 calc(50% - 6px)", border: "0.5px solid var(--ink-12)", padding: "12px 14px", minWidth: 0 }}>
+              <p style={{ margin: "0 0 2px", fontFamily: "var(--font-body)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em", color: "#2D6A4F" }}>
+                Cellular environment
+              </p>
+              <p style={{ margin: "0 0 4px", fontFamily: "var(--font-body)", fontSize: 10, color: "var(--ink-30)" }}>
+                Fusobacterium group — target &lt;0.5%
+              </p>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 300, color: "var(--ink)" }}>{proliferativeSignalPct.toFixed(2)}</span>
+                <span style={{ fontFamily: "var(--font-body)", fontSize: 10, color: "var(--ink-30)" }}>% reads</span>
+              </div>
+              <span style={{
+                fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "2px 6px",
+                background: proliferativeSignalPct < 0.5 ? "#EAF3DE" : proliferativeSignalPct < 2 ? "#FEF3C7" : "#FEE2E2",
+                color: proliferativeSignalPct < 0.5 ? "#2D6A4F" : proliferativeSignalPct < 2 ? "#92400E" : "#991B1B",
+              }}>
+                {proliferativeSignalPct < 0.5 ? "Optimal" : proliferativeSignalPct < 2 ? "Watch" : "Attention"}
+              </span>
+              <p style={{ margin: "8px 0 0", fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", fontStyle: "italic" }}>
+                Based on emerging research — see Science page for details.
+              </p>
+            </div>
+          ) : (
+            <div style={{ flex: "1 1 calc(50% - 6px)", border: "0.5px solid var(--ink-12)", padding: "12px 14px", minWidth: 0 }}>
+              <p style={{ margin: "0 0 2px", fontFamily: "var(--font-body)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em", color: "#2D6A4F" }}>
+                Cellular environment
+              </p>
+              <p style={{ margin: "0 0 4px", fontFamily: "var(--font-body)", fontSize: 10, color: "var(--ink-30)" }}>
+                Oral bacteria associated with cellular health
+              </p>
+              <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink-30)" }}>Not detected</p>
+              <p style={{ margin: "8px 0 0", fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", fontStyle: "italic" }}>
+                Based on emerging research — see Science page for details.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Secondary insights */}
@@ -522,6 +644,56 @@ export function OralPanelClient({ oral, snapshot }: Props) {
                 <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 12, color: "var(--ink-60)", lineHeight: 1.6 }}>{r}</p>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Emerging research recommendations for D5/D6/D7 */}
+        {((neuroSignalPct !== null && neuroSignalPct > 0.5) ||
+          (metabolicSignalPct !== null && metabolicSignalPct > 3) ||
+          (proliferativeSignalPct !== null && proliferativeSignalPct > 0.5)) && (
+          <div style={{ marginTop: 24 }}>
+            <p style={{ fontFamily: "var(--font-body)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-30)", marginBottom: 10 }}>
+              Emerging Research Recommendations
+            </p>
+
+            {neuroSignalPct !== null && neuroSignalPct > 0.5 && (
+              <div style={{ border: "0.5px solid var(--ink-12)", borderLeft: "3px solid #B8860B", padding: "14px 16px", marginBottom: 10 }}>
+                <p style={{ margin: "0 0 5px", fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 400, color: "var(--ink)" }}>
+                  Supporting oral neurological balance
+                </p>
+                <p style={{ margin: "0 0 8px", fontFamily: "var(--font-body)", fontSize: 12, lineHeight: 1.65, color: "var(--ink-60)" }}>
+                  Research is exploring the connection between certain oral bacteria and neurological health pathways. Professional dental cleaning and L. reuteri probiotics have shown promise in reducing these bacteria.
+                </p>
+                <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", fontStyle: "italic" }}>
+                  Speak with your dentist about your results
+                </p>
+              </div>
+            )}
+
+            {metabolicSignalPct !== null && metabolicSignalPct > 3 && (
+              <div style={{ border: "0.5px solid var(--ink-12)", borderLeft: "3px solid #B8860B", padding: "14px 16px", marginBottom: 10 }}>
+                <p style={{ margin: "0 0 5px", fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 400, color: "var(--ink)" }}>
+                  Supporting metabolic microbiome balance
+                </p>
+                <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 12, lineHeight: 1.65, color: "var(--ink-60)" }}>
+                  Certain Prevotella species are associated with metabolic health pathways. A diet rich in diverse plant fibers supports a balanced oral microbiome.
+                </p>
+              </div>
+            )}
+
+            {proliferativeSignalPct !== null && proliferativeSignalPct > 0.5 && (
+              <div style={{ border: "0.5px solid var(--ink-12)", borderLeft: "3px solid #B8860B", padding: "14px 16px", marginBottom: 10 }}>
+                <p style={{ margin: "0 0 5px", fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 400, color: "var(--ink)" }}>
+                  Supporting cellular environment balance
+                </p>
+                <p style={{ margin: "0 0 8px", fontFamily: "var(--font-body)", fontSize: 12, lineHeight: 1.65, color: "var(--ink-60)" }}>
+                  Fusobacterium species are being studied in connection with cellular health. Regular dental cleaning, good oral hygiene, and dietary fiber support a balanced microbiome.
+                </p>
+                <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", fontStyle: "italic" }}>
+                  Speak with your dentist about your results
+                </p>
+              </div>
+            )}
           </div>
         )}
 

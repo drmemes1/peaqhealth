@@ -94,6 +94,15 @@ export interface ScoreWheelProps {
     lastSynced:   string | null
     recentNights: Array<{ date: string; totalSleepHours: number; hrv: number }>
   }
+  modifiers_applied?: Array<{
+    id: string
+    panels: string[]
+    direction: 'penalty' | 'bonus'
+    points: number
+    label: string
+    rationale: string
+  }>
+  modifier_total?: number
 }
 
 function ageAtLeast(ageRange: string | undefined, minAge: number): boolean {
@@ -1212,6 +1221,7 @@ export function ScoreWheel({
   lastSyncAt, lastSyncRequestedAt,
   peaqPercent, peaqPercentLabel, lpaFlag, hsCRPRetestFlag, additionalMarkers,
   labLockExpiresAt, oralOrdered, sleepNightsAvailable, oralKitStatus, whoopData,
+  modifiers_applied, modifier_total,
 }: ScoreWheelProps) {
   const [mounted, setMounted] = useState(false)
   const [hoveredRing, setHoveredRing] = useState<string | null>(null)
@@ -1220,16 +1230,15 @@ export function ScoreWheel({
   const [displaySleep, setDisplaySleep] = useState(0)
   const [displayBlood, setDisplayBlood] = useState(0)
   const [displayOral, setDisplayOral] = useState(0)
-  const [displayLifestyle, setDisplayLifestyle] = useState(0)
   const [openMissingTooltip, setOpenMissingTooltip] = useState<string | null>(null)
+  const [showModifiers, setShowModifiers] = useState(false)
   const sleepPanelRef    = useRef<CollapsiblePanelHandle>(null)
   const bloodPanelRef    = useRef<CollapsiblePanelHandle>(null)
   const oralPanelRef     = useRef<CollapsiblePanelHandle>(null)
-  const lifestylePanelRef = useRef<CollapsiblePanelHandle>(null)
 
   function handlePeakClick(key: string) {
     const map: Record<string, React.RefObject<CollapsiblePanelHandle | null>> = {
-      sleep: sleepPanelRef, blood: bloodPanelRef, oral: oralPanelRef, lifestyle: lifestylePanelRef,
+      sleep: sleepPanelRef, blood: bloodPanelRef, oral: oralPanelRef,
     }
     map[key]?.current?.scrollAndOpen()
   }
@@ -1238,7 +1247,6 @@ export function ScoreWheel({
   useCountUp(breakdown.sleepSub, 900, 350, setDisplaySleep)
   useCountUp(breakdown.bloodSub, 900, 450, setDisplayBlood)
   useCountUp(breakdown.oralSub, 900, 550, setDisplayOral)
-  useCountUp(breakdown.lifestyleSub, 800, 650, setDisplayLifestyle)
 
   useEffect(() => {
     setMounted(true)
@@ -1254,7 +1262,7 @@ export function ScoreWheel({
   const bloodLocked = !hasBlood
 
 
-  const subline = ""
+  const subline = "Your score is entirely based on measured data."
 
   // Stale badge
   const staleBadge = labFreshness === "stale" && bloodData ? `⚠ ${bloodData.monthsOld} mo old` : labFreshness === "aging" && bloodData ? `${bloodData.monthsOld} mo old` : undefined
@@ -1343,6 +1351,35 @@ export function ScoreWheel({
           YOUR PEAQ SCORE · {new Date().toLocaleString("en-US", { month: "long", year: "numeric" }).toUpperCase()}
         </p>
 
+        {/* Cross-panel modifiers */}
+        {modifiers_applied && modifiers_applied.length > 0 && (
+          <div style={{ textAlign: "center", marginTop: 8 }}>
+            <button
+              onClick={() => setShowModifiers(o => !o)}
+              style={{
+                fontFamily: "var(--font-body)", fontSize: 11,
+                color: (modifier_total ?? 0) >= 0 ? "#2D6A4F" : "#C0392B",
+                background: "none", border: "none", cursor: "pointer",
+                letterSpacing: "0.04em",
+              }}
+            >
+              {showModifiers ? "−" : "+"} {(modifier_total ?? 0) > 0 ? `+${modifier_total}` : modifier_total} cross-panel
+            </button>
+            {showModifiers && (
+              <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
+                {modifiers_applied.map(m => (
+                  <p key={m.id} style={{
+                    fontFamily: "var(--font-body)", fontSize: 12, margin: 0,
+                    color: m.direction === "bonus" ? "#2D6A4F" : "#C0392B",
+                  }}>
+                    {m.direction === "bonus" ? "+" : "−"}{m.points} {m.label}
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Mountain peaks chart with hero backdrop */}
         <div style={{ width: "100%", marginTop: 40, position: "relative" }}>
           {/* Hero image — snow-capped mountains behind the peaks */}
@@ -1396,7 +1433,7 @@ export function ScoreWheel({
               sleepConnected={sleepConnected}
               hasBlood={hasBlood}
               oralActive={oralActive}
-              hasLifestyle={!!lifestyleData}
+              hasLifestyle={false}
               onPeakHover={setHoveredRing}
               onPeakClick={handlePeakClick}
             />
@@ -1424,10 +1461,10 @@ export function ScoreWheel({
       {/* PANEL GRID */}
       <div style={fadeUp("0.08s")}>
         <PanelGrid
-          displaySleep={displaySleep} displayBlood={displayBlood} displayOral={displayOral} displayLifestyle={displayLifestyle}
+          displaySleep={displaySleep} displayBlood={displayBlood} displayOral={displayOral} displayLifestyle={0}
           sleepConnected={sleepConnected} isSyncing={isSyncing} wearableProvider={wearableProvider}
-          labFreshness={labFreshness} oralActive={oralActive} lifestyleActive={!!lifestyleData}
-          lifestyleSub={breakdown.lifestyleSub}
+          labFreshness={labFreshness} oralActive={oralActive} lifestyleActive={false}
+          lifestyleSub={0}
           sleepDesc={sleepDesc} bloodDesc={bloodDesc} oralDesc={oralDesc}
           staleBadge={staleBadge} mounted={mounted} hoveredRing={hoveredRing}
           interactionsFired={interactionsFired}
@@ -1738,69 +1775,6 @@ export function ScoreWheel({
             </a>
           )}
         </div>
-      </CollapsiblePanel>
-
-      {/* LIFESTYLE */}
-      <CollapsiblePanel
-        ref={lifestylePanelRef}
-        title="Lifestyle"
-        score={Math.round(breakdown.lifestyleSub * 10) / 10}
-        maxScore={13}
-        subtitle={lifestyleData ? `QUESTIONNAIRE · ${new Date(lifestyleData.updatedAt).toLocaleDateString("en-US", { month: "short", year: "numeric" }).toUpperCase()}` : "QUESTIONNAIRE"}
-        defaultOpen={!!lifestyleData}
-        delay="0.30s"
-        fadeUpFn={fadeUp}
-      >
-        <div style={{ borderTop: "0.5px solid var(--ink-12)" }}>
-          {(() => {
-            const exLabels: Record<string, string> = { active: "Active — 5+×/wk", moderate: "Moderate — 3–4×/wk", light: "Light — 1–2×/wk", sedentary: "Sedentary" }
-            const brushLabels: Record<string, string> = { once: "Once per day", twice: "Twice per day", more: "3+ times/day" }
-            const flossLabels: Record<string, string> = { never: "Never", sometimes: "Sometimes", daily: "Daily" }
-            const dentalLabels: Record<string, string> = { "6mo": "< 6 months", "1yr": "6–12 months", "2yr": "1–2 years", more: "2+ years" }
-            const smokeLabels: Record<string, string> = { never: "Never smoked", former: "Former smoker", current: "Current smoker" }
-            const stressLabels: Record<string, string> = { low: "Low", moderate: "Moderate", high: "High" }
-            const ageLabels: Record<string, string> = { "18_29": "Under 30", "30_39": "30–39", "40_49": "40–49", "50_59": "50–59", "60_69": "60–69", "70_plus": "70 or older" }
-            const sexLabels: Record<string, string> = { male: "Male", female: "Female", non_binary: "Non-binary", prefer_not_to_say: "Prefer not to answer" }
-
-            type LRow = { name: string; val: string | null; flag: Flag }
-            const rows: LRow[] = []
-
-            if (lifestyleData) {
-              rows.push({ name: "Age range", val: lifestyleData.ageRange ? (ageLabels[lifestyleData.ageRange] ?? lifestyleData.ageRange) : "Not set", flag: (lifestyleData.ageRange ? "good" : "watch") as Flag })
-              rows.push({ name: "Biological sex", val: lifestyleData.biologicalSex ? (sexLabels[lifestyleData.biologicalSex] ?? lifestyleData.biologicalSex) : "Not set", flag: (lifestyleData.biologicalSex ? "good" : "watch") as Flag })
-              rows.push({ name: "Exercise", val: exLabels[lifestyleData.exerciseLevel] ?? lifestyleData.exerciseLevel, flag: (lifestyleData.exerciseLevel === "sedentary" ? "attention" : lifestyleData.exerciseLevel === "light" ? "watch" : "good") as Flag })
-              rows.push({ name: "Brushing", val: brushLabels[lifestyleData.brushingFreq] ?? lifestyleData.brushingFreq, flag: (lifestyleData.brushingFreq === "once" ? "watch" : "good") as Flag })
-              rows.push({ name: "Flossing", val: flossLabels[lifestyleData.flossingFreq] ?? lifestyleData.flossingFreq, flag: (lifestyleData.flossingFreq === "never" ? "attention" : lifestyleData.flossingFreq === "sometimes" ? "watch" : "good") as Flag })
-              rows.push({ name: "Dental visits", val: dentalLabels[lifestyleData.lastDentalVisit] ?? lifestyleData.lastDentalVisit, flag: (lifestyleData.lastDentalVisit === "6mo" || lifestyleData.lastDentalVisit === "1yr" ? "good" : lifestyleData.lastDentalVisit === "2yr" ? "watch" : "attention") as Flag })
-              rows.push({ name: "Smoking", val: smokeLabels[lifestyleData.smokingStatus] ?? lifestyleData.smokingStatus, flag: (lifestyleData.smokingStatus === "current" ? "attention" : lifestyleData.smokingStatus === "former" ? "watch" : "good") as Flag })
-              if (lifestyleData.stressLevel) rows.push({ name: "Stress", val: stressLabels[lifestyleData.stressLevel] ?? lifestyleData.stressLevel, flag: (lifestyleData.stressLevel === "high" ? "attention" : lifestyleData.stressLevel === "moderate" ? "watch" : "good") as Flag })
-              if (lifestyleData.alcoholPerWeek !== undefined) rows.push({ name: "Alcohol", val: lifestyleData.alcoholPerWeek === 0 ? "None" : `${lifestyleData.alcoholPerWeek} drinks/wk`, flag: (lifestyleData.alcoholPerWeek > 14 ? "attention" : lifestyleData.alcoholPerWeek > 7 ? "watch" : "good") as Flag })
-              if (lifestyleData.vegServings !== undefined) rows.push({ name: "Vegetables", val: lifestyleData.vegServings === 0 ? "None" : `${lifestyleData.vegServings} servings/day`, flag: (lifestyleData.vegServings >= 3 ? "good" : lifestyleData.vegServings >= 1 ? "watch" : "attention") as Flag })
-            } else {
-              rows.push({ name: "Age range", val: null, flag: "pending" })
-              rows.push({ name: "Biological sex", val: null, flag: "pending" })
-              rows.push({ name: "Exercise", val: null, flag: "pending" })
-              rows.push({ name: "Oral hygiene", val: null, flag: "pending" })
-              rows.push({ name: "Dental visits", val: null, flag: "pending" })
-              rows.push({ name: "Smoking", val: null, flag: "pending" })
-            }
-
-            const dotColor = (f: Flag) => f === "good" ? "#2D6A4F" : f === "watch" ? "#B8860B" : f === "attention" ? "#C0392B" : "var(--ink-30)"
-
-            return rows.map((row, i) => (
-              <div key={row.name} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 0", borderBottom: i < rows.length - 1 ? "0.5px solid var(--ink-06)" : "none" }}>
-                <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink-60)" }}>{row.name}</span>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink)" }}>{row.val ?? "—"}</span>
-                  <span style={{ fontSize: 8, color: dotColor(row.flag), lineHeight: 1 }}>●</span>
-                </div>
-              </div>
-            ))
-          })()}
-        </div>
-        <a href="/settings/lifestyle" style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "var(--gold)", display: "block", marginTop: 14 }}>
-          Update lifestyle markers →
-        </a>
       </CollapsiblePanel>
 
       {/* INSIGHTS */}

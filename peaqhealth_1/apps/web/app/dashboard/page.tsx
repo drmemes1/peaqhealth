@@ -251,6 +251,8 @@ export default async function DashboardPage() {
     labLockExpiresAt: (lab && !lab.is_locked && lab.lock_expires_at)
       ? (lab.lock_expires_at as string)
       : null,
+    modifiers_applied: snapshot?.modifiers_applied ?? [],
+    modifier_total: snapshot?.modifier_total ?? 0,
     whoopData: wearable?.provider === "whoop" ? {
       connected:  true,
       lastSynced: (wearable.last_synced_at as string | null) ?? null,

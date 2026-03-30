@@ -157,14 +157,13 @@ export function PanelGrid({
         <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 22, fontWeight: 300, color: "var(--ink)", margin: 0 }}>Panel breakdown</h3>
         <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-30)" }}>Score composition</span>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
         {isSyncing
           ? <SyncingCard provider={wearableProvider} />
           : <PanelCard label="Sleep" color="var(--sleep-c)" trackColor="var(--sleep-bg)" score={displaySleep} max={27} active={sleepConnected} locked={!sleepConnected} desc={sleepDesc} mounted={mounted} highlighted={hoveredRing === "sleep"} />
         }
         <PanelCard label="Blood" color="var(--blood-c)" trackColor="var(--blood-bg)" score={displayBlood} max={33} active={hasBlood} locked={bloodLocked} desc={bloodDesc} staleBadge={staleBadge} mounted={mounted} highlighted={hoveredRing === "blood"} />
         <PanelCard label="Oral Microbiome" color="var(--oral-c)" trackColor="var(--oral-bg)" score={displayOral} max={27} active={oralActive} locked={!oralActive} desc={oralDesc} mounted={mounted} highlighted={hoveredRing === "oral"} />
-        <PanelCard label="Lifestyle" color="var(--gold)" trackColor="var(--warm-100)" score={displayLifestyle} max={13} active={lifestyleActive} locked={!lifestyleActive} desc="" mounted={mounted} highlighted={hoveredRing === "lifestyle"} />
       </div>
     </div>
   )

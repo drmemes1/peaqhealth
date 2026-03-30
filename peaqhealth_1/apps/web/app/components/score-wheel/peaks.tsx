@@ -8,8 +8,7 @@ const MAX_H        = 200   // reference height for ratio calculations (not a har
 const TOP_PAD      = 64    // minimum clearance above tallest apex for score number
 const SCALE_TO     = 0.90  // tallest active peak fills this fraction of available space
 const HALF_W       = 44    // base half-width 44px → 88px total; 67px gaps between peaks
-const CENTERS: readonly [number, number, number, number] = [120, 275, 430, 585]
-const LIFESTYLE_CAP = 0.65  // lifestyle (13 pts) visually capped at 65% of max height
+const CENTERS: readonly [number, number, number] = [150, 350, 550]
 const DURATION = 700        // ms each peak takes to rise
 const STAGGER  = 130        // ms between peaks
 
@@ -17,7 +16,6 @@ const PANELS = [
   { key: "sleep",     label: "SLEEP",     max: 27, color: "#4A7FB5" },
   { key: "blood",     label: "BLOOD",     max: 33, color: "#C0392B" },
   { key: "oral",      label: "ORAL",      max: 27, color: "#2D6A4F" },
-  { key: "lifestyle", label: "LIFESTYLE", max: 13, color: "#B8860B" },
 ] as const
 
 function easeOutCubic(t: number): number {
@@ -45,15 +43,13 @@ export function PeaksVisualization({
     breakdown.sleepSub,
     breakdown.bloodSub,
     breakdown.oralSub,
-    breakdown.lifestyleSub,
   ]
-  const pending = [!sleepConnected, !hasBlood, !oralActive, !hasLifestyle]
+  const pending = [!sleepConnected, !hasBlood, !oralActive]
 
-  // Raw heights using MAX_H as reference scale (lifestyle capped)
+  // Raw heights using MAX_H as reference scale
   const rawHeights = rawScores.map((s, i) => {
     if (pending[i] || s <= 0) return 0
-    const h = (s / PANELS[i].max) * MAX_H
-    return i === 3 ? Math.min(h, LIFESTYLE_CAP * MAX_H) : h
+    return (s / PANELS[i].max) * MAX_H
   })
 
   // Dynamic scaling: tallest active peak fills SCALE_TO of available vertical space
@@ -66,8 +62,8 @@ export function PeaksVisualization({
   )
   const apexYs = finalHeights.map(h => BASELINE - h)
 
-  const polyRefs  = useRef<(SVGPolygonElement | null)[]>([null, null, null, null])
-  const decorRefs = useRef<(SVGGElement | null)[]>([null, null, null, null])
+  const polyRefs  = useRef<(SVGPolygonElement | null)[]>([null, null, null])
+  const decorRefs = useRef<(SVGGElement | null)[]>([null, null, null])
 
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = []
@@ -97,7 +93,7 @@ export function PeaksVisualization({
     })
 
     // Reveal decorations after all peaks finish
-    const revealAt = 100 + 3 * STAGGER + DURATION + 100
+    const revealAt = 100 + 2 * STAGGER + DURATION + 100
     timers.push(setTimeout(() => {
       decorRefs.current.forEach(el => { if (el) el.style.opacity = "1" })
     }, revealAt))

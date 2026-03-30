@@ -1,8 +1,44 @@
 import { calculatePeaqScore, type LifestyleInputs, type BloodInputs, type OralInputs, type SleepInputs } from "@peaq/score-engine"
 import type { SupabaseClient } from "@supabase/supabase-js"
+import { scoreOralV2, type OralDimensionInputs } from "../oral/dimensions-v2"
+import { calculateModifiers, type PanelInputs } from "./modifiers"
 
 // Provider priority for best-per-date selection (lower = preferred)
 const PROVIDER_PRIORITY: Record<string, number> = { whoop: 0, oura: 1, garmin: 2 }
+
+// ─── Age helpers ─────────────────────────────────────────────────────────────
+
+function ageRangeToMidpoint(range: string | null | undefined): number {
+  if (!range) return 45
+  const map: Record<string, number> = {
+    "under_30": 25, "18_29": 25, "20_29": 25,
+    "30_39": 35,
+    "40_49": 45,
+    "50_59": 55,
+    "60_69": 65,
+    "70_plus": 72, "over_70": 72,
+  }
+  if (map[range]) return map[range]
+  const n = parseInt(range)
+  return isNaN(n) ? 45 : n
+}
+
+function getHRVTarget(age: number): { optimal: number; good: number; watch: number } {
+  if (age < 30) return { optimal: 60, good: 45, watch: 30 }
+  if (age < 40) return { optimal: 55, good: 40, watch: 28 }
+  if (age < 50) return { optimal: 48, good: 35, watch: 25 }
+  if (age < 60) return { optimal: 42, good: 30, watch: 22 }
+  return { optimal: 35, good: 25, watch: 18 }
+}
+
+function scoreHRVAgeAdjusted(hrv: number | null, age: number): number {
+  if (hrv === null || hrv <= 0) return 0
+  const targets = getHRVTarget(age)
+  if (hrv >= targets.optimal) return 8
+  if (hrv >= targets.good) return 5
+  if (hrv >= targets.watch) return 2
+  return 0
+}
 
 // ─── DB row → engine type mappers ─────────────────────────────────────────────
 
@@ -36,7 +72,6 @@ export function mapLifestyleRow(row: Record<string, unknown>): LifestyleInputs {
     daytimeFatigue:  (row.daytime_fatigue ? fatMap[row.daytime_fatigue  as string] : undefined) as LifestyleInputs["daytimeFatigue"],
     nightWakings:    (row.night_wakings   ? wakeMap[row.night_wakings   as string] : undefined) as LifestyleInputs["nightWakings"],
     sleepMedication: "never",
-    // New optional fields (v4.2)
     hypertensionDx: row.hypertension_dx === "yes" || row.hypertension_dx === true ? true : undefined,
     onBPMeds: row.on_bp_meds === "yes" || row.on_bp_meds === true ? true : undefined,
     onStatins: row.on_statins === "yes" || row.on_statins === true ? true : undefined,
@@ -51,10 +86,8 @@ export function mapLifestyleRow(row: Record<string, unknown>): LifestyleInputs {
     sugaryDrinksPerWeek: typeof row.sugary_drinks_per_week === "number" ? row.sugary_drinks_per_week : undefined,
     alcoholDrinksPerWeek: typeof row.alcohol_drinks_per_week === "number" ? row.alcohol_drinks_per_week : undefined,
     stressLevel: typeof row.stress_level === "string" && ["low", "moderate", "high"].includes(row.stress_level) ? (row.stress_level as "low" | "moderate" | "high") : undefined,
-    // v7.0 — age/sex demographic + preventive screening
     ageRange:      typeof row.age_range === "string" && (AGE_RANGES as readonly string[]).includes(row.age_range) ? (row.age_range as LifestyleInputs["ageRange"]) : undefined,
     biologicalSex: typeof row.biological_sex === "string" && (BIO_SEXES as readonly string[]).includes(row.biological_sex) ? (row.biological_sex as LifestyleInputs["biologicalSex"]) : undefined,
-    // Only true maps to true — false/null both become undefined (no penalty for non-completion)
     cacScored:              row.cac_scored === true ? true : undefined,
     colorectalScreeningDone: row.colorectal_screening_done === true ? true : undefined,
     lungCtDone:             row.lung_ct_done === true ? true : undefined,
@@ -119,14 +152,10 @@ export function mapLabRow(row: Record<string, unknown>): BloodInputs | undefined
     psa_ngmL:               num(row.psa_ngml),
     labCollectionDate:      row.collection_date as string | undefined,
   }
-
-  // Return undefined only if no numeric marker is present at all
   const presentKeys = Object.entries(mapped)
     .filter(([k, v]) => k !== "labCollectionDate" && v !== undefined && (v as number) > 0)
     .map(([k]) => k)
-
   if (presentKeys.length === 0) return undefined
-
   return mapped as BloodInputs
 }
 
@@ -140,39 +169,34 @@ export function mapOralRow(row: Record<string, unknown>): OralInputs | undefined
     collectionDate:        row.collection_date          as string | undefined,
     reportId:              row.id                       as string | undefined,
   }
-  // Enrich with full OralScore data when available (from oral_score_snapshot)
   if (row.oral_score_snapshot && typeof row.oral_score_snapshot === 'object') {
     const snap = row.oral_score_snapshot as Record<string, unknown>
     if (typeof snap.pGingivalisPct === 'number') base.pGingivalisPct = snap.pGingivalisPct
     if (typeof snap.osaBurden === 'number') base.osaBurden = snap.osaBurden
     if (typeof snap.periodontalBurden === 'number') base.periodontalBurden = snap.periodontalBurden
     if (typeof snap.highOsaRisk === 'boolean') base.highOsaRisk = snap.highOsaRisk
-    // D4: protective bacteria % — use from snapshot when available (engine v1.1+)
-    // osaTaxaPct field is repurposed to carry protective bacteria % for the score engine
     if (typeof snap.protectivePct === 'number') base.osaTaxaPct = snap.protectivePct
   }
   return base
 }
 
 // Aggregate manual sleep entries → SleepInputs
-// quality 1–5 maps to sleep efficiency 58–92% (rough proxy)
 function aggregateManualSleepInputs(
   rows: Array<{ duration_seconds: number; quality: number }>
 ): SleepInputs | null {
   const valid = rows.filter((r) => r.duration_seconds > 0).slice(0, 10)
   if (valid.length < 7) return null
-  const avgEffPct =
-    50 + (valid.reduce((s, r) => s + r.quality, 0) / valid.length) * 8.5
+  const avgEffPct = 50 + (valid.reduce((s, r) => s + r.quality, 0) / valid.length) * 8.5
   return {
-    deepSleepPct:       0,
-    hrv_ms:             0,
-    spo2DipsPerNight:   0,
-    remPct:             0,
+    deepSleepPct: 0,
+    hrv_ms: 0,
+    spo2DipsPerNight: 0,
+    remPct: 0,
     sleepEfficiencyPct: avgEffPct,
   }
 }
 
-// ─── Shared score recalculator ────────────────────────────────────────────────
+// ─── Shared score recalculator (v2) ──────────────────────────────────────────
 
 export async function recalculateScore(
   userId: string,
@@ -191,11 +215,13 @@ export async function recalculateScore(
       .order("date", { ascending: false }),
   ])
 
-  // Sleep inputs: best wearable data per date (provider priority) → manual entries
+  // ── User age from lifestyle ────────────────────────────────────────────────
+  const userAge = ageRangeToMidpoint(lifestyleRes.data?.age_range as string | null)
+
+  // ── Sleep aggregation ──────────────────────────────────────────────────────
   let sleepInputs: SleepInputs | undefined
   let sleepSource = "none"
 
-  // ── Direct sleep_data query with source priority ──────────────────────────
   type SleepNight = {
     date: string; source: string
     total_sleep_minutes: number; deep_sleep_minutes: number; rem_sleep_minutes: number
@@ -203,32 +229,20 @@ export async function recalculateScore(
     resting_heart_rate: number | null
   }
   const allNights = (sleepNightsRes.data ?? []) as unknown as SleepNight[]
-
-  // Priority-selected best night per date — hoisted so resting-HR merge can reuse it
   let bestNights: SleepNight[] = []
 
   if (allNights.length > 0) {
-    // Pick best source per date (whoop > oura > garmin)
     const bestByDate = new Map<string, SleepNight>()
     for (const night of allNights) {
       const existing = bestByDate.get(night.date)
-      const nightPriority    = PROVIDER_PRIORITY[night.source]    ?? 99
+      const nightPriority = PROVIDER_PRIORITY[night.source] ?? 99
       const existingPriority = existing ? (PROVIDER_PRIORITY[existing.source] ?? 99) : Infinity
       if (nightPriority < existingPriority) bestByDate.set(night.date, night)
     }
 
-    console.log("[score] priority selection:",
-      Array.from(bestByDate.entries())
-        .sort((a, b) => b[0].localeCompare(a[0]))
-        .slice(0, 3)
-        .map(([date, row]) => `${date}:${row.source}`)
-    )
-
-    bestNights = Array.from(bestByDate.values())
-      .sort((a, b) => b.date.localeCompare(a.date))
+    bestNights = Array.from(bestByDate.values()).sort((a, b) => b.date.localeCompare(a.date))
     const n = bestNights.length
 
-    // Recency-weighted average: last 7 nights = 3x, days 8-14 = 2x, days 15-30 = 1x
     const getWeight = (i: number) => i < 7 ? 3.0 : i < 14 ? 2.0 : 1.0
     const weightedAvg = (key: keyof SleepNight): number => {
       let sum = 0, total = 0
@@ -239,16 +253,9 @@ export async function recalculateScore(
       return total > 0 ? sum / total : 0
     }
 
-    const totalMin  = weightedAvg("total_sleep_minutes")
-    const spo2Avg   = weightedAvg("spo2")
+    const totalMin = weightedAvg("total_sleep_minutes")
+    const spo2Avg = weightedAvg("spo2")
     const mostRecentSource = bestNights[0]?.source ?? "unknown"
-
-    // Confidence tiers
-    const sleepConfidence =
-      n >= 14 ? "high" :
-      n >= 7  ? "good" :
-      n >= 3  ? "low"  :
-      n >= 1  ? "minimal" : "none"
 
     sleepInputs = {
       deepSleepPct:       totalMin > 0 ? (weightedAvg("deep_sleep_minutes") / totalMin) * 100 : 0,
@@ -259,15 +266,6 @@ export async function recalculateScore(
       nightsAvailable:    n,
     }
     sleepSource = mostRecentSource
-
-    console.log(
-      "[score] sleep from sleep_data — nights:", n,
-      "confidence:", sleepConfidence,
-      "source:", mostRecentSource,
-      "weighted eff:", Math.round(weightedAvg("sleep_efficiency") * 10) / 10,
-      "weighted hrv:", Math.round(weightedAvg("hrv_rmssd") * 10) / 10,
-      "weighted deep%:", Math.round(sleepInputs.deepSleepPct * 10) / 10,
-    )
   }
 
   if (!sleepInputs && manualSleepRes.data && manualSleepRes.data.length >= 7) {
@@ -276,70 +274,171 @@ export async function recalculateScore(
     ) ?? undefined
   }
 
-  const bloodInputs     = labsRes.data     ? mapLabRow(labsRes.data as Record<string, unknown>)           : undefined
-  const oralInputs      = oralRes.data     ? mapOralRow(oralRes.data as Record<string, unknown>)          : undefined
+  const bloodInputs = labsRes.data ? mapLabRow(labsRes.data as Record<string, unknown>) : undefined
+  const oralInputsLegacy = oralRes.data ? mapOralRow(oralRes.data as Record<string, unknown>) : undefined
   let lifestyleInputs = lifestyleRes.data ? mapLifestyleRow(lifestyleRes.data as Record<string, unknown>) : undefined
 
-  // Identify absent premium markers for logging / downstream nudges
-  const missingPremium: string[] = []
-  if (bloodInputs) {
-    if (!bloodInputs.apoB_mgdL)        missingPremium.push("ApoB")
-    if (!bloodInputs.hsCRP_mgL)        missingPremium.push("hsCRP")
-    if (!bloodInputs.lpa_mgdL)         missingPremium.push("Lp(a)")
-    if (!bloodInputs.vitaminD_ngmL)    missingPremium.push("Vitamin D")
-    if (!bloodInputs.hba1c_pct)        missingPremium.push("HbA1c")
-  }
-
-  // Merge wearable biometrics (resting HR) from the priority-selected most recent night.
-  // Use bestNights (not raw allNights) so WHOOP wins over Oura when both are connected.
+  // Merge wearable resting HR
   if (lifestyleInputs && bestNights.length > 0) {
     const latestRhr = bestNights[0].resting_heart_rate
     if (typeof latestRhr === "number" && latestRhr > 0) lifestyleInputs.restingHR = latestRhr
   }
 
-  console.log("[score] sleep inputs:", JSON.stringify(sleepInputs ?? null))
-  console.log("[score] blood inputs present:", bloodInputs ? Object.keys(bloodInputs).filter(k => (bloodInputs as Record<string, unknown>)[k] != null).length : 0)
+  // ── Call legacy engine to get raw sub-scores ───────────────────────────────
+  const legacyResult = calculatePeaqScore(sleepInputs, bloodInputs, oralInputsLegacy, lifestyleInputs)
 
-  const result = calculatePeaqScore(sleepInputs, bloodInputs, oralInputs, lifestyleInputs)
+  // ── BLOOD: scale 33 → 40 ──────────────────────────────────────────────────
+  const bloodSubRaw = legacyResult.breakdown.bloodSub
+  const bloodSub = Math.round(Math.min(40, bloodSubRaw * (40 / 33)) * 10) / 10
 
-  // Sleep panel requires real wearable data — if the engine fell back to questionnaire
-  // estimation (sleepSource === "questionnaire"), discard that estimate so the sleep
-  // panel shows 0 and users are prompted to connect a wearable.
-  const sleepSub = !sleepInputs ? 0 : result.breakdown.sleepSub
-  const storedScore = !sleepInputs
-    ? Math.max(0, result.score - result.breakdown.sleepSub)
-    : result.score
-  const storedSleepSource = !sleepInputs ? "none" : (sleepSource || result.breakdown.sleepSource)
+  // ── SLEEP: scale 27 → 30, with age-adjusted HRV ──────────────────────────
+  let sleepSub = 0
+  if (sleepInputs && (sleepInputs.nightsAvailable ?? 7) >= 7) {
+    // Get legacy sleep sub and replace HRV component with age-adjusted version
+    const legacySleepSub = legacyResult.breakdown.sleepSub
+    const legacyHrvScore = legacyResult.metrics.hrvScore
 
-  console.log(`[recalculate] user=${userId} sleep=${sleepSub} blood=${result.breakdown.bloodSub} oral=${result.breakdown.oralSub} lifestyle=${result.breakdown.lifestyleSub} total=${storedScore} sleepSource=${storedSleepSource}`)
+    // Age-adjusted HRV score (max 8 pts same as legacy)
+    const ageAdjHrv = scoreHRVAgeAdjusted(sleepInputs.hrv_ms, userAge)
+    const hrvTarget = getHRVTarget(userAge)
+    console.log(`[sleep-engine] hrv age-adjusted: age=${userAge} target_optimal=${hrvTarget.optimal} hrv=${sleepInputs.hrv_ms?.toFixed(1)} → ${ageAdjHrv} pts`)
 
+    // Swap HRV component: remove legacy, add age-adjusted
+    const sleepWithNewHrv = legacySleepSub - legacyHrvScore + ageAdjHrv
+
+    // Scale 27 → 30
+    sleepSub = Math.round(Math.min(30, sleepWithNewHrv * (30 / 27)) * 10) / 10
+  }
+
+  // ── ORAL: v2 scoring (30 pts) ─────────────────────────────────────────────
+  let oralSub = 0
+  let oralBreakdown: ReturnType<typeof scoreOralV2> | null = null
+
+  if (oralRes.data) {
+    const oralSnap = (oralRes.data.oral_score_snapshot ?? {}) as Record<string, unknown>
+    // Fall back to raw_otu_table for species not in oral_score_snapshot
+    const otu = (oralRes.data.raw_otu_table ?? {}) as Record<string, number>
+
+    // Extract species from OTU using exact Supabase key strings (fractional 0-1)
+    const otuPGingivalis = otu["Porphyromonas gingivalis"] ?? 0
+    const otuTDenticola = otu["Treponema denticola"] ?? 0
+    const otuTForsythia = otu["Tannerella forsythia"] ?? 0
+    const otuFNucleatum = otu["Fusobacterium nucleatum"] ?? 0
+    const otuPIntermedia = otu["Prevotella intermedia"] ?? 0
+    // Note: Streptococcus mutans present in OTU — caries pathogen, not scored (future dimension)
+    // Sum all Prevotella species
+    const otuPrevotellaTotal = Object.entries(otu)
+      .filter(([k]) => k.startsWith("Prevotella"))
+      .reduce((sum, [, v]) => sum + v, 0)
+    // Sum all Fusobacterium species
+    const otuFusobacteriumTotal = Object.entries(otu)
+      .filter(([k]) => k.startsWith("Fusobacterium"))
+      .reduce((sum, [, v]) => sum + v, 0)
+
+    const oralDimInputs: OralDimensionInputs = {
+      shannonDiversity:      typeof oralSnap.shannonDiversity === "number" ? oralSnap.shannonDiversity : (oralRes.data.shannon_diversity as number | null),
+      nitrateReducerPct:     typeof oralSnap.nitrateReducerPct === "number" ? oralSnap.nitrateReducerPct : (oralRes.data.nitrate_reducers_pct as number | null),
+      pGingivalisPct:        typeof oralSnap.pGingivalisPct === "number" ? oralSnap.pGingivalisPct : (otuPGingivalis > 0 ? otuPGingivalis : null),
+      tDenticolaPct:         otuTDenticola > 0 ? otuTDenticola : null,
+      tForsythiaPct:         otuTForsythia > 0 ? otuTForsythia : null,
+      fNucleatumPct:         typeof oralSnap.fNucleatumPct === "number" ? oralSnap.fNucleatumPct : (otuFNucleatum > 0 ? otuFNucleatum : null),
+      pIntermediaPct:        otuPIntermedia > 0 ? otuPIntermedia : null,
+      aActinoPct:            null,
+      protectivePct:         typeof oralSnap.protectivePct === "number" ? oralSnap.protectivePct : null,
+      periodontalBurden:     typeof oralSnap.periodontalBurden === "number" ? oralSnap.periodontalBurden : null,
+      prevotellaTotalPct:    typeof oralSnap.prevotellaPct === "number" ? oralSnap.prevotellaPct : (otuPrevotellaTotal > 0 ? otuPrevotellaTotal : null),
+      fusobacteriumTotalPct: otuFusobacteriumTotal > 0 ? otuFusobacteriumTotal : (typeof oralSnap.fNucleatumPct === "number" ? oralSnap.fNucleatumPct : null),
+    }
+
+    oralBreakdown = scoreOralV2(oralDimInputs)
+    oralSub = oralBreakdown.total
+
+    // Store new dimension signals back to oral_kit_orders
+    const neuroPathogenPct = (oralDimInputs.pGingivalisPct ?? 0) + (oralDimInputs.tDenticolaPct ?? 0)
+    await supabase.from("oral_kit_orders").update({
+      neuro_signal_pct: neuroPathogenPct,
+      metabolic_signal_pct: oralDimInputs.prevotellaTotalPct,
+      proliferative_signal_pct: oralDimInputs.fusobacteriumTotalPct,
+    }).eq("id", oralRes.data.id)
+  }
+
+  // ── LIFESTYLE: compute but store as context only ──────────────────────────
+  const lifestyleSub = legacyResult.breakdown.lifestyleSub
+
+  // ── Base score = blood + sleep + oral (max 100) ───────────────────────────
+  const baseScore = Math.round(Math.min(100, bloodSub + sleepSub + oralSub))
+
+  // ── Cross-panel modifiers ─────────────────────────────────────────────────
+  const oralSnapForMods = oralRes.data?.oral_score_snapshot as Record<string, unknown> | undefined
+  const panelInputs: PanelInputs = {
+    hrv_ms:               sleepInputs?.hrv_ms ?? null,
+    sleep_efficiency_pct: sleepInputs?.sleepEfficiencyPct ?? null,
+    deep_sleep_pct:       sleepInputs?.deepSleepPct ?? null,
+    nights_available:     sleepInputs?.nightsAvailable ?? 0,
+    hsCRP:                bloodInputs?.hsCRP_mgL ?? null,
+    lpA:                  bloodInputs?.lpa_mgdL ?? null,
+    ldl:                  bloodInputs?.ldl_mgdL ?? null,
+    glucose:              bloodInputs?.glucose_mgdL ?? null,
+    apoB:                 bloodInputs?.apoB_mgdL ?? null,
+    periodontal_burden:   typeof oralSnapForMods?.periodontalBurden === "number" ? oralSnapForMods.periodontalBurden : null,
+    nitrate_reducer_pct:  typeof oralSnapForMods?.nitrateReducerPct === "number" ? ((oralSnapForMods.nitrateReducerPct as number) > 1 ? (oralSnapForMods.nitrateReducerPct as number) : (oralSnapForMods.nitrateReducerPct as number) * 100) : null,
+    shannon_diversity:    typeof oralSnapForMods?.shannonDiversity === "number" ? oralSnapForMods.shannonDiversity : null,
+    neuro_pathogen_pct:   typeof oralSnapForMods?.pGingivalisPct === "number" ? ((oralSnapForMods.pGingivalisPct as number) + ((oralSnapForMods.tDenticolaPct as number) ?? 0)) : null,
+    prevotella_pct:       typeof oralSnapForMods?.prevotellaPct === "number" ? oralSnapForMods.prevotellaPct : null,
+    fusobacterium_pct:    typeof oralSnapForMods?.fNucleatumPct === "number" ? oralSnapForMods.fNucleatumPct : null,
+    has_sleep:            sleepSub > 0,
+    has_blood:            bloodSub > 0,
+    has_oral:             oralSub > 0,
+    lifestyle_score:      lifestyleSub,
+  }
+
+  const { modifiers, total: modifierTotal } = calculateModifiers(panelInputs)
+  const finalScore = Math.max(0, Math.min(100, baseScore + modifierTotal))
+
+  // ── Lifestyle context ─────────────────────────────────────────────────────
+  const lifestyleContext = {
+    score: lifestyleSub,
+    ageRange: lifestyleRes.data?.age_range ?? null,
+    answers: lifestyleInputs ?? null,
+    note: "Lifestyle stored as context only — does not contribute to total score as of v2",
+  }
+
+  // ── Log ────────────────────────────────────────────────────────────────────
+  console.log(`[recalculate] user=${userId} blood=${bloodSub} sleep=${sleepSub} oral=${oralSub} base=${baseScore} modifiers=${modifierTotal} (${modifiers.map(m => m.id).join(", ")}) final=${finalScore}`)
+
+  // ── Save snapshot ─────────────────────────────────────────────────────────
   let insertError: unknown = null
-  try { await supabase.from("score_snapshots").insert({
-    user_id:                userId,
-    calculated_at:          new Date().toISOString(),
-    engine_version:         result.version,
-    score:                  storedScore,
-    category:               result.category,
-    sleep_sub:              sleepSub,
-    sleep_source:           storedSleepSource,
-    blood_sub:              result.breakdown.bloodSub,
-    oral_sub:               result.breakdown.oralSub,
-    lifestyle_sub:          result.breakdown.lifestyleSub,
-    interaction_pool:       result.breakdown.interactionPool,
-    lab_result_id:          labsRes.data?.id     ?? null,
-    oral_kit_id:            oralRes.data?.id     ?? null,
-    wearable_connection_id: null,
-    lifestyle_record_id:    lifestyleRes.data?.id ?? null,
-    lab_freshness:          result.labFreshness,
-    // v5.0 new fields
-    peaq_percent:           result.peaqPercent,
-    peaq_percent_label:     result.peaqPercentLabel,
-    lpa_flag:               result.lpaFlag,
-    hscrp_retest_flag:      result.hsCRPRetestFlag,
-    blood_recency_multiplier: result.bloodRecencyMultiplier,
-    interactions_fired:     result.interactionsFired,
-  }) } catch (e) { insertError = e }
+  try {
+    await supabase.from("score_snapshots").insert({
+      user_id:                userId,
+      calculated_at:          new Date().toISOString(),
+      engine_version:         "8.0",
+      score:                  finalScore,
+      category:               finalScore >= 85 ? "excellent" : finalScore >= 70 ? "good" : finalScore >= 55 ? "fair" : "needs_attention",
+      sleep_sub:              sleepSub,
+      sleep_source:           !sleepInputs ? "none" : sleepSource,
+      blood_sub:              bloodSub,
+      oral_sub:               oralSub,
+      lifestyle_sub:          0, // zeroed — stored in context
+      base_score:             baseScore,
+      modifier_total:         modifierTotal,
+      modifiers_applied:      modifiers,
+      lifestyle_context:      lifestyleContext,
+      interaction_pool:       legacyResult.breakdown.interactionPool,
+      lab_result_id:          labsRes.data?.id ?? null,
+      oral_kit_id:            oralRes.data?.id ?? null,
+      wearable_connection_id: null,
+      lifestyle_record_id:    lifestyleRes.data?.id ?? null,
+      lab_freshness:          legacyResult.labFreshness,
+      peaq_percent:           legacyResult.peaqPercent,
+      peaq_percent_label:     legacyResult.peaqPercentLabel,
+      lpa_flag:               legacyResult.lpaFlag,
+      hscrp_retest_flag:      legacyResult.hsCRPRetestFlag,
+      blood_recency_multiplier: legacyResult.bloodRecencyMultiplier,
+      interactions_fired:     legacyResult.interactionsFired,
+    })
+  } catch (e) { insertError = e }
   if (insertError) console.error("[recalculate] snapshot insert failed for user:", userId, insertError)
 
-  return result.score
+  return finalScore
 }
