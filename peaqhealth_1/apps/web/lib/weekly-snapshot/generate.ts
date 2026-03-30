@@ -112,8 +112,9 @@ export async function generateWeeklySnapshot(userId: string): Promise<Record<str
   const avgRemPct    = totalMinutes > 0 ? (remMinutes  / totalMinutes) * 100 : null
 
   // ── Recency ────────────────────────────────────────────────────────────────
-  const daysSinceBlood = bloodData?.created_at
-    ? Math.floor((Date.now() - new Date(bloodData.created_at as string).getTime()) / 86400000)
+  const bloodDateStr = (bloodData?.collection_date ?? bloodData?.created_at) as string | null
+  const daysSinceBlood = bloodDateStr
+    ? Math.floor((Date.now() - new Date(bloodDateStr).getTime()) / 86400000)
     : null
   const daysSinceOral = oralData
     ? Math.floor((Date.now() - new Date((oralData.results_date ?? oralData.ordered_at) as string).getTime()) / 86400000)
@@ -134,22 +135,42 @@ export async function generateWeeklySnapshot(userId: string): Promise<Record<str
 
   // ── Oral summary for prompt ────────────────────────────────────────────────
   const snap = oralData?.oral_score_snapshot as Record<string, unknown> | null
-  // oral_score_snapshot values may be stored as fractions (0–1) or already as percentages
-  // Normalise both to percentage for the prompt
-  const toPromptPct = (v: unknown) => {
+
+  // All species values in snapshot are fractions (0–1). Multiply by 100 once for display.
+  const fracToPct = (v: unknown): number | null => {
     const n = Number(v)
-    if (isNaN(n)) return null
+    if (isNaN(n) || n === 0) return null
+    // If value is > 1, it's already a percentage — pass through
     return n > 1 ? n : n * 100
   }
-  const nitrateForPrompt     = snap?.nitrateReducerPct != null ? toPromptPct(snap.nitrateReducerPct)    : null
-  const periodontalForPrompt = snap?.periodontalBurden != null ? toPromptPct(snap.periodontalBurden)    : null
+
+  const nitrateForPrompt = fracToPct(snap?.nitrateReducerPct)
+
+  // Compute periodontal burden from individual species (snapshot.periodontalBurden may be 0 due to parser bug)
+  const pGing = Number(snap?.pGingivalisPct ?? 0)
+  const fNucl = Number(snap?.fNucleatumPct ?? 0)
+  const prevot = Number(snap?.prevotellaPct ?? 0)
+  // T. denticola / T. forsythia live in pathogenicSpecies array
+  const pathogens = (snap?.pathogenicSpecies ?? []) as Array<{ species?: string; name?: string; abundance?: number }>
+  const tDent = pathogens.find(s => (s.species ?? s.name ?? "").toLowerCase().includes("denticola"))?.abundance ?? 0
+  const tFors = pathogens.find(s => (s.species ?? s.name ?? "").toLowerCase().includes("forsythia"))?.abundance ?? 0
+  const periodontalBurdenFrac = pGing + fNucl + prevot + tDent + tFors
+  const periodontalBurdenPct = periodontalBurdenFrac * 100
+
+  function burdenLevelWeekly(pct: number): string {
+    if (pct < 0.5)  return "within target"
+    if (pct < 2)    return "mildly elevated"
+    if (pct < 5)    return "elevated"
+    return "notably elevated"
+  }
+
+  console.log("[weekly-snapshot] blood days ago:", daysSinceBlood, "oral days ago:", daysSinceOral, "periodontalBurden%:", periodontalBurdenPct.toFixed(1))
+
   const oralLines = oralData ? [
     `Last tested: ${daysSinceOral} days ago`,
     snap?.shannonDiversity != null ? `Shannon diversity: ${Number(snap.shannonDiversity).toFixed(2)}` : null,
-    nitrateForPrompt     != null ? `Nitrate reducers: ${nitrateForPrompt.toFixed(1)}%` : null,
-    periodontalForPrompt != null
-      ? `Periodontal burden: ${periodontalForPrompt > 2 ? "elevated" : "within target"} (${periodontalForPrompt.toFixed(2)}%)`
-      : null,
+    nitrateForPrompt != null ? `Nitrate reducers: ${nitrateForPrompt.toFixed(1)}%` : null,
+    `Periodontal burden: ${burdenLevelWeekly(periodontalBurdenPct)}`,
   ].filter(Boolean).join("\n") : "No oral data on file"
 
   // ── Lifestyle summary ─────────────────────────────────────────────────────
@@ -198,7 +219,12 @@ BODY RULES:
 
 RETEST THRESHOLDS:
 - Blood: consider if >90 days since last test, or significant lifestyle change, or borderline markers
-- Oral: consider if >180 days since last kit, or elevated periodontal burden, or low nitrate reducers with confirmed mouthwash use`
+- Oral: consider if >180 days since last kit, or elevated periodontal burden, or low nitrate reducers with confirmed mouthwash use
+
+BANNED IN OUTPUT:
+- Never cite a raw percentage for periodontal burden or OSA-associated taxa
+- Use qualitative descriptors only: "within target", "mildly elevated", "elevated", "notably elevated"
+- Example: "your periodontal burden is notably elevated" NOT "your periodontal burden is 384.5%"`
 
   const userPrompt = `Generate a weekly snapshot for week of ${weekStart}.
 
