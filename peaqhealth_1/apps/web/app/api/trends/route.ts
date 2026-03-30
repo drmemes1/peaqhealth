@@ -127,13 +127,20 @@ export async function GET() {
     provider: r.source ?? null,
   }))
 
-  // Streak — consecutive days with sleep data
+  // Streak — consecutive days with sleep data, anchored to most recent night
+  // (not today) so users with stale data don't always show 0
   const sleepDates = new Set(rawSleep.map(n => n.date))
+  const sortedSleepDates = [...sleepDates].sort().reverse()
   let streak = 0
-  for (let i = 0; i < 60; i++) {
-    const d = new Date(Date.now() - i * 86400000).toISOString().split("T")[0]
-    if (sleepDates.has(d)) streak++
-    else break
+  if (sortedSleepDates.length > 0) {
+    const mostRecent = new Date(sortedSleepDates[0])
+    for (let i = 0; i < sortedSleepDates.length; i++) {
+      const expected = new Date(mostRecent)
+      expected.setDate(mostRecent.getDate() - i)
+      const expectedStr = expected.toISOString().split("T")[0]
+      if (sleepDates.has(expectedStr)) streak++
+      else break
+    }
   }
 
   // 7-day avg HRV
@@ -185,6 +192,10 @@ export async function GET() {
 
   console.log(`[trends-api] displaying: score=${current?.total} sleep=${current?.sleep} blood=${current?.blood} oral=${current?.oral} date=${current?.date}`)
 
+  const daysSinceLastSleep = sortedSleepDates[0]
+    ? Math.floor((Date.now() - new Date(sortedSleepDates[0]).getTime()) / 86400000)
+    : null
+
   return Response.json({
     current,
     previous,
@@ -198,6 +209,7 @@ export async function GET() {
     lastLabDate,
     lastOralDate,
     daysSinceOral,
+    daysSinceLastSleep,
     lastCheckin: lastCheckinRow,
     checkinHistory: checkinHistoryRows ?? [],
     shouldPromptCheckin,

@@ -2,6 +2,14 @@
   "framework": "nextjs",
   "crons": [
     {
+      "path": "/api/cron/morning-sync",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/weekly-snapshots",
+      "schedule": "0 7 * * 1"
+    },
+    {
       "path": "/api/cron/lock-labs",
       "schedule": "0 * * * *"
     }

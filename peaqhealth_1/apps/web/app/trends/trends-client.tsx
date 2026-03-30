@@ -85,6 +85,7 @@ interface TrendsData {
   hrvTrendPct: number | null
   daysSinceLastLab: number | null
   daysSinceOral: number | null
+  daysSinceLastSleep: number | null
   lastLabDate: string | null
   lastOralDate: string | null
   lastCheckin: CheckinRecord | null
@@ -668,53 +669,66 @@ export function TrendsClient() {
           <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
 
             {/* ─── LAST NIGHT ──────────────────────────────── */}
-            {hasSleep && (
-              <CollapsibleSection
-                title="Last night"
-                defaultOpen={!!lastNightRecent}
-                badge={lastNight ? fmtDate(lastNight.date) : undefined}
-              >
-                {lastNightRecent && lastNight ? (
-                  <div style={{ ...card, borderLeft: `3px solid ${C.sleep}`, padding: "16px 20px", marginBottom: 8 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                      <div>
-                        <p style={{ fontFamily: body, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-40)", margin: "0 0 8px" }}>
-                          {data.wearableProvider ? data.wearableProvider.toUpperCase() : "WEARABLE"}
-                        </p>
-                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
-                          {[
-                            { label: `Deep ${fmt(lastNight.deepPct, 1)}%`, ok: (lastNight.deepPct ?? 0) >= 17 },
-                            { label: `REM ${fmt(lastNight.remPct, 1)}%`, ok: (lastNight.remPct ?? 0) >= 18 },
-                            { label: `Eff ${fmt(lastNight.efficiency, 1)}%`, ok: (lastNight.efficiency ?? 0) >= 85 },
-                            { label: `HRV ${fmt(lastNight.hrv, 1)} ms`, ok: (lastNight.hrv ?? 0) >= 50 },
-                          ].map(({ label, ok }) => (
-                            <span key={label} style={{
-                              fontFamily: body, fontSize: 11, padding: "3px 10px", borderRadius: 12,
-                              background: ok ? `${C.sleep}12` : "var(--ink-04)",
-                              color: ok ? C.sleep : "var(--ink-40)",
-                            }}>
-                              {label}
-                            </span>
-                          ))}
+            {hasSleep && (() => {
+              const daysSince = data!.daysSinceLastSleep ?? null
+              const sectionTitle = daysSince === 0 ? "Last night"
+                : daysSince === 1 ? "Last night · yesterday"
+                : daysSince !== null ? `Last recorded · ${daysSince} days ago`
+                : "Last night"
+              const providerName = data!.wearableProvider === "oura" ? "Oura" : "WHOOP"
+              return (
+                <CollapsibleSection
+                  title={sectionTitle}
+                  defaultOpen={!!lastNightRecent}
+                  badge={lastNight ? fmtDate(lastNight.date) : undefined}
+                >
+                  {lastNightRecent && lastNight ? (
+                    <div style={{ ...card, borderLeft: `3px solid ${C.sleep}`, padding: "16px 20px", marginBottom: 8 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                        <div>
+                          <p style={{ fontFamily: body, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-40)", margin: "0 0 8px" }}>
+                            {data!.wearableProvider ? data!.wearableProvider.toUpperCase() : "WEARABLE"}
+                          </p>
+                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
+                            {[
+                              { label: `Deep ${fmt(lastNight.deepPct, 1)}%`, ok: (lastNight.deepPct ?? 0) >= 17 },
+                              { label: `REM ${fmt(lastNight.remPct, 1)}%`, ok: (lastNight.remPct ?? 0) >= 18 },
+                              { label: `Eff ${fmt(lastNight.efficiency, 1)}%`, ok: (lastNight.efficiency ?? 0) >= 85 },
+                              { label: `HRV ${fmt(lastNight.hrv, 1)} ms`, ok: (lastNight.hrv ?? 0) >= 50 },
+                            ].map(({ label, ok }) => (
+                              <span key={label} style={{
+                                fontFamily: body, fontSize: 11, padding: "3px 10px", borderRadius: 12,
+                                background: ok ? `${C.sleep}12` : "var(--ink-04)",
+                                color: ok ? C.sleep : "var(--ink-40)",
+                              }}>
+                                {label}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        <div style={{ textAlign: "right", flexShrink: 0 }}>
+                          <p style={{ fontFamily: serif, fontSize: 28, fontWeight: 300, color: C.sleep, margin: 0, lineHeight: 1 }}>
+                            {fmt(data!.current?.sleep, 0)}
+                          </p>
+                          <p style={{ fontFamily: body, fontSize: 9, color: "var(--ink-30)", margin: "4px 0 0", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                            Sleep /30
+                          </p>
                         </div>
                       </div>
-                      <div style={{ textAlign: "right", flexShrink: 0 }}>
-                        <p style={{ fontFamily: serif, fontSize: 28, fontWeight: 300, color: C.sleep, margin: 0, lineHeight: 1 }}>
-                          {fmt(data.current?.sleep, 0)}
-                        </p>
-                        <p style={{ fontFamily: body, fontSize: 9, color: "var(--ink-30)", margin: "4px 0 0", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                          Sleep /30
-                        </p>
-                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <p style={{ fontFamily: body, fontSize: 13, color: "var(--ink-40)", padding: "8px 0 16px", lineHeight: 1.7 }}>
-                    No data from last night yet — check back after your next sync.
-                  </p>
-                )}
-              </CollapsibleSection>
-            )}
+                  ) : (
+                    <p style={{ fontFamily: body, fontSize: 13, color: "var(--ink-40)", padding: "8px 0 8px", lineHeight: 1.7 }}>
+                      No data from last night yet — check back after your next sync.
+                    </p>
+                  )}
+                  {daysSince !== null && daysSince > 1 && lastNight && (
+                    <p style={{ fontFamily: body, fontSize: 12, color: "var(--ink-40)", margin: "0 0 12px", fontStyle: "italic" }}>
+                      No new data since {new Date(lastNight.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}. Open your {providerName} app to sync.
+                    </p>
+                  )}
+                </CollapsibleSection>
+              )
+            })()}
 
             {/* ─── SLEEP STREAK ────────────────────────────── */}
             {hasSleep && (
