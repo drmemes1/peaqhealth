@@ -187,13 +187,28 @@ function flag(good: boolean, ok: boolean): Flag {
   return good ? "optimal" : ok ? "watch" : "attention"
 }
 
+// ─── Descriptor helpers for emerging-research dimensions ────────────────────
+
+function burdenDescriptor(
+  val: number | null,
+  thresholds: [number, number, number],
+): { label: string; status: "optimal" | "watch" | "attention" } {
+  if (val === null) return { label: "Not detected", status: "optimal" }
+  const [low, mid, high] = thresholds
+  if (val < low)  return { label: "Within target", status: "optimal" }
+  if (val < mid)  return { label: "Worth watching", status: "watch" }
+  if (val < high) return { label: "Elevated", status: "attention" }
+  return { label: "Notably elevated", status: "attention" }
+}
+
 // ─── Wellness-framed narrative (no disease language) ─────────────────────────
 
 function generateOralNarrative(periodontalBurden: number, nitrateReducerPct: number, shannonDiversity: number): string {
   const issues: string[] = []
   const positives: string[] = []
 
-  if (periodontalBurden > 0.5)   issues.push("elevated periodontal bacteria")
+  // periodontalBurden and nitrateReducerPct are in OTU scale (percentage for mock data)
+  if (periodontalBurden > 2)     issues.push("elevated periodontal bacteria")
   if (nitrateReducerPct < 10)    issues.push("low nitrate-reducing bacteria")
   if (shannonDiversity < 2.5)    issues.push("reduced microbiome diversity")
   if (nitrateReducerPct >= 15)   positives.push("good nitrate-reducing bacteria")
@@ -313,7 +328,7 @@ export function OralPanelClient({ oral, snapshot }: Props) {
           <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
             <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 36, fontWeight: 300, color: "var(--ink)", margin: 0 }}>Oral</h1>
             {oralSub !== undefined && (
-              <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink-30)" }}>{oralSub}/27 pts</span>
+              <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink-30)" }}>{oralSub}/30 pts</span>
             )}
           </div>
           <Link
@@ -379,132 +394,73 @@ export function OralPanelClient({ oral, snapshot }: Props) {
             status={periodontalPct < 0.5 ? "optimal" : periodontalPct < 1.5 ? "watch" : "attention"}
             statusLabel={periodontalPct < 0.5 ? "Optimal" : periodontalPct < 1.5 ? "Watch" : "Elevated"}
           />
-          <MetricCard
-            label="OSA-Associated Taxa"
-            sub="Prevotella · Fusobacterium — target <1%"
-            value={osaPct.toFixed(1)}
-            unit="% reads"
-            color="#B8860B"
-            status={osaPct < 1 ? "optimal" : osaPct < 3 ? "watch" : "attention"}
-            statusLabel={osaPct < 1 ? "Optimal" : osaPct < 3 ? "Watch" : "Elevated"}
-          />
+          {(() => {
+            // osaPct is in OTU scale (percentage for mock data)
+            // Use descriptor thresholds in percentage scale
+            const osaDesc = osaPct < 1 ? "Within target" : osaPct < 3 ? "Worth watching" : osaPct < 5 ? "Elevated" : "Notably elevated"
+            const osaSt = osaPct < 1 ? "optimal" as const : osaPct < 3 ? "watch" as const : "attention" as const
+            return (
+              <MetricCard
+                label="OSA-Associated Taxa"
+                sub="Prevotella · Fusobacterium"
+                value={osaDesc}
+                unit=""
+                color="#B8860B"
+                status={osaSt}
+                statusLabel={osaDesc}
+              />
+            )
+          })()}
 
-          {/* D5 — Neurological balance */}
-          {neuroSignalPct !== null ? (
-            <div style={{ flex: "1 1 calc(50% - 6px)", border: "0.5px solid var(--ink-12)", padding: "12px 14px", minWidth: 0 }}>
-              <p style={{ margin: "0 0 2px", fontFamily: "var(--font-body)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em", color: "#2D6A4F" }}>
-                Neurological balance
-              </p>
-              <p style={{ margin: "0 0 4px", fontFamily: "var(--font-body)", fontSize: 10, color: "var(--ink-30)" }}>
-                P. gingivalis + T. denticola — target combined &lt;0.1%
-              </p>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-                <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 300, color: "var(--ink)" }}>{neuroSignalPct.toFixed(2)}</span>
-                <span style={{ fontFamily: "var(--font-body)", fontSize: 10, color: "var(--ink-30)" }}>% combined</span>
-              </div>
-              <span style={{
-                fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "2px 6px",
-                background: neuroSignalPct < 0.1 ? "#EAF3DE" : neuroSignalPct < 0.5 ? "#FEF3C7" : "#FEE2E2",
-                color: neuroSignalPct < 0.1 ? "#2D6A4F" : neuroSignalPct < 0.5 ? "#92400E" : "#991B1B",
-              }}>
-                {neuroSignalPct < 0.1 ? "Optimal" : neuroSignalPct < 0.5 ? "Watch" : "Attention"}
-              </span>
-              <p style={{ margin: "8px 0 0", fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", fontStyle: "italic" }}>
-                Based on emerging research — see Science page for details.
-              </p>
-            </div>
-          ) : (
-            <div style={{ flex: "1 1 calc(50% - 6px)", border: "0.5px solid var(--ink-12)", padding: "12px 14px", minWidth: 0 }}>
-              <p style={{ margin: "0 0 2px", fontFamily: "var(--font-body)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em", color: "#2D6A4F" }}>
-                Neurological balance
-              </p>
-              <p style={{ margin: "0 0 4px", fontFamily: "var(--font-body)", fontSize: 10, color: "var(--ink-30)" }}>
-                Oral bacteria linked to brain health pathways
-              </p>
-              <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink-30)" }}>Not detected</p>
-              <p style={{ margin: "8px 0 0", fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", fontStyle: "italic" }}>
-                Based on emerging research — see Science page for details.
-              </p>
-            </div>
-          )}
+          {/* D5 — Neurological balance (descriptor only) */}
+          {(() => {
+            const d = burdenDescriptor(neuroSignalRaw, [0.001, 0.005, 0.02])
+            const statusBg = d.status === "optimal" ? "#EAF3DE" : d.status === "watch" ? "#FEF3C7" : "#FEE2E2"
+            const statusTxt = d.status === "optimal" ? "#2D6A4F" : d.status === "watch" ? "#92400E" : "#991B1B"
+            return (
+              <MetricCard
+                label="Neurological balance"
+                sub="Oral bacteria linked to brain health pathways"
+                value={d.label}
+                unit=""
+                color="#2D6A4F"
+                status={d.status}
+                statusLabel={d.label}
+              />
+            )
+          })()}
 
-          {/* D6 — Metabolic balance */}
-          {metabolicSignalPct !== null ? (
-            <div style={{ flex: "1 1 calc(50% - 6px)", border: "0.5px solid var(--ink-12)", padding: "12px 14px", minWidth: 0 }}>
-              <p style={{ margin: "0 0 2px", fontFamily: "var(--font-body)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em", color: "#2D6A4F" }}>
-                Metabolic balance
-              </p>
-              <p style={{ margin: "0 0 4px", fontFamily: "var(--font-body)", fontSize: 10, color: "var(--ink-30)" }}>
-                Prevotella group — target &lt;3%
-              </p>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-                <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 300, color: "var(--ink)" }}>{metabolicSignalPct.toFixed(2)}</span>
-                <span style={{ fontFamily: "var(--font-body)", fontSize: 10, color: "var(--ink-30)" }}>% reads</span>
-              </div>
-              <span style={{
-                fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "2px 6px",
-                background: metabolicSignalPct < 1 ? "#EAF3DE" : metabolicSignalPct < 3 ? "#FEF3C7" : "#FEE2E2",
-                color: metabolicSignalPct < 1 ? "#2D6A4F" : metabolicSignalPct < 3 ? "#92400E" : "#991B1B",
-              }}>
-                {metabolicSignalPct < 1 ? "Optimal" : metabolicSignalPct < 3 ? "Watch" : "Attention"}
-              </span>
-              <p style={{ margin: "8px 0 0", fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", fontStyle: "italic" }}>
-                Based on emerging research — see Science page for details.
-              </p>
-            </div>
-          ) : (
-            <div style={{ flex: "1 1 calc(50% - 6px)", border: "0.5px solid var(--ink-12)", padding: "12px 14px", minWidth: 0 }}>
-              <p style={{ margin: "0 0 2px", fontFamily: "var(--font-body)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em", color: "#2D6A4F" }}>
-                Metabolic balance
-              </p>
-              <p style={{ margin: "0 0 4px", fontFamily: "var(--font-body)", fontSize: 10, color: "var(--ink-30)" }}>
-                Oral bacteria associated with metabolic pathways
-              </p>
-              <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink-30)" }}>Not detected</p>
-              <p style={{ margin: "8px 0 0", fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", fontStyle: "italic" }}>
-                Based on emerging research — see Science page for details.
-              </p>
-            </div>
-          )}
+          {/* D6 — Metabolic balance (descriptor only) */}
+          {(() => {
+            const d = burdenDescriptor(metabolicSignalRaw, [0.02, 0.05, 0.10])
+            return (
+              <MetricCard
+                label="Metabolic balance"
+                sub="Oral bacteria associated with metabolic pathways"
+                value={d.label}
+                unit=""
+                color="#2D6A4F"
+                status={d.status}
+                statusLabel={d.label}
+              />
+            )
+          })()}
 
-          {/* D7 — Cellular environment */}
-          {proliferativeSignalPct !== null ? (
-            <div style={{ flex: "1 1 calc(50% - 6px)", border: "0.5px solid var(--ink-12)", padding: "12px 14px", minWidth: 0 }}>
-              <p style={{ margin: "0 0 2px", fontFamily: "var(--font-body)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em", color: "#2D6A4F" }}>
-                Cellular environment
-              </p>
-              <p style={{ margin: "0 0 4px", fontFamily: "var(--font-body)", fontSize: 10, color: "var(--ink-30)" }}>
-                Fusobacterium group — target &lt;0.5%
-              </p>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-                <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 300, color: "var(--ink)" }}>{proliferativeSignalPct.toFixed(2)}</span>
-                <span style={{ fontFamily: "var(--font-body)", fontSize: 10, color: "var(--ink-30)" }}>% reads</span>
-              </div>
-              <span style={{
-                fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "2px 6px",
-                background: proliferativeSignalPct < 0.5 ? "#EAF3DE" : proliferativeSignalPct < 2 ? "#FEF3C7" : "#FEE2E2",
-                color: proliferativeSignalPct < 0.5 ? "#2D6A4F" : proliferativeSignalPct < 2 ? "#92400E" : "#991B1B",
-              }}>
-                {proliferativeSignalPct < 0.5 ? "Optimal" : proliferativeSignalPct < 2 ? "Watch" : "Attention"}
-              </span>
-              <p style={{ margin: "8px 0 0", fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", fontStyle: "italic" }}>
-                Based on emerging research — see Science page for details.
-              </p>
-            </div>
-          ) : (
-            <div style={{ flex: "1 1 calc(50% - 6px)", border: "0.5px solid var(--ink-12)", padding: "12px 14px", minWidth: 0 }}>
-              <p style={{ margin: "0 0 2px", fontFamily: "var(--font-body)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em", color: "#2D6A4F" }}>
-                Cellular environment
-              </p>
-              <p style={{ margin: "0 0 4px", fontFamily: "var(--font-body)", fontSize: 10, color: "var(--ink-30)" }}>
-                Oral bacteria associated with cellular health
-              </p>
-              <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink-30)" }}>Not detected</p>
-              <p style={{ margin: "8px 0 0", fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", fontStyle: "italic" }}>
-                Based on emerging research — see Science page for details.
-              </p>
-            </div>
-          )}
+          {/* D7 — Cellular environment (descriptor only) */}
+          {(() => {
+            const d = burdenDescriptor(proliferativeSignalRaw, [0.005, 0.02, 0.05])
+            return (
+              <MetricCard
+                label="Cellular environment"
+                sub="Oral bacteria associated with cellular health"
+                value={d.label}
+                unit=""
+                color="#2D6A4F"
+                status={d.status}
+                statusLabel={d.label}
+              />
+            )
+          })()}
         </div>
 
         {/* Secondary insights */}
