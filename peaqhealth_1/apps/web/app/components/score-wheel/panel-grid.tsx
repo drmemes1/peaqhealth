@@ -160,10 +160,10 @@ export function PanelGrid({
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
         {isSyncing
           ? <SyncingCard provider={wearableProvider} />
-          : <PanelCard label="Sleep" color="var(--sleep-c)" trackColor="var(--sleep-bg)" score={displaySleep} max={27} active={sleepConnected} locked={!sleepConnected} desc={sleepDesc} mounted={mounted} highlighted={hoveredRing === "sleep"} />
+          : <PanelCard label="Sleep" color="var(--sleep-c)" trackColor="var(--sleep-bg)" score={Math.round(displaySleep)} max={30} active={sleepConnected} locked={!sleepConnected} desc={sleepDesc} mounted={mounted} highlighted={hoveredRing === "sleep"} />
         }
-        <PanelCard label="Blood" color="var(--blood-c)" trackColor="var(--blood-bg)" score={displayBlood} max={33} active={hasBlood} locked={bloodLocked} desc={bloodDesc} staleBadge={staleBadge} mounted={mounted} highlighted={hoveredRing === "blood"} />
-        <PanelCard label="Oral Microbiome" color="var(--oral-c)" trackColor="var(--oral-bg)" score={displayOral} max={27} active={oralActive} locked={!oralActive} desc={oralDesc} mounted={mounted} highlighted={hoveredRing === "oral"} />
+        <PanelCard label="Blood" color="var(--blood-c)" trackColor="var(--blood-bg)" score={Math.round(displayBlood)} max={40} active={hasBlood} locked={bloodLocked} desc={bloodDesc} staleBadge={staleBadge} mounted={mounted} highlighted={hoveredRing === "blood"} />
+        <PanelCard label="Oral Microbiome" color="var(--oral-c)" trackColor="var(--oral-bg)" score={Math.round(displayOral)} max={30} active={oralActive} locked={!oralActive} desc={oralDesc} mounted={mounted} highlighted={hoveredRing === "oral"} />
       </div>
     </div>
   )

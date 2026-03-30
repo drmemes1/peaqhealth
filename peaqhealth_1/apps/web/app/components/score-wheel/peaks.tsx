@@ -13,9 +13,9 @@ const DURATION = 700        // ms each peak takes to rise
 const STAGGER  = 130        // ms between peaks
 
 const PANELS = [
-  { key: "sleep",     label: "SLEEP",     max: 27, color: "#4A7FB5" },
-  { key: "blood",     label: "BLOOD",     max: 33, color: "#C0392B" },
-  { key: "oral",      label: "ORAL",      max: 27, color: "#2D6A4F" },
+  { key: "sleep",     label: "SLEEP",     max: 30, color: "#4A7FB5" },
+  { key: "blood",     label: "BLOOD",     max: 40, color: "#C0392B" },
+  { key: "oral",      label: "ORAL",      max: 30, color: "#2D6A4F" },
 ] as const
 
 function easeOutCubic(t: number): number {
@@ -129,7 +129,7 @@ export function PeaksVisualization({
         const apexY      = apexYs[i]
         const displayVal = isPending || score <= 0
           ? "—"
-          : Number.isInteger(score) ? String(score) : score.toFixed(1)
+          : String(Math.round(score))
 
         return (
           <g key={p.key}>

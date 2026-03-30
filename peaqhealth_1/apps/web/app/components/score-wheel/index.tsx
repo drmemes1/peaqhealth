@@ -1357,13 +1357,14 @@ export function ScoreWheel({
             <button
               onClick={() => setShowModifiers(o => !o)}
               style={{
-                fontFamily: "var(--font-body)", fontSize: 11,
-                color: (modifier_total ?? 0) >= 0 ? "#2D6A4F" : "#C0392B",
+                fontFamily: "var(--font-body)", fontSize: 12,
+                color: (modifier_total ?? 0) < 0 ? "#C0392B" : "#2D6A4F",
                 background: "none", border: "none", cursor: "pointer",
-                letterSpacing: "0.04em",
+                letterSpacing: "0.05em", fontWeight: 500,
+                opacity: 1,
               }}
             >
-              {showModifiers ? "−" : "+"} {(modifier_total ?? 0) > 0 ? `+${modifier_total}` : modifier_total} cross-panel
+              {(modifier_total ?? 0) > 0 ? `+${modifier_total}` : modifier_total} cross-panel {showModifiers ? "▲" : "▼"}
             </button>
             {showModifiers && (
               <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
@@ -1491,8 +1492,8 @@ export function ScoreWheel({
       <CollapsiblePanel
         ref={sleepPanelRef}
         title="Sleep"
-        score={Math.round(breakdown.sleepSub * 10) / 10}
-        maxScore={27}
+        score={Math.round(breakdown.sleepSub)}
+        maxScore={30}
         subtitle={sleepData ? (() => {
           const n = sleepData.nightsAvg
           const dev = sleepData.device.toUpperCase()
@@ -1551,8 +1552,8 @@ export function ScoreWheel({
       <CollapsiblePanel
         ref={bloodPanelRef}
         title="Blood"
-        score={breakdown.bloodSub}
-        maxScore={33}
+        score={Math.round(breakdown.bloodSub)}
+        maxScore={40}
         subtitle={bloodData ? `${bloodData.labName.toUpperCase()} · ${new Date(bloodData.collectionDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }).toUpperCase()}` : "NO DATA"}
         statusDots={bf ? [bf.hsCRP, bf.apoB, bf.lpa, bf.tg] : undefined}
         defaultOpen={hasBlood}
@@ -1746,8 +1747,8 @@ export function ScoreWheel({
       <CollapsiblePanel
         ref={oralPanelRef}
         title="Oral Microbiome"
-        score={breakdown.oralSub}
-        maxScore={27}
+        score={Math.round(breakdown.oralSub)}
+        maxScore={30}
         subtitle={oralData ? `ZYMO RESEARCH · ${new Date(oralData.reportDate).toLocaleDateString("en-US", { month: "short", year: "numeric" }).toUpperCase()}` : (oralOrdered ? "PROCESSING" : "")}
         statusDots={of_ ? [of_.shannon, of_.nitrate, of_.periodont, of_.osa] : undefined}
         defaultOpen={oralActive}
