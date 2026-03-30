@@ -18,7 +18,6 @@ export async function POST(req: Request) {
       sleep_priority:         body.sleep_priority         ?? null,
       smoking:                body.smoking                ?? null,
       energy_level:           body.energy_level           ?? null,
-      blood_pressure_feeling: body.blood_pressure_feeling ?? null,
       supplements:            body.supplements            ?? [],
     })
 

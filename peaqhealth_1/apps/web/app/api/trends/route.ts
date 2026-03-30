@@ -36,8 +36,8 @@ export async function GET() {
 
     // Event markers
     Promise.all([
-      supabase.from("lab_results").select("created_at").eq("user_id", userId).order("created_at"),
-      supabase.from("oral_kit_orders").select("results_date").eq("user_id", userId).not("results_date", "is", null),
+      supabase.from("lab_results").select("uploaded_at").eq("user_id", userId).order("uploaded_at"),
+      supabase.from("oral_kit_orders").select("results_date").eq("user_id", userId).not("results_date", "is", null).order("results_date", { ascending: false }),
       supabase.from("wearable_connections_v2").select("created_at, provider").eq("user_id", userId),
     ]),
 
@@ -153,21 +153,24 @@ export async function GET() {
   // ─── Events ─────────────────────────────────────────────────────────────────
   const [labEvents, oralEvents, wearableEvents] = eventResults
   const events = [
-    ...(labEvents.data ?? []).map(e => ({ type: "blood" as const, date: e.created_at, label: "Lab upload" })),
+    ...(labEvents.data ?? []).map(e => ({ type: "blood" as const, date: e.uploaded_at, label: "Lab upload" })),
     ...(oralEvents.data ?? []).map(e => ({ type: "oral" as const, date: e.results_date, label: "Oral results" })),
     ...(wearableEvents.data ?? []).map(e => ({ type: "wearable" as const, date: e.created_at, label: `${e.provider} connected` })),
   ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
   // ─── Lab recency ────────────────────────────────────────────────────────────
   const allLabs = labEvents.data ?? []
-  const lastLabDate = allLabs.length > 0 ? allLabs[allLabs.length - 1].created_at : null
+  const lastLabDate = allLabs.length > 0 ? allLabs[allLabs.length - 1].uploaded_at : null
   const daysSinceLastLab = lastLabDate
     ? Math.floor((Date.now() - new Date(lastLabDate).getTime()) / 86400000)
     : null
 
   // ─── Oral recency ──────────────────────────────────────────────────────────
   const allOral = oralEvents.data ?? []
-  const lastOralDate = allOral.length > 0 ? allOral[allOral.length - 1].results_date : null
+  const lastOralDate = allOral.length > 0 ? allOral[0].results_date : null
+  const daysSinceOral = lastOralDate
+    ? Math.floor((Date.now() - new Date(lastOralDate).getTime()) / 86400000)
+    : null
 
   // ─── Check-in ───────────────────────────────────────────────────────────────
   const daysSinceCheckin = lastCheckinRow
@@ -192,6 +195,7 @@ export async function GET() {
     daysSinceLastLab,
     lastLabDate,
     lastOralDate,
+    daysSinceOral,
     lastCheckin: lastCheckinRow,
     checkinHistory: checkinHistoryRows ?? [],
     shouldPromptCheckin,

@@ -71,7 +71,6 @@ interface CheckinRecord {
   alcohol_frequency: string | null
   sleep_priority: string | null
   energy_level: string | null
-  blood_pressure_feeling: string | null
   supplements: string[] | null
 }
 
@@ -85,6 +84,7 @@ interface TrendsData {
   avgHrv: number | null
   hrvTrendPct: number | null
   daysSinceLastLab: number | null
+  daysSinceOral: number | null
   lastLabDate: string | null
   lastOralDate: string | null
   lastCheckin: CheckinRecord | null
@@ -130,19 +130,48 @@ function fmtMonthYear(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
 }
 
-function delta(current: number, previous: number | null | undefined, isFirst: boolean): { text: string; color: string } {
-  if (isFirst || previous == null) return { text: "first result", color: "var(--ink-30)" }
-  const diff = Math.round(current - previous)
-  if (diff === 0) return { text: "— unchanged", color: "var(--ink-30)" }
-  if (diff > 0) return { text: `+${diff}`, color: "#2D6A4F" }
-  return { text: `${diff}`, color: "#C0392B" }
+
+function estimateNextSnapshotDate(daysSinceBlood: number | null, daysSinceOral: number | null): string | null {
+  if (daysSinceBlood === null && daysSinceOral === null) return null
+  const bloodDaysLeft = daysSinceBlood !== null ? Math.max(0, 90 - daysSinceBlood) : Infinity
+  const oralDaysLeft  = daysSinceOral  !== null ? Math.max(0, 150 - daysSinceOral) : Infinity
+  const daysUntil = Math.min(bloodDaysLeft, oralDaysLeft)
+  if (daysUntil <= 0) return "Overdue"
+  const d = new Date(Date.now() + daysUntil * 86400000)
+  return d.toLocaleDateString("en-US", { month: "short", year: "numeric" })
 }
 
-function estimateNext(lastLabDate: string | null) {
-  if (!lastLabDate) return "—"
-  const d = new Date(lastLabDate)
-  d.setMonth(d.getMonth() + 3)
-  return d.toLocaleDateString("en-US", { month: "short", year: "numeric" })
+function getRetestRecommendation(daysSinceBlood: number | null, daysSinceOral: number | null): string {
+  const noBlood = daysSinceBlood === null
+  const noOral  = daysSinceOral  === null
+
+  if (noBlood && noOral) {
+    return "Upload your blood panel and order an oral kit to unlock your full Peaq score. For the most meaningful snapshot, consider doing both around the same time — blood and oral data taken together paint a much clearer picture of your cardiovascular and systemic health."
+  }
+  if (!noBlood && noOral) {
+    return "You have blood data but no oral microbiome results yet. Order an oral kit — when tested around the same time as your blood panel, the two together reveal cross-panel signals (like how your oral bacteria may be influencing your Lp(a) and hsCRP) that neither panel can show alone."
+  }
+  if (noBlood && !noOral) {
+    return "You have oral microbiome data but no blood panel yet. Uploading your labs will complete your baseline — blood and oral tested close together is when the most interesting cross-panel patterns emerge."
+  }
+
+  const bloodDue = (daysSinceBlood ?? 0) >= 90
+  const oralDue  = (daysSinceOral  ?? 0) >= 150
+
+  if (bloodDue && oralDue) {
+    return `Your blood panel is ${daysSinceBlood} days old and your oral kit is ${daysSinceOral} days old. Consider retesting both around the same time — a simultaneous blood and oral snapshot gives you the strongest cross-panel comparison to your baseline.`
+  }
+  if (bloodDue && !oralDue) {
+    return `Your blood panel is ${daysSinceBlood} days old — consider uploading fresh labs. When you do, timing it close to your next oral kit (due in ~${Math.max(0, 150 - (daysSinceOral ?? 0))} days) will give you the most meaningful snapshot comparison.`
+  }
+  if (!bloodDue && oralDue) {
+    return `Your oral kit is ${daysSinceOral} days old — consider ordering a new one. Timing it close to your next blood upload will give you the strongest cross-panel picture.`
+  }
+
+  const nextBloodDays = Math.max(0, 90  - (daysSinceBlood ?? 0))
+  const nextOralDays  = Math.max(0, 150 - (daysSinceOral  ?? 0))
+  const nextDays = Math.min(nextBloodDays, nextOralDays)
+  return `Your panels are up to date. Next recommended snapshot in ~${nextDays} days. For best results, consider retesting blood and oral within 2 weeks of each other — simultaneous snapshots reveal the most meaningful cross-panel patterns.`
 }
 
 // ─── Tooltips ───────────────────────────────────────────────────────────────────
@@ -162,7 +191,6 @@ function ScoreTooltip({ active, payload }: { active?: boolean; payload?: Array<{
         { k: "sleep", l: "Sleep", c: C.sleep },
         { k: "blood", l: "Blood", c: C.blood },
         { k: "oral", l: "Oral", c: C.oral },
-        { k: "lifestyle", l: "Lifestyle", c: C.lifestyle },
       ].map(({ k, l, c }) => (
         <p key={k} style={{ margin: "2px 0", color: "var(--ink-60)" }}>
           <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: c, marginRight: 6, verticalAlign: "middle" }} />
@@ -475,14 +503,13 @@ export function TrendsClient() {
   const [checkinSubmitting, setCheckinSubmitting] = useState(false)
   const [checkinResult, setCheckinResult] = useState<{ shouldUpdateQuestionnaire: boolean; changeDirection: string; message: string } | null>(null)
   const [checkin, setCheckin] = useState({
-    exercise_frequency:     null as string | null,
-    diet_quality:           null as string | null,
-    stress_level:           null as string | null,
-    alcohol_frequency:      null as string | null,
-    sleep_priority:         null as string | null,
-    energy_level:           null as string | null,
-    blood_pressure_feeling: null as string | null,
-    supplements:            [] as string[],
+    exercise_frequency: null as string | null,
+    diet_quality:       null as string | null,
+    stress_level:       null as string | null,
+    alcohol_frequency:  null as string | null,
+    sleep_priority:     null as string | null,
+    energy_level:       null as string | null,
+    supplements:        [] as string[],
   })
 
   useEffect(() => {
@@ -566,8 +593,13 @@ export function TrendsClient() {
     ? [...data!.sleepNights].map(n => ({ ...n, label: fmtDate(n.date) }))
     : []
 
-  const hasSpO2    = sleepChartData.some(n => n.spo2 != null)
-  const hasRHR     = sleepChartData.some(n => n.restingHeartRate != null)
+  const hasSpO2 = sleepChartData.some(n => n.spo2 != null)
+  const hasRHR  = sleepChartData.some(n => n.restingHeartRate != null)
+
+  // Next full snapshot
+  const daysSinceBlood   = data?.daysSinceLastLab ?? null
+  const daysSinceOral    = data?.daysSinceOral    ?? null
+  const nextSnapshotDate = estimateNextSnapshotDate(daysSinceBlood, daysSinceOral)
 
   return (
     <div className="min-h-svh bg-off-white">
@@ -598,20 +630,42 @@ export function TrendsClient() {
 
         <WeeklySnapshotCard snapshot={weeklySnapshot} />
 
+        {/* ─── NEXT FULL SNAPSHOT (always visible) ─────────── */}
+        <div style={{ ...card, marginBottom: 24 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+            <div>
+              <div style={{ fontFamily: body, fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--ink-40)", marginBottom: 6 }}>
+                Next full snapshot
+              </div>
+              <div style={{ fontFamily: serif, fontSize: 20, color: C.ink }}>
+                {nextSnapshotDate ?? "Schedule when ready"}
+              </div>
+            </div>
+            <div style={{ fontFamily: body, fontSize: 11, color: "var(--ink-40)", textAlign: "right" }}>
+              {daysSinceBlood !== null && <div>Blood · {daysSinceBlood}d ago</div>}
+              {daysSinceOral  !== null && <div>Oral · {daysSinceOral}d ago</div>}
+            </div>
+          </div>
+          <div style={{
+            fontFamily: body, fontSize: 13, color: "var(--ink-60)", lineHeight: 1.65,
+            marginBottom: 16, padding: "12px 14px",
+            background: "var(--off-white)", borderRadius: 8,
+            borderLeft: `3px solid ${C.lifestyle}`,
+          }}>
+            {getRetestRecommendation(daysSinceBlood, daysSinceOral)}
+          </div>
+          <div style={{ display: "flex", gap: 10 }}>
+            <Link href="/dashboard/blood" style={{ fontFamily: body, fontSize: 12, color: C.blood, fontWeight: 500, textDecoration: "none" }}>
+              Upload labs →
+            </Link>
+            <Link href="/shop" style={{ fontFamily: body, fontSize: 12, color: C.oral, fontWeight: 500, textDecoration: "none" }}>
+              Order oral kit →
+            </Link>
+          </div>
+        </div>
+
         {data && data.snapshots.length > 0 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-
-            {/* ─── CROSS-PANEL ALERT (always visible) ──────── */}
-            {data!.showCrossPanelAlert && (
-              <div style={{ ...card, borderLeft: `3px solid ${C.lifestyle}`, padding: "16px 20px", marginBottom: 24 }}>
-                <p style={{ fontFamily: body, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em", color: C.lifestyle, margin: "0 0 8px" }}>
-                  CROSS-PANEL SIGNAL
-                </p>
-                <p style={{ fontFamily: body, fontSize: 13, color: "var(--ink-60)", margin: 0, lineHeight: 1.7 }}>
-                  Your HRV has trended down {fmt(Math.abs(data!.hrvTrendPctValue ?? 0), 1)}% this week. Your oral nitrate reducers are low — these two are connected through the nitric oxide pathway. Worth keeping an eye on together.
-                </p>
-              </div>
-            )}
 
             {/* ─── LAST NIGHT ──────────────────────────────── */}
             {hasSleep && (
@@ -700,9 +754,165 @@ export function TrendsClient() {
               </CollapsibleSection>
             )}
 
+            {/* ─── CROSS-PANEL ALERT ───────────────────────── */}
+            {data!.showCrossPanelAlert && (
+              <div style={{ ...card, borderLeft: `3px solid ${C.lifestyle}`, padding: "16px 20px", marginBottom: 4 }}>
+                <p style={{ fontFamily: body, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em", color: C.lifestyle, margin: "0 0 8px" }}>
+                  CROSS-PANEL SIGNAL
+                </p>
+                <p style={{ fontFamily: body, fontSize: 13, color: "var(--ink-60)", margin: 0, lineHeight: 1.7 }}>
+                  Your HRV has trended down {fmt(Math.abs(data!.hrvTrendPctValue ?? 0), 1)}% this week. Your oral nitrate reducers are low — these two are connected through the nitric oxide pathway. Worth keeping an eye on together.
+                </p>
+              </div>
+            )}
+
+            {/* ─── CHECK-INS ───────────────────────────────── */}
+            <CollapsibleSection
+              title="Check-ins"
+              defaultOpen={data!.shouldPromptCheckin && !checkinSaved}
+              badge={checkinSaved ? "Saved" : data!.shouldPromptCheckin ? "Due" : daysSinceCheckin != null ? `${daysSinceCheckin}d ago` : undefined}
+            >
+              <div style={{ marginBottom: 8 }}>
+                {!checkinSaved ? (
+                  <div style={{ ...card, border: "0.5px solid var(--ink-12)" }}>
+                    <p style={{ fontFamily: serif, fontSize: 20, fontWeight: 300, color: C.ink, margin: "0 0 4px" }}>
+                      Has your lifestyle changed recently?
+                    </p>
+                    <p style={{ fontFamily: body, fontSize: 12, color: "var(--ink-30)", margin: "0 0 20px" }}>
+                      {isFirstCheckin ? "First check-in" : `Last check-in ${daysSinceCheckin} days ago`}
+                    </p>
+                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                      <button
+                        onClick={handleNoChange}
+                        style={{
+                          fontFamily: body, padding: "10px 24px", borderRadius: 8, fontSize: 14,
+                          border: lifestyleChanged === false ? `1.5px solid var(--ink)` : "0.5px solid var(--ink-20)",
+                          background: lifestyleChanged === false ? "var(--ink)" : "transparent",
+                          color: lifestyleChanged === false ? "var(--off-white)" : "var(--ink-60)",
+                          cursor: "pointer",
+                        }}
+                      >
+                        No, about the same
+                      </button>
+                      <button
+                        onClick={() => { setLifestyleChanged(true); setExpanded(true) }}
+                        style={{
+                          fontFamily: body, padding: "10px 24px", borderRadius: 8, fontSize: 14,
+                          border: lifestyleChanged === true ? `1.5px solid var(--ink)` : "0.5px solid var(--ink-20)",
+                          background: lifestyleChanged === true ? "var(--ink)" : "transparent",
+                          color: lifestyleChanged === true ? "var(--off-white)" : "var(--ink-60)",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Yes, things have changed
+                      </button>
+                    </div>
+                    {lifestyleChanged === false && (
+                      <div style={{ marginTop: 16, fontFamily: body, fontSize: 13, color: "var(--ink-40)", borderTop: "0.5px solid var(--ink-08)", paddingTop: 14 }}>
+                        Got it — we&apos;ll check in again in 30 days. Your lifestyle score stays the same.
+                      </div>
+                    )}
+                    {expanded && (
+                      <div style={{ marginTop: 24, borderTop: "0.5px solid var(--ink-08)", paddingTop: 20 }}>
+                        <CheckinRow
+                          label="Exercise"
+                          options={[{ value: "less", label: "Less than before" }, { value: "same", label: "Same" }, { value: "more", label: "More than before" }]}
+                          value={checkin.exercise_frequency}
+                          onChange={v => setCheckin(c => ({ ...c, exercise_frequency: v }))}
+                          previous={isFirstCheckin ? undefined : prevCheckin?.exercise_frequency}
+                        />
+                        <CheckinRow
+                          label="Diet"
+                          options={[{ value: "worse", label: "Worse" }, { value: "same", label: "Same" }, { value: "better", label: "Better" }]}
+                          value={checkin.diet_quality}
+                          onChange={v => setCheckin(c => ({ ...c, diet_quality: v }))}
+                          previous={isFirstCheckin ? undefined : prevCheckin?.diet_quality}
+                        />
+                        <CheckinRow
+                          label="Stress"
+                          options={[{ value: "higher", label: "Higher" }, { value: "same", label: "Same" }, { value: "lower", label: "Lower" }]}
+                          value={checkin.stress_level}
+                          onChange={v => setCheckin(c => ({ ...c, stress_level: v }))}
+                          previous={isFirstCheckin ? undefined : prevCheckin?.stress_level}
+                        />
+                        <CheckinRow
+                          label="Alcohol"
+                          options={[{ value: "more", label: "More" }, { value: "same", label: "Same" }, { value: "less", label: "Less" }, { value: "none", label: "None" }]}
+                          value={checkin.alcohol_frequency}
+                          onChange={v => setCheckin(c => ({ ...c, alcohol_frequency: v }))}
+                          previous={isFirstCheckin ? undefined : prevCheckin?.alcohol_frequency}
+                        />
+                        <CheckinRow
+                          label="Sleep focus"
+                          options={[{ value: "less", label: "Less priority" }, { value: "same", label: "Same" }, { value: "more", label: "More priority" }]}
+                          value={checkin.sleep_priority}
+                          onChange={v => setCheckin(c => ({ ...c, sleep_priority: v }))}
+                          previous={isFirstCheckin ? undefined : prevCheckin?.sleep_priority}
+                        />
+                        <CheckinRow
+                          label="Energy & mood"
+                          options={[{ value: "lower", label: "Lower than usual" }, { value: "normal", label: "About normal" }, { value: "better", label: "Better than usual" }]}
+                          value={checkin.energy_level}
+                          onChange={v => setCheckin(c => ({ ...c, energy_level: v }))}
+                          previous={isFirstCheckin ? undefined : prevCheckin?.energy_level}
+                        />
+                        <SupplementPicker
+                          value={checkin.supplements}
+                          onChange={v => setCheckin(c => ({ ...c, supplements: v }))}
+                        />
+                        <button
+                          onClick={handleSubmitCheckin}
+                          disabled={checkinSubmitting}
+                          style={{
+                            fontFamily: body, marginTop: 4, padding: "12px 28px", fontSize: 14,
+                            background: "var(--ink)", color: "var(--off-white)",
+                            border: "none", borderRadius: 8,
+                            cursor: checkinSubmitting ? "wait" : "pointer",
+                            opacity: checkinSubmitting ? 0.6 : 1,
+                            width: "100%", transition: "opacity 0.15s ease",
+                          }}
+                        >
+                          {checkinSubmitting ? "Saving..." : "Save check-in"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : checkinResult ? (
+                  <div style={{ ...card, borderLeft: `3px solid #2D6A4F`, padding: "20px 24px" }}>
+                    <p style={{ fontFamily: body, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.08em", color: "#2D6A4F", margin: "0 0 10px" }}>
+                      ✓ Check-in saved
+                    </p>
+                    {checkinResult.shouldUpdateQuestionnaire ? (
+                      <>
+                        <p style={{ fontFamily: body, fontSize: 13, color: "var(--ink-60)", margin: "0 0 16px", lineHeight: 1.7 }}>
+                          {checkinResult.changeDirection === "positive"
+                            ? "A lot has changed since your last assessment. Want to update your full lifestyle score?"
+                            : "Your lifestyle has shifted. Updating your full assessment will keep your score accurate."
+                          }{" "}It takes about 2 minutes.
+                        </p>
+                        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                          <Link href="/settings/lifestyle" style={{ fontFamily: body, fontSize: 12, fontWeight: 500, padding: "8px 18px", background: "var(--ink)", color: "var(--off-white)", textDecoration: "none", borderRadius: 4 }}>
+                            Update lifestyle score →
+                          </Link>
+                          <button onClick={() => setCheckinResult(null)} style={{ fontFamily: body, fontSize: 12, color: "var(--ink-30)", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                            Maybe later
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <p style={{ fontFamily: body, fontSize: 13, color: "var(--ink-60)", margin: 0, lineHeight: 1.7 }}>
+                        Your lifestyle looks consistent — no score update needed.
+                        <br />We&apos;ll check in again in 30 days.
+                      </p>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            </CollapsibleSection>
+
             {/* ─── SLEEP TRENDS ────────────────────────────── */}
             {hasSleep && (
-              <CollapsibleSection title="Sleep trends · 30 nights" defaultOpen={false}>
+              <CollapsibleSection title="Sleep · 30 nights" defaultOpen={false}>
                 <div style={{ marginBottom: 8 }}>
                   <MiniChart
                     data={sleepChartData}
@@ -765,7 +975,6 @@ export function TrendsClient() {
                   {[
                     { l: "Total", c: C.ink }, { l: "Sleep", c: C.sleep },
                     { l: "Blood", c: C.blood }, { l: "Oral", c: C.oral },
-                    { l: "Lifestyle", c: C.lifestyle },
                   ].map(({ l, c }) => (
                     <div key={l} style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <div style={{ width: 12, height: 2, background: c, borderRadius: 1 }} />
@@ -818,7 +1027,6 @@ export function TrendsClient() {
                           <Line type="monotone" dataKey="sleep" stroke={C.sleep} strokeWidth={1.25} dot={{ r: 2.5, fill: C.sleep, stroke: "var(--white)", strokeWidth: 1 }} connectNulls={false} />
                           <Line type="monotone" dataKey="blood" stroke={C.blood} strokeWidth={1.25} dot={{ r: 2.5, fill: C.blood, stroke: "var(--white)", strokeWidth: 1 }} connectNulls={false} />
                           <Line type="monotone" dataKey="oral" stroke={C.oral} strokeWidth={1.25} dot={{ r: 2.5, fill: C.oral, stroke: "var(--white)", strokeWidth: 1 }} connectNulls={false} />
-                          <Line type="monotone" dataKey="lifestyle" stroke={C.lifestyle} strokeWidth={1.25} dot={{ r: 2.5, fill: C.lifestyle, stroke: "var(--white)", strokeWidth: 1 }} connectNulls={false} />
                         </ComposedChart>
                       </ResponsiveContainer>
                     </div>
@@ -827,192 +1035,9 @@ export function TrendsClient() {
               </div>
             </CollapsibleSection>
 
-            {/* ─── CHECK-INS ───────────────────────────────── */}
-            <CollapsibleSection
-              title="Check-ins"
-              defaultOpen={data!.shouldPromptCheckin && !checkinSaved}
-              badge={checkinSaved ? "Saved" : data!.shouldPromptCheckin ? "Due" : daysSinceCheckin != null ? `${daysSinceCheckin}d ago` : undefined}
-            >
-              <div style={{ marginBottom: 8 }}>
-                {!checkinSaved ? (
-                  <div style={{ ...card, border: "0.5px solid var(--ink-12)" }}>
-                    <p style={{ fontFamily: serif, fontSize: 20, fontWeight: 300, color: C.ink, margin: "0 0 4px" }}>
-                      Has your lifestyle changed recently?
-                    </p>
-                    <p style={{ fontFamily: body, fontSize: 12, color: "var(--ink-30)", margin: "0 0 20px" }}>
-                      {isFirstCheckin ? "First check-in" : `Last check-in ${daysSinceCheckin} days ago`}
-                    </p>
-
-                    {/* Yes / No gate */}
-                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                      <button
-                        onClick={handleNoChange}
-                        style={{
-                          fontFamily: body, padding: "10px 24px", borderRadius: 8, fontSize: 14,
-                          border: lifestyleChanged === false ? `1.5px solid var(--ink)` : "0.5px solid var(--ink-20)",
-                          background: lifestyleChanged === false ? "var(--ink)" : "transparent",
-                          color: lifestyleChanged === false ? "var(--off-white)" : "var(--ink-60)",
-                          cursor: "pointer",
-                        }}
-                      >
-                        No, about the same
-                      </button>
-                      <button
-                        onClick={() => { setLifestyleChanged(true); setExpanded(true) }}
-                        style={{
-                          fontFamily: body, padding: "10px 24px", borderRadius: 8, fontSize: 14,
-                          border: lifestyleChanged === true ? `1.5px solid var(--ink)` : "0.5px solid var(--ink-20)",
-                          background: lifestyleChanged === true ? "var(--ink)" : "transparent",
-                          color: lifestyleChanged === true ? "var(--off-white)" : "var(--ink-60)",
-                          cursor: "pointer",
-                        }}
-                      >
-                        Yes, things have changed
-                      </button>
-                    </div>
-
-                    {/* "No" confirmation */}
-                    {lifestyleChanged === false && (
-                      <div style={{ marginTop: 16, fontFamily: body, fontSize: 13, color: "var(--ink-40)", borderTop: "0.5px solid var(--ink-08)", paddingTop: 14 }}>
-                        Got it — we&apos;ll check in again in 30 days. Your lifestyle score stays the same.
-                      </div>
-                    )}
-
-                    {/* Expanded detail form */}
-                    {expanded && (
-                      <div style={{ marginTop: 24, borderTop: "0.5px solid var(--ink-08)", paddingTop: 20 }}>
-                        <CheckinRow
-                          label="Exercise"
-                          options={[{ value: "less", label: "Less than before" }, { value: "same", label: "Same" }, { value: "more", label: "More than before" }]}
-                          value={checkin.exercise_frequency}
-                          onChange={v => setCheckin(c => ({ ...c, exercise_frequency: v }))}
-                          previous={isFirstCheckin ? undefined : prevCheckin?.exercise_frequency}
-                        />
-                        <CheckinRow
-                          label="Diet"
-                          options={[{ value: "worse", label: "Worse" }, { value: "same", label: "Same" }, { value: "better", label: "Better" }]}
-                          value={checkin.diet_quality}
-                          onChange={v => setCheckin(c => ({ ...c, diet_quality: v }))}
-                          previous={isFirstCheckin ? undefined : prevCheckin?.diet_quality}
-                        />
-                        <CheckinRow
-                          label="Stress"
-                          options={[{ value: "higher", label: "Higher" }, { value: "same", label: "Same" }, { value: "lower", label: "Lower" }]}
-                          value={checkin.stress_level}
-                          onChange={v => setCheckin(c => ({ ...c, stress_level: v }))}
-                          previous={isFirstCheckin ? undefined : prevCheckin?.stress_level}
-                        />
-                        <CheckinRow
-                          label="Alcohol"
-                          options={[{ value: "more", label: "More" }, { value: "same", label: "Same" }, { value: "less", label: "Less" }, { value: "none", label: "None" }]}
-                          value={checkin.alcohol_frequency}
-                          onChange={v => setCheckin(c => ({ ...c, alcohol_frequency: v }))}
-                          previous={isFirstCheckin ? undefined : prevCheckin?.alcohol_frequency}
-                        />
-                        <CheckinRow
-                          label="Sleep focus"
-                          options={[{ value: "less", label: "Less priority" }, { value: "same", label: "Same" }, { value: "more", label: "More priority" }]}
-                          value={checkin.sleep_priority}
-                          onChange={v => setCheckin(c => ({ ...c, sleep_priority: v }))}
-                          previous={isFirstCheckin ? undefined : prevCheckin?.sleep_priority}
-                        />
-                        <CheckinRow
-                          label="Energy & mood"
-                          options={[{ value: "lower", label: "Lower than usual" }, { value: "normal", label: "About normal" }, { value: "better", label: "Better than usual" }]}
-                          value={checkin.energy_level}
-                          onChange={v => setCheckin(c => ({ ...c, energy_level: v }))}
-                          previous={isFirstCheckin ? undefined : prevCheckin?.energy_level}
-                        />
-                        <CheckinRow
-                          label="Blood pressure"
-                          options={[{ value: "higher", label: "Feeling higher" }, { value: "normal", label: "Seems normal" }, { value: "lower", label: "Feeling lower" }]}
-                          value={checkin.blood_pressure_feeling}
-                          onChange={v => setCheckin(c => ({ ...c, blood_pressure_feeling: v }))}
-                          previous={isFirstCheckin ? undefined : prevCheckin?.blood_pressure_feeling}
-                        />
-                        <SupplementPicker
-                          value={checkin.supplements}
-                          onChange={v => setCheckin(c => ({ ...c, supplements: v }))}
-                        />
-                        <button
-                          onClick={handleSubmitCheckin}
-                          disabled={checkinSubmitting}
-                          style={{
-                            fontFamily: body, marginTop: 4, padding: "12px 28px", fontSize: 14,
-                            background: "var(--ink)", color: "var(--off-white)",
-                            border: "none", borderRadius: 8,
-                            cursor: checkinSubmitting ? "wait" : "pointer",
-                            opacity: checkinSubmitting ? 0.6 : 1,
-                            width: "100%", transition: "opacity 0.15s ease",
-                          }}
-                        >
-                          {checkinSubmitting ? "Saving..." : "Save check-in"}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ) : checkinResult ? (
-                  <div style={{ ...card, borderLeft: `3px solid #2D6A4F`, padding: "20px 24px" }}>
-                    <p style={{ fontFamily: body, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.08em", color: "#2D6A4F", margin: "0 0 10px" }}>
-                      ✓ Check-in saved
-                    </p>
-                    {checkinResult.shouldUpdateQuestionnaire ? (
-                      <>
-                        <p style={{ fontFamily: body, fontSize: 13, color: "var(--ink-60)", margin: "0 0 16px", lineHeight: 1.7 }}>
-                          {checkinResult.changeDirection === "positive"
-                            ? "A lot has changed since your last assessment. Want to update your full lifestyle score?"
-                            : "Your lifestyle has shifted. Updating your full assessment will keep your score accurate."
-                          }{" "}It takes about 2 minutes.
-                        </p>
-                        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                          <Link href="/settings/lifestyle" style={{ fontFamily: body, fontSize: 12, fontWeight: 500, padding: "8px 18px", background: "var(--ink)", color: "var(--off-white)", textDecoration: "none", borderRadius: 4 }}>
-                            Update lifestyle score →
-                          </Link>
-                          <button onClick={() => setCheckinResult(null)} style={{ fontFamily: body, fontSize: 12, color: "var(--ink-30)", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                            Maybe later
-                          </button>
-                        </div>
-                      </>
-                    ) : (
-                      <p style={{ fontFamily: body, fontSize: 13, color: "var(--ink-60)", margin: 0, lineHeight: 1.7 }}>
-                        Your lifestyle looks consistent — no score update needed.
-                        <br />We&apos;ll check in again in 30 days.
-                      </p>
-                    )}
-                  </div>
-                ) : null}
-              </div>
-            </CollapsibleSection>
-
             {/* ─── SNAPSHOTS ───────────────────────────────── */}
             <CollapsibleSection title="Snapshots" defaultOpen={false}>
               <div style={{ marginBottom: 8 }}>
-                {/* Delta cards */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 16 }}>
-                  {([
-                    { key: "total" as const, label: "TOTAL", max: 100 },
-                    { key: "sleep" as const, label: "SLEEP", max: 27 },
-                    { key: "blood" as const, label: "BLOOD", max: 33 },
-                    { key: "oral" as const, label: "ORAL", max: 27 },
-                  ]).map(panel => {
-                    const cur = data!.current?.[panel.key] ?? 0
-                    const prev = data!.previous?.[panel.key]
-                    const d = delta(cur, prev, data!.previous == null)
-                    const color = C[panel.key as keyof typeof C] ?? C.ink
-                    return (
-                      <div key={panel.key} style={{ ...card, borderTop: `2px solid ${color}`, padding: "14px 14px 12px" }}>
-                        <p style={{ fontFamily: body, fontSize: 8, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-40)", margin: "0 0 6px" }}>
-                          {panel.label} {panel.key !== "total" && <span style={{ color: "var(--ink-20)" }}>/{panel.max}</span>}
-                        </p>
-                        <p style={{ fontFamily: serif, fontSize: 28, fontWeight: 300, color, margin: "0 0 4px", lineHeight: 1 }}>
-                          {fmt(cur, 0)}
-                        </p>
-                        <p style={{ fontFamily: body, fontSize: 10, color: d.color, margin: 0 }}>{d.text}</p>
-                      </div>
-                    )
-                  })}
-                </div>
-
                 <div style={{ display: "grid", gridTemplateColumns: data!.previous ? "1fr 1fr" : "1fr", gap: 12 }}>
                   <div style={{ ...card, borderLeft: `3px solid var(--ink)` }}>
                     <p style={{ fontFamily: body, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-40)", margin: "0 0 10px" }}>
@@ -1022,7 +1047,7 @@ export function TrendsClient() {
                       {fmt(data!.current?.total, 0)}
                     </p>
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                      {(["sleep", "blood", "oral", "lifestyle"] as const).map(k => (
+                      {(["sleep", "blood", "oral"] as const).map(k => (
                         <span key={k} style={{ fontFamily: body, fontSize: 10, padding: "3px 10px", borderRadius: 12, background: `${C[k]}12`, color: C[k], fontWeight: 500 }}>
                           {k.charAt(0).toUpperCase() + k.slice(1)} {fmt(data!.current?.[k], 0)}
                         </span>
@@ -1038,7 +1063,7 @@ export function TrendsClient() {
                         {fmt(data!.previous.total, 0)}
                       </p>
                       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                        {(["sleep", "blood", "oral", "lifestyle"] as const).map(k => (
+                        {(["sleep", "blood", "oral"] as const).map(k => (
                           <span key={k} style={{ fontFamily: body, fontSize: 10, padding: "3px 10px", borderRadius: 12, background: "var(--ink-06)", color: "var(--ink-40)", fontWeight: 500 }}>
                             {k.charAt(0).toUpperCase() + k.slice(1)} {fmt(data!.previous![k], 0)}
                           </span>
@@ -1054,47 +1079,6 @@ export function TrendsClient() {
                 )}
               </div>
             </CollapsibleSection>
-
-            {/* ─── NEXT SNAPSHOT (always visible) ──────────── */}
-            <div style={{ ...card, background: "var(--off-white)", marginTop: 20 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
-                <p style={{ fontFamily: body, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-40)", margin: 0 }}>
-                  Next full snapshot
-                </p>
-                <span style={{ fontFamily: body, fontSize: 11, color: "var(--ink-30)" }}>
-                  Est. {estimateNext(data!.lastLabDate)}
-                </span>
-              </div>
-              <p style={{ fontFamily: body, fontSize: 13, color: "var(--ink-60)", margin: "0 0 12px", lineHeight: 1.7, maxWidth: 480 }}>
-                {data!.daysSinceLastLab != null
-                  ? `Blood panel is ${fmt(data!.daysSinceLastLab, 0)} days old.`
-                  : "No blood panel uploaded yet."
-                }
-                {data!.lastOralDate && ` Oral kit submitted ${fmtDate(data!.lastOralDate)}.`}
-              </p>
-              {data!.daysSinceLastLab != null && (
-                <div style={{ marginBottom: 16 }}>
-                  <div style={{ height: 6, borderRadius: 3, background: "var(--ink-06)", overflow: "hidden" }}>
-                    <div style={{
-                      height: "100%", borderRadius: 3, background: "var(--ink)", opacity: 0.25,
-                      width: `${Math.min((data!.daysSinceLastLab / 90) * 100, 100)}%`,
-                      transition: "width 0.5s ease",
-                    }} />
-                  </div>
-                  <p style={{ fontFamily: body, fontSize: 10, color: "var(--ink-25)", margin: "4px 0 0" }}>
-                    {fmt(data!.daysSinceLastLab, 0)} of 90 days
-                  </p>
-                </div>
-              )}
-              <div style={{ display: "flex", gap: 16 }}>
-                <Link href="/dashboard/blood" style={{ fontFamily: body, fontSize: 12, color: C.blood, textDecoration: "none", letterSpacing: "0.02em" }}>
-                  Upload labs →
-                </Link>
-                <Link href="/shop" style={{ fontFamily: body, fontSize: 12, color: C.oral, textDecoration: "none", letterSpacing: "0.02em" }}>
-                  Order oral kit →
-                </Link>
-              </div>
-            </div>
 
           </div>
         )}
