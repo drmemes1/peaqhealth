@@ -82,13 +82,16 @@ export default async function DashboardPage() {
     providerSlug: bestNights[0]?.source ?? (wearable?.provider ?? "unknown"),
   } : undefined
 
-  // Auto-heal stale zero snapshot. Fires when:
+  // Auto-heal stale/zero/v1 snapshot. Fires when:
   // 1. No snapshot at all (first load ever)
   // 2. score=0 but panel data exists (disconnect regression / cron race)
-  const snapshotIsStaleZero = !snapshot || (Number(snapshot.score) === 0 && (!!lab || !!oral || !!lifestyle))
-  console.log("[dashboard] snapshotIsStaleZero:", snapshotIsStaleZero, "score:", Number(snapshot?.score ?? 0))
+  // 3. v1 snapshot (no base_score column) — force v2 recalculation
+  const snapshotIsV1 = snapshot && !snapshot.base_score
+  const snapshotIsStaleZero = !snapshot || (Number(snapshot.score) === 0 && (!!lab || !!oral || !!lifestyle)) || snapshotIsV1
+  if (snapshotIsV1) console.log("[dashboard] v1 snapshot detected — forcing v2 recalculation for:", user.id)
+  console.log("[dashboard] snapshotIsStaleZero:", snapshotIsStaleZero, "score:", Number(snapshot?.score ?? 0), "isV1:", !!snapshotIsV1)
   if (snapshotIsStaleZero) {
-    console.log("[dashboard] stale/zero snapshot — auto-recalculating for:", user.id)
+    console.log("[dashboard] stale/zero/v1 snapshot — auto-recalculating for:", user.id)
     try {
       const svc = createServiceClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,

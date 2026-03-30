@@ -245,8 +245,8 @@ export async function GET() {
     oralData = {
       shannon:           (snap?.shannonDiversity as number | null) ?? (oral.shannon_diversity != null ? Number(oral.shannon_diversity) : null),
       nitrateReducerPct: toOralPct(snap?.nitrateReducerPct, oral.nitrate_reducers_pct),
-      periodontalBurden: toOralPct(snap?.periodontalBurden, oral.periodontopathogen_pct),
-      osaBurden:         toOralPct(snap?.osaBurden,         oral.osa_taxa_pct),
+      periodontalBurden: (snap?.periodontalBurden as number | null) ?? (oral.periodontopathogen_pct != null ? Number(oral.periodontopathogen_pct) : null),
+      osaBurden:         (snap?.osaBurden as number | null) ?? (oral.osa_taxa_pct != null ? Number(oral.osa_taxa_pct) : null),
       protectivePct:     toOralPct(snap?.protectiveSpecies, null),
       mouthwashDetected: (snap?.mouthwashDetected as boolean | null) ?? (lifestyle?.mouthwash_type != null && lifestyle.mouthwash_type !== "none"),
       neuroPct:          (snap?.neuroSignalPct as number | null) ?? (oral.neuro_signal_pct != null ? Number(oral.neuro_signal_pct) : null),
