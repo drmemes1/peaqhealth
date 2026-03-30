@@ -114,6 +114,8 @@ export default async function DashboardPage() {
     }
   }
 
+  console.log(`[dashboard] displaying: score=${snapshot?.score} sleep=${snapshot?.sleep_sub} blood=${snapshot?.blood_sub} oral=${snapshot?.oral_sub} engine=${snapshot?.engine_version} snapshot_at=${snapshot?.calculated_at}`)
+
   // Compute lab freshness
   type LabFreshness = 'fresh' | 'aging' | 'stale' | 'expired' | 'none'
   let labFreshness: LabFreshness = 'none'

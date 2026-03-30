@@ -34,7 +34,7 @@ export async function generateWeeklySnapshot(userId: string): Promise<Record<str
   ] = await Promise.all([
     supabase
       .from("score_snapshots")
-      .select("score, sleep_sub, blood_sub, oral_sub, lifestyle_sub, calculated_at")
+      .select("score, sleep_sub, blood_sub, oral_sub, lifestyle_sub, modifier_total, modifiers_applied, calculated_at")
       .eq("user_id", userId)
       .order("calculated_at", { ascending: false })
       .limit(1)
@@ -227,6 +227,14 @@ ${bloodLines}
 ORAL MICROBIOME:
 ${oralLines}
 
+ACTIVE CROSS-PANEL MODIFIERS:
+${(() => {
+  const mods = (currentSnapshot?.modifiers_applied ?? []) as Array<{ direction: string; points: number; label: string }>
+  if (mods.length === 0) return "None active"
+  return mods.map(m => `${m.direction === "bonus" ? "+" : "-"}${m.points} ${m.label}`).join("\n")
+})()}
+Modifier total: ${currentSnapshot?.modifier_total ?? 0}
+
 LIFESTYLE CHECK-IN:
 ${checkinLines}
 
@@ -259,7 +267,7 @@ Return exactly this JSON (no other keys):
   const cleaned = raw.replace(/```json/gi, "").replace(/```/g, "").trim()
   const parsed = JSON.parse(cleaned) as Record<string, unknown>
 
-  console.log(`[weekly-snapshot] generated for user=${userId.slice(0, 8)} headline="${parsed.headline}"`)
+  console.log(`[weekly-snapshot] generated for user=${userId.slice(0, 8)} score=${currentSnapshot?.score} sleep=${currentSnapshot?.sleep_sub} blood=${currentSnapshot?.blood_sub} oral=${currentSnapshot?.oral_sub} headline="${parsed.headline}"`)
 
   // ── Upsert ────────────────────────────────────────────────────────────────
   const { data: saved, error: upsertErr } = await supabase

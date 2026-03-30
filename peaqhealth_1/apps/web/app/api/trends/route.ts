@@ -183,6 +183,8 @@ export async function GET() {
   const hrvDown = hrvTrendPct != null && hrvTrendPct <= -10
   const showCrossPanelAlert = hrvDown && nitrateReducersLow && oralData != null
 
+  console.log(`[trends-api] displaying: score=${current?.total} sleep=${current?.sleep} blood=${current?.blood} oral=${current?.oral} date=${current?.date}`)
+
   return Response.json({
     current,
     previous,

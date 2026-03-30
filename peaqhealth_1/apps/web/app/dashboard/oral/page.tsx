@@ -24,6 +24,8 @@ export default async function OralPage() {
       .single(),
   ])
 
+  console.log(`[oral-panel] displaying: oral_sub=${snapshot?.oral_sub} total=${snapshot?.score} from=score_snapshots`)
+
   return (
     <OralPanelClient
       oral={oral as Record<string, unknown> | null}
