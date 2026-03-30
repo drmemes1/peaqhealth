@@ -21,7 +21,7 @@ export default async function DashboardPage() {
     { data: labHistoryRows },
     { data: sleepNights },
   ] = await Promise.all([
-    supabase.from("score_snapshots").select("*").eq("user_id", user.id).order("calculated_at", { ascending: false }).limit(1).single(),
+    supabase.from("score_snapshots").select("*").eq("user_id", user.id).order("calculated_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("wearable_connections_v2").select("provider,last_synced_at,needs_reconnect").eq("user_id", user.id).eq("needs_reconnect", false).order("connected_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("lab_results").select("*").eq("user_id", user.id).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).single(),
     supabase.from("oral_kit_orders").select("id, shannon_diversity").eq("user_id", user.id).limit(1).maybeSingle(),
@@ -107,7 +107,7 @@ export default async function DashboardPage() {
         .eq("user_id", user.id)
         .order("calculated_at", { ascending: false })
         .limit(1)
-        .single()
+        .maybeSingle()
       if (fresh) snapshot = fresh
     } catch (err) {
       console.error("[dashboard] auto-recalculate failed:", err)

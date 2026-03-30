@@ -1357,14 +1357,14 @@ export function ScoreWheel({
             <button
               onClick={() => setShowModifiers(o => !o)}
               style={{
-                fontFamily: "var(--font-body)", fontSize: 12,
-                color: (modifier_total ?? 0) < 0 ? "#C0392B" : "#2D6A4F",
+                fontFamily: "var(--font-body)", fontSize: 11,
+                color: (modifier_total ?? 0) < 0 ? "#C0392B" : "#1D9E75",
                 background: "none", border: "none", cursor: "pointer",
-                letterSpacing: "0.05em", fontWeight: 500,
-                opacity: 1,
+                letterSpacing: "0.06em",
+                marginTop: 6,
               }}
             >
-              {(modifier_total ?? 0) > 0 ? `+${modifier_total}` : modifier_total} cross-panel {showModifiers ? "▲" : "▼"}
+              {(modifier_total ?? 0) > 0 ? `+${modifier_total}` : modifier_total} cross-panel
             </button>
             {showModifiers && (
               <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>

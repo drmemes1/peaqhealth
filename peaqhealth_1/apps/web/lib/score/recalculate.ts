@@ -189,12 +189,33 @@ function aggregateManualSleepInputs(
 
 // ─── Shared score recalculator (v2) ──────────────────────────────────────────
 
+// Module-level mutex — prevents concurrent recalculations for the same user
+// from writing duplicate snapshot rows. Cleared after 5 s to handle crashes.
+const recalcInProgress = new Set<string>()
+
 export async function recalculateScore(
   userId: string,
   supabase: SupabaseClient
 ): Promise<number> {
+  if (recalcInProgress.has(userId)) {
+    console.log(`[recalculate] already in progress for ${userId.slice(0, 8)} — skipping`)
+    return 0
+  }
+  recalcInProgress.add(userId)
+
+  try {
+  return await _recalculateScore(userId, supabase)
+  } finally {
+    setTimeout(() => recalcInProgress.delete(userId), 5000)
+  }
+}
+
+async function _recalculateScore(
+  userId: string,
+  supabase: SupabaseClient
+): Promise<number> {
   const [labsRes, oralRes, lifestyleRes, manualSleepRes, sleepNightsRes] = await Promise.all([
-    supabase.from("lab_results").select("*").eq("user_id", userId).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).single(),
+    supabase.from("lab_results").select("*").eq("user_id", userId).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("oral_kit_orders").select("*").eq("user_id", userId).not("shannon_diversity", "is", null).order("ordered_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("lifestyle_records").select("*").eq("user_id", userId).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("manual_sleep_entries").select("duration_seconds,quality").eq("user_id", userId).order("date", { ascending: false }).limit(14),
@@ -424,38 +445,38 @@ export async function recalculateScore(
   console.log(`[recalculate] user=${userId} blood=${bloodSub} sleep=${sleepSub} oral=${oralSub} base=${baseScore} modifiers=${modifierTotal} (${modifiers.map(m => m.id).join(", ")}) final=${finalScore}`)
 
   // ── Save snapshot ─────────────────────────────────────────────────────────
-  let insertError: unknown = null
-  try {
-    await supabase.from("score_snapshots").insert({
-      user_id:                userId,
-      calculated_at:          new Date().toISOString(),
-      engine_version:         "8.1",
-      score:                  finalScore,
-      category:               finalScore >= 85 ? "excellent" : finalScore >= 70 ? "good" : finalScore >= 55 ? "fair" : "needs_attention",
-      sleep_sub:              sleepSub,
-      sleep_source:           !sleepInputs ? "none" : sleepSource,
-      blood_sub:              bloodSub,
-      oral_sub:               oralSub,
-      lifestyle_sub:          0, // zeroed — stored in context
-      base_score:             baseScore,
-      modifier_total:         modifierTotal,
-      modifiers_applied:      modifiers,
-      lifestyle_context:      lifestyleContext,
-      interaction_pool:       legacyResult.breakdown.interactionPool,
-      lab_result_id:          labsRes.data?.id ?? null,
-      oral_kit_id:            oralRes.data?.id ?? null,
-      wearable_connection_id: null,
-      lifestyle_record_id:    lifestyleRes.data?.id ?? null,
-      lab_freshness:          legacyResult.labFreshness,
-      peaq_percent:           legacyResult.peaqPercent,
-      peaq_percent_label:     legacyResult.peaqPercentLabel,
-      lpa_flag:               legacyResult.lpaFlag,
-      hscrp_retest_flag:      legacyResult.hsCRPRetestFlag,
-      blood_recency_multiplier: legacyResult.bloodRecencyMultiplier,
-      interactions_fired:     legacyResult.interactionsFired,
-    })
-  } catch (e) { insertError = e }
-  if (insertError) console.error("[recalculate] snapshot insert failed for user:", userId, insertError)
+  const { error: insertError } = await supabase.from("score_snapshots").insert({
+    user_id:                userId,
+    calculated_at:          new Date().toISOString(),
+    engine_version:         "8.1",
+    score:                  finalScore,
+    category:               finalScore >= 85 ? "excellent" : finalScore >= 70 ? "good" : finalScore >= 55 ? "fair" : "needs_attention",
+    sleep_sub:              sleepSub,
+    sleep_source:           !sleepInputs ? "none" : sleepSource,
+    blood_sub:              bloodSub,
+    oral_sub:               oralSub,
+    lifestyle_sub:          0, // zeroed — stored in context
+    base_score:             baseScore,
+    modifier_total:         modifierTotal,
+    modifiers_applied:      modifiers,
+    lifestyle_context:      lifestyleContext,
+    interaction_pool:       legacyResult.breakdown.interactionPool,
+    lab_result_id:          labsRes.data?.id ?? null,
+    oral_kit_id:            oralRes.data?.id ?? null,
+    wearable_connection_id: null,
+    lifestyle_record_id:    lifestyleRes.data?.id ?? null,
+    lab_freshness:          legacyResult.labFreshness,
+    peaq_percent:           legacyResult.peaqPercent,
+    peaq_percent_label:     legacyResult.peaqPercentLabel,
+    lpa_flag:               legacyResult.lpaFlag,
+    hscrp_retest_flag:      legacyResult.hsCRPRetestFlag,
+    blood_recency_multiplier: legacyResult.bloodRecencyMultiplier,
+    interactions_fired:     legacyResult.interactionsFired,
+  })
+  if (insertError) {
+    console.error("[recalculate] snapshot insert failed for user:", userId, insertError)
+    throw new Error(`snapshot insert failed: ${insertError.message}`)
+  }
 
   return finalScore
 }

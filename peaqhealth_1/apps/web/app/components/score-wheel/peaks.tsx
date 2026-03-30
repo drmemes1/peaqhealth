@@ -2,12 +2,13 @@
 import { useEffect, useRef } from "react"
 
 // ─── Layout constants ────────────────────────────────────────────────────────
-// ViewBox 700 × 320; peaks centered in 40–660 range
-const BASELINE     = 256   // y-position of the baseline rule
-const MAX_H        = 200   // reference height for ratio calculations (not a hard cap)
-const TOP_PAD      = 64    // minimum clearance above tallest apex for score number
-const SCALE_TO     = 0.90  // tallest active peak fills this fraction of available space
-const HALF_W       = 44    // base half-width 44px → 88px total; 67px gaps between peaks
+// ViewBox 700 × 420; peaks centered in 40–660 range
+const VB_H         = 420   // viewBox height — taller to give peaks room
+const BASELINE     = 360   // y-position of the baseline rule
+const MAX_H        = 300   // reference height for ratio calculations (not a hard cap)
+const TOP_PAD      = 56    // minimum clearance above tallest apex for score number
+const SCALE_TO     = 0.92  // tallest active peak fills this fraction of available space
+const BASE_HALF_W  = 55    // base half-width — peaks widen proportionally with height
 const CENTERS: readonly [number, number, number] = [150, 350, 550]
 const DURATION = 700        // ms each peak takes to rise
 const STAGGER  = 130        // ms between peaks
@@ -46,11 +47,14 @@ export function PeaksVisualization({
   ]
   const pending = [!sleepConnected, !hasBlood, !oralActive]
 
-  // Raw heights using MAX_H as reference scale
-  const rawHeights = rawScores.map((s, i) => {
+  // Score ratios (0–1) for height and width scaling
+  const ratios = rawScores.map((s, i) => {
     if (pending[i] || s <= 0) return 0
-    return (s / PANELS[i].max) * MAX_H
+    return Math.min(s / PANELS[i].max, 1)
   })
+
+  // Raw heights using MAX_H as reference scale
+  const rawHeights = ratios.map(r => r * MAX_H)
 
   // Dynamic scaling: tallest active peak fills SCALE_TO of available vertical space
   const availableH = BASELINE - TOP_PAD
@@ -62,6 +66,11 @@ export function PeaksVisualization({
   )
   const apexYs = finalHeights.map(h => BASELINE - h)
 
+  // Peak widths scale proportionally with height — taller = wider for dramatic effect
+  const halfWidths = ratios.map(r =>
+    Math.max(36, Math.round(BASE_HALF_W * Math.max(r, 0.3) * 1.15))
+  )
+
   const polyRefs  = useRef<(SVGPolygonElement | null)[]>([null, null, null])
   const decorRefs = useRef<(SVGGElement | null)[]>([null, null, null])
 
@@ -72,7 +81,8 @@ export function PeaksVisualization({
       const el = polyRefs.current[i]
       if (!el) return
 
-      el.setAttribute("points", `${cx - HALF_W},${BASELINE} ${cx},${BASELINE} ${cx + HALF_W},${BASELINE}`)
+      const hw = halfWidths[i]
+      el.setAttribute("points", `${cx - hw},${BASELINE} ${cx},${BASELINE} ${cx + hw},${BASELINE}`)
 
       const id = setTimeout(() => {
         const start  = performance.now()
@@ -83,7 +93,7 @@ export function PeaksVisualization({
           const t     = Math.min((performance.now() - start) / DURATION, 1)
           const ease  = easeOutCubic(t)
           const apexY = BASELINE - endH * ease
-          target.setAttribute("points", `${cx - HALF_W},${BASELINE} ${cx},${apexY} ${cx + HALF_W},${BASELINE}`)
+          target.setAttribute("points", `${cx - hw},${BASELINE} ${cx},${apexY} ${cx + hw},${BASELINE}`)
           if (t < 1) requestAnimationFrame(frame)
         }
         requestAnimationFrame(frame)
@@ -103,7 +113,7 @@ export function PeaksVisualization({
 
   return (
     <svg
-      viewBox="0 0 700 320"
+      viewBox={`0 0 700 ${VB_H}`}
       width="100%"
       style={{ display: "block", overflow: "visible" }}
       aria-label="Score breakdown peaks"
@@ -136,7 +146,7 @@ export function PeaksVisualization({
             {/* Peak polygon — animated */}
             <polygon
               ref={el => { polyRefs.current[i] = el }}
-              points={`${cx - HALF_W},${BASELINE} ${cx},${BASELINE} ${cx + HALF_W},${BASELINE}`}
+              points={`${cx - halfWidths[i]},${BASELINE} ${cx},${BASELINE} ${cx + halfWidths[i]},${BASELINE}`}
               fill={isPending ? "none" : `url(#pg-${p.key})`}
               stroke={p.color}
               strokeWidth={1.25}
