@@ -703,7 +703,7 @@ export function TrendsClient() {
                           {fmt(data.current?.sleep, 0)}
                         </p>
                         <p style={{ fontFamily: body, fontSize: 9, color: "var(--ink-30)", margin: "4px 0 0", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                          Sleep /27
+                          Sleep /30
                         </p>
                       </div>
                     </div>
@@ -809,7 +809,7 @@ export function TrendsClient() {
                     </div>
                     {lifestyleChanged === false && (
                       <div style={{ marginTop: 16, fontFamily: body, fontSize: 13, color: "var(--ink-40)", borderTop: "0.5px solid var(--ink-08)", paddingTop: 14 }}>
-                        Got it — we&apos;ll check in again in 30 days. Your lifestyle score stays the same.
+                        Got it — we&apos;ll check in again in 30 days.
                       </div>
                     )}
                     {expanded && (
@@ -886,13 +886,13 @@ export function TrendsClient() {
                       <>
                         <p style={{ fontFamily: body, fontSize: 13, color: "var(--ink-60)", margin: "0 0 16px", lineHeight: 1.7 }}>
                           {checkinResult.changeDirection === "positive"
-                            ? "A lot has changed since your last assessment. Want to update your full lifestyle score?"
-                            : "Your lifestyle has shifted. Updating your full assessment will keep your score accurate."
+                            ? "Things are trending well. Want to update your lifestyle questionnaire so your insights stay accurate?"
+                            : "Your habits have shifted. Updating your questionnaire helps us tailor your insights."
                           }{" "}It takes about 2 minutes.
                         </p>
                         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
                           <Link href="/settings/lifestyle" style={{ fontFamily: body, fontSize: 12, fontWeight: 500, padding: "8px 18px", background: "var(--ink)", color: "var(--off-white)", textDecoration: "none", borderRadius: 4 }}>
-                            Update lifestyle score →
+                            Update questionnaire →
                           </Link>
                           <button onClick={() => setCheckinResult(null)} style={{ fontFamily: body, fontSize: 12, color: "var(--ink-30)", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
                             Maybe later
@@ -901,8 +901,7 @@ export function TrendsClient() {
                       </>
                     ) : (
                       <p style={{ fontFamily: body, fontSize: 13, color: "var(--ink-60)", margin: 0, lineHeight: 1.7 }}>
-                        Your lifestyle looks consistent — no score update needed.
-                        <br />We&apos;ll check in again in 30 days.
+                        Your habits look consistent — we&apos;ll check in again in 30 days.
                       </p>
                     )}
                   </div>
