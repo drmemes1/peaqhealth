@@ -1232,6 +1232,7 @@ export function ScoreWheel({
   const [displayOral, setDisplayOral] = useState(0)
   const [openMissingTooltip, setOpenMissingTooltip] = useState<string | null>(null)
   const [showModifiers, setShowModifiers] = useState(false)
+  const [expandedSleepMetric, setExpandedSleepMetric] = useState<string | null>(null)
   const sleepPanelRef    = useRef<CollapsiblePanelHandle>(null)
   const bloodPanelRef    = useRef<CollapsiblePanelHandle>(null)
   const oralPanelRef     = useRef<CollapsiblePanelHandle>(null)
@@ -1324,6 +1325,29 @@ export function ScoreWheel({
     animation: "fadeUp 0.7s ease both",
     animationDelay: delay,
   })
+
+  const SLEEP_INFO: Record<string, { explanation: string; source: string }> = {
+    deep: {
+      explanation: "Deep sleep (slow-wave sleep) is when your body does its most important physical repair — releasing growth hormone, consolidating memories, and clearing metabolic waste from the brain via the glymphatic system. Low deep sleep is associated with impaired immune function and cognitive decline over time.",
+      source: "Walker, M. (2017). Why We Sleep. Xander Dumas et al., Nature Communications (2020) — glymphatic clearance during NREM sleep.",
+    },
+    hrv: {
+      explanation: "Heart rate variability measures variation in time between heartbeats — a proxy for how well your autonomic nervous system is balancing stress and recovery. Higher HRV generally reflects better cardiovascular fitness, lower inflammation, and greater resilience. HRV declines naturally with age, so Peaq uses age-adjusted targets.",
+      source: "Shaffer & Ginsberg (2017). Frontiers in Public Health — An Overview of Heart Rate Variability Metrics and Norms.",
+    },
+    spo2Avg: {
+      explanation: "Blood oxygen saturation during sleep reflects how well your lungs and cardiovascular system deliver oxygen at rest. Repeated dips below 94% may indicate sleep-disordered breathing, which is associated with elevated blood pressure, cognitive impairment, and increased cardiovascular risk.",
+      source: "American Academy of Sleep Medicine (AASM) — Clinical guidelines for sleep-related breathing disorders, 2023.",
+    },
+    rem: {
+      explanation: "REM sleep is when your brain processes emotional experiences and consolidates procedural memory. Adequate REM supports emotional regulation, creativity, and resilience. REM is suppressed by alcohol, some medications, and sleep fragmentation.",
+      source: "Stickgold, R. (2005). Sleep-dependent memory consolidation. Nature. Carskadon & Dement, Principles and Practice of Sleep Medicine.",
+    },
+    efficiency: {
+      explanation: "Sleep efficiency is the percentage of time in bed that you are actually asleep. High efficiency (≥85%) means you fall asleep quickly and stay asleep. Low efficiency can reflect anxiety, pain, sleep apnea, or poor sleep hygiene — and is the primary target in cognitive behavioral therapy for insomnia (CBT-I).",
+      source: "Buysse et al. (1989). Pittsburgh Sleep Quality Index. Morin et al. — CBT-I meta-analysis, Journal of Consulting and Clinical Psychology (2006).",
+    },
+  }
 
   const exerciseLabel: Record<string, string> = { active: "Active (4+ days/wk)", moderate: "Moderate (2–3 days/wk)", light: "Light (1 day/wk)", sedentary: "Sedentary" }
 
@@ -1521,11 +1545,11 @@ export function ScoreWheel({
             </p>
           )}
           {[
-            { name: "Deep sleep",       sub: "Slow-wave · target ≥17%",    val: sleepData?.deepPct,   unit: "% of TST",  flagKey: "deep",       max: 30 },
-            { name: "HRV",              sub: "RMSSD · target ≥50 ms",      val: sleepData?.hrv,       unit: "ms RMSSD",  flagKey: "hrv",        max: 100 },
-            { name: "SpO2",              sub: "Avg saturation · target ≥96%", val: sleepData?.spo2Avg, unit: "%",         flagKey: "spo2Avg",    max: 100 },
-            { name: "REM",              sub: "Target ≥18%",                 val: sleepData?.remPct,    unit: "% of TST",  flagKey: "rem",        max: 30 },
-            { name: "Sleep efficiency", sub: "Target ≥85%",                 val: sleepData?.efficiency,unit: "% in bed",  flagKey: "efficiency", max: 100 },
+            { name: "Deep sleep",       sub: "Slow-wave · target ≥17%",       val: sleepData?.deepPct,   unit: "% of TST",  flagKey: "deep",       max: 30 },
+            { name: "HRV",              sub: "RMSSD · age-adjusted target",   val: sleepData?.hrv,       unit: "ms RMSSD",  flagKey: "hrv",        max: 100 },
+            { name: "SpO2",             sub: "Avg saturation · target ≥96%",  val: sleepData?.spo2Avg,   unit: "%",         flagKey: "spo2Avg",    max: 100 },
+            { name: "REM",              sub: "Target ≥18%",                   val: sleepData?.remPct,    unit: "% of TST",  flagKey: "rem",        max: 30 },
+            { name: "Sleep efficiency", sub: "Target ≥85%",                   val: sleepData?.efficiency,unit: "% in bed",  flagKey: "efficiency", max: 100 },
           ].map(row => (
             <MarkerRow key={row.name} name={row.name} sub={row.sub}
               value={row.val ?? null} unit={row.unit}
@@ -1533,6 +1557,10 @@ export function ScoreWheel({
               barPct={row.val !== undefined ? fa(row.val, row.max) : 0}
               color="var(--sleep-c)" trackColor="var(--sleep-bg)"
               hoverBg="rgba(74,127,181,0.04)" mounted={mounted}
+              infoKey={row.flagKey}
+              expandedKey={expandedSleepMetric}
+              onInfoToggle={k => setExpandedSleepMetric(prev => prev === k ? null : k)}
+              infoContent={SLEEP_INFO[row.flagKey]}
             />
           ))}
 
