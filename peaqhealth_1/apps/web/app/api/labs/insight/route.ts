@@ -19,12 +19,13 @@ VOICE:
 STRICT RULES:
 1. Every insight must connect at least 2 panels. Single-panel observations are forbidden.
 2. Generate exactly 3 insight cards — never more, never fewer.
-3. Order is fixed: card 1 = POSITIVE, card 2 = WATCH, card 3 = EXPLORE.
+3. Order is fixed: card 1 = POSITIVE, card 2 = WATCH or EXPLORE, card 3 = LIFESTYLE TIE-IN.
 4. Only reference established biological relationships. Never invent terminology or mechanisms.
 5. Never say: "you have", "you are at risk", "indicates that you", "this means you have", "you should see a doctor", "you need to", or any diagnostic language.
 6. Instead say: "your data shows", "this pattern may suggest", "worth keeping an eye on", "an interesting connection", "something to explore with your doctor if curious"
 7. Actions must be lifestyle observations, not medical instructions. Frame as "something worth exploring" not "you must do X."
 8. Return ONLY valid JSON. No markdown, no backticks, no commentary.
+9. Card 3 MUST include the "lifestyle_field" key identifying which lifestyle field is referenced.
 
 CATEGORY DECISION RULES — apply these exactly:
 
@@ -44,10 +45,18 @@ WATCH (card 2) — the most clinically interesting cross-panel signal worth moni
 - The pattern is worth monitoring over time
 - Not alarming, just notable — the most interesting signal in the data
 
-EXPLORE (card 3) — something actionable the user can do based on their data:
-- A specific lifestyle or behavior change connected to at least 2 panels
-- Framed as a practical action, not a diagnosis
-- Even if data is strong overall, find the most useful thing worth trying
+EXPLORE (card 2) — the most interesting cross-panel signal worth monitoring or acting on:
+- One or more values outside their target range, OR an actionable behavior change
+- The most useful signal in the data
+
+LIFESTYLE TIE-IN (card 3) — MANDATORY. Connects lifestyle context to at least one measured panel:
+- References the user's actual reported lifestyle data (exercise, diet, stress, oral habits, etc.)
+- Connects it explicitly to a measured panel value (sleep HRV, blood hsCRP, oral burden, etc.)
+- Can be POSITIVE (lifestyle habit reflected in good data), WATCH (lifestyle factor worth examining), or EXPLORE (opportunity to improve)
+- Required even if lifestyle data is sparse — use what is available
+- category field must still be one of: "POSITIVE", "WATCH", "EXPLORE"
+- Must include "lifestyle_field" key identifying which lifestyle field is referenced
+- "panels" array must include "lifestyle" plus the measured panel(s) referenced
 
 TONE MUST MATCH CATEGORY:
 - POSITIVE body: affirming and specific — "Your REM at 26.7% and glucose at 83 mg/dL are moving together well", "This is a strong combination"
@@ -288,12 +297,16 @@ export async function GET() {
   // ── User prompt ────────────────────────────────────────────────────────────
   const userPrompt = `Generate exactly 3 cross-panel insights in this order: 1 POSITIVE, 1 WATCH, 1 EXPLORE.
 
-MANDATORY COMPOSITION:
+MANDATORY COMPOSITION — all 3 cards must follow this structure:
+1. POSITIVE — genuine strength across 2+ measured panels
+2. WATCH or EXPLORE — most interesting cross-panel signal
+3. LIFESTYLE TIE-IN — connects lifestyle context to at least one measured panel (sleep, blood, or oral). Can be POSITIVE OR WATCH OR EXPLORE. Must reference the user's actual reported lifestyle data. Required even if lifestyle data is sparse — use what's available.
+
+Additional rules:
 - Exactly 3 cards — no more, no fewer
-- Fixed order: card 1 = POSITIVE, card 2 = WATCH, card 3 = EXPLORE
 - Every insight connects at least 2 panels
 - Only generate insights supported by the user's actual data
-- Skip any panel that is unavailable
+- Skip any panel that is unavailable (but lifestyle is always available if any field is provided)
 
 BLOOD PANEL:
 ${bloodData ? `- hsCRP: ${hsCRPContext(bloodData.hsCRP_mgL as number | null)}
@@ -332,25 +345,54 @@ ${modifiersApplied.length > 0
   ? modifiersApplied.map(m => `${m.direction === 'bonus' ? '+' : '-'}${m.points} ${m.label}`).join('\n')
   : 'None active'}
 
-LIFESTYLE CONTEXT (not scored — informational only):
-${lifestyleData ? `- Age range: ${lifestyleData.ageRange ?? "not provided"}
-- Exercise: ${lifestyleData.exerciseLevel ?? "not provided"}
-- Smoking: ${lifestyleData.smokingStatus ?? "not provided"}
-- Brushing frequency: ${lifestyleData.brushingFreq ?? "not provided"}
-- Flossing frequency: ${lifestyleData.flossingFreq ?? "not provided"}
-- Mouthwash: ${lifestyleData.mouthwashType ?? "not provided"}
-- Stress: ${lifestyleData.stressLevel ?? "not provided"}` : "Not available"}
+LIFESTYLE (from health profile — not scored, informational context):
+- Age range: ${lifestyle?.age_range ?? "not provided"}
+- Exercise: ${lifestyle?.exercise_level ?? "not provided"}
+- Diet: ${(lifestyle as Record<string, unknown> | null)?.diet_pattern as string ?? "not provided"}
+- Smoking: ${lifestyle?.smoking_status ?? "not provided"}
+- Alcohol (drinks/week): ${lifestyle?.alcohol_drinks_per_week != null ? lifestyle.alcohol_drinks_per_week : "not provided"}
+- Brushing: ${lifestyle?.brushing_freq ?? "not provided"}
+- Flossing: ${lifestyle?.flossing_freq ?? "not provided"}
+- Mouthwash: ${lifestyle?.mouthwash_type ?? "not provided"}
+- Last dental visit: ${lifestyle?.last_dental_visit ?? "not provided"}
+- Stress (from profile): ${(lifestyleData as Record<string, unknown> | null)?.stressLevel as string ?? "not provided"}
 
 LIFESTYLE SELF-REPORT (most recent check-in: ${recentCheckin?.checked_in_at ?? "none"}):
-${recentCheckin ? `- Exercise: ${recentCheckin.exercise_frequency ?? "not reported"}
-- Diet: ${recentCheckin.diet_quality ?? "not reported"}
-- Stress: ${recentCheckin.stress_level ?? "not reported"}
-- Alcohol: ${recentCheckin.alcohol_frequency ?? "not reported"}
-- Sleep focus: ${(recentCheckin as Record<string, unknown>).sleep_priority ?? "not reported"}
-- Energy level: ${(recentCheckin as Record<string, unknown>).energy_level ?? "not reported"}
-- Blood pressure feeling: ${(recentCheckin as Record<string, unknown>).blood_pressure_feeling ?? "not reported"}
-- Supplements: ${Array.isArray((recentCheckin as Record<string, unknown>).supplements) && ((recentCheckin as Record<string, unknown>).supplements as string[]).length > 0 ? ((recentCheckin as Record<string, unknown>).supplements as string[]).join(", ") : "none reported"}` : "No check-in data available"}
-Note: these are self-reported relative changes, not absolute values. Use them to add context to insights but do not make strong claims from them.
+- Stress (from check-in): ${recentCheckin?.stress_level ?? "not reported"}
+- Recent exercise change: ${recentCheckin?.exercise_frequency ?? "not reported"}
+- Diet quality: ${recentCheckin?.diet_quality ?? "not reported"}
+- Alcohol frequency: ${(recentCheckin as Record<string, unknown> | null)?.alcohol_frequency as string ?? "not reported"}
+- Energy level: ${(recentCheckin as Record<string, unknown> | null)?.energy_level as string ?? "not reported"}
+- Supplements: ${Array.isArray((recentCheckin as Record<string, unknown>)?.supplements) && ((recentCheckin as Record<string, unknown>).supplements as string[]).length > 0 ? ((recentCheckin as Record<string, unknown>).supplements as string[]).join(", ") : "none reported"}
+Note: check-in values are self-reported relative changes, not absolute values.
+
+CARD 3 MUST connect at least one lifestyle field to a measured panel value. Use the actual field values — not generic advice.
+
+LIFESTYLE TIE-IN SIGNALS — generate card 3 from one of these if data supports:
+
+POSITIVE lifestyle signals:
+- Exercise = active/very_active + HRV ≥ 40ms → exercise supporting autonomic balance
+- Exercise = active/very_active + deep sleep ≥ 20% → physical activity and sleep architecture aligned
+- Flossing = daily + low periodontal burden → oral hygiene reflected in microbiome
+- Smoking = never + healthy LDL/hsCRP → non-smoking supporting cardiovascular markers
+- Alcohol = 0/low drinks per week + good HRV → low alcohol and autonomic recovery
+
+WATCH/EXPLORE lifestyle signals:
+- Stress = high (from check-in or profile) + HRV < 35ms → stress and autonomic balance worth watching
+- Stress = high + poor sleep efficiency → stress-sleep connection
+- Exercise = sedentary/light + elevated glucose → activity level and metabolic markers
+- Mouthwash = antiseptic + low nitrate reducers → mouthwash suppressing nitric oxide pathway
+- Flossing = never/rarely + elevated periodontal burden → oral hygiene and microbiome
+- Alcohol = moderate/high + low HRV → alcohol and recovery capacity
+- Smoking = current + any cardiovascular marker → smoking and cardiovascular markers
+- Brushing = once/less + elevated periodontal burden → brushing frequency and oral health
+
+NEUTRAL/INTERESTING:
+- Exercise = moderate + stable HRV → consistency showing in recovery data
+- Diet quality = poor/fair (from check-in) + elevated hsCRP → dietary pattern and inflammation
+
+If no specific signal matches, generate a general lifestyle-to-panel observation using whatever lifestyle data is available. Never skip card 3.
+Frame positives warmly. Frame watches with curiosity not alarm. Always use the user's actual reported values.
 SUPPLEMENT CONTEXT (apply when relevant):
 - If taking a statin: LDL and ApoB values may be lower than baseline due to treatment — note this as context rather than attributing the value solely to lifestyle
 - If taking fish oil: omega-3 supplementation is relevant to triglycerides and inflammatory markers like hsCRP — worth noting as a contributing factor if both are in a good range
@@ -382,7 +424,7 @@ Invalid POSITIVE examples (do not generate these):
 
 If no strong POSITIVE signal exists, pick the best available strength and frame it warmly. Do not invent connections that aren't there.
 
-Return a JSON array of exactly 3 insight objects in this order: POSITIVE, WATCH, EXPLORE:
+Return a JSON array of exactly 3 insight objects in this order: POSITIVE, WATCH/EXPLORE, LIFESTYLE TIE-IN:
 [
   {
     "id": "unique_string",
@@ -394,11 +436,34 @@ Return a JSON array of exactly 3 insight objects in this order: POSITIVE, WATCH,
     "category": "POSITIVE",
     "priority": 1,
     "citations": ["1-3 real published studies most relevant to this specific insight. Format: Author et al., Journal Name, Year. Only include studies you are highly confident exist — omit if uncertain."]
+  },
+  {
+    "id": "unique_string",
+    "panels": ["sleep", "blood"],
+    "headline": "...",
+    "body": "...",
+    "mechanism": "...",
+    "action": "...",
+    "category": "WATCH",
+    "priority": 2,
+    "citations": []
+  },
+  {
+    "id": "lifestyle_tie",
+    "panels": ["lifestyle", "sleep"],
+    "lifestyle_field": "exercise_level",
+    "headline": "...",
+    "body": "References the user's actual exercise_level value and connects it to their HRV or sleep metric with specific numbers.",
+    "mechanism": "...",
+    "action": "...",
+    "category": "POSITIVE",
+    "priority": 3,
+    "citations": []
   }
 ]
 
 category must be exactly one of: "POSITIVE", "WATCH", "EXPLORE"
-Array order is fixed: index 0 = POSITIVE, index 1 = WATCH, index 2 = EXPLORE.`
+Array order is fixed: index 0 = POSITIVE, index 1 = WATCH or EXPLORE, index 2 = LIFESTYLE TIE-IN (panels must include "lifestyle", lifestyle_field must be present).`
 
   // ── Pre-call panel data log ────────────────────────────────────────────────
   console.log(
@@ -495,6 +560,20 @@ Array order is fixed: index 0 = POSITIVE, index 1 = WATCH, index 2 = EXPLORE.`
     .slice(0, 3)
 
   if (validated.length < 3) console.warn(`[labs-insight] fewer than 3 valid cards: ${validated.length}`)
+
+  // Validate lifestyle tie-in card (card 3) exists and has required fields
+  const lifestyleCard = validated.find(c => {
+    const card = c as Record<string, unknown>
+    return Array.isArray(card.panels) && (card.panels as string[]).includes("lifestyle")
+  })
+  if (!lifestyleCard) {
+    console.warn("[labs-insight] no lifestyle tie-in card generated — lifestyle data available:", !!lifestyleData || !!recentCheckin)
+  } else {
+    const lc = lifestyleCard as Record<string, unknown>
+    if (!lc.lifestyle_field) console.warn("[labs-insight] lifestyle card missing lifestyle_field key")
+    else console.log(`[labs-insight] lifestyle tie-in: field=${lc.lifestyle_field} category=${lc.category}`)
+  }
+
   console.log(`[labs-insight] insight generated successfully — cards: ${validated.length}`)
 
   return NextResponse.json(validated)
