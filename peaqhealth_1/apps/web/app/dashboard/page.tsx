@@ -82,13 +82,16 @@ export default async function DashboardPage() {
     providerSlug: bestNights[0]?.source ?? (wearable?.provider ?? "unknown"),
   } : undefined
 
-  // Auto-heal stale/zero/v1 snapshot. Fires when:
+  // Auto-heal stale/zero/v1/outdated snapshot. Fires when:
   // 1. No snapshot at all (first load ever)
   // 2. score=0 but panel data exists (disconnect regression / cron race)
   // 3. v1 snapshot (no base_score column) — force v2 recalculation
+  // 4. Engine version < 8.0 — force recalculation with latest weights
   const snapshotIsV1 = snapshot && !snapshot.base_score
-  const snapshotIsStaleZero = !snapshot || (Number(snapshot.score) === 0 && (!!lab || !!oral || !!lifestyle)) || snapshotIsV1
+  const snapshotIsOutdated = snapshot && snapshot.engine_version !== "8.1"
+  const snapshotIsStaleZero = !snapshot || (Number(snapshot.score) === 0 && (!!lab || !!oral || !!lifestyle)) || snapshotIsV1 || snapshotIsOutdated
   if (snapshotIsV1) console.log("[dashboard] v1 snapshot detected — forcing v2 recalculation for:", user.id)
+  if (snapshotIsOutdated) console.log("[dashboard] outdated engine version", snapshot?.engine_version, "— forcing recalculation for:", user.id)
   console.log("[dashboard] snapshotIsStaleZero:", snapshotIsStaleZero, "score:", Number(snapshot?.score ?? 0), "isV1:", !!snapshotIsV1)
   if (snapshotIsStaleZero) {
     console.log("[dashboard] stale/zero/v1 snapshot — auto-recalculating for:", user.id)

@@ -429,7 +429,7 @@ export async function recalculateScore(
     await supabase.from("score_snapshots").insert({
       user_id:                userId,
       calculated_at:          new Date().toISOString(),
-      engine_version:         "8.0",
+      engine_version:         "8.1",
       score:                  finalScore,
       category:               finalScore >= 85 ? "excellent" : finalScore >= 70 ? "good" : finalScore >= 55 ? "fair" : "needs_attention",
       sleep_sub:              sleepSub,
