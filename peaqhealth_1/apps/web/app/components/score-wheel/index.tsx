@@ -1234,6 +1234,7 @@ export function ScoreWheel({
   const [showModifiers, setShowModifiers] = useState(false)
   const [expandedSleepMetric, setExpandedSleepMetric] = useState<string | null>(null)
   const [sleepHidden, setSleepHidden] = useState(false)
+  const [toastVisible, setToastVisible] = useState(false)
   const sleepPanelRef    = useRef<CollapsiblePanelHandle>(null)
   const bloodPanelRef    = useRef<CollapsiblePanelHandle>(null)
   const oralPanelRef     = useRef<CollapsiblePanelHandle>(null)
@@ -1245,7 +1246,8 @@ export function ScoreWheel({
     map[key]?.current?.scrollAndOpen()
   }
 
-  useCountUp(score, 1400, 200, setDisplayScore)
+  const visualScore = sleepHidden ? Math.max(0, score - breakdown.sleepSub) : score
+  useCountUp(visualScore, 1400, 200, setDisplayScore)
   useCountUp(breakdown.sleepSub, 900, 350, setDisplaySleep)
   useCountUp(breakdown.bloodSub, 900, 450, setDisplayBlood)
   useCountUp(breakdown.oralSub, 900, 550, setDisplayOral)
@@ -1364,7 +1366,16 @@ export function ScoreWheel({
     >
       <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)" }}>Sleep panel</span>
       <button
-        onClick={(e) => { e.stopPropagation(); setSleepHidden(o => { const next = !o; localStorage.setItem('peaq-sleep-panel-hidden', next ? 'true' : 'false'); return next }) }}
+        onClick={(e) => {
+          e.stopPropagation()
+          setSleepHidden(o => {
+            const next = !o
+            localStorage.setItem('peaq-sleep-panel-hidden', next ? 'true' : 'false')
+            setToastVisible(true)
+            setTimeout(() => setToastVisible(false), 3000)
+            return next
+          })
+        }}
         style={{
           width: '32px', height: '18px', borderRadius: '9px',
           background: sleepHidden ? 'var(--ink-12)' : '#4A7FB5',
@@ -1406,6 +1417,9 @@ export function ScoreWheel({
           color: "var(--ink-30)", margin: "8px 0 0",
         }}>
           YOUR PEAQ SCORE · {new Date().toLocaleString("en-US", { month: "long", year: "numeric" }).toUpperCase()}
+          {sleepHidden && (
+            <span style={{ color: '#4A7FB5', marginLeft: '6px' }}>· OUT OF 70</span>
+          )}
         </p>
 
         {/* Cross-panel modifiers */}
@@ -1429,8 +1443,12 @@ export function ScoreWheel({
                   <p key={m.id} style={{
                     fontFamily: "var(--font-body)", fontSize: 12, margin: 0,
                     color: m.direction === "bonus" ? "#2D6A4F" : "#C0392B",
+                    opacity: (sleepHidden && m.panels?.includes('sleep')) ? 0.4 : 1,
                   }}>
                     {m.direction === "bonus" ? "+" : "−"}{m.points} {m.label}
+                    {sleepHidden && m.panels?.includes('sleep') && (
+                      <span style={{ color: 'var(--ink-30)', fontSize: '11px' }}> (sleep paused)</span>
+                    )}
                   </p>
                 ))}
               </div>
@@ -1883,6 +1901,27 @@ export function ScoreWheel({
       <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, textAlign: "center", color: "var(--ink-30)", maxWidth: 400, margin: "0 auto", lineHeight: 1.7 }}>
         For informational purposes only. Peaq does not provide medical advice. Always consult a licensed healthcare provider regarding your results.
       </p>
+
+      {/* SLEEP TOGGLE TOAST */}
+      {toastVisible && (
+        <div style={{
+          position: 'fixed', bottom: '24px', left: '50%',
+          transform: 'translateX(-50%)',
+          background: 'var(--ink)', color: 'var(--white)',
+          padding: '10px 20px', borderRadius: '20px',
+          fontSize: '13px', fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+          zIndex: 1000, boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          display: 'flex', alignItems: 'center', gap: '8px',
+          animation: 'fadeInUp 0.2s ease',
+          whiteSpace: 'nowrap',
+        }}>
+          {sleepHidden ? (
+            <><span style={{ color: '#4A7FB5' }}>○</span> Sleep paused — score now out of 70</>
+          ) : (
+            <><span style={{ color: '#4A7FB5' }}>●</span> Sleep restored — score now out of 100</>
+          )}
+        </div>
+      )}
     </div>
   )
 }

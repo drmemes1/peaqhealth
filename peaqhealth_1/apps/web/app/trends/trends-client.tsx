@@ -679,6 +679,56 @@ function SleepNarrativeCard() {
   )
 }
 
+// ─── SleepPausedCard ────────────────────────────────────────────────────────────
+
+function SleepPausedCard() {
+  const font = "var(--font-body, 'Instrument Sans', sans-serif)"
+  return (
+    <div style={{
+      background: 'var(--white)',
+      border: '0.5px solid var(--ink-12)',
+      borderTop: '3px solid #4A7FB5',
+      borderRadius: 8,
+      padding: '20px 24px',
+      marginBottom: '12px',
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+        <span style={{ fontFamily: font, fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#4A7FB5', fontWeight: 500 }}>
+          Sleep · paused
+        </span>
+        <a href="/settings#wearables" style={{ fontFamily: font, fontSize: '11px', color: '#4A7FB5', textDecoration: 'none', fontWeight: 500 }}>
+          Manage →
+        </a>
+      </div>
+      <div style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: '18px', color: 'var(--ink)', lineHeight: 1.4, marginBottom: '10px' }}>
+        Your sleep panel is currently paused
+      </div>
+      <p style={{ fontFamily: font, fontSize: '13px', color: 'var(--ink-40)', lineHeight: 1.65, marginBottom: '16px' }}>
+        Sleep is the only panel that updates every night — it gives Peaq the longitudinal signal that makes your score meaningful over time. HRV, deep sleep, and sleep efficiency directly connect to your blood and oral microbiome signals.
+      </p>
+      {[
+        { connection: 'Sleep → Blood', text: 'Poor sleep architecture elevates cortisol and drives insulin resistance — measurable in your blood panel.' },
+        { connection: 'Sleep → Oral', text: 'Low HRV and low oral nitrate reducers are connected through the nitric oxide pathway.' },
+        { connection: 'Sleep → Score', text: 'With sleep active, your score reflects 30 additional points based on nightly objective data.' },
+      ].map(item => (
+        <div key={item.connection} style={{ marginBottom: '10px', paddingLeft: '10px', borderLeft: '2px solid rgba(74,127,181,0.25)' }}>
+          <div style={{ fontFamily: font, fontSize: '10px', fontWeight: 500, color: '#4A7FB5', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: '2px' }}>
+            {item.connection}
+          </div>
+          <div style={{ fontFamily: font, fontSize: '12px', color: 'var(--ink-50, var(--ink-60))', lineHeight: 1.55 }}>
+            {item.text}
+          </div>
+        </div>
+      ))}
+      <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '0.5px solid var(--ink-08)', display: 'flex', gap: '12px' }}>
+        <a href="/settings#wearables" style={{ fontFamily: font, fontSize: '12px', fontWeight: 500, color: '#4A7FB5', textDecoration: 'none' }}>
+          Re-enable sleep →
+        </a>
+      </div>
+    </div>
+  )
+}
+
 // ─── Component ──────────────────────────────────────────────────────────────────
 
 export function TrendsClient() {
@@ -687,6 +737,7 @@ export function TrendsClient() {
   const [weeklySnapshot, setWeeklySnapshot] = useState<WeeklySnapshot | null>(null)
 
   const [syncing, setSyncing] = useState(false)
+  const [sleepHidden, setSleepHidden] = useState(false)
 
   // Check-in form state
   const [lifestyleChanged, setLifestyleChanged] = useState<boolean | null>(null)
@@ -716,6 +767,11 @@ export function TrendsClient() {
       .then(r => r.json())
       .then(d => { if (d.snapshot) setWeeklySnapshot(d.snapshot as WeeklySnapshot) })
       .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    const stored = localStorage.getItem('peaq-sleep-panel-hidden')
+    if (stored === 'true') setSleepHidden(true)
   }, [])
 
   async function handleNoChange() {
@@ -821,6 +877,15 @@ export function TrendsClient() {
         )}
 
         <WeeklySnapshotCard snapshot={weeklySnapshot} />
+        {sleepHidden && weeklySnapshot && (
+          <p style={{
+            fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+            fontSize: '11px', color: 'var(--ink-30)', fontStyle: 'italic',
+            margin: '-16px 0 24px 4px',
+          }}>
+            Showing blood + oral signals only — sleep panel is paused.
+          </p>
+        )}
 
         {/* ─── NEXT FULL SNAPSHOT (always visible) ─────────── */}
         <div style={{ ...card, marginBottom: 24 }}>
@@ -859,6 +924,11 @@ export function TrendsClient() {
         {data && data.snapshots.length > 0 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
 
+            {/* ─── SLEEP SECTIONS (hidden when sleep paused) ── */}
+            {sleepHidden ? (
+              <SleepPausedCard />
+            ) : (
+              <>
             {/* ─── LAST NIGHT ──────────────────────────────── */}
             {hasSleep && (() => {
               const daysSince = data!.daysSinceLastSleep ?? null
@@ -948,6 +1018,8 @@ export function TrendsClient() {
 
             {/* ─── SLEEP NARRATIVE ─────────────────────────── */}
             {hasSleep && <SleepNarrativeCard />}
+              </>
+            )}
 
             {/* ─── CROSS-PANEL ALERT ───────────────────────── */}
             {data!.showCrossPanelAlert && (

@@ -627,6 +627,9 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
             <p className="font-body text-xs leading-relaxed" style={{ color: 'var(--ink-40)', margin: 0, maxWidth: '340px' }}>
               When enabled, nightly WHOOP/Oura data contributes 30pts to your Peaq score. Disable if you prefer a blood + oral only baseline.
             </p>
+            <p className="font-body" style={{ fontSize: '11px', color: sleepHidden ? '#C0392B' : '#2D6A4F', margin: '4px 0 0' }}>
+              {sleepHidden ? 'Sleep is paused — score shown out of 70' : 'Sleep is active — contributing up to 30pts'}
+            </p>
           </div>
           <button
             onClick={() => {
