@@ -195,42 +195,210 @@ const STATUS_COLORS: Record<Flag, string> = {
   good: "#2D6A4F", watch: "#B8860B", attention: "#C2510A", elevated: "#C0392B", pending: "var(--ink-12)", not_tested: "var(--ink-12)",
 }
 
-// Spectrum bar marker row — positioned dot on track with optional optimal zone
-function SpectrumRow({ name, value, unit, f, min, max, optMin, optMax }: {
-  name: string; value: number | undefined; unit: string; f: Flag
-  min: number; max: number; optMin: number; optMax: number
-}) {
-  if (!value || value === 0) return null
-  const clamp = (v: number) => Math.max(0, Math.min(100, v))
-  const pct = clamp(((value - min) / (max - min)) * 100)
-  const optMinPct = clamp(((optMin - min) / (max - min)) * 100)
-  const optMaxPct = clamp(((optMax - min) / (max - min)) * 100)
-  const dotColor = f === "good" ? "#2D6A4F" : f === "watch" ? "#B8860B" : f === "attention" ? "#C0392B" : "var(--ink-30)"
-  const badgeBg   = f === "good" ? "#EAF3DE" : f === "watch" ? "#FEF3C7" : f === "attention" ? "#FEE2E2" : "var(--warm-50)"
-  const badgeText = f === "good" ? "#2D6A4F" : f === "watch" ? "#92400E" : f === "attention" ? "#991B1B" : "var(--ink-60)"
-  const badgeLabel = f === "good" ? "Optimal" : f === "watch" ? "Watch" : f === "attention" ? "Attention" : "—"
+
+const BLOOD_ZONES: Record<string, {
+  zones: { label: string; color: string; min: number; max: number }[]
+  unit: string
+  markerColor: string
+}> = {
+  hsCRP: {
+    unit: 'mg/L',
+    markerColor: '#C0392B',
+    zones: [
+      { label: 'Optimal', color: '#D4EDDA', min: 0,   max: 0.5  },
+      { label: 'Good',    color: '#FFF3CD', min: 0.5, max: 1.0  },
+      { label: 'Watch',   color: '#FFE0B2', min: 1.0, max: 3.0  },
+      { label: 'High',    color: '#FFCDD2', min: 3.0, max: 10.0 },
+    ]
+  },
+  LDL: {
+    unit: 'mg/dL',
+    markerColor: '#C0392B',
+    zones: [
+      { label: 'Optimal', color: '#D4EDDA', min: 0,   max: 70  },
+      { label: 'Good',    color: '#FFF3CD', min: 70,  max: 100 },
+      { label: 'Watch',   color: '#FFE0B2', min: 100, max: 130 },
+      { label: 'High',    color: '#FFCDD2', min: 130, max: 200 },
+    ]
+  },
+  HDL: {
+    unit: 'mg/dL',
+    markerColor: '#2D6A4F',
+    zones: [
+      { label: 'Low',     color: '#FFCDD2', min: 0,  max: 40  },
+      { label: 'Watch',   color: '#FFE0B2', min: 40, max: 50  },
+      { label: 'Good',    color: '#FFF3CD', min: 50, max: 60  },
+      { label: 'Optimal', color: '#D4EDDA', min: 60, max: 100 },
+    ]
+  },
+  glucose: {
+    unit: 'mg/dL',
+    markerColor: '#C0392B',
+    zones: [
+      { label: 'Optimal', color: '#D4EDDA', min: 70,  max: 85  },
+      { label: 'Good',    color: '#FFF3CD', min: 85,  max: 99  },
+      { label: 'Watch',   color: '#FFE0B2', min: 99,  max: 125 },
+      { label: 'High',    color: '#FFCDD2', min: 125, max: 200 },
+    ]
+  },
+  lpA: {
+    unit: 'mg/dL',
+    markerColor: '#C0392B',
+    zones: [
+      { label: 'Optimal', color: '#D4EDDA', min: 0,  max: 30  },
+      { label: 'Watch',   color: '#FFE0B2', min: 30, max: 50  },
+      { label: 'High',    color: '#FFCDD2', min: 50, max: 100 },
+    ]
+  },
+  triglycerides: {
+    unit: 'mg/dL',
+    markerColor: '#C0392B',
+    zones: [
+      { label: 'Optimal', color: '#D4EDDA', min: 0,   max: 100 },
+      { label: 'Good',    color: '#FFF3CD', min: 100, max: 150 },
+      { label: 'Watch',   color: '#FFE0B2', min: 150, max: 200 },
+      { label: 'High',    color: '#FFCDD2', min: 200, max: 500 },
+    ]
+  },
+  eGFR: {
+    unit: 'mL/min',
+    markerColor: '#4A7FB5',
+    zones: [
+      { label: 'Low',     color: '#FFCDD2', min: 0,   max: 60  },
+      { label: 'Watch',   color: '#FFE0B2', min: 60,  max: 90  },
+      { label: 'Good',    color: '#FFF3CD', min: 90,  max: 105 },
+      { label: 'Optimal', color: '#D4EDDA', min: 105, max: 150 },
+    ]
+  },
+  hemoglobin: {
+    unit: 'g/dL',
+    markerColor: '#C0392B',
+    zones: [
+      { label: 'Low',     color: '#FFCDD2', min: 0,    max: 12.0 },
+      { label: 'Watch',   color: '#FFE0B2', min: 12.0, max: 13.5 },
+      { label: 'Good',    color: '#FFF3CD', min: 13.5, max: 14.5 },
+      { label: 'Optimal', color: '#D4EDDA', min: 14.5, max: 18.0 },
+    ]
+  },
+}
+
+function RangeBar({ value, markerKey }: { value: number | null; markerKey: string }) {
+  const config = BLOOD_ZONES[markerKey]
+  if (!config || value === null || value === 0) return (
+    <div style={{ height: '8px', background: 'var(--ink-08)', borderRadius: '4px', flex: 1 }} />
+  )
+
+  const zones = config.zones
+  const totalMin = zones[0].min
+  const totalMax = zones[zones.length - 1].max
+  const totalRange = totalMax - totalMin
+  const clampedValue = Math.max(totalMin, Math.min(totalMax, value))
+  const markerPct = ((clampedValue - totalMin) / totalRange) * 100
 
   return (
-    <div style={{ padding: "10px 0", borderBottom: "0.5px solid var(--ink-06)" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-          <div style={{ width: 7, height: 7, borderRadius: "50%", background: dotColor, flexShrink: 0 }} />
-          <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink)" }}>{name}</span>
+    <div style={{ flex: 1, position: 'relative' }}>
+      <div style={{ display: 'flex', height: '8px', borderRadius: '4px', overflow: 'hidden', gap: '1px' }}>
+        {zones.map((zone, i) => {
+          const zonePct = ((zone.max - zone.min) / totalRange) * 100
+          return (
+            <div
+              key={i}
+              style={{
+                flex: `0 0 ${zonePct}%`,
+                background: zone.color,
+                borderRadius: i === 0 ? '4px 0 0 4px' : i === zones.length - 1 ? '0 4px 4px 0' : '0',
+              }}
+            />
+          )
+        })}
+      </div>
+      <div style={{
+        position: 'absolute', top: '50%', left: `${markerPct}%`,
+        transform: 'translate(-50%, -50%)',
+        width: '12px', height: '12px', borderRadius: '50%',
+        background: config.markerColor,
+        border: '2px solid white',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+        zIndex: 2,
+      }} />
+      <div style={{ display: 'flex', marginTop: '4px', gap: '1px' }}>
+        {zones.map((zone, i) => {
+          const zonePct = ((zone.max - zone.min) / totalRange) * 100
+          return (
+            <div key={i} style={{
+              flex: `0 0 ${zonePct}%`,
+              fontSize: '9px', color: 'var(--ink-30)', textAlign: 'center' as const,
+              letterSpacing: '0.04em', textTransform: 'uppercase' as const,
+              overflow: 'hidden', whiteSpace: 'nowrap' as const,
+            }}>
+              {zone.label}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function BloodMarkerRow({
+  name, sub, value, unit, flag: f, zoneKey, mounted,
+}: {
+  name: string
+  sub: string
+  value: number | null
+  unit: string
+  flag: Flag
+  zoneKey: string | null
+  mounted: boolean
+}) {
+  const font = "var(--font-body, 'Instrument Sans', sans-serif)"
+  const isNotTested = value === null || value === 0
+  const effectiveFlag = isNotTested && f !== "pending" ? "not_tested" : f
+  const fs = {
+    good:       { bg: "#EAF3DE", text: "#2D6A4F",          label: "Good" },
+    watch:      { bg: "#FEF3C7", text: "#92400E",          label: "Watch" },
+    attention:  { bg: "#FEF0E6", text: "#C2510A",          label: "Attention" },
+    elevated:   { bg: "#FEECEC", text: "#C0392B",          label: "Elevated" },
+    pending:    { bg: "var(--warm-50)", text: "var(--ink-60)",  label: "Pending" },
+    not_tested: { bg: "var(--warm-50)", text: "var(--ink-30)", label: "—" },
+  }[effectiveFlag]
+
+  return (
+    <div style={{ padding: "10px 0", borderBottom: "0.5px solid var(--ink-06)", opacity: isNotTested ? 0.5 : 1 }}>
+      {/* Top row: name + value + badge */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: zoneKey && !isNotTested ? 8 : 0 }}>
+        <div>
+          <p style={{ fontFamily: font, fontSize: 13, color: "var(--ink)", margin: 0 }}>{name}</p>
+          <p style={{ fontFamily: font, fontSize: 11, color: "var(--ink-60)", margin: "1px 0 0" }}>{sub}</p>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink)" }}>
-            {formatValue(value)} <span style={{ fontSize: 10, color: "var(--ink-30)" }}>{unit}</span>
+          {isNotTested ? (
+            <span style={{ fontFamily: font, fontSize: 11, color: "var(--ink-30)" }}>Not tested</span>
+          ) : (
+            <span style={{ fontFamily: font, fontSize: 13, color: "var(--ink)" }}>
+              {value != null ? (Math.round((value as number) * 10) / 10) : "—"}{" "}
+              <span style={{ fontSize: 10, color: "var(--ink-30)" }}>{unit}</span>
+            </span>
+          )}
+          <span style={{
+            fontFamily: font, fontSize: 9, textTransform: "uppercase" as const,
+            letterSpacing: "0.05em", padding: "3px 8px", borderRadius: 3,
+            background: fs!.bg, color: fs!.text,
+          }}>
+            {fs!.label}
           </span>
-          <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "3px 8px", borderRadius: 3, background: badgeBg, color: badgeText }}>{badgeLabel}</span>
         </div>
       </div>
-      {/* Track */}
-      <div style={{ position: "relative", height: 4, borderRadius: 2, background: "var(--ink-08)", margin: "0 0 2px" }}>
-        {/* Optimal zone */}
-        <div style={{ position: "absolute", top: 0, bottom: 0, left: `${optMinPct}%`, width: `${optMaxPct - optMinPct}%`, background: "rgba(45,106,79,0.15)", borderRadius: 2 }} />
-        {/* Dot */}
-        <div style={{ position: "absolute", top: "50%", left: `${pct}%`, transform: "translate(-50%, -50%)", width: 8, height: 8, borderRadius: "50%", background: dotColor, border: "1.5px solid var(--white)", boxShadow: "0 1px 3px rgba(0,0,0,0.2)", zIndex: 1 }} />
-      </div>
+      {/* Range bar — only when zone exists and has a value */}
+      {zoneKey && !isNotTested && (
+        <RangeBar value={value} markerKey={zoneKey} />
+      )}
+      {/* Simple grey bar for tested markers without a zone */}
+      {!zoneKey && !isNotTested && mounted && (
+        <div style={{ height: '3px', background: 'var(--blood-bg)', borderRadius: 2, marginTop: 4 }}>
+          <div style={{ height: '100%', width: '100%', background: 'var(--blood-c)', borderRadius: 2, opacity: 0.4 }} />
+        </div>
+      )}
     </div>
   )
 }
@@ -1691,64 +1859,53 @@ export function ScoreWheel({
           </p>
         )}
         <div style={{ borderTop: "0.5px solid var(--ink-12)" }}>
-          {[
-            { name: "hsCRP",         sub: "High-sensitivity · target <0.5",  val: bloodData?.hsCRP,         unit: "mg/L",  flagKey: "hsCRP",    max: 5    },
-            { name: "Vitamin D",     sub: "25-OH · target 30–60 ng/mL",      val: bloodData?.vitaminD,       unit: "ng/mL", flagKey: "vitaminD", max: 80   },
-            { name: "ApoB",          sub: "Particles · target <90",           val: bloodData?.apoB,           unit: "mg/dL", flagKey: "apoB",     max: 150  },
-            { name: "LDL : HDL",     sub: "Ratio · target <2.0",             val: bloodData?.ldlHdlRatio,    unit: "ratio", flagKey: "ldlHdl",   max: 5    },
-            { name: "HbA1c",         sub: "Glycaemia · target <5.4%",        val: bloodData?.hba1c,          unit: "%",     flagKey: "hba1c",    max: 8    },
-            { name: "Lp(a)",         sub: "Lipoprotein(a) · target <30",     val: bloodData?.lpa,            unit: "mg/dL", flagKey: "lpa",      max: 80   },
-            { name: "Triglycerides", sub: "Target <150 mg/dL",               val: bloodData?.triglycerides,  unit: "mg/dL", flagKey: "tg",       max: 300  },
-          ].map(row => {
-            const notTested = row.val === undefined || row.val === 0
-            return (
-              <MarkerRow key={row.name} name={row.name} sub={row.sub}
-                value={notTested ? null : formatValue(row.val!)} unit={row.unit}
-                flag={notTested ? "not_tested" : bf ? (bf[row.flagKey as keyof typeof bf] as Flag) : "pending"}
-                barPct={notTested ? 0 : fa(row.val!, row.max)}
-                color="var(--blood-c)" trackColor="var(--blood-bg)"
-                hoverBg="rgba(192,57,43,0.04)" mounted={mounted}
-              />
-            )
-          })}
-        </div>
-        {bloodData && (() => {
-          const useApoB = bloodData.apoB > 0
-          const useLDL  = !useApoB && bloodData.ldl > 0
-          const useHbA1c = bloodData.hba1c > 0 && bloodData.glucose === 0
-          return (
-            <div style={{ marginTop: 4 }}>
-              {useApoB && (
-                <SpectrumRow name="ApoB" value={bloodData.apoB} unit="mg/dL"
-                  f={bf!.apoB} min={40} max={160} optMin={40} optMax={90} />
-              )}
-              {useLDL && (
-                <SpectrumRow name="LDL" value={bloodData.ldl} unit="mg/dL"
-                  f={bf!.ldl} min={40} max={220} optMin={40} optMax={100} />
-              )}
+          {bloodData ? (
+            <>
+              {/* Primary markers — always shown (not tested if missing) */}
+              <BloodMarkerRow name="hs-CRP"        sub="High-sensitivity · target <0.5"    value={bloodData.hsCRP}        unit="mg/L"  flag={bflag(bloodData.hsCRP, bloodData.hsCRP < 0.5, bloodData.hsCRP < 2.0)}           zoneKey="hsCRP"        mounted={mounted} />
+              <BloodMarkerRow name="Lp(a)"         sub="Lipoprotein(a) · target <30"       value={bloodData.lpa}          unit="mg/dL" flag={bflag(bloodData.lpa, bloodData.lpa < 30, bloodData.lpa < 50)}                   zoneKey="lpA"          mounted={mounted} />
+              <BloodMarkerRow name="Triglycerides" sub="Target <150 mg/dL"                 value={bloodData.triglycerides} unit="mg/dL" flag={bflag(bloodData.triglycerides, bloodData.triglycerides < 150, bloodData.triglycerides < 200)} zoneKey="triglycerides" mounted={mounted} />
+              {/* ApoB if available, else LDL */}
+              {bloodData.apoB > 0 ? (
+                <BloodMarkerRow name="ApoB"   sub="Particles · target <90"   value={bloodData.apoB}   unit="mg/dL" flag={bflag(bloodData.apoB, bloodData.apoB < 90, bloodData.apoB < 120)}     zoneKey={null} mounted={mounted} />
+              ) : bloodData.ldl > 0 ? (
+                <BloodMarkerRow name="LDL"    sub="LDL-C · target <100"      value={bloodData.ldl}    unit="mg/dL" flag={bflag(bloodData.ldl, bloodData.ldl < 100, bloodData.ldl < 130)}        zoneKey="LDL"  mounted={mounted} />
+              ) : null}
+              {/* HDL */}
               {bloodData.hdl > 0 && (
-                <SpectrumRow name="HDL" value={bloodData.hdl} unit="mg/dL"
-                  f={bf!.hdl} min={20} max={100} optMin={60} optMax={100} />
+                <BloodMarkerRow name="HDL"    sub="Target >60 mg/dL"          value={bloodData.hdl}    unit="mg/dL" flag={bflag(bloodData.hdl, bloodData.hdl >= 60, bloodData.hdl >= 40)}        zoneKey="HDL"  mounted={mounted} />
               )}
+              {/* Glucose */}
               {bloodData.glucose > 0 && (
-                <SpectrumRow name="Glucose" value={bloodData.glucose} unit="mg/dL"
-                  f={bf!.glucose} min={60} max={180} optMin={70} optMax={99} />
+                <BloodMarkerRow name="Glucose" sub="Fasting · target 70–85"  value={bloodData.glucose} unit="mg/dL" flag={bflag(bloodData.glucose, bloodData.glucose >= 70 && bloodData.glucose < 85, bloodData.glucose < 99)} zoneKey="glucose" mounted={mounted} />
               )}
-              {useHbA1c && (
-                <SpectrumRow name="HbA1c" value={bloodData.hba1c} unit="%"
-                  f={bf!.hba1c} min={4} max={10} optMin={4} optMax={5.4} />
+              {/* HbA1c — show if explicitly present */}
+              {bloodData.hba1c > 0 && (
+                <BloodMarkerRow name="HbA1c"     sub="Glycaemia · target <5.4%"   value={bloodData.hba1c}     unit="%"     flag={bflag(bloodData.hba1c, bloodData.hba1c < 5.4, bloodData.hba1c < 5.7)}               zoneKey={null} mounted={mounted} />
               )}
+              {/* Vitamin D */}
+              {bloodData.vitaminD > 0 && (
+                <BloodMarkerRow name="Vitamin D" sub="25-OH · target 30–60 ng/mL" value={bloodData.vitaminD}   unit="ng/mL" flag={bflag(bloodData.vitaminD, bloodData.vitaminD >= 30 && bloodData.vitaminD <= 60, bloodData.vitaminD >= 20)} zoneKey={null} mounted={mounted} />
+              )}
+              {/* LDL:HDL ratio */}
+              {bloodData.ldlHdlRatio > 0 && (
+                <BloodMarkerRow name="LDL : HDL" sub="Ratio · target <2.0"         value={bloodData.ldlHdlRatio} unit="ratio" flag={bflag(bloodData.ldlHdlRatio, bloodData.ldlHdlRatio < 2.0, bloodData.ldlHdlRatio < 3.0)}       zoneKey={null} mounted={mounted} />
+              )}
+              {/* eGFR */}
               {bloodData.egfr > 0 && (
-                <SpectrumRow name="eGFR" value={bloodData.egfr} unit="mL/min"
-                  f={bf!.egfr} min={0} max={130} optMin={90} optMax={130} />
+                <BloodMarkerRow name="eGFR"       sub="Kidney function · target >90" value={bloodData.egfr}       unit="mL/min" flag={bflag(bloodData.egfr, bloodData.egfr >= 90, bloodData.egfr >= 60)}                  zoneKey="eGFR" mounted={mounted} />
               )}
+              {/* Hemoglobin */}
               {bloodData.hemoglobin > 0 && (
-                <SpectrumRow name="Hemoglobin" value={bloodData.hemoglobin} unit="g/dL"
-                  f={bf!.hemoglobin} min={8} max={20} optMin={12} optMax={17.5} />
+                <BloodMarkerRow name="Hemoglobin" sub="Red blood cells"               value={bloodData.hemoglobin} unit="g/dL"   flag={bflag(bloodData.hemoglobin, bloodData.hemoglobin >= 12 && bloodData.hemoglobin <= 17.5, bloodData.hemoglobin >= 10)} zoneKey="hemoglobin" mounted={mounted} />
               )}
-            </div>
-          )
-        })()}
+            </>
+          ) : (
+            <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink-40)", padding: "16px 0" }}>
+              No blood data on file. Upload your lab results to see markers.
+            </p>
+          )}
+        </div>
         {(() => {
           const missing = computeRelevantMissing(bloodData, lifestyleData, oralData)
           if (missing.length === 0) return null
