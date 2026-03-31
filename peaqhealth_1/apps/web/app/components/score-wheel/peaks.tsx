@@ -31,6 +31,7 @@ export interface PeaksProps {
   hasBlood:        boolean
   oralActive:      boolean
   hasLifestyle:    boolean
+  sleepGhosted?:   boolean
   onPeakHover?:    (key: string | null) => void
   onPeakClick?:    (key: string) => void
 }
@@ -38,14 +39,14 @@ export interface PeaksProps {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function PeaksVisualization({
-  breakdown, sleepConnected, hasBlood, oralActive, hasLifestyle, onPeakHover, onPeakClick,
+  breakdown, sleepConnected, hasBlood, oralActive, hasLifestyle, sleepGhosted, onPeakHover, onPeakClick,
 }: PeaksProps) {
   const rawScores = [
     breakdown.sleepSub,
     breakdown.bloodSub,
     breakdown.oralSub,
   ]
-  const pending = [!sleepConnected, !hasBlood, !oralActive]
+  const pending = [!sleepConnected || (sleepGhosted ?? false), !hasBlood, !oralActive]
 
   // Score ratios (0–1) for height and width scaling
   const ratios = rawScores.map((s, i) => {

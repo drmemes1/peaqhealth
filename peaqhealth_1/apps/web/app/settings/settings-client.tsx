@@ -373,6 +373,7 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
 
   const [whoopConnected, setWhoopConnected] = useState(initialWhoopConnected)
   const [junctionConnections, setJunctionConnections] = useState<JunctionConnection[]>(initialJunctionConnections)
+  const [sleepHidden, setSleepHidden] = useState(false)
 
   // Smooth-scroll to #wearables when arriving from a dashboard CTA
   useEffect(() => {
@@ -380,6 +381,11 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
       const el = document.getElementById("wearables")
       if (el) el.scrollIntoView({ behavior: "smooth", block: "start" })
     }
+  }, [])
+
+  useEffect(() => {
+    const stored = localStorage.getItem('peaq-sleep-panel-hidden')
+    if (stored === 'true') setSleepHidden(true)
   }, [])
 
 
@@ -603,6 +609,48 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
             setJunctionConnections(prev => prev.filter(c => c.provider !== provider))
           }
         />
+        <div style={{
+          marginTop: '12px',
+          padding: '14px 16px',
+          background: 'var(--white)',
+          border: '0.5px solid var(--ink-12)',
+          borderRadius: 4,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: '16px',
+        }}>
+          <div>
+            <p className="font-body text-sm" style={{ color: 'var(--ink)', marginBottom: '3px' }}>
+              Include sleep in score
+            </p>
+            <p className="font-body text-xs leading-relaxed" style={{ color: 'var(--ink-40)', margin: 0, maxWidth: '340px' }}>
+              When enabled, nightly WHOOP/Oura data contributes 30pts to your Peaq score. Disable if you prefer a blood + oral only baseline.
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              const next = !sleepHidden
+              setSleepHidden(next)
+              localStorage.setItem('peaq-sleep-panel-hidden', next ? 'true' : 'false')
+            }}
+            style={{
+              width: '44px', height: '24px', borderRadius: '12px',
+              background: sleepHidden ? 'var(--ink-12)' : '#4A7FB5',
+              border: 'none', cursor: 'pointer', position: 'relative',
+              transition: 'background 0.2s ease', flexShrink: 0,
+              padding: 0,
+            }}
+          >
+            <div style={{
+              position: 'absolute', top: '3px',
+              left: sleepHidden ? '3px' : '20px',
+              width: '18px', height: '18px', borderRadius: '50%',
+              background: 'white', transition: 'left 0.2s ease',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+            }} />
+          </button>
+        </div>
       </section>
 
       {/* ── Account ─────────────────────────────────────────────────── */}

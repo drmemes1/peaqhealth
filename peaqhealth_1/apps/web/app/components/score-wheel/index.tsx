@@ -1233,6 +1233,7 @@ export function ScoreWheel({
   const [openMissingTooltip, setOpenMissingTooltip] = useState<string | null>(null)
   const [showModifiers, setShowModifiers] = useState(false)
   const [expandedSleepMetric, setExpandedSleepMetric] = useState<string | null>(null)
+  const [sleepHidden, setSleepHidden] = useState(false)
   const sleepPanelRef    = useRef<CollapsiblePanelHandle>(null)
   const bloodPanelRef    = useRef<CollapsiblePanelHandle>(null)
   const oralPanelRef     = useRef<CollapsiblePanelHandle>(null)
@@ -1257,6 +1258,11 @@ export function ScoreWheel({
       setTimeout(() => setScorePulse(false), 400)
     }, 1800)
     return () => clearTimeout(t)
+  }, [])
+
+  useEffect(() => {
+    const stored = localStorage.getItem('peaq-sleep-panel-hidden')
+    if (stored === 'true') setSleepHidden(true)
   }, [])
 
   const hasBlood = labFreshness !== "none" && labFreshness !== "expired"
@@ -1350,6 +1356,33 @@ export function ScoreWheel({
   }
 
   const exerciseLabel: Record<string, string> = { active: "Active (4+ days/wk)", moderate: "Moderate (2–3 days/wk)", light: "Light (1 day/wk)", sedentary: "Sedentary" }
+
+  const sleepToggle = sleepConnected ? (
+    <div
+      style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'var(--ink-30)' }}
+      onClick={e => e.stopPropagation()}
+    >
+      <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)" }}>Sleep panel</span>
+      <button
+        onClick={(e) => { e.stopPropagation(); setSleepHidden(o => { const next = !o; localStorage.setItem('peaq-sleep-panel-hidden', next ? 'true' : 'false'); return next }) }}
+        style={{
+          width: '32px', height: '18px', borderRadius: '9px',
+          background: sleepHidden ? 'var(--ink-12)' : '#4A7FB5',
+          border: 'none', cursor: 'pointer', position: 'relative',
+          transition: 'background 0.2s ease', flexShrink: 0,
+          padding: 0,
+        }}
+      >
+        <div style={{
+          position: 'absolute', top: '2px',
+          left: sleepHidden ? '2px' : '14px',
+          width: '14px', height: '14px', borderRadius: '50%',
+          background: 'white', transition: 'left 0.2s ease',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
+        }} />
+      </button>
+    </div>
+  ) : null
 
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: "0 0 80px", display: "flex", flexDirection: "column", gap: 52 }}>
@@ -1459,6 +1492,7 @@ export function ScoreWheel({
               hasBlood={hasBlood}
               oralActive={oralActive}
               hasLifestyle={false}
+              sleepGhosted={sleepHidden}
               onPeakHover={setHoveredRing}
               onPeakClick={handlePeakClick}
             />
@@ -1493,6 +1527,7 @@ export function ScoreWheel({
           sleepDesc={sleepDesc} bloodDesc={bloodDesc} oralDesc={oralDesc}
           staleBadge={staleBadge} mounted={mounted} hoveredRing={hoveredRing}
           interactionsFired={interactionsFired}
+          oralKitStatus={oralKitStatus}
         />
       </div>
 
@@ -1531,49 +1566,56 @@ export function ScoreWheel({
         defaultOpen={sleepConnected}
         delay="0.14s"
         fadeUpFn={fadeUp}
+        headerExtra={sleepToggle}
       >
-        <div style={{ borderTop: "0.5px solid var(--ink-12)" }}>
+        {!sleepHidden ? (
+          <div style={{ borderTop: "0.5px solid var(--ink-12)" }}>
 
-          {(sleepData || whoopData?.connected) && (
-            <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "var(--ink-40)", padding: "8px 0 0", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#22C55E", display: "inline-block", flexShrink: 0 }} />
-              {sleepData?.device || "Wearable"} connected
-              {(() => {
-                const raw = sleepData?.lastSync || whoopData?.lastSynced
-                return raw ? ` · Last sync ${new Date(raw).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : ""
-              })()}
-            </p>
-          )}
-          {[
-            { name: "Deep sleep",       sub: "Slow-wave · target ≥17%",       val: sleepData?.deepPct,   unit: "% of TST",  flagKey: "deep",       max: 30 },
-            { name: "HRV",              sub: "RMSSD · age-adjusted target",   val: sleepData?.hrv,       unit: "ms RMSSD",  flagKey: "hrv",        max: 100 },
-            { name: "SpO2",             sub: "Avg saturation · target ≥96%",  val: sleepData?.spo2Avg,   unit: "%",         flagKey: "spo2Avg",    max: 100 },
-            { name: "REM",              sub: "Target ≥18%",                   val: sleepData?.remPct,    unit: "% of TST",  flagKey: "rem",        max: 30 },
-            { name: "Sleep efficiency", sub: "Target ≥85%",                   val: sleepData?.efficiency,unit: "% in bed",  flagKey: "efficiency", max: 100 },
-          ].map(row => (
-            <MarkerRow key={row.name} name={row.name} sub={row.sub}
-              value={row.val ?? null} unit={row.unit}
-              flag={sf ? (sf[row.flagKey as keyof typeof sf] as Flag) : "pending"}
-              barPct={row.val !== undefined ? fa(row.val, row.max) : 0}
-              color="var(--sleep-c)" trackColor="var(--sleep-bg)"
-              hoverBg="rgba(74,127,181,0.04)" mounted={mounted}
-              infoKey={row.flagKey}
-              expandedKey={expandedSleepMetric}
-              onInfoToggle={k => setExpandedSleepMetric(prev => prev === k ? null : k)}
-              infoContent={SLEEP_INFO[row.flagKey]}
-            />
-          ))}
+            {(sleepData || whoopData?.connected) && (
+              <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "var(--ink-40)", padding: "8px 0 0", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#22C55E", display: "inline-block", flexShrink: 0 }} />
+                {sleepData?.device || "Wearable"} connected
+                {(() => {
+                  const raw = sleepData?.lastSync || whoopData?.lastSynced
+                  return raw ? ` · Last sync ${new Date(raw).toLocaleDateString("en-US", { month: "short", day: "numeric" })}` : ""
+                })()}
+              </p>
+            )}
+            {[
+              { name: "Deep sleep",       sub: "Slow-wave · target ≥17%",       val: sleepData?.deepPct,   unit: "% of TST",  flagKey: "deep",       max: 30 },
+              { name: "HRV",              sub: "RMSSD · age-adjusted target",   val: sleepData?.hrv,       unit: "ms RMSSD",  flagKey: "hrv",        max: 100 },
+              { name: "SpO2",             sub: "Avg saturation · target ≥96%",  val: sleepData?.spo2Avg,   unit: "%",         flagKey: "spo2Avg",    max: 100 },
+              { name: "REM",              sub: "Target ≥18%",                   val: sleepData?.remPct,    unit: "% of TST",  flagKey: "rem",        max: 30 },
+              { name: "Sleep efficiency", sub: "Target ≥85%",                   val: sleepData?.efficiency,unit: "% in bed",  flagKey: "efficiency", max: 100 },
+            ].map(row => (
+              <MarkerRow key={row.name} name={row.name} sub={row.sub}
+                value={row.val ?? null} unit={row.unit}
+                flag={sf ? (sf[row.flagKey as keyof typeof sf] as Flag) : "pending"}
+                barPct={row.val !== undefined ? fa(row.val, row.max) : 0}
+                color="var(--sleep-c)" trackColor="var(--sleep-bg)"
+                hoverBg="rgba(74,127,181,0.04)" mounted={mounted}
+                infoKey={row.flagKey}
+                expandedKey={expandedSleepMetric}
+                onInfoToggle={k => setExpandedSleepMetric(prev => prev === k ? null : k)}
+                infoContent={SLEEP_INFO[row.flagKey]}
+              />
+            ))}
 
-          {/* Wearable status */}
-          {!sleepData && !whoopData?.connected && (
-            <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "var(--ink-40)", marginTop: 12 }}>
-              No wearable connected —{" "}
-              <a href="/settings#wearables" style={{ color: "var(--sleep-c)", textDecoration: "none" }}>
-                Go to Settings →
-              </a>
-            </p>
-          )}
-        </div>
+            {/* Wearable status */}
+            {!sleepData && !whoopData?.connected && (
+              <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "var(--ink-40)", marginTop: 12 }}>
+                No wearable connected —{" "}
+                <a href="/settings#wearables" style={{ color: "var(--sleep-c)", textDecoration: "none" }}>
+                  Go to Settings →
+                </a>
+              </p>
+            )}
+          </div>
+        ) : (
+          <div style={{ padding: '12px 0', fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: '12px', color: 'var(--ink-30)', fontStyle: 'italic' }}>
+            Sleep panel hidden — toggle above to re-enable.
+          </div>
+        )}
       </CollapsiblePanel>
 
       {/* BLOOD MARKERS */}
