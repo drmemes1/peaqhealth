@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
         "",
         "Peaq Health · peaqhealth.me",
       ].join("\n"),
-      attachments: [{ filename, content: pdfBuffer.toString("base64") }],
+      attachments: [{ filename, content: Buffer.from(pdfBuffer).toString("base64") }],
     })
 
     if (error) {
