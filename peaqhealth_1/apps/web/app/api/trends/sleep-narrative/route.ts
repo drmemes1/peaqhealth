@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { createClient } from "../../../../lib/supabase/server"
 import { createClient as createServiceClient } from "@supabase/supabase-js"
 import OpenAI from "openai"
+import { ageRangeToMidpoint, getHRVTarget } from "../../../../lib/score/recalculate"
 
 export const dynamic = "force-dynamic"
 
@@ -100,7 +101,7 @@ export async function GET() {
 
     supabase
       .from("lifestyle_records")
-      .select("exercise_level, stress_level, age_range, mouthwash_type")
+      .select("exercise_level, stress_level, age_range, biological_sex, mouthwash_type")
       .eq("user_id", userId)
       .order("updated_at", { ascending: false })
       .limit(1)
@@ -120,6 +121,11 @@ export async function GET() {
 
   const modifiers = (snapshotRes.data?.modifiers_applied ?? []) as Array<{ label: string; points: number; direction: string }>
 
+  const ageRange = lifestyleRes.data?.age_range as string | null
+  const biologicalSex = lifestyleRes.data?.biological_sex as string | null
+  const age = ageRangeToMidpoint(ageRange)
+  const hrvTarget = getHRVTarget(age)
+
   // ── Build prompt ──────────────────────────────────────────────────────────
   const systemPrompt = `You are the sleep intelligence engine for Peaq Health, a longevity platform built by a cardiologist and periodontist.
 
@@ -138,6 +144,7 @@ RULES:
 - If deep sleep is above 20% → celebrate it specifically with the number
 - If efficiency is above 85% → acknowledge it with the number
 - If HRV is below 50ms → note it without alarm
+- If age range is provided, contextualize HRV relative to their age group using the age-adjusted targets in the user prompt. A 43ms HRV may be good for a 45-year-old but below target for a 28-year-old. Never invent thresholds — only use the ones provided.
 - Return ONLY valid JSON. No markdown. No backticks.`
 
   const hrvTrendStr = hrvTrendPct != null
@@ -148,7 +155,7 @@ RULES:
 
 LAST ${sleepNights.length} NIGHTS (${fourteenDaysAgo} to ${today}):
 - Nights tracked: ${sleepNights.length}
-- Avg HRV: ${avgHrv != null ? `${avgHrv.toFixed(1)} ms${avgHrv >= 50 ? " (above 50ms target)" : " (below 50ms target)"}` : "no data"}
+- Avg HRV: ${avgHrv != null ? `${avgHrv.toFixed(1)} ms (age-adjusted target: ${hrvTarget.optimal}ms optimal, ${hrvTarget.good}ms good${avgHrv >= hrvTarget.optimal ? " — above optimal" : avgHrv >= hrvTarget.good ? " — good range" : " — below good range"})` : "no data"}
 - HRV trend vs last week: ${hrvTrendStr}
 - Avg deep sleep: ${avgDeep != null ? `${avgDeep.toFixed(1)}%${avgDeep >= 17 ? " (above 17% target)" : ""}` : "no data"}
 - Avg REM: ${avgRem != null ? `${avgRem.toFixed(1)}%${avgRem >= 18 ? " (above 18% target)" : ""}` : "no data"}
@@ -160,6 +167,8 @@ CROSS-PANEL CONTEXT:
 - Active cross-panel modifiers: ${modifiers.length > 0 ? modifiers.map(m => m.label).join(", ") : "none"}
 - Exercise level: ${lifestyleRes.data?.exercise_level ?? "not provided"}
 - Stress (self-reported): ${lifestyleRes.data?.stress_level ?? "not provided"}
+- User age range: ${ageRange ?? "not provided"}
+- User sex: ${biologicalSex ?? "not provided"}
 
 Return this exact JSON:
 {
