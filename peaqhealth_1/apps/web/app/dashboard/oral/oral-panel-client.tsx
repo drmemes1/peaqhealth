@@ -64,6 +64,14 @@ const PRIORITY_STYLE: Record<string, { bg: string; text: string; dot: string }> 
   POSITIVE:  { bg: "#EAF3DE", text: "#2D6A4F", dot: "#2D6A4F" },
 }
 
+const PRIORITY_DISPLAY: Record<string, string> = {
+  CRITICAL: "Notable signal",
+  HIGH:     "Worth discussing",
+  MEDIUM:   "Worth monitoring",
+  LOW:      "Interesting pattern",
+  POSITIVE: "Strong signal",
+}
+
 const PANEL_COLOR: Record<string, string> = {
   nitrate:    "#4A7FB5",
   periodontal: "#C0392B",
@@ -485,7 +493,7 @@ export function OralPanelClient({ oral, snapshot }: Props) {
                       {panelLabel}
                     </span>
                     <span style={{ fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "3px 8px", background: ps.bg, color: ps.text }}>
-                      {f.priority}
+                      {PRIORITY_DISPLAY[f.priority] ?? f.priority}
                     </span>
                   </div>
                 </div>
