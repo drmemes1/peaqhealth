@@ -207,12 +207,14 @@ STRICT RULES:
 - Keep body under 80 words — punchy, not exhaustive
 - Return ONLY valid JSON, no markdown, no backticks
 
-SCOPE:
-- This snapshot covers the FULL cross-panel picture — blood, oral, and sleep together
-- Do NOT generate a sleep-only summary — a dedicated sleep narrative card already handles that
-- Focus on cross-panel connections: how oral health affects sleep, how blood markers relate to recovery, how all three panels interact
-- If sleep is the only interesting signal, connect it to at least one other panel (blood or oral)
-- Never lead with sleep metrics alone
+SCOPE — CRITICAL:
+- This is a CROSS-PANEL summary. Sleep data alone is NOT sufficient for the headline or body.
+- The headline MUST connect at least two different panels (sleep + oral, sleep + blood, oral + blood).
+- Never lead with sleep metrics alone — a dedicated sleep narrative card already covers that.
+- Focus on: how oral health is affecting cardiovascular markers, how blood markers relate to recovery, what the cross-panel modifier signals mean for this user.
+- If the most interesting finding is sleep-related, connect it to oral or blood before mentioning it.
+- Example good headline: "Oral signals worth watching as sleep recovery holds strong"
+- Example bad headline: "Strong sleep stages despite oral health challenges" — this is sleep-focused, not cross-panel
 
 BODY RULES:
 - Do not summarize what the user can already see on their dashboard
