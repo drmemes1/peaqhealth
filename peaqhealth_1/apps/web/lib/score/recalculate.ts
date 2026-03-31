@@ -8,7 +8,7 @@ const PROVIDER_PRIORITY: Record<string, number> = { whoop: 0, oura: 1, garmin: 2
 
 // ─── Age helpers ─────────────────────────────────────────────────────────────
 
-function ageRangeToMidpoint(range: string | null | undefined): number {
+export function ageRangeToMidpoint(range: string | null | undefined): number {
   if (!range) return 45
   const map: Record<string, number> = {
     "under_30": 25, "18_29": 25, "20_29": 25,
@@ -23,7 +23,7 @@ function ageRangeToMidpoint(range: string | null | undefined): number {
   return isNaN(n) ? 45 : n
 }
 
-function getHRVTarget(age: number): { optimal: number; good: number; watch: number } {
+export function getHRVTarget(age: number): { optimal: number; good: number; watch: number } {
   if (age < 30) return { optimal: 60, good: 45, watch: 30 }
   if (age < 40) return { optimal: 55, good: 40, watch: 28 }
   if (age < 50) return { optimal: 48, good: 35, watch: 25 }
