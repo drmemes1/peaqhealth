@@ -117,8 +117,8 @@ const ORAL_ZONES: Record<string, {
     zones: [
       { label: 'Optimal', color: '#D4EDDA', min: 0,    max: 0.5  },
       { label: 'Good',    color: '#FFF3CD', min: 0.5,  max: 1.0  },
-      { label: 'Watch',   color: '#FFE0B2', min: 1.0,  max: 2.0  },
-      { label: 'Elevated',color: '#FFCDD2', min: 2.0,  max: 5.0  },
+      { label: 'Watch',   color: '#FFE0B2', min: 1.0,  max: 1.5  },
+      { label: 'Elevated',color: '#FFCDD2', min: 1.5,  max: 5.0  },
     ]
   },
   osa: {
@@ -275,19 +275,6 @@ function flag(good: boolean, ok: boolean): Flag {
 }
 
 // ─── Descriptor helpers for emerging-research dimensions ────────────────────
-
-function burdenDescriptor(
-  val: number | null,
-  thresholds: [number, number, number],
-): { label: string; status: "optimal" | "watch" | "attention" } {
-  if (val === null) return { label: "Not detected", status: "optimal" }
-  const [low, mid, high] = thresholds
-  if (val < low)  return { label: "Within target", status: "optimal" }
-  if (val < mid)  return { label: "Worth watching", status: "watch" }
-  if (val < high) return { label: "Elevated", status: "attention" }
-  return { label: "Notably elevated", status: "attention" }
-}
-
 // ─── Wellness-framed narrative (no disease language) ─────────────────────────
 
 function generateOralNarrative(periodontalBurden: number, nitrateReducerPct: number, shannonDiversity: number): string {
