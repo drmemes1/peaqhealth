@@ -88,6 +88,85 @@ const ADDITIONAL_NAMES: Record<string, { name: string; unit: string }> = {
   vldl_mgdl: { name: "VLDL", unit: "mg/dL" },
 }
 
+// ─── Clinical zone definitions ───────────────────────────────────────────────
+
+const BLOOD_ZONES: Record<string, {
+  zones: { label: string; color: string; min: number; max: number }[]
+  markerColor: string
+}> = {
+  ldl_mgdl:             { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 70 }, { label: 'Good', color: '#FFF3CD', min: 70, max: 100 }, { label: 'Watch', color: '#FFE0B2', min: 100, max: 130 }, { label: 'High', color: '#FFCDD2', min: 130, max: 200 }] },
+  hdl_mgdl:             { markerColor: '#2D6A4F', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 40 }, { label: 'Watch', color: '#FFE0B2', min: 40, max: 50 }, { label: 'Good', color: '#FFF3CD', min: 50, max: 60 }, { label: 'Optimal', color: '#D4EDDA', min: 60, max: 100 }] },
+  triglycerides_mgdl:   { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 100 }, { label: 'Good', color: '#FFF3CD', min: 100, max: 150 }, { label: 'Watch', color: '#FFE0B2', min: 150, max: 200 }, { label: 'High', color: '#FFCDD2', min: 200, max: 400 }] },
+  apob_mgdl:            { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 80 }, { label: 'Good', color: '#FFF3CD', min: 80, max: 100 }, { label: 'Watch', color: '#FFE0B2', min: 100, max: 130 }, { label: 'High', color: '#FFCDD2', min: 130, max: 200 }] },
+  lpa_mgdl:             { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 30 }, { label: 'Watch', color: '#FFE0B2', min: 30, max: 50 }, { label: 'High', color: '#FFCDD2', min: 50, max: 150 }] },
+  totalcholesterol_mgdl:{ markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 200 }, { label: 'Good', color: '#FFF3CD', min: 200, max: 240 }, { label: 'High', color: '#FFCDD2', min: 240, max: 400 }] },
+  hs_crp_mgl:           { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 0.5 }, { label: 'Good', color: '#FFF3CD', min: 0.5, max: 1.0 }, { label: 'Watch', color: '#FFE0B2', min: 1.0, max: 3.0 }, { label: 'High', color: '#FFCDD2', min: 3.0, max: 10.0 }] },
+  wbc_kul:              { markerColor: '#4A7FB5', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 4 }, { label: 'Optimal', color: '#D4EDDA', min: 4, max: 10 }, { label: 'Watch', color: '#FFE0B2', min: 10, max: 15 }, { label: 'High', color: '#FFCDD2', min: 15, max: 20 }] },
+  albumin_gdl:          { markerColor: '#2D6A4F', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 3.5 }, { label: 'Watch', color: '#FFE0B2', min: 3.5, max: 4.0 }, { label: 'Optimal', color: '#D4EDDA', min: 4.0, max: 5.5 }] },
+  glucose_mgdl:         { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 65, max: 85 }, { label: 'Good', color: '#FFF3CD', min: 85, max: 99 }, { label: 'Watch', color: '#FFE0B2', min: 99, max: 125 }, { label: 'High', color: '#FFCDD2', min: 125, max: 200 }] },
+  hba1c_pct:            { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 4, max: 5.4 }, { label: 'Good', color: '#FFF3CD', min: 5.4, max: 5.7 }, { label: 'Watch', color: '#FFE0B2', min: 5.7, max: 6.5 }, { label: 'High', color: '#FFCDD2', min: 6.5, max: 10 }] },
+  fastinginsulin_uiuml: { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 2, max: 8 }, { label: 'Watch', color: '#FFE0B2', min: 8, max: 20 }, { label: 'High', color: '#FFCDD2', min: 20, max: 30 }] },
+  uricacid_mgdl:        { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 3, max: 6 }, { label: 'Watch', color: '#FFE0B2', min: 6, max: 7 }, { label: 'High', color: '#FFCDD2', min: 7, max: 12 }] },
+  egfr_mlmin:           { markerColor: '#4A7FB5', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 60 }, { label: 'Watch', color: '#FFE0B2', min: 60, max: 90 }, { label: 'Good', color: '#FFF3CD', min: 90, max: 105 }, { label: 'Optimal', color: '#D4EDDA', min: 105, max: 150 }] },
+  creatinine_mgdl:      { markerColor: '#4A7FB5', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0.7, max: 1.3 }, { label: 'Watch', color: '#FFE0B2', min: 1.3, max: 1.5 }, { label: 'High', color: '#FFCDD2', min: 1.5, max: 3.0 }] },
+  bun_mgdl:             { markerColor: '#4A7FB5', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 7, max: 20 }, { label: 'Watch', color: '#FFE0B2', min: 20, max: 30 }, { label: 'High', color: '#FFCDD2', min: 30, max: 50 }] },
+  alt_ul:               { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 5, max: 33 }, { label: 'Watch', color: '#FFE0B2', min: 33, max: 56 }, { label: 'High', color: '#FFCDD2', min: 56, max: 100 }] },
+  ast_ul:               { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 5, max: 33 }, { label: 'Watch', color: '#FFE0B2', min: 33, max: 40 }, { label: 'High', color: '#FFCDD2', min: 40, max: 100 }] },
+  vitamin_d_ngml:       { markerColor: '#B8860B', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 20 }, { label: 'Watch', color: '#FFE0B2', min: 20, max: 30 }, { label: 'Good', color: '#FFF3CD', min: 30, max: 50 }, { label: 'Optimal', color: '#D4EDDA', min: 50, max: 100 }] },
+  hemoglobin_gdl:       { markerColor: '#C0392B', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 12.0 }, { label: 'Watch', color: '#FFE0B2', min: 12.0, max: 13.5 }, { label: 'Good', color: '#FFF3CD', min: 13.5, max: 14.5 }, { label: 'Optimal', color: '#D4EDDA', min: 14.5, max: 18.0 }] },
+  tsh_uiuml:            { markerColor: '#B8860B', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 0.5 }, { label: 'Optimal', color: '#D4EDDA', min: 0.5, max: 3.0 }, { label: 'Watch', color: '#FFE0B2', min: 3.0, max: 4.0 }, { label: 'High', color: '#FFCDD2', min: 4.0, max: 8.0 }] },
+  testosterone_ngdl:    { markerColor: '#4A7FB5', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 300 }, { label: 'Watch', color: '#FFE0B2', min: 300, max: 400 }, { label: 'Good', color: '#FFF3CD', min: 400, max: 700 }, { label: 'Optimal', color: '#D4EDDA', min: 700, max: 1200 }] },
+  ferritin_ngml:        { markerColor: '#B8860B', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 20 }, { label: 'Watch', color: '#FFE0B2', min: 20, max: 30 }, { label: 'Good', color: '#FFF3CD', min: 30, max: 100 }, { label: 'Optimal', color: '#D4EDDA', min: 100, max: 300 }] },
+}
+
+function RangeBar({ value, markerKey }: { value: number | null; markerKey: string }) {
+  const config = BLOOD_ZONES[markerKey]
+  if (!config || value === null || value === 0) return null
+
+  const zones = config.zones
+  const totalMin = zones[0].min
+  const totalMax = zones[zones.length - 1].max
+  const totalRange = totalMax - totalMin
+  const clampedValue = Math.max(totalMin, Math.min(totalMax, value))
+  const markerPct = ((clampedValue - totalMin) / totalRange) * 100
+  const zonePcts = zones.map(z => ((z.max - z.min) / totalRange) * 100)
+
+  return (
+    <div style={{ position: 'relative', marginTop: 6 }}>
+      <div style={{ display: 'flex', height: '8px', borderRadius: '4px', overflow: 'hidden', gap: '1px' }}>
+        {zones.map((zone, i) => (
+          <div key={i} style={{
+            flex: `0 0 ${zonePcts[i]}%`,
+            background: zone.color,
+            borderRadius: i === 0 ? '4px 0 0 4px' : i === zones.length - 1 ? '0 4px 4px 0' : '0',
+          }} />
+        ))}
+      </div>
+      <div style={{
+        position: 'absolute', top: '50%', left: `${markerPct}%`,
+        transform: 'translate(-50%, -50%)',
+        width: '12px', height: '12px', borderRadius: '50%',
+        background: config.markerColor,
+        border: '2px solid white',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+        zIndex: 2,
+      }} />
+      <div style={{ display: 'flex', marginTop: '4px', gap: '1px' }}>
+        {zones.map((zone, i) => (
+          <div key={i} style={{
+            flex: `0 0 ${zonePcts[i]}%`,
+            fontSize: '9px', color: 'var(--ink-30)', textAlign: 'center' as const,
+            letterSpacing: '0.04em', textTransform: 'uppercase' as const,
+            overflow: 'hidden', whiteSpace: 'nowrap' as const,
+          }}>
+            {zone.label}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ─── Status helpers ─────────────────────────────────────────────────────────
 
 type MarkerStatus = "optimal" | "good" | "watch" | "attention" | "retest" | "not_tested"
@@ -191,23 +270,27 @@ function MarkerRow({ val, def, isHsCRP }: { val: number | null; def: MarkerDef; 
           <p style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", margin: "2px 0 0 18px" }}>
             Target {def.target}
           </p>
-          {/* Spectrum bar */}
-          <div style={{ margin: "6px 0 0 18px", position: "relative", height: 12 }}>
-            <div style={{ position: "absolute", top: 5, left: 0, right: 0, height: 1, background: "var(--ink-08)" }} />
-            {/* Optimal zone */}
-            <div style={{
-              position: "absolute", top: 3, height: 5, borderRadius: 2,
-              left: `${(def.optimalRange[0] / def.displayMax) * 100}%`,
-              width: `${((def.optimalRange[1] - def.optimalRange[0]) / def.displayMax) * 100}%`,
-              background: "rgba(45,106,79,0.12)",
-            }} />
-            {/* Value dot */}
-            <div style={{
-              position: "absolute", top: 1, width: 8, height: 8, borderRadius: "50%",
-              background: s.dot,
-              left: `${Math.min((val! / def.displayMax) * 100, 100)}%`,
-              transform: "translateX(-50%)",
-            }} />
+          <div style={{ margin: "0 0 0 18px" }}>
+            {BLOOD_ZONES[def.key] ? (
+              <RangeBar value={val} markerKey={def.key} />
+            ) : (
+              /* Fallback spectrum bar for markers without zone definitions */
+              <div style={{ marginTop: 6, position: "relative", height: 12 }}>
+                <div style={{ position: "absolute", top: 5, left: 0, right: 0, height: 1, background: "var(--ink-08)" }} />
+                <div style={{
+                  position: "absolute", top: 3, height: 5, borderRadius: 2,
+                  left: `${(def.optimalRange[0] / def.displayMax) * 100}%`,
+                  width: `${((def.optimalRange[1] - def.optimalRange[0]) / def.displayMax) * 100}%`,
+                  background: "rgba(45,106,79,0.12)",
+                }} />
+                <div style={{
+                  position: "absolute", top: 1, width: 8, height: 8, borderRadius: "50%",
+                  background: s.dot,
+                  left: `${Math.min((val! / def.displayMax) * 100, 100)}%`,
+                  transform: "translateX(-50%)",
+                }} />
+              </div>
+            )}
           </div>
         </>
       )}
