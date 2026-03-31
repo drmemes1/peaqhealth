@@ -1880,11 +1880,11 @@ export function ScoreWheel({
               </p>
             )}
             {[
-              { name: "Deep sleep",       sub: "Slow-wave · target ≥17%",       val: sleepData?.deepPct,   unit: "% of TST",  flagKey: "deep",       max: 30 },
-              { name: "HRV",              sub: "RMSSD · age-adjusted target",   val: sleepData?.hrv,       unit: "ms RMSSD",  flagKey: "hrv",        max: 100 },
-              { name: "SpO2",             sub: "Avg saturation · target ≥96%",  val: sleepData?.spo2Avg,   unit: "%",         flagKey: "spo2Avg",    max: 100 },
-              { name: "REM",              sub: "Target ≥18%",                   val: sleepData?.remPct,    unit: "% of TST",  flagKey: "rem",        max: 30 },
-              { name: "Sleep efficiency", sub: "Target ≥85%",                   val: sleepData?.efficiency,unit: "% in bed",  flagKey: "efficiency", max: 100 },
+              { name: "Deep sleep",       sub: "Slow-wave · target ≥17%",       val: sleepData?.deepPct,    unit: "% of TST",  flagKey: "deep",       max: 30,  zoneKey: "deep"       },
+              { name: "HRV",              sub: "RMSSD · age-adjusted target",   val: sleepData?.hrv,        unit: "ms RMSSD",  flagKey: "hrv",        max: 100, zoneKey: "hrv"        },
+              { name: "SpO2",             sub: "Avg saturation · target ≥96%",  val: sleepData?.spo2Avg,    unit: "%",         flagKey: "spo2Avg",    max: 100, zoneKey: "spo2Avg"    },
+              { name: "REM",              sub: "Target ≥18%",                   val: sleepData?.remPct,     unit: "% of TST",  flagKey: "rem",        max: 30,  zoneKey: "rem"        },
+              { name: "Sleep efficiency", sub: "Target ≥85%",                   val: sleepData?.efficiency, unit: "% in bed",  flagKey: "efficiency", max: 100, zoneKey: "efficiency" },
             ].map(row => (
               <MarkerRow key={row.name} name={row.name} sub={row.sub}
                 value={row.val ?? null} unit={row.unit}
@@ -1892,6 +1892,7 @@ export function ScoreWheel({
                 barPct={row.val !== undefined ? fa(row.val, row.max) : 0}
                 color="var(--sleep-c)" trackColor="var(--sleep-bg)"
                 hoverBg="rgba(74,127,181,0.04)" mounted={mounted}
+                zoneKey={row.zoneKey}
                 infoKey={row.flagKey}
                 expandedKey={expandedSleepMetric}
                 onInfoToggle={k => setExpandedSleepMetric(prev => prev === k ? null : k)}
