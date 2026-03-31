@@ -24,6 +24,8 @@ const toOralPct = (v: unknown): number | null => {
   return Math.min(n > 1 ? n : n * 100, 100)
 }
 
+// periodontalBurden and osaBurden are stored as raw fractional abundances (0–1 scale, same as OTU entries)
+// Thresholds: 0.005 = 0.5% reads, 0.02 = 2% reads, 0.05 = 5% reads — consistent with labs/insight route
 function burdenLevel(val: number | null): string {
   if (val === null) return "not detected"
   if (val < 0.005) return "within target"
@@ -36,6 +38,7 @@ export async function GET() {
   const sessionClient = await createClient()
   const { data: { user } } = await sessionClient.auth.getUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return NextResponse.json({ error: "Misconfigured" }, { status: 503 })
 
   const supabase = svc()
   const userId = user.id

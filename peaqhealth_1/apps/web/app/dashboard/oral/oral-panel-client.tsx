@@ -283,7 +283,7 @@ export function OralPanelClient({ oral, snapshot }: Props) {
 
   useEffect(() => {
     fetch("/api/oral/narrative")
-      .then(r => r.ok ? r.json() : null)
+      .then(r => { if (!r.ok) { console.warn("[OralPanel] narrative fetch non-ok:", r.status); return null; } return r.json() })
       .then(data => {
         if (data?.narrative) setAiNarrative(data.narrative as OralNarrative)
       })

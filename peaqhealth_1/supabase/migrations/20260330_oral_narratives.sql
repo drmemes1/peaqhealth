@@ -20,7 +20,3 @@ create policy "Users can read own oral narratives"
   on oral_narratives for select
   using (auth.uid() = user_id);
 
-create policy "Service role can write oral narratives"
-  on oral_narratives for all
-  using (true)
-  with check (true);
