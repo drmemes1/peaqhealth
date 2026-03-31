@@ -144,25 +144,28 @@ function OralRangeBar({ value, zoneKey }: { value: number; zoneKey: string }) {
   const zonePcts = zones.map(z => ((z.max - z.min) / totalRange) * 100)
 
   return (
-    <div style={{ position: 'relative', marginTop: 6 }}>
-      <div style={{ display: 'flex', height: '6px', borderRadius: '3px', overflow: 'hidden', gap: '1px' }}>
-        {zones.map((zone, i) => (
-          <div key={i} style={{
-            flex: `0 0 ${zonePcts[i]}%`,
-            background: zone.color,
-            borderRadius: i === 0 ? '3px 0 0 3px' : i === zones.length - 1 ? '0 3px 3px 0' : '0',
-          }} />
-        ))}
+    <div style={{ marginTop: 6 }}>
+      <div style={{ position: 'relative', height: '14px', display: 'flex', alignItems: 'center' }}>
+        <div style={{ position: 'absolute', left: 0, right: 0, height: '6px', display: 'flex', borderRadius: '3px', overflow: 'hidden', gap: '1px' }}>
+          {zones.map((zone, i) => (
+            <div key={i} style={{
+              flex: `0 0 ${zonePcts[i]}%`,
+              background: zone.color,
+              borderRadius: i === 0 ? '3px 0 0 3px' : i === zones.length - 1 ? '0 3px 3px 0' : '0',
+            }} />
+          ))}
+        </div>
+        <div style={{
+          position: 'absolute', top: '50%', left: `${markerPct}%`,
+          transform: 'translate(-50%, -50%)',
+          width: '10px', height: '10px', borderRadius: '50%',
+          background: config.markerColor,
+          border: '2px solid white',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
+          zIndex: 2,
+          pointerEvents: 'none',
+        }} />
       </div>
-      <div style={{
-        position: 'absolute', top: '50%', left: `${markerPct}%`,
-        transform: 'translate(-50%, -50%)',
-        width: '10px', height: '10px', borderRadius: '50%',
-        background: config.markerColor,
-        border: '2px solid white',
-        boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
-        zIndex: 2,
-      }} />
     </div>
   )
 }

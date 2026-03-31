@@ -280,6 +280,16 @@ const BLOOD_ZONES: Record<string, {
       { label: 'Optimal', color: '#D4EDDA', min: 14.5, max: 18.0 },
     ]
   },
+  ldlHdlRatio: {
+    unit: 'ratio',
+    markerColor: '#C0392B',
+    zones: [
+      { label: 'Optimal', color: '#D4EDDA', min: 0,   max: 1.5 },
+      { label: 'Good',    color: '#FFF3CD', min: 1.5, max: 2.0 },
+      { label: 'Watch',   color: '#FFE0B2', min: 2.0, max: 3.0 },
+      { label: 'High',    color: '#FFCDD2', min: 3.0, max: 5.0 },
+    ]
+  },
 }
 
 function RangeBar({ value, markerKey }: { value: number | null; markerKey: string }) {
@@ -296,32 +306,35 @@ function RangeBar({ value, markerKey }: { value: number | null; markerKey: strin
   const markerPct = ((clampedValue - totalMin) / totalRange) * 100
 
   return (
-    <div style={{ flex: 1, position: 'relative' }}>
-      <div style={{ display: 'flex', height: '8px', borderRadius: '4px', overflow: 'hidden', gap: '1px' }}>
-        {zones.map((zone, i) => {
-          const zonePct = ((zone.max - zone.min) / totalRange) * 100
-          return (
-            <div
-              key={i}
-              style={{
-                flex: `0 0 ${zonePct}%`,
-                background: zone.color,
-                borderRadius: i === 0 ? '4px 0 0 4px' : i === zones.length - 1 ? '0 4px 4px 0' : '0',
-              }}
-            />
-          )
-        })}
+    <div style={{ flex: 1 }}>
+      <div style={{ position: 'relative', height: '16px', display: 'flex', alignItems: 'center' }}>
+        <div style={{ position: 'absolute', left: 0, right: 0, height: '8px', display: 'flex', borderRadius: '4px', overflow: 'hidden', gap: '1px' }}>
+          {zones.map((zone, i) => {
+            const zonePct = ((zone.max - zone.min) / totalRange) * 100
+            return (
+              <div
+                key={i}
+                style={{
+                  flex: `0 0 ${zonePct}%`,
+                  background: zone.color,
+                  borderRadius: i === 0 ? '4px 0 0 4px' : i === zones.length - 1 ? '0 4px 4px 0' : '0',
+                }}
+              />
+            )
+          })}
+        </div>
+        <div style={{
+          position: 'absolute', top: '50%', left: `${markerPct}%`,
+          transform: 'translate(-50%, -50%)',
+          width: '12px', height: '12px', borderRadius: '50%',
+          background: config.markerColor,
+          border: '2px solid white',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+          zIndex: 2,
+          pointerEvents: 'none',
+        }} />
       </div>
-      <div style={{
-        position: 'absolute', top: '50%', left: `${markerPct}%`,
-        transform: 'translate(-50%, -50%)',
-        width: '12px', height: '12px', borderRadius: '50%',
-        background: config.markerColor,
-        border: '2px solid white',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-        zIndex: 2,
-      }} />
-      <div style={{ display: 'flex', marginTop: '4px', gap: '1px' }}>
+      <div style={{ display: 'flex', marginTop: '2px', gap: '1px' }}>
         {zones.map((zone, i) => {
           const zonePct = ((zone.max - zone.min) / totalRange) * 100
           return (
@@ -330,6 +343,7 @@ function RangeBar({ value, markerKey }: { value: number | null; markerKey: strin
               fontSize: '9px', color: 'var(--ink-30)', textAlign: 'center' as const,
               letterSpacing: '0.04em', textTransform: 'uppercase' as const,
               overflow: 'hidden', whiteSpace: 'nowrap' as const,
+              userSelect: 'none' as const,
             }}>
               {zone.label}
             </div>
@@ -1668,7 +1682,7 @@ export function ScoreWheel({
     { name: "Glucose",      sub: "Fasting · target 70–85",             value: bloodData.glucose,       unit: "mg/dL", flag: bflag(bloodData.glucose, bloodData.glucose >= 70 && bloodData.glucose < 85, bloodData.glucose < 99),            zoneKey: "glucose",      infoKey: "glucose" },
     { name: "HbA1c",        sub: "Glycaemia · target <5.4%",           value: bloodData.hba1c,         unit: "%",     flag: bflag(bloodData.hba1c, bloodData.hba1c < 5.4, bloodData.hba1c < 5.7),                                          zoneKey: null,           infoKey: "hbA1c" },
     { name: "Vitamin D",    sub: "25-OH · target 30–60 ng/mL",        value: bloodData.vitaminD,       unit: "ng/mL", flag: bflag(bloodData.vitaminD, bloodData.vitaminD >= 30 && bloodData.vitaminD <= 60, bloodData.vitaminD >= 20),      zoneKey: null,           infoKey: "vitaminD" },
-    { name: "LDL : HDL",   sub: "Ratio · target <2.0",                value: bloodData.ldlHdlRatio,    unit: "ratio", flag: bflag(bloodData.ldlHdlRatio, bloodData.ldlHdlRatio < 2.0, bloodData.ldlHdlRatio < 3.0),                       zoneKey: null,           infoKey: null },
+    { name: "LDL : HDL",   sub: "Ratio · target <2.0",                value: bloodData.ldlHdlRatio,    unit: "ratio", flag: bflag(bloodData.ldlHdlRatio, bloodData.ldlHdlRatio < 2.0, bloodData.ldlHdlRatio < 3.0),                       zoneKey: "ldlHdlRatio",  infoKey: null },
     { name: "eGFR",         sub: "Kidney function · target >90",       value: bloodData.egfr,          unit: "mL/min",flag: bflag(bloodData.egfr, bloodData.egfr >= 90, bloodData.egfr >= 60),                                             zoneKey: "eGFR",         infoKey: "eGFR" },
     { name: "Hemoglobin",   sub: "Red blood cells",                    value: bloodData.hemoglobin,     unit: "g/dL",  flag: bflag(bloodData.hemoglobin, bloodData.hemoglobin >= 12 && bloodData.hemoglobin <= 17.5, bloodData.hemoglobin >= 10), zoneKey: "hemoglobin", infoKey: "hemoglobin" },
   ] : []
