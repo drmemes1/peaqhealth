@@ -342,6 +342,7 @@ function RangeBar({ value, markerKey }: { value: number | null; markerKey: strin
 
 function BloodMarkerRow({
   name, sub, value, unit, flag: f, zoneKey, mounted,
+  infoKey, expandedKey, onInfoToggle, infoContent,
 }: {
   name: string
   sub: string
@@ -350,6 +351,10 @@ function BloodMarkerRow({
   flag: Flag
   zoneKey: string | null
   mounted: boolean
+  infoKey?: string
+  expandedKey?: string | null
+  onInfoToggle?: (key: string) => void
+  infoContent?: { explanation: string; source: string }
 }) {
   const font = "var(--font-body, 'Instrument Sans', sans-serif)"
   const isNotTested = value === null || value === 0
@@ -362,41 +367,76 @@ function BloodMarkerRow({
     pending:    { bg: "var(--warm-50)", text: "var(--ink-60)",  label: "Pending" },
     not_tested: { bg: "var(--warm-50)", text: "var(--ink-30)", label: "—" },
   }[effectiveFlag]
+  const isExpanded = infoKey != null && expandedKey === infoKey
 
   return (
-    <div style={{ padding: "10px 0", borderBottom: "0.5px solid var(--ink-06)", opacity: isNotTested ? 0.5 : 1 }}>
-      {/* Top row: name + value + badge */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: zoneKey && !isNotTested ? 8 : 0 }}>
-        <div>
-          <p style={{ fontFamily: font, fontSize: 13, color: "var(--ink)", margin: 0 }}>{name}</p>
-          <p style={{ fontFamily: font, fontSize: 11, color: "var(--ink-60)", margin: "1px 0 0" }}>{sub}</p>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {isNotTested ? (
-            <span style={{ fontFamily: font, fontSize: 11, color: "var(--ink-30)" }}>Not tested</span>
-          ) : (
-            <span style={{ fontFamily: font, fontSize: 13, color: "var(--ink)" }}>
-              {value != null ? (Math.round((value as number) * 10) / 10) : "—"}{" "}
-              <span style={{ fontSize: 10, color: "var(--ink-30)" }}>{unit}</span>
+    <div>
+      <div style={{ padding: "10px 0", borderBottom: isExpanded ? "none" : "0.5px solid var(--ink-06)", opacity: isNotTested ? 0.5 : 1 }}>
+        {/* Top row: name + value + badge */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: zoneKey && !isNotTested ? 8 : 0 }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              <p style={{ fontFamily: font, fontSize: 13, color: "var(--ink)", margin: 0 }}>{name}</p>
+              {infoContent && infoKey && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onInfoToggle?.(infoKey) }}
+                  style={{
+                    background: "none", border: "none", cursor: "pointer",
+                    color: isExpanded ? "var(--ink-60)" : "var(--ink-20)",
+                    fontSize: 13, padding: "0 2px", lineHeight: 1, flexShrink: 0,
+                    transition: "color 0.15s ease",
+                  }}
+                >
+                  ⓘ
+                </button>
+              )}
+            </div>
+            <p style={{ fontFamily: font, fontSize: 11, color: "var(--ink-60)", margin: "1px 0 0" }}>{sub}</p>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {isNotTested ? (
+              <span style={{ fontFamily: font, fontSize: 11, color: "var(--ink-30)" }}>Not tested</span>
+            ) : (
+              <span style={{ fontFamily: font, fontSize: 13, color: "var(--ink)" }}>
+                {value != null ? (Math.round((value as number) * 10) / 10) : "—"}{" "}
+                <span style={{ fontSize: 10, color: "var(--ink-30)" }}>{unit}</span>
+              </span>
+            )}
+            <span style={{
+              fontFamily: font, fontSize: 9, textTransform: "uppercase" as const,
+              letterSpacing: "0.05em", padding: "3px 8px", borderRadius: 3,
+              background: fs!.bg, color: fs!.text,
+            }}>
+              {fs!.label}
             </span>
-          )}
-          <span style={{
-            fontFamily: font, fontSize: 9, textTransform: "uppercase" as const,
-            letterSpacing: "0.05em", padding: "3px 8px", borderRadius: 3,
-            background: fs!.bg, color: fs!.text,
-          }}>
-            {fs!.label}
-          </span>
+          </div>
         </div>
+        {/* Range bar — only when zone exists and has a value */}
+        {zoneKey && !isNotTested && (
+          <RangeBar value={value} markerKey={zoneKey} />
+        )}
+        {/* Simple grey bar for tested markers without a zone */}
+        {!zoneKey && !isNotTested && mounted && (
+          <div style={{ height: '3px', background: 'var(--blood-bg)', borderRadius: 2, marginTop: 4 }}>
+            <div style={{ height: '100%', width: '100%', background: 'var(--blood-c)', borderRadius: 2, opacity: 0.4 }} />
+          </div>
+        )}
       </div>
-      {/* Range bar — only when zone exists and has a value */}
-      {zoneKey && !isNotTested && (
-        <RangeBar value={value} markerKey={zoneKey} />
-      )}
-      {/* Simple grey bar for tested markers without a zone */}
-      {!zoneKey && !isNotTested && mounted && (
-        <div style={{ height: '3px', background: 'var(--blood-bg)', borderRadius: 2, marginTop: 4 }}>
-          <div style={{ height: '100%', width: '100%', background: 'var(--blood-c)', borderRadius: 2, opacity: 0.4 }} />
+      {isExpanded && infoContent && (
+        <div style={{
+          padding: "12px 14px",
+          background: "var(--ink-04)",
+          borderRadius: 8,
+          borderLeft: "3px solid var(--blood-c)",
+          borderBottom: "0.5px solid var(--ink-06)",
+          marginBottom: 2,
+        }}>
+          <p style={{ fontFamily: font, fontSize: 13, color: "var(--ink-60)", lineHeight: 1.65, margin: "0 0 8px" }}>
+            {infoContent.explanation}
+          </p>
+          <p style={{ fontFamily: font, fontSize: 11, color: "var(--ink-30)", fontStyle: "italic", margin: 0 }}>
+            Source: {infoContent.source}
+          </p>
         </div>
       )}
     </div>
@@ -647,7 +687,7 @@ function CrossPanelInteractions({
       computed.push({
         key: "periodontCV",
         title: "Periodontal pathogens & cardiovascular risk",
-        body: "Elevated periodontal pathogens combined with your cardiovascular markers suggest systemic inflammation may be originating in your mouth. P. gingivalis has been found in coronary plaques.",
+        body: "Elevated periodontal bacteria alongside elevated cardiovascular markers is a signal worth watching — research suggests these pathways are connected.",
         panels: ["Oral", "Blood"],
         severity: "high",
         learnMore: {
@@ -770,26 +810,6 @@ function CrossPanelInteractions({
         },
       })
     }
-  }
-
-  // Sleep + Lifestyle combined effect — fires whenever both panels have data, regardless of oral
-  if (sleepData && lifestyleActive) {
-    computed.push({
-      key: "sleepLifestyle",
-      title: "Sleep + lifestyle combined effect",
-      body: "Research in 53,242 adults shows that small improvements across sleep and lifestyle together reduce cardiovascular risk more efficiently than improving either alone. Just 10 extra minutes of sleep and 5 extra minutes of daily movement combined with a modest diet improvement is associated with 10% lower risk of heart attack, stroke, and heart failure.",
-      panels: ["Sleep", "Lifestyle"],
-      severity: "medium",
-      learnMore: {
-        science: "The SPAN study (Koemel et al., EJPC 2026) found the optimal combination of 8–9.4 hours sleep, 42–104 minutes of moderate activity, and high diet quality was associated with 57% lower risk of major adverse cardiovascular events in a wearable-based cohort of over 53,000 adults. Crucially, behaviors studied in combination required 3x less individual change to achieve the same cardiovascular benefit as behaviors studied in isolation — validating the multi-panel approach.",
-        meaning: "Because you have both sleep and lifestyle data, you can see the combined effect. Small simultaneous improvements — not large changes to one area — are the most efficient path to cardiovascular risk reduction.",
-        actions: [
-          "Consider whether your sleep and activity goals reinforce each other — improving both simultaneously is more efficient than focusing on one",
-          "Track your SPAN score: sleep 8+ hours, move 40+ minutes daily, add one additional serving of vegetables",
-        ],
-        citation: "Koemel et al., European Journal of Preventive Cardiology, 2026. n=53,242, 8-year follow-up, UK Biobank.",
-      },
-    })
   }
 
   const hasComputed = computed.length > 0
@@ -1401,6 +1421,9 @@ export function ScoreWheel({
   const [openMissingTooltip, setOpenMissingTooltip] = useState<string | null>(null)
   const [showModifiers, setShowModifiers] = useState(false)
   const [expandedSleepMetric, setExpandedSleepMetric] = useState<string | null>(null)
+  const [showUntested, setShowUntested] = useState(false)
+  const [expandedBloodMetric, setExpandedBloodMetric] = useState<string | null>(null)
+  const [expandedOralMetric, setExpandedOralMetric] = useState<string | null>(null)
   const [sleepHidden, setSleepHidden] = useState(false)
   const [toastVisible, setToastVisible] = useState(false)
   const sleepPanelRef    = useRef<CollapsiblePanelHandle>(null)
@@ -1525,6 +1548,68 @@ export function ScoreWheel({
     },
   }
 
+  const BLOOD_INFO: Record<string, { explanation: string; source: string }> = {
+    hsCRP: {
+      explanation: 'High-sensitivity C-reactive protein is produced by the liver in response to inflammation. Elevated hsCRP is one of the strongest independent predictors of cardiovascular events — more predictive than LDL cholesterol alone. Chronic low-grade inflammation, often driven by factors like periodontal disease, visceral fat, or poor sleep, can keep hsCRP persistently elevated.',
+      source: 'Ridker PM (2003). Clinical application of C-reactive protein for cardiovascular disease detection and prevention. Circulation. Hansson GK (2005). Inflammation, atherosclerosis, and coronary artery disease. NEJM.'
+    },
+    LDL: {
+      explanation: 'Low-density lipoprotein carries cholesterol to tissues and is the primary driver of atherosclerotic plaque formation. Lower is better — optimal is below 70 mg/dL for most adults. LDL alone is less predictive than ApoB or LDL particle number, but remains a key cardiovascular risk marker.',
+      source: 'Grundy SM et al. (2018). AHA/ACC Guideline on Management of Blood Cholesterol. Journal of the American College of Cardiology.'
+    },
+    HDL: {
+      explanation: 'High-density lipoprotein removes cholesterol from arterial walls and transports it to the liver for disposal — a process called reverse cholesterol transport. Higher HDL is generally protective, though very high levels (above 80 mg/dL) may paradoxically increase risk in some populations.',
+      source: 'Barter P et al. (2007). HDL cholesterol, very low levels of LDL cholesterol, and cardiovascular events. NEJM.'
+    },
+    lpA: {
+      explanation: "Lipoprotein(a) is a genetically determined lipoprotein that promotes both atherosclerosis and thrombosis. It is largely unaffected by diet or lifestyle — elevated Lp(a) is primarily inherited. Above 50 mg/dL significantly increases cardiovascular risk independent of LDL. It's one of the most underdiagnosed cardiovascular risk factors.",
+      source: 'Tsimikas S (2017). A test in context: Lipoprotein(a). Journal of the American College of Cardiology. Kronenberg F (2022). Lipoprotein(a) — the strangest lipoprotein species. European Heart Journal.'
+    },
+    triglycerides: {
+      explanation: 'Triglycerides are the main form of fat stored in the body. Elevated triglycerides often reflect excess carbohydrate intake, insulin resistance, or poor metabolic health. They are a key component of the metabolic syndrome picture alongside low HDL and elevated glucose.',
+      source: 'Miller M et al. (2011). Triglycerides and cardiovascular disease: A scientific statement from the AHA. Circulation.'
+    },
+    glucose: {
+      explanation: 'Fasting glucose reflects how well your body regulates blood sugar. Values above 100 mg/dL suggest early insulin resistance. Optimal fasting glucose (70–85 mg/dL) is associated with the lowest cardiovascular and metabolic risk. Glucose trends over time are more informative than a single reading.',
+      source: 'American Diabetes Association (2023). Standards of Medical Care in Diabetes. Diabetes Care.'
+    },
+    apoB: {
+      explanation: 'Apolipoprotein B is a protein found on every atherogenic lipoprotein particle — LDL, VLDL, and Lp(a). ApoB measures the total number of dangerous particles rather than just their cholesterol content, making it a more accurate predictor of cardiovascular risk than LDL-C alone.',
+      source: 'Sniderman AD et al. (2019). ApoB versus non-HDL-C and LDL-C as indices of cardiovascular disease risk. Journal of the American Heart Association.'
+    },
+    eGFR: {
+      explanation: 'Estimated glomerular filtration rate measures how well your kidneys are filtering blood. Values above 90 mL/min are normal. Declining eGFR can indicate early kidney disease, which is closely linked to hypertension, diabetes, and cardiovascular risk.',
+      source: 'Levey AS et al. (2009). New equation to estimate GFR. Annals of Internal Medicine. KDIGO Clinical Practice Guideline for CKD.'
+    },
+    hemoglobin: {
+      explanation: 'Hemoglobin carries oxygen in red blood cells. Low hemoglobin (anemia) reduces oxygen delivery to tissues and can cause fatigue, impaired cognitive function, and increased cardiovascular strain. Optimal hemoglobin supports athletic performance and metabolic health.',
+      source: 'WHO (2011). Haemoglobin concentrations for the diagnosis of anaemia. Vitamin and Mineral Nutrition Information System.'
+    },
+    hbA1c: {
+      explanation: 'HbA1c reflects average blood glucose over the past 2–3 months by measuring glycated hemoglobin. It is the gold standard for diagnosing and monitoring diabetes. Values below 5.4% indicate optimal glycemic control. Even values in the pre-diabetic range (5.7–6.4%) significantly increase cardiovascular and metabolic risk.',
+      source: 'American Diabetes Association (2023). Standards of Medical Care in Diabetes. Nathan DM et al. (2009). Translating the A1C assay into estimated average glucose values. Diabetes Care.'
+    },
+    vitaminD: {
+      explanation: 'Vitamin D functions as a hormone affecting immune regulation, cardiovascular health, bone density, and mood. Deficiency (below 20 ng/mL) is extremely common and linked to increased risk of autoimmune conditions, depression, and cardiovascular disease. Optimal levels (40–60 ng/mL) are associated with the best health outcomes.',
+      source: 'Holick MF (2007). Vitamin D deficiency. NEJM. Pilz S et al. (2016). Vitamin D and cardiovascular disease prevention. Nature Reviews Cardiology.'
+    },
+  }
+
+  const ORAL_INFO: Record<string, { explanation: string; source: string }> = {
+    shannon: {
+      explanation: 'Shannon diversity index measures both the number of bacterial species present and how evenly distributed they are. Higher diversity (above 3.0) generally indicates a resilient, balanced oral microbiome. Low diversity is associated with periodontal disease, systemic inflammation, and reduced nitric oxide production.',
+      source: 'Hajishengallis G & Lamont RJ (2012). Beyond the red complex — the oral microbiota and dysbiosis. Molecular Oral Microbiology. Lloyd-Price J et al. (2017). Strains, functions and dynamics in the expanded Human Microbiome Project. Nature.'
+    },
+    nitrate: {
+      explanation: 'Nitrate-reducing bacteria (Neisseria, Rothia, Veillonella) convert dietary nitrate from vegetables into nitrite, which is then converted to nitric oxide — a molecule critical for blood vessel dilation, blood pressure regulation, and cardiovascular health. Low nitrate reducers are associated with reduced NO bioavailability and elevated blood pressure.',
+      source: 'Lundberg JO et al. (2008). The nitrate-nitrite-nitric oxide pathway in physiology and therapeutics. Nature Reviews Drug Discovery. Vanhatalo A et al. (2018). Nitrate-responsive oral microbiome modulates nitric oxide homeostasis. Free Radical Biology and Medicine.'
+    },
+    periodontal: {
+      explanation: 'Periodontal burden measures the combined abundance of bacteria known to drive gum disease and systemic inflammation. P. gingivalis, T. denticola, and T. forsythia (the "red complex") are the most virulent — they produce enzymes that degrade tissue, evade immune responses, and enter the bloodstream where they contribute to arterial inflammation.',
+      source: 'Socransky SS et al. (1998). Microbial complexes in subgingival plaque. Journal of Clinical Periodontology. Hajishengallis G (2015). Periodontitis: from microbial immune subversion to systemic inflammation. Nature Reviews Immunology.'
+    },
+  }
+
   const exerciseLabel: Record<string, string> = { active: "Active (4+ days/wk)", moderate: "Moderate (2–3 days/wk)", light: "Light (1 day/wk)", sedentary: "Sedentary" }
 
   const sleepToggle = sleepConnected ? (
@@ -1562,6 +1647,33 @@ export function ScoreWheel({
       </button>
     </div>
   ) : null
+
+  type BloodMarkerDef = {
+    name: string
+    sub: string
+    value: number
+    unit: string
+    flag: Flag
+    zoneKey: string | null
+    infoKey: string | null
+  }
+  const bloodMarkerDefs: BloodMarkerDef[] = bloodData ? [
+    { name: "hs-CRP",        sub: "High-sensitivity · target <0.5",    value: bloodData.hsCRP,         unit: "mg/L",  flag: bflag(bloodData.hsCRP, bloodData.hsCRP < 0.5, bloodData.hsCRP < 2.0),                                          zoneKey: "hsCRP",        infoKey: "hsCRP" },
+    { name: "Lp(a)",         sub: "Lipoprotein(a) · target <30",       value: bloodData.lpa,           unit: "mg/dL", flag: bflag(bloodData.lpa, bloodData.lpa < 30, bloodData.lpa < 50),                                                  zoneKey: "lpA",          infoKey: "lpA" },
+    { name: "Triglycerides", sub: "Target <150 mg/dL",                 value: bloodData.triglycerides, unit: "mg/dL", flag: bflag(bloodData.triglycerides, bloodData.triglycerides < 150, bloodData.triglycerides < 200),                   zoneKey: "triglycerides", infoKey: "triglycerides" },
+    bloodData.apoB > 0
+      ? { name: "ApoB",   sub: "Particles · target <90",   value: bloodData.apoB,           unit: "mg/dL", flag: bflag(bloodData.apoB, bloodData.apoB < 90, bloodData.apoB < 120),                                                         zoneKey: null,    infoKey: "apoB" }
+      : { name: "LDL",    sub: "LDL-C · target <100",      value: bloodData.ldl,            unit: "mg/dL", flag: bflag(bloodData.ldl, bloodData.ldl < 100, bloodData.ldl < 130),                                                           zoneKey: "LDL",   infoKey: "LDL" },
+    { name: "HDL",          sub: "Target >60 mg/dL",                   value: bloodData.hdl,           unit: "mg/dL", flag: bflag(bloodData.hdl, bloodData.hdl >= 60, bloodData.hdl >= 40),                                                zoneKey: "HDL",          infoKey: "HDL" },
+    { name: "Glucose",      sub: "Fasting · target 70–85",             value: bloodData.glucose,       unit: "mg/dL", flag: bflag(bloodData.glucose, bloodData.glucose >= 70 && bloodData.glucose < 85, bloodData.glucose < 99),            zoneKey: "glucose",      infoKey: "glucose" },
+    { name: "HbA1c",        sub: "Glycaemia · target <5.4%",           value: bloodData.hba1c,         unit: "%",     flag: bflag(bloodData.hba1c, bloodData.hba1c < 5.4, bloodData.hba1c < 5.7),                                          zoneKey: null,           infoKey: "hbA1c" },
+    { name: "Vitamin D",    sub: "25-OH · target 30–60 ng/mL",        value: bloodData.vitaminD,       unit: "ng/mL", flag: bflag(bloodData.vitaminD, bloodData.vitaminD >= 30 && bloodData.vitaminD <= 60, bloodData.vitaminD >= 20),      zoneKey: null,           infoKey: "vitaminD" },
+    { name: "LDL : HDL",   sub: "Ratio · target <2.0",                value: bloodData.ldlHdlRatio,    unit: "ratio", flag: bflag(bloodData.ldlHdlRatio, bloodData.ldlHdlRatio < 2.0, bloodData.ldlHdlRatio < 3.0),                       zoneKey: null,           infoKey: null },
+    { name: "eGFR",         sub: "Kidney function · target >90",       value: bloodData.egfr,          unit: "mL/min",flag: bflag(bloodData.egfr, bloodData.egfr >= 90, bloodData.egfr >= 60),                                             zoneKey: "eGFR",         infoKey: "eGFR" },
+    { name: "Hemoglobin",   sub: "Red blood cells",                    value: bloodData.hemoglobin,     unit: "g/dL",  flag: bflag(bloodData.hemoglobin, bloodData.hemoglobin >= 12 && bloodData.hemoglobin <= 17.5, bloodData.hemoglobin >= 10), zoneKey: "hemoglobin", infoKey: "hemoglobin" },
+  ] : []
+  const testedBloodMarkers   = bloodMarkerDefs.filter(m => m.value > 0)
+  const untestedBloodMarkers = bloodMarkerDefs.filter(m => m.value === 0)
 
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: "0 0 80px", display: "flex", flexDirection: "column", gap: 52 }}>
@@ -1861,44 +1973,48 @@ export function ScoreWheel({
         <div style={{ borderTop: "0.5px solid var(--ink-12)" }}>
           {bloodData ? (
             <>
-              {/* Primary markers — always shown (not tested if missing) */}
-              <BloodMarkerRow name="hs-CRP"        sub="High-sensitivity · target <0.5"    value={bloodData.hsCRP}        unit="mg/L"  flag={bflag(bloodData.hsCRP, bloodData.hsCRP < 0.5, bloodData.hsCRP < 2.0)}           zoneKey="hsCRP"        mounted={mounted} />
-              <BloodMarkerRow name="Lp(a)"         sub="Lipoprotein(a) · target <30"       value={bloodData.lpa}          unit="mg/dL" flag={bflag(bloodData.lpa, bloodData.lpa < 30, bloodData.lpa < 50)}                   zoneKey="lpA"          mounted={mounted} />
-              <BloodMarkerRow name="Triglycerides" sub="Target <150 mg/dL"                 value={bloodData.triglycerides} unit="mg/dL" flag={bflag(bloodData.triglycerides, bloodData.triglycerides < 150, bloodData.triglycerides < 200)} zoneKey="triglycerides" mounted={mounted} />
-              {/* ApoB if available, else LDL */}
-              {bloodData.apoB > 0 ? (
-                <BloodMarkerRow name="ApoB"   sub="Particles · target <90"   value={bloodData.apoB}   unit="mg/dL" flag={bflag(bloodData.apoB, bloodData.apoB < 90, bloodData.apoB < 120)}     zoneKey={null} mounted={mounted} />
-              ) : bloodData.ldl > 0 ? (
-                <BloodMarkerRow name="LDL"    sub="LDL-C · target <100"      value={bloodData.ldl}    unit="mg/dL" flag={bflag(bloodData.ldl, bloodData.ldl < 100, bloodData.ldl < 130)}        zoneKey="LDL"  mounted={mounted} />
-              ) : null}
-              {/* HDL */}
-              {bloodData.hdl > 0 && (
-                <BloodMarkerRow name="HDL"    sub="Target >60 mg/dL"          value={bloodData.hdl}    unit="mg/dL" flag={bflag(bloodData.hdl, bloodData.hdl >= 60, bloodData.hdl >= 40)}        zoneKey="HDL"  mounted={mounted} />
+              {testedBloodMarkers.map(m => (
+                <BloodMarkerRow
+                  key={m.name}
+                  name={m.name} sub={m.sub} value={m.value} unit={m.unit} flag={m.flag}
+                  zoneKey={m.zoneKey} mounted={mounted}
+                  infoKey={m.infoKey ?? undefined}
+                  expandedKey={expandedBloodMetric}
+                  onInfoToggle={k => setExpandedBloodMetric(prev => prev === k ? null : k)}
+                  infoContent={m.infoKey ? BLOOD_INFO[m.infoKey] : undefined}
+                />
+              ))}
+              {untestedBloodMarkers.length > 0 && (
+                <button
+                  onClick={() => setShowUntested(o => !o)}
+                  style={{
+                    marginTop: '12px',
+                    fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                    fontSize: '12px',
+                    color: 'var(--ink-30)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  {showUntested ? '−' : '+'} {untestedBloodMarkers.length} marker{untestedBloodMarkers.length !== 1 ? 's' : ''} not tested
+                </button>
               )}
-              {/* Glucose */}
-              {bloodData.glucose > 0 && (
-                <BloodMarkerRow name="Glucose" sub="Fasting · target 70–85"  value={bloodData.glucose} unit="mg/dL" flag={bflag(bloodData.glucose, bloodData.glucose >= 70 && bloodData.glucose < 85, bloodData.glucose < 99)} zoneKey="glucose" mounted={mounted} />
-              )}
-              {/* HbA1c — show if explicitly present */}
-              {bloodData.hba1c > 0 && (
-                <BloodMarkerRow name="HbA1c"     sub="Glycaemia · target <5.4%"   value={bloodData.hba1c}     unit="%"     flag={bflag(bloodData.hba1c, bloodData.hba1c < 5.4, bloodData.hba1c < 5.7)}               zoneKey={null} mounted={mounted} />
-              )}
-              {/* Vitamin D */}
-              {bloodData.vitaminD > 0 && (
-                <BloodMarkerRow name="Vitamin D" sub="25-OH · target 30–60 ng/mL" value={bloodData.vitaminD}   unit="ng/mL" flag={bflag(bloodData.vitaminD, bloodData.vitaminD >= 30 && bloodData.vitaminD <= 60, bloodData.vitaminD >= 20)} zoneKey={null} mounted={mounted} />
-              )}
-              {/* LDL:HDL ratio */}
-              {bloodData.ldlHdlRatio > 0 && (
-                <BloodMarkerRow name="LDL : HDL" sub="Ratio · target <2.0"         value={bloodData.ldlHdlRatio} unit="ratio" flag={bflag(bloodData.ldlHdlRatio, bloodData.ldlHdlRatio < 2.0, bloodData.ldlHdlRatio < 3.0)}       zoneKey={null} mounted={mounted} />
-              )}
-              {/* eGFR */}
-              {bloodData.egfr > 0 && (
-                <BloodMarkerRow name="eGFR"       sub="Kidney function · target >90" value={bloodData.egfr}       unit="mL/min" flag={bflag(bloodData.egfr, bloodData.egfr >= 90, bloodData.egfr >= 60)}                  zoneKey="eGFR" mounted={mounted} />
-              )}
-              {/* Hemoglobin */}
-              {bloodData.hemoglobin > 0 && (
-                <BloodMarkerRow name="Hemoglobin" sub="Red blood cells"               value={bloodData.hemoglobin} unit="g/dL"   flag={bflag(bloodData.hemoglobin, bloodData.hemoglobin >= 12 && bloodData.hemoglobin <= 17.5, bloodData.hemoglobin >= 10)} zoneKey="hemoglobin" mounted={mounted} />
-              )}
+              {showUntested && untestedBloodMarkers.map(m => (
+                <BloodMarkerRow
+                  key={m.name}
+                  name={m.name} sub={m.sub} value={m.value} unit={m.unit} flag={m.flag}
+                  zoneKey={null} mounted={mounted}
+                  infoKey={m.infoKey ?? undefined}
+                  expandedKey={expandedBloodMetric}
+                  onInfoToggle={k => setExpandedBloodMetric(prev => prev === k ? null : k)}
+                  infoContent={m.infoKey ? BLOOD_INFO[m.infoKey] : undefined}
+                />
+              ))}
             </>
           ) : (
             <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink-40)", padding: "16px 0" }}>
@@ -2002,10 +2118,10 @@ export function ScoreWheel({
       >
         <div style={{ borderTop: "0.5px solid var(--ink-12)" }}>
           {[
-            { name: "Shannon diversity",   sub: "16S species richness · target ≥3.0",         val: oralData?.shannonDiversity,   unit: "index",   flagKey: "shannon",  max: 5  },
-            { name: "Nitrate-reducing",    sub: "Neisseria · Rothia · Veillonella · ≥5%",     val: oralData?.nitrateReducersPct, unit: "% reads", flagKey: "nitrate",  max: 20 },
-            { name: "Periodontal path.",   sub: "P. gingivalis · T. denticola · target <0.5%", val: oralData?.periodontPathPct,   unit: "% reads", flagKey: "periodont",max: 3  },
-            { name: "OSA-associated taxa", sub: "Prevotella · Fusobacterium · target <1%",     val: oralData?.osaTaxaPct,         unit: "% reads", flagKey: "osa",      max: 5  },
+            { name: "Shannon diversity",      sub: "16S species richness · target ≥3.0",         val: oralData?.shannonDiversity,   unit: "index",   flagKey: "shannon",  max: 5,  infoKey: "shannon"     },
+            { name: "Nitrate-reducing",       sub: "Neisseria · Rothia · Veillonella · ≥5%",     val: oralData?.nitrateReducersPct, unit: "% reads", flagKey: "nitrate",  max: 20, infoKey: "nitrate"     },
+            { name: "Periodontal pathogens",  sub: "P. gingivalis · T. denticola · target <0.5%", val: oralData?.periodontPathPct,   unit: "% reads", flagKey: "periodont",max: 3,  infoKey: "periodontal" },
+            { name: "OSA-associated taxa",    sub: "Prevotella · Fusobacterium · target <1%",     val: oralData?.osaTaxaPct,         unit: "% reads", flagKey: "osa",      max: 5,  infoKey: undefined     },
           ].map(row => (
             <MarkerRow key={row.name} name={row.name} sub={row.sub}
               value={row.val ?? null} unit={row.unit}
@@ -2013,6 +2129,10 @@ export function ScoreWheel({
               barPct={row.val !== undefined ? fa(row.val, row.max) : 0}
               color="var(--oral-c)" trackColor="var(--oral-bg)"
               hoverBg="rgba(45,106,79,0.04)" mounted={mounted}
+              infoKey={row.infoKey}
+              expandedKey={expandedOralMetric}
+              onInfoToggle={k => setExpandedOralMetric(prev => prev === k ? null : k)}
+              infoContent={row.infoKey ? ORAL_INFO[row.infoKey] : undefined}
             />
           ))}
           {oralActive && (
