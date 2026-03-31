@@ -475,16 +475,16 @@ function OralPage({ data }: { data: ReportData }) {
     { label: "D7  Cellular environment", value: data.proliferativeSignalPct != null ? n(data.proliferativeSignalPct, 2) : "\u2014", unit: "%", target: "target", st: data.proliferativeSignalPct == null ? "NOT TESTED" : "GOOD" },
   ]
 
-  const speciesRows: Array<{ name: string; val: number; st: Status; role: string }> = [
-    { name: "P. gingivalis", val: gingivalis, st: gingivalis > 1 ? "ELEVATED" : gingivalis > 0.5 ? "WATCH" : "GOOD", role: "Primary periodontal pathogen" },
-    { name: "T. denticola",  val: denticola,  st: denticola > 1 ? "ELEVATED" : denticola > 0.5 ? "WATCH" : "GOOD",   role: "Periodontal pathogen" },
-    { name: "T. forsythia",  val: forsythia,  st: forsythia > 1 ? "ELEVATED" : forsythia > 0.5 ? "WATCH" : "GOOD",   role: "Periodontal pathogen" },
-    { name: "F. nucleatum",  val: fusobact,   st: fusobact > 5 ? "ELEVATED" : fusobact > 2 ? "WATCH" : "GOOD",       role: "Systemic inflammation marker" },
-    { name: "Prevotella spp.", val: prevotella, st: prevotella > 5 ? "WATCH" : "GOOD",                              role: "Metabolic signal" },
-    { name: "Neisseria spp.", val: neisseria, st: neisseria >= 10 ? "OPTIMAL" : neisseria >= 5 ? "GOOD" : "WATCH",   role: "Nitrate reducer" },
-    { name: "Rothia spp.",   val: rothia,    st: rothia >= 5 ? "OPTIMAL" : rothia >= 2 ? "GOOD" : "WATCH",           role: "Nitrate reducer" },
-    { name: "S. salivarius", val: salivarius, st: salivarius >= 5 ? "OPTIMAL" : salivarius >= 2 ? "GOOD" : "WATCH", role: "Protective species" },
-  ].filter(r => r.val > 0)
+  const speciesRows = ([
+    { name: "P. gingivalis", val: gingivalis, st: (gingivalis > 1 ? "ELEVATED" : gingivalis > 0.5 ? "WATCH" : "GOOD") as Status, role: "Primary periodontal pathogen" },
+    { name: "T. denticola",  val: denticola,  st: (denticola > 1 ? "ELEVATED" : denticola > 0.5 ? "WATCH" : "GOOD") as Status,   role: "Periodontal pathogen" },
+    { name: "T. forsythia",  val: forsythia,  st: (forsythia > 1 ? "ELEVATED" : forsythia > 0.5 ? "WATCH" : "GOOD") as Status,   role: "Periodontal pathogen" },
+    { name: "F. nucleatum",  val: fusobact,   st: (fusobact > 5 ? "ELEVATED" : fusobact > 2 ? "WATCH" : "GOOD") as Status,       role: "Systemic inflammation marker" },
+    { name: "Prevotella spp.", val: prevotella, st: (prevotella > 5 ? "WATCH" : "GOOD") as Status,                              role: "Metabolic signal" },
+    { name: "Neisseria spp.", val: neisseria, st: (neisseria >= 10 ? "OPTIMAL" : neisseria >= 5 ? "GOOD" : "WATCH") as Status,   role: "Nitrate reducer" },
+    { name: "Rothia spp.",   val: rothia,    st: (rothia >= 5 ? "OPTIMAL" : rothia >= 2 ? "GOOD" : "WATCH") as Status,           role: "Nitrate reducer" },
+    { name: "S. salivarius", val: salivarius, st: (salivarius >= 5 ? "OPTIMAL" : salivarius >= 2 ? "GOOD" : "WATCH") as Status, role: "Protective species" },
+  ] as const).filter(r => r.val > 0)
 
   const SCW = [CONTENT_W * 0.36, CONTENT_W * 0.14, CONTENT_W * 0.16, CONTENT_W * 0.34]
 
