@@ -268,15 +268,15 @@ function MetricCard({ label, sub, value, unit, color, status, statusLabel }: {
 
 // ─── Main component ──────────────────────────────────────────────────────────
 
+type OralNarrative = {
+  headline: string | null
+  narrative: string | null
+  positive_signal: string | null
+  watch_signal: string | null
+}
+
 export function OralPanelClient({ oral, snapshot }: Props) {
   const oralSub = snapshot?.oral_sub as number | undefined
-
-  type OralNarrative = {
-    headline: string | null
-    narrative: string | null
-    positive_signal: string | null
-    watch_signal: string | null
-  }
 
   const [aiNarrative, setAiNarrative] = useState<OralNarrative | null>(null)
   const [narrativeLoading, setNarrativeLoading] = useState(true)
@@ -287,7 +287,7 @@ export function OralPanelClient({ oral, snapshot }: Props) {
       .then(data => {
         if (data?.narrative) setAiNarrative(data.narrative as OralNarrative)
       })
-      .catch(() => { /* silent fallback */ })
+      .catch((err: unknown) => { console.warn("[OralPanel] narrative fetch failed, using fallback:", err) })
       .finally(() => setNarrativeLoading(false))
   }, [])
 
