@@ -13,6 +13,7 @@
     "@peaq/api-client": "*",
     "@peaq/score-engine": "^4.0.0",
     "@peaq/types": "^0.0.1",
+    "@react-pdf/renderer": "^4.3.2",
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.99.1",
     "@tryvital/vital-link": "^0.1.7",
@@ -21,6 +22,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "recharts": "^3.8.0",
+    "resend": "^6.10.0",
     "svix": "^1.88.0",
     "unpdf": "^1.4.0"
   },
