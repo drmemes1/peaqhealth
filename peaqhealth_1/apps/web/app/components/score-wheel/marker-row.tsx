@@ -138,21 +138,19 @@ export function MarkerRow({ name, sub, value, unit, flag, barPct, color, trackCo
             const totalMin = zones[0].min
             const totalMax = zones[zones.length - 1].max
             const totalRange = totalMax - totalMin
-            const clampedValue = Math.max(totalMin, Math.min(totalMax, value as number))
+            const clampedValue = Math.max(totalMin, Math.min(totalMax, value))
             const markerPct = ((clampedValue - totalMin) / totalRange) * 100
+            const zonePcts = zones.map(z => ((z.max - z.min) / totalRange) * 100)
             return (
               <div style={{ position: 'relative' }}>
                 <div style={{ display: 'flex', height: '7px', borderRadius: '4px', overflow: 'hidden', gap: '1px' }}>
-                  {zones.map((zone, i) => {
-                    const zonePct = ((zone.max - zone.min) / totalRange) * 100
-                    return (
-                      <div key={i} style={{
-                        flex: `0 0 ${zonePct}%`,
-                        background: zone.color,
-                        borderRadius: i === 0 ? '4px 0 0 4px' : i === zones.length - 1 ? '0 4px 4px 0' : '0',
-                      }} />
-                    )
-                  })}
+                  {zones.map((zone, i) => (
+                    <div key={i} style={{
+                      flex: `0 0 ${zonePcts[i]}%`,
+                      background: zone.color,
+                      borderRadius: i === 0 ? '4px 0 0 4px' : i === zones.length - 1 ? '0 4px 4px 0' : '0',
+                    }} />
+                  ))}
                 </div>
                 <div style={{
                   position: 'absolute', top: '50%', left: `${markerPct}%`,
@@ -164,19 +162,16 @@ export function MarkerRow({ name, sub, value, unit, flag, barPct, color, trackCo
                   zIndex: 2,
                 }} />
                 <div style={{ display: 'flex', marginTop: '3px', gap: '1px' }}>
-                  {zones.map((zone, i) => {
-                    const zonePct = ((zone.max - zone.min) / totalRange) * 100
-                    return (
-                      <div key={i} style={{
-                        flex: `0 0 ${zonePct}%`,
-                        fontSize: '8px', color: 'var(--ink-30)', textAlign: 'center' as const,
-                        letterSpacing: '0.04em', textTransform: 'uppercase' as const,
-                        overflow: 'hidden', whiteSpace: 'nowrap' as const,
-                      }}>
-                        {zone.label}
-                      </div>
-                    )
-                  })}
+                  {zones.map((zone, i) => (
+                    <div key={i} style={{
+                      flex: `0 0 ${zonePcts[i]}%`,
+                      fontSize: '8px', color: 'var(--ink-30)', textAlign: 'center' as const,
+                      letterSpacing: '0.04em', textTransform: 'uppercase' as const,
+                      overflow: 'hidden', whiteSpace: 'nowrap' as const,
+                    }}>
+                      {zone.label}
+                    </div>
+                  ))}
                 </div>
               </div>
             )
