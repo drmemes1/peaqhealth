@@ -88,6 +88,85 @@ const PANEL_LABEL: Record<string, string> = {
   general:    "General",
 }
 
+// ─── Oral metric zone definitions ────────────────────────────────────────────
+
+const ORAL_ZONES: Record<string, {
+  zones: { label: string; color: string; min: number; max: number }[]
+  markerColor: string
+}> = {
+  shannon: {
+    markerColor: '#2D6A4F',
+    zones: [
+      { label: 'Low',     color: '#FFCDD2', min: 0,    max: 2.0  },
+      { label: 'Watch',   color: '#FFE0B2', min: 2.0,  max: 2.5  },
+      { label: 'Good',    color: '#FFF3CD', min: 2.5,  max: 3.0  },
+      { label: 'Optimal', color: '#D4EDDA', min: 3.0,  max: 5.0  },
+    ]
+  },
+  nitrate: {
+    markerColor: '#4A7FB5',
+    zones: [
+      { label: 'Low',     color: '#FFCDD2', min: 0,    max: 2.0  },
+      { label: 'Watch',   color: '#FFE0B2', min: 2.0,  max: 5.0  },
+      { label: 'Good',    color: '#FFF3CD', min: 5.0,  max: 15.0 },
+      { label: 'Optimal', color: '#D4EDDA', min: 15.0, max: 30.0 },
+    ]
+  },
+  periodontal: {
+    markerColor: '#C0392B',
+    zones: [
+      { label: 'Optimal', color: '#D4EDDA', min: 0,    max: 0.5  },
+      { label: 'Good',    color: '#FFF3CD', min: 0.5,  max: 1.0  },
+      { label: 'Watch',   color: '#FFE0B2', min: 1.0,  max: 2.0  },
+      { label: 'Elevated',color: '#FFCDD2', min: 2.0,  max: 5.0  },
+    ]
+  },
+  osa: {
+    markerColor: '#B8860B',
+    zones: [
+      { label: 'Optimal', color: '#D4EDDA', min: 0,    max: 1.0  },
+      { label: 'Watch',   color: '#FFE0B2', min: 1.0,  max: 3.0  },
+      { label: 'Elevated',color: '#FFCDD2', min: 3.0,  max: 10.0 },
+    ]
+  },
+}
+
+function OralRangeBar({ value, zoneKey }: { value: number; zoneKey: string }) {
+  const config = ORAL_ZONES[zoneKey]
+  if (!config) return null
+
+  const zones = config.zones
+  const totalMin = zones[0].min
+  const totalMax = zones[zones.length - 1].max
+  const totalRange = totalMax - totalMin
+  const clampedValue = Math.max(totalMin, Math.min(totalMax, value))
+  const markerPct = ((clampedValue - totalMin) / totalRange) * 100
+  const zonePcts = zones.map(z => ((z.max - z.min) / totalRange) * 100)
+
+  return (
+    <div style={{ position: 'relative', marginTop: 6 }}>
+      <div style={{ display: 'flex', height: '6px', borderRadius: '3px', overflow: 'hidden', gap: '1px' }}>
+        {zones.map((zone, i) => (
+          <div key={i} style={{
+            flex: `0 0 ${zonePcts[i]}%`,
+            background: zone.color,
+            borderRadius: i === 0 ? '3px 0 0 3px' : i === zones.length - 1 ? '0 3px 3px 0' : '0',
+          }} />
+        ))}
+      </div>
+      <div style={{
+        position: 'absolute', top: '50%', left: `${markerPct}%`,
+        transform: 'translate(-50%, -50%)',
+        width: '10px', height: '10px', borderRadius: '50%',
+        background: config.markerColor,
+        border: '2px solid white',
+        boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
+        zIndex: 2,
+      }} />
+    </div>
+  )
+}
+
 // ─── Collapsible section ─────────────────────────────────────────────────────
 
 function Section({ title, defaultOpen, children }: {
@@ -238,7 +317,7 @@ function generateOralNarrative(periodontalBurden: number, nitrateReducerPct: num
 
 // ─── Metric card ─────────────────────────────────────────────────────────────
 
-function MetricCard({ label, sub, value, unit, color, status, statusLabel }: {
+function MetricCard({ label, sub, value, unit, color, status, statusLabel, zoneKey, numericValue }: {
   label: string
   sub: string
   value: string | number
@@ -246,6 +325,8 @@ function MetricCard({ label, sub, value, unit, color, status, statusLabel }: {
   color: string
   status: "optimal" | "watch" | "attention"
   statusLabel: string
+  zoneKey?: string
+  numericValue?: number
 }) {
   const statusBg = status === "optimal" ? "#EAF3DE" : status === "watch" ? "#FEF3C7" : "#FEE2E2"
   const statusTxt = status === "optimal" ? "#2D6A4F" : status === "watch" ? "#92400E" : "#991B1B"
@@ -258,10 +339,13 @@ function MetricCard({ label, sub, value, unit, color, status, statusLabel }: {
       <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
         <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 300, color: "var(--ink)" }}>{value}</span>
         <span style={{ fontFamily: "var(--font-body)", fontSize: 10, color: "var(--ink-30)" }}>{unit}</span>
+        <span style={{ marginLeft: "auto", fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "2px 6px", background: statusBg, color: statusTxt }}>
+          {statusLabel}
+        </span>
       </div>
-      <span style={{ fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "2px 6px", background: statusBg, color: statusTxt }}>
-        {statusLabel}
-      </span>
+      {zoneKey !== undefined && numericValue !== undefined && (
+        <OralRangeBar value={numericValue} zoneKey={zoneKey} />
+      )}
     </div>
   )
 }
@@ -327,14 +411,14 @@ export function OralPanelClient({ oral, snapshot }: Props) {
   const osaPct = sp("Prevotella melaninogenica") + sp("Fusobacterium nucleatum")
 
   // D5–D7 emerging-research dimension values (stored as fractions 0–1, display as %)
-  const neuroSignalRaw = (oral.neuro_signal_pct as number | null) ?? null
-  const metabolicSignalRaw = (oral.metabolic_signal_pct as number | null) ?? null
-  const proliferativeSignalRaw = (oral.proliferative_signal_pct as number | null) ?? null
+  const _neuroSignalRaw = (oral.neuro_signal_pct as number | null) ?? null
+  const _metabolicSignalRaw = (oral.metabolic_signal_pct as number | null) ?? null
+  const _proliferativeSignalRaw = (oral.proliferative_signal_pct as number | null) ?? null
   // Convert to percentage for display — values > 1 are already percentages
   const toDisplayPct = (v: number | null) => v === null ? null : (v > 1 ? v : v * 100)
-  const neuroSignalPct = toDisplayPct(neuroSignalRaw)
-  const metabolicSignalPct = toDisplayPct(metabolicSignalRaw)
-  const proliferativeSignalPct = toDisplayPct(proliferativeSignalRaw)
+  const neuroSignalPct = toDisplayPct(_neuroSignalRaw)
+  const metabolicSignalPct = toDisplayPct(_metabolicSignalRaw)
+  const proliferativeSignalPct = toDisplayPct(_proliferativeSignalRaw)
 
   // Derive insights from findings (sorted by priority)
   const PRIORITY_ORDER = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "POSITIVE"] as const
@@ -437,6 +521,8 @@ export function OralPanelClient({ oral, snapshot }: Props) {
             color="#2D6A4F"
             status={shannon >= 3 ? "optimal" : shannon >= 2 ? "watch" : "attention"}
             statusLabel={shannon >= 3 ? "Optimal" : shannon >= 2 ? "Watch" : "Low"}
+            zoneKey="shannon"
+            numericValue={shannon}
           />
           <MetricCard
             label="Nitrate-Reducing"
@@ -446,6 +532,8 @@ export function OralPanelClient({ oral, snapshot }: Props) {
             color="#4A7FB5"
             status={nitratePct >= 5 ? "optimal" : nitratePct >= 2 ? "watch" : "attention"}
             statusLabel={nitratePct >= 5 ? "Optimal" : nitratePct >= 2 ? "Watch" : "Low"}
+            zoneKey="nitrate"
+            numericValue={nitratePct}
           />
           <MetricCard
             label="Periodontal Burden"
@@ -455,74 +543,20 @@ export function OralPanelClient({ oral, snapshot }: Props) {
             color="#C0392B"
             status={periodontalPct < 0.5 ? "optimal" : periodontalPct < 1.5 ? "watch" : "attention"}
             statusLabel={periodontalPct < 0.5 ? "Optimal" : periodontalPct < 1.5 ? "Watch" : "Elevated"}
+            zoneKey="periodontal"
+            numericValue={periodontalPct}
           />
-          {(() => {
-            // osaPct is in OTU scale (percentage for mock data)
-            // Use descriptor thresholds in percentage scale
-            const osaDesc = osaPct < 1 ? "Within target" : osaPct < 3 ? "Worth watching" : osaPct < 5 ? "Elevated" : "Notably elevated"
-            const osaSt = osaPct < 1 ? "optimal" as const : osaPct < 3 ? "watch" as const : "attention" as const
-            return (
-              <MetricCard
-                label="OSA-Associated Taxa"
-                sub="Prevotella · Fusobacterium"
-                value={osaDesc}
-                unit=""
-                color="#B8860B"
-                status={osaSt}
-                statusLabel={osaDesc}
-              />
-            )
-          })()}
-
-          {/* D5 — Neurological balance (descriptor only) */}
-          {(() => {
-            const d = burdenDescriptor(neuroSignalRaw, [0.001, 0.005, 0.02])
-            const statusBg = d.status === "optimal" ? "#EAF3DE" : d.status === "watch" ? "#FEF3C7" : "#FEE2E2"
-            const statusTxt = d.status === "optimal" ? "#2D6A4F" : d.status === "watch" ? "#92400E" : "#991B1B"
-            return (
-              <MetricCard
-                label="Neurological balance"
-                sub="Oral bacteria linked to brain health pathways"
-                value={d.label}
-                unit=""
-                color="#2D6A4F"
-                status={d.status}
-                statusLabel={d.label}
-              />
-            )
-          })()}
-
-          {/* D6 — Metabolic balance (descriptor only) */}
-          {(() => {
-            const d = burdenDescriptor(metabolicSignalRaw, [0.02, 0.05, 0.10])
-            return (
-              <MetricCard
-                label="Metabolic balance"
-                sub="Oral bacteria associated with metabolic pathways"
-                value={d.label}
-                unit=""
-                color="#2D6A4F"
-                status={d.status}
-                statusLabel={d.label}
-              />
-            )
-          })()}
-
-          {/* D7 — Cellular environment (descriptor only) */}
-          {(() => {
-            const d = burdenDescriptor(proliferativeSignalRaw, [0.005, 0.02, 0.05])
-            return (
-              <MetricCard
-                label="Cellular environment"
-                sub="Oral bacteria associated with cellular health"
-                value={d.label}
-                unit=""
-                color="#2D6A4F"
-                status={d.status}
-                statusLabel={d.label}
-              />
-            )
-          })()}
+          <MetricCard
+            label="OSA-Associated Taxa"
+            sub="Prevotella · Fusobacterium — target <1%"
+            value={osaPct.toFixed(2)}
+            unit="% reads"
+            color="#B8860B"
+            status={osaPct < 1 ? "optimal" : osaPct < 3 ? "watch" : "attention"}
+            statusLabel={osaPct < 1 ? "Optimal" : osaPct < 3 ? "Watch" : "Elevated"}
+            zoneKey="osa"
+            numericValue={osaPct}
+          />
         </div>
 
         {/* Secondary insights */}
