@@ -107,6 +107,8 @@ export async function GET() {
       .from("lifestyle_records")
       .select("age_range, biological_sex, mouthwash_type")
       .eq("user_id", userId)
+      .order("updated_at", { ascending: false })
+      .limit(1)
       .maybeSingle(),
   ])
 
