@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Nav } from "../../components/nav"
 
@@ -271,6 +271,26 @@ function MetricCard({ label, sub, value, unit, color, status, statusLabel }: {
 export function OralPanelClient({ oral, snapshot }: Props) {
   const oralSub = snapshot?.oral_sub as number | undefined
 
+  type OralNarrative = {
+    headline: string | null
+    narrative: string | null
+    positive_signal: string | null
+    watch_signal: string | null
+  }
+
+  const [aiNarrative, setAiNarrative] = useState<OralNarrative | null>(null)
+  const [narrativeLoading, setNarrativeLoading] = useState(true)
+
+  useEffect(() => {
+    fetch("/api/oral/narrative")
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.narrative) setAiNarrative(data.narrative as OralNarrative)
+      })
+      .catch(() => { /* silent fallback */ })
+      .finally(() => setNarrativeLoading(false))
+  }, [])
+
   if (!oral) {
     return (
       <div className="min-h-svh bg-off-white">
@@ -365,13 +385,47 @@ export function OralPanelClient({ oral, snapshot }: Props) {
           </div>
         )}
 
-        {/* Top narrative — wellness-framed, generated from live dimension values */}
-        <p style={{
-          fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: 17,
-          color: "var(--ink-65)", lineHeight: 1.55, margin: "0 0 24px",
-        }}>
-          {generateOralNarrative(periodontalPct, nitratePct, shannon)}
-        </p>
+        {/* Top narrative — AI-generated, falls back to hardcoded */}
+        {narrativeLoading ? (
+          <p style={{
+            fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: 17,
+            color: "var(--ink-30)", lineHeight: 1.55, margin: "0 0 24px",
+          }}>
+            Analysing your microbiome data…
+          </p>
+        ) : aiNarrative?.narrative ? (
+          <div style={{ border: "0.5px solid var(--ink-12)", padding: "16px 18px", marginBottom: 24, background: "#fff" }}>
+            {aiNarrative.headline && (
+              <p style={{ margin: "0 0 8px", fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: 16, fontWeight: 400, color: "var(--ink)", lineHeight: 1.4 }}>
+                {aiNarrative.headline}
+              </p>
+            )}
+            <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 12, color: "var(--ink-60)", lineHeight: 1.65 }}>
+              {aiNarrative.narrative}
+            </p>
+            {(aiNarrative.positive_signal || aiNarrative.watch_signal) && (
+              <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {aiNarrative.positive_signal && (
+                  <span style={{ fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "2px 8px", background: "#EAF3DE", color: "#2D6A4F" }}>
+                    {aiNarrative.positive_signal}
+                  </span>
+                )}
+                {aiNarrative.watch_signal && (
+                  <span style={{ fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "2px 8px", background: "#FEF3C7", color: "#92400E" }}>
+                    {aiNarrative.watch_signal}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
+          <p style={{
+            fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: 17,
+            color: "var(--ink-65)", lineHeight: 1.55, margin: "0 0 24px",
+          }}>
+            {generateOralNarrative(periodontalPct, nitratePct, shannon)}
+          </p>
+        )}
 
         {/* 4 key metrics */}
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 32 }}>
