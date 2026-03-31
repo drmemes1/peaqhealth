@@ -9,12 +9,12 @@ interface ExportModalProps {
 export function ExportModal({ onClose }: ExportModalProps) {
   const [email, setEmail] = useState("")
   const [recipientName, setRecipientName] = useState("")
-  const [sending, setSending] = useState(false)
+  const [loading, setLoading] = useState<"email" | "download" | null>(null)
   const [sent, setSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const handleExport = async (sendEmail: boolean) => {
-    setSending(true)
+    setLoading(sendEmail ? "email" : "download")
     setError(null)
     try {
       const res = await fetch("/api/account/export", {
@@ -48,7 +48,7 @@ export function ExportModal({ onClose }: ExportModalProps) {
     } catch {
       setError("Network error. Please check your connection and try again.")
     } finally {
-      setSending(false)
+      setLoading(null)
     }
   }
 
@@ -96,18 +96,18 @@ export function ExportModal({ onClose }: ExportModalProps) {
             {email && (
               <button
                 onClick={() => handleExport(true)}
-                disabled={sending}
-                style={{ flex: 1, padding: 10, background: "var(--ink)", color: "var(--white)", border: "none", borderRadius: 6, fontSize: 13, cursor: "pointer", fontWeight: 500, opacity: sending ? 0.5 : 1 }}
+                disabled={loading !== null}
+                style={{ flex: 1, padding: 10, background: "var(--ink)", color: "var(--white)", border: "none", borderRadius: 6, fontSize: 13, cursor: "pointer", fontWeight: 500, opacity: loading !== null ? 0.5 : 1 }}
               >
-                {sending ? "Sending…" : "Send to physician"}
+                {loading === "email" ? "Sending…" : "Send to physician"}
               </button>
             )}
             <button
               onClick={() => handleExport(false)}
-              disabled={sending}
-              style={{ flex: 1, padding: 10, background: "transparent", color: "var(--ink)", border: "0.5px solid var(--ink-20)", borderRadius: 6, fontSize: 13, cursor: "pointer", opacity: sending ? 0.5 : 1 }}
+              disabled={loading !== null}
+              style={{ flex: 1, padding: 10, background: "transparent", color: "var(--ink)", border: "0.5px solid var(--ink-20)", borderRadius: 6, fontSize: 13, cursor: "pointer", opacity: loading !== null ? 0.5 : 1 }}
             >
-              {sending ? "Building…" : "Download PDF"}
+              {loading === "download" ? "Building…" : "Download PDF"}
             </button>
           </div>
         )}
