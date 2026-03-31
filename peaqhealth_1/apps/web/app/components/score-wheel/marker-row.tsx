@@ -12,24 +12,76 @@ const FLAG_STYLES: Record<Flag, { bg: string; text: string; label: string }> = {
   not_tested: { bg: "var(--warm-50)", text: "var(--ink-30)", label: "—" },
 }
 
+export const SLEEP_ZONES: Record<string, {
+  zones: { label: string; color: string; min: number; max: number }[]
+  markerColor: string
+}> = {
+  deep: {
+    markerColor: '#4A7FB5',
+    zones: [
+      { label: 'Low',     color: '#FFCDD2', min: 0,  max: 10 },
+      { label: 'Watch',   color: '#FFE0B2', min: 10, max: 17 },
+      { label: 'Good',    color: '#FFF3CD', min: 17, max: 22 },
+      { label: 'Optimal', color: '#D4EDDA', min: 22, max: 35 },
+    ]
+  },
+  hrv: {
+    markerColor: '#4A7FB5',
+    zones: [
+      { label: 'Low',     color: '#FFCDD2', min: 0,  max: 20  },
+      { label: 'Watch',   color: '#FFE0B2', min: 20, max: 40  },
+      { label: 'Good',    color: '#FFF3CD', min: 40, max: 60  },
+      { label: 'Optimal', color: '#D4EDDA', min: 60, max: 120 },
+    ]
+  },
+  spo2Avg: {
+    markerColor: '#4A7FB5',
+    zones: [
+      { label: 'Low',     color: '#FFCDD2', min: 85, max: 90 },
+      { label: 'Watch',   color: '#FFE0B2', min: 90, max: 94 },
+      { label: 'Good',    color: '#FFF3CD', min: 94, max: 96 },
+      { label: 'Optimal', color: '#D4EDDA', min: 96, max: 100 },
+    ]
+  },
+  rem: {
+    markerColor: '#4A7FB5',
+    zones: [
+      { label: 'Low',     color: '#FFCDD2', min: 0,  max: 12 },
+      { label: 'Watch',   color: '#FFE0B2', min: 12, max: 18 },
+      { label: 'Good',    color: '#FFF3CD', min: 18, max: 25 },
+      { label: 'Optimal', color: '#D4EDDA', min: 25, max: 35 },
+    ]
+  },
+  efficiency: {
+    markerColor: '#4A7FB5',
+    zones: [
+      { label: 'Low',     color: '#FFCDD2', min: 60, max: 70 },
+      { label: 'Watch',   color: '#FFE0B2', min: 70, max: 78 },
+      { label: 'Good',    color: '#FFF3CD', min: 78, max: 85 },
+      { label: 'Optimal', color: '#D4EDDA', min: 85, max: 100 },
+    ]
+  },
+}
+
 interface MarkerRowProps {
   name: string
   sub: string
   value: number | string | null
   unit: string
   flag: Flag
-  barPct: number  // 0–100
+  barPct: number  // 0–100, used when zoneKey is absent
   color: string
   trackColor: string
   hoverBg: string
   mounted: boolean
+  zoneKey?: string  // when provided, renders zone bar instead of progress bar
   infoKey?: string
   expandedKey?: string | null
   onInfoToggle?: (key: string) => void
   infoContent?: { explanation: string; source: string }
 }
 
-export function MarkerRow({ name, sub, value, unit, flag, barPct, color, trackColor, hoverBg, mounted, infoKey, expandedKey, onInfoToggle, infoContent }: MarkerRowProps) {
+export function MarkerRow({ name, sub, value, unit, flag, barPct, color, trackColor, hoverBg, mounted, zoneKey, infoKey, expandedKey, onInfoToggle, infoContent }: MarkerRowProps) {
   const [hovered, setHovered] = useState(false)
   const isNotTested = value === null || value === 0 || value === "0"
   const isPending = flag === "pending" || isNotTested
@@ -73,15 +125,71 @@ export function MarkerRow({ name, sub, value, unit, flag, barPct, color, trackCo
           <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "var(--ink-60)", margin: "1px 0 0" }}>{sub}</p>
         </div>
 
-        {/* Bar */}
+        {/* Bar — zone bar when zoneKey provided, else progress bar */}
         <div style={{ flex: 1, minWidth: 60 }}>
-          <div style={{ height: 3, borderRadius: 2, background: trackColor, overflow: "hidden" }}>
-            <div style={{
-              height: "100%", width: mounted ? `${barPct}%` : "0%",
-              background: isPending ? "transparent" : color,
-              borderRadius: 2, transition: "width 1.4s cubic-bezier(.16,1,.3,1) 400ms",
-            }} />
-          </div>
+          {zoneKey && !isPending && typeof value === 'number' && (() => {
+            const config = SLEEP_ZONES[zoneKey]
+            if (!config) return (
+              <div style={{ height: 3, borderRadius: 2, background: trackColor, overflow: "hidden" }}>
+                <div style={{ height: "100%", width: mounted ? `${barPct}%` : "0%", background: color, borderRadius: 2, transition: "width 1.4s cubic-bezier(.16,1,.3,1) 400ms" }} />
+              </div>
+            )
+            const zones = config.zones
+            const totalMin = zones[0].min
+            const totalMax = zones[zones.length - 1].max
+            const totalRange = totalMax - totalMin
+            const clampedValue = Math.max(totalMin, Math.min(totalMax, value as number))
+            const markerPct = ((clampedValue - totalMin) / totalRange) * 100
+            return (
+              <div style={{ position: 'relative' }}>
+                <div style={{ display: 'flex', height: '7px', borderRadius: '4px', overflow: 'hidden', gap: '1px' }}>
+                  {zones.map((zone, i) => {
+                    const zonePct = ((zone.max - zone.min) / totalRange) * 100
+                    return (
+                      <div key={i} style={{
+                        flex: `0 0 ${zonePct}%`,
+                        background: zone.color,
+                        borderRadius: i === 0 ? '4px 0 0 4px' : i === zones.length - 1 ? '0 4px 4px 0' : '0',
+                      }} />
+                    )
+                  })}
+                </div>
+                <div style={{
+                  position: 'absolute', top: '50%', left: `${markerPct}%`,
+                  transform: 'translate(-50%, -50%)',
+                  width: '11px', height: '11px', borderRadius: '50%',
+                  background: config.markerColor,
+                  border: '2px solid white',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                  zIndex: 2,
+                }} />
+                <div style={{ display: 'flex', marginTop: '3px', gap: '1px' }}>
+                  {zones.map((zone, i) => {
+                    const zonePct = ((zone.max - zone.min) / totalRange) * 100
+                    return (
+                      <div key={i} style={{
+                        flex: `0 0 ${zonePct}%`,
+                        fontSize: '8px', color: 'var(--ink-30)', textAlign: 'center' as const,
+                        letterSpacing: '0.04em', textTransform: 'uppercase' as const,
+                        overflow: 'hidden', whiteSpace: 'nowrap' as const,
+                      }}>
+                        {zone.label}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })()}
+          {(!zoneKey || isPending || typeof value !== 'number') && (
+            <div style={{ height: 3, borderRadius: 2, background: trackColor, overflow: "hidden" }}>
+              <div style={{
+                height: "100%", width: mounted ? `${barPct}%` : "0%",
+                background: isPending ? "transparent" : color,
+                borderRadius: 2, transition: "width 1.4s cubic-bezier(.16,1,.3,1) 400ms",
+              }} />
+            </div>
+          )}
         </div>
 
         {/* Value + unit */}
