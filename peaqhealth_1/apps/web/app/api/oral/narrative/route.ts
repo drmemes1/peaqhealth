@@ -54,8 +54,12 @@ export async function GET() {
     return NextResponse.json({ narrative: null, reason: "no_oral_data" })
   }
 
-  // Resolve cache key date
-  const kitDate = (oralKit.collection_date ?? oralKit.ordered_at?.split("T")[0]) as string
+  // Resolve cache key date — fall back to ordered_at date if collection_date is absent
+  const kitDate = (oralKit.collection_date ?? oralKit.ordered_at?.split("T")[0]) as string | undefined
+  if (!kitDate) {
+    console.error("[oral-narrative] no kit date available — cannot cache")
+    return NextResponse.json({ narrative: null, reason: "no_kit_date" })
+  }
   const today = new Date().toISOString().split("T")[0]
 
   // ── Cache check — skip if < 7 days old ────────────────────────────────────
@@ -105,7 +109,7 @@ export async function GET() {
 
     supabase
       .from("lifestyle_records")
-      .select("age_range, biological_sex, mouthwash_type")
+      .select("age_range, biological_sex")
       .eq("user_id", userId)
       .order("updated_at", { ascending: false })
       .limit(1)
@@ -192,7 +196,7 @@ Return this exact JSON:
       model,
       max_tokens: 400,
       temperature: 0.65,
-      store: false,
+      store: false, // HIPAA ZDR
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user",   content: userPrompt },
