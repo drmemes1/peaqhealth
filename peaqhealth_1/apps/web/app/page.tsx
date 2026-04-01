@@ -15,25 +15,27 @@ export default function Home() {
     <div className="min-h-svh bg-off-white" style={{ color: "var(--ink)" }}>
 
       {/* ─── SECTION 1: HERO ──────────────────────────────────────────── */}
-      <section style={{ ...section, paddingTop: 48, paddingBottom: 80 }}>
-        <div className="fade-up" style={{ animationDelay: "0ms", marginBottom: 56 }}>
-          <LogoSvg size={80} color="var(--ink)" />
+      <section style={{ ...section, paddingTop: 64, paddingBottom: 100, minHeight: "85vh", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+        <div className="fade-up" style={{ animationDelay: "0ms", marginBottom: 64 }}>
+          <LogoSvg size={96} color="var(--ink)" />
         </div>
 
         <h1
           className="fade-up"
           style={{
             fontFamily: serif,
-            fontSize: "clamp(36px, 5.5vw, 48px)",
-            fontWeight: 300,
-            lineHeight: 1.15,
-            margin: "0 0 24px",
+            fontSize: "clamp(40px, 6vw, 64px)",
+            fontWeight: 400,
+            lineHeight: 1.05,
+            letterSpacing: "-0.02em",
+            maxWidth: 820,
+            margin: "0 0 8px",
             animationDelay: "80ms",
           }}
         >
           Your mouth is affecting your heart.
           <br />
-          <em style={{ fontStyle: "italic", color: "var(--gold)" }}>
+          <em style={{ fontStyle: "italic", color: "#9A7200" }}>
             We can show you exactly how.
           </em>
         </h1>
@@ -42,11 +44,12 @@ export default function Home() {
           className="fade-up"
           style={{
             fontFamily: body,
-            fontSize: 16,
-            lineHeight: 1.7,
-            color: "var(--ink-60)",
-            maxWidth: 560,
-            margin: "0 0 36px",
+            fontSize: 17,
+            fontStyle: "italic",
+            lineHeight: 1.75,
+            color: "rgba(20, 20, 16, 0.62)",
+            maxWidth: 520,
+            margin: "28px 0 48px",
             animationDelay: "180ms",
           }}
         >
@@ -61,8 +64,7 @@ export default function Home() {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 20,
-            marginBottom: 40,
+            gap: 32,
             animationDelay: "280ms",
           }}
         >
@@ -70,12 +72,13 @@ export default function Home() {
             href="/signup"
             style={{
               fontFamily: body,
-              fontSize: 14,
+              fontSize: 15,
               fontWeight: 500,
-              padding: "12px 28px",
-              background: "var(--ink)",
+              letterSpacing: "0.02em",
+              padding: "14px 32px",
+              background: "#141410",
               color: "var(--off-white)",
-              borderRadius: 6,
+              borderRadius: 4,
               textDecoration: "none",
             }}
           >
@@ -85,8 +88,9 @@ export default function Home() {
             href="/science"
             style={{
               fontFamily: body,
-              fontSize: 14,
-              color: "var(--ink-50)",
+              fontSize: 15,
+              letterSpacing: "0.02em",
+              color: "rgba(20, 20, 16, 0.5)",
               textDecoration: "none",
             }}
           >
@@ -99,7 +103,9 @@ export default function Home() {
           style={{
             fontFamily: body,
             fontSize: 12,
-            color: "var(--ink-30)",
+            letterSpacing: "0.08em",
+            color: "rgba(20, 20, 16, 0.35)",
+            marginTop: 64,
             animationDelay: "360ms",
           }}
         >
@@ -107,6 +113,8 @@ export default function Home() {
           and Dr. Paul Leis (Cardiologist)
         </p>
       </section>
+
+      <hr style={{ border: "none", borderTop: "0.5px solid rgba(20, 20, 16, 0.10)", margin: 0 }} />
 
       {/* ─── SECTION 2: THREE PANELS ──────────────────────────────────── */}
       <section style={{ ...section, paddingTop: 80, paddingBottom: 80 }}>
