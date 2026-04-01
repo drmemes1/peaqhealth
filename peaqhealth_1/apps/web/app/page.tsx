@@ -1,206 +1,201 @@
 import Link from "next/link"
 import { LogoSvg } from "./components/logo-svg"
 
-const serif = "'Cormorant Garamond', Georgia, serif"
-const body = "var(--font-body, 'Instrument Sans', sans-serif)"
+/* ─── Design tokens ───────────────────────────────────────────────────────── */
 
-const section: React.CSSProperties = {
-  maxWidth: 680,
+const serif = "'Cormorant Garamond', Georgia, serif"
+const sans  = "'Instrument Sans', system-ui, sans-serif"
+
+const INK    = "#141410"
+const INK_60 = "rgba(20,20,16,0.60)"
+const INK_40 = "rgba(20,20,16,0.40)"
+const INK_20 = "rgba(20,20,16,0.20)"
+const INK_08 = "rgba(20,20,16,0.08)"
+const INK_04 = "rgba(20,20,16,0.04)"
+const GOLD   = "#9A7200"
+const ORAL   = "#2D6A4F"
+const BLOOD  = "#C0392B"
+const SLEEP  = "#4A7FB5"
+const BORDER = "rgba(20,20,16,0.10)"
+const BG     = "#FAFAF8"
+
+const wrap: React.CSSProperties = {
+  maxWidth: 1080,
   margin: "0 auto",
-  padding: "0 24px",
+  padding: "0 10%",
 }
+
+const eyebrow: React.CSSProperties = {
+  fontFamily: sans,
+  fontSize: 11,
+  fontWeight: 500,
+  textTransform: "uppercase",
+  letterSpacing: "0.1em",
+  color: INK_40,
+  margin: "0 0 16px",
+}
+
+const rule: React.CSSProperties = {
+  border: "none",
+  borderTop: `0.5px solid ${BORDER}`,
+  margin: 0,
+}
+
+/* ─── Page ────────────────────────────────────────────────────────────────── */
 
 export default function Home() {
   return (
-    <div className="min-h-svh bg-off-white" style={{ color: "var(--ink)" }}>
+    <div style={{ background: BG, color: INK }}>
 
-      {/* ─── SECTION 1: HERO ──────────────────────────────────────────── */}
-      <section style={{ ...section, paddingTop: 64, paddingBottom: 100, minHeight: "85vh", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-        <div className="fade-up" style={{ animationDelay: "0ms", marginBottom: 64 }}>
-          <LogoSvg size={96} color="var(--ink)" />
+      {/* ══════════════════════════════════════════════════════════════════
+          SECTION 1 — HERO
+          ══════════════════════════════════════════════════════════════════ */}
+      <section style={{
+        ...wrap,
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        position: "relative",
+        paddingTop: 120,
+        paddingBottom: 80,
+      }}>
+        {/* Logo — top-left, absolute */}
+        <div className="fade-up" style={{
+          position: "absolute",
+          top: 48,
+          left: "10%",
+          animationDelay: "0ms",
+        }}>
+          <LogoSvg size={96} color={INK} />
         </div>
 
-        <h1
-          className="fade-up"
-          style={{
-            fontFamily: serif,
-            fontSize: "clamp(40px, 6vw, 64px)",
-            fontWeight: 400,
-            lineHeight: 1.05,
-            letterSpacing: "-0.02em",
-            maxWidth: 820,
-            margin: "0 0 8px",
-            animationDelay: "80ms",
-          }}
-        >
+        {/* Headline */}
+        <h1 className="fade-up" style={{
+          fontFamily: serif,
+          fontSize: "clamp(44px, 6vw, 72px)",
+          fontWeight: 400,
+          lineHeight: 1.05,
+          letterSpacing: "-0.02em",
+          maxWidth: 760,
+          margin: 0,
+          animationDelay: "80ms",
+        }}>
           Your mouth is affecting your heart.
           <br />
-          <em style={{ fontStyle: "italic", color: "#9A7200" }}>
+          <em style={{ fontStyle: "italic", color: GOLD }}>
             We can show you exactly how.
           </em>
         </h1>
 
-        <p
-          className="fade-up"
-          style={{
-            fontFamily: body,
-            fontSize: 17,
-            fontStyle: "italic",
-            lineHeight: 1.75,
-            color: "rgba(20, 20, 16, 0.62)",
-            maxWidth: 520,
-            margin: "28px 0 48px",
-            animationDelay: "180ms",
-          }}
-        >
-          <em style={{ fontStyle: "italic" }}>P. gingivalis</em> — a bacterium found in gum
-          disease — has been detected inside human coronary artery plaques.
-          Peaq is the first platform to connect your oral microbiome,
-          bloodwork, and sleep data into a single longitudinal score.
+        {/* Subhead */}
+        <p className="fade-up" style={{
+          fontFamily: sans,
+          fontSize: 17,
+          fontStyle: "italic",
+          lineHeight: 1.75,
+          color: "rgba(20,20,16,0.62)",
+          maxWidth: 500,
+          margin: "28px 0 0",
+          animationDelay: "180ms",
+        }}>
+          <em>P. gingivalis</em> — a bacterium found in gum disease — has been
+          detected inside human coronary artery plaques. Peaq is the first
+          platform to connect your oral microbiome, bloodwork, and sleep data
+          into a single longitudinal score.
         </p>
 
-        <div
-          className="fade-up"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 32,
-            animationDelay: "280ms",
-          }}
-        >
-          <Link
-            href="/signup"
-            style={{
-              fontFamily: body,
-              fontSize: 15,
-              fontWeight: 500,
-              letterSpacing: "0.02em",
-              padding: "14px 32px",
-              background: "#141410",
-              color: "var(--off-white)",
-              borderRadius: 4,
-              textDecoration: "none",
-            }}
-          >
+        {/* CTAs */}
+        <div className="fade-up" style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 32,
+          marginTop: 52,
+          animationDelay: "280ms",
+        }}>
+          <Link href="/signup" style={{
+            fontFamily: sans,
+            fontSize: 14,
+            fontWeight: 500,
+            letterSpacing: "0.06em",
+            textTransform: "uppercase" as const,
+            padding: "14px 36px",
+            background: INK,
+            color: BG,
+            borderRadius: 3,
+            textDecoration: "none",
+          }}>
             Get started
           </Link>
-          <Link
-            href="/science"
-            style={{
-              fontFamily: body,
-              fontSize: 15,
-              letterSpacing: "0.02em",
-              color: "rgba(20, 20, 16, 0.5)",
-              textDecoration: "none",
-            }}
-          >
+          <Link href="/science" style={{
+            fontFamily: sans,
+            fontSize: 15,
+            letterSpacing: "0.02em",
+            color: "rgba(20,20,16,0.50)",
+            textDecoration: "none",
+          }}>
             See the science →
           </Link>
         </div>
 
-        <p
-          className="fade-up"
-          style={{
-            fontFamily: body,
-            fontSize: 12,
-            letterSpacing: "0.08em",
-            color: "rgba(20, 20, 16, 0.35)",
-            marginTop: 64,
-            animationDelay: "360ms",
-          }}
-        >
+        {/* Attribution */}
+        <p className="fade-up" style={{
+          fontFamily: sans,
+          fontSize: 12,
+          letterSpacing: "0.08em",
+          color: "rgba(20,20,16,0.35)",
+          marginTop: 72,
+          animationDelay: "360ms",
+        }}>
           Built by Dr. Igor Khabensky (General Dentist)
           and Dr. Paul Leis (Cardiologist)
         </p>
       </section>
 
-      <hr style={{ border: "none", borderTop: "0.5px solid rgba(20, 20, 16, 0.10)", margin: 0 }} />
+      <hr style={rule} />
 
-      {/* ─── SECTION 2: THREE PANELS ──────────────────────────────────── */}
-      <section style={{ ...section, paddingTop: 80, paddingBottom: 80 }}>
-        <p
-          style={{
-            fontFamily: body,
-            fontSize: 10,
-            textTransform: "uppercase",
-            letterSpacing: "0.14em",
-            color: "var(--ink-30)",
-            margin: "0 0 12px",
-          }}
-        >
-          Three panels. One score.
-        </p>
+      {/* ══════════════════════════════════════════════════════════════════
+          SECTION 2 — THREE PANELS
+          ══════════════════════════════════════════════════════════════════ */}
+      <section style={{ ...wrap, paddingTop: 96, paddingBottom: 96 }}>
+        <p style={eyebrow}>Three panels. One score.</p>
 
-        <p
-          style={{
-            fontFamily: serif,
-            fontSize: "clamp(24px, 3.5vw, 30px)",
-            fontWeight: 300,
-            lineHeight: 1.3,
-            margin: "0 0 40px",
-            maxWidth: 520,
-          }}
-        >
+        <p style={{
+          fontFamily: serif,
+          fontSize: "clamp(28px, 3.5vw, 42px)",
+          fontWeight: 400,
+          lineHeight: 1.3,
+          margin: "0 0 48px",
+          maxWidth: 560,
+        }}>
           Most health platforms measure one thing.
           Peaq measures three — and finds the connections between them.
         </p>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: 16,
-            marginBottom: 32,
-          }}
-        >
-          {[
-            {
-              label: "Oral Microbiome",
-              color: "#2D6A4F",
-              lines: ["16S rRNA sequencing", "via Zymo Research"],
-            },
-            {
-              label: "Blood",
-              color: "#C0392B",
-              lines: ["40+ biomarkers", "from any lab"],
-            },
-            {
-              label: "Sleep",
-              color: "#4A7FB5",
-              lines: ["Nightly wearable", "HRV, deep sleep, SpO\u2082"],
-            },
-          ].map((p) => (
-            <div
-              key={p.label}
-              style={{
-                borderTop: `3px solid ${p.color}`,
-                padding: "20px 0 0",
-              }}
-            >
-              <p
-                style={{
-                  fontFamily: body,
-                  fontSize: 11,
-                  fontWeight: 600,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                  color: p.color,
-                  margin: "0 0 8px",
-                }}
-              >
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+          gap: 48,
+          marginBottom: 48,
+        }}>
+          {([
+            { label: "Oral Microbiome", color: ORAL,  lines: ["16S rRNA sequencing", "via Zymo Research"] },
+            { label: "Blood",           color: BLOOD, lines: ["40+ biomarkers", "from any lab"] },
+            { label: "Sleep",           color: SLEEP, lines: ["Nightly wearable", "HRV, deep sleep, SpO\u2082"] },
+          ] as const).map(p => (
+            <div key={p.label} style={{ borderTop: `2px solid ${p.color}`, paddingTop: 24 }}>
+              <p style={{
+                fontFamily: sans, fontSize: 11, fontWeight: 600,
+                textTransform: "uppercase", letterSpacing: "0.1em",
+                color: p.color, margin: "0 0 10px",
+              }}>
                 {p.label}
               </p>
-              {p.lines.map((l) => (
-                <p
-                  key={l}
-                  style={{
-                    fontFamily: body,
-                    fontSize: 13,
-                    color: "var(--ink-50)",
-                    margin: "2px 0",
-                    lineHeight: 1.5,
-                  }}
-                >
+              {p.lines.map(l => (
+                <p key={l} style={{
+                  fontFamily: sans, fontSize: 15, color: INK_60,
+                  lineHeight: 1.7, margin: "2px 0",
+                }}>
                   {l}
                 </p>
               ))}
@@ -208,243 +203,205 @@ export default function Home() {
           ))}
         </div>
 
-        <p
-          style={{
-            fontFamily: serif,
-            fontSize: 18,
-            fontWeight: 300,
-            fontStyle: "italic",
-            color: "var(--ink-40)",
-            maxWidth: 480,
-          }}
-        >
+        <p style={{
+          fontFamily: serif, fontSize: 20, fontWeight: 400,
+          fontStyle: "italic", color: INK_40, maxWidth: 520,
+        }}>
           The insight isn&apos;t in any single panel.
           It&apos;s in what they reveal about each other.
         </p>
       </section>
 
-      {/* ─── SECTION 3: THE CROSS-PANEL INSIGHT ──────────────────────── */}
-      <section style={{ ...section, paddingTop: 80, paddingBottom: 80 }}>
-        <p
-          style={{
-            fontFamily: body,
-            fontSize: 10,
-            textTransform: "uppercase",
-            letterSpacing: "0.14em",
-            color: "var(--ink-30)",
-            margin: "0 0 20px",
-          }}
-        >
-          What Peaq reveals
-        </p>
+      <hr style={rule} />
 
-        <div
-          style={{
-            borderLeft: "3px solid #4A7FB5",
-            padding: "24px 28px",
-            background: "var(--white)",
-            borderRadius: "0 6px 6px 0",
-            border: "0.5px solid var(--ink-08)",
-            borderLeftWidth: 3,
-            borderLeftColor: "#4A7FB5",
-          }}
-        >
-          <p
-            style={{
-              fontFamily: serif,
-              fontSize: 20,
-              fontWeight: 300,
-              lineHeight: 1.4,
-              color: "var(--ink)",
-              margin: "0 0 16px",
-            }}
-          >
-            &ldquo;Your oral nitrate-reducing bacteria are at 13% —
-            below the 20% threshold. Your HRV dropped to 27ms
-            this week. These two signals share a pathway:
-            the same bacteria that convert dietary nitrate
-            to nitric oxide also regulate cardiovascular
+      {/* ══════════════════════════════════════════════════════════════════
+          SECTION 3 — CROSS-PANEL INSIGHT
+          ══════════════════════════════════════════════════════════════════ */}
+      <section style={{ ...wrap, paddingTop: 96, paddingBottom: 96 }}>
+        <p style={eyebrow}>What Peaq reveals</p>
+
+        {/* Quote card */}
+        <div style={{
+          borderLeft: `3px solid ${SLEEP}`,
+          padding: "32px 40px",
+          background: INK_04,
+          borderRadius: "0 8px 8px 0",
+          maxWidth: 720,
+        }}>
+          <p style={{
+            fontFamily: serif, fontSize: 22, fontWeight: 400,
+            lineHeight: 1.6, color: INK, margin: "0 0 20px",
+          }}>
+            &ldquo;Your oral nitrate-reducing bacteria are at 13% — below
+            the 20% threshold. Your HRV dropped to 27ms this week. These
+            two signals share a pathway: the same bacteria that convert
+            dietary nitrate to nitric oxide also regulate cardiovascular
             recovery during sleep.&rdquo;
           </p>
-          <p
-            style={{
-              fontFamily: body,
-              fontSize: 12,
-              color: "var(--ink-30)",
-              fontStyle: "italic",
-              margin: 0,
-            }}
-          >
+          <p style={{
+            fontFamily: sans, fontSize: 12, fontStyle: "italic",
+            color: INK_40, margin: 0,
+          }}>
             — From a real Peaq weekly snapshot
           </p>
         </div>
+
+        {/* Stat blocks */}
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 64,
+          marginTop: 48,
+          maxWidth: 560,
+        }}>
+          <div>
+            <p style={{ fontFamily: serif, fontSize: 48, fontWeight: 400, color: GOLD, margin: "0 0 4px", lineHeight: 1 }}>
+              51%
+            </p>
+            <p style={{ fontFamily: sans, fontSize: 13, color: INK_60, lineHeight: 1.6, margin: "0 0 8px" }}>
+              nitrate-reducing bacteria in a healthy oral profile
+            </p>
+            <p style={{ fontFamily: sans, fontSize: 12, color: INK_40, margin: 0 }}>
+              vs. 13% in this sample
+            </p>
+          </div>
+          <div>
+            <p style={{ fontFamily: serif, fontSize: 48, fontWeight: 400, color: GOLD, margin: "0 0 4px", lineHeight: 1 }}>
+              27ms
+            </p>
+            <p style={{ fontFamily: sans, fontSize: 13, color: INK_60, lineHeight: 1.6, margin: "0 0 8px" }}>
+              HRV on the week this sample was taken
+            </p>
+            <p style={{ fontFamily: sans, fontSize: 12, color: INK_40, margin: 0 }}>
+              Population average: 45ms
+            </p>
+          </div>
+        </div>
       </section>
 
-      {/* ─── SECTION 4: THE SCIENCE ──────────────────────────────────── */}
-      <section style={{ ...section, paddingTop: 80, paddingBottom: 80 }}>
-        <p
-          style={{
-            fontFamily: body,
-            fontSize: 10,
-            textTransform: "uppercase",
-            letterSpacing: "0.14em",
-            color: "var(--ink-30)",
-            margin: "0 0 12px",
-          }}
-        >
-          Grounded in peer-reviewed research
+      <hr style={rule} />
+
+      {/* ══════════════════════════════════════════════════════════════════
+          SECTION 4 — SCIENCE
+          ══════════════════════════════════════════════════════════════════ */}
+      <section style={{ ...wrap, paddingTop: 96, paddingBottom: 96 }}>
+        <p style={eyebrow}>Grounded in peer-reviewed research</p>
+
+        <p style={{
+          fontFamily: sans, fontSize: 16, color: INK_60,
+          lineHeight: 1.75, maxWidth: 560, margin: "0 0 48px",
+        }}>
+          The oral-systemic connection isn&apos;t new — it&apos;s just never
+          been made measurable for individuals.
         </p>
 
-        <p
-          style={{
-            fontFamily: serif,
-            fontSize: "clamp(22px, 3vw, 28px)",
-            fontWeight: 300,
-            lineHeight: 1.3,
-            margin: "0 0 36px",
-            maxWidth: 520,
-          }}
-        >
-          The oral-systemic connection isn&apos;t new —
-          it&apos;s just never been made measurable for individuals.
-        </p>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-          {[
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {([
             {
-              source: "Tran et al. 2026, Circulation (AHA)",
-              finding:
-                "Periodontal disease increases ASCVD risk through bacteremia and chronic inflammation pathways.",
+              journal: "Circulation, 2026",
+              authors: "Tran AH et al. (AHA)",
+              finding: "Periodontal disease increases ASCVD risk through bacteremia and chronic inflammation.",
+              tag: "Oral \u2192 Blood",
+              tagColor: ORAL,
             },
             {
-              source: "Kurt et al. 2025, European Heart Journal (n=448,653)",
-              finding:
-                "Residual inflammatory risk is at least as strong a predictor as residual cholesterol risk.",
+              journal: "European Heart Journal, 2025",
+              authors: "Kurt B, Ridker PM et al. \u00b7 n = 448,653",
+              finding: "Residual inflammatory risk is at least as strong a predictor as residual cholesterol risk.",
+              tag: "Blood",
+              tagColor: BLOOD,
             },
             {
-              source: "Dominy et al. 2019, Science Advances",
-              finding:
-                "P. gingivalis detected in Alzheimer\u2019s disease brains.",
+              journal: "Science Advances, 2019",
+              authors: "Dominy SS et al.",
+              finding: "P. gingivalis detected in Alzheimer\u2019s disease brains.",
+              tag: "Oral \u2192 Brain",
+              tagColor: ORAL,
             },
-          ].map((c) => (
-            <div key={c.source}>
-              <p
-                style={{
-                  fontFamily: body,
-                  fontSize: 12,
-                  fontWeight: 500,
-                  color: "var(--ink)",
-                  margin: "0 0 4px",
-                }}
-              >
-                {c.source}
+          ] as const).map((c, i, arr) => (
+            <div key={c.journal} style={{
+              padding: "24px 0",
+              borderBottom: i < arr.length - 1 ? `0.5px solid ${BORDER}` : "none",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              gap: 48,
+              flexWrap: "wrap",
+            }}>
+              <div style={{ minWidth: 140, flexShrink: 0 }}>
+                <p style={{ fontFamily: sans, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: INK_40, margin: "0 0 2px" }}>
+                  {c.journal}
+                </p>
+                <p style={{ fontFamily: sans, fontSize: 12, color: INK_40, margin: 0 }}>
+                  {c.authors}
+                </p>
+              </div>
+              <p style={{
+                fontFamily: serif, fontSize: 18, fontWeight: 400,
+                fontStyle: "italic", color: INK, lineHeight: 1.5,
+                maxWidth: 440, margin: 0, flex: 1,
+              }}>
+                &ldquo;{c.finding}&rdquo;
               </p>
-              <p
-                style={{
-                  fontFamily: body,
-                  fontSize: 14,
-                  color: "var(--ink-50)",
-                  lineHeight: 1.6,
-                  margin: 0,
-                }}
-              >
-                {c.finding}
-              </p>
+              <span style={{
+                fontFamily: sans, fontSize: 10, fontWeight: 500,
+                textTransform: "uppercase", letterSpacing: "0.06em",
+                color: c.tagColor, padding: "4px 10px",
+                border: `1px solid ${c.tagColor}30`,
+                borderRadius: 3, flexShrink: 0, whiteSpace: "nowrap",
+              }}>
+                {c.tag}
+              </span>
             </div>
           ))}
         </div>
 
-        <Link
-          href="/science"
-          style={{
-            fontFamily: body,
-            fontSize: 13,
-            color: "var(--ink-40)",
-            textDecoration: "none",
-            display: "inline-block",
-            marginTop: 28,
-          }}
-        >
-          View full science →
+        <Link href="/science" style={{
+          fontFamily: sans, fontSize: 13, color: INK_40,
+          textDecoration: "none", display: "inline-block", marginTop: 32,
+        }}>
+          View full evidence base →
         </Link>
       </section>
 
-      {/* ─── SECTION 5: HOW IT WORKS ─────────────────────────────────── */}
-      <section style={{ ...section, paddingTop: 80, paddingBottom: 80 }}>
-        <p
-          style={{
-            fontFamily: body,
-            fontSize: 10,
-            textTransform: "uppercase",
-            letterSpacing: "0.14em",
-            color: "var(--ink-30)",
-            margin: "0 0 36px",
-          }}
-        >
-          How it works
-        </p>
+      <hr style={rule} />
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
-          {[
-            {
-              num: "1",
-              title: "Order your kit",
-              text: "Oral microbiome swab — 16S rRNA sequencing via Zymo Research. Results in 2-3 weeks.",
-            },
-            {
-              num: "2",
-              title: "Upload your labs",
-              text: "LabCorp, Quest, or any standard bloodwork. 40+ biomarkers tracked.",
-            },
-            {
-              num: "3",
-              title: "Connect your wearable",
-              text: "WHOOP or Oura. Syncs nightly. Apple Health coming soon.",
-            },
-            {
-              num: "4",
-              title: "Get your Peaq score",
-              text: "A single number — recalculated as your data updates. With the cross-panel signals that change how you understand your health.",
-            },
-          ].map((s) => (
-            <div
-              key={s.num}
-              style={{ display: "flex", gap: 20, alignItems: "flex-start" }}
-            >
-              <span
-                style={{
-                  fontFamily: serif,
-                  fontSize: 28,
-                  fontWeight: 300,
-                  color: "var(--ink-20)",
-                  lineHeight: 1,
-                  flexShrink: 0,
-                  width: 28,
-                }}
-              >
+      {/* ══════════════════════════════════════════════════════════════════
+          SECTION 5 — HOW IT WORKS
+          ══════════════════════════════════════════════════════════════════ */}
+      <section style={{ ...wrap, paddingTop: 96, paddingBottom: 96 }}>
+        <p style={eyebrow}>How it works</p>
+
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {([
+            { num: "1", title: "Order your kit",          text: "Oral microbiome swab — 16S rRNA sequencing via Zymo Research. Results in 2\u20133 weeks." },
+            { num: "2", title: "Upload your labs",        text: "LabCorp, Quest, or any standard bloodwork. 40+ biomarkers tracked." },
+            { num: "3", title: "Connect your wearable",   text: "WHOOP or Oura. Syncs nightly. Apple Health coming soon." },
+            { num: "4", title: "Get your Peaq score",     text: "A single number \u2014 recalculated as your data updates. With the cross-panel signals that change how you understand your health." },
+          ] as const).map(s => (
+            <div key={s.num} style={{
+              display: "flex", alignItems: "flex-start", gap: 32,
+              padding: "32px 0",
+              borderBottom: `0.5px solid ${INK_08}`,
+            }}>
+              <span style={{
+                fontFamily: serif, fontSize: 32, fontWeight: 400,
+                color: "rgba(20,20,16,0.15)", lineHeight: 1,
+                width: 32, flexShrink: 0, marginTop: 2,
+              }}>
                 {s.num}
               </span>
               <div>
-                <p
-                  style={{
-                    fontFamily: body,
-                    fontSize: 14,
-                    fontWeight: 500,
-                    color: "var(--ink)",
-                    margin: "0 0 4px",
-                  }}
-                >
+                <p style={{
+                  fontFamily: sans, fontSize: 15, fontWeight: 500,
+                  color: INK, margin: "0 0 6px",
+                }}>
                   {s.title}
                 </p>
-                <p
-                  style={{
-                    fontFamily: body,
-                    fontSize: 14,
-                    color: "var(--ink-50)",
-                    lineHeight: 1.65,
-                    margin: 0,
-                  }}
-                >
+                <p style={{
+                  fontFamily: sans, fontSize: 14, color: "rgba(20,20,16,0.55)",
+                  lineHeight: 1.7, margin: 0,
+                }}>
                   {s.text}
                 </p>
               </div>
@@ -453,147 +410,123 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── SECTION 6: BUILT BY CLINICIANS ──────────────────────────── */}
-      <section style={{ ...section, paddingTop: 80, paddingBottom: 80 }}>
-        <p
-          style={{
-            fontFamily: body,
-            fontSize: 10,
-            textTransform: "uppercase",
-            letterSpacing: "0.14em",
-            color: "var(--ink-30)",
-            margin: "0 0 28px",
-          }}
-        >
-          Built by clinicians, not algorithms
-        </p>
+      <hr style={rule} />
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 24,
-            marginBottom: 28,
-          }}
-        >
-          <div>
-            <p
-              style={{
-                fontFamily: body,
-                fontSize: 14,
-                fontWeight: 500,
-                color: "var(--ink)",
-                margin: "0 0 2px",
-              }}
-            >
-              Dr. Igor Khabensky
-            </p>
-            <p
-              style={{
-                fontFamily: body,
-                fontSize: 12,
-                color: "var(--ink-40)",
-                margin: 0,
-              }}
-            >
-              General Dentist
-            </p>
-          </div>
-          <div>
-            <p
-              style={{
-                fontFamily: body,
-                fontSize: 14,
-                fontWeight: 500,
-                color: "var(--ink)",
-                margin: "0 0 2px",
-              }}
-            >
-              Dr. Paul Leis
-            </p>
-            <p
-              style={{
-                fontFamily: body,
-                fontSize: 12,
-                color: "var(--ink-40)",
-                margin: 0,
-              }}
-            >
-              Cardiologist
-            </p>
-          </div>
+      {/* ══════════════════════════════════════════════════════════════════
+          SECTION 6 — DASHBOARD PREVIEW
+          ══════════════════════════════════════════════════════════════════ */}
+      <section style={{ ...wrap, paddingTop: 96, paddingBottom: 96 }}>
+        <p style={eyebrow}>Your dashboard</p>
+
+        <div style={{
+          width: "100%",
+          aspectRatio: "16 / 9",
+          background: INK_04,
+          border: `0.5px solid ${INK_08}`,
+          borderRadius: 12,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}>
+          <p style={{
+            fontFamily: sans, fontSize: 13,
+            color: INK_20, fontStyle: "italic",
+          }}>
+            Dashboard screenshot — replacing soon
+          </p>
+        </div>
+      </section>
+
+      <hr style={rule} />
+
+      {/* ══════════════════════════════════════════════════════════════════
+          SECTION 7 — BUILT BY CLINICIANS
+          ══════════════════════════════════════════════════════════════════ */}
+      <section style={{ ...wrap, paddingTop: 96, paddingBottom: 96 }}>
+        <p style={eyebrow}>Built by clinicians, not algorithms</p>
+
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+          gap: 64,
+          marginBottom: 56,
+        }}>
+          {([
+            { name: "Dr. Igor Khabensky", title: "General Dentist" },
+            { name: "Dr. Paul Leis",      title: "Cardiologist" },
+          ] as const).map(doc => (
+            <div key={doc.name}>
+              <div style={{
+                width: 80, height: 80, borderRadius: "50%",
+                background: "rgba(20,20,16,0.06)", marginBottom: 20,
+              }} />
+              <p style={{
+                fontFamily: sans, fontSize: 16, fontWeight: 500,
+                color: INK, margin: "0 0 4px",
+              }}>
+                {doc.name}
+              </p>
+              <p style={{
+                fontFamily: sans, fontSize: 13,
+                color: "rgba(20,20,16,0.45)", margin: 0,
+              }}>
+                {doc.title}
+              </p>
+            </div>
+          ))}
         </div>
 
-        <p
-          style={{
-            fontFamily: serif,
-            fontSize: 18,
-            fontWeight: 300,
-            fontStyle: "italic",
-            lineHeight: 1.5,
-            color: "var(--ink-50)",
-            maxWidth: 520,
-          }}
-        >
-          &ldquo;We built Peaq because we kept seeing the same
-          pattern — oral disease showing up in cardiovascular
-          risk, sleep disruption compounding inflammation.
-          No platform was connecting these dots.&rdquo;
+        <p style={{
+          fontFamily: serif, fontSize: 24, fontWeight: 400,
+          fontStyle: "italic", lineHeight: 1.5,
+          color: INK_60, maxWidth: 640,
+        }}>
+          &ldquo;We built Peaq because we kept seeing the same pattern —
+          oral disease showing up in cardiovascular risk, sleep disruption
+          compounding inflammation. No platform was connecting these
+          dots.&rdquo;
         </p>
       </section>
 
-      {/* ─── SECTION 7: FINAL CTA ────────────────────────────────────── */}
-      <section
-        style={{
-          ...section,
-          paddingTop: 80,
-          paddingBottom: 80,
-          textAlign: "center",
-        }}
-      >
-        <p
-          style={{
-            fontFamily: serif,
-            fontSize: "clamp(24px, 3.5vw, 32px)",
-            fontWeight: 300,
-            lineHeight: 1.3,
-            margin: "0 0 32px",
-          }}
-        >
+      <hr style={rule} />
+
+      {/* ══════════════════════════════════════════════════════════════════
+          SECTION 8 — FINAL CTA
+          ══════════════════════════════════════════════════════════════════ */}
+      <section style={{ ...wrap, paddingTop: 120, paddingBottom: 80 }}>
+        <p style={{
+          fontFamily: serif,
+          fontSize: "clamp(28px, 4vw, 48px)",
+          fontWeight: 400,
+          lineHeight: 1.15,
+          letterSpacing: "-0.02em",
+          margin: "0 0 40px",
+        }}>
           Ready to measure what others miss?
         </p>
 
-        <Link
-          href="/signup"
-          style={{
-            fontFamily: body,
-            fontSize: 15,
-            fontWeight: 500,
-            padding: "14px 36px",
-            background: "var(--ink)",
-            color: "var(--off-white)",
-            borderRadius: 6,
-            textDecoration: "none",
-            display: "inline-block",
-          }}
-        >
+        <Link href="/signup" style={{
+          fontFamily: sans,
+          fontSize: 14,
+          fontWeight: 500,
+          letterSpacing: "0.06em",
+          textTransform: "uppercase" as const,
+          padding: "14px 36px",
+          background: INK,
+          color: BG,
+          borderRadius: 3,
+          textDecoration: "none",
+          display: "inline-block",
+        }}>
           Get started
         </Link>
 
-        <p
-          style={{
-            fontFamily: body,
-            fontSize: 11,
-            color: "var(--ink-20)",
-            marginTop: 24,
-            lineHeight: 1.6,
-            maxWidth: 400,
-            marginLeft: "auto",
-            marginRight: "auto",
-          }}
-        >
+        <p style={{
+          fontFamily: sans, fontSize: 11, color: "rgba(20,20,16,0.30)",
+          marginTop: 48, lineHeight: 1.7, maxWidth: 440,
+        }}>
           For informational purposes only. Not a medical device.
-          Not intended to diagnose, treat, cure, or prevent disease.
+          Not intended to diagnose, treat, cure, or prevent any disease.
         </p>
       </section>
     </div>
