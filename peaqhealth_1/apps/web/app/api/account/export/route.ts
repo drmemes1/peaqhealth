@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server"
 import { createClient } from "../../../../lib/supabase/server"
-import { pdf } from "@react-pdf/renderer"
 import fs from "fs"
 import path from "path"
 import { fetchReportData } from "./report-data"
@@ -24,14 +23,7 @@ export async function POST() {
     // PDF renders without logo
   }
 
-  const doc = buildReportDocument(reportData, logoBase64)
-  const pdfStream = await pdf(doc).toBuffer()
-  const chunks: Buffer[] = []
-  const pdfBuffer = await new Promise<Buffer>((resolve, reject) => {
-    pdfStream.on("data", (chunk: Buffer) => chunks.push(chunk))
-    pdfStream.on("end", () => resolve(Buffer.concat(chunks)))
-    pdfStream.on("error", reject)
-  })
+  const pdfBuffer = await buildReportDocument(reportData, logoBase64)
 
   const dateStr = new Date().toISOString().split("T")[0]
   const safeName = reportData.fullName.replace(/[^a-zA-Z0-9\s]/g, "").replace(/\s+/g, "-").toLowerCase()
@@ -45,4 +37,8 @@ export async function POST() {
       "Content-Length": pdfBuffer.length.toString(),
     },
   })
+}
+
+export function GET() {
+  return NextResponse.json({ error: "Method not allowed" }, { status: 405 })
 }
