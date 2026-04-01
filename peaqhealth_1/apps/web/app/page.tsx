@@ -299,7 +299,7 @@ export default function Home() {
         }}>
           {([
             { name: "Dr. Igor Khabensky", title: "General Dentist", photo: "/images/dr-igor-khabensky.jpg" },
-            { name: "Dr. Paul Leis",      title: "Cardiologist",    photo: null },
+            { name: "Dr. Paul Leis",      title: "Cardiologist",    photo: "/images/dr-paul-leis.jpg" },
           ] as const).map(doc => (
             <div key={doc.name}>
               {doc.photo ? (
