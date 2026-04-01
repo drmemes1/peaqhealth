@@ -162,23 +162,19 @@ export default function Home() {
           display: "flex",
           alignItems: "center",
           justifyContent: "flex-end",
-          paddingRight: 0,
-          paddingLeft: 20,
           animationDelay: "400ms",
         }}>
           <img
             src="/images/preview-insights.png"
             alt="Peaq cross-panel insights on iPhone"
             style={{
-              width: "100%",
-              maxWidth: 480,
+              width: 320,
               height: "auto",
               display: "block",
               marginLeft: "auto",
-              marginRight: 0,
               borderRadius: 24,
-              boxShadow: "0 32px 80px rgba(20,20,16,0.18), 0 8px 24px rgba(20,20,16,0.10)",
-              transform: "perspective(1000px) rotateY(-4deg) rotateX(2deg)",
+              boxShadow: "0 24px 60px rgba(20,20,16,0.15), 0 4px 16px rgba(20,20,16,0.08)",
+              transform: "perspective(800px) rotateY(-6deg)",
             }}
           />
         </div>
