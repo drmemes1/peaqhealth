@@ -157,7 +157,7 @@ export default function Home() {
             style={{
               width: "min(340px, 30vw)",
               height: "auto",
-              filter: "drop-shadow(0 24px 48px rgba(0,0,0,0.10))",
+              filter: "drop-shadow(0 16px 40px rgba(0,0,0,0.06))",
             }}
             className="hero-phone"
           />
@@ -272,7 +272,7 @@ export default function Home() {
             style={{
               width: "min(380px, 50vw)",
               height: "auto",
-              filter: "drop-shadow(0 24px 48px rgba(0,0,0,0.08))",
+              filter: "drop-shadow(0 16px 40px rgba(0,0,0,0.06))",
             }}
           />
         </div>
