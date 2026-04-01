@@ -104,7 +104,7 @@ export default function Home() {
           }}
         >
           Built by Dr. Igor Khabensky (General Dentist)
-          and Dr. Narod Naranjarian (Periodontist)
+          and Dr. Paul Leis (Cardiologist)
         </p>
       </section>
 
@@ -501,7 +501,7 @@ export default function Home() {
                 margin: "0 0 2px",
               }}
             >
-              Dr. Narod Naranjarian
+              Dr. Paul Leis
             </p>
             <p
               style={{
@@ -511,7 +511,7 @@ export default function Home() {
                 margin: 0,
               }}
             >
-              Periodontist
+              Cardiologist
             </p>
           </div>
         </div>
@@ -528,9 +528,9 @@ export default function Home() {
           }}
         >
           &ldquo;We built Peaq because we kept seeing the same
-          pattern in our patients — oral disease showing up
-          in their bloodwork, their sleep, their cardiovascular
-          risk. No platform was connecting these dots.&rdquo;
+          pattern — oral disease showing up in cardiovascular
+          risk, sleep disruption compounding inflammation.
+          No platform was connecting these dots.&rdquo;
         </p>
       </section>
 
