@@ -298,14 +298,25 @@ export default function Home() {
           marginBottom: 56,
         }}>
           {([
-            { name: "Dr. Igor Khabensky", title: "General Dentist" },
-            { name: "Dr. Paul Leis",      title: "Cardiologist" },
+            { name: "Dr. Igor Khabensky", title: "General Dentist", photo: "/images/dr-igor-khabensky.jpg" },
+            { name: "Dr. Paul Leis",      title: "Cardiologist",    photo: null },
           ] as const).map(doc => (
             <div key={doc.name}>
-              <div style={{
-                width: 80, height: 80, borderRadius: "50%",
-                background: "rgba(20,20,16,0.06)", marginBottom: 20,
-              }} />
+              {doc.photo ? (
+                <img
+                  src={doc.photo}
+                  alt={doc.name}
+                  style={{
+                    width: 80, height: 80, borderRadius: "50%",
+                    objectFit: "cover", marginBottom: 20,
+                  }}
+                />
+              ) : (
+                <div style={{
+                  width: 80, height: 80, borderRadius: "50%",
+                  background: "rgba(20,20,16,0.06)", marginBottom: 20,
+                }} />
+              )}
               <p style={{
                 fontFamily: sans, fontSize: 16, fontWeight: 500,
                 color: INK, margin: "0 0 4px",
