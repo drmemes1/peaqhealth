@@ -1,6 +1,8 @@
 // Must mock ESM packages before any imports
+import { Readable } from 'stream'
+function mockPdfStream() { return Readable.from(Buffer.from('%PDF-mock')) }
 jest.mock('@react-pdf/renderer', () => ({
-  pdf: jest.fn().mockReturnValue({ toBuffer: jest.fn().mockResolvedValue(Buffer.from('%PDF-mock')) }),
+  pdf: jest.fn().mockReturnValue({ toBuffer: jest.fn().mockImplementation(() => Promise.resolve(mockPdfStream())) }),
   Document: ({ children }: { children: unknown }) => children,
   Page: ({ children }: { children: unknown }) => children,
   Text: ({ children }: { children: unknown }) => children,

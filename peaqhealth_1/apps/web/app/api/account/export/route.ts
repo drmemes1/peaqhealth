@@ -32,7 +32,13 @@ export async function POST(req: NextRequest) {
   }
 
   const doc = buildReportDocument(reportData, logoBase64)
-  const pdfBuffer = await pdf(doc).toBuffer()
+  const pdfStream = await pdf(doc).toBuffer()
+  const chunks: Buffer[] = []
+  const pdfBuffer = await new Promise<Buffer>((resolve, reject) => {
+    pdfStream.on("data", (chunk: Buffer) => chunks.push(chunk))
+    pdfStream.on("end", () => resolve(Buffer.concat(chunks)))
+    pdfStream.on("error", reject)
+  })
 
   const dateStr = new Date().toISOString().split("T")[0]
   const safeName = reportData.fullName.replace(/[^a-zA-Z0-9\s]/g, "").replace(/\s+/g, "-").toLowerCase()
@@ -56,7 +62,7 @@ export async function POST(req: NextRequest) {
         "",
         "Peaq Health · peaqhealth.me",
       ].join("\n"),
-      attachments: [{ filename, content: Buffer.from(pdfBuffer).toString("base64") }],
+      attachments: [{ filename, content: pdfBuffer.toString("base64") }],
     })
 
     if (error) {
@@ -68,7 +74,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Download path
-  return new NextResponse(pdfBuffer, {
+  return new NextResponse(new Uint8Array(pdfBuffer), {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",
