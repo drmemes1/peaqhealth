@@ -1843,6 +1843,25 @@ export function ScoreWheel({
         />
       </div>
 
+      {/* INSIGHTS */}
+      <div style={fadeUp("0.32s")}>
+        <Insights
+          sleepConnected={sleepConnected} hasBlood={hasBlood} oralActive={oralActive} lifestyleActive={!!lifestyleData}
+          sleepHrv={sleepData?.hrv} sleepDeepPct={sleepData?.deepPct}
+          sleepEfficiency={sleepData?.efficiency}
+          bloodHsCrp={bloodData?.hsCRP} bloodApoB={bloodData?.apoB}
+          bloodLdl={bloodData?.ldl} bloodVitaminD={bloodData?.vitaminD}
+          bloodHba1c={bloodData?.hba1c} bloodGlucose={bloodData?.glucose}
+          oralPeriodont={oralData?.periodontPathPct}
+          exerciseLevel={lifestyleData?.exerciseLevel}
+          smokingStatus={lifestyleData?.smokingStatus}
+          stressLevel={lifestyleData?.stressLevel}
+          alcoholDrinksPerWeek={lifestyleData?.alcoholPerWeek}
+          vegServings={lifestyleData?.vegServings}
+          processedFood={lifestyleData?.processedFood}
+        />
+      </div>
+
       {/* CROSS-PANEL INTERACTIONS */}
       <CrossPanelInteractions
         oralKitStatus={oralKitStatus}
@@ -2158,25 +2177,6 @@ export function ScoreWheel({
           )}
         </div>
       </CollapsiblePanel>
-
-      {/* INSIGHTS */}
-      <div style={fadeUp("0.32s")}>
-        <Insights
-          sleepConnected={sleepConnected} hasBlood={hasBlood} oralActive={oralActive} lifestyleActive={!!lifestyleData}
-          sleepHrv={sleepData?.hrv} sleepDeepPct={sleepData?.deepPct}
-          sleepEfficiency={sleepData?.efficiency}
-          bloodHsCrp={bloodData?.hsCRP} bloodApoB={bloodData?.apoB}
-          bloodLdl={bloodData?.ldl} bloodVitaminD={bloodData?.vitaminD}
-          bloodHba1c={bloodData?.hba1c} bloodGlucose={bloodData?.glucose}
-          oralPeriodont={oralData?.periodontPathPct}
-          exerciseLevel={lifestyleData?.exerciseLevel}
-          smokingStatus={lifestyleData?.smokingStatus}
-          stressLevel={lifestyleData?.stressLevel}
-          alcoholDrinksPerWeek={lifestyleData?.alcoholPerWeek}
-          vegServings={lifestyleData?.vegServings}
-          processedFood={lifestyleData?.processedFood}
-        />
-      </div>
 
       {/* NEXT STEPS */}
       <div style={fadeUp("0.38s")}>
