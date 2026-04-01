@@ -57,7 +57,7 @@ function fmtDate(iso: string | null | undefined): string {
   catch { return iso }
 }
 
-const today = fmtDate(new Date().toISOString())
+function today() { return fmtDate(new Date().toISOString()) }
 
 type Status = "OPTIMAL" | "GOOD" | "WATCH" | "ELEVATED" | "NOT TESTED"
 
@@ -85,7 +85,7 @@ function PageFooter({ name }: { name: string }) {
   return (
     <View style={s.footer} fixed>
       <Text style={s.ftTxt}>Peaq Health · peaqhealth.me · {name}</Text>
-      <Text style={s.ftTxt}>Generated {today}</Text>
+      <Text style={s.ftTxt}>Generated {today()}</Text>
     </View>
   )
 }
@@ -187,7 +187,7 @@ function CoverPage({ data, logo }: { data: ReportData; logo: string | null }) {
           <Text style={{ fontSize: 16, color: INK, marginBottom: 4 }}>Personal Health Report</Text>
           <Text style={{ fontSize: 12, fontFamily: "Helvetica-Bold", color: INK, marginBottom: 2 }}>{data.fullName}</Text>
           <Text style={{ fontSize: 9, color: INK_40, marginBottom: 2 }}>{data.email}</Text>
-          <Text style={{ fontSize: 9, color: INK_40 }}>Generated {today}</Text>
+          <Text style={{ fontSize: 9, color: INK_40 }}>Generated {today()}</Text>
         </View>
       </View>
 
@@ -675,7 +675,7 @@ function LifestylePage({ data }: { data: ReportData }) {
 
       <View style={{ marginTop: 20, flexDirection: "row", justifyContent: "space-between" }}>
         <Text style={{ fontSize: 8, color: INK_40 }}>Peaq Health \u00b7 peaqhealth.me</Text>
-        <Text style={{ fontSize: 8, color: INK_40 }}>Generated {today}</Text>
+        <Text style={{ fontSize: 8, color: INK_40 }}>Generated {today()}</Text>
       </View>
 
       <PageFooter name={data.fullName} />
