@@ -435,30 +435,30 @@ function WeeklySnapshotCard({ snapshot }: { snapshot: WeeklySnapshot | null }) {
 
       {/* Headline */}
       <p style={{ fontFamily: serif, fontSize: 22, fontWeight: 300, color: C.ink, lineHeight: 1.3, margin: "0 0 10px" }}>
-        {snapshot.headline}
+        {String(snapshot.headline ?? "")}
       </p>
 
       {/* Body */}
       <p style={{ fontFamily: body, fontSize: 13, color: "var(--ink-60)", lineHeight: 1.65, margin: snapshot.retest_recommendation ? "0 0 16px" : "0" }}>
-        {snapshot.body}
+        {String(snapshot.body ?? "")}
       </p>
 
       {/* Positive highlight */}
-      {snapshot.raw_response?.positive_highlight && (
+      {typeof snapshot.raw_response?.positive_highlight === "string" && (
         <div style={{ marginTop: 14, padding: "10px 14px", background: "rgba(29,158,117,0.07)", borderRadius: 8, borderLeft: "3px solid #1D9E75", fontFamily: body, fontSize: 13, color: "var(--ink-60)", lineHeight: 1.5 }}>
           {snapshot.raw_response.positive_highlight}
         </div>
       )}
 
       {/* Watch note */}
-      {snapshot.raw_response?.watch_note && (
+      {typeof snapshot.raw_response?.watch_note === "string" && (
         <div style={{ marginTop: 10, padding: "10px 14px", background: "rgba(184,134,11,0.07)", borderRadius: 8, borderLeft: `3px solid ${C.lifestyle}`, fontFamily: body, fontSize: 13, color: "var(--ink-60)", lineHeight: 1.5 }}>
           {snapshot.raw_response.watch_note}
         </div>
       )}
 
       {/* Retest recommendation */}
-      {snapshot.retest_recommendation && (
+      {typeof snapshot.retest_recommendation === "string" && (
         <div style={{ marginTop: 14, paddingTop: 14, borderTop: "0.5px solid var(--ink-08)", fontFamily: body, fontSize: 12, color: "var(--ink-40)", lineHeight: 1.55, fontStyle: "italic" }}>
           {snapshot.retest_recommendation}
         </div>
@@ -584,28 +584,28 @@ function SleepNarrativeCard() {
       </div>
 
       {/* Headline */}
-      {narrative.headline && (
+      {typeof narrative.headline === "string" && (
         <div style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 20, fontWeight: 300, color: "var(--ink)", lineHeight: 1.3, marginBottom: 10 }}>
           {narrative.headline}
         </div>
       )}
 
       {/* Narrative */}
-      {narrative.narrative && (
+      {typeof narrative.narrative === "string" && (
         <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 14, color: "var(--ink-60)", lineHeight: 1.65, marginBottom: 14, margin: "0 0 14px" }}>
           {narrative.narrative}
         </p>
       )}
 
       {/* Positive signal */}
-      {narrative.positive_signal && (
+      {typeof narrative.positive_signal === "string" && (
         <div style={{ padding: "10px 14px", background: "rgba(29,158,117,0.07)", borderRadius: 6, borderLeft: "3px solid #1D9E75", fontSize: 13, fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", color: "var(--ink-60)", lineHeight: 1.5, marginBottom: 8 }}>
           {narrative.positive_signal}
         </div>
       )}
 
       {/* Watch signal */}
-      {narrative.watch_signal && (
+      {typeof narrative.watch_signal === "string" && (
         <div style={{ padding: "10px 14px", background: "rgba(184,134,11,0.07)", borderRadius: 6, borderLeft: "3px solid #B8860B", fontSize: 13, fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", color: "var(--ink-60)", lineHeight: 1.5, marginBottom: 14 }}>
           {narrative.watch_signal}
         </div>

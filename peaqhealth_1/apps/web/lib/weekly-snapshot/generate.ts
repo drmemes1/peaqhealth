@@ -323,10 +323,10 @@ Return exactly this JSON (no other keys):
       avg_rem_pct:      avgRemPct,
       nights_tracked:   thisWeekSleep.length,
       hrv_trend_pct:    hrvTrendPct,
-      headline:         parsed.headline       ?? null,
-      body:             parsed.body           ?? null,
-      trend_direction:  parsed.trend_direction ?? "stable",
-      retest_recommendation: parsed.retest_recommendation ?? null,
+      headline:         typeof parsed.headline === "string" ? parsed.headline : null,
+      body:             typeof parsed.body === "string" ? parsed.body : null,
+      trend_direction:  typeof parsed.trend_direction === "string" ? parsed.trend_direction : "stable",
+      retest_recommendation: typeof parsed.retest_recommendation === "string" ? parsed.retest_recommendation : null,
       raw_response:     parsed,
     }, { onConflict: "user_id,week_start" })
     .select()

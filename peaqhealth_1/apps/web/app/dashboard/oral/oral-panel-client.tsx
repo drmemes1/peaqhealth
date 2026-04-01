@@ -467,9 +467,9 @@ export function OralPanelClient({ oral, snapshot }: Props) {
           }}>
             Analysing your microbiome data…
           </p>
-        ) : aiNarrative?.narrative ? (
+        ) : typeof aiNarrative?.narrative === "string" ? (
           <div style={{ border: "0.5px solid var(--ink-12)", padding: "16px 18px", marginBottom: 24, background: "#fff" }}>
-            {aiNarrative.headline && (
+            {typeof aiNarrative.headline === "string" && (
               <p style={{ margin: "0 0 8px", fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: 16, fontWeight: 400, color: "var(--ink)", lineHeight: 1.4 }}>
                 {aiNarrative.headline}
               </p>
@@ -477,14 +477,14 @@ export function OralPanelClient({ oral, snapshot }: Props) {
             <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 12, color: "var(--ink-60)", lineHeight: 1.65 }}>
               {aiNarrative.narrative}
             </p>
-            {(aiNarrative.positive_signal || aiNarrative.watch_signal) && (
+            {(typeof aiNarrative.positive_signal === "string" || typeof aiNarrative.watch_signal === "string") && (
               <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {aiNarrative.positive_signal && (
+                {typeof aiNarrative.positive_signal === "string" && (
                   <span style={{ fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "2px 8px", background: "#EAF3DE", color: "#2D6A4F" }}>
                     {aiNarrative.positive_signal}
                   </span>
                 )}
-                {aiNarrative.watch_signal && (
+                {typeof aiNarrative.watch_signal === "string" && (
                   <span style={{ fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "2px 8px", background: "#FEF3C7", color: "#92400E" }}>
                     {aiNarrative.watch_signal}
                   </span>
