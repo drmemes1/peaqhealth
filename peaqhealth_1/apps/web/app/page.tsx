@@ -307,7 +307,7 @@ export default function Home() {
                   src={doc.photo}
                   alt={doc.name}
                   style={{
-                    width: 80, height: 80, borderRadius: "50%",
+                    width: 160, height: 160, borderRadius: "50%",
                     objectFit: "cover", marginBottom: 20,
                   }}
                 />
