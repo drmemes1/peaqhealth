@@ -66,11 +66,11 @@ export default function Home() {
       <section className="hero-grid" style={{
         display: "grid",
         gridTemplateColumns: "1fr 1fr",
-        gap: 80,
+        gap: 48,
         alignItems: "center",
         minHeight: "100vh",
         paddingLeft: "10%",
-        paddingRight: "6%",
+        paddingRight: "8%",
         paddingTop: 0,
         paddingBottom: 0,
       }}>
@@ -160,7 +160,10 @@ export default function Home() {
         {/* Right — phone mockup (hidden on mobile via CSS) */}
         <div className="fade-up hero-phone-col" style={{
           display: "flex",
+          alignItems: "center",
           justifyContent: "flex-end",
+          paddingRight: 0,
+          paddingLeft: 40,
           animationDelay: "400ms",
         }}>
           <img
@@ -168,12 +171,14 @@ export default function Home() {
             alt="Peaq sleep panel on iPhone"
             style={{
               width: "100%",
-              maxWidth: 420,
+              maxWidth: 380,
               height: "auto",
               display: "block",
               marginLeft: "auto",
-              background: "transparent",
-              border: "none",
+              marginRight: 0,
+              borderRadius: 32,
+              boxShadow: "0 32px 80px rgba(20,20,16,0.18), 0 8px 24px rgba(20,20,16,0.10)",
+              transform: "perspective(1000px) rotateY(-4deg) rotateX(2deg)",
             }}
           />
         </div>
