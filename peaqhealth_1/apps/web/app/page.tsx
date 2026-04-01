@@ -163,20 +163,20 @@ export default function Home() {
           alignItems: "center",
           justifyContent: "flex-end",
           paddingRight: 0,
-          paddingLeft: 40,
+          paddingLeft: 20,
           animationDelay: "400ms",
         }}>
           <img
-            src="/images/preview-sleep.png"
-            alt="Peaq sleep panel on iPhone"
+            src="/images/preview-insights.png"
+            alt="Peaq cross-panel insights on iPhone"
             style={{
               width: "100%",
-              maxWidth: 380,
+              maxWidth: 480,
               height: "auto",
               display: "block",
               marginLeft: "auto",
               marginRight: 0,
-              borderRadius: 32,
+              borderRadius: 24,
               boxShadow: "0 32px 80px rgba(20,20,16,0.18), 0 8px 24px rgba(20,20,16,0.10)",
               transform: "perspective(1000px) rotateY(-4deg) rotateX(2deg)",
             }}
@@ -280,22 +280,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Phone mockup — Insights */}
-        <div style={{
-          display: "flex",
-          justifyContent: "center",
-          marginTop: 64,
-        }}>
-          <img
-            src="/images/preview-insights.png"
-            alt="Peaq cross-panel insights on iPhone"
-            style={{
-              width: "min(380px, 50vw)",
-              height: "auto",
-              filter: "drop-shadow(0 16px 40px rgba(0,0,0,0.06))",
-            }}
-          />
-        </div>
       </section>
 
       <hr style={rule} />
