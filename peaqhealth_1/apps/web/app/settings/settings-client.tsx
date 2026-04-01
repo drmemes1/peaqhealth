@@ -6,7 +6,6 @@ import Link from "next/link"
 import { createClient } from "../../lib/supabase/client"
 import { WearableManager, type JunctionConnection } from "../components/wearable-manager"
 import { useTheme } from "../components/theme-provider"
-import { ExportModal } from "../components/export-modal"
 
 interface Props {
   userId: string
@@ -96,7 +95,7 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
-  const [exportModalOpen, setExportModalOpen] = useState(false)
+  const [exporting, setExporting] = useState(false)
 
   const [passwordSent, setPasswordSent] = useState(false)
   const [sendingReset, setSendingReset] = useState(false)
@@ -278,11 +277,31 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
             description="Printable PDF summary for your physician, cardiologist, or dentist"
             right={
               <button
-                onClick={() => setExportModalOpen(true)}
+                onClick={async () => {
+                  setExporting(true)
+                  try {
+                    const res = await fetch("/api/account/export", { method: "POST" })
+                    if (!res.ok) throw new Error("Export failed")
+                    const blob = await res.blob()
+                    const url = URL.createObjectURL(blob)
+                    const a = document.createElement("a")
+                    a.href = url
+                    a.download = `peaq-health-report-${new Date().toISOString().split("T")[0]}.pdf`
+                    document.body.appendChild(a)
+                    a.click()
+                    document.body.removeChild(a)
+                    URL.revokeObjectURL(url)
+                  } catch (err) {
+                    console.error("[export] failed:", err)
+                  } finally {
+                    setExporting(false)
+                  }
+                }}
+                disabled={exporting}
                 className="h-8 px-4 font-body text-[10px] uppercase tracking-[0.1em] font-medium transition-opacity hover:opacity-70"
-                style={{ border: "0.5px solid var(--ink-30)", color: "var(--ink)" }}
+                style={{ border: "0.5px solid var(--ink-30)", color: "var(--ink)", opacity: exporting ? 0.5 : 1, cursor: exporting ? "not-allowed" : "pointer" }}
               >
-                Export
+                {exporting ? "Generating…" : "Export"}
               </button>
             }
           />
@@ -498,10 +517,6 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
           )}
         </div>
       </section>
-
-      {exportModalOpen && (
-        <ExportModal onClose={() => setExportModalOpen(false)} />
-      )}
 
     </div>
   )
