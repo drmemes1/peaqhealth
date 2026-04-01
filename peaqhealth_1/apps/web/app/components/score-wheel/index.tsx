@@ -2133,10 +2133,10 @@ export function ScoreWheel({
       >
         <div style={{ borderTop: "0.5px solid var(--ink-12)" }}>
           {[
-            { name: "Shannon diversity",      sub: "16S species richness · target ≥3.0",         val: oralData?.shannonDiversity,   unit: "index",   flagKey: "shannon",  max: 5,  infoKey: "shannon"     },
-            { name: "Nitrate-reducing",       sub: "Neisseria · Rothia · Veillonella · ≥5%",     val: oralData?.nitrateReducersPct, unit: "% reads", flagKey: "nitrate",  max: 20, infoKey: "nitrate"     },
-            { name: "Periodontal pathogens",  sub: "P. gingivalis · T. denticola · target <0.5%", val: oralData?.periodontPathPct,   unit: "% reads", flagKey: "periodont",max: 3,  infoKey: "periodontal" },
-            { name: "OSA-associated taxa",    sub: "Prevotella · Fusobacterium · target <1%",     val: oralData?.osaTaxaPct,         unit: "% reads", flagKey: "osa",      max: 5,  infoKey: undefined     },
+            { name: "Shannon diversity",      sub: "16S species richness · target ≥3.0",         val: oralData?.shannonDiversity,   unit: "index",   flagKey: "shannon",  max: 5,  infoKey: "shannon",     zoneKey: "shannon"     },
+            { name: "Nitrate-reducing",       sub: "Neisseria · Rothia · Veillonella · ≥5%",     val: oralData?.nitrateReducersPct, unit: "% reads", flagKey: "nitrate",  max: 20, infoKey: "nitrate",     zoneKey: "nitrate"     },
+            { name: "Periodontal pathogens",  sub: "P. gingivalis · T. denticola · target <0.5%", val: oralData?.periodontPathPct,   unit: "% reads", flagKey: "periodont",max: 3,  infoKey: "periodontal", zoneKey: "periodontal" },
+            { name: "OSA-associated taxa",    sub: "Prevotella · Fusobacterium · target <1%",     val: oralData?.osaTaxaPct,         unit: "% reads", flagKey: "osa",      max: 5,  infoKey: undefined,     zoneKey: "osa"         },
           ].map(row => (
             <MarkerRow key={row.name} name={row.name} sub={row.sub}
               value={row.val ?? null} unit={row.unit}
@@ -2144,6 +2144,7 @@ export function ScoreWheel({
               barPct={row.val !== undefined ? fa(row.val, row.max) : 0}
               color="var(--oral-c)" trackColor="var(--oral-bg)"
               hoverBg="rgba(45,106,79,0.04)" mounted={mounted}
+              zoneKey={row.zoneKey}
               infoKey={row.infoKey}
               expandedKey={expandedOralMetric}
               onInfoToggle={k => setExpandedOralMetric(prev => prev === k ? null : k)}

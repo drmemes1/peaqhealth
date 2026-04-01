@@ -117,6 +117,7 @@ const BLOOD_ZONES: Record<string, {
   tsh_uiuml:            { markerColor: '#B8860B', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 0.5 }, { label: 'Optimal', color: '#D4EDDA', min: 0.5, max: 3.0 }, { label: 'Watch', color: '#FFE0B2', min: 3.0, max: 4.0 }, { label: 'High', color: '#FFCDD2', min: 4.0, max: 8.0 }] },
   testosterone_ngdl:    { markerColor: '#4A7FB5', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 300 }, { label: 'Watch', color: '#FFE0B2', min: 300, max: 400 }, { label: 'Good', color: '#FFF3CD', min: 400, max: 700 }, { label: 'Optimal', color: '#D4EDDA', min: 700, max: 1200 }] },
   ferritin_ngml:        { markerColor: '#B8860B', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 20 }, { label: 'Watch', color: '#FFE0B2', min: 20, max: 30 }, { label: 'Good', color: '#FFF3CD', min: 30, max: 100 }, { label: 'Optimal', color: '#D4EDDA', min: 100, max: 300 }] },
+  ldl_hdl_ratio:        { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 1.5 }, { label: 'Good', color: '#FFF3CD', min: 1.5, max: 2.0 }, { label: 'Watch', color: '#FFE0B2', min: 2.0, max: 3.0 }, { label: 'High', color: '#FFCDD2', min: 3.0, max: 5.0 }] },
 }
 
 function RangeBar({ value, markerKey }: { value: number | null; markerKey: string }) {
@@ -132,32 +133,35 @@ function RangeBar({ value, markerKey }: { value: number | null; markerKey: strin
   const zonePcts = zones.map(z => ((z.max - z.min) / totalRange) * 100)
 
   return (
-    <div style={{ position: 'relative', marginTop: 6 }}>
-      <div style={{ display: 'flex', height: '8px', borderRadius: '4px', overflow: 'hidden', gap: '1px' }}>
-        {zones.map((zone, i) => (
-          <div key={i} style={{
-            flex: `0 0 ${zonePcts[i]}%`,
-            background: zone.color,
-            borderRadius: i === 0 ? '4px 0 0 4px' : i === zones.length - 1 ? '0 4px 4px 0' : '0',
-          }} />
-        ))}
+    <div style={{ marginTop: 6 }}>
+      <div style={{ position: 'relative', height: '20px', display: 'flex', alignItems: 'center', flex: 1 }}>
+        <div style={{ position: 'absolute', left: 0, right: 0, height: '8px', display: 'flex', borderRadius: '4px', overflow: 'hidden', gap: '1px' }}>
+          {zones.map((zone, i) => (
+            <div key={i} style={{
+              flex: zone.max - zone.min,
+              background: zone.color,
+            }} />
+          ))}
+        </div>
+        <div style={{
+          position: 'absolute', left: `${markerPct}%`, top: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '12px', height: '12px', borderRadius: '50%',
+          background: config.markerColor,
+          border: '2px solid white',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+          zIndex: 2,
+          pointerEvents: 'none',
+        }} />
       </div>
-      <div style={{
-        position: 'absolute', top: '50%', left: `${markerPct}%`,
-        transform: 'translate(-50%, -50%)',
-        width: '12px', height: '12px', borderRadius: '50%',
-        background: config.markerColor,
-        border: '2px solid white',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-        zIndex: 2,
-      }} />
       <div style={{ display: 'flex', marginTop: '4px', gap: '1px' }}>
         {zones.map((zone, i) => (
           <div key={i} style={{
-            flex: `0 0 ${zonePcts[i]}%`,
+            flex: zone.max - zone.min,
             fontSize: '9px', color: 'var(--ink-30)', textAlign: 'center' as const,
             letterSpacing: '0.04em', textTransform: 'uppercase' as const,
             overflow: 'hidden', whiteSpace: 'nowrap' as const,
+            userSelect: 'none' as const,
           }}>
             {zone.label}
           </div>

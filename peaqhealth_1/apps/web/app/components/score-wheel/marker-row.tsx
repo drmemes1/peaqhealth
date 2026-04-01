@@ -63,6 +63,49 @@ export const SLEEP_ZONES: Record<string, {
   },
 }
 
+export const ORAL_ZONES: Record<string, {
+  zones: { label: string; color: string; min: number; max: number }[]
+  markerColor: string
+}> = {
+  shannon: {
+    markerColor: '#2D6A4F',
+    zones: [
+      { label: 'Low',     color: '#FFCDD2', min: 0,   max: 2.0 },
+      { label: 'Watch',   color: '#FFE0B2', min: 2.0, max: 2.5 },
+      { label: 'Good',    color: '#FFF3CD', min: 2.5, max: 3.0 },
+      { label: 'Optimal', color: '#D4EDDA', min: 3.0, max: 4.5 },
+    ]
+  },
+  nitrate: {
+    markerColor: '#4A7FB5',
+    zones: [
+      { label: 'Low',     color: '#FFCDD2', min: 0,  max: 5  },
+      { label: 'Watch',   color: '#FFE0B2', min: 5,  max: 10 },
+      { label: 'Good',    color: '#FFF3CD', min: 10, max: 20 },
+      { label: 'Optimal', color: '#D4EDDA', min: 20, max: 40 },
+    ]
+  },
+  periodontal: {
+    markerColor: '#C0392B',
+    zones: [
+      { label: 'Optimal',   color: '#D4EDDA', min: 0,   max: 0.5 },
+      { label: 'Good',      color: '#FFF3CD', min: 0.5, max: 2.0 },
+      { label: 'Watch',     color: '#FFE0B2', min: 2.0, max: 5.0 },
+      { label: 'Attention', color: '#FFCDD2', min: 5.0, max: 15.0 },
+    ]
+  },
+  osa: {
+    markerColor: '#B8860B',
+    zones: [
+      { label: 'Optimal',   color: '#D4EDDA', min: 0,   max: 1.0 },
+      { label: 'Watch',     color: '#FFE0B2', min: 1.0, max: 5.0 },
+      { label: 'Attention', color: '#FFCDD2', min: 5.0, max: 15.0 },
+    ]
+  },
+}
+
+const ALL_ZONES: Record<string, { zones: { label: string; color: string; min: number; max: number }[]; markerColor: string }> = { ...SLEEP_ZONES, ...ORAL_ZONES }
+
 interface MarkerRowProps {
   name: string
   sub: string
@@ -128,7 +171,7 @@ export function MarkerRow({ name, sub, value, unit, flag, barPct, color, trackCo
         {/* Bar — zone bar when zoneKey provided, else progress bar */}
         <div style={{ flex: 1, minWidth: 60 }}>
           {zoneKey && !isPending && typeof value === 'number' && (() => {
-            const config = SLEEP_ZONES[zoneKey]
+            const config = ALL_ZONES[zoneKey]
             if (!config) return (
               <div style={{ height: 3, borderRadius: 2, background: trackColor, overflow: "hidden" }}>
                 <div style={{ height: "100%", width: mounted ? `${barPct}%` : "0%", background: color, borderRadius: 2, transition: "width 1.4s cubic-bezier(.16,1,.3,1) 400ms" }} />
@@ -142,32 +185,35 @@ export function MarkerRow({ name, sub, value, unit, flag, barPct, color, trackCo
             const markerPct = ((clampedValue - totalMin) / totalRange) * 100
             const zonePcts = zones.map(z => ((z.max - z.min) / totalRange) * 100)
             return (
-              <div style={{ position: 'relative' }}>
-                <div style={{ display: 'flex', height: '7px', borderRadius: '4px', overflow: 'hidden', gap: '1px' }}>
-                  {zones.map((zone, i) => (
-                    <div key={i} style={{
-                      flex: `0 0 ${zonePcts[i]}%`,
-                      background: zone.color,
-                      borderRadius: i === 0 ? '4px 0 0 4px' : i === zones.length - 1 ? '0 4px 4px 0' : '0',
-                    }} />
-                  ))}
+              <div>
+                <div style={{ position: 'relative', height: '18px', display: 'flex', alignItems: 'center' }}>
+                  <div style={{ position: 'absolute', left: 0, right: 0, height: '7px', display: 'flex', borderRadius: '4px', overflow: 'hidden', gap: '1px' }}>
+                    {zones.map((zone, i) => (
+                      <div key={i} style={{
+                        flex: zone.max - zone.min,
+                        background: zone.color,
+                      }} />
+                    ))}
+                  </div>
+                  <div style={{
+                    position: 'absolute', left: `${markerPct}%`, top: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: '11px', height: '11px', borderRadius: '50%',
+                    background: config.markerColor,
+                    border: '2px solid white',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                    zIndex: 2,
+                    pointerEvents: 'none',
+                  }} />
                 </div>
-                <div style={{
-                  position: 'absolute', top: '50%', left: `${markerPct}%`,
-                  transform: 'translate(-50%, -50%)',
-                  width: '11px', height: '11px', borderRadius: '50%',
-                  background: config.markerColor,
-                  border: '2px solid white',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                  zIndex: 2,
-                }} />
                 <div style={{ display: 'flex', marginTop: '3px', gap: '1px' }}>
                   {zones.map((zone, i) => (
                     <div key={i} style={{
-                      flex: `0 0 ${zonePcts[i]}%`,
-                      fontSize: '8px', color: 'var(--ink-30)', textAlign: 'center' as const,
+                      flex: zone.max - zone.min,
+                      fontSize: '9px', color: 'var(--ink-30)', textAlign: 'center' as const,
                       letterSpacing: '0.04em', textTransform: 'uppercase' as const,
                       overflow: 'hidden', whiteSpace: 'nowrap' as const,
+                      userSelect: 'none' as const,
                     }}>
                       {zone.label}
                     </div>
