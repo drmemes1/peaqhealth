@@ -4,6 +4,8 @@ import { useState, useEffect } from "react"
 import { Nav } from "../components/nav"
 import { ScoreWheel, type ScoreWheelProps } from "../components/score-wheel"
 import { ScoreHistoryChart } from "../components/score-history-chart"
+import { PushNotificationPrompt } from "../components/push-notification-prompt"
+import { IOSInstallBanner } from "../components/ios-install-banner"
 
 interface LabHistoryPoint {
   locked_at:       string
@@ -69,6 +71,7 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
       <Nav />
       <main className="mx-auto max-w-[720px] px-6 pt-14 pb-10">
 
+        <PushNotificationPrompt />
         <ScoreWheel {...liveProps} />
 
         {/* PROGRESS CHART — only shown when 2+ history entries exist */}
@@ -89,6 +92,7 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
           </div>
         )}
       </main>
+      <IOSInstallBanner />
     </div>
   )
 }

@@ -1,8 +1,37 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createClient as createServiceClient } from "@supabase/supabase-js"
+import { createClient as createServiceClient, SupabaseClient } from "@supabase/supabase-js"
 import { fetchAndStoreWhoopData, WhoopReconnectError } from "../../../../lib/whoop/fetch"
 import { fetchAndStoreOuraData } from "../../../../lib/oura/fetch"
 import { recalculateScore } from "../../../../lib/score/recalculate"
+import webpush from "web-push"
+
+async function sendSleepPush(userId: string, supabase: SupabaseClient) {
+  if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) return
+
+  const { data: sub } = await supabase.from("push_subscriptions").select("subscription").eq("user_id", userId).maybeSingle()
+  if (!sub) return
+
+  const { data: latest } = await supabase.from("sleep_data").select("hrv_rmssd, sleep_efficiency, deep_sleep_minutes, total_sleep_minutes").eq("user_id", userId).order("date", { ascending: false }).limit(1).maybeSingle()
+  if (!latest) return
+
+  const hrv = latest.hrv_rmssd ? `HRV ${Math.round(latest.hrv_rmssd as number)}ms` : null
+  const eff = latest.sleep_efficiency ? `Sleep ${Math.round(latest.sleep_efficiency as number)}%` : null
+  const deep = latest.total_sleep_minutes && latest.deep_sleep_minutes
+    ? `Deep ${Math.round(((latest.deep_sleep_minutes as number) / (latest.total_sleep_minutes as number)) * 100)}%`
+    : null
+  const parts = [hrv, eff, deep].filter(Boolean).join(" · ")
+  if (!parts) return
+
+  webpush.setVapidDetails("mailto:igor@peaqhealth.me", process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY)
+  const subscription = JSON.parse(sub.subscription as string)
+  await webpush.sendNotification(subscription, JSON.stringify({
+    title: "Your morning Peaq signal",
+    body: parts,
+    url: "/trends",
+    icon: "/icons/icon-192.png",
+    badge: "/icons/icon-192.png",
+  }))
+}
 
 /**
  * POST /api/whoop/sync-all
@@ -35,6 +64,8 @@ export async function POST(_request: NextRequest) {
       const count = await fetchAndStoreWhoopData(userId, 7) // nightly cron: 7 days
       await recalculateScore(userId, supabase)
       console.log(`[sync-all] whoop user=${userId} records=${count}`)
+      // Send push notification with latest sleep data
+      try { await sendSleepPush(userId, supabase) } catch (e) { console.error(`[sync-all] push failed user=${userId}`, e) }
       return { userId, records: count }
     })
   )
@@ -74,6 +105,7 @@ export async function POST(_request: NextRequest) {
       const count = await fetchAndStoreOuraData(userId, 1)
       await recalculateScore(userId, supabase)
       console.log(`[sync-all] oura user=${userId} records=${count}`)
+      try { await sendSleepPush(userId, supabase) } catch (e) { console.error(`[sync-all] push failed user=${userId}`, e) }
       return { userId, records: count }
     })
   )
