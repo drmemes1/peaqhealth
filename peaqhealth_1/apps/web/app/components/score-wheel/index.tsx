@@ -223,7 +223,7 @@ const BLOOD_ZONES: Record<string, {
   },
   HDL: {
     unit: 'mg/dL',
-    markerColor: '#2D6A4F',
+    markerColor: '#C0392B',
     zones: [
       { label: 'Low',     color: '#FFCDD2', min: 0,  max: 40  },
       { label: 'Watch',   color: '#FFE0B2', min: 40, max: 50  },
@@ -262,7 +262,7 @@ const BLOOD_ZONES: Record<string, {
   },
   eGFR: {
     unit: 'mL/min',
-    markerColor: '#4A7FB5',
+    markerColor: '#C0392B',
     zones: [
       { label: 'Low',     color: '#FFCDD2', min: 0,   max: 60  },
       { label: 'Watch',   color: '#FFE0B2', min: 60,  max: 90  },
