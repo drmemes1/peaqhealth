@@ -247,7 +247,7 @@ export default function Home() {
 
         <div style={{ display: "flex", flexDirection: "column" }}>
           {([
-            { num: "1", title: "Order your kit",          text: "Oral microbiome swab — 16S rRNA sequencing via Zymo Research. Results in 2\u20133 weeks." },
+            { num: "1", title: "Order your kit",          text: "Oral microbiome swab \u2014 16S rRNA sequencing at species-level resolution. Results in 2\u20133 weeks." },
             { num: "2", title: "Upload your labs",        text: "LabCorp, Quest, or any standard bloodwork. 40+ biomarkers tracked." },
             { num: "3", title: "Connect your wearable",   text: "WHOOP or Oura. Syncs nightly. Apple Health coming soon." },
             { num: "4", title: "Get your Peaq score",     text: "A single number \u2014 recalculated as your data updates. With the cross-panel signals that change how you understand your health." },
@@ -280,33 +280,6 @@ export default function Home() {
               </div>
             </div>
           ))}
-        </div>
-      </section>
-
-      <hr style={rule} />
-
-      {/* ══════════════════════════════════════════════════════════════════
-          SECTION 6 — DASHBOARD PREVIEW
-          ══════════════════════════════════════════════════════════════════ */}
-      <section style={{ ...wrap, paddingTop: 96, paddingBottom: 96 }}>
-        <p style={eyebrow}>Your dashboard</p>
-
-        <div style={{
-          width: "100%",
-          aspectRatio: "16 / 9",
-          background: INK_04,
-          border: `0.5px solid ${INK_08}`,
-          borderRadius: 12,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}>
-          <p style={{
-            fontFamily: sans, fontSize: 13,
-            color: INK_20, fontStyle: "italic",
-          }}>
-            Dashboard screenshot — replacing soon
-          </p>
         </div>
       </section>
 
