@@ -220,4 +220,13 @@ body {
   .hero-phone {
     display: none !important;
   }
+  .hero-grid {
+    grid-template-columns: 1fr !important;
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+    padding-top: 100px !important;
+  }
+  .hero-phone-col {
+    display: none !important;
+  }
 }

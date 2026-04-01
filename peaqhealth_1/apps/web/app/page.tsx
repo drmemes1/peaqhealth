@@ -51,38 +51,38 @@ export default function Home() {
       {/* ══════════════════════════════════════════════════════════════════
           SECTION 1 — HERO
           ══════════════════════════════════════════════════════════════════ */}
-      <section style={{
-        ...wrap,
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        position: "relative",
-        paddingTop: 120,
-        paddingBottom: 80,
-        gap: 48,
-      }}>
-        {/* Logo — top-left, absolute */}
-        <div className="fade-up" style={{
-          position: "absolute",
-          top: 48,
-          left: "10%",
-          animationDelay: "0ms",
-        }}>
-          <LogoSvg size={96} color={INK} />
-        </div>
 
+      {/* Logo — fixed, outside content flow */}
+      <div className="fade-up" style={{
+        position: "fixed",
+        top: 32,
+        left: "10%",
+        zIndex: 100,
+        animationDelay: "0ms",
+      }}>
+        <LogoSvg size={80} color={INK} />
+      </div>
+
+      <section className="hero-grid" style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: 80,
+        alignItems: "center",
+        minHeight: "100vh",
+        paddingLeft: "10%",
+        paddingRight: "6%",
+        paddingTop: 0,
+        paddingBottom: 0,
+      }}>
         {/* Left — copy */}
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ paddingTop: 80, paddingBottom: 80 }}>
           {/* Headline */}
           <h1 className="fade-up" style={{
             fontFamily: serif,
-            fontSize: "clamp(44px, 6vw, 72px)",
+            fontSize: "clamp(32px, 3.5vw, 48px)",
             fontWeight: 400,
-            lineHeight: 1.05,
+            lineHeight: 1.08,
             letterSpacing: "-0.02em",
-            maxWidth: 760,
             margin: 0,
             animationDelay: "80ms",
           }}>
@@ -96,12 +96,12 @@ export default function Home() {
           {/* Subhead */}
           <p className="fade-up" style={{
             fontFamily: sans,
-            fontSize: 17,
+            fontSize: 15,
             fontStyle: "italic",
-            lineHeight: 1.75,
-            color: "rgba(20,20,16,0.62)",
-            maxWidth: 500,
-            margin: "28px 0 0",
+            lineHeight: 1.65,
+            color: "rgba(20,20,16,0.60)",
+            maxWidth: 400,
+            margin: "24px 0 0",
             animationDelay: "180ms",
           }}>
             <em>P. gingivalis</em> — a bacterium found in gum disease — has been
@@ -114,8 +114,8 @@ export default function Home() {
           <div className="fade-up" style={{
             display: "flex",
             alignItems: "center",
-            gap: 32,
-            marginTop: 52,
+            gap: 28,
+            marginTop: 36,
             animationDelay: "280ms",
           }}>
             <Link href="/signup" style={{
@@ -142,24 +142,39 @@ export default function Home() {
               See the science →
             </Link>
           </div>
+
+          {/* Attribution */}
+          <p className="fade-up" style={{
+            fontFamily: sans,
+            fontSize: 11,
+            letterSpacing: "0.08em",
+            color: "rgba(20,20,16,0.30)",
+            marginTop: 48,
+            animationDelay: "360ms",
+          }}>
+            Built by Dr. Igor Khabensky (General Dentist)
+            and Dr. Paul Leis (Cardiologist)
+          </p>
         </div>
 
-        {/* Right — phone mockup (hidden on mobile) */}
-        <div className="fade-up" style={{
-          flex: "0 0 auto",
-          animationDelay: "400ms",
+        {/* Right — phone mockup (hidden on mobile via CSS) */}
+        <div className="fade-up hero-phone-col" style={{
           display: "flex",
           justifyContent: "flex-end",
+          animationDelay: "400ms",
         }}>
           <img
             src="/images/preview-sleep.png"
             alt="Peaq sleep panel on iPhone"
             style={{
-              width: "min(340px, 30vw)",
+              width: "100%",
+              maxWidth: 420,
               height: "auto",
-              filter: "drop-shadow(0 16px 40px rgba(0,0,0,0.06))",
+              display: "block",
+              marginLeft: "auto",
+              background: "transparent",
+              border: "none",
             }}
-            className="hero-phone"
           />
         </div>
 
