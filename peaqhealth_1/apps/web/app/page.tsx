@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { LogoSvg } from "./components/logo-svg"
+import { LandingPanelsAndScience } from "./components/landing-panels-science"
 
 /* ─── Design tokens ───────────────────────────────────────────────────────── */
 
@@ -154,63 +155,8 @@ export default function Home() {
 
       <hr style={rule} />
 
-      {/* ══════════════════════════════════════════════════════════════════
-          SECTION 2 — THREE PANELS
-          ══════════════════════════════════════════════════════════════════ */}
-      <section style={{ ...wrap, paddingTop: 96, paddingBottom: 96 }}>
-        <p style={eyebrow}>Three panels. One score.</p>
-
-        <p style={{
-          fontFamily: serif,
-          fontSize: "clamp(28px, 3.5vw, 42px)",
-          fontWeight: 400,
-          lineHeight: 1.3,
-          margin: "0 0 48px",
-          maxWidth: 560,
-        }}>
-          Most health platforms measure one thing.
-          Peaq measures three — and finds the connections between them.
-        </p>
-
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-          gap: 48,
-          marginBottom: 48,
-        }}>
-          {([
-            { label: "Oral Microbiome", color: ORAL,  lines: ["16S rRNA sequencing", "via Zymo Research"] },
-            { label: "Blood",           color: BLOOD, lines: ["40+ biomarkers", "from any lab"] },
-            { label: "Sleep",           color: SLEEP, lines: ["Nightly wearable", "HRV, deep sleep, SpO\u2082"] },
-          ] as const).map(p => (
-            <div key={p.label} style={{ borderTop: `2px solid ${p.color}`, paddingTop: 24 }}>
-              <p style={{
-                fontFamily: sans, fontSize: 11, fontWeight: 600,
-                textTransform: "uppercase", letterSpacing: "0.1em",
-                color: p.color, margin: "0 0 10px",
-              }}>
-                {p.label}
-              </p>
-              {p.lines.map(l => (
-                <p key={l} style={{
-                  fontFamily: sans, fontSize: 15, color: INK_60,
-                  lineHeight: 1.7, margin: "2px 0",
-                }}>
-                  {l}
-                </p>
-              ))}
-            </div>
-          ))}
-        </div>
-
-        <p style={{
-          fontFamily: serif, fontSize: 20, fontWeight: 400,
-          fontStyle: "italic", color: INK_40, maxWidth: 520,
-        }}>
-          The insight isn&apos;t in any single panel.
-          It&apos;s in what they reveal about each other.
-        </p>
-      </section>
+      {/* ══ SECTIONS 2 + 4 — Interactive panels + science (shared state) ═══ */}
+      <LandingPanelsAndScience />
 
       <hr style={rule} />
 
@@ -277,91 +223,6 @@ export default function Home() {
             </p>
           </div>
         </div>
-      </section>
-
-      <hr style={rule} />
-
-      {/* ══════════════════════════════════════════════════════════════════
-          SECTION 4 — SCIENCE
-          ══════════════════════════════════════════════════════════════════ */}
-      <section style={{ ...wrap, paddingTop: 96, paddingBottom: 96 }}>
-        <p style={eyebrow}>Grounded in peer-reviewed research</p>
-
-        <p style={{
-          fontFamily: sans, fontSize: 16, color: INK_60,
-          lineHeight: 1.75, maxWidth: 560, margin: "0 0 48px",
-        }}>
-          The oral-systemic connection isn&apos;t new — it&apos;s just never
-          been made measurable for individuals.
-        </p>
-
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          {([
-            {
-              journal: "Circulation, 2026",
-              authors: "Tran AH et al. (AHA)",
-              finding: "Periodontal disease increases ASCVD risk through bacteremia and chronic inflammation.",
-              tag: "Oral \u2192 Blood",
-              tagColor: ORAL,
-            },
-            {
-              journal: "European Heart Journal, 2025",
-              authors: "Kurt B, Ridker PM et al. \u00b7 n = 448,653",
-              finding: "Residual inflammatory risk is at least as strong a predictor as residual cholesterol risk.",
-              tag: "Blood",
-              tagColor: BLOOD,
-            },
-            {
-              journal: "Science Advances, 2019",
-              authors: "Dominy SS et al.",
-              finding: "P. gingivalis detected in Alzheimer\u2019s disease brains.",
-              tag: "Oral \u2192 Brain",
-              tagColor: ORAL,
-            },
-          ] as const).map((c, i, arr) => (
-            <div key={c.journal} style={{
-              padding: "24px 0",
-              borderBottom: i < arr.length - 1 ? `0.5px solid ${BORDER}` : "none",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              gap: 48,
-              flexWrap: "wrap",
-            }}>
-              <div style={{ minWidth: 140, flexShrink: 0 }}>
-                <p style={{ fontFamily: sans, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: INK_40, margin: "0 0 2px" }}>
-                  {c.journal}
-                </p>
-                <p style={{ fontFamily: sans, fontSize: 12, color: INK_40, margin: 0 }}>
-                  {c.authors}
-                </p>
-              </div>
-              <p style={{
-                fontFamily: serif, fontSize: 18, fontWeight: 400,
-                fontStyle: "italic", color: INK, lineHeight: 1.5,
-                maxWidth: 440, margin: 0, flex: 1,
-              }}>
-                &ldquo;{c.finding}&rdquo;
-              </p>
-              <span style={{
-                fontFamily: sans, fontSize: 10, fontWeight: 500,
-                textTransform: "uppercase", letterSpacing: "0.06em",
-                color: c.tagColor, padding: "4px 10px",
-                border: `1px solid ${c.tagColor}30`,
-                borderRadius: 3, flexShrink: 0, whiteSpace: "nowrap",
-              }}>
-                {c.tag}
-              </span>
-            </div>
-          ))}
-        </div>
-
-        <Link href="/science" style={{
-          fontFamily: sans, fontSize: 13, color: INK_40,
-          textDecoration: "none", display: "inline-block", marginTop: 32,
-        }}>
-          View full evidence base →
-        </Link>
       </section>
 
       <hr style={rule} />
