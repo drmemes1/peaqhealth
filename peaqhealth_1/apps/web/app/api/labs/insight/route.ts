@@ -115,9 +115,10 @@ function hsCRPContext(val: number | null): string {
 
 function lpAContext(val: number | null): string {
   if (val === null) return "not available"
-  if (val < 30)    return `${val} mg/dL — within normal range`
-  if (val < 50)    return `${val} mg/dL — borderline, worth noting`
-  return             `${val} mg/dL — elevated`
+  const nmol = Math.round(val * 2.5)
+  if (val < 30)    return `${nmol} nmol/L — within normal range`
+  if (val < 50)    return `${nmol} nmol/L — borderline, worth noting`
+  return             `${nmol} nmol/L — elevated`
 }
 
 function ldlContext(val: number | null): string {

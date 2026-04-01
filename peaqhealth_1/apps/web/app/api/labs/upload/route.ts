@@ -256,7 +256,7 @@ async function parseWithAzureOpenAI(fullText: string): Promise<Record<string, un
 EXTRACTION RULES:
 - Extract the PATIENT RESULT value only — never use reference range numbers
 - Never use 0 as a value — use null if not found
-- If Lp(a) is reported in nmol/L, convert to mg/dL by dividing by 2.5
+- If Lp(a) is reported in nmol/L, convert to mg/dL by dividing by 2.5 (internal storage is mg/dL)
 - collectionDate in YYYY-MM-DD format
 - labName: the lab company name found in the report (e.g. "LabCorp", "Quest Diagnostics")
 - For Apolipoprotein B: the result is the number immediately following the test name, before any reference table

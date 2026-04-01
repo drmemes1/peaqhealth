@@ -14,7 +14,7 @@ const CANONICAL_MARKERS: Array<{ slug: keyof BloodMarkers; name: string; unit: s
   { slug: "ldl_mgdL",           name: "LDL",           unit: "mg/dL" },
   { slug: "hdl_mgdL",           name: "HDL",           unit: "mg/dL" },
   { slug: "triglycerides_mgdL", name: "Triglycerides", unit: "mg/dL" },
-  { slug: "lpa_mgdL",           name: "Lp(a)",         unit: "mg/dL" },
+  { slug: "lpa_mgdL",           name: "Lp(a)",         unit: "nmol/L" },
   { slug: "glucose_mgdL",       name: "Glucose",       unit: "mg/dL" },
   { slug: "hba1c_pct",          name: "HbA1c",         unit: "%"     },
 ]

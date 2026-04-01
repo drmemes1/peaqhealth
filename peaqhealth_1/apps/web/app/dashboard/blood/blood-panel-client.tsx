@@ -22,7 +22,7 @@ const CARDIOVASCULAR: MarkerDef[] = [
   { key: "hdl_mgdl",           name: "HDL Cholesterol",  unit: "mg/dL", target: ">50",      optimalRange: [50, 90],  normalRange: [40, 100], displayMax: 120 },
   { key: "triglycerides_mgdl", name: "Triglycerides",    unit: "mg/dL", target: "<150",     optimalRange: [0, 100],  normalRange: [0, 150],  displayMax: 400, inverted: true },
   { key: "apob_mgdl",          name: "ApoB",             unit: "mg/dL", target: "<90",      optimalRange: [0, 80],   normalRange: [0, 100],  displayMax: 200, inverted: true },
-  { key: "lpa_mgdl",           name: "Lp(a)",            unit: "mg/dL", target: "<30",      optimalRange: [0, 30],   normalRange: [0, 50],   displayMax: 150, inverted: true },
+  { key: "lpa_mgdl",           name: "Lp(a)",            unit: "nmol/L", target: "<75",      optimalRange: [0, 75],   normalRange: [0, 125],   displayMax: 375, inverted: true },
   { key: "totalcholesterol_mgdl", name: "Total Cholesterol", unit: "mg/dL", target: "<200", optimalRange: [0, 200],  normalRange: [0, 240],  displayMax: 400, inverted: true },
 ]
 
@@ -98,7 +98,7 @@ const BLOOD_ZONES: Record<string, {
   hdl_mgdl:             { markerColor: '#C0392B', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 40 }, { label: 'Watch', color: '#FFE0B2', min: 40, max: 50 }, { label: 'Good', color: '#FFF3CD', min: 50, max: 60 }, { label: 'Optimal', color: '#D4EDDA', min: 60, max: 100 }] },
   triglycerides_mgdl:   { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 100 }, { label: 'Good', color: '#FFF3CD', min: 100, max: 150 }, { label: 'Watch', color: '#FFE0B2', min: 150, max: 200 }, { label: 'High', color: '#FFCDD2', min: 200, max: 400 }] },
   apob_mgdl:            { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 80 }, { label: 'Good', color: '#FFF3CD', min: 80, max: 100 }, { label: 'Watch', color: '#FFE0B2', min: 100, max: 130 }, { label: 'High', color: '#FFCDD2', min: 130, max: 200 }] },
-  lpa_mgdl:             { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 30 }, { label: 'Watch', color: '#FFE0B2', min: 30, max: 50 }, { label: 'High', color: '#FFCDD2', min: 50, max: 150 }] },
+  lpa_mgdl:             { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 75 }, { label: 'Watch', color: '#FFE0B2', min: 75, max: 125 }, { label: 'High', color: '#FFCDD2', min: 125, max: 375 }] },
   totalcholesterol_mgdl:{ markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 200 }, { label: 'Good', color: '#FFF3CD', min: 200, max: 240 }, { label: 'High', color: '#FFCDD2', min: 240, max: 400 }] },
   hs_crp_mgl:           { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 0.5 }, { label: 'Good', color: '#FFF3CD', min: 0.5, max: 1.0 }, { label: 'Watch', color: '#FFE0B2', min: 1.0, max: 3.0 }, { label: 'High', color: '#FFCDD2', min: 3.0, max: 10.0 }] },
   wbc_kul:              { markerColor: '#C0392B', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 4 }, { label: 'Optimal', color: '#D4EDDA', min: 4, max: 10 }, { label: 'Watch', color: '#FFE0B2', min: 10, max: 15 }, { label: 'High', color: '#FFCDD2', min: 15, max: 20 }] },
@@ -205,7 +205,11 @@ function getStatus(val: number | null, def: MarkerDef, isHsCRP?: boolean): Marke
 function getVal(lab: Record<string, unknown> | null, key: string): number | null {
   if (!lab) return null
   const v = lab[key]
-  if (typeof v === "number" && v > 0) return v
+  if (typeof v === "number" && v > 0) {
+    // Lp(a) stored as mg/dL in DB — convert to nmol/L for display
+    if (key === "lpa_mgdl") return Math.round(v * 2.5 * 10) / 10
+    return v
+  }
   return null
 }
 
@@ -416,7 +420,7 @@ export function BloodPanelClient({ lab, snapshot, history, ageRange, stressLevel
           <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", marginBottom: 12, borderRadius: 4, background: "rgba(245,158,11,0.08)", border: "0.5px solid rgba(245,158,11,0.3)" }}>
             <span style={{ color: "#d97706" }}>⚑</span>
             <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "#92400e" }}>
-              Lp(a) {lpaFlag === "very_elevated" ? "very elevated (>50 mg/dL)" : "elevated (30–50 mg/dL)"}. Genetic cardiovascular risk factor — discuss with your physician.
+              Lp(a) {lpaFlag === "very_elevated" ? "very elevated (>125 nmol/L)" : "elevated (75–125 nmol/L)"}. Genetic cardiovascular risk factor — discuss with your physician.
             </span>
           </div>
         )}

@@ -656,9 +656,9 @@ export default function SciencePage() {
         <Marker
           num={11}
           title="Lp(a)"
-          target="<30 mg/dL"
+          target="<75 nmol/L"
           color="var(--blood-c)"
-          body={<>Lipoprotein(a) is a largely genetically-determined atherogenic particle that standard lipid panels miss. Elevated Lp(a) (&gt;50 mg/dL) doubles cardiovascular risk independently. Most people have never had it measured.<Cite n={11} /></>}
+          body={<>Lipoprotein(a) is a largely genetically-determined atherogenic particle that standard lipid panels miss. Elevated Lp(a) (&gt;125 nmol/L) doubles cardiovascular risk independently. Most people have never had it measured.<Cite n={11} /></>}
           evidence="Tsimikas, JACC 2017."
         />
         <Marker

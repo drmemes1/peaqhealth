@@ -165,7 +165,7 @@ export default async function DashboardPage() {
                         ? (lab.ldl_mgdl as number) / (lab.hdl_mgdl as number)
                         : 0,
       hba1c:          (lab.hba1c_pct           as number) ?? 0,
-      lpa:            (lab.lpa_mgdl            as number) ?? 0,
+      lpa:            ((lab.lpa_mgdl            as number) ?? 0) * 2.5,
       triglycerides:  (lab.triglycerides_mgdl  as number) ?? 0,
       ldl:            (lab.ldl_mgdl            as number) ?? 0,
       hdl:            (lab.hdl_mgdl            as number) ?? 0,

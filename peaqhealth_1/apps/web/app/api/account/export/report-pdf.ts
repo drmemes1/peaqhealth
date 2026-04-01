@@ -153,7 +153,7 @@ function bloodSt(key: string, v: number | null): Status {
     triglycerides_mgdl: x => x < 100 ? "OPTIMAL" : x < 150 ? "GOOD" : x < 200 ? "WATCH" : "ELEVATED",
     total_cholesterol_mgdl: x => x < 170 ? "OPTIMAL" : x < 200 ? "GOOD" : x < 240 ? "WATCH" : "ELEVATED",
     apob_mgdl: x => x < 80 ? "OPTIMAL" : x < 90 ? "GOOD" : x < 110 ? "WATCH" : "ELEVATED",
-    lpa_mgdl: x => x < 15 ? "OPTIMAL" : x < 30 ? "GOOD" : x < 50 ? "WATCH" : "ELEVATED",
+    lpa_mgdl: x => x < 38 ? "OPTIMAL" : x < 75 ? "GOOD" : x < 125 ? "WATCH" : "ELEVATED",
     hs_crp_mgl: x => x < 1.0 ? "OPTIMAL" : x < 2.0 ? "GOOD" : x < 3.0 ? "WATCH" : "ELEVATED",
     glucose_mgdl: x => x >= 70 && x <= 85 ? "OPTIMAL" : x <= 99 ? "GOOD" : x <= 125 ? "WATCH" : "ELEVATED",
     hba1c_pct: x => x < 5.4 ? "OPTIMAL" : x < 5.7 ? "GOOD" : x < 6.4 ? "WATCH" : "ELEVATED",
@@ -173,7 +173,7 @@ const BLOOD_MARKERS: Array<{ key: string; label: string; unit: string; reference
   { key: "triglycerides_mgdl", label: "Triglycerides", unit: "mg/dL", reference: "<150" },
   { key: "total_cholesterol_mgdl", label: "Total Cholesterol", unit: "mg/dL", reference: "<200" },
   { key: "apob_mgdl", label: "ApoB", unit: "mg/dL", reference: "<80 optimal" },
-  { key: "lpa_mgdl", label: "Lp(a)", unit: "mg/dL", reference: "<30" },
+  { key: "lpa_mgdl", label: "Lp(a)", unit: "nmol/L", reference: "<75" },
   { key: "hs_crp_mgl", label: "hs-CRP", unit: "mg/L", reference: "<1.0 optimal" },
   { key: "glucose_mgdl", label: "Glucose (fasting)", unit: "mg/dL", reference: "70\u201385 optimal" },
   { key: "hba1c_pct", label: "HbA1c", unit: "%", reference: "<5.4% optimal" },
@@ -195,7 +195,7 @@ const BLOOD_MARKERS: Array<{ key: string; label: string; unit: string; reference
 
 const BLOOD_CTX: Record<string, { body: string; src: string }> = {
   lpa_mgdl: {
-    body: "Lp(a) is largely genetically determined and is an independent cardiovascular risk factor. Levels >30 mg/dL are associated with increased atherosclerotic risk even with otherwise favorable lipid profiles. Discuss with your cardiologist, particularly in the context of any elevated periodontal burden.",
+    body: "Lp(a) is largely genetically determined and is an independent cardiovascular risk factor. Levels >75 nmol/L are associated with increased atherosclerotic risk even with otherwise favorable lipid profiles. Discuss with your cardiologist, particularly in the context of any elevated periodontal burden.",
     src: "Tsimikas S, JACC 2017; Nordestgaard BG, Eur Heart J 2010",
   },
   hs_crp_mgl: {
@@ -446,7 +446,10 @@ function drawBloodPage(doc: InstanceType<typeof PDFDocument>, data: ReportData) 
   const labs = data.labs
   const val = (key: string): number | null => {
     const v = labs[key]
-    return v != null && Number(v) !== 0 ? Number(v) : null
+    if (v == null || Number(v) === 0) return null
+    // Lp(a) stored as mg/dL — convert to nmol/L for display
+    if (key === "lpa_mgdl") return Math.round(Number(v) * 2.5 * 10) / 10
+    return Number(v)
   }
 
   const CW = [CONTENT_W * 0.35, CONTENT_W * 0.14, CONTENT_W * 0.14, CONTENT_W * 0.24, CONTENT_W * 0.13]

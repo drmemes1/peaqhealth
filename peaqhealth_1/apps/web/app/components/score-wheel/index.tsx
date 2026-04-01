@@ -158,7 +158,7 @@ function computeRelevantMissing(
 
   // Lp(a): always recommend once as genetic screen
   if (!blood.lpa) {
-    results.push({ label: "Lp(a)", pts: 1, reason: `Lp(a) is genetically determined and only needs to be tested once. At your LDL level it would complete your cardiovascular risk picture.`, science: "Above 50 mg/dL doubles cardiovascular risk. Cannot be lowered by diet or statins — important for family risk planning." })
+    results.push({ label: "Lp(a)", pts: 1, reason: `Lp(a) is genetically determined and only needs to be tested once. At your LDL level it would complete your cardiovascular risk picture.`, science: "Above 125 nmol/L doubles cardiovascular risk. Cannot be lowered by diet or statins — important for family risk planning." })
   }
 
   // Vitamin D: only if age 40+
@@ -242,12 +242,12 @@ const BLOOD_ZONES: Record<string, {
     ]
   },
   lpA: {
-    unit: 'mg/dL',
+    unit: 'nmol/L',
     markerColor: '#C0392B',
     zones: [
-      { label: 'Optimal', color: '#D4EDDA', min: 0,  max: 30  },
-      { label: 'Watch',   color: '#FFE0B2', min: 30, max: 50  },
-      { label: 'High',    color: '#FFCDD2', min: 50, max: 100 },
+      { label: 'Optimal', color: '#D4EDDA', min: 0,   max: 75  },
+      { label: 'Watch',   color: '#FFE0B2', min: 75,  max: 125 },
+      { label: 'High',    color: '#FFCDD2', min: 125, max: 250 },
     ]
   },
   triglycerides: {
@@ -1516,7 +1516,7 @@ export function ScoreWheel({
     apoB:      bflag(bloodData.apoB, bloodData.apoB < 90, bloodData.apoB < 120),
     ldlHdl:    bflag(bloodData.ldlHdlRatio, bloodData.ldlHdlRatio < 2.0, bloodData.ldlHdlRatio < 3.0),
     hba1c:     bflag(bloodData.hba1c, bloodData.hba1c < 5.4, bloodData.hba1c < 5.7),
-    lpa:       bflag(bloodData.lpa, bloodData.lpa < 30, bloodData.lpa < 50),
+    lpa:       bflag(bloodData.lpa, bloodData.lpa < 75, bloodData.lpa < 125),
     tg:        bflag(bloodData.triglycerides, bloodData.triglycerides < 150, bloodData.triglycerides < 200),
     ldl:       bflag(bloodData.ldl, bloodData.ldl < 100, bloodData.ldl < 130),
     hdl:       bflag(bloodData.hdl, bloodData.hdl >= 60, bloodData.hdl >= 40),
@@ -1576,7 +1576,7 @@ export function ScoreWheel({
       source: 'Barter P et al. (2007). HDL cholesterol, very low levels of LDL cholesterol, and cardiovascular events. NEJM.'
     },
     lpA: {
-      explanation: "Lipoprotein(a) is a genetically determined lipoprotein that promotes both atherosclerosis and thrombosis. It is largely unaffected by diet or lifestyle — elevated Lp(a) is primarily inherited. Above 50 mg/dL significantly increases cardiovascular risk independent of LDL. It's one of the most underdiagnosed cardiovascular risk factors.",
+      explanation: "Lipoprotein(a) is a genetically determined lipoprotein that promotes both atherosclerosis and thrombosis. It is largely unaffected by diet or lifestyle — elevated Lp(a) is primarily inherited. Above 125 nmol/L significantly increases cardiovascular risk independent of LDL. It's one of the most underdiagnosed cardiovascular risk factors.",
       source: 'Tsimikas S (2017). A test in context: Lipoprotein(a). Journal of the American College of Cardiology. Kronenberg F (2022). Lipoprotein(a) — the strangest lipoprotein species. European Heart Journal.'
     },
     triglycerides: {
@@ -1673,7 +1673,7 @@ export function ScoreWheel({
   }
   const bloodMarkerDefs: BloodMarkerDef[] = bloodData ? [
     { name: "hs-CRP",        sub: "High-sensitivity · target <0.5",    value: bloodData.hsCRP,         unit: "mg/L",  flag: bflag(bloodData.hsCRP, bloodData.hsCRP < 0.5, bloodData.hsCRP < 2.0),                                          zoneKey: "hsCRP",        infoKey: "hsCRP" },
-    { name: "Lp(a)",         sub: "Lipoprotein(a) · target <30",       value: bloodData.lpa,           unit: "mg/dL", flag: bflag(bloodData.lpa, bloodData.lpa < 30, bloodData.lpa < 50),                                                  zoneKey: "lpA",          infoKey: "lpA" },
+    { name: "Lp(a)",         sub: "Lipoprotein(a) · target <75",       value: bloodData.lpa,           unit: "nmol/L", flag: bflag(bloodData.lpa, bloodData.lpa < 75, bloodData.lpa < 125),                                                  zoneKey: "lpA",          infoKey: "lpA" },
     { name: "Triglycerides", sub: "Target <150 mg/dL",                 value: bloodData.triglycerides, unit: "mg/dL", flag: bflag(bloodData.triglycerides, bloodData.triglycerides < 150, bloodData.triglycerides < 200),                   zoneKey: "triglycerides", infoKey: "triglycerides" },
     bloodData.apoB > 0
       ? { name: "ApoB",   sub: "Particles · target <90",   value: bloodData.apoB,           unit: "mg/dL", flag: bflag(bloodData.apoB, bloodData.apoB < 90, bloodData.apoB < 120),                                                         zoneKey: null,    infoKey: "apoB" }

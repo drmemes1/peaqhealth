@@ -29,7 +29,7 @@ async function generateBloodInsight(userId: string, supabase: SupabaseClient, bl
   if (n(bloodRow.wbc_kul))            bloodLines.push(`WBC: ${bloodRow.wbc_kul} K/uL`)
   if (n(bloodRow.albumin_gdl))        bloodLines.push(`Albumin: ${bloodRow.albumin_gdl} g/dL`)
   if (n(bloodRow.hemoglobin_gdl))     bloodLines.push(`Hemoglobin: ${bloodRow.hemoglobin_gdl} g/dL`)
-  if (n(bloodRow.lpa_mgdl))           bloodLines.push(`Lp(a): ${bloodRow.lpa_mgdl} mg/dL`)
+  if (n(bloodRow.lpa_mgdl))           bloodLines.push(`Lp(a): ${Math.round(Number(bloodRow.lpa_mgdl) * 2.5)} nmol/L`)
   if (bloodLines.length === 0) return null
 
   const missingBlood: string[] = []
