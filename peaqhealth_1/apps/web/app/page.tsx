@@ -55,11 +55,13 @@ export default function Home() {
         ...wrap,
         minHeight: "100vh",
         display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
         position: "relative",
         paddingTop: 120,
         paddingBottom: 80,
+        gap: 48,
       }}>
         {/* Logo — top-left, absolute */}
         <div className="fade-up" style={{
@@ -71,72 +73,94 @@ export default function Home() {
           <LogoSvg size={96} color={INK} />
         </div>
 
-        {/* Headline */}
-        <h1 className="fade-up" style={{
-          fontFamily: serif,
-          fontSize: "clamp(44px, 6vw, 72px)",
-          fontWeight: 400,
-          lineHeight: 1.05,
-          letterSpacing: "-0.02em",
-          maxWidth: 760,
-          margin: 0,
-          animationDelay: "80ms",
-        }}>
-          Your mouth is affecting your heart.
-          <br />
-          <em style={{ fontStyle: "italic", color: GOLD }}>
-            We can show you exactly how.
-          </em>
-        </h1>
+        {/* Left — copy */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Headline */}
+          <h1 className="fade-up" style={{
+            fontFamily: serif,
+            fontSize: "clamp(44px, 6vw, 72px)",
+            fontWeight: 400,
+            lineHeight: 1.05,
+            letterSpacing: "-0.02em",
+            maxWidth: 760,
+            margin: 0,
+            animationDelay: "80ms",
+          }}>
+            Your mouth is affecting your heart.
+            <br />
+            <em style={{ fontStyle: "italic", color: GOLD }}>
+              We can show you exactly how.
+            </em>
+          </h1>
 
-        {/* Subhead */}
-        <p className="fade-up" style={{
-          fontFamily: sans,
-          fontSize: 17,
-          fontStyle: "italic",
-          lineHeight: 1.75,
-          color: "rgba(20,20,16,0.62)",
-          maxWidth: 500,
-          margin: "28px 0 0",
-          animationDelay: "180ms",
-        }}>
-          <em>P. gingivalis</em> — a bacterium found in gum disease — has been
-          detected inside human coronary artery plaques. Peaq is the first
-          platform to connect your oral microbiome, bloodwork, and sleep data
-          into a single longitudinal score.
-        </p>
+          {/* Subhead */}
+          <p className="fade-up" style={{
+            fontFamily: sans,
+            fontSize: 17,
+            fontStyle: "italic",
+            lineHeight: 1.75,
+            color: "rgba(20,20,16,0.62)",
+            maxWidth: 500,
+            margin: "28px 0 0",
+            animationDelay: "180ms",
+          }}>
+            <em>P. gingivalis</em> — a bacterium found in gum disease — has been
+            detected inside human coronary artery plaques. Peaq is the first
+            platform to connect your oral microbiome, bloodwork, and sleep data
+            into a single longitudinal score.
+          </p>
 
-        {/* CTAs */}
+          {/* CTAs */}
+          <div className="fade-up" style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 32,
+            marginTop: 52,
+            animationDelay: "280ms",
+          }}>
+            <Link href="/signup" style={{
+              fontFamily: sans,
+              fontSize: 14,
+              fontWeight: 500,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase" as const,
+              padding: "14px 36px",
+              background: INK,
+              color: BG,
+              borderRadius: 3,
+              textDecoration: "none",
+            }}>
+              Get started
+            </Link>
+            <Link href="/science" style={{
+              fontFamily: sans,
+              fontSize: 15,
+              letterSpacing: "0.02em",
+              color: "rgba(20,20,16,0.50)",
+              textDecoration: "none",
+            }}>
+              See the science →
+            </Link>
+          </div>
+        </div>
+
+        {/* Right — phone mockup (hidden on mobile) */}
         <div className="fade-up" style={{
+          flex: "0 0 auto",
+          animationDelay: "400ms",
           display: "flex",
-          alignItems: "center",
-          gap: 32,
-          marginTop: 52,
-          animationDelay: "280ms",
+          justifyContent: "flex-end",
         }}>
-          <Link href="/signup" style={{
-            fontFamily: sans,
-            fontSize: 14,
-            fontWeight: 500,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase" as const,
-            padding: "14px 36px",
-            background: INK,
-            color: BG,
-            borderRadius: 3,
-            textDecoration: "none",
-          }}>
-            Get started
-          </Link>
-          <Link href="/science" style={{
-            fontFamily: sans,
-            fontSize: 15,
-            letterSpacing: "0.02em",
-            color: "rgba(20,20,16,0.50)",
-            textDecoration: "none",
-          }}>
-            See the science →
-          </Link>
+          <img
+            src="/images/preview-sleep.png"
+            alt="Peaq sleep panel on iPhone"
+            style={{
+              width: "min(340px, 30vw)",
+              height: "auto",
+              filter: "drop-shadow(0 24px 48px rgba(0,0,0,0.10))",
+            }}
+            className="hero-phone"
+          />
         </div>
 
       </section>
@@ -234,6 +258,23 @@ export default function Home() {
             <p style={{ fontFamily: sans, fontSize: 13, color: INK_60, lineHeight: 1.6, margin: "0 0 8px" }}>OSA-associated taxa</p>
             <p style={{ fontFamily: sans, fontSize: 12, color: INK_40, margin: 0 }}>clinical target: {"<"}2%</p>
           </div>
+        </div>
+
+        {/* Phone mockup — Insights */}
+        <div style={{
+          display: "flex",
+          justifyContent: "center",
+          marginTop: 64,
+        }}>
+          <img
+            src="/images/preview-insights.png"
+            alt="Peaq cross-panel insights on iPhone"
+            style={{
+              width: "min(380px, 50vw)",
+              height: "auto",
+              filter: "drop-shadow(0 24px 48px rgba(0,0,0,0.08))",
+            }}
+          />
         </div>
       </section>
 

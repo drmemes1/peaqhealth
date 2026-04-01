@@ -215,3 +215,9 @@ body {
     opacity: 0.45;
   }
 }
+
+@media (max-width: 768px) {
+  .hero-phone {
+    display: none !important;
+  }
+}
