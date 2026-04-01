@@ -139,18 +139,6 @@ export default function Home() {
           </Link>
         </div>
 
-        {/* Attribution */}
-        <p className="fade-up" style={{
-          fontFamily: sans,
-          fontSize: 12,
-          letterSpacing: "0.08em",
-          color: "rgba(20,20,16,0.35)",
-          marginTop: 72,
-          animationDelay: "360ms",
-        }}>
-          Built by Dr. Igor Khabensky (General Dentist)
-          and Dr. Paul Leis (Cardiologist)
-        </p>
       </section>
 
       <hr style={rule} />
@@ -166,14 +154,20 @@ export default function Home() {
       <section style={{ ...wrap, paddingTop: 96, paddingBottom: 96 }}>
         <p style={eyebrow}>What Peaq reveals</p>
 
-        {/* Quote card */}
+        {/* Quote card 1 — Oral → Blood (nitrate-reducers + HRV) */}
         <div style={{
           borderLeft: `3px solid ${SLEEP}`,
           padding: "32px 40px",
           background: INK_04,
           borderRadius: "0 8px 8px 0",
           maxWidth: 720,
+          marginBottom: 24,
         }}>
+          <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+            <span style={{ fontFamily: sans, fontSize: 10, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.08em", color: ORAL, padding: "3px 8px", border: `1px solid ${ORAL}30`, borderRadius: 3 }}>Oral</span>
+            <span style={{ fontFamily: sans, fontSize: 10, color: INK_20 }}>{"\u2192"}</span>
+            <span style={{ fontFamily: sans, fontSize: 10, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.08em", color: SLEEP, padding: "3px 8px", border: `1px solid ${SLEEP}30`, borderRadius: 3 }}>Sleep</span>
+          </div>
           <p style={{
             fontFamily: serif, fontSize: 22, fontWeight: 400,
             lineHeight: 1.6, color: INK, margin: "0 0 20px",
@@ -184,43 +178,61 @@ export default function Home() {
             dietary nitrate to nitric oxide also regulate cardiovascular
             recovery during sleep.&rdquo;
           </p>
-          <p style={{
-            fontFamily: sans, fontSize: 12, fontStyle: "italic",
-            color: INK_40, margin: 0,
-          }}>
+          <p style={{ fontFamily: sans, fontSize: 12, fontStyle: "italic", color: INK_40, margin: 0 }}>
             — From a real Peaq weekly snapshot
+          </p>
+        </div>
+
+        {/* Quote card 2 — Sleep → Oral (OSA taxa + SpO₂) */}
+        <div style={{
+          borderLeft: `3px solid ${ORAL}`,
+          padding: "32px 40px",
+          background: INK_04,
+          borderRadius: "0 8px 8px 0",
+          maxWidth: 720,
+        }}>
+          <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+            <span style={{ fontFamily: sans, fontSize: 10, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.08em", color: SLEEP, padding: "3px 8px", border: `1px solid ${SLEEP}30`, borderRadius: 3 }}>Sleep</span>
+            <span style={{ fontFamily: sans, fontSize: 10, color: INK_20 }}>{"\u2192"}</span>
+            <span style={{ fontFamily: sans, fontSize: 10, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.08em", color: ORAL, padding: "3px 8px", border: `1px solid ${ORAL}30`, borderRadius: 3 }}>Oral</span>
+          </div>
+          <p style={{
+            fontFamily: serif, fontSize: 22, fontWeight: 400,
+            lineHeight: 1.6, color: INK, margin: "0 0 20px",
+          }}>
+            &ldquo;Your OSA-associated taxa are at 8.2% — elevated. Your
+            wearable shows SpO{"\u2082"} dipping to 91% three nights this week.
+            The microbiome is flagging the same risk your wearable is
+            measuring: Prevotella and Fusobacterium are enriched in the
+            upper airway of sleep apnea patients.&rdquo;
+          </p>
+          <p style={{ fontFamily: sans, fontSize: 12, fontStyle: "italic", color: INK_40, margin: 0 }}>
+            — From a real Peaq cross-panel signal
           </p>
         </div>
 
         {/* Stat blocks */}
         <div style={{
           display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 64,
+          gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+          gap: 48,
           marginTop: 48,
-          maxWidth: 560,
+          maxWidth: 680,
         }}>
           <div>
-            <p style={{ fontFamily: serif, fontSize: 48, fontWeight: 400, color: GOLD, margin: "0 0 4px", lineHeight: 1 }}>
-              51%
-            </p>
-            <p style={{ fontFamily: sans, fontSize: 13, color: INK_60, lineHeight: 1.6, margin: "0 0 8px" }}>
-              nitrate-reducing bacteria in a healthy oral profile
-            </p>
-            <p style={{ fontFamily: sans, fontSize: 12, color: INK_40, margin: 0 }}>
-              vs. 13% in this sample
-            </p>
+            <p style={{ fontFamily: serif, fontSize: 48, fontWeight: 400, color: GOLD, margin: "0 0 4px", lineHeight: 1 }}>13%</p>
+            <p style={{ fontFamily: sans, fontSize: 13, color: INK_60, lineHeight: 1.6, margin: "0 0 8px" }}>nitrate reducers</p>
+            <p style={{ fontFamily: sans, fontSize: 12, color: INK_40, margin: 0 }}>healthy threshold: {"\u2265"}20%</p>
           </div>
           <div>
-            <p style={{ fontFamily: serif, fontSize: 48, fontWeight: 400, color: GOLD, margin: "0 0 4px", lineHeight: 1 }}>
-              27ms
-            </p>
-            <p style={{ fontFamily: sans, fontSize: 13, color: INK_60, lineHeight: 1.6, margin: "0 0 8px" }}>
-              HRV on the week this sample was taken
-            </p>
-            <p style={{ fontFamily: sans, fontSize: 12, color: INK_40, margin: 0 }}>
-              Population average: 45ms
-            </p>
+            <p style={{ fontFamily: serif, fontSize: 48, fontWeight: 400, color: GOLD, margin: "0 0 4px", lineHeight: 1 }}>27ms</p>
+            <p style={{ fontFamily: sans, fontSize: 13, color: INK_60, lineHeight: 1.6, margin: "0 0 8px" }}>HRV this week</p>
+            <p style={{ fontFamily: sans, fontSize: 12, color: INK_40, margin: 0 }}>population avg: 45ms</p>
+          </div>
+          <div>
+            <p style={{ fontFamily: serif, fontSize: 48, fontWeight: 400, color: GOLD, margin: "0 0 4px", lineHeight: 1 }}>8.2%</p>
+            <p style={{ fontFamily: sans, fontSize: 13, color: INK_60, lineHeight: 1.6, margin: "0 0 8px" }}>OSA-associated taxa</p>
+            <p style={{ fontFamily: sans, fontSize: 12, color: INK_40, margin: 0 }}>clinical target: {"<"}2%</p>
           </div>
         </div>
       </section>
