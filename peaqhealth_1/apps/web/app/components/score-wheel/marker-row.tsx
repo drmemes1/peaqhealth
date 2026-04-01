@@ -68,7 +68,7 @@ export const ORAL_ZONES: Record<string, {
   markerColor: string
 }> = {
   shannon: {
-    markerColor: '#2D6A4F',
+    markerColor: '#2D6A4F', // oral green
     zones: [
       { label: 'Low',     color: '#FFCDD2', min: 0,   max: 2.0 },
       { label: 'Watch',   color: '#FFE0B2', min: 2.0, max: 2.5 },
@@ -77,7 +77,7 @@ export const ORAL_ZONES: Record<string, {
     ]
   },
   nitrate: {
-    markerColor: '#4A7FB5',
+    markerColor: '#2D6A4F',
     zones: [
       { label: 'Low',     color: '#FFCDD2', min: 0,  max: 5  },
       { label: 'Watch',   color: '#FFE0B2', min: 5,  max: 10 },
@@ -86,7 +86,7 @@ export const ORAL_ZONES: Record<string, {
     ]
   },
   periodontal: {
-    markerColor: '#C0392B',
+    markerColor: '#2D6A4F',
     zones: [
       { label: 'Optimal',   color: '#D4EDDA', min: 0,   max: 0.5 },
       { label: 'Good',      color: '#FFF3CD', min: 0.5, max: 2.0 },
@@ -95,7 +95,7 @@ export const ORAL_ZONES: Record<string, {
     ]
   },
   osa: {
-    markerColor: '#B8860B',
+    markerColor: '#2D6A4F',
     zones: [
       { label: 'Optimal',   color: '#D4EDDA', min: 0,   max: 1.0 },
       { label: 'Watch',     color: '#FFE0B2', min: 1.0, max: 5.0 },
