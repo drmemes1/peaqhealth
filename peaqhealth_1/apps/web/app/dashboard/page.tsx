@@ -276,5 +276,5 @@ export default async function DashboardPage() {
     } : { connected: false, lastSynced: null, recentNights: [] },
   }
 
-  return <DashboardClient {...props} labHistory={labHistoryRows ?? []} />
+  return <DashboardClient {...props} labHistory={labHistoryRows ?? []} wearableNeedsReconnect={wearableNeedsReconnect} />
 }
