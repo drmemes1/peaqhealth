@@ -157,51 +157,27 @@ export default function Home() {
             marginTop: 48,
             animationDelay: "360ms",
           }}>
-            Built by Dr. Igor Khabensky (General Dentist)
-            and Dr. Paul Leis (Cardiologist)
+            Built by a dentist + cardiologist team
           </p>
         </div>
 
-        {/* Right — staggered duo phone mockups */}
+        {/* Right — hero phone mockup */}
         <div className="fade-up hero-mockup" style={{
-          position: "relative",
-          height: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
           overflow: "hidden",
-          backgroundColor: "#FAFAF8",
           animationDelay: "400ms",
         }}>
-          {/* Back phone — Sleep panel */}
           <img
             className="phone-mockup"
-            src="/images/preview-sleep.png"
-            alt="Peaq sleep panel"
+            src="/images/preview-insights.png"
+            alt="Peaq Health cross-panel insights"
             style={{
-              position: "absolute",
-              height: "78%",
+              maxHeight: "85vh",
               width: "auto",
-              right: 100,
-              top: "6%",
-              zIndex: 1,
-              mixBlendMode: "multiply" as const,
-              imageRendering: "crisp-edges" as const,
-              filter: "drop-shadow(-4px 0 20px rgba(20,20,16,0.08))",
-            }}
-          />
-          {/* Front phone — Insights */}
-          <img
-            className="phone-mockup"
-            src="/images/dashboard-preview.png"
-            alt="Peaq Health dashboard"
-            style={{
-              position: "absolute",
-              height: "88%",
-              width: "auto",
-              right: -20,
-              top: "5%",
-              zIndex: 2,
-              mixBlendMode: "multiply" as const,
-              imageRendering: "crisp-edges" as const,
-              filter: "drop-shadow(-8px 0 40px rgba(20,20,16,0.12))",
+              maxWidth: "100%",
+              filter: "drop-shadow(0 20px 40px rgba(20,20,16,0.10))",
             }}
           />
         </div>
