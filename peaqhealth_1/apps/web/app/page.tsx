@@ -320,93 +320,114 @@ export default function Home() {
       <hr style={rule} />
 
       {/* ══════════════════════════════════════════════════════════════════
-          SECTION 3 — CROSS-PANEL INSIGHT
+          SECTION 4 — INSIDE THE APP
           ══════════════════════════════════════════════════════════════════ */}
-      <section style={{ ...wrap, paddingTop: 96, paddingBottom: 96 }}>
-        <p style={eyebrow}>What Peaq reveals</p>
-
-        {/* Quote card 1 — Oral → Blood (nitrate-reducers + HRV) */}
-        <div style={{
-          borderLeft: `3px solid ${SLEEP}`,
-          padding: "32px 40px",
-          background: INK_04,
-          borderRadius: "0 8px 8px 0",
-          maxWidth: 720,
-          marginBottom: 24,
-        }}>
-          <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
-            <span style={{ fontFamily: sans, fontSize: 10, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.08em", color: ORAL, padding: "3px 8px", border: `1px solid ${ORAL}30`, borderRadius: 3 }}>Oral</span>
-            <span style={{ fontFamily: sans, fontSize: 10, color: INK_20 }}>{"\u2192"}</span>
-            <span style={{ fontFamily: sans, fontSize: 10, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.08em", color: SLEEP, padding: "3px 8px", border: `1px solid ${SLEEP}30`, borderRadius: 3 }}>Sleep</span>
-          </div>
-          <p style={{
-            fontFamily: serif, fontSize: 22, fontWeight: 400,
-            lineHeight: 1.6, color: INK, margin: "0 0 20px",
+      <section style={{
+        background: "var(--warm-50)",
+        paddingTop: 96,
+        paddingBottom: 96,
+      }}>
+        <div style={{ ...wrap }}>
+          <p style={eyebrow}>Inside the app</p>
+          <h2 style={{
+            fontFamily: serif,
+            fontSize: "clamp(24px, 2.5vw, 36px)",
+            fontWeight: 400,
+            lineHeight: 1.2,
+            letterSpacing: "-0.01em",
+            margin: "0 0 56px",
+            maxWidth: 480,
           }}>
-            &ldquo;Your oral nitrate-reducing bacteria are at 13% — below
-            the 20% threshold. Your HRV dropped to 27ms this week. These
-            two signals share a pathway: the same bacteria that convert
-            dietary nitrate to nitric oxide also regulate cardiovascular
-            recovery during sleep.&rdquo;
-          </p>
-          <p style={{ fontFamily: sans, fontSize: 12, fontStyle: "italic", color: INK_40, margin: 0 }}>
-            — From a real Peaq weekly snapshot
-          </p>
-        </div>
+            This is what you actually see.
+          </h2>
 
-        {/* Quote card 2 — Sleep → Oral (OSA taxa + SpO₂) */}
-        <div style={{
-          borderLeft: `3px solid ${ORAL}`,
-          padding: "32px 40px",
-          background: INK_04,
-          borderRadius: "0 8px 8px 0",
-          maxWidth: 720,
-        }}>
-          <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
-            <span style={{ fontFamily: sans, fontSize: 10, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.08em", color: SLEEP, padding: "3px 8px", border: `1px solid ${SLEEP}30`, borderRadius: 3 }}>Sleep</span>
-            <span style={{ fontFamily: sans, fontSize: 10, color: INK_20 }}>{"\u2192"}</span>
-            <span style={{ fontFamily: sans, fontSize: 10, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.08em", color: ORAL, padding: "3px 8px", border: `1px solid ${ORAL}30`, borderRadius: 3 }}>Oral</span>
-          </div>
-          <p style={{
-            fontFamily: serif, fontSize: 22, fontWeight: 400,
-            lineHeight: 1.6, color: INK, margin: "0 0 20px",
+          <div className="app-showcase-grid" style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 64,
+            alignItems: "start",
           }}>
-            &ldquo;Your OSA-associated taxa are at 8.2% — elevated. Your
-            wearable shows SpO{"\u2082"} dipping to 91% three nights this week.
-            The microbiome is flagging the same risk your wearable is
-            measuring: Prevotella and Fusobacterium are enriched in the
-            upper airway of sleep apnea patients.&rdquo;
-          </p>
-          <p style={{ fontFamily: sans, fontSize: 12, fontStyle: "italic", color: INK_40, margin: 0 }}>
-            — From a real Peaq cross-panel signal
-          </p>
-        </div>
+            {/* Left — Insights view */}
+            <div>
+              <img
+                className="phone-mockup"
+                src="/images/dashboard-preview.png"
+                alt="Peaq Insights dashboard showing cross-panel AI cards"
+                style={{
+                  width: "100%",
+                  maxWidth: 320,
+                  height: "auto",
+                  display: "block",
+                  mixBlendMode: "multiply" as const,
+                  imageRendering: "crisp-edges" as const,
+                  filter: "drop-shadow(-6px 6px 32px rgba(20,20,16,0.12))",
+                  marginBottom: 28,
+                }}
+              />
+              <p style={{
+                fontFamily: sans, fontSize: 10, fontWeight: 600,
+                textTransform: "uppercase" as const, letterSpacing: "0.1em",
+                color: ORAL, margin: "0 0 8px",
+              }}>
+                AI Insights
+              </p>
+              <p style={{
+                fontFamily: serif, fontSize: 20, fontWeight: 400,
+                color: INK, margin: "0 0 12px", lineHeight: 1.3,
+              }}>
+                Cross-panel signals, updated daily
+              </p>
+              <p style={{
+                fontFamily: sans, fontSize: 14, color: INK_60,
+                lineHeight: 1.7, maxWidth: 340, margin: 0,
+              }}>
+                Peaq&apos;s AI reads across your oral, blood, and sleep data to
+                surface connections no single panel can see. Every insight
+                links to the underlying science.
+              </p>
+            </div>
 
-        {/* Stat blocks */}
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-          gap: 48,
-          marginTop: 48,
-          maxWidth: 680,
-        }}>
-          <div>
-            <p style={{ fontFamily: serif, fontSize: 48, fontWeight: 400, color: GOLD, margin: "0 0 4px", lineHeight: 1 }}>13%</p>
-            <p style={{ fontFamily: sans, fontSize: 13, color: INK_60, lineHeight: 1.6, margin: "0 0 8px" }}>nitrate reducers</p>
-            <p style={{ fontFamily: sans, fontSize: 12, color: INK_40, margin: 0 }}>healthy threshold: {"\u2265"}20%</p>
-          </div>
-          <div>
-            <p style={{ fontFamily: serif, fontSize: 48, fontWeight: 400, color: GOLD, margin: "0 0 4px", lineHeight: 1 }}>27ms</p>
-            <p style={{ fontFamily: sans, fontSize: 13, color: INK_60, lineHeight: 1.6, margin: "0 0 8px" }}>HRV this week</p>
-            <p style={{ fontFamily: sans, fontSize: 12, color: INK_40, margin: 0 }}>population avg: 45ms</p>
-          </div>
-          <div>
-            <p style={{ fontFamily: serif, fontSize: 48, fontWeight: 400, color: GOLD, margin: "0 0 4px", lineHeight: 1 }}>8.2%</p>
-            <p style={{ fontFamily: sans, fontSize: 13, color: INK_60, lineHeight: 1.6, margin: "0 0 8px" }}>OSA-associated taxa</p>
-            <p style={{ fontFamily: sans, fontSize: 12, color: INK_40, margin: 0 }}>clinical target: {"<"}2%</p>
+            {/* Right — Sleep panel */}
+            <div>
+              <img
+                className="phone-mockup"
+                src="/images/preview-sleep.png"
+                alt="Peaq sleep panel showing deep sleep, HRV, SpO2 and REM metrics"
+                style={{
+                  width: "100%",
+                  maxWidth: 320,
+                  height: "auto",
+                  display: "block",
+                  mixBlendMode: "multiply" as const,
+                  imageRendering: "crisp-edges" as const,
+                  filter: "drop-shadow(-6px 6px 32px rgba(20,20,16,0.12))",
+                  marginBottom: 28,
+                }}
+              />
+              <p style={{
+                fontFamily: sans, fontSize: 10, fontWeight: 600,
+                textTransform: "uppercase" as const, letterSpacing: "0.1em",
+                color: SLEEP, margin: "0 0 8px",
+              }}>
+                Sleep Panel
+              </p>
+              <p style={{
+                fontFamily: serif, fontSize: 20, fontWeight: 400,
+                color: INK, margin: "0 0 12px", lineHeight: 1.3,
+              }}>
+                Clinical thresholds, not just ranges
+              </p>
+              <p style={{
+                fontFamily: sans, fontSize: 14, color: INK_60,
+                lineHeight: 1.7, maxWidth: 340, margin: 0,
+              }}>
+                Deep sleep, HRV, SpO₂, REM — each metric measured against a
+                clinical target, not a population average. When something needs
+                attention, you&apos;ll know.
+              </p>
+            </div>
           </div>
         </div>
-
       </section>
 
       <hr style={rule} />
