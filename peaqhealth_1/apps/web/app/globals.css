@@ -225,8 +225,10 @@ body {
     padding-left: 24px !important;
     padding-right: 24px !important;
     padding-top: 100px !important;
+    min-height: auto !important;
   }
-  .hero-phone-col {
+  .hero-phone-col,
+  .hero-mockup {
     display: none !important;
   }
 }

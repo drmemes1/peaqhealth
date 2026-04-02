@@ -66,16 +66,21 @@ export default function Home() {
       <section className="hero-grid" style={{
         display: "grid",
         gridTemplateColumns: "1fr 1fr",
-        gap: 64,
-        alignItems: "center",
+        gap: 0,
+        alignItems: "stretch",
         minHeight: "100vh",
-        paddingLeft: "10%",
-        paddingRight: "5%",
-        paddingTop: 0,
-        paddingBottom: 0,
+        overflow: "hidden",
       }}>
         {/* Left — copy */}
-        <div style={{ paddingTop: 80, paddingBottom: 80 }}>
+        <div style={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          paddingLeft: "10%",
+          paddingRight: "6%",
+          paddingTop: 80,
+          paddingBottom: 80,
+        }}>
           {/* Headline */}
           <h1 className="fade-up" style={{
             fontFamily: serif,
@@ -157,26 +162,26 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Right — phone mockup (hidden on mobile via CSS) */}
-        <div className="fade-up hero-phone-col" style={{
+        {/* Right — phone mockup, fills column, bleeds top/bottom */}
+        <div className="fade-up hero-mockup" style={{
+          position: "relative",
+          height: "100vh",
+          overflow: "hidden",
           display: "flex",
           alignItems: "center",
           justifyContent: "flex-end",
-          paddingLeft: 40,
           animationDelay: "400ms",
         }}>
           <img
             src="/images/dashboard-preview.png"
             alt="Peaq Health dashboard"
             style={{
-              width: "100%",
-              maxWidth: 560,
-              height: "auto",
+              height: "110%",
+              width: "auto",
+              maxWidth: "none",
               display: "block",
-              borderRadius: 0,
-              background: "transparent",
-              boxShadow: "none",
-              filter: "drop-shadow(0 32px 64px rgba(20,20,16,0.20))",
+              marginRight: -20,
+              filter: "drop-shadow(-8px 0 40px rgba(20,20,16,0.12))",
             }}
           />
         </div>
