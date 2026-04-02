@@ -66,11 +66,11 @@ export default function Home() {
       <section className="hero-grid" style={{
         display: "grid",
         gridTemplateColumns: "1fr 1fr",
-        gap: 48,
+        gap: 64,
         alignItems: "center",
         minHeight: "100vh",
         paddingLeft: "10%",
-        paddingRight: "8%",
+        paddingRight: "5%",
         paddingTop: 0,
         paddingBottom: 0,
       }}>
@@ -162,19 +162,21 @@ export default function Home() {
           display: "flex",
           alignItems: "center",
           justifyContent: "flex-end",
+          paddingLeft: 40,
           animationDelay: "400ms",
         }}>
           <img
-            src="/images/preview-insights.png"
-            alt="Peaq cross-panel insights on iPhone"
+            src="/images/dashboard-preview.png"
+            alt="Peaq Health dashboard"
             style={{
-              width: 320,
+              width: "100%",
+              maxWidth: 560,
               height: "auto",
               display: "block",
-              marginLeft: "auto",
-              borderRadius: 24,
-              boxShadow: "0 24px 60px rgba(20,20,16,0.15), 0 4px 16px rgba(20,20,16,0.08)",
-              transform: "perspective(800px) rotateY(-6deg)",
+              borderRadius: 0,
+              background: "transparent",
+              boxShadow: "none",
+              filter: "drop-shadow(0 32px 64px rgba(20,20,16,0.20))",
             }}
           />
         </div>
