@@ -253,20 +253,18 @@ export default function Home() {
             gap: 64,
             alignItems: "start",
           }}>
-            {/* Left — Insights view */}
+            {/* Left — Oral microbiome panel */}
             <div>
               <img
-                className="phone-mockup"
-                src="/images/dashboard-preview.png"
-                alt="Peaq Insights dashboard showing cross-panel AI cards"
+                src="/images/landing-oral.png"
+                alt="Peaq oral microbiome panel showing Shannon diversity, nitrate reducers, periodontal burden, and OSA-associated taxa"
                 style={{
                   width: "100%",
-                  maxWidth: 320,
+                  maxWidth: 480,
                   height: "auto",
                   display: "block",
-                  mixBlendMode: "multiply" as const,
-                  imageRendering: "crisp-edges" as const,
-                  filter: "drop-shadow(-6px 6px 32px rgba(20,20,16,0.12))",
+                  borderRadius: 8,
+                  border: "0.5px solid rgba(20,20,16,0.08)",
                   marginBottom: 28,
                 }}
               />
@@ -275,38 +273,36 @@ export default function Home() {
                 textTransform: "uppercase" as const, letterSpacing: "0.1em",
                 color: ORAL, margin: "0 0 8px",
               }}>
-                AI Insights
+                Oral Microbiome
               </p>
               <p style={{
                 fontFamily: serif, fontSize: 20, fontWeight: 400,
                 color: INK, margin: "0 0 12px", lineHeight: 1.3,
               }}>
-                Cross-panel signals, updated daily
+                Species-level resolution, clinical thresholds
               </p>
               <p style={{
                 fontFamily: sans, fontSize: 14, color: INK_60,
                 lineHeight: 1.7, maxWidth: 340, margin: 0,
               }}>
-                Peaq&apos;s AI reads across your oral, blood, and sleep data to
-                surface connections no single panel can see. Every insight
-                links to the underlying science.
+                Shannon diversity, nitrate-reducing bacteria, periodontal
+                pathogens, OSA-associated taxa — each scored against clinical
+                targets with clear status indicators.
               </p>
             </div>
 
-            {/* Right — Sleep panel */}
+            {/* Right — Sleep narrative */}
             <div>
               <img
-                className="phone-mockup"
-                src="/images/preview-sleep.png"
-                alt="Peaq sleep panel showing deep sleep, HRV, SpO2 and REM metrics"
+                src="/images/landing-sleep.png"
+                alt="Peaq sleep narrative showing deep sleep, HRV, efficiency analysis with cross-panel context"
                 style={{
                   width: "100%",
-                  maxWidth: 320,
+                  maxWidth: 480,
                   height: "auto",
                   display: "block",
-                  mixBlendMode: "multiply" as const,
-                  imageRendering: "crisp-edges" as const,
-                  filter: "drop-shadow(-6px 6px 32px rgba(20,20,16,0.12))",
+                  borderRadius: 8,
+                  border: "0.5px solid rgba(20,20,16,0.08)",
                   marginBottom: 28,
                 }}
               />
@@ -315,21 +311,21 @@ export default function Home() {
                 textTransform: "uppercase" as const, letterSpacing: "0.1em",
                 color: SLEEP, margin: "0 0 8px",
               }}>
-                Sleep Panel
+                Sleep Narrative
               </p>
               <p style={{
                 fontFamily: serif, fontSize: 20, fontWeight: 400,
                 color: INK, margin: "0 0 12px", lineHeight: 1.3,
               }}>
-                Clinical thresholds, not just ranges
+                AI analysis with cross-panel context
               </p>
               <p style={{
                 fontFamily: sans, fontSize: 14, color: INK_60,
                 lineHeight: 1.7, maxWidth: 340, margin: 0,
               }}>
-                Deep sleep, HRV, SpO₂, REM — each metric measured against a
-                clinical target, not a population average. When something needs
-                attention, you&apos;ll know.
+                Your sleep data interpreted through your oral and blood panels.
+                Not just numbers — the connections between deep sleep, HRV,
+                and your oral nitrate pathways.
               </p>
             </div>
           </div>
