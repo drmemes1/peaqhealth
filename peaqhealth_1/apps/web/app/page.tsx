@@ -52,18 +52,8 @@ export default function Home() {
           SECTION 1 — HERO
           ══════════════════════════════════════════════════════════════════ */}
 
-      {/* Logo — fixed, outside content flow */}
-      <div className="fade-up" style={{
-        position: "fixed",
-        top: 32,
-        left: "10%",
-        zIndex: 100,
-        animationDelay: "0ms",
-      }}>
-        <LogoSvg size={80} color={INK} />
-      </div>
-
       <section className="hero-grid" style={{
+        position: "relative",
         display: "grid",
         gridTemplateColumns: "1fr 1fr",
         gap: 0,
@@ -71,6 +61,16 @@ export default function Home() {
         minHeight: "100vh",
         overflow: "hidden",
       }}>
+        {/* Logo — absolute within hero only */}
+        <div className="fade-up" style={{
+          position: "absolute",
+          top: 32,
+          left: "10%",
+          zIndex: 10,
+          animationDelay: "0ms",
+        }}>
+          <LogoSvg size={80} color={INK} />
+        </div>
         {/* Left — copy */}
         <div style={{
           display: "flex",
@@ -170,18 +170,22 @@ export default function Home() {
           display: "flex",
           alignItems: "center",
           justifyContent: "flex-end",
+          paddingTop: "80px",
+          backgroundColor: "#FAFAF8",
           animationDelay: "400ms",
         }}>
           <img
             src="/images/dashboard-preview.png"
             alt="Peaq Health dashboard"
             style={{
-              height: "110%",
+              height: "95%",
               width: "auto",
               maxWidth: "none",
               display: "block",
               marginRight: -20,
               filter: "drop-shadow(-8px 0 40px rgba(20,20,16,0.12))",
+              imageRendering: "crisp-edges",
+              mixBlendMode: "multiply",
             }}
           />
         </div>
