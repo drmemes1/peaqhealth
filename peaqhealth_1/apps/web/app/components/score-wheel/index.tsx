@@ -2172,7 +2172,7 @@ export function ScoreWheel({
         title="Oral Microbiome"
         score={Math.round(breakdown.oralSub)}
         maxScore={30}
-        subtitle={oralData ? `ZYMO RESEARCH · ${new Date(oralData.reportDate).toLocaleDateString("en-US", { month: "short", year: "numeric" }).toUpperCase()}` : (oralOrdered ? "PROCESSING" : "")}
+        subtitle={oralData ? `${new Date(oralData.reportDate).toLocaleDateString("en-US", { month: "short", year: "numeric" }).toUpperCase()}` : (oralOrdered ? "PROCESSING" : "")}
         statusDots={of_ ? [of_.shannon, of_.nitrate, of_.periodont, of_.osa] : undefined}
         defaultOpen={oralActive}
         delay="0.26s"

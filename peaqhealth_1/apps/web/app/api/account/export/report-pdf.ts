@@ -409,7 +409,7 @@ function drawCoverPage(doc: InstanceType<typeof PDFDocument>, data: ReportData, 
   const methCols = [
     { label: "Blood \u00b7 40 pts", color: RED, body: "Cardiovascular and metabolic biomarkers (LabCorp/Quest)." },
     { label: "Sleep \u00b7 30 pts", color: BLUE, body: "Wearable-derived HRV, deep sleep, REM, efficiency, SpO\u2082 (WHOOP/Oura)." },
-    { label: "Oral \u00b7 30 pts", color: GREEN, body: "16S rRNA microbiome sequencing via Zymo Research." },
+    { label: "Oral \u00b7 30 pts", color: GREEN, body: "16S rRNA microbiome sequencing." },
   ]
 
   const colW = (CONTENT_W - 24 - 24) / 3
@@ -586,7 +586,7 @@ function drawSleepPage(doc: InstanceType<typeof PDFDocument>, data: ReportData) 
 // ─── Page 4: Oral ─────────────────────────────────────────────────────────────
 
 function drawOralPage(doc: InstanceType<typeof PDFDocument>, data: ReportData) {
-  drawPageHeader(doc, `Oral Microbiome \u00b7 Zymo Research 16S rRNA${data.reportDate ? ` \u00b7 ${fmtDate(data.reportDate)}` : ""}`)
+  drawPageHeader(doc, `Oral Microbiome \u00b7 16S rRNA${data.reportDate ? ` \u00b7 ${fmtDate(data.reportDate)}` : ""}`)
 
   if (data.shannonDiversity == null) {
     doc.font("Helvetica").fontSize(10).fillColor(INK_40)

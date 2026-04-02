@@ -684,7 +684,7 @@ export default function SciencePage() {
             The oral microbiome is the least understood and most underutilised dimension of systemic health. The mouth is not isolated from the rest of the body — it shares blood supply with the heart, lungs, and brain. Dysbiosis in oral bacteria has been directly detected in coronary plaques and systemic tissues in multiple autopsy and biopsy studies.
           </p>
           <p style={{ ...bodyTextStyle, marginBottom: 16 }}>
-            Oral microbiome data comes from Zymo Research 16S rRNA sequencing. A simple at-home swab kit. Results in 10–14 days.
+            Oral microbiome data comes from 16S rRNA sequencing. A simple at-home swab kit. Results in 10–14 days.
           </p>
           <p style={{ ...bodyTextStyle, marginBottom: 32 }}>
             This is the panel nobody else measures. It is also where the most compelling cross-panel interactions originate.

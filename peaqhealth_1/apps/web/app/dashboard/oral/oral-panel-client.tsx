@@ -445,7 +445,7 @@ export function OralPanelClient({ oral, snapshot }: Props) {
 
         {reportDate && (
           <p style={{ fontFamily: "var(--font-body)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-30)", margin: "0 0 24px" }}>
-            ZYMO RESEARCH · {new Date(reportDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }).toUpperCase()}
+            {new Date(reportDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }).toUpperCase()}
           </p>
         )}
 

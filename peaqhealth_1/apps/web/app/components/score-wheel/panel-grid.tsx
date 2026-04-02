@@ -150,7 +150,7 @@ function EmptyPanelCard({ panel, oralOrdered = false }: {
       color: '#2D6A4F',
       label: 'ORAL MICROBIOME',
       headline: oralOrdered ? 'Kit processing' : 'Order your oral kit',
-      why_short: '16S sequencing via Zymo Research.',
+      why_short: '16S rRNA sequencing.',
       cta: oralOrdered ? 'View kit status' : 'Order oral kit',
       ctaHref: oralOrdered ? '/dashboard/oral' : '/shop',
       stat1: { label: 'Technology', value: '16S rRNA' },

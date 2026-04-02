@@ -8,7 +8,7 @@ const sections = [
     title: "What we collect",
     body: [
       "Account information — your email address and encrypted password, used solely to authenticate you.",
-      "Health data you provide — wearable sleep metrics (deep sleep %, REM %, HRV, resting heart rate), blood biomarker values from lab reports you upload, oral microbiome sequencing results from your Zymo Research kit, and lifestyle questionnaire responses (age range, sex, exercise level, smoking status, diet, alcohol, stress).",
+      "Health data you provide — wearable sleep metrics (deep sleep %, REM %, HRV, resting heart rate), blood biomarker values from lab reports you upload, oral microbiome sequencing results from your at-home oral kit, and lifestyle questionnaire responses (age range, sex, exercise level, smoking status, diet, alcohol, stress).",
       "Device & usage data — browser type, IP address, pages visited, and session timestamps, collected automatically to keep the service running and secure. We do not use this data for advertising.",
       "Payment data — if you purchase a kit or subscription, payment is processed by Stripe. Peaq Health never sees or stores your full card number.",
     ],
@@ -37,7 +37,7 @@ const sections = [
     title: "What we never do",
     body: [
       "We do not sell your data — ever. Not to insurers, employers, advertisers, data brokers, or anyone else.",
-      "We do not share your individual health data with third parties except as strictly necessary to operate the service (e.g. Zymo Research receives your kit registration to process your sample; Stripe processes payment).",
+      "We do not share your individual health data with third parties except as strictly necessary to operate the service (e.g. Our sequencing partner receives your kit registration to process your sample; Stripe processes payment).",
       "We do not use your data for targeted advertising on any platform.",
       "We do not use health data as a factor in pricing or eligibility for any product.",
     ],

@@ -166,7 +166,7 @@ export default function Home() {
               borderRadius: 3,
               textDecoration: "none",
             }}>
-              Get started
+              Join waitlist
             </Link>
             <Link href="/science" style={{
               fontFamily: sans,
@@ -496,7 +496,7 @@ export default function Home() {
           textDecoration: "none",
           display: "inline-block",
         }}>
-          Get started
+          Join waitlist
         </Link>
 
         <p style={{
