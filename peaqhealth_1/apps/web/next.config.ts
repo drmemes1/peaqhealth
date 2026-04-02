@@ -37,6 +37,13 @@ const withPWA = withPWAInit({
 const nextConfig: NextConfig = {
   // next-pwa uses webpack; tell Next.js 16 to use webpack for the build
   turbopack: {},
+  // Bundle pdfkit font data files for serverless (Vercel)
+  outputFileTracingIncludes: {
+    "/api/account/export": [
+      "./node_modules/pdfkit/js/data/**/*",
+      "../../node_modules/pdfkit/js/data/**/*",
+    ],
+  },
 };
 
 export default withPWA(nextConfig);
