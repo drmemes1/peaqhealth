@@ -227,9 +227,21 @@ body {
     padding-top: 100px !important;
     min-height: auto !important;
   }
-  .hero-phone-col,
   .hero-mockup {
-    display: none !important;
+    max-height: 50vh !important;
+    justify-content: center !important;
+  }
+  .hero-mockup img {
+    max-height: 50vh !important;
+    max-width: 70% !important;
+  }
+  .app-showcase-grid {
+    grid-template-columns: 1fr !important;
+    gap: 48px !important;
+  }
+  .app-showcase-grid img {
+    max-width: 260px !important;
+    margin: 0 auto !important;
   }
 }
 
