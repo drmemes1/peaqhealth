@@ -232,3 +232,24 @@ body {
     display: none !important;
   }
 }
+
+/* Phone mockup images — dark mode: multiply blend darkens further, switch to normal */
+[data-theme="dark"] .phone-mockup {
+  mix-blend-mode: normal;
+  opacity: 0.88;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .phone-mockup {
+    mix-blend-mode: normal;
+    opacity: 0.88;
+  }
+}
+
+/* Inside-the-app showcase grid — stack on mobile */
+@media (max-width: 768px) {
+  .app-showcase-grid {
+    grid-template-columns: 1fr !important;
+    gap: 48px !important;
+  }
+}
