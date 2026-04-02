@@ -440,11 +440,11 @@ export default function Home() {
 
         <div style={{ display: "flex", flexDirection: "column" }}>
           {([
-            { num: "1", title: "Order your kit",          text: "Oral microbiome swab \u2014 16S rRNA sequencing at species-level resolution. Results in 2\u20133 weeks." },
-            { num: "2", title: "Upload your labs",        text: "LabCorp, Quest, or any standard bloodwork. 40+ biomarkers tracked." },
-            { num: "3", title: "Connect your wearable",   text: "WHOOP or Oura. Syncs nightly. Apple Health coming soon." },
-            { num: "4", title: "Get your Peaq score",     text: "A single number \u2014 recalculated as your data updates. With the cross-panel signals that change how you understand your health." },
-          ] as const).map(s => (
+            { num: "1", title: "Order your kit",        text: "Oral microbiome swab \u2014 16S rRNA sequencing at species-level resolution. Results in 2\u20133 weeks.", img: "/images/oralkit.png" as string | undefined, pill: undefined as string | undefined },
+            { num: "2", title: "Upload your labs",      text: "LabCorp, Quest, or any standard bloodwork. 40+ biomarkers tracked.", img: undefined, pill: undefined },
+            { num: "3", title: "Connect your wearable", text: "WHOOP or Oura. Syncs nightly. Apple Health coming soon.", img: undefined, pill: undefined },
+            { num: "4", title: "Get your Peaq score",   text: "A single number \u2014 recalculated as your data updates. With the cross-panel signals that change how you understand your health.", img: undefined, pill: "Peaq score" as string | undefined },
+          ]).map(s => (
             <div key={s.num} style={{
               display: "flex", alignItems: "flex-start", gap: 32,
               padding: "32px 0",
@@ -457,13 +457,24 @@ export default function Home() {
               }}>
                 {s.num}
               </span>
-              <div>
-                <p style={{
-                  fontFamily: sans, fontSize: 15, fontWeight: 500,
-                  color: INK, margin: "0 0 6px",
-                }}>
-                  {s.title}
-                </p>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
+                  <p style={{
+                    fontFamily: sans, fontSize: 15, fontWeight: 500,
+                    color: INK, margin: 0,
+                  }}>
+                    {s.title}
+                  </p>
+                  {s.pill && (
+                    <span style={{
+                      fontSize: 11, fontWeight: 500, fontFamily: sans,
+                      background: "rgba(154,114,0,0.10)", color: GOLD,
+                      padding: "3px 10px", borderRadius: 20,
+                    }}>
+                      {s.pill}
+                    </span>
+                  )}
+                </div>
                 <p style={{
                   fontFamily: sans, fontSize: 14, color: "rgba(20,20,16,0.55)",
                   lineHeight: 1.7, margin: 0,
@@ -471,6 +482,17 @@ export default function Home() {
                   {s.text}
                 </p>
               </div>
+              {s.img && (
+                <img
+                  src={s.img}
+                  alt=""
+                  aria-hidden="true"
+                  style={{
+                    height: 64, width: "auto", opacity: 0.85,
+                    mixBlendMode: "multiply" as const, flexShrink: 0,
+                  }}
+                />
+              )}
             </div>
           ))}
         </div>
