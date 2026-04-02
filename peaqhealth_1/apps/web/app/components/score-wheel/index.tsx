@@ -779,6 +779,30 @@ function CrossPanelInteractions({
     }
   }
 
+  // ── Sleep + Blood interactions (don't require oral data) ─────────────────
+  if (!oralActive && bloodData && sleepData) {
+    if (bloodData.hsCRP > 1.0 &&
+        (sleepData.efficiency < 85 || sleepData.deepPct < 20)) {
+      computed.push({
+        key: "inflammSleep",
+        title: "Inflammation & sleep fragmentation",
+        body: "Elevated hsCRP alongside fragmented sleep creates a bidirectional cycle — inflammation disrupts sleep architecture, and poor sleep elevates inflammatory markers.",
+        panels: ["Blood", "Sleep"],
+        severity: "medium",
+        learnMore: {
+          science: "hsCRP above 1.0 mg/L is associated with fragmented sleep architecture in prospective cohort studies. The relationship is bidirectional — inflammation disrupts slow-wave sleep, and sleep deprivation activates NF-κB inflammatory pathways within 24 hours.",
+          meaning: `Your hsCRP of ${bloodData.hsCRP.toFixed(1)} mg/L combined with ${sleepData.efficiency < 85 ? `sleep efficiency of ${sleepData.efficiency.toFixed(0)}%` : `deep sleep of ${sleepData.deepPct.toFixed(1)}%`} suggests an active inflammation-sleep disruption cycle.`,
+          actions: [
+            "Prioritize 7–9 hours with consistent sleep/wake times — circadian anchoring reduces inflammatory markers",
+            "Consider an anti-inflammatory diet: omega-3s, polyphenols, reduce ultra-processed foods",
+            "Recheck hsCRP in 90 days after sleep optimization",
+          ],
+          citation: "Irwin et al., Biological Psychiatry, 2016. Meta-analysis, n=72 studies.",
+        },
+      })
+    }
+  }
+
   // Oral + Lifestyle fermented foods interactions
   const lowFermented = !lifestyleData?.fermentedFoods || lifestyleData.fermentedFoods === "rarely"
   if (oralActive && oralData && lifestyleActive && lifestyleData) {
@@ -829,10 +853,11 @@ function CrossPanelInteractions({
   const hasComputed = computed.length > 0
   const fired = interactionsFired.filter(k => INSIGHT_COPY[k])
 
+  const hasPanelData = oralActive || (bloodData && sleepData)
   const collapsedSummary =
     computed.length > 0
       ? `⚡ ${computed.length} pattern${computed.length !== 1 ? "s" : ""} — ${computed[0].title}`
-      : oralActive
+      : hasPanelData
       ? "✓ No patterns detected"
       : oralKitStatus === "none"
       ? "🔒 Unlock with oral kit  →  Order now"
@@ -903,7 +928,7 @@ function CrossPanelInteractions({
           )}
 
           {/* Oral active but no patterns */}
-          {oralActive && !hasComputed && (
+          {hasPanelData && !hasComputed && (
             <div>
               <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", fontSize: 18, color: "var(--ink-40)", margin: "0 0 6px", lineHeight: 1.3 }}>
                 No patterns detected — your panels look balanced.
@@ -1716,20 +1741,23 @@ export function ScoreWheel({
           )}
         </p>
 
-        {/* Cross-panel modifiers */}
+        {/* Cross-panel modifiers — show math breakdown */}
         {modifiers_applied && modifiers_applied.length > 0 && (
           <div style={{ textAlign: "center", marginTop: 8 }}>
             <button
               onClick={() => setShowModifiers(o => !o)}
               style={{
                 fontFamily: "var(--font-body)", fontSize: 11,
-                color: (modifier_total ?? 0) < 0 ? "#C0392B" : "#1D9E75",
+                color: "var(--ink-40)",
                 background: "none", border: "none", cursor: "pointer",
-                letterSpacing: "0.06em",
+                letterSpacing: "0.04em",
                 marginTop: 6,
               }}
             >
-              {(modifier_total ?? 0) > 0 ? `+${modifier_total}` : modifier_total} cross-panel
+              {breakdown.bloodSub + breakdown.sleepSub + breakdown.oralSub} base{" "}
+              <span style={{ color: (modifier_total ?? 0) < 0 ? "#C0392B" : "#1D9E75" }}>
+                {(modifier_total ?? 0) > 0 ? `+${modifier_total}` : modifier_total} cross-panel
+              </span>
             </button>
             {showModifiers && (
               <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>

@@ -22,7 +22,7 @@ export default async function DashboardPage() {
     { data: sleepNights },
   ] = await Promise.all([
     supabase.from("score_snapshots").select("*").eq("user_id", user.id).order("calculated_at", { ascending: false }).limit(1).maybeSingle(),
-    supabase.from("wearable_connections_v2").select("provider,last_synced_at,needs_reconnect").eq("user_id", user.id).eq("needs_reconnect", false).order("connected_at", { ascending: false }).limit(1).maybeSingle(),
+    supabase.from("wearable_connections_v2").select("provider,last_synced_at,needs_reconnect").eq("user_id", user.id).order("connected_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("lab_results").select("*").eq("user_id", user.id).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).single(),
     supabase.from("oral_kit_orders").select("id, shannon_diversity").eq("user_id", user.id).limit(1).maybeSingle(),
     supabase.from("lifestyle_records").select("*").eq("user_id", user.id).single(),
@@ -30,7 +30,11 @@ export default async function DashboardPage() {
     supabase.from("sleep_data").select("date,source,total_sleep_minutes,deep_sleep_minutes,rem_sleep_minutes,sleep_efficiency,hrv_rmssd,spo2").eq("user_id", user.id).order("date", { ascending: false }).limit(30),
   ])
 
-  const wearable = wearableConn  // unified connection (replaces old wearable_connections + whoop_connections)
+  const wearableRaw = wearableConn  // unified connection (replaces old wearable_connections + whoop_connections)
+  // Treat needs_reconnect connections as still "connected" for data display
+  // (their sleep data is still in the DB), but flag the stale state
+  const wearableNeedsReconnect = !!(wearableRaw as any)?.needs_reconnect
+  const wearable = wearableRaw  // keep existing data flowing — reconnect is a UI concern
 
   const { data: oral } = await supabase
     .from("oral_kit_orders")
