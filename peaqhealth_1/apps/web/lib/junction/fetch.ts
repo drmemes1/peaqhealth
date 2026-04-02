@@ -1,0 +1,167 @@
+import { createClient } from "@supabase/supabase-js"
+
+function serviceClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  )
+}
+
+/**
+ * Fetch sleep data from Vital/Junction API for any Junction-connected provider
+ * and upsert into sleep_data.
+ * Returns count of upserted records.
+ */
+export async function fetchAndStoreJunctionData(
+  userId: string,
+  provider: string,
+  daysBack: number = 7,
+): Promise<number> {
+  const supabase = serviceClient()
+
+  // Look up junction_user_id from wearable_connections_v2 (external_user_id), fall back to profiles
+  let junctionUserId: string | null = null
+
+  const { data: conn } = await supabase
+    .from("wearable_connections_v2")
+    .select("external_user_id")
+    .eq("user_id", userId)
+    .eq("provider", provider)
+    .maybeSingle()
+
+  junctionUserId = (conn?.external_user_id as string | null) ?? null
+
+  if (!junctionUserId) {
+    // Fallback: profiles table (populated during link-token creation)
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("junction_user_id")
+      .eq("id", userId)
+      .maybeSingle()
+    junctionUserId = (profile?.junction_user_id as string | null) ?? null
+  }
+
+  if (!junctionUserId) {
+    console.log(`[junction-fetch/${provider}] no junction_user_id for user:`, userId)
+    return 0
+  }
+
+  const end   = new Date()
+  const start = new Date(end.getTime() - daysBack * 24 * 60 * 60 * 1000)
+  const startDate = start.toISOString().slice(0, 10)
+  const endDate   = end.toISOString().slice(0, 10)
+
+  console.log(`[junction-fetch/${provider}] user=${userId} junction=${junctionUserId} start=${startDate} end=${endDate}`)
+
+  const baseUrl = process.env.JUNCTION_ENV === "production"
+    ? "https://api.tryvital.io"
+    : "https://api.sandbox.tryvital.io"
+  const url = `${baseUrl}/v2/summary/sleep/${junctionUserId}?start_date=${startDate}&end_date=${endDate}`
+  console.log(`[junction-fetch/${provider}] GET url=${url}`)
+
+  const res = await fetch(url, {
+    headers: { "x-vital-api-key": process.env.JUNCTION_API_KEY! },
+  })
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "")
+    if (res.status === 404) {
+      console.info(`[junction-fetch/${provider}] 404 — no sleep data in window (user=${userId})`)
+      return 0
+    }
+    throw new Error(`Vital sleep API ${res.status}: ${body}`)
+  }
+
+  const payload = await res.json() as { sleep: Record<string, unknown>[] }
+  const allSleeps = payload.sleep ?? []
+
+  // Filter out naps and very short sessions
+  const mainSleeps = allSleeps.filter((s) => {
+    const type  = s.type as string | undefined
+    const total = (s.total as number | undefined) ?? (s.duration as number | undefined) ?? 0
+    return type !== "acknowledged_nap" && type !== "nap" && total > 3600
+  })
+
+  console.log(`[junction-fetch/${provider}] ${allSleeps.length} total, ${mainSleeps.length} main sleeps after filtering`)
+
+  if (mainSleeps.length === 0) return 0
+
+  type SleepRow = {
+    user_id:              string
+    source:               string
+    sleep_id:             string | null
+    date:                 string
+    total_sleep_minutes:  number
+    deep_sleep_minutes:   number
+    rem_sleep_minutes:    number
+    sleep_efficiency:     number
+    respiratory_rate:     number | null
+    hrv_rmssd:            number | null
+    resting_heart_rate:   number | null
+    spo2:                 number | null
+    recovery_score:       null
+    raw_sleep:            unknown
+    raw_recovery:         null
+  }
+
+  const rows: SleepRow[] = mainSleeps.map((s) => {
+    const total    = (s.total    as number | undefined) ?? (s.duration as number | undefined) ?? 0
+    const deep     = (s.deep     as number | undefined) ?? 0
+    const rem      = (s.rem      as number | undefined) ?? 0
+    const raw      = s.raw_sleep as Record<string, unknown> | undefined
+    // Vital's summary has average_hrv at the top level or inside raw_sleep
+    const hrv      = (s.hrv_rmssd    as number | undefined)
+                  ?? (s.average_hrv  as number | undefined)
+                  ?? (raw?.average_hrv as number | undefined)
+                  ?? null
+    const respRate = (s.respiratory_rate      as number | undefined)
+                  ?? (raw?.respiratory_rate   as number | undefined)
+                  ?? null
+    const rhr      = (s.hr_lowest as number | undefined) ?? null
+    const spo2     = (s.spo2_avg  as number | undefined) ?? null
+    const eff      = (s.efficiency as number | undefined) ?? 0
+    const date     = (s.calendar_date as string | undefined) ?? (s.date as string | undefined) ?? ""
+    const sleepId  = (s.id as string | undefined) ?? null
+
+    console.log(
+      `[junction-fetch/${provider}] sleep record: ${sleepId} date: ${date}`,
+      `hrv: ${hrv}`,
+      `respiratory_rate: ${respRate}`,
+      `efficiency: ${eff}`,
+    )
+
+    return {
+      user_id:              userId,
+      source:               provider,
+      sleep_id:             sleepId,
+      date,
+      total_sleep_minutes:  Math.round(total / 60),
+      deep_sleep_minutes:   Math.round(deep  / 60),
+      rem_sleep_minutes:    Math.round(rem   / 60),
+      sleep_efficiency:     eff,
+      respiratory_rate:     respRate,
+      hrv_rmssd:            hrv,
+      resting_heart_rate:   rhr,
+      spo2,
+      recovery_score:       null,
+      raw_sleep:            s,
+      raw_recovery:         null,
+    }
+  }).filter(r => r.date)
+
+  console.log(`[junction-fetch/${provider}] sample row:`, JSON.stringify(rows[0], null, 2))
+  const { error } = await supabase
+    .from("sleep_data")
+    .upsert(rows, { onConflict: "user_id,date,source" })
+  console.log(`[junction-fetch/${provider}] upsert:`, rows.length, "rows error:", error?.message ?? "none")
+
+  // Mark connection as synced in unified connections table
+  if (rows.length > 0) {
+    await supabase.from("wearable_connections_v2").update({
+      last_synced_at: new Date().toISOString(),
+    }).eq("user_id", userId).eq("provider", provider)
+  }
+
+  console.log(`[junction-fetch/${provider}] stored ${rows.length} records for user ${userId}`)
+  return rows.length
+}

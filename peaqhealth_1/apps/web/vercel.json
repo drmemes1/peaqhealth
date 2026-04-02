@@ -3,13 +3,13 @@
     "app/api/labs/upload/route.ts": {
       "maxDuration": 60
     },
-    "app/api/whoop/sync-all/route.ts": {
+    "app/api/sync/nightly/route.ts": {
       "maxDuration": 300
     }
   },
   "crons": [
     {
-      "path": "/api/whoop/sync-all",
+      "path": "/api/sync/nightly",
       "schedule": "0 6 * * *"
     },
     {
