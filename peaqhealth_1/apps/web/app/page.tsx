@@ -177,7 +177,10 @@ export default function Home() {
               maxHeight: "80vh",
               width: "auto",
               maxWidth: "90%",
-              mixBlendMode: "multiply" as const,
+              maskImage: "linear-gradient(to right, transparent 0%, black 15%, black 75%, transparent 100%), linear-gradient(to bottom, transparent 0%, black 10%, black 80%, transparent 100%)",
+              maskComposite: "intersect",
+              WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 15%, black 75%, transparent 100%), linear-gradient(to bottom, transparent 0%, black 10%, black 80%, transparent 100%)",
+              WebkitMaskComposite: "source-in",
             }}
           />
         </div>
