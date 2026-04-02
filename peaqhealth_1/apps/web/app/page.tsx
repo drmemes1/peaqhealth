@@ -102,18 +102,49 @@ export default function Home() {
           <p className="fade-up" style={{
             fontFamily: sans,
             fontSize: 15,
-            fontStyle: "italic",
             lineHeight: 1.65,
             color: "rgba(20,20,16,0.60)",
             maxWidth: 400,
             margin: "24px 0 0",
             animationDelay: "180ms",
           }}>
-            <em>P. gingivalis</em> — a bacterium found in gum disease — has been
-            detected inside human coronary artery plaques. Peaq is the first
-            platform to connect your oral microbiome, bloodwork, and sleep data
-            into a single longitudinal score.
+            Oral microbiome, blood biomarkers, sleep data — all under one roof.
           </p>
+
+          {/* Panel pills */}
+          <div className="fade-up" style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 16,
+            marginTop: 16,
+            animationDelay: "220ms",
+          }}>
+            {([
+              { label: "Oral", color: ORAL },
+              { label: "Blood", color: BLOOD },
+              { label: "Sleep", color: SLEEP },
+            ] as const).map(p => (
+              <span key={p.label} style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                fontFamily: sans,
+                fontSize: 11,
+                fontWeight: 500,
+                letterSpacing: "0.04em",
+                color: p.color,
+              }}>
+                <span style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  background: p.color,
+                  flexShrink: 0,
+                }} />
+                {p.label}
+              </span>
+            ))}
+          </div>
 
           {/* CTAs */}
           <div className="fade-up" style={{
