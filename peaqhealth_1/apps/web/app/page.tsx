@@ -162,30 +162,47 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Right — phone mockup, fills column, bleeds top/bottom */}
+        {/* Right — staggered duo phone mockups */}
         <div className="fade-up hero-mockup" style={{
           position: "relative",
           height: "100vh",
           overflow: "hidden",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "flex-end",
-          paddingTop: "80px",
           backgroundColor: "#FAFAF8",
           animationDelay: "400ms",
         }}>
+          {/* Back phone — Sleep panel */}
           <img
+            className="phone-mockup"
+            src="/images/preview-sleep.png"
+            alt="Peaq sleep panel"
+            style={{
+              position: "absolute",
+              height: "78%",
+              width: "auto",
+              right: 100,
+              top: "6%",
+              zIndex: 1,
+              opacity: 0.88,
+              mixBlendMode: "multiply" as const,
+              imageRendering: "crisp-edges" as const,
+              filter: "drop-shadow(-4px 0 20px rgba(20,20,16,0.08))",
+            }}
+          />
+          {/* Front phone — Insights */}
+          <img
+            className="phone-mockup"
             src="/images/dashboard-preview.png"
             alt="Peaq Health dashboard"
             style={{
-              height: "95%",
+              position: "absolute",
+              height: "88%",
               width: "auto",
-              maxWidth: "none",
-              display: "block",
-              marginRight: -20,
+              right: -20,
+              top: "5%",
+              zIndex: 2,
+              mixBlendMode: "multiply" as const,
+              imageRendering: "crisp-edges" as const,
               filter: "drop-shadow(-8px 0 40px rgba(20,20,16,0.12))",
-              imageRendering: "crisp-edges",
-              mixBlendMode: "multiply",
             }}
           />
         </div>
