@@ -38,9 +38,9 @@ const rule: React.CSSProperties = {
 }
 
 const panels = [
-  { key: "oral",  label: "Oral Microbiome", color: ORAL,  lines: ["16S rRNA sequencing", "Species-level resolution"] },
-  { key: "blood", label: "Blood",           color: BLOOD, lines: ["40+ biomarkers", "from any lab"] },
-  { key: "sleep", label: "Sleep",           color: SLEEP, lines: ["Nightly wearable", "HRV, deep sleep, SpO\u2082"] },
+  { key: "oral",  label: "Oral Microbiome", color: ORAL,  lines: ["16S rRNA sequencing", "Species-level resolution"], stat: "100+ species tracked" },
+  { key: "blood", label: "Blood",           color: BLOOD, lines: ["40+ biomarkers", "from any lab"],                  stat: "LabCorp · Quest · any lab" },
+  { key: "sleep", label: "Sleep",           color: SLEEP, lines: ["Nightly wearable", "HRV, deep sleep, SpO\u2082"],  stat: "WHOOP · Oura · Apple Health" },
 ] as const
 
 export function LandingPanelsAndScience() {
@@ -106,6 +106,20 @@ export function LandingPanelsAndScience() {
                     {l}
                   </p>
                 ))}
+                <span style={{
+                  display: "inline-block",
+                  marginTop: 10,
+                  fontSize: 10,
+                  fontWeight: 500,
+                  fontFamily: sans,
+                  color: p.color,
+                  background: p.color + "18",
+                  padding: "3px 8px",
+                  borderRadius: 3,
+                  letterSpacing: "0.03em",
+                }}>
+                  {p.stat}
+                </span>
               </div>
             )
           })}
