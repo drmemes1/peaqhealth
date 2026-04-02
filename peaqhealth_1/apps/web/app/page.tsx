@@ -165,126 +165,23 @@ export default function Home() {
         <div className="fade-up hero-mockup" style={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "center",
+          justifyContent: "flex-end",
           overflow: "hidden",
           animationDelay: "400ms",
         }}>
           <img
             className="phone-mockup"
-            src="/images/preview-insights.png"
-            alt="Peaq Health cross-panel insights"
+            src="/images/hero-peaq.png"
+            alt="Peaq Health insights dashboard"
             style={{
-              maxHeight: "85vh",
+              maxHeight: "80vh",
               width: "auto",
-              maxWidth: "100%",
-              filter: "drop-shadow(0 20px 40px rgba(20,20,16,0.10))",
+              maxWidth: "90%",
+              mixBlendMode: "multiply" as const,
             }}
           />
         </div>
 
-      </section>
-
-      <hr style={rule} />
-
-      {/* ══════════════════════════════════════════════════════════════════
-          SECTION 2 — SCIENCE HOOK
-          ══════════════════════════════════════════════════════════════════ */}
-      <section style={{ ...wrap, paddingTop: 80, paddingBottom: 80 }}>
-        <p style={eyebrow}>The pathway</p>
-
-        <div className="science-hook-grid" style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 64,
-          alignItems: "center",
-        }}>
-          {/* Left — key stat */}
-          <div>
-            <p style={{
-              fontFamily: serif,
-              fontSize: "clamp(64px, 8vw, 96px)",
-              fontWeight: 400,
-              lineHeight: 1,
-              color: GOLD,
-              margin: "0 0 16px",
-            }}>
-              100%
-            </p>
-            <p style={{
-              fontFamily: sans,
-              fontSize: 16,
-              lineHeight: 1.65,
-              color: INK_60,
-              maxWidth: 340,
-              margin: "0 0 12px",
-            }}>
-              of coronary artery plaques studied contained{" "}
-              <em>P. gingivalis</em> DNA — an oral bacterium.
-            </p>
-            <p style={{
-              fontFamily: sans,
-              fontSize: 11,
-              fontStyle: "italic",
-              color: INK_40,
-              margin: 0,
-            }}>
-              — J. Am. Coll. Cardiol., 2023
-            </p>
-          </div>
-
-          {/* Right — pathway SVG */}
-          <div>
-            <svg
-              viewBox="0 0 470 80"
-              role="img"
-              aria-label="Pathway: oral bacteria to cardiac tissue"
-              style={{ width: "100%", maxWidth: 500, overflow: "visible" }}
-            >
-              <defs>
-                <marker id="science-pathway-arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
-                  <path d="M0,0 L0,6 L8,3 z" fill={INK_20} />
-                </marker>
-              </defs>
-              {/* Connecting lines */}
-              <line x1="83" y1="40" x2="143" y2="40" stroke={INK_20} strokeWidth="1.5" markerEnd="url(#science-pathway-arrow)" />
-              <line x1="203" y1="40" x2="263" y2="40" stroke={INK_20} strokeWidth="1.5" markerEnd="url(#science-pathway-arrow)" />
-              <line x1="323" y1="40" x2="383" y2="40" stroke={INK_20} strokeWidth="1.5" markerEnd="url(#science-pathway-arrow)" />
-              {/* Node 1 — Oral */}
-              <circle cx="55" cy="40" r="28" fill="#EAF3DE" />
-              {/* Node 2 — Bloodstream */}
-              <circle cx="175" cy="40" r="28" fill="#FDECEA" />
-              {/* Node 3 — Inflammation */}
-              <circle cx="295" cy="40" r="28" fill="#FEF3C7" />
-              {/* Node 4 — Cardiac */}
-              <circle cx="415" cy="40" r="28" fill={INK_08} />
-              <g style={{ fontFamily: sans }}>
-                {/* Node 1 text */}
-                <text x="55" y="38" textAnchor="middle" fontSize="8" fontWeight="600" fill={ORAL}>Oral</text>
-                <text x="55" y="49" textAnchor="middle" fontSize="7" fill={ORAL}>bacteria</text>
-                {/* Node 2 text */}
-                <text x="175" y="38" textAnchor="middle" fontSize="8" fontWeight="600" fill={BLOOD}>Blood-</text>
-                <text x="175" y="49" textAnchor="middle" fontSize="7" fill={BLOOD}>stream</text>
-                {/* Node 3 text */}
-                <text x="295" y="38" textAnchor="middle" fontSize="8" fontWeight="600" fill="#B8860B">Systemic</text>
-                <text x="295" y="49" textAnchor="middle" fontSize="7" fill="#B8860B">inflam.</text>
-                {/* Node 4 text */}
-                <text x="415" y="38" textAnchor="middle" fontSize="8" fontWeight="600" fill="#141410">Cardiac</text>
-                <text x="415" y="49" textAnchor="middle" fontSize="7" fill={INK_60}>tissue</text>
-              </g>
-            </svg>
-            <p style={{
-              fontFamily: sans,
-              fontSize: 12,
-              color: INK_40,
-              marginTop: 20,
-              lineHeight: 1.6,
-            }}>
-              The same species that cause gum disease cross into the
-              bloodstream, trigger systemic inflammation, and have been
-              found embedded in coronary artery plaque.
-            </p>
-          </div>
-        </div>
       </section>
 
       <hr style={rule} />
