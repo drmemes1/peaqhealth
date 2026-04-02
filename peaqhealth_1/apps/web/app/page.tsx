@@ -154,7 +154,7 @@ export default function Home() {
             marginTop: 36,
             animationDelay: "280ms",
           }}>
-            <Link href="/signup" style={{
+            <span style={{
               fontFamily: sans,
               fontSize: 14,
               fontWeight: 500,
@@ -164,10 +164,9 @@ export default function Home() {
               background: INK,
               color: BG,
               borderRadius: 3,
-              textDecoration: "none",
             }}>
-              Join waitlist
-            </Link>
+              Coming soon
+            </span>
             <Link href="/science" style={{
               fontFamily: sans,
               fontSize: 15,
@@ -479,7 +478,7 @@ export default function Home() {
           Ready to measure what others miss?
         </p>
 
-        <Link href="/signup" style={{
+        <span style={{
           fontFamily: sans,
           fontSize: 14,
           fontWeight: 500,
@@ -489,11 +488,10 @@ export default function Home() {
           background: INK,
           color: BG,
           borderRadius: 3,
-          textDecoration: "none",
           display: "inline-block",
         }}>
-          Join waitlist
-        </Link>
+          Coming soon
+        </span>
 
         <p style={{
           fontFamily: sans, fontSize: 11, color: "rgba(20,20,16,0.30)",
