@@ -253,3 +253,11 @@ body {
     gap: 48px !important;
   }
 }
+
+/* Science hook grid — stack on mobile */
+@media (max-width: 768px) {
+  .science-hook-grid {
+    grid-template-columns: 1fr !important;
+    gap: 40px !important;
+  }
+}

@@ -182,7 +182,6 @@ export default function Home() {
               right: 100,
               top: "6%",
               zIndex: 1,
-              opacity: 0.88,
               mixBlendMode: "multiply" as const,
               imageRendering: "crisp-edges" as const,
               filter: "drop-shadow(-4px 0 20px rgba(20,20,16,0.08))",
@@ -217,7 +216,7 @@ export default function Home() {
       <section style={{ ...wrap, paddingTop: 80, paddingBottom: 80 }}>
         <p style={eyebrow}>The pathway</p>
 
-        <div style={{
+        <div className="science-hook-grid" style={{
           display: "grid",
           gridTemplateColumns: "1fr 1fr",
           gap: 64,
