@@ -1458,7 +1458,7 @@ export function ScoreWheel({
   const [displayBlood, setDisplayBlood] = useState(0)
   const [displayOral, setDisplayOral] = useState(0)
   const [openMissingTooltip, setOpenMissingTooltip] = useState<string | null>(null)
-  const [showModifiers, setShowModifiers] = useState(false)
+  const [showModifiers, setShowModifiers] = useState<string | null>(null)
   const [expandedSleepMetric, setExpandedSleepMetric] = useState<string | null>(null)
   const [showUntested, setShowUntested] = useState(false)
   const [expandedBloodMetric, setExpandedBloodMetric] = useState<string | null>(null)
@@ -1741,40 +1741,52 @@ export function ScoreWheel({
           )}
         </p>
 
-        {/* Cross-panel modifiers — show math breakdown */}
+        {/* Cross-panel modifiers — always visible math breakdown */}
         {modifiers_applied && modifiers_applied.length > 0 && (
-          <div style={{ textAlign: "center", marginTop: 8 }}>
-            <button
-              onClick={() => setShowModifiers(o => !o)}
-              style={{
-                fontFamily: "var(--font-body)", fontSize: 11,
-                color: "var(--ink-40)",
-                background: "none", border: "none", cursor: "pointer",
-                letterSpacing: "0.04em",
-                marginTop: 6,
-              }}
-            >
-              {breakdown.bloodSub + breakdown.sleepSub + breakdown.oralSub} base{" "}
+          <div style={{ textAlign: "center", marginTop: 10 }}>
+            <p style={{
+              fontFamily: "var(--font-body)", fontSize: 11,
+              color: "var(--ink-30)",
+              letterSpacing: "0.04em",
+              margin: "0 0 6px",
+            }}>
+              {Math.round(breakdown.bloodSub + breakdown.sleepSub + breakdown.oralSub)} base{" "}
               <span style={{ color: (modifier_total ?? 0) < 0 ? "#C0392B" : "#1D9E75" }}>
                 {(modifier_total ?? 0) > 0 ? `+${modifier_total}` : modifier_total} cross-panel
               </span>
-            </button>
-            {showModifiers && (
-              <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
-                {modifiers_applied.map(m => (
-                  <p key={m.id} style={{
-                    fontFamily: "var(--font-body)", fontSize: 12, margin: 0,
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: 4 }}>
+              {modifiers_applied.map(m => (
+                <button
+                  key={m.id}
+                  onClick={() => setShowModifiers(prev => prev === m.id ? null : m.id)}
+                  style={{
+                    fontFamily: "var(--font-body)", fontSize: 11, margin: 0,
                     color: m.direction === "bonus" ? "#2D6A4F" : "#C0392B",
                     opacity: (sleepHidden && m.panels?.includes('sleep')) ? 0.4 : 1,
-                  }}>
-                    {m.direction === "bonus" ? "+" : "−"}{m.points} {m.label}
-                    {sleepHidden && m.panels?.includes('sleep') && (
-                      <span style={{ color: 'var(--ink-30)', fontSize: '11px' }}> (sleep paused)</span>
-                    )}
-                  </p>
-                ))}
-              </div>
-            )}
+                    background: "none", border: "none", cursor: "pointer",
+                    padding: "2px 0",
+                  }}
+                >
+                  {m.direction === "bonus" ? "+" : "−"}{m.points} {m.label}
+                  {sleepHidden && m.panels?.includes('sleep') && (
+                    <span style={{ color: 'var(--ink-30)', fontSize: '10px' }}> (sleep paused)</span>
+                  )}
+                </button>
+              ))}
+            </div>
+            {showModifiers && (() => {
+              const active = modifiers_applied.find(m => m.id === showModifiers)
+              return active?.rationale ? (
+                <p style={{
+                  fontFamily: "var(--font-body)", fontSize: 11,
+                  color: "var(--ink-40)", fontStyle: "italic",
+                  margin: "6px auto 0", maxWidth: 400, lineHeight: 1.5,
+                }}>
+                  {active.rationale}
+                </p>
+              ) : null
+            })()}
           </div>
         )}
 
