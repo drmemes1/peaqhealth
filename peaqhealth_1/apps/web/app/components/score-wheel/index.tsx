@@ -1811,34 +1811,48 @@ export function ScoreWheel({
 
       {/* PEAKS */}
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative", zIndex: 10, ...fadeUp("0s") }}>
-        {/* Score number */}
-        <span
-          className={scorePulse ? "score-pulse" : ""}
-          style={{
-            fontFamily: "'Cormorant Garamond', Georgia, serif",
-            fontSize: 96, fontWeight: 300, lineHeight: 1,
-            letterSpacing: "-0.025em", color: "var(--ink)", display: "block",
-          }}
-        >
-          {displayScore}
-        </span>
-        <p style={{
-          fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-          fontSize: 10, textTransform: "uppercase", letterSpacing: "0.18em",
-          color: "var(--ink-30)", margin: "8px 0 0",
+        {/* Score number — centered over the three peaks (left 70% of viz) */}
+        <div style={{
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          position: "relative",
+          zIndex: 20,
+          /* Offset to center over peaks zone: peaks midpoint is ~37% of SVG width,
+             so we shift left by (50% - 37%) = 13% of total width */
+          paddingRight: "26%",
         }}>
-          YOUR PEAQ SCORE · {new Date().toLocaleString("en-US", { month: "long", year: "numeric" }).toUpperCase()}
-          {sleepHidden && (
-            <span style={{ color: '#4A7FB5', marginLeft: '6px' }}>· OUT OF 70</span>
-          )}
-        </p>
+          <span
+            className={scorePulse ? "score-pulse" : ""}
+            style={{
+              fontFamily: "'Cormorant Garamond', Georgia, serif",
+              fontSize: 96, fontWeight: 300, lineHeight: 1,
+              letterSpacing: "-0.025em",
+              color: "#141410",
+              display: "block",
+            }}
+          >
+            {displayScore}
+          </span>
+          <p style={{
+            fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+            fontSize: 10, textTransform: "uppercase", letterSpacing: "0.18em",
+            color: "rgba(20,20,16,0.50)", margin: "8px 0 0",
+          }}>
+            YOUR PEAQ SCORE · {new Date().toLocaleString("en-US", { month: "long", year: "numeric" }).toUpperCase()}
+            {sleepHidden && (
+              <span style={{ color: '#4A7FB5', marginLeft: '6px' }}>· OUT OF 70</span>
+            )}
+          </p>
+        </div>
 
         {/* Mountain peaks chart with hero backdrop */}
         <div style={{ width: "100%", marginTop: 16, position: "relative" }}>
           {/* Hero image — snow-capped mountains behind the peaks */}
           <div style={{
             position: "absolute",
-            top: "-60px",
+            top: "-20px",
             left: "-48px",
             right: "-48px",
             bottom: "-20px",
