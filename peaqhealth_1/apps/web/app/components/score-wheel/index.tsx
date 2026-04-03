@@ -654,6 +654,8 @@ function CrossPanelInteractions({
   sleepData,
   lifestyleData,
   fadeUpFn,
+  modifiers_applied,
+  modifier_total,
 }: {
   oralKitStatus?: "none" | "ordered" | "complete"
   interactionsFired?: string[]
@@ -664,6 +666,8 @@ function CrossPanelInteractions({
   sleepData?: ScoreWheelProps["sleepData"]
   lifestyleData?: ScoreWheelProps["lifestyleData"]
   fadeUpFn: (d: string) => React.CSSProperties
+  modifiers_applied?: ScoreWheelProps["modifiers_applied"]
+  modifier_total?: number
 }) {
   const [open, setOpen] = useState(true)
   const [showAll, setShowAll] = useState(false)
@@ -854,165 +858,253 @@ function CrossPanelInteractions({
   const fired = interactionsFired.filter(k => INSIGHT_COPY[k])
 
   const hasPanelData = oralActive || (bloodData && sleepData)
-  const collapsedSummary =
-    computed.length > 0
-      ? `⚡ ${computed.length} pattern${computed.length !== 1 ? "s" : ""} — ${computed[0].title}`
-      : hasPanelData
-      ? "✓ No patterns detected"
-      : oralKitStatus === "none"
-      ? "🔒 Unlock with oral kit  →  Order now"
-      : "⏳ Kit processing — insights unlocking soon"
+  const hasModifiers = modifiers_applied && modifiers_applied.length > 0
+
+  const MODIFIER_PANEL_COLORS: Record<string, string> = {
+    oral: "#2D6A4F", blood: "#C0392B", sleep: "#4A7FB5",
+  }
 
   return (
     <div style={fadeUpFn("0.10s")}>
       <style>{`@keyframes cpPulse{0%,100%{opacity:1}50%{opacity:0.35}}`}</style>
-      <div style={{
-        background: "rgba(184,134,11,0.06)",
-        border: "0.5px solid rgba(184,134,11,0.3)",
-        borderRadius: 8,
-        padding: open ? "20px 24px" : "14px 20px",
-        marginBottom: 24,
-        transition: "padding 0.2s ease",
-      }}>
-        {/* Header */}
-        <div
-          onClick={() => setOpen(o => !o)}
-          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", marginBottom: open ? 16 : 0 }}
-        >
-          <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, fontVariant: "small-caps", letterSpacing: "0.1em", color: "#B8860B", fontWeight: 600 }}>
-            Cross-Panel Interactions
-          </span>
-          {!open && (
-            <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "#B8860B", flex: 1, marginLeft: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {collapsedSummary}
-            </span>
-          )}
-          <div
-            onMouseEnter={() => setHoverToggle(true)}
-            onMouseLeave={() => setHoverToggle(false)}
-            style={{
-              width: 20, height: 20, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
-              border: `0.5px solid ${hoverToggle ? "#B8860B" : "rgba(184,134,11,0.4)"}`,
-              color: hoverToggle ? "#B8860B" : "rgba(184,134,11,0.6)",
-              fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 16, lineHeight: 1,
-              transition: "border-color 0.2s ease, color 0.2s ease", flexShrink: 0, marginLeft: 8,
-            }}
-          >
-            {open ? "−" : "+"}
+
+      {/* ── Modifier signals card (from score engine) ─────────────────────── */}
+      {hasModifiers && (
+        <div style={{
+          background: "var(--ink-04, rgba(20,20,16,0.04))",
+          border: "0.5px solid var(--ink-08, rgba(20,20,16,0.08))",
+          borderRadius: 10,
+          padding: "24px 28px",
+          marginBottom: 24,
+        }}>
+          <p style={{
+            fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+            fontSize: 10, fontWeight: 500,
+            textTransform: "uppercase", letterSpacing: "0.12em",
+            color: "var(--ink-30, rgba(20,20,16,0.30))",
+            margin: "0 0 20px",
+          }}>
+            Cross-Panel Signals
+          </p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+            {modifiers_applied.map((m, i) => {
+              const accentColor = m.direction === "bonus"
+                ? "#2D6A4F"
+                : (m.panels?.includes("blood") ? "#C0392B" : m.panels?.includes("oral") ? "#2D6A4F" : "#4A7FB5")
+              const pointColor = m.direction === "bonus" ? "#2D6A4F" : "#C0392B"
+              return (
+                <div key={m.id}>
+                  <div style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 16,
+                    padding: "16px 0",
+                    borderLeft: `3px solid ${accentColor}`,
+                    paddingLeft: 20,
+                  }}>
+                    <span style={{
+                      fontFamily: "'Cormorant Garamond', Georgia, serif",
+                      fontSize: 20, fontWeight: 400, lineHeight: 1,
+                      color: pointColor,
+                      minWidth: 32,
+                      flexShrink: 0,
+                    }}>
+                      {m.direction === "bonus" ? "+" : "−"}{m.points}
+                    </span>
+                    <div style={{ flex: 1 }}>
+                      <p style={{
+                        fontFamily: "'Cormorant Garamond', Georgia, serif",
+                        fontSize: 17, fontWeight: 400, lineHeight: 1.35,
+                        color: "var(--ink, #141410)",
+                        margin: "0 0 4px",
+                      }}>
+                        {m.label}
+                      </p>
+                      <p style={{
+                        fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                        fontSize: 12, lineHeight: 1.5,
+                        color: "var(--ink-40, rgba(20,20,16,0.40))",
+                        margin: 0,
+                      }}>
+                        {m.rationale}
+                      </p>
+                      {m.panels && m.panels.length > 0 && (
+                        <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+                          {m.panels.map(p => (
+                            <span key={p} style={{
+                              fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                              fontSize: 9, fontWeight: 500,
+                              textTransform: "uppercase", letterSpacing: "0.08em",
+                              color: MODIFIER_PANEL_COLORS[p] ?? "var(--ink-40)",
+                              background: (MODIFIER_PANEL_COLORS[p] ?? "var(--ink-40)") + "18",
+                              padding: "2px 7px", borderRadius: 3,
+                            }}>
+                              {p}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {i < modifiers_applied.length - 1 && (
+                    <div style={{
+                      height: 0.5,
+                      background: "var(--ink-08, rgba(20,20,16,0.08))",
+                      marginLeft: 23,
+                    }} />
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Net total */}
+          <div style={{
+            marginTop: 16, paddingTop: 12,
+            borderTop: "0.5px solid var(--ink-08, rgba(20,20,16,0.08))",
+          }}>
+            <p style={{
+              fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+              fontSize: 11, color: "var(--ink-30, rgba(20,20,16,0.30))",
+              letterSpacing: "0.04em", margin: 0,
+            }}>
+              Net effect: <span style={{
+                color: (modifier_total ?? 0) < 0 ? "#C0392B" : "#2D6A4F",
+                fontWeight: 500,
+              }}>
+                {(modifier_total ?? 0) > 0 ? "+" : ""}{modifier_total} pts
+              </span>
+            </p>
           </div>
         </div>
+      )}
 
-        {/* Body */}
-        <div style={{ maxHeight: open ? 6000 : 0, opacity: open ? 1 : 0, overflow: "hidden", transition: "max-height 0.3s ease, opacity 0.3s ease" }}>
-
-          {/* Show computed interactions whenever any are present */}
-          {hasComputed && (
-            <div>
-              <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", color: "#B8860B", margin: "0 0 10px" }}>
-                Patterns detected:
-              </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {computed.slice(0, showAll ? undefined : 3).map(interaction => (
-                  <InteractionCard key={interaction.key} interaction={interaction} />
-                ))}
-              </div>
-              {!showAll && computed.length > 3 && (
-                <button
-                  onClick={e => { e.stopPropagation(); setShowAll(true) }}
-                  style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "#B8860B", background: "none", border: "none", cursor: "pointer", marginTop: 10, padding: 0 }}
-                >
-                  View all {computed.length} patterns →
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Oral active but no patterns */}
-          {hasPanelData && !hasComputed && (
-            <div>
-              <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", fontSize: 18, color: "var(--ink-40)", margin: "0 0 6px", lineHeight: 1.3 }}>
-                No patterns detected — your panels look balanced.
-              </p>
-              <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink-40)", margin: 0, lineHeight: 1.5 }}>
-                We continuously monitor your data for cross-panel signals. Check back as your data updates.
-              </p>
-            </div>
-          )}
-
-          {/* No oral data — kit not ordered */}
-          {!oralActive && oralKitStatus === "none" && (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1 }}>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
-                  <rect x="3" y="7" width="10" height="8" rx="1.5" stroke="#B8860B" strokeWidth="1.2"/>
-                  <path d="M5.5 7V5a2.5 2.5 0 015 0v2" stroke="#B8860B" strokeWidth="1.2" strokeLinecap="round"/>
-                </svg>
-                <div>
-                  <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", fontSize: 18, color: "var(--ink)", margin: "0 0 4px", lineHeight: 1.3 }}>
-                    Your cross-panel intelligence is waiting.
-                  </p>
-                  <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink-60)", margin: 0, lineHeight: 1.5 }}>
-                    The oral microbiome is the missing piece. Spit, send, and wait for your full Peaqture.
-                  </p>
-                </div>
-              </div>
-              <a
-                href="/shop"
-                style={{
-                  fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, fontVariant: "small-caps", letterSpacing: "0.06em",
-                  border: "1px solid #B8860B", color: "#B8860B", background: "transparent",
-                  padding: "8px 16px", borderRadius: 4, textDecoration: "none", whiteSpace: "nowrap", display: "inline-block",
-                }}
-                onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = "#B8860B"; (e.currentTarget as HTMLAnchorElement).style.color = "var(--off-white)" }}
-                onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = "transparent"; (e.currentTarget as HTMLAnchorElement).style.color = "#B8860B" }}
-              >
-                Order oral kit
-              </a>
-            </div>
-          )}
-
-          {/* No oral data — kit processing */}
-          {!oralActive && oralKitStatus === "ordered" && (
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#B8860B", flexShrink: 0, animation: "cpPulse 2s infinite", display: "inline-block" }} />
-              <div>
-                <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", fontSize: 18, color: "var(--ink)", margin: "0 0 4px", lineHeight: 1.3 }}>
-                  Your sample is on its way.
-                </p>
-                <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink-60)", margin: 0, lineHeight: 1.5 }}>
-                  Results arrive in 10–14 days. Cross-panel insights unlock then.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Legacy server-fired interactions (fallback) */}
-          {!oralActive && fired.length > 0 && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {fired.map(key => {
-                const insight = INSIGHT_COPY[key]!
-                return (
-                  <div key={key} style={{ background: "rgba(184,134,11,0.04)", borderLeft: "3px solid #B8860B", borderRadius: "0 4px 4px 0", padding: "12px 14px" }}>
-                    <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 4, gap: 8 }}>
-                      <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, fontWeight: 600, color: "#B8860B" }}>⚡ {insight.title}</span>
-                      <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
-                        {insight.panels.map(p => (
-                          <span key={p} style={{ display: "flex", alignItems: "center", gap: 3 }}>
-                            <span style={{ width: 6, height: 6, borderRadius: "50%", background: PANEL_COLORS[p] ?? "#B8860B", display: "inline-block" }} />
-                            <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, color: PANEL_COLORS[p] ?? "#B8860B" }}>{p}</span>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink-60)", margin: 0, lineHeight: 1.5 }}>{insight.body}</p>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-
+      {/* ── No modifiers — clean fallback ─────────────────────────────────── */}
+      {!hasModifiers && hasPanelData && (
+        <div style={{
+          background: "var(--ink-04, rgba(20,20,16,0.04))",
+          border: "0.5px solid var(--ink-08, rgba(20,20,16,0.08))",
+          borderRadius: 10,
+          padding: "20px 24px",
+          marginBottom: 24,
+        }}>
+          <p style={{
+            fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+            fontSize: 10, fontWeight: 500,
+            textTransform: "uppercase", letterSpacing: "0.12em",
+            color: "var(--ink-30, rgba(20,20,16,0.30))",
+            margin: "0 0 10px",
+          }}>
+            Cross-Panel Signals
+          </p>
+          <p style={{
+            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontStyle: "italic", fontSize: 17, lineHeight: 1.4,
+            color: "var(--ink-40, rgba(20,20,16,0.40))",
+            margin: 0,
+          }}>
+            Your panels show no compounding risk signals. Check back as your data updates.
+          </p>
         </div>
-      </div>
+      )}
+
+      {/* ── Computed interactions (detailed client-side analysis) ────────── */}
+      {hasComputed && (
+        <div style={{
+          background: "rgba(184,134,11,0.06)",
+          border: "0.5px solid rgba(184,134,11,0.3)",
+          borderRadius: 8,
+          padding: open ? "20px 24px" : "14px 20px",
+          marginBottom: 24,
+          transition: "padding 0.2s ease",
+        }}>
+          {/* Header */}
+          <div
+            onClick={() => setOpen(o => !o)}
+            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", marginBottom: open ? 16 : 0 }}
+          >
+            <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, fontVariant: "small-caps", letterSpacing: "0.1em", color: "#B8860B", fontWeight: 600 }}>
+              Detailed Patterns
+            </span>
+            <div
+              onMouseEnter={() => setHoverToggle(true)}
+              onMouseLeave={() => setHoverToggle(false)}
+              style={{
+                width: 20, height: 20, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+                border: `0.5px solid ${hoverToggle ? "#B8860B" : "rgba(184,134,11,0.4)"}`,
+                color: hoverToggle ? "#B8860B" : "rgba(184,134,11,0.6)",
+                fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 16, lineHeight: 1,
+                transition: "border-color 0.2s ease, color 0.2s ease", flexShrink: 0, marginLeft: 8,
+              }}
+            >
+              {open ? "−" : "+"}
+            </div>
+          </div>
+
+          {/* Body */}
+          <div style={{ maxHeight: open ? 6000 : 0, opacity: open ? 1 : 0, overflow: "hidden", transition: "max-height 0.3s ease, opacity 0.3s ease" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {computed.slice(0, showAll ? undefined : 3).map(interaction => (
+                <InteractionCard key={interaction.key} interaction={interaction} />
+              ))}
+            </div>
+            {!showAll && computed.length > 3 && (
+              <button
+                onClick={e => { e.stopPropagation(); setShowAll(true) }}
+                style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "#B8860B", background: "none", border: "none", cursor: "pointer", marginTop: 10, padding: 0 }}
+              >
+                View all {computed.length} patterns →
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Kit status cards (no oral data yet) */}
+      {!hasModifiers && !hasPanelData && oralKitStatus === "none" && (
+        <div style={{
+          background: "var(--ink-04, rgba(20,20,16,0.04))",
+          border: "0.5px solid var(--ink-08, rgba(20,20,16,0.08))",
+          borderRadius: 10, padding: "20px 24px", marginBottom: 24,
+          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap",
+        }}>
+          <div>
+            <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", fontSize: 17, color: "var(--ink)", margin: "0 0 4px", lineHeight: 1.3 }}>
+              Your cross-panel intelligence is waiting.
+            </p>
+            <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink-60)", margin: 0, lineHeight: 1.5 }}>
+              The oral microbiome is the missing piece.
+            </p>
+          </div>
+          <a href="/shop" style={{
+            fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, fontWeight: 500,
+            letterSpacing: "0.06em", textTransform: "uppercase",
+            border: "1px solid var(--ink-20)", color: "var(--ink-60)", background: "transparent",
+            padding: "8px 16px", borderRadius: 4, textDecoration: "none", whiteSpace: "nowrap",
+          }}>
+            Order oral kit
+          </a>
+        </div>
+      )}
+      {!hasModifiers && !hasPanelData && oralKitStatus === "ordered" && (
+        <div style={{
+          background: "var(--ink-04, rgba(20,20,16,0.04))",
+          border: "0.5px solid var(--ink-08, rgba(20,20,16,0.08))",
+          borderRadius: 10, padding: "20px 24px", marginBottom: 24,
+          display: "flex", alignItems: "center", gap: 12,
+        }}>
+          <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#9A7200", flexShrink: 0, animation: "cpPulse 2s infinite", display: "inline-block" }} />
+          <div>
+            <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", fontSize: 17, color: "var(--ink)", margin: "0 0 4px", lineHeight: 1.3 }}>
+              Your sample is on its way.
+            </p>
+            <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink-60)", margin: 0, lineHeight: 1.5 }}>
+              Results arrive in 10–14 days. Cross-panel insights unlock then.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -1458,7 +1550,7 @@ export function ScoreWheel({
   const [displayBlood, setDisplayBlood] = useState(0)
   const [displayOral, setDisplayOral] = useState(0)
   const [openMissingTooltip, setOpenMissingTooltip] = useState<string | null>(null)
-  const [showModifiers, setShowModifiers] = useState<string | null>(null)
+  const [_showModifiers] = useState<string | null>(null) // reserved
   const [expandedSleepMetric, setExpandedSleepMetric] = useState<string | null>(null)
   const [showUntested, setShowUntested] = useState(false)
   const [expandedBloodMetric, setExpandedBloodMetric] = useState<string | null>(null)
@@ -1741,54 +1833,20 @@ export function ScoreWheel({
           )}
         </p>
 
-        {/* Cross-panel modifiers — always visible math breakdown */}
-        {modifiers_applied && modifiers_applied.length > 0 && (
-          <div style={{ textAlign: "center", marginTop: 10 }}>
+        {/* Score interpretation */}
+        {(() => {
+          const s = score
+          const interp = s >= 85 ? "Exceptional" : s >= 75 ? "Strong longevity profile" : s >= 65 ? "Above average" : s >= 50 ? "Building your baseline" : "Real room to improve."
+          return (
             <p style={{
-              fontFamily: "var(--font-body)", fontSize: 11,
-              color: "var(--ink-30)",
-              letterSpacing: "0.04em",
-              margin: "0 0 6px",
+              fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+              fontSize: 13, color: "#9A7200", margin: "8px 0 0",
+              letterSpacing: "0.02em",
             }}>
-              {Math.round(breakdown.bloodSub + breakdown.sleepSub + breakdown.oralSub)} base{" "}
-              <span style={{ color: (modifier_total ?? 0) < 0 ? "#C0392B" : "#1D9E75" }}>
-                {(modifier_total ?? 0) > 0 ? `+${modifier_total}` : modifier_total} cross-panel
-              </span>
+              {interp}
             </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: 4 }}>
-              {modifiers_applied.map(m => (
-                <button
-                  key={m.id}
-                  onClick={() => setShowModifiers(prev => prev === m.id ? null : m.id)}
-                  style={{
-                    fontFamily: "var(--font-body)", fontSize: 11, margin: 0,
-                    color: m.direction === "bonus" ? "#2D6A4F" : "#C0392B",
-                    opacity: (sleepHidden && m.panels?.includes('sleep')) ? 0.4 : 1,
-                    background: "none", border: "none", cursor: "pointer",
-                    padding: "2px 0",
-                  }}
-                >
-                  {m.direction === "bonus" ? "+" : "−"}{m.points} {m.label}
-                  {sleepHidden && m.panels?.includes('sleep') && (
-                    <span style={{ color: 'var(--ink-30)', fontSize: '10px' }}> (sleep paused)</span>
-                  )}
-                </button>
-              ))}
-            </div>
-            {showModifiers && (() => {
-              const active = modifiers_applied.find(m => m.id === showModifiers)
-              return active?.rationale ? (
-                <p style={{
-                  fontFamily: "var(--font-body)", fontSize: 11,
-                  color: "var(--ink-40)", fontStyle: "italic",
-                  margin: "6px auto 0", maxWidth: 400, lineHeight: 1.5,
-                }}>
-                  {active.rationale}
-                </p>
-              ) : null
-            })()}
-          </div>
-        )}
+          )
+        })()}
 
         {/* Mountain peaks chart with hero backdrop */}
         <div style={{ width: "100%", marginTop: 40, position: "relative" }}>
@@ -1913,6 +1971,8 @@ export function ScoreWheel({
         sleepData={sleepData}
         lifestyleData={lifestyleData}
         fadeUpFn={fadeUp}
+        modifiers_applied={modifiers_applied}
+        modifier_total={modifier_total}
       />
 
       {/* CTA BLOCKS */}
