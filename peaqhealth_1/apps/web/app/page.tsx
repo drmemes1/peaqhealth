@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { LogoSvg } from "./components/logo-svg"
 import { LandingPanelsAndScience } from "./components/landing-panels-science"
+import { WaitlistForm } from "./components/waitlist-form"
 
 /* ─── Design tokens ───────────────────────────────────────────────────────── */
 
@@ -146,33 +147,17 @@ export default function Home() {
             ))}
           </div>
 
-          {/* CTAs */}
-          <div className="fade-up" style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 28,
-            marginTop: 36,
-            animationDelay: "280ms",
-          }}>
-            <span style={{
-              fontFamily: sans,
-              fontSize: 14,
-              fontWeight: 500,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase" as const,
-              padding: "14px 36px",
-              background: INK,
-              color: BG,
-              borderRadius: 3,
-            }}>
-              Coming soon
-            </span>
+          {/* Waitlist */}
+          <div className="fade-up" style={{ marginTop: 36, animationDelay: "280ms" }}>
+            <WaitlistForm />
             <Link href="/science" style={{
               fontFamily: sans,
-              fontSize: 15,
+              fontSize: 13,
               letterSpacing: "0.02em",
-              color: "rgba(20,20,16,0.50)",
+              color: "rgba(20,20,16,0.40)",
               textDecoration: "none",
+              display: "inline-block",
+              marginTop: 20,
             }}>
               See the science →
             </Link>
@@ -246,27 +231,26 @@ export default function Home() {
             This is what you actually see.
           </h2>
 
-          <div className="app-showcase-grid" style={{
+          {/* Feature 1 — Oral microbiome */}
+          <div className="app-feature" style={{
             display: "grid",
             gridTemplateColumns: "1fr 1fr",
-            gap: 64,
-            alignItems: "start",
+            gap: 48,
+            alignItems: "center",
+            marginBottom: 80,
           }}>
-            {/* Left — Oral microbiome panel */}
+            <img
+              src="/images/landing-oral.png"
+              alt="Peaq oral microbiome panel showing Shannon diversity, nitrate reducers, periodontal burden, and OSA-associated taxa"
+              style={{
+                width: "100%",
+                height: "auto",
+                display: "block",
+                borderRadius: 8,
+                border: "0.5px solid rgba(20,20,16,0.08)",
+              }}
+            />
             <div>
-              <img
-                src="/images/landing-oral.png"
-                alt="Peaq oral microbiome panel showing Shannon diversity, nitrate reducers, periodontal burden, and OSA-associated taxa"
-                style={{
-                  width: "100%",
-                  maxWidth: 480,
-                  height: "auto",
-                  display: "block",
-                  borderRadius: 8,
-                  border: "0.5px solid rgba(20,20,16,0.08)",
-                  marginBottom: 28,
-                }}
-              />
               <p style={{
                 fontFamily: sans, fontSize: 10, fontWeight: 600,
                 textTransform: "uppercase" as const, letterSpacing: "0.1em",
@@ -275,58 +259,64 @@ export default function Home() {
                 Oral Microbiome
               </p>
               <p style={{
-                fontFamily: serif, fontSize: 20, fontWeight: 400,
-                color: INK, margin: "0 0 12px", lineHeight: 1.3,
+                fontFamily: serif, fontSize: 24, fontWeight: 400,
+                color: INK, margin: "0 0 14px", lineHeight: 1.3,
               }}>
-                Species-level resolution, clinical thresholds
+                Species-level resolution
               </p>
               <p style={{
                 fontFamily: sans, fontSize: 14, color: INK_60,
-                lineHeight: 1.7, maxWidth: 340, margin: 0,
+                lineHeight: 1.7, maxWidth: 380, margin: 0,
               }}>
                 Shannon diversity, nitrate-reducing bacteria, periodontal
                 pathogens, OSA-associated taxa — each scored against clinical
                 targets with clear status indicators.
               </p>
             </div>
+          </div>
 
-            {/* Right — Sleep narrative */}
-            <div>
-              <img
-                src="/images/landing-sleep.png"
-                alt="Peaq sleep narrative showing deep sleep, HRV, efficiency analysis with cross-panel context"
-                style={{
-                  width: "100%",
-                  maxWidth: 480,
-                  height: "auto",
-                  display: "block",
-                  borderRadius: 8,
-                  border: "0.5px solid rgba(20,20,16,0.08)",
-                  marginBottom: 28,
-                }}
-              />
+          {/* Feature 2 — AI insights */}
+          <div className="app-feature" style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 48,
+            alignItems: "center",
+          }}>
+            <div style={{ order: 1 }}>
               <p style={{
                 fontFamily: sans, fontSize: 10, fontWeight: 600,
                 textTransform: "uppercase" as const, letterSpacing: "0.1em",
                 color: SLEEP, margin: "0 0 8px",
               }}>
-                Sleep Narrative
+                AI Insights
               </p>
               <p style={{
-                fontFamily: serif, fontSize: 20, fontWeight: 400,
-                color: INK, margin: "0 0 12px", lineHeight: 1.3,
+                fontFamily: serif, fontSize: 24, fontWeight: 400,
+                color: INK, margin: "0 0 14px", lineHeight: 1.3,
               }}>
                 AI analysis with cross-panel context
               </p>
               <p style={{
                 fontFamily: sans, fontSize: 14, color: INK_60,
-                lineHeight: 1.7, maxWidth: 340, margin: 0,
+                lineHeight: 1.7, maxWidth: 380, margin: 0,
               }}>
                 Your sleep data interpreted through your oral and blood panels.
                 Not just numbers — the connections between deep sleep, HRV,
                 and your oral nitrate pathways.
               </p>
             </div>
+            <img
+              src="/images/landing-sleep.png"
+              alt="Peaq sleep narrative showing deep sleep, HRV, efficiency analysis with cross-panel context"
+              style={{
+                width: "100%",
+                height: "auto",
+                display: "block",
+                borderRadius: 8,
+                border: "0.5px solid rgba(20,20,16,0.08)",
+                order: 2,
+              }}
+            />
           </div>
         </div>
       </section>
@@ -478,20 +468,7 @@ export default function Home() {
           Ready to measure what others miss?
         </p>
 
-        <span style={{
-          fontFamily: sans,
-          fontSize: 14,
-          fontWeight: 500,
-          letterSpacing: "0.06em",
-          textTransform: "uppercase" as const,
-          padding: "14px 36px",
-          background: INK,
-          color: BG,
-          borderRadius: 3,
-          display: "inline-block",
-        }}>
-          Coming soon
-        </span>
+        <WaitlistForm />
 
         <p style={{
           fontFamily: sans, fontSize: 11, color: "rgba(20,20,16,0.30)",

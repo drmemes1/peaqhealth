@@ -243,6 +243,17 @@ body {
     max-width: 260px !important;
     margin: 0 auto !important;
   }
+  .app-feature {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+    margin-bottom: 56px !important;
+  }
+  .app-feature img {
+    order: 0 !important;
+  }
+  .app-feature > div {
+    order: 1 !important;
+  }
 }
 
 /* Phone mockup images — dark mode: multiply blend darkens further, switch to normal */
