@@ -1811,7 +1811,7 @@ export function ScoreWheel({
 
       {/* PEAKS */}
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative", zIndex: 10, ...fadeUp("0s") }}>
-        {/* Score number — centered over the three peaks (left 70% of viz) */}
+        {/* Score number — centered over full SVG width */}
         <div style={{
           width: "100%",
           display: "flex",
@@ -1819,9 +1819,6 @@ export function ScoreWheel({
           alignItems: "center",
           position: "relative",
           zIndex: 20,
-          /* Offset to center over peaks zone: peaks midpoint is ~37% of SVG width,
-             so we shift left by (50% - 37%) = 13% of total width */
-          paddingRight: "26%",
         }}>
           <span
             className={scorePulse ? "score-pulse" : ""}

@@ -2,22 +2,20 @@
 import { useEffect, useRef } from "react"
 
 // ─── Layout constants ────────────────────────────────────────────────────────
-// ViewBox 700 × 440; peaks occupy left ~70%, cross-panel element on right ~30%
+// ViewBox 700 × 440; four equidistant columns (175px each)
 const VB_H         = 440
 const BASELINE     = 360
 const MAX_H        = 300
 const TOP_PAD      = 56
 const SCALE_TO     = 0.92
-const BASE_HALF_W  = 50
-// Peaks bunched left: centered at 110, 260, 410 (spanning ~60–460)
-const CENTERS: readonly [number, number, number] = [110, 260, 410]
+const BASE_HALF_W  = 48
+// Four equidistant columns: 700 / 4 = 175px each, centers at 12.5% 37.5% 62.5% 87.5%
+const CENTERS: readonly [number, number, number] = [88, 263, 438]
 const DURATION = 700
 const STAGGER  = 130
 
-// Divider x-position — between peaks zone and cross-panel zone
-const DIVIDER_X = 488
-// Cross-panel element center
-const CP_CX = 595
+// Cross-panel element center (4th column)
+const CP_CX = 613
 
 const PANELS = [
   { key: "sleep",     label: "SLEEP",     max: 30, color: "#4A7FB5" },
@@ -234,15 +232,7 @@ export function PeaksVisualization({
         )
       })}
 
-      {/* ── Vertical divider ──────────────────────────────────────────────── */}
-      {netModifier !== 0 && (
-        <line
-          x1={DIVIDER_X} y1={tallestApexY} x2={DIVIDER_X} y2={BASELINE}
-          stroke="rgba(20,20,16,0.15)"
-          strokeWidth={0.5}
-          strokeDasharray="3 4"
-        />
-      )}
+      {/* Divider removed — equidistant spacing provides clear separation */}
 
       {/* ── Cross-panel element (right 30%) ───────────────────────────────── */}
       {netModifier !== 0 && (
