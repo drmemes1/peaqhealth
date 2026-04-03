@@ -1849,7 +1849,7 @@ export function ScoreWheel({
         })()}
 
         {/* Mountain peaks chart with hero backdrop */}
-        <div style={{ width: "100%", marginTop: 40, position: "relative" }}>
+        <div style={{ width: "100%", marginTop: 16, position: "relative" }}>
           {/* Hero image — snow-capped mountains behind the peaks */}
           <div style={{
             position: "absolute",
@@ -1905,6 +1905,7 @@ export function ScoreWheel({
               sleepGhosted={sleepHidden}
               onPeakHover={setHoveredRing}
               onPeakClick={handlePeakClick}
+              netModifier={modifier_total ?? 0}
             />
           </div>
         </div>

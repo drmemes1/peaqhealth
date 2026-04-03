@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react"
 
 // ─── Layout constants ────────────────────────────────────────────────────────
 // ViewBox 700 × 420; peaks centered in 40–660 range
-const VB_H         = 420   // viewBox height — taller to give peaks room
+const VB_H         = 460   // viewBox height — taller to give peaks room + valley below baseline
 const BASELINE     = 360   // y-position of the baseline rule
 const MAX_H        = 300   // reference height for ratio calculations (not a hard cap)
 const TOP_PAD      = 56    // minimum clearance above tallest apex for score number
@@ -34,12 +34,13 @@ export interface PeaksProps {
   sleepGhosted?:   boolean
   onPeakHover?:    (key: string | null) => void
   onPeakClick?:    (key: string) => void
+  netModifier?:    number
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function PeaksVisualization({
-  breakdown, sleepConnected, hasBlood, oralActive, hasLifestyle, sleepGhosted, onPeakHover, onPeakClick,
+  breakdown, sleepConnected, hasBlood, oralActive, hasLifestyle, sleepGhosted, onPeakHover, onPeakClick, netModifier = 0,
 }: PeaksProps) {
   const rawScores = [
     breakdown.sleepSub,
@@ -127,6 +128,10 @@ export function PeaksVisualization({
             <stop offset="100%" stopColor={p.color} stopOpacity={0.03} />
           </linearGradient>
         ))}
+        <linearGradient id="pg-valley" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stopColor="#9A7200" stopOpacity={0.10} />
+          <stop offset="100%" stopColor="#9A7200" stopOpacity={0.04} />
+        </linearGradient>
       </defs>
 
       {/* Baseline rule */}
@@ -212,6 +217,48 @@ export function PeaksVisualization({
           </g>
         )
       })}
+
+      {/* Cross-panel valley — inverted triangle below baseline */}
+      {netModifier !== 0 && (() => {
+        const cx = 350
+        const halfW = 60
+        const isBonus = netModifier > 0
+        const depth = Math.abs(netModifier) * 8
+        const tipY = isBonus ? BASELINE - depth : BASELINE + depth
+        const points = isBonus
+          ? `${cx - halfW},${BASELINE} ${cx},${tipY} ${cx + halfW},${BASELINE}`
+          : `${cx - halfW},${BASELINE} ${cx},${tipY} ${cx + halfW},${BASELINE}`
+
+        return (
+          <g>
+            <polygon
+              points={points}
+              fill="url(#pg-valley)"
+              stroke="#9A7200"
+              strokeWidth={0.8}
+              strokeDasharray="3 4"
+              strokeLinejoin="round"
+              opacity={0.35}
+            />
+            <circle
+              cx={cx} cy={tipY} r={3}
+              fill="#9A7200" opacity={0.4}
+            />
+            <text
+              x={cx}
+              y={isBonus ? tipY - 12 : tipY + 16}
+              textAnchor="middle"
+              fontFamily="'Cormorant Garamond', Georgia, serif"
+              fontSize={12}
+              fontStyle="italic"
+              fill="#9A7200"
+              opacity={0.55}
+            >
+              {isBonus ? "+" : "−"}{Math.abs(netModifier)} cross-panel
+            </text>
+          </g>
+        )
+      })()}
     </svg>
   )
 }
