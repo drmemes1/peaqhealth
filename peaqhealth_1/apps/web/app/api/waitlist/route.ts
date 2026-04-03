@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   }
 
   const resend = new Resend(resendKey)
-  const from = process.env.REPORT_FROM_EMAIL ?? "Peaq Health <onboarding@resend.dev>"
+  const from = "Peaq Health <hello@peaqhealth.me>"
   const { error } = await resend.emails.send({
     from,
     to: "info@peaqhealth.me",
