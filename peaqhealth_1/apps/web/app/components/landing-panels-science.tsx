@@ -55,10 +55,10 @@ export function LandingPanelsAndScience() {
   return (
     <>
       {/* ══ SECTION 2 — THREE PANELS ══════════════════════════════════════ */}
-      <section style={{ ...wrap, paddingTop: 96, paddingBottom: 96 }}>
+      <section className="landing-section" style={{ ...wrap, paddingTop: 96, paddingBottom: 96 }}>
         <p style={eyebrow}>Three panels. One score.</p>
 
-        <p style={{
+        <p className="landing-heading" style={{
           fontFamily: serif, fontSize: "clamp(28px, 3.5vw, 42px)",
           fontWeight: 400, lineHeight: 1.3, margin: "0 0 48px", maxWidth: 560,
         }}>
@@ -137,7 +137,7 @@ export function LandingPanelsAndScience() {
       <hr style={rule} />
 
       {/* ══ SECTION 4 — SCIENCE ═══════════════════════════════════════════ */}
-      <section style={{ ...wrap, paddingTop: 96, paddingBottom: 96 }}>
+      <section className="landing-section" style={{ ...wrap, paddingTop: 96, paddingBottom: 96 }}>
         <p style={eyebrow}>Grounded in peer-reviewed research</p>
 
         <p style={{

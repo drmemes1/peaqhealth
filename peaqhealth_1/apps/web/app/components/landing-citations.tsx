@@ -99,6 +99,7 @@ export function LandingCitations({
           <div key={c.id}>
             {/* Citation row */}
             <div
+              className="citation-row"
               onMouseEnter={() => setHovered(c.id)}
               onMouseLeave={() => setHovered(null)}
               onClick={() => setExpanded(expanded === c.id ? null : c.id)}
@@ -117,6 +118,7 @@ export function LandingCitations({
                 flexWrap: "wrap",
                 cursor: "pointer",
                 transition: "all 0.25s ease",
+                minHeight: 44,
               }}
             >
               {/* Left — journal + authors */}
@@ -201,11 +203,11 @@ export function LandingCitations({
 
             {/* Expanded panel */}
             <div style={{
-              maxHeight: isExpanded ? 400 : 0,
+              maxHeight: isExpanded ? 800 : 0,
               overflow: "hidden",
               transition: "max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
             }}>
-              <div style={{
+              <div className="citation-expanded" style={{
                 padding: "24px 0 32px 20px",
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
