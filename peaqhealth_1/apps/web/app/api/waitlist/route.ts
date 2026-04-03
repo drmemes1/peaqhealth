@@ -14,11 +14,12 @@ export async function POST(req: NextRequest) {
   }
 
   const resend = new Resend(resendKey)
+  const from = process.env.REPORT_FROM_EMAIL ?? "Peaq Health <onboarding@resend.dev>"
   const { error } = await resend.emails.send({
-    from: process.env.REPORT_FROM_EMAIL ?? "waitlist@peaqhealth.me",
+    from,
     to: "info@peaqhealth.me",
-    subject: `Waitlist signup: ${email}`,
-    text: `New waitlist signup:\n\nEmail: ${email}\nDate: ${new Date().toISOString()}`,
+    subject: `New waitlist signup: ${email}`,
+    html: `<p>New waitlist signup:</p><p><strong>${email}</strong></p><p>Date: ${new Date().toISOString()}</p>`,
   })
 
   if (error) {
