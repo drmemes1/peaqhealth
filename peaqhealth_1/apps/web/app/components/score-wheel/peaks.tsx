@@ -2,16 +2,22 @@
 import { useEffect, useRef } from "react"
 
 // ─── Layout constants ────────────────────────────────────────────────────────
-// ViewBox 700 × 420; peaks centered in 40–660 range
-const VB_H         = 460   // viewBox height — taller to give peaks room + valley below baseline
-const BASELINE     = 360   // y-position of the baseline rule
-const MAX_H        = 300   // reference height for ratio calculations (not a hard cap)
-const TOP_PAD      = 56    // minimum clearance above tallest apex for score number
-const SCALE_TO     = 0.92  // tallest active peak fills this fraction of available space
-const BASE_HALF_W  = 55    // base half-width — peaks widen proportionally with height
-const CENTERS: readonly [number, number, number] = [150, 350, 550]
-const DURATION = 700        // ms each peak takes to rise
-const STAGGER  = 130        // ms between peaks
+// ViewBox 700 × 440; peaks occupy left ~70%, cross-panel element on right ~30%
+const VB_H         = 440
+const BASELINE     = 360
+const MAX_H        = 300
+const TOP_PAD      = 56
+const SCALE_TO     = 0.92
+const BASE_HALF_W  = 50
+// Peaks bunched left: centered at 110, 260, 410 (spanning ~60–460)
+const CENTERS: readonly [number, number, number] = [110, 260, 410]
+const DURATION = 700
+const STAGGER  = 130
+
+// Divider x-position — between peaks zone and cross-panel zone
+const DIVIDER_X = 488
+// Cross-panel element center
+const CP_CX = 595
 
 const PANELS = [
   { key: "sleep",     label: "SLEEP",     max: 30, color: "#4A7FB5" },
@@ -49,16 +55,13 @@ export function PeaksVisualization({
   ]
   const pending = [!sleepConnected || (sleepGhosted ?? false), !hasBlood, !oralActive]
 
-  // Score ratios (0–1) for height and width scaling
   const ratios = rawScores.map((s, i) => {
     if (pending[i] || s <= 0) return 0
     return Math.min(s / PANELS[i].max, 1)
   })
 
-  // Raw heights using MAX_H as reference scale
   const rawHeights = ratios.map(r => r * MAX_H)
 
-  // Dynamic scaling: tallest active peak fills SCALE_TO of available vertical space
   const availableH = BASELINE - TOP_PAD
   const maxRawH    = Math.max(10, ...rawHeights)
   const scale      = (availableH * SCALE_TO) / maxRawH
@@ -68,13 +71,13 @@ export function PeaksVisualization({
   )
   const apexYs = finalHeights.map(h => BASELINE - h)
 
-  // Peak widths scale proportionally with height — taller = wider for dramatic effect
   const halfWidths = ratios.map(r =>
-    Math.max(36, Math.round(BASE_HALF_W * Math.max(r, 0.3) * 1.15))
+    Math.max(32, Math.round(BASE_HALF_W * Math.max(r, 0.3) * 1.15))
   )
 
   const polyRefs  = useRef<(SVGPolygonElement | null)[]>([null, null, null])
   const decorRefs = useRef<(SVGGElement | null)[]>([null, null, null])
+  const cpRef     = useRef<SVGGElement | null>(null)
 
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = []
@@ -104,14 +107,28 @@ export function PeaksVisualization({
       timers.push(id)
     })
 
-    // Reveal decorations after all peaks finish
+    // Reveal decorations + cross-panel after all peaks finish
     const revealAt = 100 + 2 * STAGGER + DURATION + 100
     timers.push(setTimeout(() => {
       decorRefs.current.forEach(el => { if (el) el.style.opacity = "1" })
+      if (cpRef.current) cpRef.current.style.opacity = "1"
     }, revealAt))
 
     return () => timers.forEach(clearTimeout)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Cross-panel element geometry
+  const absModifier = Math.abs(netModifier)
+  const isBonus     = netModifier > 0
+  const cpHalfW     = 50
+  const cpDepth     = absModifier * 8
+  const cpTopY      = BASELINE   // base of the inverted triangle sits on baseline
+  const cpTipY      = isBonus ? BASELINE - cpDepth : BASELINE + cpDepth
+  // Position the number above the shape
+  const cpNumberY   = isBonus ? Math.min(cpTipY, BASELINE) - 14 : BASELINE - 14
+
+  // Tallest peak apex for divider
+  const tallestApexY = Math.min(...apexYs)
 
   return (
     <svg
@@ -128,16 +145,21 @@ export function PeaksVisualization({
             <stop offset="100%" stopColor={p.color} stopOpacity={0.03} />
           </linearGradient>
         ))}
-        <linearGradient id="pg-valley" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%"   stopColor="#9A7200" stopOpacity={0.10} />
-          <stop offset="100%" stopColor="#9A7200" stopOpacity={0.04} />
+        <linearGradient id="pg-cp-valley" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stopColor="#9A7200" stopOpacity={0.04} />
+          <stop offset="100%" stopColor="#9A7200" stopOpacity={0.16} />
+        </linearGradient>
+        <linearGradient id="pg-cp-bonus" x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0%"   stopColor="#9A7200" stopOpacity={0.04} />
+          <stop offset="100%" stopColor="#9A7200" stopOpacity={0.16} />
         </linearGradient>
       </defs>
 
-      {/* Baseline rule */}
+      {/* Baseline rule — extends across full width */}
       <line x1={36} y1={BASELINE} x2={664} y2={BASELINE}
         stroke="var(--ink-12)" strokeWidth={0.75} />
 
+      {/* ── Three peaks (left 70%) ────────────────────────────────────────── */}
       {PANELS.map((p, i) => {
         const cx         = CENTERS[i]
         const isPending  = pending[i]
@@ -149,7 +171,6 @@ export function PeaksVisualization({
 
         return (
           <g key={p.key}>
-            {/* Peak polygon — animated */}
             <polygon
               ref={el => { polyRefs.current[i] = el }}
               points={`${cx - halfWidths[i]},${BASELINE} ${cx},${BASELINE} ${cx + halfWidths[i]},${BASELINE}`}
@@ -171,15 +192,12 @@ export function PeaksVisualization({
               onClick={() => onPeakClick?.(p.key)}
             />
 
-            {/* Apex dot + score + labels — fade in after animation */}
             <g
               ref={el => { decorRefs.current[i] = el }}
               style={{ opacity: 0, transition: "opacity 500ms ease" }}
             >
-              {/* Apex dot */}
               <circle cx={cx} cy={apexY} r={4.5} fill={p.color} />
 
-              {/* Score value above apex */}
               <text
                 x={cx} y={apexY - 16}
                 textAnchor="middle"
@@ -191,7 +209,6 @@ export function PeaksVisualization({
                 {displayVal}
               </text>
 
-              {/* Panel name below baseline */}
               <text
                 x={cx} y={BASELINE + 22}
                 textAnchor="middle"
@@ -203,7 +220,6 @@ export function PeaksVisualization({
                 {p.label}
               </text>
 
-              {/* /max */}
               <text
                 x={cx} y={BASELINE + 36}
                 textAnchor="middle"
@@ -218,47 +234,81 @@ export function PeaksVisualization({
         )
       })}
 
-      {/* Cross-panel valley — inverted triangle below baseline */}
-      {netModifier !== 0 && (() => {
-        const cx = 350
-        const halfW = 60
-        const isBonus = netModifier > 0
-        const depth = Math.abs(netModifier) * 8
-        const tipY = isBonus ? BASELINE - depth : BASELINE + depth
-        const points = isBonus
-          ? `${cx - halfW},${BASELINE} ${cx},${tipY} ${cx + halfW},${BASELINE}`
-          : `${cx - halfW},${BASELINE} ${cx},${tipY} ${cx + halfW},${BASELINE}`
+      {/* ── Vertical divider ──────────────────────────────────────────────── */}
+      {netModifier !== 0 && (
+        <line
+          x1={DIVIDER_X} y1={tallestApexY} x2={DIVIDER_X} y2={BASELINE}
+          stroke="rgba(20,20,16,0.15)"
+          strokeWidth={0.5}
+          strokeDasharray="3 4"
+        />
+      )}
 
-        return (
-          <g>
-            <polygon
-              points={points}
-              fill="url(#pg-valley)"
-              stroke="#9A7200"
-              strokeWidth={0.8}
-              strokeDasharray="3 4"
-              strokeLinejoin="round"
-              opacity={0.35}
-            />
-            <circle
-              cx={cx} cy={tipY} r={3}
-              fill="#9A7200" opacity={0.4}
-            />
-            <text
-              x={cx}
-              y={isBonus ? tipY - 12 : tipY + 16}
-              textAnchor="middle"
-              fontFamily="'Cormorant Garamond', Georgia, serif"
-              fontSize={12}
-              fontStyle="italic"
-              fill="#9A7200"
-              opacity={0.55}
-            >
-              {isBonus ? "+" : "−"}{Math.abs(netModifier)} cross-panel
-            </text>
-          </g>
-        )
-      })()}
+      {/* ── Cross-panel element (right 30%) ───────────────────────────────── */}
+      {netModifier !== 0 && (
+        <g ref={cpRef} style={{ opacity: 0, transition: "opacity 600ms ease" }}>
+          {/* Net modifier number */}
+          <text
+            x={CP_CX} y={cpNumberY}
+            textAnchor="middle"
+            fontFamily="'Cormorant Garamond', Georgia, serif"
+            fontSize={22}
+            fontWeight={400}
+            fill="#9A7200"
+            opacity={0.75}
+          >
+            {isBonus ? "+" : "−"}{absModifier}
+          </text>
+
+          {/* Inverted triangle */}
+          <polygon
+            points={isBonus
+              ? `${CP_CX - cpHalfW},${BASELINE} ${CP_CX},${cpTipY} ${CP_CX + cpHalfW},${BASELINE}`
+              : `${CP_CX - cpHalfW},${BASELINE} ${CP_CX},${cpTipY} ${CP_CX + cpHalfW},${BASELINE}`
+            }
+            fill={isBonus ? "url(#pg-cp-bonus)" : "url(#pg-cp-valley)"}
+            stroke="#9A7200"
+            strokeWidth={0.8}
+            strokeDasharray="3 4"
+            strokeLinejoin="round"
+            opacity={0.45}
+          />
+
+          {/* Tip dot */}
+          <circle
+            cx={CP_CX} cy={cpTipY} r={3}
+            fill="#9A7200" opacity={0.5}
+          />
+
+          {/* CROSS-PANEL label */}
+          <text
+            x={CP_CX}
+            y={isBonus ? BASELINE + 22 : cpTipY + 18}
+            textAnchor="middle"
+            fontFamily="var(--font-body, 'Instrument Sans', sans-serif)"
+            fontSize={10}
+            letterSpacing="1.5"
+            fill="#9A7200"
+            opacity={0.55}
+          >
+            CROSS-PANEL
+          </text>
+
+          {/* "modifier" italic label */}
+          <text
+            x={CP_CX}
+            y={isBonus ? BASELINE + 35 : cpTipY + 31}
+            textAnchor="middle"
+            fontFamily="'Cormorant Garamond', Georgia, serif"
+            fontSize={9}
+            fontStyle="italic"
+            fill="#9A7200"
+            opacity={0.4}
+          >
+            modifier
+          </text>
+        </g>
+      )}
     </svg>
   )
 }

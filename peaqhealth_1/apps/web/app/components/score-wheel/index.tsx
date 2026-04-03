@@ -1833,21 +1833,6 @@ export function ScoreWheel({
           )}
         </p>
 
-        {/* Score interpretation */}
-        {(() => {
-          const s = score
-          const interp = s >= 85 ? "Exceptional" : s >= 75 ? "Strong longevity profile" : s >= 65 ? "Above average" : s >= 50 ? "Building your baseline" : "Real room to improve."
-          return (
-            <p style={{
-              fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-              fontSize: 13, color: "#9A7200", margin: "8px 0 0",
-              letterSpacing: "0.02em",
-            }}>
-              {interp}
-            </p>
-          )
-        })()}
-
         {/* Mountain peaks chart with hero backdrop */}
         <div style={{ width: "100%", marginTop: 16, position: "relative" }}>
           {/* Hero image — snow-capped mountains behind the peaks */}
