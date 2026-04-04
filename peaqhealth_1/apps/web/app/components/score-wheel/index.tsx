@@ -1860,67 +1860,18 @@ export function ScoreWheel({
           </p>
         </div>
 
-        {/* Mountain peaks chart with hero backdrop */}
-        <div style={{ width: "100%", height: 220, maxHeight: 220, overflow: "hidden", position: "relative" }}>
-          {/* Hero image — snow-capped mountains behind the peaks */}
-          <div style={{
-            position: "absolute",
-            top: 0,
-            left: "-48px",
-            right: "-48px",
-            bottom: 0,
-            zIndex: 0,
-            overflow: "hidden",
-            borderRadius: "8px",
-          }}>
-            <img
-              src="/images/snowcapped.jpg"
-              alt=""
-              className="hero-mountain"
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                objectPosition: "center 30%",
-                transform: "scale(1.05)",
-              }}
-            />
-            {/* Fade edges to blend with background */}
-            <div style={{
-              position: "absolute",
-              inset: 0,
-              background: `
-                linear-gradient(to bottom,
-                  #fff 0%,
-                  transparent 25%,
-                  transparent 55%,
-                  #fff 100%
-                ),
-                linear-gradient(to right,
-                  #fff 0%,
-                  transparent 15%,
-                  transparent 85%,
-                  #fff 100%
-                )
-              `,
-              pointerEvents: "none",
-            }} />
-          </div>
-
-          <div style={{ position: "relative", zIndex: 1 }}>
-            <PeaksVisualization
-              breakdown={breakdown}
-              sleepConnected={sleepConnected}
-              hasBlood={hasBlood}
-              oralActive={oralActive}
-              hasLifestyle={false}
-              sleepGhosted={sleepHidden}
-              onPeakHover={setHoveredRing}
-              onPeakClick={handlePeakClick}
-              netModifier={modifier_total ?? 0}
-            />
-          </div>
-        </div>
+        {/* Mountain peaks chart */}
+        <PeaksVisualization
+          breakdown={breakdown}
+          sleepConnected={sleepConnected}
+          hasBlood={hasBlood}
+          oralActive={oralActive}
+          hasLifestyle={false}
+          sleepGhosted={sleepHidden}
+          onPeakHover={setHoveredRing}
+          onPeakClick={handlePeakClick}
+          netModifier={modifier_total ?? 0}
+        />
 
       </div>
 
