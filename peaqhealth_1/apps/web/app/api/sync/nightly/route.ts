@@ -30,7 +30,7 @@ async function sendSleepPush(userId: string, supabase: SupabaseClient) {
   await webpush.sendNotification(subscription, JSON.stringify({
     title: "Your morning Peaq signal",
     body: parts,
-    url: "/trends",
+    url: "/dashboard/sleep",
     icon: "/icons/icon-192.png",
     badge: "/icons/icon-192.png",
   }))

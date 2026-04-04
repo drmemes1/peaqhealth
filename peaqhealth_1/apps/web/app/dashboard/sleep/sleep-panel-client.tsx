@@ -3,6 +3,11 @@
 import { useState } from "react"
 import Link from "next/link"
 import { Nav } from "../../components/nav"
+import {
+  ResponsiveContainer, AreaChart, Area,
+  XAxis, YAxis, Tooltip, ReferenceLine,
+} from "recharts"
+import { markerInfo } from "../../../lib/markerInfo"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -210,6 +215,68 @@ const FLAG_STYLES: Record<Status, { bg: string; color: string; label: string }> 
   attention: { bg: "#FEE2E2", color: "#991B1B", label: "Low" },
 }
 
+// ─── Sleep mini chart ────────────────────────────────────────────────────────
+
+function SleepMiniChart({
+  data, dataKey, color, refY, label, unit, domain,
+}: {
+  data: Array<{ label: string; value: number | null }>
+  dataKey: string
+  color: string
+  refY: number
+  label: string
+  unit: string
+  domain: [number, number]
+}) {
+  return (
+    <div style={{
+      background: "var(--peaq-bg-card, #fff)",
+      border: "0.5px solid var(--ink-08)",
+      borderRadius: 8,
+      padding: "14px 16px",
+      marginBottom: 12,
+    }}>
+      <p style={{
+        fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+        fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em",
+        color: "var(--ink-40)", margin: "0 0 12px",
+      }}>
+        {label} <span style={{ color: "var(--ink-20)" }}>· {unit}</span>
+      </p>
+      <ResponsiveContainer width="100%" height={120}>
+        <AreaChart data={data} margin={{ top: 4, right: 8, left: -24, bottom: 0 }}>
+          <XAxis
+            dataKey="label"
+            tick={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 11, fill: "var(--ink-30)" }}
+            axisLine={false} tickLine={false}
+            interval={Math.max(0, Math.floor(data.length / 8))}
+          />
+          <YAxis
+            domain={domain}
+            tick={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 11, fill: "var(--ink-30)" }}
+            axisLine={false} tickLine={false} tickCount={4}
+          />
+          <Tooltip
+            contentStyle={{
+              fontFamily: "var(--font-body)", fontSize: 12,
+              background: "var(--peaq-bg-card, #fff)",
+              border: "0.5px solid var(--ink-08)",
+              borderRadius: 6, padding: "6px 10px",
+            }}
+          />
+          <ReferenceLine y={refY} stroke="var(--ink-12)" strokeDasharray="4 4" />
+          <Area
+            type="monotone" dataKey={dataKey}
+            stroke={color} strokeWidth={1.5}
+            fill={color} fillOpacity={0.08}
+            dot={false} connectNulls={false}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
 // ─── Sleep metric row ────────────────────────────────────────────────────────
 
 function MetricRow({
@@ -220,6 +287,7 @@ function MetricRow({
   status,
   zoneKey,
   numericValue,
+  infoContent,
 }: {
   name: string
   sublabel: string
@@ -228,35 +296,79 @@ function MetricRow({
   status: Status
   zoneKey: string
   numericValue: number | null
+  infoContent?: { why: string; target: string; citation: string; tip?: string }
 }) {
+  const [expanded, setExpanded] = useState(false)
   const fs = FLAG_STYLES[status]
   const dotColor = status === "optimal" ? "#2D6A4F" : status === "good" ? "#4A7FB5" : status === "watch" ? "#B8860B" : "#C0392B"
 
   return (
-    <div style={{ padding: "12px 0", borderBottom: "0.5px solid var(--ink-06)" }}>
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ width: 8, height: 8, borderRadius: "50%", background: dotColor, display: "inline-block", flexShrink: 0 }} />
-            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 15, color: "var(--ink)" }}>{name}</span>
+    <div style={{ borderBottom: "0.5px solid var(--ink-06)" }}>
+      <div style={{ padding: "12px 0" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: dotColor, display: "inline-block", flexShrink: 0 }} />
+              <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 15, color: "var(--ink)" }}>{name}</span>
+              {infoContent && (
+                <button
+                  onClick={() => setExpanded(e => !e)}
+                  style={{
+                    background: "none", border: "0.5px solid var(--ink-20)", borderRadius: "50%",
+                    width: 16, height: 16, display: "flex", alignItems: "center", justifyContent: "center",
+                    cursor: "pointer", padding: 0, flexShrink: 0,
+                    fontFamily: "var(--font-body)", fontSize: 9, color: "var(--ink-40)",
+                  }}
+                  aria-label={expanded ? "Hide info" : "Show info"}
+                >
+                  ⓘ
+                </button>
+              )}
+            </div>
+            <p style={{ margin: "1px 0 0 14px", fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-60)" }}>{sublabel}</p>
           </div>
-          <p style={{ margin: "1px 0 0 14px", fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-60)" }}>{sublabel}</p>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink)" }}>
+              {value}
+              <span style={{ fontSize: 10, color: "var(--ink-30)", marginLeft: 2 }}>{unit}</span>
+            </span>
+            <span style={{ fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "2px 7px", background: fs.bg, color: fs.color }}>
+              {fs.label}
+            </span>
+          </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-          <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink)" }}>
-            {value}
-            <span style={{ fontSize: 10, color: "var(--ink-30)", marginLeft: 2 }}>{unit}</span>
-          </span>
-          <span style={{ fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "2px 7px", background: fs.bg, color: fs.color }}>
-            {fs.label}
-          </span>
-        </div>
+        {numericValue != null && (
+          <div style={{ marginLeft: 14 }}>
+            <SleepRangeBar value={numericValue} zoneKey={zoneKey} />
+          </div>
+        )}
       </div>
-      {numericValue != null && (
-        <div style={{ marginLeft: 14 }}>
-          <SleepRangeBar value={numericValue} zoneKey={zoneKey} />
-        </div>
-      )}
+      <div style={{ maxHeight: expanded && infoContent ? 300 : 0, overflow: "hidden", transition: "max-height 0.35s ease, opacity 0.3s ease", opacity: expanded && infoContent ? 1 : 0 }}>
+        {infoContent && (
+          <div style={{
+            background: "var(--peaq-bg-secondary, #F0EFE8)",
+            borderRadius: "0 0 8px 8px",
+            padding: "12px 16px",
+            marginTop: 0,
+            marginBottom: 8,
+          }}>
+            <p style={{ fontFamily: "var(--font-body)", fontSize: 12, lineHeight: 1.6, color: "var(--ink-60)", margin: "0 0 8px" }}>
+              {infoContent.why}
+            </p>
+            <p style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", fontStyle: "italic", margin: "0 0 4px" }}>
+              Target: {infoContent.target}
+            </p>
+            <p style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", fontStyle: "italic", margin: 0 }}>
+              {infoContent.citation}
+            </p>
+            {infoContent.tip && (
+              <p style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "var(--color-accent-gold, #C49A3C)", margin: "8px 0 0" }}>
+                · {infoContent.tip}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -327,6 +439,10 @@ export function SleepPanelClient({ nights, snapshot, wearable }: Props) {
   // ── Last 7 nights ────────────────────────────────────────────────────────
 
   const last7 = deduped.slice(0, 7)
+
+  // ── 30-night trend data (oldest → newest for left-to-right charts) ───────
+
+  const bestNights = deduped.slice(0, 30).reverse()
 
   // ── Status computations ──────────────────────────────────────────────────
 
@@ -425,6 +541,7 @@ export function SleepPanelClient({ nights, snapshot, wearable }: Props) {
             status={deepStatus}
             zoneKey="deepSleep"
             numericValue={avgDeep}
+            infoContent={markerInfo["deep-sleep"]}
           />
           <MetricRow
             name="HRV"
@@ -434,6 +551,7 @@ export function SleepPanelClient({ nights, snapshot, wearable }: Props) {
             status={hrvStatus}
             zoneKey="hrv"
             numericValue={avgHrv}
+            infoContent={markerInfo["hrv"]}
           />
           <MetricRow
             name="SpO₂"
@@ -443,6 +561,7 @@ export function SleepPanelClient({ nights, snapshot, wearable }: Props) {
             status={spo2Status}
             zoneKey="spo2"
             numericValue={avgSpo2}
+            infoContent={markerInfo["spo2"]}
           />
           <MetricRow
             name="REM"
@@ -452,6 +571,7 @@ export function SleepPanelClient({ nights, snapshot, wearable }: Props) {
             status={remStatus}
             zoneKey="rem"
             numericValue={avgRem}
+            infoContent={markerInfo["rem"]}
           />
           <MetricRow
             name="Sleep Efficiency"
@@ -461,6 +581,7 @@ export function SleepPanelClient({ nights, snapshot, wearable }: Props) {
             status={effStatus}
             zoneKey="efficiency"
             numericValue={avgEff}
+            infoContent={markerInfo["sleep-efficiency"]}
           />
         </Section>
 
@@ -508,6 +629,68 @@ export function SleepPanelClient({ nights, snapshot, wearable }: Props) {
               </div>
             )
           })}
+        </Section>
+
+        {/* Sleep Trends */}
+        <Section title="Sleep trends · 30 nights" defaultOpen={true}>
+          {bestNights.length >= 3 ? (
+            <>
+              <SleepMiniChart
+                data={bestNights.map(n => ({
+                  label: new Date((n.date as string) + "T00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+                  value: n.deep_sleep_minutes && n.total_sleep_minutes
+                    ? ((n.deep_sleep_minutes as number) / (n.total_sleep_minutes as number)) * 100
+                    : null,
+                }))}
+                dataKey="value"
+                color="#4A7FB5"
+                refY={17}
+                label="Deep sleep"
+                unit="% of TST"
+                domain={[0, 45]}
+              />
+              <SleepMiniChart
+                data={bestNights.map(n => ({
+                  label: new Date((n.date as string) + "T00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+                  value: n.hrv_rmssd as number | null,
+                }))}
+                dataKey="value"
+                color="#4A7FB5"
+                refY={40}
+                label="HRV"
+                unit="ms RMSSD"
+                domain={[0, 80]}
+              />
+              <SleepMiniChart
+                data={bestNights.map(n => ({
+                  label: new Date((n.date as string) + "T00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+                  value: n.sleep_efficiency as number | null,
+                }))}
+                dataKey="value"
+                color="#4A7FB5"
+                refY={85}
+                label="Sleep efficiency"
+                unit="%"
+                domain={[60, 100]}
+              />
+              <SleepMiniChart
+                data={bestNights.map(n => ({
+                  label: new Date((n.date as string) + "T00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+                  value: n.spo2 as number | null,
+                }))}
+                dataKey="value"
+                color="#4A7FB5"
+                refY={96}
+                label="SpO₂"
+                unit="% avg"
+                domain={[88, 100]}
+              />
+            </>
+          ) : (
+            <p style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink-40)", padding: "12px 0" }}>
+              Need at least 3 nights of data to show trends.
+            </p>
+          )}
         </Section>
 
       </main>

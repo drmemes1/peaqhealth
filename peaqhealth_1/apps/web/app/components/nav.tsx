@@ -12,7 +12,6 @@ export function Nav({ cartCount = 0, onCartOpen }: NavProps) {
   const pathname = usePathname();
   const links = [
     { href: "/dashboard", label: "Dashboard" },
-    { href: "/trends", label: "Trends" },
     { href: "/shop", label: "Shop" },
     { href: "/science", label: "Science" },
     { href: "/settings", label: "Settings" },
