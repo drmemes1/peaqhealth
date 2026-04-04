@@ -1560,8 +1560,13 @@ export function ScoreWheel({
   const sleepPanelRef    = useRef<CollapsiblePanelHandle>(null)
   const bloodPanelRef    = useRef<CollapsiblePanelHandle>(null)
   const oralPanelRef     = useRef<CollapsiblePanelHandle>(null)
+  const crossPanelRef    = useRef<HTMLDivElement>(null)
 
   function handlePeakClick(key: string) {
+    if (key === "cross-panel") {
+      crossPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+      return
+    }
     const map: Record<string, React.RefObject<CollapsiblePanelHandle | null>> = {
       sleep: sleepPanelRef, blood: bloodPanelRef, oral: oralPanelRef,
     }
@@ -1958,6 +1963,7 @@ export function ScoreWheel({
       </div>
 
       {/* CROSS-PANEL INTERACTIONS */}
+      <div ref={crossPanelRef} />
       <CrossPanelInteractions
         oralKitStatus={oralKitStatus}
         interactionsFired={interactionsFired}

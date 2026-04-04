@@ -234,9 +234,23 @@ export function PeaksVisualization({
 
       {/* Divider removed — equidistant spacing provides clear separation */}
 
-      {/* ── Cross-panel element (right 30%) ───────────────────────────────── */}
+      {/* ── Cross-panel element (clickable — scrolls to cross-panel section) */}
       {netModifier !== 0 && (
-        <g ref={cpRef} style={{ opacity: 0, transition: "opacity 600ms ease" }}>
+        <g
+          ref={cpRef}
+          style={{ opacity: 0, transition: "opacity 600ms ease", cursor: onPeakClick ? "pointer" : "default" }}
+          onClick={() => onPeakClick?.("cross-panel")}
+          onMouseEnter={e => { (e.currentTarget as SVGGElement).style.opacity = "0.8" }}
+          onMouseLeave={e => { (e.currentTarget as SVGGElement).style.opacity = "1" }}
+        >
+          {/* Invisible expanded touch target (min 44px) */}
+          <rect
+            x={CP_CX - 60} y={cpNumberY - 20}
+            width={120}
+            height={Math.max(80, (isBonus ? BASELINE - cpTipY : cpTipY - BASELINE) + 60)}
+            fill="transparent"
+          />
+
           {/* Net modifier number */}
           <text
             x={CP_CX} y={cpNumberY}
@@ -252,10 +266,7 @@ export function PeaksVisualization({
 
           {/* Inverted triangle */}
           <polygon
-            points={isBonus
-              ? `${CP_CX - cpHalfW},${BASELINE} ${CP_CX},${cpTipY} ${CP_CX + cpHalfW},${BASELINE}`
-              : `${CP_CX - cpHalfW},${BASELINE} ${CP_CX},${cpTipY} ${CP_CX + cpHalfW},${BASELINE}`
-            }
+            points={`${CP_CX - cpHalfW},${BASELINE} ${CP_CX},${cpTipY} ${CP_CX + cpHalfW},${BASELINE}`}
             fill={isBonus ? "url(#pg-cp-bonus)" : "url(#pg-cp-valley)"}
             stroke="#9A7200"
             strokeWidth={1.2}
