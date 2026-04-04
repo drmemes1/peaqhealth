@@ -99,9 +99,9 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
   }
 
   return (
-    <div className="min-h-svh bg-off-white">
+    <div className="min-h-svh" style={{ background: "#F6F4EF" }}>
       <Nav />
-      <main className="mx-auto px-6 pt-14 pb-10" style={{ maxWidth: "var(--layout-max-width, 760px)" }}>
+      <main className="mx-auto pt-14 pb-10" style={{ maxWidth: "var(--layout-max-width, 760px)", padding: "28px 24px" }}>
 
         {/* Reconnect banner */}
         {wearableNeedsReconnect && (

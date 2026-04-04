@@ -27,16 +27,17 @@ function PanelCard({ label, color, trackColor, score, max, active, locked, desc,
       onMouseLeave={() => setHovered(false)}
       onTouchStart={() => haptics.light()}
       style={{
-        background: "var(--white)",
-        border: `0.5px solid ${highlighted ? color + "66" : hovered && active ? "var(--ink-20)" : "var(--ink-12)"}`,
-        borderTop: `2px solid ${locked ? "transparent" : active ? color : color + "44"}`,
-        borderRadius: 4,
-        padding: "14px 16px",
+        background: "#fff",
+        border: `0.5px solid ${highlighted ? color + "66" : "rgba(0,0,0,0.06)"}`,
+        borderRadius: 12,
+        padding: "14px 13px",
         opacity: locked ? 0.52 : 1,
-        transform: hovered && active ? "translateY(-2px)" : "none",
-        boxShadow: hovered && active ? "0 4px 16px var(--ink-06)" : "none",
-        transition: "transform 0.2s cubic-bezier(.16,1,.3,1), border-color 0.2s ease, box-shadow 0.2s ease",
-        cursor: active ? "default" : "pointer",
+        transform: hovered && active ? "translateY(-3px)" : "none",
+        boxShadow: hovered && active
+          ? `0 8px 24px rgba(0,0,0,0.08), 0 0 0 1.5px ${color}`
+          : "none",
+        transition: "transform 0.2s ease, box-shadow 0.2s ease",
+        cursor: "pointer",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
@@ -80,11 +81,10 @@ function SyncingCard({ provider }: { provider?: string }) {
 
   return (
     <div style={{
-      background: "var(--white)",
-      border: "0.5px solid var(--ink-12)",
-      borderTop: "2px solid var(--sleep-c)",
-      borderRadius: 4,
-      padding: "14px 16px",
+      background: "#fff",
+      border: "0.5px solid rgba(0,0,0,0.06)",
+      borderRadius: 12,
+      padding: "14px 13px",
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
@@ -161,11 +161,10 @@ function EmptyPanelCard({ panel, oralOrdered = false }: {
 
   return (
     <div style={{
-      border: `0.5px solid ${config.color}30`,
-      borderTop: `3px solid ${config.color}`,
-      borderRadius: 4,
-      padding: '14px 16px',
-      background: 'var(--white)',
+      border: `0.5px solid rgba(0,0,0,0.06)`,
+      borderRadius: 12,
+      padding: '14px 13px',
+      background: '#fff',
       opacity: 0.85,
     }}>
       <div style={{
@@ -501,23 +500,23 @@ export function PanelGrid({
         <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 22, fontWeight: 300, color: "var(--ink)", margin: 0 }}>Panel breakdown</h3>
         <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-30)" }}>Score composition</span>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 10 }}>
         {isSyncing
           ? <SyncingCard provider={wearableProvider} />
           : sleepConnected
-            ? <Link href="/dashboard/sleep" style={{ textDecoration: "none", color: "inherit", borderRadius: 8, transition: "box-shadow 0.2s ease" }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 1.5px var(--panel-sleep-border, #185FA5)" }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = "none" }}>
+            ? <Link href="/dashboard/sleep" style={{ textDecoration: "none", color: "inherit", display: "block", borderRadius: 8, transition: "transform 0.2s ease, box-shadow 0.2s ease" }} onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.transform = "translateY(-3px)"; el.style.boxShadow = "0 8px 24px rgba(0,0,0,0.08), 0 0 0 1.5px var(--panel-sleep-border, #185FA5)" }} onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.transform = ""; el.style.boxShadow = "" }}>
                 <PanelCard label="Sleep" color="var(--sleep-c)" trackColor="var(--sleep-bg)" score={Math.round(displaySleep)} max={30} active={sleepConnected} locked={false} desc={sleepDesc} mounted={mounted} highlighted={hoveredRing === "sleep"} />
               </Link>
             : <EmptyPanelCard panel="sleep" />
         }
         {hasBlood
-          ? <Link href="/dashboard/blood" style={{ textDecoration: "none", color: "inherit", borderRadius: 8, transition: "box-shadow 0.2s ease" }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 1.5px var(--panel-blood-border, #A32D2D)" }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = "none" }}>
+          ? <Link href="/dashboard/blood" style={{ textDecoration: "none", color: "inherit", display: "block", borderRadius: 8, transition: "transform 0.2s ease, box-shadow 0.2s ease" }} onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.transform = "translateY(-3px)"; el.style.boxShadow = "0 8px 24px rgba(0,0,0,0.08), 0 0 0 1.5px var(--panel-blood-border, #A32D2D)" }} onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.transform = ""; el.style.boxShadow = "" }}>
               <PanelCard label="Blood" color="var(--blood-c)" trackColor="var(--blood-bg)" score={Math.round(displayBlood)} max={40} active={true} locked={false} desc={bloodDesc} staleBadge={staleBadge} mounted={mounted} highlighted={hoveredRing === "blood"} />
             </Link>
           : <EmptyPanelCard panel="blood" />
         }
         {oralActive
-          ? <Link href="/dashboard/oral" style={{ textDecoration: "none", color: "inherit", borderRadius: 8, transition: "box-shadow 0.2s ease" }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 1.5px var(--panel-oral-border, #3B6D11)" }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = "none" }}>
+          ? <Link href="/dashboard/oral" style={{ textDecoration: "none", color: "inherit", display: "block", borderRadius: 8, transition: "transform 0.2s ease, box-shadow 0.2s ease" }} onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.transform = "translateY(-3px)"; el.style.boxShadow = "0 8px 24px rgba(0,0,0,0.08), 0 0 0 1.5px var(--panel-oral-border, #3B6D11)" }} onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.transform = ""; el.style.boxShadow = "" }}>
               <PanelCard label="Oral Microbiome" color="var(--oral-c)" trackColor="var(--oral-bg)" score={Math.round(displayOral)} max={30} active={true} locked={false} desc={oralDesc} mounted={mounted} highlighted={hoveredRing === "oral"} />
             </Link>
           : <EmptyPanelCard panel="oral" oralOrdered={oralKitStatus === "ordered"} />

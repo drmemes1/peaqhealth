@@ -1,5 +1,6 @@
 "use client"
 import React, { useEffect, useImperativeHandle, useRef, useState } from "react"
+import Link from "next/link"
 import { useCountUp } from "./use-count-up"
 import { PeaksVisualization } from "./peaks"
 import { HeroTitle } from "./hero-title"
@@ -1813,10 +1814,17 @@ export function ScoreWheel({
   const untestedBloodMarkers = bloodMarkerDefs.filter(m => m.value === 0)
 
   return (
-    <div style={{ maxWidth: "var(--layout-max-width, 760px)", margin: "0 auto", padding: "0 0 80px", display: "flex", flexDirection: "column", gap: "var(--spacing-section, 64px)" }}>
+    <div style={{ maxWidth: "var(--layout-max-width, 760px)", margin: "0 auto", padding: "0 0 80px", display: "flex", flexDirection: "column", gap: 12 }}>
 
-      {/* PEAKS */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative", zIndex: 10, ...fadeUp("0s") }}>
+      {/* HERO CARD */}
+      <div style={{
+        background: "#fff",
+        borderRadius: 14,
+        border: "0.5px solid rgba(0,0,0,0.06)",
+        padding: "24px 20px 20px",
+        ...fadeUp("0s"),
+      }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative", zIndex: 10 }}>
         {/* Score number — centered over full SVG width */}
         <div style={{
           width: "100%",
@@ -1915,9 +1923,10 @@ export function ScoreWheel({
       </div>
 
       {/* HERO */}
-      <div style={fadeUp("0s")}>
+      <div>
         <HeroTitle score={score} sleepConnected={sleepConnected} hasBlood={hasBlood} oralActive={oralActive} subline={subline} />
       </div>
+      </div>{/* end hero card */}
 
       {/* PENDING BANNERS */}
       {(!sleepConnected || !oralActive || labFreshness === "none" || labFreshness === "expired" || labFreshness === "stale") && (
@@ -1945,7 +1954,8 @@ export function ScoreWheel({
       </div>
 
       {/* INSIGHTS */}
-      <div style={fadeUp("0.32s")}>
+      <Link href="/dashboard/insights" style={{ textDecoration: "none", color: "inherit", display: "block", borderRadius: 12, transition: "transform 0.2s ease, box-shadow 0.2s ease", cursor: "pointer" }} onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.transform = "translateY(-3px)"; el.style.boxShadow = "0 8px 24px rgba(0,0,0,0.08), 0 0 0 1.5px rgba(196,154,60,0.3)" }} onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.transform = ""; el.style.boxShadow = "" }}>
+      <div style={{ background: "#fff", borderRadius: 12, border: "0.5px solid rgba(0,0,0,0.06)", padding: "14px 13px", ...fadeUp("0.32s") }}>
         <Insights
           sleepConnected={sleepConnected} hasBlood={hasBlood} oralActive={oralActive} lifestyleActive={!!lifestyleData}
           sleepHrv={sleepData?.hrv} sleepDeepPct={sleepData?.deepPct}
@@ -1962,9 +1972,12 @@ export function ScoreWheel({
           processedFood={lifestyleData?.processedFood}
         />
       </div>
+      </Link>
 
       {/* CROSS-PANEL INTERACTIONS */}
       <div ref={crossPanelRef} />
+      <Link href="/dashboard/cross-panel" style={{ textDecoration: "none", color: "inherit", display: "block", borderRadius: 12, transition: "transform 0.2s ease, box-shadow 0.2s ease", cursor: "pointer" }} onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.transform = "translateY(-3px)"; el.style.boxShadow = "0 8px 24px rgba(0,0,0,0.08), 0 0 0 1.5px rgba(163,45,45,0.3)" }} onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.transform = ""; el.style.boxShadow = "" }}>
+      <div style={{ background: "#fff", borderRadius: 12, border: "0.5px solid rgba(0,0,0,0.06)", padding: "14px 13px" }}>
       <CrossPanelInteractions
         oralKitStatus={oralKitStatus}
         interactionsFired={interactionsFired}
@@ -1978,6 +1991,8 @@ export function ScoreWheel({
         modifiers_applied={modifiers_applied}
         modifier_total={modifier_total}
       />
+      </div>
+      </Link>
 
       {/* CTA BLOCKS */}
       <CTABlocks sleepConnected={sleepConnected} labFreshness={labFreshness} oralActive={oralActive} />
