@@ -1870,11 +1870,9 @@ export function ScoreWheel({
                 </defs>
 
                 {/* Score number */}
-                <text x="340" y="72" textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="80" fontWeight="400" fill="#1a1a18" letterSpacing="-1">{displayScore}</text>
-                {/* Score label */}
-                <text x="340" y="94" textAnchor="middle" fontFamily="'Instrument Sans', system-ui, sans-serif" fontSize="11" fill="#aaa" letterSpacing="3">YOUR PEAQ SCORE · {monthLabel}{sleepHidden ? " · OUT OF 70" : ""}</text>
+                <text x="340" y="68" textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="80" fontWeight="400" fill="#1a1a18" letterSpacing="-1">{displayScore}</text>
 
-                {/* Mountain bg */}
+                {/* Mountain bg — shifted down to give space under score */}
                 <path d="M0 340 L20 298 L70 315 L140 248 L210 280 L295 198 L365 234 L425 208 L490 242 L548 216 L605 250 L645 230 L680 240 L680 340 Z" fill="url(#pviz-mtn1)" />
                 <path d="M0 340 L55 312 L120 328 L195 292 L270 315 L355 278 L435 298 L510 282 L575 300 L640 288 L680 295 L680 340 Z" fill="url(#pviz-mtn2)" />
 
@@ -1913,14 +1911,14 @@ export function ScoreWheel({
                 )}
 
                 {/* Labels */}
-                <text x="185" y="360" textAnchor="middle" fontSize="10" fill="#999" letterSpacing="2" fontFamily="'Instrument Sans', system-ui, sans-serif">SLEEP</text>
-                <text x="340" y="360" textAnchor="middle" fontSize="10" fill="#999" letterSpacing="2" fontFamily="'Instrument Sans', system-ui, sans-serif">BLOOD</text>
-                <text x="495" y="360" textAnchor="middle" fontSize="10" fill="#999" letterSpacing="2" fontFamily="'Instrument Sans', system-ui, sans-serif">ORAL</text>
-                <text x="608" y="360" textAnchor="middle" fontSize="10" fill="#C49A3C" letterSpacing="1.5" fontFamily="'Instrument Sans', system-ui, sans-serif">CROSS-PANEL</text>
-                <text x="185" y="374" textAnchor="middle" fontSize="9" fill="#ccc" fontFamily="'Instrument Sans', system-ui, sans-serif">/30</text>
-                <text x="340" y="374" textAnchor="middle" fontSize="9" fill="#ccc" fontFamily="'Instrument Sans', system-ui, sans-serif">/40</text>
-                <text x="495" y="374" textAnchor="middle" fontSize="9" fill="#ccc" fontFamily="'Instrument Sans', system-ui, sans-serif">/30</text>
-                <text x="608" y="374" textAnchor="middle" fontSize="9" fill="#C49A3C" opacity=".55" fontFamily="'Instrument Sans', system-ui, sans-serif">modifier</text>
+                <text x="185" y="360" textAnchor="middle" fontSize="10" fill="#999" letterSpacing="2" fontFamily="'Cormorant Garamond', Georgia, serif">SLEEP</text>
+                <text x="340" y="360" textAnchor="middle" fontSize="10" fill="#999" letterSpacing="2" fontFamily="'Cormorant Garamond', Georgia, serif">BLOOD</text>
+                <text x="495" y="360" textAnchor="middle" fontSize="10" fill="#999" letterSpacing="2" fontFamily="'Cormorant Garamond', Georgia, serif">ORAL</text>
+                <text x="608" y="360" textAnchor="middle" fontSize="10" fill="#C49A3C" letterSpacing="1.5" fontFamily="'Cormorant Garamond', Georgia, serif">CROSS-PANEL</text>
+                <text x="185" y="374" textAnchor="middle" fontSize="9" fill="#ccc" fontFamily="'Cormorant Garamond', Georgia, serif">/30</text>
+                <text x="340" y="374" textAnchor="middle" fontSize="9" fill="#ccc" fontFamily="'Cormorant Garamond', Georgia, serif">/40</text>
+                <text x="495" y="374" textAnchor="middle" fontSize="9" fill="#ccc" fontFamily="'Cormorant Garamond', Georgia, serif">/30</text>
+                <text x="608" y="374" textAnchor="middle" fontSize="9" fill="#C49A3C" opacity=".55" fontFamily="'Cormorant Garamond', Georgia, serif">modifier</text>
               </svg>
             </div>
 
