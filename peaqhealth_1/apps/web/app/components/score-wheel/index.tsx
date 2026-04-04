@@ -1825,7 +1825,7 @@ export function ScoreWheel({
         ...fadeUp("0s"),
       }}>
       {(() => {
-        const BL = 310
+        const BL = 340
         const MAX_H = 253
         const sScore = Math.round(displaySleep)
         const bScore = Math.round(displayBlood)
@@ -1834,38 +1834,15 @@ export function ScoreWheel({
         const sleepApexY = BL - (sScore / 30) * MAX_H
         const bloodApexY = BL - (bScore / 40) * MAX_H
         const oralApexY = BL - (oScore / 30) * MAX_H
-        const crossH = (Math.min(Math.abs(crossNet), 10) / 10) * (MAX_H * 0.28)
-        const crossTopY = BL - crossH
+        const crossH = Math.max((Math.min(Math.abs(crossNet), 10) / 10) * (MAX_H * 0.28), 20)
         const crossLabel = crossNet >= 0 ? `+${crossNet}` : `${crossNet}`
-        const monthLabel = new Date().toLocaleString("en-US", { month: "long", year: "numeric" })
+        const monthLabel = new Date().toLocaleString("en-US", { month: "long", year: "numeric" }).toUpperCase()
 
         return (
           <>
-            {/* Score */}
-            <div style={{ textAlign: "center", paddingTop: 36, paddingBottom: 0 }}>
-              <div
-                className={scorePulse ? "score-pulse" : ""}
-                style={{
-                  fontFamily: "'Cormorant Garamond', Georgia, serif",
-                  fontSize: 100, fontWeight: 400, lineHeight: 1,
-                  color: "#1a1a18", letterSpacing: "-0.02em",
-                }}
-              >
-                {displayScore}
-              </div>
-              <div style={{
-                fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                fontSize: 11, letterSpacing: "0.16em",
-                textTransform: "uppercase" as const, color: "#aaa", marginTop: 10,
-              }}>
-                Your Peaq score &middot; {monthLabel}
-                {sleepHidden && <span style={{ color: "#4A7FB5", marginLeft: 6 }}>&middot; out of 70</span>}
-              </div>
-            </div>
-
-            {/* SVG peaks */}
-            <div style={{ width: "100%", height: 380, display: "block", marginTop: 8 }}>
-              <svg viewBox="0 0 680 380" preserveAspectRatio="xMidYMid meet" style={{ width: "100%", height: "100%", display: "block" }}>
+            {/* Score + peaks — single SVG, no gap */}
+            <div style={{ width: "100%", aspectRatio: "680 / 440" }}>
+              <svg viewBox="0 0 680 440" preserveAspectRatio="xMidYMid meet" style={{ width: "100%", height: "100%", display: "block" }}>
                 <defs>
                   <linearGradient id="pviz-sleep" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#4A7FB5" stopOpacity=".72" />
@@ -1893,9 +1870,14 @@ export function ScoreWheel({
                   </linearGradient>
                 </defs>
 
+                {/* Score number */}
+                <text x="340" y="105" textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="96" fontWeight="400" fill="#1a1a18" letterSpacing="-1">{displayScore}</text>
+                {/* Score label */}
+                <text x="340" y="128" textAnchor="middle" fontFamily="sans-serif" fontSize="11" fill="#aaa" letterSpacing="3">YOUR PEAQ SCORE · {monthLabel}{sleepHidden ? " · OUT OF 70" : ""}</text>
+
                 {/* Mountain bg */}
-                <path d="M0 310 L20 268 L70 285 L140 218 L210 250 L295 168 L365 204 L425 178 L490 212 L548 186 L605 220 L645 200 L680 210 L680 310 Z" fill="url(#pviz-mtn1)" />
-                <path d="M0 310 L55 282 L120 298 L195 262 L270 285 L355 248 L435 268 L510 252 L575 270 L640 258 L680 265 L680 310 Z" fill="url(#pviz-mtn2)" />
+                <path d="M0 340 L20 298 L70 315 L140 248 L210 280 L295 198 L365 234 L425 208 L490 242 L548 216 L605 250 L645 230 L680 240 L680 340 Z" fill="url(#pviz-mtn1)" />
+                <path d="M0 340 L55 312 L120 328 L195 292 L270 315 L355 278 L435 298 L510 282 L575 300 L640 288 L680 295 L680 340 Z" fill="url(#pviz-mtn2)" />
 
                 {/* Baseline */}
                 <line x1="60" y1={BL} x2="660" y2={BL} stroke="#D5D2CB" strokeWidth=".8" />
@@ -1915,20 +1897,31 @@ export function ScoreWheel({
                 <circle cx="495" cy={oralApexY} r="4.5" fill="#2D6A4F" />
                 <text x="495" y={oralApexY - 14} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="18" fill="#2D6A4F">{oScore}</text>
 
-                {/* CROSS-PANEL — inverted */}
-                <polygon points={`585,${crossTopY} 631,${crossTopY} 608,${BL}`} fill="url(#pviz-cross)" stroke="#C49A3C" strokeWidth=".9" strokeDasharray="4 3" />
-                <circle cx="608" cy={BL} r="3.5" fill="#C49A3C" />
-                <text x="608" y={crossTopY - 8} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="16" fill="#C49A3C">{crossLabel}</text>
+                {/* CROSS-PANEL — negative: inverted (point down), positive: normal (point up) */}
+                {crossNet !== 0 && crossNet < 0 && (
+                  <>
+                    <polygon points={`585,${BL} 631,${BL} 608,${BL + crossH}`} fill="url(#pviz-cross)" stroke="#C49A3C" strokeWidth=".9" strokeDasharray="4 3" />
+                    <circle cx="608" cy={BL + crossH} r="3.5" fill="#C49A3C" />
+                    <text x="608" y={BL - 10} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="16" fill="#C49A3C">{crossLabel}</text>
+                  </>
+                )}
+                {crossNet > 0 && (
+                  <>
+                    <polygon points={`585,${BL} 631,${BL} 608,${BL - crossH}`} fill="url(#pviz-cross)" stroke="#C49A3C" strokeWidth=".9" strokeDasharray="4 3" />
+                    <circle cx="608" cy={BL - crossH} r="3.5" fill="#C49A3C" />
+                    <text x="608" y={BL - crossH - 10} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="16" fill="#C49A3C">{crossLabel}</text>
+                  </>
+                )}
 
                 {/* Labels */}
-                <text x="185" y="330" textAnchor="middle" fontSize="10" fill="#999" letterSpacing="2" fontFamily="sans-serif">SLEEP</text>
-                <text x="340" y="330" textAnchor="middle" fontSize="10" fill="#999" letterSpacing="2" fontFamily="sans-serif">BLOOD</text>
-                <text x="495" y="330" textAnchor="middle" fontSize="10" fill="#999" letterSpacing="2" fontFamily="sans-serif">ORAL</text>
-                <text x="608" y="330" textAnchor="middle" fontSize="10" fill="#C49A3C" letterSpacing="1.5" fontFamily="sans-serif">CROSS-PANEL</text>
-                <text x="185" y="344" textAnchor="middle" fontSize="9" fill="#ccc" fontFamily="sans-serif">/30</text>
-                <text x="340" y="344" textAnchor="middle" fontSize="9" fill="#ccc" fontFamily="sans-serif">/40</text>
-                <text x="495" y="344" textAnchor="middle" fontSize="9" fill="#ccc" fontFamily="sans-serif">/30</text>
-                <text x="608" y="344" textAnchor="middle" fontSize="9" fill="#C49A3C" opacity=".55" fontFamily="sans-serif">modifier</text>
+                <text x="185" y="360" textAnchor="middle" fontSize="10" fill="#999" letterSpacing="2" fontFamily="sans-serif">SLEEP</text>
+                <text x="340" y="360" textAnchor="middle" fontSize="10" fill="#999" letterSpacing="2" fontFamily="sans-serif">BLOOD</text>
+                <text x="495" y="360" textAnchor="middle" fontSize="10" fill="#999" letterSpacing="2" fontFamily="sans-serif">ORAL</text>
+                <text x="608" y="360" textAnchor="middle" fontSize="10" fill="#C49A3C" letterSpacing="1.5" fontFamily="sans-serif">CROSS-PANEL</text>
+                <text x="185" y="374" textAnchor="middle" fontSize="9" fill="#ccc" fontFamily="sans-serif">/30</text>
+                <text x="340" y="374" textAnchor="middle" fontSize="9" fill="#ccc" fontFamily="sans-serif">/40</text>
+                <text x="495" y="374" textAnchor="middle" fontSize="9" fill="#ccc" fontFamily="sans-serif">/30</text>
+                <text x="608" y="374" textAnchor="middle" fontSize="9" fill="#C49A3C" opacity=".55" fontFamily="sans-serif">modifier</text>
               </svg>
             </div>
 
