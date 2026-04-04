@@ -21,28 +21,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light")
 
   useEffect(() => {
-    const stored = localStorage.getItem("peaq-theme") as Theme | null
-    if (stored && ["light", "dark", "system"].includes(stored)) {
-      setThemeState(stored)
-    }
+    // Force light mode — dark mode coming soon
+    document.documentElement.setAttribute("data-theme", "light")
+    setResolvedTheme("light")
+    localStorage.setItem("peaq-theme", "light")
   }, [])
-
-  useEffect(() => {
-    const apply = (t: Theme) => {
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
-      const resolved = t === "system" ? (prefersDark ? "dark" : "light") : t
-      document.documentElement.setAttribute("data-theme", resolved)
-      setResolvedTheme(resolved)
-    }
-
-    apply(theme)
-    localStorage.setItem("peaq-theme", theme)
-
-    const mq = window.matchMedia("(prefers-color-scheme: dark)")
-    const handler = () => { if (theme === "system") apply("system") }
-    mq.addEventListener("change", handler)
-    return () => mq.removeEventListener("change", handler)
-  }, [theme])
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme: setThemeState, resolvedTheme }}>

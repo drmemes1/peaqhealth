@@ -435,27 +435,11 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
           <p className="font-body text-sm" style={{ color: "var(--ink)" }}>Theme</p>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <p className="font-body text-xs" style={{ color: "var(--ink-60)", margin: 0 }}>
-              {resolvedTheme === "dark" ? "Dark mode" : "Light mode"}
+              Light mode
             </p>
-            <button
-              onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-              className="transition-all"
-              style={{
-                width: 44, height: 24, borderRadius: 12,
-                background: resolvedTheme === "dark" ? "var(--gold)" : "var(--ink-12)",
-                border: "none", cursor: "pointer", position: "relative",
-                padding: 0,
-              }}
-            >
-              <div style={{
-                width: 18, height: 18, borderRadius: "50%",
-                background: "var(--white)",
-                position: "absolute", top: 3,
-                left: resolvedTheme === "dark" ? 23 : 3,
-                transition: "left 0.2s ease",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
-              }} />
-            </button>
+            <span className="font-body text-xs" style={{ color: "var(--ink-30)" }}>
+              Dark mode coming soon
+            </span>
           </div>
         </div>
       </section>

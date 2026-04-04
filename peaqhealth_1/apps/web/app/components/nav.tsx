@@ -43,8 +43,8 @@ export function Nav({ cartCount = 0, onCartOpen }: NavProps) {
   const today = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric" });
 
   return (
-    <nav className="sticky top-0 z-50 border-b bg-off-white/92 backdrop-blur-[12px]"
-         style={{ borderBottomColor: "var(--ink-12)" }}>
+    <nav className="sticky z-50 border-b bg-off-white/92 backdrop-blur-[12px]"
+         style={{ borderBottomColor: "var(--ink-12)", top: "env(safe-area-inset-top, 0px)" }}>
       <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-6">
         {/* Logo */}
         <Link href="/dashboard">
