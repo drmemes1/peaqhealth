@@ -38,10 +38,12 @@ export function Nav({ cartCount = 0, onCartOpen }: NavProps) {
                 href={href}
                 className="font-body text-[13px] uppercase tracking-[0.08em] transition-colors"
                 style={{
-                  color: active ? "var(--ink)" : "var(--ink-60)",
+                  color: active ? "var(--color-accent-gold, #C49A3C)" : "var(--ink)",
+                  opacity: active ? 1 : 0.5,
                   textDecoration: active ? "underline" : "none",
                   textUnderlineOffset: "4px",
                   textDecorationThickness: "0.5px",
+                  textDecorationColor: active ? "var(--color-accent-gold, #C49A3C)" : undefined,
                 }}
               >
                 {label}

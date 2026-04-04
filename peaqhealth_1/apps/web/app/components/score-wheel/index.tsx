@@ -9,6 +9,7 @@ import { MarkerRow, type Flag } from "./marker-row"
 import { Insights } from "./insights"
 import { NextSteps } from "./next-steps"
 import { CTABlocks } from "./cta-blocks"
+import { PanelChip, type Panel } from "../ui/PanelChip"
 
 // Re-export the props type so dashboard-client can import it
 export interface ScoreWheelProps {
@@ -860,9 +861,7 @@ function CrossPanelInteractions({
   const hasPanelData = oralActive || (bloodData && sleepData)
   const hasModifiers = modifiers_applied && modifiers_applied.length > 0
 
-  const MODIFIER_PANEL_COLORS: Record<string, string> = {
-    oral: "#2D6A4F", blood: "#C0392B", sleep: "#4A7FB5",
-  }
+  const VALID_PANELS = new Set(["sleep", "blood", "oral"])
 
   return (
     <div style={fadeUpFn("0.10s")}>
@@ -932,16 +931,18 @@ function CrossPanelInteractions({
                       {m.panels && m.panels.length > 0 && (
                         <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
                           {m.panels.map(p => (
-                            <span key={p} style={{
-                              fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                              fontSize: 9, fontWeight: 500,
-                              textTransform: "uppercase", letterSpacing: "0.08em",
-                              color: MODIFIER_PANEL_COLORS[p] ?? "var(--ink-40)",
-                              background: (MODIFIER_PANEL_COLORS[p] ?? "var(--ink-40)") + "18",
-                              padding: "2px 7px", borderRadius: 3,
-                            }}>
-                              {p}
-                            </span>
+                            VALID_PANELS.has(p)
+                              ? <PanelChip key={p} panel={p as Panel} />
+                              : <span key={p} style={{
+                                  fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                                  fontSize: 10, fontWeight: 500,
+                                  textTransform: "uppercase", letterSpacing: "0.06em",
+                                  color: "var(--ink-40)",
+                                  background: "var(--ink-04)",
+                                  padding: "2px 7px", borderRadius: 3,
+                                }}>
+                                  {p}
+                                </span>
                           ))}
                         </div>
                       )}
@@ -1812,7 +1813,7 @@ export function ScoreWheel({
   const untestedBloodMarkers = bloodMarkerDefs.filter(m => m.value === 0)
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", padding: "0 0 80px", display: "flex", flexDirection: "column", gap: 52 }}>
+    <div style={{ maxWidth: "var(--layout-max-width, 760px)", margin: "0 auto", padding: "0 0 80px", display: "flex", flexDirection: "column", gap: "var(--spacing-section, 64px)" }}>
 
       {/* PEAKS */}
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative", zIndex: 10, ...fadeUp("0s") }}>
