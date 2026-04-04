@@ -10,9 +10,9 @@ interface NavProps {
 }
 
 const PANEL_ITEMS = [
-  { href: "/dashboard/sleep", label: "Sleep", color: "#4A7FB5" },
-  { href: "/dashboard/blood", label: "Blood", color: "#C0392B" },
-  { href: "/dashboard/oral", label: "Oral", color: "#2D6A4F" },
+  { href: "/dashboard/sleep", label: "SLEEP", color: "#4A7FB5" },
+  { href: "/dashboard/blood", label: "BLOOD", color: "#C0392B" },
+  { href: "/dashboard/oral", label: "ORAL", color: "#2D6A4F" },
 ];
 
 export function Nav({ cartCount = 0, onCartOpen }: NavProps) {
@@ -101,53 +101,56 @@ export function Nav({ cartCount = 0, onCartOpen }: NavProps) {
               </span>
             </button>
 
-            {panelsOpen && (
-              <div style={{
-                position: "absolute",
-                top: "calc(100% + 10px)",
-                left: "50%",
-                transform: "translateX(-50%)",
-                background: "var(--off-white, #FAFAF8)",
-                border: "0.5px solid var(--ink-12, rgba(20,20,16,0.07))",
-                borderRadius: 8,
-                padding: "6px 0",
-                minWidth: 180,
-                boxShadow: "0 8px 32px rgba(0,0,0,0.08)",
-                zIndex: 100,
-              }}>
-                {PANEL_ITEMS.map(p => {
-                  const itemActive = pathname.startsWith(p.href);
-                  return (
-                    <Link
-                      key={p.href}
-                      href={p.href}
-                      onClick={() => setPanelsOpen(false)}
-                      style={{
-                        display: "flex", alignItems: "center", gap: 10,
-                        padding: "10px 16px",
-                        textDecoration: "none",
-                        transition: "background 0.1s ease",
-                        background: itemActive ? "var(--ink-04, rgba(20,20,16,0.04))" : "transparent",
-                      }}
-                      onMouseEnter={e => { if (!itemActive) (e.currentTarget as HTMLElement).style.background = "var(--ink-04, rgba(20,20,16,0.04))" }}
-                      onMouseLeave={e => { if (!itemActive) (e.currentTarget as HTMLElement).style.background = "transparent" }}
-                    >
-                      <span style={{
-                        width: 6, height: 6, borderRadius: "50%",
-                        background: p.color, flexShrink: 0,
-                      }} />
-                      <span style={{
-                        fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                        fontSize: 13, fontWeight: itemActive ? 500 : 400,
-                        color: itemActive ? "var(--ink)" : "var(--ink-60)",
-                      }}>
-                        {p.label}
-                      </span>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
+            <div style={{
+              position: "absolute",
+              top: "calc(100% + 8px)",
+              left: "50%",
+              transform: `translateX(-50%) translateY(${panelsOpen ? "0" : "-4px"})`,
+              opacity: panelsOpen ? 1 : 0,
+              pointerEvents: panelsOpen ? "auto" : "none",
+              background: "#FFFFFF",
+              border: "0.5px solid rgba(0,0,0,0.08)",
+              borderRadius: 10,
+              padding: "8px 0",
+              minWidth: 160,
+              boxShadow: "0 12px 40px rgba(0,0,0,0.1), 0 0 0 0.5px rgba(0,0,0,0.04)",
+              zIndex: 100,
+              transition: "opacity 0.18s ease, transform 0.18s ease",
+            }}>
+              {PANEL_ITEMS.map((p, i) => {
+                const itemActive = pathname.startsWith(p.href);
+                return (
+                  <Link
+                    key={p.href}
+                    href={p.href}
+                    onClick={() => setPanelsOpen(false)}
+                    style={{
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                      padding: "10px 20px",
+                      textDecoration: "none",
+                      transition: "background 0.12s ease",
+                      background: itemActive ? "rgba(0,0,0,0.03)" : "transparent",
+                      borderBottom: i < PANEL_ITEMS.length - 1 ? "0.5px solid rgba(0,0,0,0.04)" : "none",
+                    }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.03)" }}
+                    onMouseLeave={e => { if (!itemActive) (e.currentTarget as HTMLElement).style.background = "transparent" }}
+                  >
+                    <span style={{
+                      width: 5, height: 5, borderRadius: "50%",
+                      background: p.color, flexShrink: 0,
+                    }} />
+                    <span style={{
+                      fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                      fontSize: 12, fontWeight: 500,
+                      letterSpacing: "0.08em",
+                      color: itemActive ? "var(--ink)" : "var(--ink-60)",
+                    }}>
+                      {p.label}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
 
           {linksAfterPanels.map(({ href, label }) => {
