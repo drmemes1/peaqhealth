@@ -195,13 +195,13 @@ export async function GET() {
   // ── Cross-panel modifiers ──────────────────────────────────────────────────
   const { data: latestSnapshot } = await svc
     .from("score_snapshots")
-    .select("modifiers_applied")
+    .select("score, base_score, modifier_total, modifiers_applied")
     .eq("user_id", user.id)
     .order("calculated_at", { ascending: false })
     .limit(1)
     .maybeSingle()
 
-  const modifiersApplied = (latestSnapshot?.modifiers_applied ?? []) as Array<{direction: string, points: number, label: string}>
+  const modifiersApplied = (latestSnapshot?.modifiers_applied ?? []) as Array<{direction: string, points: number, label: string, rationale?: string}>
 
   const hasSomething = !!(lab || sleepRows.length > 0 || oral || lifestyle)
   if (!hasSomething) return NextResponse.json({ error: "No data" }, { status: 422 })
@@ -346,10 +346,16 @@ ${oralData ? `- Shannon diversity: ${fmt(oralData.shannon, 2)} (target ≥3.0)
 - Cellular environment signal: ${oralData.fusobacteriumPct !== null ? oralData.fusobacteriumPct.toFixed(1) + "% Fusobacterium" : "not detected"}
 - Antiseptic mouthwash detected: ${oralData.mouthwashDetected ? "yes — note that antiseptic mouthwash suppresses nitrate-reducing bacteria" : "no"}` : "Not available — do not reference oral panel in any insight"}
 
-ACTIVE CROSS-PANEL MODIFIERS:
+CROSS-PANEL MODIFIERS CURRENTLY ACTIVE:
 ${modifiersApplied.length > 0
-  ? modifiersApplied.map(m => `${m.direction === 'bonus' ? '+' : '-'}${m.points} ${m.label}`).join('\n')
-  : 'None active'}
+  ? modifiersApplied.map(m => `${m.direction === 'bonus' ? '+' : '-'}${m.points} pts: ${m.label}${m.rationale ? ' — ' + m.rationale : ''}`).join('\n')
+  : 'No cross-panel modifiers active.'}
+
+Base score: ${latestSnapshot?.base_score ?? 'unknown'}
+Modifier total: ${latestSnapshot?.modifier_total ?? 0}
+Final Peaq score: ${latestSnapshot?.score ?? 'unknown'}
+
+When generating insights, prioritize explaining any active modifiers first. Each active modifier represents a clinically meaningful interaction between panels that the user needs to understand. Frame modifier explanations as actionable insights — what the interaction means biologically and what the user can do about it.
 
 LIFESTYLE (from health profile — not scored, informational context):
 - Age range: ${lifestyle?.age_range ?? "not provided"}
