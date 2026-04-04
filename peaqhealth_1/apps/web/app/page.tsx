@@ -53,20 +53,20 @@ export default function Home() {
         borderBottom: `1px solid ${BORDER_DARK}`,
       }}>
         <div style={{
-          maxWidth: "var(--layout-max-width)",
+          maxWidth: 1200,
           margin: "0 auto",
-          padding: "0 24px",
+          padding: "0 48px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          height: 56,
+          height: 64,
         }}>
           {/* Logo */}
           <img
             src="/images/peaq_logo_transparent.png"
             alt="Peaq Health"
             style={{
-              height: 28,
+              height: 32,
               width: "auto",
               filter: "brightness(0) invert(1)",
             }}
