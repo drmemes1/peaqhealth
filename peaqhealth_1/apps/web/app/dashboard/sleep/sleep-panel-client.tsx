@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Nav } from "../../components/nav"
 import {
@@ -378,6 +378,26 @@ function MetricRow({
 export function SleepPanelClient({ nights, snapshot, wearable }: Props) {
   const sleepSub = snapshot?.sleep_sub as number | undefined
 
+  const [narrative, setNarrative] = useState<{
+    headline: string | null
+    narrative: string | null
+    positive_signal: string | null
+    watch_signal: string | null
+    nights_analyzed: number | null
+    avg_hrv: number | null
+    avg_efficiency: number | null
+    avg_deep_pct: number | null
+    avg_rem_pct: number | null
+    raw_response: { trend_summary?: string } | null
+  } | null>(null)
+
+  useEffect(() => {
+    fetch("/api/trends/sleep-narrative")
+      .then(r => r.json())
+      .then((d: { narrative: typeof narrative }) => setNarrative(d.narrative))
+      .catch(() => {})
+  }, [])
+
   const provider = wearable?.provider as string | null | undefined
   const lastSynced = wearable?.last_synced_at as string | null | undefined
 
@@ -531,6 +551,60 @@ export function SleepPanelClient({ nights, snapshot, wearable }: Props) {
           </div>
         </div>
 
+        {/* Sleep Insight */}
+        {narrative && (
+          <div style={{
+            borderLeft: "3px solid var(--sleep-c, #4A7FB5)",
+            background: "var(--peaq-bg-card, #fff)",
+            border: "0.5px solid var(--ink-08)",
+            borderLeftWidth: 3,
+            borderLeftColor: "var(--sleep-c, #4A7FB5)",
+            borderRadius: 10,
+            padding: "20px 24px",
+            marginBottom: 24,
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <span style={{ fontFamily: "var(--font-body)", fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--ink-40)" }}>
+                Sleep · last {narrative.nights_analyzed ?? "—"} nights
+              </span>
+              {narrative.raw_response?.trend_summary && (
+                <span style={{
+                  fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 500,
+                  color: narrative.raw_response.trend_summary === "improving" ? "#1D9E75"
+                    : narrative.raw_response.trend_summary === "declining" ? "#C0392B" : "#B8860B",
+                }}>
+                  {narrative.raw_response.trend_summary === "improving" ? "↑ Improving"
+                    : narrative.raw_response.trend_summary === "declining" ? "↓ Worth watching" : "→ Holding steady"}
+                </span>
+              )}
+            </div>
+
+            {narrative.headline && (
+              <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 300, color: "var(--ink)", lineHeight: 1.3, margin: "0 0 10px" }}>
+                {narrative.headline}
+              </p>
+            )}
+
+            {narrative.narrative && (
+              <p style={{ fontFamily: "var(--font-body)", fontSize: 14, color: "var(--ink-60)", lineHeight: 1.65, margin: "0 0 14px" }}>
+                {narrative.narrative}
+              </p>
+            )}
+
+            {narrative.positive_signal && (
+              <div style={{ padding: "10px 14px", background: "rgba(29,158,117,0.07)", borderRadius: 6, borderLeft: "3px solid #1D9E75", fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink-60)", lineHeight: 1.5, marginBottom: 8 }}>
+                {narrative.positive_signal}
+              </div>
+            )}
+
+            {narrative.watch_signal && (
+              <div style={{ padding: "10px 14px", background: "rgba(184,134,11,0.07)", borderRadius: 6, borderLeft: "3px solid #B8860B", fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink-60)", lineHeight: 1.5 }}>
+                {narrative.watch_signal}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Sleep Metrics section */}
         <Section title="Sleep Metrics" defaultOpen={true}>
           <MetricRow
@@ -632,7 +706,7 @@ export function SleepPanelClient({ nights, snapshot, wearable }: Props) {
         </Section>
 
         {/* Sleep Trends */}
-        <Section title="Sleep trends · 30 nights" defaultOpen={true}>
+        <Section title="Sleep trends · 30 nights" defaultOpen={false}>
           {bestNights.length >= 3 ? (
             <>
               <SleepMiniChart
