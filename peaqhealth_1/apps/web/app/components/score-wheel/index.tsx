@@ -2,7 +2,6 @@
 import React, { useEffect, useImperativeHandle, useRef, useState } from "react"
 import Link from "next/link"
 import { useCountUp } from "./use-count-up"
-import { PeaksVisualization } from "./peaks"
 import { HeroTitle } from "./hero-title"
 import { PendingBanner } from "./pending-banners"
 import { PanelGrid } from "./panel-grid"
