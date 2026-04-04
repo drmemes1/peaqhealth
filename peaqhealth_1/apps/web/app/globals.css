@@ -224,27 +224,32 @@ body {
 /* ─── Landing page mobile ─────────────────────────────────────────────── */
 
 @media (max-width: 768px) {
+  /* Nav: logo left, CTA right, hide center links */
   .landing-nav {
-    padding: 0 16px !important;
+    padding: 0 20px !important;
   }
-  .landing-nav a[style*="letter-spacing"] {
+  .landing-nav-links {
     display: none !important;
   }
-  .landing-hero {
-    grid-template-columns: 1fr !important;
-    min-height: auto !important;
-    padding: 100px 24px 48px !important;
+  .landing-nav-logo img {
+    height: 32px !important;
   }
-  .landing-hero > div:last-child {
-    display: flex !important;
-    justify-content: center !important;
-    margin-top: 32px !important;
-    margin-bottom: 0 !important;
+  .landing-nav-cta {
+    font-size: 10px !important;
+    padding: 8px 14px !important;
+  }
+
+  /* Hero: single column, breathe */
+  .landing-hero {
+    min-height: auto !important;
+    padding: 56px 20px 48px !important;
   }
   .landing-hero img {
     max-width: 280px !important;
     margin-bottom: 0 !important;
   }
+
+  /* Panels grid */
   .landing-panels-grid {
     grid-template-columns: 1fr !important;
     gap: 0 !important;
@@ -256,6 +261,8 @@ body {
   .landing-panels-grid > div:last-child {
     border-bottom: none !important;
   }
+
+  /* Science rows */
   .landing-science-row {
     flex-direction: column !important;
     gap: 10px !important;
@@ -265,17 +272,17 @@ body {
     min-width: unset !important;
     width: auto !important;
   }
+
+  /* App feature rows */
   .landing-app-feature {
     grid-template-columns: 1fr !important;
     gap: 24px !important;
     margin-bottom: 48px !important;
   }
-  .landing-app-feature img {
-    order: 0 !important;
-  }
-  .landing-app-feature > div {
-    order: 1 !important;
-  }
+  .landing-app-feature img { order: 0 !important; }
+  .landing-app-feature > div { order: 1 !important; }
+
+  /* Team + transparency grids */
   .landing-team-grid {
     grid-template-columns: 1fr !important;
     gap: 16px !important;
@@ -283,15 +290,26 @@ body {
   .landing-transparency-grid {
     grid-template-columns: 1fr !important;
   }
+
+  /* Section padding */
+  .landing-section {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
 }
 
 @media (max-width: 480px) {
   .landing-hero {
-    padding: 80px 16px 40px !important;
+    padding: 48px 16px 40px !important;
   }
   .landing-hero img {
     max-width: 240px !important;
   }
+}
+
+/* Prevent horizontal overflow */
+html, body {
+  overflow-x: hidden;
 }
 
 /* Phone mockup images — dark mode: multiply blend darkens further, switch to normal */

@@ -61,18 +61,20 @@ export default function Home() {
           justifyContent: "space-between",
         }}>
           {/* Logo */}
-          <img
-            src="/images/peaq_logo_transparent.png"
-            alt="Peaq Health"
-            style={{
-              height: 75,
-              width: "auto",
-              filter: "brightness(0) invert(1)",
-            }}
-          />
+          <div className="landing-nav-logo">
+            <img
+              src="/images/peaq_logo_transparent.png"
+              alt="Peaq Health"
+              style={{
+                height: 75,
+                width: "auto",
+                filter: "brightness(0) invert(1)",
+              }}
+            />
+          </div>
 
           {/* Center links */}
-          <div style={{ display: "flex", alignItems: "center", gap: 36 }}>
+          <div className="landing-nav-links" style={{ display: "flex", alignItems: "center", gap: 36 }}>
             {([
               { label: "Science", href: "#science" },
               { label: "How it works", href: "#how-it-works" },
@@ -98,6 +100,7 @@ export default function Home() {
 
           {/* CTA pill */}
           <a
+            className="landing-nav-cta"
             href="#cta"
             style={{
               fontFamily: sans,
