@@ -226,20 +226,17 @@ export default function Home() {
           <div style={{
             display: "flex",
             justifyContent: "center",
-            alignItems: "flex-end",
+            alignItems: "center",
           }}>
             <img
-              src="/images/hero-peaq.png"
-              alt="Peaq Health insights dashboard"
+              src="/images/hero.png"
+              alt="Couple hiking in mountains — longevity in action"
               style={{
                 width: "100%",
-                maxWidth: 400,
+                maxWidth: 480,
                 height: "auto",
-                borderRadius: 8,
-                boxShadow: "0 24px 80px rgba(0,0,0,0.5)",
-                marginBottom: -40,
-                position: "relative",
-                zIndex: 1,
+                borderRadius: 10,
+                objectFit: "cover",
               }}
             />
           </div>
