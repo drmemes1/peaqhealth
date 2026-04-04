@@ -1824,61 +1824,133 @@ export function ScoreWheel({
         padding: "24px 20px 20px",
         ...fadeUp("0s"),
       }}>
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative", zIndex: 10 }}>
-        {/* Score number — centered over full SVG width */}
-        <div style={{
-          width: "100%",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          position: "relative",
-          zIndex: 20,
-        }}>
-          <span
-            className={scorePulse ? "score-pulse" : ""}
-            style={{
-              fontFamily: "'Cormorant Garamond', Georgia, serif",
-              fontSize: 80, fontWeight: 400, lineHeight: 1,
-              letterSpacing: "-0.025em",
-              color: "#1a1a18",
-              display: "block",
-              textAlign: "center",
-            }}
-          >
-            {displayScore}
-          </span>
-          <p style={{
-            fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-            fontSize: 11, textTransform: "uppercase", letterSpacing: "0.14em",
-            color: "#bbb", margin: "6px 0 16px",
-            textAlign: "center",
-          }}>
-            YOUR PEAQ SCORE · {new Date().toLocaleString("en-US", { month: "long", year: "numeric" }).toUpperCase()}
-            {sleepHidden && (
-              <span style={{ color: '#4A7FB5', marginLeft: '6px' }}>· OUT OF 70</span>
-            )}
-          </p>
-        </div>
+      {(() => {
+        const BL = 310
+        const MAX_H = 253
+        const sScore = Math.round(displaySleep)
+        const bScore = Math.round(displayBlood)
+        const oScore = Math.round(displayOral)
+        const crossNet = modifier_total ?? 0
+        const sleepApexY = BL - (sScore / 30) * MAX_H
+        const bloodApexY = BL - (bScore / 40) * MAX_H
+        const oralApexY = BL - (oScore / 30) * MAX_H
+        const crossH = (Math.min(Math.abs(crossNet), 10) / 10) * (MAX_H * 0.28)
+        const crossTopY = BL - crossH
+        const crossLabel = crossNet >= 0 ? `+${crossNet}` : `${crossNet}`
+        const monthLabel = new Date().toLocaleString("en-US", { month: "long", year: "numeric" })
 
-        {/* Mountain peaks chart */}
-        <PeaksVisualization
-          breakdown={breakdown}
-          sleepConnected={sleepConnected}
-          hasBlood={hasBlood}
-          oralActive={oralActive}
-          hasLifestyle={false}
-          sleepGhosted={sleepHidden}
-          onPeakHover={setHoveredRing}
-          onPeakClick={handlePeakClick}
-          netModifier={modifier_total ?? 0}
-        />
+        return (
+          <>
+            {/* Score */}
+            <div style={{ textAlign: "center", paddingTop: 36, paddingBottom: 0 }}>
+              <div
+                className={scorePulse ? "score-pulse" : ""}
+                style={{
+                  fontFamily: "'Cormorant Garamond', Georgia, serif",
+                  fontSize: 100, fontWeight: 400, lineHeight: 1,
+                  color: "#1a1a18", letterSpacing: "-0.02em",
+                }}
+              >
+                {displayScore}
+              </div>
+              <div style={{
+                fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                fontSize: 11, letterSpacing: "0.16em",
+                textTransform: "uppercase" as const, color: "#aaa", marginTop: 10,
+              }}>
+                Your Peaq score &middot; {monthLabel}
+                {sleepHidden && <span style={{ color: "#4A7FB5", marginLeft: 6 }}>&middot; out of 70</span>}
+              </div>
+            </div>
 
-      </div>
+            {/* SVG peaks */}
+            <div style={{ width: "100%", height: 380, display: "block", marginTop: 8 }}>
+              <svg viewBox="0 0 680 380" preserveAspectRatio="xMidYMid meet" style={{ width: "100%", height: "100%", display: "block" }}>
+                <defs>
+                  <linearGradient id="pviz-sleep" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#4A7FB5" stopOpacity=".72" />
+                    <stop offset="100%" stopColor="#4A7FB5" stopOpacity=".04" />
+                  </linearGradient>
+                  <linearGradient id="pviz-blood" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#C0392B" stopOpacity=".68" />
+                    <stop offset="100%" stopColor="#C0392B" stopOpacity=".04" />
+                  </linearGradient>
+                  <linearGradient id="pviz-oral" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#2D6A4F" stopOpacity=".68" />
+                    <stop offset="100%" stopColor="#2D6A4F" stopOpacity=".04" />
+                  </linearGradient>
+                  <linearGradient id="pviz-cross" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#C49A3C" stopOpacity=".12" />
+                    <stop offset="100%" stopColor="#C49A3C" stopOpacity=".32" />
+                  </linearGradient>
+                  <linearGradient id="pviz-mtn1" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#B8CAD8" stopOpacity=".5" />
+                    <stop offset="100%" stopColor="#B8CAD8" stopOpacity="0" />
+                  </linearGradient>
+                  <linearGradient id="pviz-mtn2" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#C8D5DF" stopOpacity=".35" />
+                    <stop offset="100%" stopColor="#C8D5DF" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
 
-      {/* HERO */}
-      <div>
-        <HeroTitle score={score} sleepConnected={sleepConnected} hasBlood={hasBlood} oralActive={oralActive} subline={subline} />
-      </div>
+                {/* Mountain bg */}
+                <path d="M0 310 L20 268 L70 285 L140 218 L210 250 L295 168 L365 204 L425 178 L490 212 L548 186 L605 220 L645 200 L680 210 L680 310 Z" fill="url(#pviz-mtn1)" />
+                <path d="M0 310 L55 282 L120 298 L195 262 L270 285 L355 248 L435 268 L510 252 L575 270 L640 258 L680 265 L680 310 Z" fill="url(#pviz-mtn2)" />
+
+                {/* Baseline */}
+                <line x1="60" y1={BL} x2="660" y2={BL} stroke="#D5D2CB" strokeWidth=".8" />
+
+                {/* SLEEP */}
+                <polygon points={`160,${BL} 185,${sleepApexY} 210,${BL}`} fill="url(#pviz-sleep)" stroke="#4A7FB5" strokeWidth="1.2" />
+                <circle cx="185" cy={sleepApexY} r="4.5" fill="#4A7FB5" />
+                <text x="185" y={sleepApexY - 14} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="18" fill="#4A7FB5">{sScore}</text>
+
+                {/* BLOOD */}
+                <polygon points={`311,${BL} 340,${bloodApexY} 369,${BL}`} fill="url(#pviz-blood)" stroke="#C0392B" strokeWidth="1.2" />
+                <circle cx="340" cy={bloodApexY} r="4.5" fill="#C0392B" />
+                <text x="340" y={bloodApexY - 14} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="18" fill="#C0392B">{bScore}</text>
+
+                {/* ORAL */}
+                <polygon points={`475,${BL} 495,${oralApexY} 515,${BL}`} fill="url(#pviz-oral)" stroke="#2D6A4F" strokeWidth="1.2" />
+                <circle cx="495" cy={oralApexY} r="4.5" fill="#2D6A4F" />
+                <text x="495" y={oralApexY - 14} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="18" fill="#2D6A4F">{oScore}</text>
+
+                {/* CROSS-PANEL — inverted */}
+                <polygon points={`585,${crossTopY} 631,${crossTopY} 608,${BL}`} fill="url(#pviz-cross)" stroke="#C49A3C" strokeWidth=".9" strokeDasharray="4 3" />
+                <circle cx="608" cy={BL} r="3.5" fill="#C49A3C" />
+                <text x="608" y={crossTopY - 8} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="16" fill="#C49A3C">{crossLabel}</text>
+
+                {/* Labels */}
+                <text x="185" y="330" textAnchor="middle" fontSize="10" fill="#999" letterSpacing="2" fontFamily="sans-serif">SLEEP</text>
+                <text x="340" y="330" textAnchor="middle" fontSize="10" fill="#999" letterSpacing="2" fontFamily="sans-serif">BLOOD</text>
+                <text x="495" y="330" textAnchor="middle" fontSize="10" fill="#999" letterSpacing="2" fontFamily="sans-serif">ORAL</text>
+                <text x="608" y="330" textAnchor="middle" fontSize="10" fill="#C49A3C" letterSpacing="1.5" fontFamily="sans-serif">CROSS-PANEL</text>
+                <text x="185" y="344" textAnchor="middle" fontSize="9" fill="#ccc" fontFamily="sans-serif">/30</text>
+                <text x="340" y="344" textAnchor="middle" fontSize="9" fill="#ccc" fontFamily="sans-serif">/40</text>
+                <text x="495" y="344" textAnchor="middle" fontSize="9" fill="#ccc" fontFamily="sans-serif">/30</text>
+                <text x="608" y="344" textAnchor="middle" fontSize="9" fill="#C49A3C" opacity=".55" fontFamily="sans-serif">modifier</text>
+              </svg>
+            </div>
+
+            {/* Tagline */}
+            <div style={{ textAlign: "center", padding: "20px 32px 28px", borderTop: "0.5px solid #EDEBE5" }}>
+              <div style={{
+                fontFamily: "'Cormorant Garamond', Georgia, serif",
+                fontSize: 24, fontWeight: 400, color: "#1a1a18", lineHeight: 1.35,
+              }}>
+                Real room to <em style={{ fontStyle: "italic", color: "#C49A3C" }}>improve.</em><br />
+                The data shows you where.
+              </div>
+              <div style={{
+                fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
+                fontSize: 12, color: "#bbb", marginTop: 8,
+              }}>
+                Your score is entirely based on measured data.
+              </div>
+            </div>
+          </>
+        )
+      })()}
       </div>{/* end hero card */}
 
       {/* PENDING BANNERS */}
