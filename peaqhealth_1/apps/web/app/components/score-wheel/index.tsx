@@ -1833,15 +1833,15 @@ export function ScoreWheel({
         const sleepApexY = sScore > 0 ? BL - (sScore / 30) * MAX_H : BL - 8
         const bloodApexY = bScore > 0 ? BL - (bScore / 40) * MAX_H : BL - 8
         const oralApexY  = oScore > 0 ? BL - (oScore / 30) * MAX_H : BL - 8
-        const crossH = Math.max((Math.min(Math.abs(crossNet), 10) / 10) * (MAX_H * 0.28), 20)
+        const crossH = Math.max((Math.min(Math.abs(crossNet), 10) / 10) * (MAX_H * 0.28), 28)
         const crossLabel = crossNet >= 0 ? `+${crossNet}` : `${crossNet}`
         const monthLabel = new Date().toLocaleString("en-US", { month: "long", year: "numeric" }).toUpperCase()
 
         return (
           <>
             {/* Score + peaks — single SVG, no gap */}
-            <div style={{ width: "100%", aspectRatio: "680 / 440" }}>
-              <svg viewBox="0 0 680 440" preserveAspectRatio="xMidYMid meet" style={{ width: "100%", height: "100%", display: "block" }}>
+            <div style={{ width: "100%", aspectRatio: "680 / 420" }}>
+              <svg viewBox="0 0 680 420" preserveAspectRatio="xMidYMid meet" style={{ width: "100%", height: "100%", display: "block" }}>
                 <defs>
                   <linearGradient id="pviz-sleep" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#4A7FB5" stopOpacity=".72" />
@@ -1870,9 +1870,9 @@ export function ScoreWheel({
                 </defs>
 
                 {/* Score number */}
-                <text x="340" y="105" textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="96" fontWeight="400" fill="#1a1a18" letterSpacing="-1">{displayScore}</text>
+                <text x="340" y="72" textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="80" fontWeight="400" fill="#1a1a18" letterSpacing="-1">{displayScore}</text>
                 {/* Score label */}
-                <text x="340" y="128" textAnchor="middle" fontFamily="'Instrument Sans', system-ui, sans-serif" fontSize="11" fill="#aaa" letterSpacing="3">YOUR PEAQ SCORE · {monthLabel}{sleepHidden ? " · OUT OF 70" : ""}</text>
+                <text x="340" y="94" textAnchor="middle" fontFamily="'Instrument Sans', system-ui, sans-serif" fontSize="11" fill="#aaa" letterSpacing="3">YOUR PEAQ SCORE · {monthLabel}{sleepHidden ? " · OUT OF 70" : ""}</text>
 
                 {/* Mountain bg */}
                 <path d="M0 340 L20 298 L70 315 L140 248 L210 280 L295 198 L365 234 L425 208 L490 242 L548 216 L605 250 L645 230 L680 240 L680 340 Z" fill="url(#pviz-mtn1)" />
@@ -1899,16 +1899,16 @@ export function ScoreWheel({
                 {/* CROSS-PANEL — negative: inverted (point down), positive: normal (point up) */}
                 {crossNet !== 0 && crossNet < 0 && (
                   <>
-                    <polygon points={`585,${BL} 631,${BL} 608,${BL + crossH}`} fill="url(#pviz-cross)" stroke="#C49A3C" strokeWidth=".9" strokeDasharray="4 3" />
+                    <polygon points={`578,${BL} 638,${BL} 608,${BL + crossH}`} fill="url(#pviz-cross)" stroke="#C49A3C" strokeWidth=".9" strokeDasharray="4 3" />
                     <circle cx="608" cy={BL + crossH} r="3.5" fill="#C49A3C" />
-                    <text x="608" y={BL - 10} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="16" fill="#C49A3C">{crossLabel}</text>
+                    <text x="608" y={BL - 12} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="16" fill="#C49A3C">{crossLabel}</text>
                   </>
                 )}
                 {crossNet > 0 && (
                   <>
-                    <polygon points={`585,${BL} 631,${BL} 608,${BL - crossH}`} fill="url(#pviz-cross)" stroke="#C49A3C" strokeWidth=".9" strokeDasharray="4 3" />
+                    <polygon points={`578,${BL} 638,${BL} 608,${BL - crossH}`} fill="url(#pviz-cross)" stroke="#C49A3C" strokeWidth=".9" strokeDasharray="4 3" />
                     <circle cx="608" cy={BL - crossH} r="3.5" fill="#C49A3C" />
-                    <text x="608" y={BL - crossH - 10} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="16" fill="#C49A3C">{crossLabel}</text>
+                    <text x="608" y={BL - crossH - 12} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="16" fill="#C49A3C">{crossLabel}</text>
                   </>
                 )}
 
