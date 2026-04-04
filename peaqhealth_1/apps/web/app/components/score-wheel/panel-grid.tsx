@@ -1,5 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
+import Link from "next/link"
 import { haptics } from "@/lib/haptics"
 
 interface PanelCardProps {
@@ -504,15 +505,21 @@ export function PanelGrid({
         {isSyncing
           ? <SyncingCard provider={wearableProvider} />
           : sleepConnected
-            ? <PanelCard label="Sleep" color="var(--sleep-c)" trackColor="var(--sleep-bg)" score={Math.round(displaySleep)} max={30} active={sleepConnected} locked={false} desc={sleepDesc} mounted={mounted} highlighted={hoveredRing === "sleep"} />
+            ? <Link href="/dashboard/sleep" style={{ textDecoration: "none", color: "inherit", borderRadius: 8, transition: "box-shadow 0.2s ease" }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 1.5px var(--panel-sleep-border, #185FA5)" }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = "none" }}>
+                <PanelCard label="Sleep" color="var(--sleep-c)" trackColor="var(--sleep-bg)" score={Math.round(displaySleep)} max={30} active={sleepConnected} locked={false} desc={sleepDesc} mounted={mounted} highlighted={hoveredRing === "sleep"} />
+              </Link>
             : <EmptyPanelCard panel="sleep" />
         }
         {hasBlood
-          ? <PanelCard label="Blood" color="var(--blood-c)" trackColor="var(--blood-bg)" score={Math.round(displayBlood)} max={40} active={true} locked={false} desc={bloodDesc} staleBadge={staleBadge} mounted={mounted} highlighted={hoveredRing === "blood"} />
+          ? <Link href="/dashboard/blood" style={{ textDecoration: "none", color: "inherit", borderRadius: 8, transition: "box-shadow 0.2s ease" }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 1.5px var(--panel-blood-border, #A32D2D)" }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = "none" }}>
+              <PanelCard label="Blood" color="var(--blood-c)" trackColor="var(--blood-bg)" score={Math.round(displayBlood)} max={40} active={true} locked={false} desc={bloodDesc} staleBadge={staleBadge} mounted={mounted} highlighted={hoveredRing === "blood"} />
+            </Link>
           : <EmptyPanelCard panel="blood" />
         }
         {oralActive
-          ? <PanelCard label="Oral Microbiome" color="var(--oral-c)" trackColor="var(--oral-bg)" score={Math.round(displayOral)} max={30} active={true} locked={false} desc={oralDesc} mounted={mounted} highlighted={hoveredRing === "oral"} />
+          ? <Link href="/dashboard/oral" style={{ textDecoration: "none", color: "inherit", borderRadius: 8, transition: "box-shadow 0.2s ease" }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 1.5px var(--panel-oral-border, #3B6D11)" }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = "none" }}>
+              <PanelCard label="Oral Microbiome" color="var(--oral-c)" trackColor="var(--oral-bg)" score={Math.round(displayOral)} max={30} active={true} locked={false} desc={oralDesc} mounted={mounted} highlighted={hoveredRing === "oral"} />
+            </Link>
           : <EmptyPanelCard panel="oral" oralOrdered={oralKitStatus === "ordered"} />
         }
       </div>
