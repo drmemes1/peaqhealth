@@ -1826,13 +1826,13 @@ export function ScoreWheel({
       {(() => {
         const BL = 340
         const MAX_H = 253
-        const sScore = Math.round(displaySleep)
-        const bScore = Math.round(displayBlood)
-        const oScore = Math.round(displayOral)
+        const sScore = Math.max(Math.round(displaySleep ?? 0), 0)
+        const bScore = Math.max(Math.round(displayBlood ?? 0), 0)
+        const oScore = Math.max(Math.round(displayOral ?? 0), 0)
         const crossNet = modifier_total ?? 0
-        const sleepApexY = BL - (sScore / 30) * MAX_H
-        const bloodApexY = BL - (bScore / 40) * MAX_H
-        const oralApexY = BL - (oScore / 30) * MAX_H
+        const sleepApexY = sScore > 0 ? BL - (sScore / 30) * MAX_H : BL - 8
+        const bloodApexY = bScore > 0 ? BL - (bScore / 40) * MAX_H : BL - 8
+        const oralApexY  = oScore > 0 ? BL - (oScore / 30) * MAX_H : BL - 8
         const crossH = Math.max((Math.min(Math.abs(crossNet), 10) / 10) * (MAX_H * 0.28), 20)
         const crossLabel = crossNet >= 0 ? `+${crossNet}` : `${crossNet}`
         const monthLabel = new Date().toLocaleString("en-US", { month: "long", year: "numeric" }).toUpperCase()
@@ -1872,7 +1872,7 @@ export function ScoreWheel({
                 {/* Score number */}
                 <text x="340" y="105" textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="96" fontWeight="400" fill="#1a1a18" letterSpacing="-1">{displayScore}</text>
                 {/* Score label */}
-                <text x="340" y="128" textAnchor="middle" fontFamily="sans-serif" fontSize="11" fill="#aaa" letterSpacing="3">YOUR PEAQ SCORE · {monthLabel}{sleepHidden ? " · OUT OF 70" : ""}</text>
+                <text x="340" y="128" textAnchor="middle" fontFamily="'Instrument Sans', system-ui, sans-serif" fontSize="11" fill="#aaa" letterSpacing="3">YOUR PEAQ SCORE · {monthLabel}{sleepHidden ? " · OUT OF 70" : ""}</text>
 
                 {/* Mountain bg */}
                 <path d="M0 340 L20 298 L70 315 L140 248 L210 280 L295 198 L365 234 L425 208 L490 242 L548 216 L605 250 L645 230 L680 240 L680 340 Z" fill="url(#pviz-mtn1)" />
@@ -1913,14 +1913,14 @@ export function ScoreWheel({
                 )}
 
                 {/* Labels */}
-                <text x="185" y="360" textAnchor="middle" fontSize="10" fill="#999" letterSpacing="2" fontFamily="sans-serif">SLEEP</text>
-                <text x="340" y="360" textAnchor="middle" fontSize="10" fill="#999" letterSpacing="2" fontFamily="sans-serif">BLOOD</text>
-                <text x="495" y="360" textAnchor="middle" fontSize="10" fill="#999" letterSpacing="2" fontFamily="sans-serif">ORAL</text>
-                <text x="608" y="360" textAnchor="middle" fontSize="10" fill="#C49A3C" letterSpacing="1.5" fontFamily="sans-serif">CROSS-PANEL</text>
-                <text x="185" y="374" textAnchor="middle" fontSize="9" fill="#ccc" fontFamily="sans-serif">/30</text>
-                <text x="340" y="374" textAnchor="middle" fontSize="9" fill="#ccc" fontFamily="sans-serif">/40</text>
-                <text x="495" y="374" textAnchor="middle" fontSize="9" fill="#ccc" fontFamily="sans-serif">/30</text>
-                <text x="608" y="374" textAnchor="middle" fontSize="9" fill="#C49A3C" opacity=".55" fontFamily="sans-serif">modifier</text>
+                <text x="185" y="360" textAnchor="middle" fontSize="10" fill="#999" letterSpacing="2" fontFamily="'Instrument Sans', system-ui, sans-serif">SLEEP</text>
+                <text x="340" y="360" textAnchor="middle" fontSize="10" fill="#999" letterSpacing="2" fontFamily="'Instrument Sans', system-ui, sans-serif">BLOOD</text>
+                <text x="495" y="360" textAnchor="middle" fontSize="10" fill="#999" letterSpacing="2" fontFamily="'Instrument Sans', system-ui, sans-serif">ORAL</text>
+                <text x="608" y="360" textAnchor="middle" fontSize="10" fill="#C49A3C" letterSpacing="1.5" fontFamily="'Instrument Sans', system-ui, sans-serif">CROSS-PANEL</text>
+                <text x="185" y="374" textAnchor="middle" fontSize="9" fill="#ccc" fontFamily="'Instrument Sans', system-ui, sans-serif">/30</text>
+                <text x="340" y="374" textAnchor="middle" fontSize="9" fill="#ccc" fontFamily="'Instrument Sans', system-ui, sans-serif">/40</text>
+                <text x="495" y="374" textAnchor="middle" fontSize="9" fill="#ccc" fontFamily="'Instrument Sans', system-ui, sans-serif">/30</text>
+                <text x="608" y="374" textAnchor="middle" fontSize="9" fill="#C49A3C" opacity=".55" fontFamily="'Instrument Sans', system-ui, sans-serif">modifier</text>
               </svg>
             </div>
 
