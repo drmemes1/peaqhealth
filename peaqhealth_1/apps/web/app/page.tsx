@@ -912,39 +912,28 @@ export default function Home() {
             color: MUTED,
             margin: "0 0 16px",
           }}>
-            Built by
+            Built by real doctors. Not AI.
           </p>
 
-          <h2 style={{
-            fontFamily: serif,
-            fontSize: 36,
-            fontWeight: 400,
-            lineHeight: 1.2,
-            color: INK,
-            margin: 0,
-          }}>
-            Real doctors. <em style={{ fontStyle: "italic", color: ACCENT_RAW }}>Not AI.</em>
-          </h2>
-
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 20,
+          <div className="landing-team-grid" style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 48,
             marginTop: 40,
           }}>
             {([
               { name: "Dr. Igor Khabensky", title: "General Dentist", photo: "/images/dr-igor-khabensky.jpg" },
               { name: "Dr. Paul Leis", title: "Cardiologist", photo: "/images/dr-paul-leis.jpg" },
             ] as const).map(doc => (
-              <div key={doc.name} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div key={doc.name} style={{ display: "flex", alignItems: "center", gap: 20 }}>
                 <img
                   src={doc.photo}
                   alt={doc.name}
-                  style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover" }}
+                  style={{ width: 120, height: 120, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
                 />
                 <div>
-                  <p style={{ fontFamily: sans, fontSize: 13, fontWeight: 500, color: INK, margin: 0 }}>{doc.name}</p>
-                  <p style={{ fontFamily: sans, fontSize: 11, color: MUTED, margin: 0 }}>{doc.title}</p>
+                  <p style={{ fontFamily: sans, fontSize: 16, fontWeight: 500, color: INK, margin: 0 }}>{doc.name}</p>
+                  <p style={{ fontFamily: sans, fontSize: 13, color: MUTED, margin: "4px 0 0" }}>{doc.title}</p>
                 </div>
               </div>
             ))}
