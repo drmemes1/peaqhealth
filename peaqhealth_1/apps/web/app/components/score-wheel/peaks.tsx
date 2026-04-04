@@ -144,12 +144,12 @@ export function PeaksVisualization({
           </linearGradient>
         ))}
         <linearGradient id="pg-cp-valley" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%"   stopColor="#9A7200" stopOpacity={0.04} />
-          <stop offset="100%" stopColor="#9A7200" stopOpacity={0.16} />
+          <stop offset="0%"   stopColor="#9A7200" stopOpacity={0.18} />
+          <stop offset="100%" stopColor="#9A7200" stopOpacity={0.35} />
         </linearGradient>
         <linearGradient id="pg-cp-bonus" x1="0" y1="1" x2="0" y2="0">
-          <stop offset="0%"   stopColor="#9A7200" stopOpacity={0.04} />
-          <stop offset="100%" stopColor="#9A7200" stopOpacity={0.16} />
+          <stop offset="0%"   stopColor="#9A7200" stopOpacity={0.18} />
+          <stop offset="100%" stopColor="#9A7200" stopOpacity={0.35} />
         </linearGradient>
       </defs>
 
@@ -242,10 +242,10 @@ export function PeaksVisualization({
             x={CP_CX} y={cpNumberY}
             textAnchor="middle"
             fontFamily="'Cormorant Garamond', Georgia, serif"
-            fontSize={22}
+            fontSize={24}
             fontWeight={400}
             fill="#9A7200"
-            opacity={0.75}
+            opacity={0.9}
           >
             {isBonus ? "+" : "−"}{absModifier}
           </text>
@@ -258,16 +258,16 @@ export function PeaksVisualization({
             }
             fill={isBonus ? "url(#pg-cp-bonus)" : "url(#pg-cp-valley)"}
             stroke="#9A7200"
-            strokeWidth={0.8}
+            strokeWidth={1.2}
             strokeDasharray="3 4"
             strokeLinejoin="round"
-            opacity={0.45}
+            opacity={0.65}
           />
 
           {/* Tip dot */}
           <circle
             cx={CP_CX} cy={cpTipY} r={3}
-            fill="#9A7200" opacity={0.5}
+            fill="#9A7200" opacity={0.8}
           />
 
           {/* CROSS-PANEL label */}
@@ -279,7 +279,7 @@ export function PeaksVisualization({
             fontSize={10}
             letterSpacing="1.5"
             fill="#9A7200"
-            opacity={0.55}
+            opacity={0.8}
           >
             CROSS-PANEL
           </text>
@@ -293,7 +293,7 @@ export function PeaksVisualization({
             fontSize={9}
             fontStyle="italic"
             fill="#9A7200"
-            opacity={0.4}
+            opacity={0.65}
           >
             modifier
           </text>
