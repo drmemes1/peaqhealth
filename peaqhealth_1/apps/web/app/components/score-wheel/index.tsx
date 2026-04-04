@@ -1838,18 +1838,20 @@ export function ScoreWheel({
             className={scorePulse ? "score-pulse" : ""}
             style={{
               fontFamily: "'Cormorant Garamond', Georgia, serif",
-              fontSize: 96, fontWeight: 300, lineHeight: 1,
+              fontSize: 80, fontWeight: 400, lineHeight: 1,
               letterSpacing: "-0.025em",
-              color: "#141410",
+              color: "#1a1a18",
               display: "block",
+              textAlign: "center",
             }}
           >
             {displayScore}
           </span>
           <p style={{
             fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-            fontSize: 10, textTransform: "uppercase", letterSpacing: "0.18em",
-            color: "rgba(20,20,16,0.50)", margin: "8px 0 0",
+            fontSize: 11, textTransform: "uppercase", letterSpacing: "0.14em",
+            color: "#bbb", margin: "6px 0 16px",
+            textAlign: "center",
           }}>
             YOUR PEAQ SCORE · {new Date().toLocaleString("en-US", { month: "long", year: "numeric" }).toUpperCase()}
             {sleepHidden && (
@@ -1859,14 +1861,14 @@ export function ScoreWheel({
         </div>
 
         {/* Mountain peaks chart with hero backdrop */}
-        <div style={{ width: "100%", marginTop: 16, position: "relative" }}>
+        <div style={{ width: "100%", height: 220, maxHeight: 220, overflow: "hidden", position: "relative" }}>
           {/* Hero image — snow-capped mountains behind the peaks */}
           <div style={{
             position: "absolute",
-            top: "-20px",
+            top: 0,
             left: "-48px",
             right: "-48px",
-            bottom: "-20px",
+            bottom: 0,
             zIndex: 0,
             overflow: "hidden",
             borderRadius: "8px",
@@ -1889,16 +1891,16 @@ export function ScoreWheel({
               inset: 0,
               background: `
                 linear-gradient(to bottom,
-                  var(--off-white) 0%,
+                  #fff 0%,
                   transparent 25%,
                   transparent 55%,
-                  var(--off-white) 100%
+                  #fff 100%
                 ),
                 linear-gradient(to right,
-                  var(--off-white) 0%,
+                  #fff 0%,
                   transparent 15%,
                   transparent 85%,
-                  var(--off-white) 100%
+                  #fff 100%
                 )
               `,
               pointerEvents: "none",
