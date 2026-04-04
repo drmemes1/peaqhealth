@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @import "./styles/tokens.css";
 
+html {
+  scroll-behavior: smooth;
+}
+
 :root {
   /* ─── Core palette (light) ─────────────────────────────────────────────── */
   --white: #FFFFFF;
@@ -217,94 +221,76 @@ body {
   }
 }
 
+/* ─── Landing page mobile ─────────────────────────────────────────────── */
+
 @media (max-width: 768px) {
-  .hero-phone {
+  .landing-nav {
+    padding: 0 16px !important;
+  }
+  .landing-nav a[style*="letter-spacing"] {
     display: none !important;
   }
-  .hero-grid {
+  .landing-hero {
     grid-template-columns: 1fr !important;
-    padding-left: 24px !important;
-    padding-right: 24px !important;
-    padding-top: 100px !important;
     min-height: auto !important;
+    padding: 100px 24px 48px !important;
   }
-  .hero-mockup {
-    max-height: 50vh !important;
+  .landing-hero > div:last-child {
+    display: flex !important;
     justify-content: center !important;
+    margin-top: 32px !important;
+    margin-bottom: 0 !important;
   }
-  .hero-mockup img {
-    max-height: 50vh !important;
-    max-width: 70% !important;
+  .landing-hero img {
+    max-width: 280px !important;
+    margin-bottom: 0 !important;
   }
-  .app-showcase-grid {
+  .landing-panels-grid {
     grid-template-columns: 1fr !important;
-    gap: 48px !important;
+    gap: 0 !important;
+    background: transparent !important;
   }
-  .app-showcase-grid img {
-    max-width: 260px !important;
-    margin: 0 auto !important;
+  .landing-panels-grid > div {
+    border-bottom: 1px solid rgba(255,255,255,0.08) !important;
   }
-  .app-feature {
+  .landing-panels-grid > div:last-child {
+    border-bottom: none !important;
+  }
+  .landing-science-row {
+    flex-direction: column !important;
+    gap: 10px !important;
+    padding: 20px 0 !important;
+  }
+  .landing-science-row > span:first-child {
+    min-width: unset !important;
+    width: auto !important;
+  }
+  .landing-app-feature {
     grid-template-columns: 1fr !important;
     gap: 24px !important;
-    margin-bottom: 56px !important;
+    margin-bottom: 48px !important;
   }
-  .app-feature img {
+  .landing-app-feature img {
     order: 0 !important;
   }
-  .app-feature > div {
+  .landing-app-feature > div {
     order: 1 !important;
   }
-
-  /* Science / citations sections */
-  .landing-section {
-    padding-top: 48px !important;
-    padding-bottom: 48px !important;
-    padding-left: 20px !important;
-    padding-right: 20px !important;
-  }
-  .landing-heading {
-    font-size: 24px !important;
-    margin-bottom: 32px !important;
-  }
-  .citation-row {
-    flex-direction: column !important;
-    gap: 12px !important;
-    padding: 20px 0 !important;
-    min-height: 44px !important;
-  }
-  .citation-row > div:first-child {
-    min-width: unset !important;
-  }
-  .citation-row p[style*="font-size: 18px"],
-  .citation-row p[style*="fontSize"] {
-    font-size: 15px !important;
-    max-width: 100% !important;
-  }
-  .citation-expanded {
+  .landing-team-grid {
     grid-template-columns: 1fr !important;
-    gap: 20px !important;
-    padding: 16px 0 24px 16px !important;
+    gap: 16px !important;
+  }
+  .landing-transparency-grid {
+    grid-template-columns: 1fr !important;
   }
 }
 
 @media (max-width: 480px) {
-  .landing-section {
-    padding-top: 40px !important;
-    padding-bottom: 40px !important;
-    padding-left: 16px !important;
-    padding-right: 16px !important;
+  .landing-hero {
+    padding: 80px 16px 40px !important;
   }
-  .landing-heading {
-    font-size: 22px !important;
-  }
-  .hero-grid {
-    padding-left: 16px !important;
-    padding-right: 16px !important;
-    padding-top: 80px !important;
-  }
-  .hero-mockup img {
-    max-width: 85% !important;
+  .landing-hero img {
+    max-width: 240px !important;
   }
 }
 
