@@ -913,109 +913,45 @@ export default function Home() {
             textTransform: "uppercase",
             letterSpacing: "0.1em",
             color: MUTED,
-            margin: "0 0 12px",
+            margin: "0 0 16px",
           }}>
-            Built by clinicians
+            Built by
           </p>
 
           <h2 style={{
             fontFamily: serif,
-            fontSize: 32,
+            fontSize: 36,
             fontWeight: 400,
             lineHeight: 1.2,
             color: INK,
-            margin: "0 0 48px",
+            margin: 0,
           }}>
-            Not algorithms. Clinicians.
+            Real doctors. <em style={{ fontStyle: "italic", color: ACCENT_GOLD }}>Not AI.</em>
           </h2>
 
-          {/* Team cards */}
-          <div className="landing-team-grid" style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 48,
-            marginBottom: 48,
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 20,
+            marginTop: 40,
           }}>
             {([
-              {
-                name: "Dr. Igor Khabensky",
-                title: "General Dentist",
-                photo: "/images/dr-igor-khabensky.jpg",
-                quote: "I kept seeing patients with pristine teeth but devastated gums. The mouth was telling me something the chart wasn\u2019t.",
-              },
-              {
-                name: "Dr. Paul Leis",
-                title: "Cardiologist",
-                photo: "/images/dr-paul-leis.jpg",
-                quote: "Half my patients with elevated hsCRP had no traditional explanation. Then we started looking at the microbiome.",
-              },
+              { name: "Dr. Igor Khabensky", title: "General Dentist", photo: "/images/dr-igor-khabensky.jpg" },
+              { name: "Dr. Paul Leis", title: "Cardiologist", photo: "/images/dr-paul-leis.jpg" },
             ] as const).map(doc => (
-              <div key={doc.name} style={{
-                background: WHITE,
-                borderRadius: 8,
-                border: `1px solid ${BORDER_LIGHT}`,
-                padding: "32px 28px",
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
-                  <img
-                    src={doc.photo}
-                    alt={doc.name}
-                    style={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: "50%",
-                      objectFit: "cover",
-                      flexShrink: 0,
-                    }}
-                  />
-                  <div>
-                    <p style={{
-                      fontFamily: sans,
-                      fontSize: 14,
-                      fontWeight: 500,
-                      color: INK,
-                      margin: 0,
-                    }}>
-                      {doc.name}
-                    </p>
-                    <p style={{
-                      fontFamily: sans,
-                      fontSize: 12,
-                      color: MUTED,
-                      margin: "2px 0 0",
-                    }}>
-                      {doc.title}
-                    </p>
-                  </div>
+              <div key={doc.name} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <img
+                  src={doc.photo}
+                  alt={doc.name}
+                  style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover" }}
+                />
+                <div>
+                  <p style={{ fontFamily: sans, fontSize: 13, fontWeight: 500, color: INK, margin: 0 }}>{doc.name}</p>
+                  <p style={{ fontFamily: sans, fontSize: 11, color: MUTED, margin: 0 }}>{doc.title}</p>
                 </div>
-                <p style={{
-                  fontFamily: serif,
-                  fontSize: 16,
-                  fontStyle: "italic",
-                  lineHeight: 1.6,
-                  color: INK_60,
-                  margin: 0,
-                }}>
-                  &ldquo;{doc.quote}&rdquo;
-                </p>
               </div>
             ))}
           </div>
-
-          {/* Shared quote */}
-          <p style={{
-            fontFamily: serif,
-            fontSize: 22,
-            fontWeight: 400,
-            fontStyle: "italic",
-            lineHeight: 1.5,
-            color: INK_60,
-            maxWidth: 560,
-          }}>
-            &ldquo;We built Peaq because we kept seeing the same pattern &mdash;
-            oral disease showing up in cardiovascular risk, sleep disruption
-            compounding inflammation. No platform was connecting these dots.&rdquo;
-          </p>
         </div>
       </section>
 
