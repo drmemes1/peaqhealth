@@ -926,7 +926,7 @@ export default function Home() {
             color: INK,
             margin: 0,
           }}>
-            Real doctors. <em style={{ fontStyle: "italic", color: ACCENT_GOLD }}>Not AI.</em>
+            Real doctors. <em style={{ fontStyle: "italic", color: ACCENT_RAW }}>Not AI.</em>
           </h2>
 
           <div style={{
