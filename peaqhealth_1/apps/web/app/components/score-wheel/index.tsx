@@ -1821,6 +1821,9 @@ export function ScoreWheel({
         borderRadius: 14,
         border: "0.5px solid rgba(0,0,0,0.06)",
         padding: "24px 20px 20px",
+        maxWidth: 860,
+        margin: "0 auto",
+        width: "100%",
         ...fadeUp("0s"),
       }}>
       {(() => {
@@ -1833,7 +1836,7 @@ export function ScoreWheel({
         const sleepApexY = sScore > 0 ? BL - (sScore / 30) * MAX_H : BL - 8
         const bloodApexY = bScore > 0 ? BL - (bScore / 40) * MAX_H : BL - 8
         const oralApexY  = oScore > 0 ? BL - (oScore / 30) * MAX_H : BL - 8
-        const crossH = Math.max((Math.min(Math.abs(crossNet), 10) / 10) * (MAX_H * 0.28), 28)
+        const crossH = Math.max((Math.min(Math.abs(crossNet), 10) / 10) * (MAX_H * 0.28), 40)
         const crossLabel = crossNet >= 0 ? `+${crossNet}` : `${crossNet}`
         const monthLabel = new Date().toLocaleString("en-US", { month: "long", year: "numeric" }).toUpperCase()
 
@@ -1879,34 +1882,34 @@ export function ScoreWheel({
                 {/* Baseline */}
                 <line x1="60" y1={BL} x2="660" y2={BL} stroke="#D5D2CB" strokeWidth=".8" />
 
-                {/* SLEEP */}
-                <polygon points={`160,${BL} 185,${sleepApexY} 210,${BL}`} fill="url(#pviz-sleep)" stroke="#4A7FB5" strokeWidth="1.2" />
+                {/* SLEEP — center 185, base 70px */}
+                <polygon points={`150,${BL} 185,${sleepApexY} 220,${BL}`} fill="url(#pviz-sleep)" stroke="#4A7FB5" strokeWidth="1.2" />
                 <circle cx="185" cy={sleepApexY} r="4.5" fill="#4A7FB5" />
                 <text x="185" y={sleepApexY - 14} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="18" fill="#4A7FB5">{sScore}</text>
 
-                {/* BLOOD */}
-                <polygon points={`311,${BL} 340,${bloodApexY} 369,${BL}`} fill="url(#pviz-blood)" stroke="#C0392B" strokeWidth="1.2" />
+                {/* BLOOD — center 340, base 80px */}
+                <polygon points={`300,${BL} 340,${bloodApexY} 380,${BL}`} fill="url(#pviz-blood)" stroke="#C0392B" strokeWidth="1.2" />
                 <circle cx="340" cy={bloodApexY} r="4.5" fill="#C0392B" />
                 <text x="340" y={bloodApexY - 14} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="18" fill="#C0392B">{bScore}</text>
 
-                {/* ORAL */}
-                <polygon points={`475,${BL} 495,${oralApexY} 515,${BL}`} fill="url(#pviz-oral)" stroke="#2D6A4F" strokeWidth="1.2" />
+                {/* ORAL — center 495, base 54px */}
+                <polygon points={`468,${BL} 495,${oralApexY} 522,${BL}`} fill="url(#pviz-oral)" stroke="#2D6A4F" strokeWidth="1.2" />
                 <circle cx="495" cy={oralApexY} r="4.5" fill="#2D6A4F" />
                 <text x="495" y={oralApexY - 14} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="18" fill="#2D6A4F">{oScore}</text>
 
-                {/* CROSS-PANEL — negative: inverted (point down), positive: normal (point up) */}
+                {/* CROSS-PANEL — center 580, base 44px */}
                 {crossNet !== 0 && crossNet < 0 && (
                   <>
-                    <polygon points={`578,${BL} 638,${BL} 608,${BL + crossH}`} fill="url(#pviz-cross)" stroke="#C49A3C" strokeWidth=".9" strokeDasharray="4 3" />
-                    <circle cx="608" cy={BL + crossH} r="3.5" fill="#C49A3C" />
-                    <text x="608" y={BL - 12} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="16" fill="#C49A3C">{crossLabel}</text>
+                    <polygon points={`558,${BL} 602,${BL} 580,${BL + crossH}`} fill="url(#pviz-cross)" stroke="#C49A3C" strokeWidth=".9" strokeDasharray="4 3" />
+                    <circle cx="580" cy={BL + crossH} r="3.5" fill="#C49A3C" />
+                    <text x="580" y={BL - 12} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="16" fill="#C49A3C">{crossLabel}</text>
                   </>
                 )}
                 {crossNet > 0 && (
                   <>
-                    <polygon points={`578,${BL} 638,${BL} 608,${BL - crossH}`} fill="url(#pviz-cross)" stroke="#C49A3C" strokeWidth=".9" strokeDasharray="4 3" />
-                    <circle cx="608" cy={BL - crossH} r="3.5" fill="#C49A3C" />
-                    <text x="608" y={BL - crossH - 12} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="16" fill="#C49A3C">{crossLabel}</text>
+                    <polygon points={`558,${BL} 602,${BL} 580,${BL - crossH}`} fill="url(#pviz-cross)" stroke="#C49A3C" strokeWidth=".9" strokeDasharray="4 3" />
+                    <circle cx="580" cy={BL - crossH} r="3.5" fill="#C49A3C" />
+                    <text x="580" y={BL - crossH - 12} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="16" fill="#C49A3C">{crossLabel}</text>
                   </>
                 )}
 
@@ -1914,11 +1917,11 @@ export function ScoreWheel({
                 <text x="185" y="360" textAnchor="middle" fontSize="10" fill="#999" letterSpacing="2" fontFamily="'Cormorant Garamond', Georgia, serif">SLEEP</text>
                 <text x="340" y="360" textAnchor="middle" fontSize="10" fill="#999" letterSpacing="2" fontFamily="'Cormorant Garamond', Georgia, serif">BLOOD</text>
                 <text x="495" y="360" textAnchor="middle" fontSize="10" fill="#999" letterSpacing="2" fontFamily="'Cormorant Garamond', Georgia, serif">ORAL</text>
-                <text x="608" y="360" textAnchor="middle" fontSize="10" fill="#C49A3C" letterSpacing="1.5" fontFamily="'Cormorant Garamond', Georgia, serif">CROSS-PANEL</text>
+                <text x="580" y="360" textAnchor="middle" fontSize="10" fill="#C49A3C" letterSpacing="1.5" fontFamily="'Cormorant Garamond', Georgia, serif">CROSS-PANEL</text>
                 <text x="185" y="374" textAnchor="middle" fontSize="9" fill="#ccc" fontFamily="'Cormorant Garamond', Georgia, serif">/30</text>
                 <text x="340" y="374" textAnchor="middle" fontSize="9" fill="#ccc" fontFamily="'Cormorant Garamond', Georgia, serif">/40</text>
                 <text x="495" y="374" textAnchor="middle" fontSize="9" fill="#ccc" fontFamily="'Cormorant Garamond', Georgia, serif">/30</text>
-                <text x="608" y="374" textAnchor="middle" fontSize="9" fill="#C49A3C" opacity=".55" fontFamily="'Cormorant Garamond', Georgia, serif">modifier</text>
+                <text x="580" y="374" textAnchor="middle" fontSize="9" fill="#C49A3C" opacity=".55" fontFamily="'Cormorant Garamond', Georgia, serif">modifier</text>
               </svg>
             </div>
 
