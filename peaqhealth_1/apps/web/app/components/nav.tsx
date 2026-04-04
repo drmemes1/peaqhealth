@@ -34,6 +34,8 @@ export function Nav({ cartCount = 0, onCartOpen }: NavProps) {
 
   const links = [
     { href: "/dashboard", label: "Dashboard" },
+  ];
+  const linksAfterPanels = [
     { href: "/shop", label: "Shop" },
     { href: "/science", label: "Science" },
     { href: "/settings", label: "Settings" },
@@ -72,7 +74,7 @@ export function Nav({ cartCount = 0, onCartOpen }: NavProps) {
             );
           })}
 
-          {/* Panels dropdown */}
+          {/* Panels dropdown — right after Dashboard */}
           <div ref={panelsRef} style={{ position: "relative" }}>
             <button
               onClick={() => setPanelsOpen(o => !o)}
@@ -147,6 +149,27 @@ export function Nav({ cartCount = 0, onCartOpen }: NavProps) {
               </div>
             )}
           </div>
+
+          {linksAfterPanels.map(({ href, label }) => {
+            const active = pathname.startsWith(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                className="font-body text-[13px] uppercase tracking-[0.08em] transition-colors"
+                style={{
+                  color: active ? "var(--color-accent-gold, #C49A3C)" : "var(--ink)",
+                  opacity: active ? 1 : 0.5,
+                  textDecoration: active ? "underline" : "none",
+                  textUnderlineOffset: "4px",
+                  textDecorationThickness: "0.5px",
+                  textDecorationColor: active ? "var(--color-accent-gold, #C49A3C)" : undefined,
+                }}
+              >
+                {label}
+              </Link>
+            );
+          })}
         </div>
 
         {/* Right — cart + avatar + date */}

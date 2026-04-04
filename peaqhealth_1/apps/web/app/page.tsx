@@ -66,7 +66,7 @@ export default function Home() {
             src="/images/peaq_logo_transparent.png"
             alt="Peaq Health"
             style={{
-              height: 32,
+              height: 36,
               width: "auto",
               filter: "brightness(0) invert(1)",
             }}
@@ -84,10 +84,10 @@ export default function Home() {
                 href={link.href}
                 style={{
                   fontFamily: sans,
-                  fontSize: 11,
+                  fontSize: 13,
                   fontWeight: 500,
                   textTransform: "uppercase",
-                  letterSpacing: "0.1em",
+                  letterSpacing: "0.08em",
                   color: "rgba(255,255,255,0.4)",
                   textDecoration: "none",
                 }}
@@ -102,15 +102,15 @@ export default function Home() {
             href="#cta"
             style={{
               fontFamily: sans,
-              fontSize: 11,
+              fontSize: 13,
               fontWeight: 500,
               textTransform: "uppercase",
-              letterSpacing: "0.1em",
+              letterSpacing: "0.08em",
               color: ACCENT,
               textDecoration: "none",
               border: `1px solid ${ACCENT_RAW}`,
               borderRadius: 999,
-              padding: "7px 18px",
+              padding: "8px 20px",
             }}
           >
             Join waitlist &rarr;
