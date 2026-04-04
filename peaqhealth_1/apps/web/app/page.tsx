@@ -128,8 +128,8 @@ export default function Home() {
           gridTemplateColumns: "1.5fr 1fr",
           gap: 48,
           alignItems: "center",
-          paddingTop: 80,
-          paddingBottom: 80,
+          paddingTop: "clamp(72px, 10vw, 120px)",
+          paddingBottom: "clamp(72px, 10vw, 120px)",
           minHeight: "70vh",
         }}>
           {/* Left column */}
@@ -137,7 +137,7 @@ export default function Home() {
             {/* Eyebrow */}
             <p style={{
               fontFamily: sans,
-              fontSize: 10,
+              fontSize: "clamp(11px, 1vw, 13px)",
               fontWeight: 500,
               textTransform: "uppercase",
               letterSpacing: "0.18em",
@@ -150,7 +150,7 @@ export default function Home() {
             {/* H1 */}
             <h1 style={{
               fontFamily: serif,
-              fontSize: 48,
+              fontSize: "clamp(40px, 5vw, 72px)",
               fontWeight: 400,
               lineHeight: 1.1,
               letterSpacing: "-0.02em",
@@ -164,7 +164,7 @@ export default function Home() {
             {/* Sub */}
             <p style={{
               fontFamily: sans,
-              fontSize: 14,
+              fontSize: "clamp(14px, 1.2vw, 17px)",
               lineHeight: 1.7,
               color: WHITE_45,
               maxWidth: 420,
@@ -213,7 +213,7 @@ export default function Home() {
             {/* Stats row */}
             <p style={{
               fontFamily: sans,
-              fontSize: 11,
+              fontSize: "clamp(11px, 1vw, 13px)",
               letterSpacing: "0.04em",
               color: WHITE_30,
               margin: 0,
@@ -228,17 +228,26 @@ export default function Home() {
             justifyContent: "center",
             alignItems: "center",
           }}>
-            <img
-              src="/images/hero.png"
-              alt="Couple hiking in mountains — longevity in action"
-              style={{
-                width: "100%",
-                maxWidth: 480,
-                height: "auto",
-                borderRadius: 10,
-                objectFit: "cover",
-              }}
-            />
+            <div className="hero-image-wrap" style={{
+              position: "relative",
+              borderRadius: 12,
+              overflow: "hidden",
+              aspectRatio: "1 / 1",
+              maxWidth: 480,
+              width: "100%",
+            }}>
+              <img
+                src="/images/hero-peaq.png"
+                alt="Peaq Health dashboard"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  objectPosition: "center top",
+                  display: "block",
+                }}
+              />
+            </div>
           </div>
         </div>
       </section>
@@ -246,12 +255,12 @@ export default function Home() {
       {/* ══════════════════════════════════════════════════════════════════
           SECTION 2 — THREE PANELS (dark bg, flush with hero)
           ══════════════════════════════════════════════════════════════════ */}
-      <section style={{ background: BG_DARK, paddingTop: 80, paddingBottom: 80 }}>
+      <section style={{ background: BG_DARK, paddingTop: "clamp(64px, 8vw, 96px)", paddingBottom: "clamp(64px, 8vw, 96px)" }}>
         <div style={contentWrap}>
           {/* Eyebrow */}
           <p style={{
             fontFamily: sans,
-            fontSize: 10,
+            fontSize: "clamp(10px, 0.9vw, 12px)",
             fontWeight: 500,
             textTransform: "uppercase",
             letterSpacing: "0.18em",
@@ -264,7 +273,7 @@ export default function Home() {
           {/* H2 */}
           <h2 style={{
             fontFamily: serif,
-            fontSize: 32,
+            fontSize: "clamp(28px, 3vw, 42px)",
             fontWeight: 400,
             lineHeight: 1.2,
             color: WHITE,
@@ -381,7 +390,7 @@ export default function Home() {
           {/* Bottom quote */}
           <p style={{
             fontFamily: serif,
-            fontSize: 15,
+            fontSize: "clamp(14px, 1.2vw, 17px)",
             fontStyle: "italic",
             color: WHITE_40,
             textAlign: "center",
@@ -397,11 +406,11 @@ export default function Home() {
           SECTION 3 — HOW IT WORKS (cream bg)
           ══════════════════════════════════════════════════════════════════ */}
       <section id="how-it-works" style={{ background: BG_CREAM }}>
-        <div style={{ ...contentWrap, paddingTop: 96, paddingBottom: 96 }}>
+        <div style={{ ...contentWrap, paddingTop: "clamp(64px, 8vw, 96px)", paddingBottom: "clamp(64px, 8vw, 96px)" }}>
           {/* Eyebrow */}
           <p style={{
             fontFamily: sans,
-            fontSize: 11,
+            fontSize: "clamp(10px, 0.9vw, 12px)",
             fontWeight: 500,
             textTransform: "uppercase",
             letterSpacing: "0.1em",
@@ -414,7 +423,7 @@ export default function Home() {
           {/* H2 */}
           <h2 style={{
             fontFamily: serif,
-            fontSize: 32,
+            fontSize: "clamp(28px, 3vw, 42px)",
             fontWeight: 400,
             lineHeight: 1.2,
             color: INK,
@@ -457,7 +466,7 @@ export default function Home() {
                 </p>
                 <p style={{
                   fontFamily: sans,
-                  fontSize: 14,
+                  fontSize: "clamp(13px, 1.1vw, 15px)",
                   color: INK_60,
                   lineHeight: 1.7,
                   margin: 0,
@@ -510,7 +519,7 @@ export default function Home() {
                 </p>
                 <p style={{
                   fontFamily: sans,
-                  fontSize: 14,
+                  fontSize: "clamp(13px, 1.1vw, 15px)",
                   color: INK_60,
                   lineHeight: 1.7,
                   margin: 0,
@@ -553,7 +562,7 @@ export default function Home() {
                 </p>
                 <p style={{
                   fontFamily: sans,
-                  fontSize: 14,
+                  fontSize: "clamp(13px, 1.1vw, 15px)",
                   color: INK_60,
                   lineHeight: 1.7,
                   margin: 0,
@@ -596,7 +605,7 @@ export default function Home() {
                 </p>
                 <p style={{
                   fontFamily: sans,
-                  fontSize: 14,
+                  fontSize: "clamp(13px, 1.1vw, 15px)",
                   color: INK_60,
                   lineHeight: 1.7,
                   margin: "0 0 8px",
@@ -624,11 +633,11 @@ export default function Home() {
           SECTION 4 — SCIENCE STRIP (dark bg)
           ══════════════════════════════════════════════════════════════════ */}
       <section id="science" style={{ background: BG_DARK }}>
-        <div style={{ ...contentWrap, paddingTop: 96, paddingBottom: 96 }}>
+        <div style={{ ...contentWrap, paddingTop: "clamp(64px, 8vw, 96px)", paddingBottom: "clamp(64px, 8vw, 96px)" }}>
           {/* Eyebrow */}
           <p style={{
             fontFamily: sans,
-            fontSize: 10,
+            fontSize: "clamp(10px, 0.9vw, 12px)",
             fontWeight: 500,
             textTransform: "uppercase",
             letterSpacing: "0.18em",
@@ -640,7 +649,7 @@ export default function Home() {
 
           <h2 style={{
             fontFamily: serif,
-            fontSize: 32,
+            fontSize: "clamp(28px, 3vw, 42px)",
             fontWeight: 400,
             lineHeight: 1.2,
             color: WHITE,
@@ -688,7 +697,7 @@ export default function Home() {
                 {/* Journal */}
                 <span style={{
                   fontFamily: sans,
-                  fontSize: 10,
+                  fontSize: "clamp(10px, 0.9vw, 12px)",
                   fontWeight: 500,
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
@@ -701,7 +710,7 @@ export default function Home() {
                 {/* Quote */}
                 <p style={{
                   fontFamily: serif,
-                  fontSize: 15,
+                  fontSize: "clamp(14px, 1.2vw, 17px)",
                   fontStyle: "italic",
                   lineHeight: 1.6,
                   color: "rgba(255,255,255,0.65)",
@@ -724,7 +733,7 @@ export default function Home() {
                 {/* Path tag */}
                 <span style={{
                   fontFamily: sans,
-                  fontSize: 10,
+                  fontSize: "clamp(10px, 0.9vw, 12px)",
                   fontWeight: 500,
                   letterSpacing: "0.06em",
                   color: ACCENT,
@@ -761,10 +770,10 @@ export default function Home() {
           SECTION 5 — APP SCREENSHOTS (cream bg)
           ══════════════════════════════════════════════════════════════════ */}
       <section style={{ background: BG_CREAM }}>
-        <div style={{ ...contentWrap, paddingTop: 96, paddingBottom: 96 }}>
+        <div style={{ ...contentWrap, paddingTop: "clamp(64px, 8vw, 96px)", paddingBottom: "clamp(64px, 8vw, 96px)" }}>
           <p style={{
             fontFamily: sans,
-            fontSize: 11,
+            fontSize: "clamp(10px, 0.9vw, 12px)",
             fontWeight: 500,
             textTransform: "uppercase",
             letterSpacing: "0.1em",
@@ -776,7 +785,7 @@ export default function Home() {
 
           <h2 style={{
             fontFamily: serif,
-            fontSize: 32,
+            fontSize: "clamp(28px, 3vw, 42px)",
             fontWeight: 400,
             lineHeight: 1.2,
             color: INK,
@@ -807,7 +816,7 @@ export default function Home() {
             <div>
               <p style={{
                 fontFamily: sans,
-                fontSize: 10,
+                fontSize: "clamp(10px, 0.9vw, 12px)",
                 fontWeight: 600,
                 textTransform: "uppercase",
                 letterSpacing: "0.1em",
@@ -851,7 +860,7 @@ export default function Home() {
             <div>
               <p style={{
                 fontFamily: sans,
-                fontSize: 10,
+                fontSize: "clamp(10px, 0.9vw, 12px)",
                 fontWeight: 600,
                 textTransform: "uppercase",
                 letterSpacing: "0.1em",
@@ -902,18 +911,30 @@ export default function Home() {
           SECTION 6 — TEAM (cream bg)
           ══════════════════════════════════════════════════════════════════ */}
       <section id="team" style={{ background: BG_CREAM }}>
-        <div style={{ ...contentWrap, paddingTop: 96, paddingBottom: 96 }}>
+        <div style={{ ...contentWrap, paddingTop: "clamp(64px, 8vw, 96px)", paddingBottom: "clamp(64px, 8vw, 96px)" }}>
           <p style={{
             fontFamily: sans,
-            fontSize: 11,
+            fontSize: "clamp(10px, 0.9vw, 12px)",
             fontWeight: 500,
             textTransform: "uppercase",
             letterSpacing: "0.1em",
             color: MUTED,
             margin: "0 0 16px",
           }}>
-            Built by real doctors. Not AI.
+            Our team
           </p>
+
+          <h2 style={{
+            fontFamily: serif,
+            fontSize: "clamp(28px, 3vw, 42px)",
+            fontWeight: 400,
+            lineHeight: 1.2,
+            color: INK,
+            margin: "0 0 40px",
+          }}>
+            Built by real doctors,{" "}
+            <em style={{ fontStyle: "italic", color: ACCENT_RAW }}>not algorithms.</em>
+          </h2>
 
           <div className="landing-team-grid" style={{
             display: "grid",
@@ -945,10 +966,10 @@ export default function Home() {
           SECTION 7 — TRANSPARENCY (dark bg)
           ══════════════════════════════════════════════════════════════════ */}
       <section style={{ background: BG_DARK }}>
-        <div style={{ ...contentWrap, paddingTop: 96, paddingBottom: 96 }}>
+        <div style={{ ...contentWrap, paddingTop: "clamp(64px, 8vw, 96px)", paddingBottom: "clamp(64px, 8vw, 96px)" }}>
           <p style={{
             fontFamily: sans,
-            fontSize: 10,
+            fontSize: "clamp(10px, 0.9vw, 12px)",
             fontWeight: 500,
             textTransform: "uppercase",
             letterSpacing: "0.18em",
@@ -960,7 +981,7 @@ export default function Home() {
 
           <h2 style={{
             fontFamily: serif,
-            fontSize: 32,
+            fontSize: "clamp(28px, 3vw, 42px)",
             fontWeight: 400,
             lineHeight: 1.2,
             color: WHITE,
@@ -983,7 +1004,7 @@ export default function Home() {
             <div style={{ background: BG_DARK2, padding: "32px 28px" }}>
               <p style={{
                 fontFamily: sans,
-                fontSize: 11,
+                fontSize: "clamp(10px, 0.9vw, 12px)",
                 fontWeight: 600,
                 textTransform: "uppercase",
                 letterSpacing: "0.1em",
@@ -1011,7 +1032,7 @@ export default function Home() {
             <div style={{ background: BG_DARK2, padding: "32px 28px" }}>
               <p style={{
                 fontFamily: sans,
-                fontSize: 11,
+                fontSize: "clamp(10px, 0.9vw, 12px)",
                 fontWeight: 600,
                 textTransform: "uppercase",
                 letterSpacing: "0.1em",
@@ -1039,7 +1060,7 @@ export default function Home() {
           {/* Footer note */}
           <p style={{
             fontFamily: serif,
-            fontSize: 15,
+            fontSize: "clamp(14px, 1.2vw, 17px)",
             fontStyle: "italic",
             color: WHITE_40,
             textAlign: "center",
@@ -1059,13 +1080,13 @@ export default function Home() {
       <section id="cta" style={{ background: BG_CREAM }}>
         <div style={{
           ...contentWrap,
-          paddingTop: 120,
-          paddingBottom: 80,
+          paddingTop: "clamp(64px, 8vw, 120px)",
+          paddingBottom: "clamp(64px, 8vw, 96px)",
           textAlign: "center",
         }}>
           <h2 style={{
             fontFamily: serif,
-            fontSize: "clamp(28px, 4vw, 44px)",
+            fontSize: "clamp(32px, 4vw, 52px)",
             fontWeight: 400,
             lineHeight: 1.15,
             letterSpacing: "-0.02em",

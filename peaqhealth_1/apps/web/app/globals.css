@@ -315,6 +315,35 @@ body {
   }
 }
 
+/* Hero image vignette */
+.hero-image-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 40%,
+    rgba(22, 21, 15, 0.5) 75%,
+    rgba(22, 21, 15, 0.85) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.hero-image-wrap::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40%;
+  background: linear-gradient(to bottom, transparent, rgba(22,21,15,0.7));
+  pointer-events: none;
+  z-index: 2;
+  border-radius: 0 0 12px 12px;
+}
+
 /* Science hook grid — stack on mobile */
 @media (max-width: 768px) {
   .science-hook-grid {
