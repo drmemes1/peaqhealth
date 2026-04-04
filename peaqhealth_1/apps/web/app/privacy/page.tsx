@@ -81,7 +81,7 @@ export default function PrivacyPage() {
         style={{ borderBottomColor: "var(--ink-12)" }}>
         <div className="mx-auto flex h-16 max-w-[820px] items-center justify-between px-6">
           <Link href="/">
-            <LogoSvg size={52} color="var(--ink)" />
+            <LogoSvg size={75} color="var(--ink)" />
           </Link>
           <Link href="/dashboard"
             className="font-body text-[12px] uppercase tracking-[0.08em]"

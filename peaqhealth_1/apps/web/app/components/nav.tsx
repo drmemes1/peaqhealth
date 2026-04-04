@@ -48,7 +48,7 @@ export function Nav({ cartCount = 0, onCartOpen }: NavProps) {
       <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-6">
         {/* Logo */}
         <Link href="/dashboard">
-          <LogoSvg size={52} color="var(--ink)" />
+          <LogoSvg size={75} color="var(--ink)" />
         </Link>
 
         {/* Center nav links */}
