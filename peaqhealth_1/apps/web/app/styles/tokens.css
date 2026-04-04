@@ -1,0 +1,46 @@
+/* ─── Design system tokens ─── */
+
+:root {
+  /* Status */
+  --status-optimal-bg: #EAF3DE;
+  --status-optimal-border: #3B6D11;
+  --status-optimal-text: #27500A;
+
+  --status-good-bg: #E1F5EE;
+  --status-good-border: #0F6E56;
+  --status-good-text: #085041;
+
+  --status-watch-bg: #FAEEDA;
+  --status-watch-border: #854F0B;
+  --status-watch-text: #633806;
+
+  --status-attention-bg: #FCEBEB;
+  --status-attention-border: #A32D2D;
+  --status-attention-text: #791F1F;
+
+  /* Panel identity */
+  --panel-sleep-bg: #E6F1FB;
+  --panel-sleep-border: #185FA5;
+  --panel-sleep-text: #0C447C;
+
+  --panel-blood-bg: #FCEBEB;
+  --panel-blood-border: #A32D2D;
+  --panel-blood-text: #791F1F;
+
+  --panel-oral-bg: #EAF3DE;
+  --panel-oral-border: #3B6D11;
+  --panel-oral-text: #27500A;
+
+  /* Brand accent */
+  --color-accent-gold: #C49A3C;
+
+  /* Spacing */
+  --spacing-section: 64px;
+  --spacing-component: 40px;
+  --spacing-element: 24px;
+  --spacing-inset: 16px;
+  --spacing-tight: 8px;
+
+  /* Layout */
+  --layout-max-width: 760px;
+}
