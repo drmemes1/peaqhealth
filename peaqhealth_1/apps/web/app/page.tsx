@@ -65,7 +65,7 @@ export default function Home() {
             src="/images/peaq_logo_transparent.png"
             alt="Peaq Health"
             style={{
-              height: 68,
+              height: 75,
               width: "auto",
               filter: "brightness(0) invert(1)",
             }}
