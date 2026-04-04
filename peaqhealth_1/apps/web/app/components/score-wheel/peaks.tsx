@@ -85,14 +85,15 @@ export function PeaksVisualization({
     return () => timers.forEach(clearTimeout)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Cross-panel label
+  // Cross-panel geometry
   const absModifier = Math.abs(netModifier)
   const crossLabel = netModifier > 0 ? `+${absModifier}` : `−${absModifier}`
+  const crossH = (Math.min(absModifier, 10) / 10) * (MAX_HEIGHT * 0.28)
 
   return (
     <div style={{ width: "100%", position: "relative" }}>
       <svg
-        viewBox="0 0 680 380"
+        viewBox="0 0 680 400"
         preserveAspectRatio="xMidYMid meet"
         style={{ width: "100%", height: "auto", display: "block" }}
         aria-label="Score breakdown peaks"
@@ -196,7 +197,7 @@ export function PeaksVisualization({
           )
         })}
 
-        {/* Cross-panel — wide edge on baseline, tip points down */}
+        {/* Cross-panel — base ON baseline, direction driven by sign */}
         {netModifier !== 0 && (
           <g
             ref={cpRef}
@@ -206,34 +207,45 @@ export function PeaksVisualization({
             onMouseLeave={e => { (e.currentTarget as SVGGElement).style.opacity = "1" }}
           >
             {/* Touch target */}
-            <rect x={505} y={BL - 24} width={80} height={120} fill="transparent" />
+            <rect x={CP_CX - 35} y={BL - 30} width={70} height={120} fill="transparent" />
 
-            {/* Label above baseline */}
+            {netModifier < 0 ? (
+              <>
+                {/* NEGATIVE — inverted, wide edge ON baseline, point goes DOWN */}
+                <polygon
+                  points={`${CP_CX - 23},${BL} ${CP_CX + 23},${BL} ${CP_CX},${BL + crossH}`}
+                  fill="url(#pviz-cross)" stroke="#C49A3C" strokeWidth={0.9} strokeDasharray="4 3"
+                />
+                <circle cx={CP_CX} cy={BL + crossH} r={3.5} fill="#C49A3C" />
+                <text
+                  x={CP_CX} y={BL - 12} textAnchor="middle"
+                  fontFamily="'Cormorant Garamond', Georgia, serif"
+                  fontSize={16} fill="#C49A3C"
+                >
+                  {crossLabel}
+                </text>
+              </>
+            ) : (
+              <>
+                {/* POSITIVE — normal upward, base ON baseline, point goes UP */}
+                <polygon
+                  points={`${CP_CX - 23},${BL} ${CP_CX + 23},${BL} ${CP_CX},${BL - crossH}`}
+                  fill="url(#pviz-cross)" stroke="#C49A3C" strokeWidth={0.9} strokeDasharray="4 3"
+                />
+                <circle cx={CP_CX} cy={BL - crossH} r={3.5} fill="#C49A3C" />
+                <text
+                  x={CP_CX} y={BL - crossH - 12} textAnchor="middle"
+                  fontFamily="'Cormorant Garamond', Georgia, serif"
+                  fontSize={16} fill="#C49A3C"
+                >
+                  {crossLabel}
+                </text>
+              </>
+            )}
+
+            {/* Labels below baseline */}
             <text
-              x={CP_CX} y={BL - 12}
-              textAnchor="middle"
-              fontFamily="'Cormorant Garamond', Georgia, serif"
-              fontSize={15} fill="#C49A3C"
-            >
-              {crossLabel}
-            </text>
-
-            {/* Wide edge ON baseline, tip points down */}
-            <polygon
-              points={`513,${BL} 577,${BL} 545,${BL + 55}`}
-              fill="url(#pviz-cross)"
-              stroke="#C49A3C"
-              strokeWidth={0.9}
-              strokeDasharray="4 3"
-              strokeLinejoin="round"
-            />
-
-            {/* Dot on baseline center */}
-            <circle cx={CP_CX} cy={BL} r={3.5} fill="#C49A3C" />
-
-            {/* Labels below tip */}
-            <text
-              x={CP_CX} y={BL + 68}
+              x={CP_CX} y={netModifier < 0 ? BL + crossH + 18 : BL + 18}
               textAnchor="middle"
               fontFamily="var(--font-body, 'Instrument Sans', sans-serif)"
               fontSize={10} letterSpacing="1.5"
@@ -242,7 +254,7 @@ export function PeaksVisualization({
               CROSS-PANEL
             </text>
             <text
-              x={CP_CX} y={BL + 80}
+              x={CP_CX} y={netModifier < 0 ? BL + crossH + 30 : BL + 30}
               textAnchor="middle"
               fontFamily="var(--font-body, 'Instrument Sans', sans-serif)"
               fontSize={9}
