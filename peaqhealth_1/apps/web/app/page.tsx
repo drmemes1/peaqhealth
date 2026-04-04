@@ -47,33 +47,32 @@ export default function Home() {
         position: "sticky",
         top: 0,
         zIndex: 50,
-        background: "rgba(22,21,15,0.85)",
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
+        background: "rgba(22,21,15,0.92)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
         borderBottom: `1px solid ${BORDER_DARK}`,
       }}>
         <div style={{
           maxWidth: 1200,
           margin: "0 auto",
-          padding: "0 48px",
+          padding: "20px 48px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          height: 64,
         }}>
           {/* Logo */}
           <img
             src="/images/peaq_logo_transparent.png"
             alt="Peaq Health"
             style={{
-              height: 36,
+              height: 32,
               width: "auto",
               filter: "brightness(0) invert(1)",
             }}
           />
 
           {/* Center links */}
-          <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 36 }}>
             {([
               { label: "Science", href: "#science" },
               { label: "How it works", href: "#how-it-works" },
@@ -84,10 +83,10 @@ export default function Home() {
                 href={link.href}
                 style={{
                   fontFamily: sans,
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: 500,
                   textTransform: "uppercase",
-                  letterSpacing: "0.08em",
+                  letterSpacing: "0.12em",
                   color: "rgba(255,255,255,0.4)",
                   textDecoration: "none",
                 }}
@@ -102,15 +101,15 @@ export default function Home() {
             href="#cta"
             style={{
               fontFamily: sans,
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: 500,
               textTransform: "uppercase",
               letterSpacing: "0.08em",
               color: ACCENT,
               textDecoration: "none",
               border: `1px solid ${ACCENT_RAW}`,
-              borderRadius: 999,
-              padding: "8px 20px",
+              borderRadius: 4,
+              padding: "10px 22px",
             }}
           >
             Join waitlist &rarr;
@@ -124,15 +123,15 @@ export default function Home() {
       <section style={{ background: BG_DARK }}>
         <div className="landing-hero" style={{
           ...contentWrap,
-          display: "grid",
-          gridTemplateColumns: "1.5fr 1fr",
-          gap: 48,
-          alignItems: "center",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-start",
+          maxWidth: 720,
           paddingTop: "clamp(72px, 10vw, 120px)",
           paddingBottom: "clamp(72px, 10vw, 120px)",
           minHeight: "70vh",
+          justifyContent: "center",
         }}>
-          {/* Left column */}
           <div>
             {/* Eyebrow */}
             <p style={{
@@ -220,34 +219,6 @@ export default function Home() {
             }}>
               100+ species &middot; 40+ biomarkers &middot; 29 cited studies &middot; 1 score
             </p>
-          </div>
-
-          {/* Right column — hero image */}
-          <div style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-          }}>
-            <div className="hero-image-wrap" style={{
-              position: "relative",
-              borderRadius: 12,
-              overflow: "hidden",
-              aspectRatio: "1 / 1",
-              maxWidth: 480,
-              width: "100%",
-            }}>
-              <img
-                src="/images/hero-peaq.png"
-                alt="Peaq Health dashboard"
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  objectPosition: "center top",
-                  display: "block",
-                }}
-              />
-            </div>
           </div>
         </div>
       </section>
