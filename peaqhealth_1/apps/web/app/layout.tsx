@@ -3,6 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from "./components/theme-provider";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://peaqhealth.me"),
   title: "Peaq Health — Reach for the peaq.",
   description:
     "Sleep, blood, and oral microbiome — one score, updated nightly. Launching 2026.",
@@ -11,6 +12,26 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "Peaq",
+  },
+  openGraph: {
+    title: "Peaq — Three signals. One measure of resilience.",
+    description:
+      "Oral microbiome. Blood biomarkers. Nightly HRV. Measured together for the first time.",
+    url: "https://peaqhealth.me",
+    siteName: "Peaq Health",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Peaq — Three signals. One measure of resilience.",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/og-image.png"],
   },
 };
 
