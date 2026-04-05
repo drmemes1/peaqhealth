@@ -251,7 +251,7 @@ export default function Home() {
             display: "flex",
             alignItems: "center",
             gap: 12,
-            marginBottom: 64,
+            marginBottom: 32,
             animationDelay: "400ms",
           }}>
             <a
@@ -292,61 +292,11 @@ export default function Home() {
             </a>
           </div>
 
-          {/* Quote card */}
-          <div className="fade-up" style={{
-            maxWidth: 560,
-            padding: "24px 32px",
-            background: "#fff",
-            border: `0.5px solid ${BORDER_LIGHT}`,
-            borderRadius: 12,
-            position: "relative",
-            textAlign: "left",
-            marginBottom: 32,
-            animationDelay: "550ms",
-          }}>
-            <span style={{
-              fontFamily: serif,
-              fontSize: 48,
-              fontWeight: 300,
-              color: ACCENT_RAW,
-              lineHeight: "0.6",
-              display: "block",
-              marginBottom: 12,
-              opacity: 0.6,
-            }}>
-              &ldquo;
-            </span>
-            <p style={{
-              fontFamily: serif,
-              fontSize: 18,
-              fontWeight: 400,
-              fontStyle: "italic",
-              color: INK,
-              lineHeight: 1.55,
-              margin: "0 0 16px",
-            }}>
-              Nobody has ever connected my mouth, my blood, and my sleep in the
-              same conversation. Each one alone felt manageable. Together they
-              felt like something I actually needed to{" "}
-              <em style={{ fontStyle: "normal", color: ACCENT_RAW, fontWeight: 500 }}>act on.</em>
-            </p>
-            <span style={{
-              fontFamily: sans,
-              fontSize: 10,
-              letterSpacing: "1px",
-              textTransform: "uppercase",
-              color: "#bbb",
-            }}>
-              Peaq user &middot; 43 &middot; Toronto
-            </span>
-          </div>
-
-          {/* Panel strip */}
           {/* Animated panel strip */}
           <div className="fade-up" style={{
             width: "100%",
             maxWidth: 640,
-            animationDelay: "700ms",
+            animationDelay: "550ms",
           }}>
             <LandingPanelStrip />
           </div>
