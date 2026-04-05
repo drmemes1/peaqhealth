@@ -1,4 +1,5 @@
 import { WaitlistForm } from "./components/waitlist-form"
+import { LandingPanelStrip } from "./components/landing-panel-strip"
 
 /* ─── Design tokens ───────────────────────────────────────────────────────── */
 
@@ -341,81 +342,13 @@ export default function Home() {
           </div>
 
           {/* Panel strip */}
+          {/* Animated panel strip */}
           <div className="fade-up" style={{
             width: "100%",
             maxWidth: 640,
             animationDelay: "700ms",
           }}>
-            <div style={{
-              display: "flex",
-              gap: 1,
-              background: BORDER_LIGHT,
-              borderRadius: 12,
-              overflow: "hidden",
-            }}>
-              {/* TODO: replace with real user data once authenticated
-                  These are sample scores — not global averages */}
-              {([
-                { color: "var(--sleep-c)", label: "Sleep", score: 24, max: 30, pct: 80 },
-                { color: "var(--blood-c)", label: "Blood", score: 34, max: 40, pct: 85 },
-                { color: "var(--oral-c)", label: "Oral", score: 10, max: 30, pct: 33 },
-              ] as const).map(p => (
-                <div key={p.label} style={{
-                  flex: 1,
-                  background: BG_CREAM,
-                  padding: "14px 16px",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: 6,
-                }}>
-                  <span style={{
-                    width: 6, height: 6, borderRadius: "50%",
-                    background: p.color,
-                  }} />
-                  <span style={{
-                    fontFamily: sans,
-                    fontSize: 8,
-                    letterSpacing: "2px",
-                    textTransform: "uppercase",
-                    color: "#bbb",
-                  }}>
-                    {p.label}
-                  </span>
-                  <span style={{
-                    fontFamily: serif,
-                    fontSize: 26,
-                    fontWeight: 300,
-                    lineHeight: 1,
-                    color: p.color,
-                  }}>
-                    {p.score}
-                  </span>
-                  <span style={{ fontFamily: sans, fontSize: 9, color: "#bbb" }}>/{p.max}</span>
-                  <div style={{
-                    width: "100%", height: 2,
-                    background: "rgba(0,0,0,0.06)", borderRadius: 1,
-                  }}>
-                    <div style={{
-                      height: 2, borderRadius: 1,
-                      width: `${p.pct}%`,
-                      background: p.color,
-                    }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <p style={{
-              textAlign: "center",
-              marginTop: 12,
-              fontFamily: sans,
-              fontSize: 9,
-              letterSpacing: "1.5px",
-              textTransform: "uppercase",
-              color: "#bbb",
-            }}>
-              Sample &middot; Your numbers will be different
-            </p>
+            <LandingPanelStrip />
           </div>
         </div>
       </section>
