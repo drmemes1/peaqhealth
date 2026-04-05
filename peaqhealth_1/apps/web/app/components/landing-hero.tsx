@@ -52,27 +52,36 @@ export function LandingHero() {
           </a>
         </div>
 
-        {/* Wearable toggle */}
-        <div className="fade-up" style={{ animationDelay: "450ms", marginBottom: 28 }}>
-          <button
-            className="wearable-toggle"
-            onClick={() => setWearable(w => !w)}
-            aria-label={wearable ? "Switch to no wearable" : "Switch to wearable"}
-          >
-            <span className={`toggle-label ${wearable ? "active" : ""}`}>
-              I have a wearable
-            </span>
-            <span className="toggle-track">
-              <span className="toggle-knob" />
-            </span>
-            <span className={`toggle-label ${!wearable ? "active" : ""}`}>
-              No wearable
-            </span>
-          </button>
-        </div>
+        {/* Toggle + connector + panel strip — left-aligned system */}
+        <div className="fade-up toggle-strip-wrapper" style={{ animationDelay: "450ms" }}>
+          {/* Toggle row — left-aligned with Sleep chip */}
+          <div className="toggle-row">
+            <button
+              className="wearable-toggle"
+              onClick={() => setWearable(w => !w)}
+              aria-label={wearable ? "Switch to no wearable" : "Switch to wearable"}
+            >
+              <span className={`toggle-label ${wearable ? "active" : ""}`}>
+                I have a wearable
+              </span>
+              <span className="toggle-track">
+                <span className="toggle-knob" />
+              </span>
+              <span className={`toggle-label ${!wearable ? "active" : ""}`}>
+                No wearable
+              </span>
+            </button>
+          </div>
 
-        {/* Panel strip */}
-        <div className="fade-up" style={{ width: "100%", maxWidth: 640, animationDelay: "550ms" }}>
+          {/* Dashed connector line — toggle to Sleep chip */}
+          <div className="toggle-connector" />
+
+          {/* "Affected by toggle" label above Sleep */}
+          <div className="toggle-affected-row">
+            <span className="toggle-affected-label">Affected by toggle</span>
+          </div>
+
+          {/* Panel strip */}
           <LandingPanelStrip wearableOff={!wearable} />
         </div>
 
@@ -261,6 +270,62 @@ export function LandingHero() {
         /* Knob position based on parent section state */
         .landing-hero-section[data-wearable="on"] .toggle-knob { left: 2px; }
         .landing-hero-section[data-wearable="off"] .toggle-knob { left: 18px; }
+
+        /* ── Toggle + strip wrapper ─────────────────────────────── */
+        .toggle-strip-wrapper {
+          width: 100%;
+          max-width: 640px;
+          display: flex;
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        /* Toggle row — left-aligned with first chip (Sleep) */
+        .toggle-row {
+          display: flex;
+          justify-content: flex-start;
+          /* Offset to align with the center of the first 1/3 chip */
+          padding-left: calc(100% / 6 - 70px);
+          margin-bottom: 0;
+        }
+
+        /* Dashed connector line */
+        .toggle-connector {
+          width: 1px;
+          height: 24px;
+          border-left: 1px dashed rgba(0,0,0,0.12);
+          /* Center under the first chip: 1/6 of container width */
+          margin-left: calc(100% / 6);
+          transition: border-color 400ms ease 200ms;
+        }
+        .landing-hero-section[data-wearable="off"] .toggle-connector {
+          border-left-color: rgba(255,255,255,0.08);
+        }
+
+        /* "Affected by toggle" label */
+        .toggle-affected-row {
+          display: flex;
+          justify-content: flex-start;
+          padding-left: calc(100% / 6 - 36px);
+          margin-bottom: 6px;
+        }
+
+        .toggle-affected-label {
+          font-family: ${sans};
+          font-size: 8px;
+          letter-spacing: 1.5px;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.3);
+          opacity: 0;
+          transform: translateY(2px);
+          transition: opacity 250ms ease, transform 250ms ease;
+          pointer-events: none;
+        }
+        .landing-hero-section[data-wearable="off"] .toggle-affected-label {
+          opacity: 1;
+          transform: translateY(0);
+          transition-delay: 200ms;
+        }
 
         /* ── No-wearable explainer ──────────────────────────────── */
         .hero-no-wearable-note {
