@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "../../lib/supabase/client"
 import { WearableManager, type JunctionConnection } from "../components/wearable-manager"
-import { useTheme } from "../components/theme-provider"
+import { AuthLayout } from "../components/auth-layout"
 
 interface Props {
   userId: string
@@ -17,6 +17,7 @@ interface Props {
   whoopLastSynced: string | null
   whoopNeedsReconnect?: boolean
   junctionConnections?: JunctionConnection[]
+  initials: string
 }
 
 // ─── Small UI primitives ─────────────────────────────────────────────────────
@@ -85,10 +86,9 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 
 // ─── Main settings component ─────────────────────────────────────────────────
 
-export function SettingsClient({ userId, email, firstName: initialFirst, lastName: initialLast, createdAt, whoopConnected: initialWhoopConnected, whoopLastSynced, whoopNeedsReconnect, junctionConnections: initialJunctionConnections = [] }: Props) {
+export function SettingsClient({ userId, email, firstName: initialFirst, lastName: initialLast, createdAt, whoopConnected: initialWhoopConnected, whoopLastSynced, whoopNeedsReconnect, junctionConnections: initialJunctionConnections = [], initials: serverInitials }: Props) {
   const router = useRouter()
   const supabase = createClient()
-  const { setTheme, resolvedTheme } = useTheme()
 
   const [firstName, setFirstName] = useState(initialFirst)
   const [lastName, setLastName] = useState(initialLast)
@@ -173,20 +173,8 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
+    <AuthLayout pageId="settings" initials={serverInitials}>
     <div className="mx-auto max-w-[660px] px-6 py-12">
-
-      {/* Page header */}
-      <div className="mb-10 fade-up">
-        <span className="font-body text-[10px] uppercase tracking-[0.12em]" style={{ color: "var(--ink-30)" }}>
-          Account
-        </span>
-        <h1
-          className="mt-1.5 font-display text-[42px] font-light leading-none"
-          style={{ color: "var(--ink)" }}
-        >
-          Settings
-        </h1>
-      </div>
 
       {/* ── Profile ─────────────────────────────────────────────────── */}
       <section className="mb-8 fade-up" style={{ animationDelay: "0.04s" }}>
@@ -428,22 +416,6 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
         </div>
       </section>
 
-      {/* ── Appearance ─────────────────────────────────────────────── */}
-      <section className="mb-8 fade-up" style={{ animationDelay: "0.18s" }}>
-        <SectionLabel>Appearance</SectionLabel>
-        <div className="overflow-hidden rounded-lg p-5" style={{ border: "0.5px solid var(--ink-12)", background: "var(--warm-50)" }}>
-          <p className="font-body text-sm" style={{ color: "var(--ink)" }}>Theme</p>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <p className="font-body text-xs" style={{ color: "var(--ink-60)", margin: 0 }}>
-              Light mode
-            </p>
-            <span className="font-body text-xs" style={{ color: "var(--ink-30)" }}>
-              Dark mode coming soon
-            </span>
-          </div>
-        </div>
-      </section>
-
       {/* ── Danger zone ─────────────────────────────────────────────── */}
       <section className="mb-20 fade-up" style={{ animationDelay: "0.2s" }}>
         <SectionLabel danger>Danger zone</SectionLabel>
@@ -503,5 +475,6 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
       </section>
 
     </div>
+    </AuthLayout>
   )
 }

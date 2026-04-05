@@ -15,17 +15,22 @@ export default async function SettingsPage() {
     .filter(c => c.provider !== "whoop")
     .map(c => ({ provider: c.provider, lastSynced: (c.last_synced_at as string | null) ?? null }))
 
+  const first = profile?.first_name ?? ""
+  const last  = profile?.last_name ?? ""
+  const initials = [first[0], last[0]].filter(Boolean).join("").toUpperCase() || user!.email?.[0]?.toUpperCase() || "?"
+
   return (
     <SettingsClient
       userId={user!.id}
       email={user!.email ?? ""}
-      firstName={profile?.first_name ?? ""}
-      lastName={profile?.last_name ?? ""}
+      firstName={first}
+      lastName={last}
       createdAt={user!.created_at}
       whoopConnected={!!whoopConn}
       whoopLastSynced={(whoopConn?.last_synced_at as string | null) ?? null}
       whoopNeedsReconnect={(whoopConn?.needs_reconnect as boolean | null) ?? false}
       junctionConnections={junctionConns}
+      initials={initials}
     />
   )
 }
