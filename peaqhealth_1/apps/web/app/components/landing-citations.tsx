@@ -117,7 +117,7 @@ export function LandingCitations({
                 gap: 48,
                 flexWrap: "wrap",
                 cursor: "pointer",
-                transition: "all 0.25s ease",
+                transition: "padding 250ms ease, background 250ms ease",
                 minHeight: 44,
               }}
             >
@@ -158,7 +158,7 @@ export function LandingCitations({
                       border: `1px solid ${c.tagColor}${isActive ? "" : "30"}`,
                       background: isActive ? `rgba(${hexToRgb(c.tagColor)}, 0.06)` : "transparent",
                       borderRadius: 3, whiteSpace: "nowrap",
-                      transition: "all 0.2s ease",
+                      transition: "background 150ms ease, border-color 150ms ease",
                     }}
                   >
                     {c.tag}

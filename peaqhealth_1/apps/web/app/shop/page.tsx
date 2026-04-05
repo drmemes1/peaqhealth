@@ -188,7 +188,7 @@ function ProductCard({ product }: { product: Product }) {
 
   return (
     <div
-      className="flex flex-col transition-all duration-150"
+      className="flex flex-col transition-colors duration-150"
       style={{ border: "0.5px solid var(--ink-12)", borderRadius: 4, background: "var(--white)" }}
       onMouseEnter={e => ((e.currentTarget as HTMLElement).style.borderColor = "var(--ink-30)")}
       onMouseLeave={e => ((e.currentTarget as HTMLElement).style.borderColor = "var(--ink-12)")}
@@ -555,7 +555,7 @@ export default function ShopPage() {
               <button
                 key={cat}
                 onClick={() => setCategory(cat)}
-                className="font-body text-[10px] uppercase tracking-[0.08em] px-4 py-2 transition-all duration-150"
+                className="font-body text-[10px] uppercase tracking-[0.08em] px-4 py-2 transition-colors duration-150"
                 style={{
                   background: category === cat ? "var(--ink)" : "var(--warm-50)",
                   color: category === cat ? "var(--white)" : "var(--ink-60)",
