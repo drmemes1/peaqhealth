@@ -43,12 +43,18 @@ function useOscillate(min: number, max: number, cycleSec: number) {
   return value
 }
 
-function AnimatedChip({ panel, dimmed }: { panel: PanelChip; dimmed: boolean }) {
+function AnimatedChip({ panel, dimmed, onToggle }: {
+  panel: PanelChip
+  dimmed: boolean
+  onToggle?: () => void
+}) {
   const score = useOscillate(panel.scoreMin, panel.scoreMax, panel.cycleSec)
   const pct = useOscillate(panel.pctMin, panel.pctMax, panel.cycleSec)
 
   const chipBg = dimmed ? "rgba(255,255,255,0.04)" : "var(--off-white, #F6F4EF)"
-  const isSleepDimmed = dimmed && panel.label === "Sleep"
+  const isSleep = panel.label === "Sleep"
+  const isSleepDimmed = dimmed && isSleep
+  const showToggle = isSleep && onToggle
 
   return (
     <div style={{
@@ -110,6 +116,55 @@ function AnimatedChip({ panel, dimmed }: { panel: PanelChip; dimmed: boolean }) 
           transition: isSleepDimmed ? "width 400ms ease 200ms" : "width 100ms linear",
         }} />
       </div>
+
+      {/* Inline on/off toggle — only in Sleep chip */}
+      {showToggle && (
+        <button
+          onClick={onToggle}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            marginTop: 4,
+            padding: "3px 8px",
+            borderRadius: 999,
+            border: "none",
+            background: dimmed ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
+            cursor: "pointer",
+            transition: "background 400ms ease 200ms",
+          }}
+        >
+          {/* Track */}
+          <span style={{
+            width: 22, height: 12,
+            borderRadius: 6,
+            background: dimmed ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)",
+            position: "relative",
+            flexShrink: 0,
+            transition: "background 250ms ease",
+          }}>
+            <span style={{
+              position: "absolute",
+              top: 2,
+              left: dimmed ? 2 : 12,
+              width: 8, height: 8,
+              borderRadius: 4,
+              background: dimmed ? "rgba(255,255,255,0.3)" : "#C49A3C",
+              transition: "left 250ms cubic-bezier(0.4,0.0,0.2,1), background 250ms ease",
+            }} />
+          </span>
+          <span style={{
+            fontFamily: sans,
+            fontSize: 7,
+            letterSpacing: "1px",
+            textTransform: "uppercase",
+            color: dimmed ? "rgba(255,255,255,0.3)" : "#bbb",
+            transition: "color 400ms ease 200ms",
+          }}>
+            {dimmed ? "Off" : "On"}
+          </span>
+        </button>
+      )}
     </div>
   )
 }
@@ -124,7 +179,7 @@ function easeInOut(t: number) {
   return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t
 }
 
-export function LandingPanelStrip({ wearableOff = false }: { wearableOff?: boolean }) {
+export function LandingPanelStrip({ wearableOff = false, onToggle }: { wearableOff?: boolean; onToggle?: () => void }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const paused = useRef(false)
   const resumeTimer = useRef<ReturnType<typeof setTimeout>>(null)
@@ -233,7 +288,12 @@ export function LandingPanelStrip({ wearableOff = false }: { wearableOff?: boole
         {/* TODO: replace with real user data once authenticated
             These are sample scores — not global averages */}
         {PANELS.map(p => (
-          <AnimatedChip key={p.label} panel={p} dimmed={wearableOff} />
+          <AnimatedChip
+            key={p.label}
+            panel={p}
+            dimmed={wearableOff}
+            onToggle={p.label === "Sleep" ? onToggle : undefined}
+          />
         ))}
       </div>
       <p style={{
