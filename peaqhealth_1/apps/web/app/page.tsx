@@ -353,6 +353,8 @@ export default function Home() {
               borderRadius: 12,
               overflow: "hidden",
             }}>
+              {/* TODO: replace with real user data once authenticated
+                  These are sample scores — not global averages */}
               {([
                 { color: "var(--sleep-c)", label: "Sleep", score: 24, max: 30, pct: 80 },
                 { color: "var(--blood-c)", label: "Blood", score: 34, max: 40, pct: 85 },

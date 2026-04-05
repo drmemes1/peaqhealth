@@ -1,7 +1,5 @@
 "use client"
 
-import { useState } from "react"
-
 const serif = "'Cormorant Garamond', Georgia, serif"
 const sans  = "'Instrument Sans', system-ui, sans-serif"
 
@@ -31,6 +29,7 @@ interface InterruptCardProps {
   modifierLabel: string
   modifierPanels: string
   citation: string
+  onDismiss?: () => void
 }
 
 const PANEL_COLORS: Record<string, string> = {
@@ -59,10 +58,8 @@ export function InterruptCard({
   modifierLabel,
   modifierPanels,
   citation,
+  onDismiss,
 }: InterruptCardProps) {
-  const [dismissed, setDismissed] = useState(false)
-
-  if (dismissed) return null
 
   return (
     <div style={{
@@ -104,7 +101,7 @@ export function InterruptCard({
           Your data flagged something
         </span>
         <button
-          onClick={() => setDismissed(true)}
+          onClick={() => onDismiss?.()}
           style={{
             fontFamily: sans,
             fontSize: 9, letterSpacing: "1px", textTransform: "uppercase",

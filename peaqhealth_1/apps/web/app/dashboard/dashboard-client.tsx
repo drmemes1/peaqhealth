@@ -7,6 +7,7 @@ import { ScoreWheel, type ScoreWheelProps } from "../components/score-wheel"
 import { ScoreHistoryChart } from "../components/score-history-chart"
 import { PushNotificationPrompt } from "../components/push-notification-prompt"
 import { IOSInstallBanner } from "../components/ios-install-banner"
+import { InterruptCard } from "../components/interrupt-card"
 
 interface LabHistoryPoint {
   locked_at:       string
@@ -97,6 +98,36 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
     breakdown: liveBreakdown,
     isSyncing,
   }
+
+  // ── Interrupt card: show when modifier_total < 0 ──────────────────────────
+  const modTotal = props.modifier_total ?? 0
+  const modifiers = props.modifiers_applied ?? []
+  const penalties = modifiers.filter(m => m.direction === "penalty")
+  const showInterrupt = modTotal < 0 && penalties.length > 0
+
+  // Delayed appearance — let peaks draw first (800ms)
+  const [interruptReady, setInterruptReady] = useState(false)
+  useEffect(() => {
+    if (!showInterrupt) return
+    const t = setTimeout(() => setInterruptReady(true), 800)
+    return () => clearTimeout(t)
+  }, [showInterrupt])
+
+  // Persist dismissal per modifier fingerprint — re-show only when modifiers change
+  const modFingerprint = penalties.map(m => m.id).sort().join(",")
+  const [interruptDismissed, setInterruptDismissed] = useState(() => {
+    if (typeof window === "undefined") return false
+    return localStorage.getItem("peaq_interrupt_dismissed") === modFingerprint
+  })
+
+  const handleInterruptDismiss = () => {
+    setInterruptDismissed(true)
+    localStorage.setItem("peaq_interrupt_dismissed", modFingerprint)
+  }
+
+  // Build the primary penalty for the interrupt card
+  const primaryPenalty = penalties[0]
+  const basePRI = liveScore - modTotal
 
   return (
     <div className="min-h-svh" style={{ background: "#F6F4EF" }}>
@@ -191,6 +222,46 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
 
         <PushNotificationPrompt />
         <ScoreWheel {...liveProps} />
+
+        {/* CROSS-PANEL INTERRUPT — fires when modifier_total < 0 */}
+        {showInterrupt && interruptReady && !interruptDismissed && primaryPenalty && (
+          <div style={{ marginTop: 24 }}>
+            <InterruptCard
+              headline={
+                primaryPenalty.panels.length >= 3
+                  ? "Your mouth, your blood, and your sleep"
+                  : `Your ${primaryPenalty.panels.join(" and your ")}`
+              }
+              headlineEmphasis="are telling the same story."
+              subtitle={`${penalties.length} cross-panel signal${penalties.length > 1 ? "s" : ""} detected. ${
+                penalties.length > 1
+                  ? "These patterns are only visible when panels are measured together."
+                  : "This pattern is only visible when panels are measured together."
+              }`}
+              signals={penalties.flatMap(p =>
+                p.panels.map(panel => ({
+                  panel: panel as "sleep" | "blood" | "oral",
+                  label: p.label,
+                  detail: p.panels.join(" + "),
+                  value: p.direction === "penalty" ? `\u2212${p.points}` : `+${p.points}`,
+                  unit: "pts",
+                  status: (p.direction === "penalty" ? "Attention" : "Good") as "Attention" | "Good",
+                })).slice(0, 1)
+              )}
+              connectors={penalties.slice(0, -1).map(p => ({
+                text: p.rationale,
+              }))}
+              insight={`<strong>What this means:</strong> ${penalties.map(p => p.rationale).join(" ")}`}
+              basePRI={basePRI}
+              finalPRI={liveScore}
+              modifierPoints={modTotal}
+              modifierLabel={penalties.map(p => p.label).join(" + ")}
+              modifierPanels={[...new Set(penalties.flatMap(p => p.panels))].map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(" + ")}
+              citation="Based on cross-panel modifier logic. Not a diagnosis. Share with your clinician."
+              onDismiss={handleInterruptDismiss}
+            />
+          </div>
+        )}
 
         {/* PROGRESS CHART — only shown when 2+ history entries exist */}
         {labHistory.length >= 2 && (
