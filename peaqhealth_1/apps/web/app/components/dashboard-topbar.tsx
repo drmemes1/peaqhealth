@@ -37,6 +37,8 @@ export function DashboardTopbar({ firstName, lastSyncAt, wearableProvider, onSyn
       justifyContent: "space-between",
       marginLeft: 62,
       flexShrink: 0,
+      animation: "topbarIn 250ms ease both",
+      animationDelay: "50ms",
     }}>
       {/* Left */}
       <div>

@@ -263,6 +263,8 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
             borderBottom: "0.5px solid rgba(0,0,0,0.06)",
             flexShrink: 0,
             background: "#fff",
+            animation: "rsidebarIn 400ms ease both",
+            animationDelay: "200ms",
           }}>
             <div style={{
               fontFamily: sans, fontSize: 9,
@@ -311,6 +313,8 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
             overflowY: "auto",
             background: "#16150F",
             padding: 16,
+            animation: "rsidebarIn 400ms ease both",
+            animationDelay: "300ms",
           }}>
             <div style={{
               fontFamily: sans, fontSize: 9,

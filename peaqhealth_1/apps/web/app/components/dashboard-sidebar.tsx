@@ -97,7 +97,7 @@ export function DashboardSidebar({ initials }: { initials: string }) {
       />
 
       {/* Main icons */}
-      {ICONS.map(item => {
+      {ICONS.map((item, i) => {
         const active = item.href === "/dashboard"
           ? pathname === "/dashboard"
           : pathname.startsWith(item.href)
@@ -117,6 +117,8 @@ export function DashboardSidebar({ initials }: { initials: string }) {
               background: active ? "rgba(196,154,60,0.12)" : "transparent",
               transition: "background 150ms ease, color 150ms ease",
               textDecoration: "none",
+              animation: "sidebarIconIn 250ms ease both",
+              animationDelay: `${i * 60}ms`,
             }}
           >
             {item.icon}
@@ -142,6 +144,8 @@ export function DashboardSidebar({ initials }: { initials: string }) {
           background: pathname.startsWith("/settings") ? "rgba(196,154,60,0.12)" : "transparent",
           transition: "background 150ms ease, color 150ms ease",
           textDecoration: "none",
+          animation: "sidebarIconIn 250ms ease both",
+          animationDelay: "240ms",
         }}
       >
         {SETTINGS_ICON.icon}
