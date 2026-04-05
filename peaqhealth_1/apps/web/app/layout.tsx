@@ -2,11 +2,16 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "./components/theme-provider";
 
+// fb:app_id requires a Facebook App ID from developers.facebook.com.
+// To set up: create a Consumer app, copy the App ID, add to Vercel env
+// as NEXT_PUBLIC_FB_APP_ID, then replace the placeholder below.
+const FB_APP_ID = process.env.NEXT_PUBLIC_FB_APP_ID ?? "000000000000000"
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://peaqhealth.me"),
   title: "Peaq Health — Reach for the peaq.",
   description:
-    "Sleep, blood, and oral microbiome — one score, updated nightly. Launching 2026.",
+    "The first platform connecting your oral microbiome, blood biomarkers, and sleep data into a single longevity score.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -14,9 +19,9 @@ export const metadata: Metadata = {
     title: "Peaq",
   },
   openGraph: {
-    title: "Peaq — Three signals. One measure of resilience.",
+    title: "Peaq Health",
     description:
-      "Oral microbiome. Blood biomarkers. Nightly HRV. Measured together for the first time.",
+      "The first platform connecting your oral microbiome, blood biomarkers, and sleep data into a single longevity score.",
     url: "https://peaqhealth.me",
     siteName: "Peaq Health",
     images: [
@@ -31,7 +36,13 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
+    title: "Peaq Health",
+    description:
+      "The first platform connecting your oral microbiome, blood biomarkers, and sleep data into a single longevity score.",
     images: ["/og-image.png"],
+  },
+  other: {
+    "fb:app_id": FB_APP_ID,
   },
 };
 
