@@ -8,6 +8,7 @@ import { ScoreHistoryChart } from "../components/score-history-chart"
 import { PushNotificationPrompt } from "../components/push-notification-prompt"
 import { IOSInstallBanner } from "../components/ios-install-banner"
 import { InterruptCard } from "../components/interrupt-card"
+import { PeaqChat } from "../components/peaq-chat"
 
 interface LabHistoryPoint {
   locked_at:       string
@@ -282,6 +283,7 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
         )}
       </main>
       <IOSInstallBanner />
+      <PeaqChat />
     </div>
   )
 }
