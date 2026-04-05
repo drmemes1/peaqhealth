@@ -1,5 +1,5 @@
 import { WaitlistForm } from "./components/waitlist-form"
-import { LandingPanelStrip } from "./components/landing-panel-strip"
+import { LandingHero } from "./components/landing-hero"
 
 /* ─── Design tokens ───────────────────────────────────────────────────────── */
 
@@ -169,139 +169,9 @@ export default function Home() {
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════
-          SECTION 1 — HERO (cream bg, centered)
+          SECTION 1 — HERO (with wearable toggle)
           ══════════════════════════════════════════════════════════════════ */}
-      <section style={{ background: BG_CREAM, position: "relative", overflow: "hidden" }}>
-        {/* Subtle radial accents */}
-        <div style={{
-          position: "absolute", inset: 0, pointerEvents: "none",
-          background: "radial-gradient(circle at 20% 50%, rgba(196,154,60,0.04) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(24,95,165,0.03) 0%, transparent 40%)",
-        }} />
-
-        <div className="landing-hero" style={{
-          ...contentWrap,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          textAlign: "center",
-          paddingTop: "clamp(60px, 8vw, 100px)",
-          paddingBottom: "clamp(60px, 8vw, 100px)",
-          position: "relative",
-          zIndex: 2,
-        }}>
-          {/* Eyebrow */}
-          <p className="fade-up" style={{
-            fontFamily: sans,
-            fontSize: 9,
-            letterSpacing: "3px",
-            textTransform: "uppercase",
-            color: ACCENT_RAW,
-            margin: "0 0 24px",
-          }}>
-            Three signals &middot; One measure of resilience
-          </p>
-
-          {/* H1 */}
-          <h1 className="fade-up" style={{
-            fontFamily: serif,
-            fontSize: "clamp(48px, 7vw, 88px)",
-            fontWeight: 300,
-            lineHeight: 1.05,
-            letterSpacing: "-0.5px",
-            color: INK,
-            maxWidth: 820,
-            margin: "0 0 12px",
-            animationDelay: "100ms",
-          }}>
-            Your body is talking.
-            <br />
-            <em style={{ fontStyle: "italic", color: ACCENT_RAW }}>We&rsquo;re listening.</em>
-          </h1>
-
-          {/* Secondary */}
-          <p className="fade-up" style={{
-            fontFamily: serif,
-            fontSize: "clamp(18px, 2.5vw, 24px)",
-            fontWeight: 300,
-            fontStyle: "italic",
-            color: MUTED,
-            margin: "0 0 32px",
-            animationDelay: "200ms",
-          }}>
-            Most platforms hear one signal. Peaq listens to three.
-          </p>
-
-          {/* Body */}
-          <p className="fade-up" style={{
-            fontFamily: sans,
-            fontSize: 14,
-            color: MUTED,
-            lineHeight: 1.7,
-            maxWidth: 480,
-            margin: "0 0 40px",
-            animationDelay: "300ms",
-          }}>
-            Oral microbiome. Blood biomarkers. Nightly sleep data. Measured
-            separately, they tell partial stories. Measured together &mdash; with
-            cross-panel analysis &mdash; they tell you things no single test ever could.
-          </p>
-
-          {/* CTAs */}
-          <div className="fade-up" style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            marginBottom: 32,
-            animationDelay: "400ms",
-          }}>
-            <a
-              href="#cta"
-              style={{
-                fontFamily: sans,
-                fontSize: 10,
-                letterSpacing: "1.5px",
-                textTransform: "uppercase",
-                padding: "12px 28px",
-                borderRadius: 6,
-                background: INK,
-                color: "#fff",
-                border: "none",
-                textDecoration: "none",
-                display: "inline-block",
-              }}
-            >
-              Start your assessment
-            </a>
-            <a
-              href="#science"
-              style={{
-                fontFamily: sans,
-                fontSize: 10,
-                letterSpacing: "1.5px",
-                textTransform: "uppercase",
-                padding: "12px 20px",
-                borderRadius: 6,
-                background: "transparent",
-                color: MUTED,
-                border: "0.5px solid rgba(0,0,0,0.12)",
-                textDecoration: "none",
-                display: "inline-block",
-              }}
-            >
-              See the science &rarr;
-            </a>
-          </div>
-
-          {/* Animated panel strip */}
-          <div className="fade-up" style={{
-            width: "100%",
-            maxWidth: 640,
-            animationDelay: "550ms",
-          }}>
-            <LandingPanelStrip />
-          </div>
-        </div>
-      </section>
+      <LandingHero />
 
       {/* ══════════════════════════════════════════════════════════════════
           SECTION 3 — HOW IT WORKS (cream bg)

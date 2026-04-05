@@ -43,55 +43,71 @@ function useOscillate(min: number, max: number, cycleSec: number) {
   return value
 }
 
-function AnimatedChip({ panel }: { panel: PanelChip }) {
+function AnimatedChip({ panel, dimmed }: { panel: PanelChip; dimmed: boolean }) {
   const score = useOscillate(panel.scoreMin, panel.scoreMax, panel.cycleSec)
   const pct = useOscillate(panel.pctMin, panel.pctMax, panel.cycleSec)
+
+  const chipBg = dimmed ? "rgba(255,255,255,0.04)" : "var(--off-white, #F6F4EF)"
+  const isSleepDimmed = dimmed && panel.label === "Sleep"
 
   return (
     <div style={{
       flex: 1,
       minWidth: 0,
-      background: "var(--off-white, #F6F4EF)",
+      background: chipBg,
       padding: "24px 32px",
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
       gap: 6,
+      transition: "background 400ms ease 200ms",
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
         <span style={{
           width: 3, height: 3, borderRadius: "50%",
-          background: panel.color,
-          animation: "chipPulse 2s ease-in-out infinite",
+          background: isSleepDimmed ? "rgba(255,255,255,0.15)" : panel.color,
+          animation: isSleepDimmed ? "none" : "chipPulse 2s ease-in-out infinite",
           animationDelay: `${panel.pulseDelay}ms`,
+          transition: "background 400ms ease 200ms",
         }} />
         <span style={{
           fontFamily: sans, fontSize: 10,
           letterSpacing: "2px", textTransform: "uppercase",
-          color: "#bbb",
+          color: dimmed ? "rgba(255,255,255,0.35)" : "#bbb",
+          transition: "color 400ms ease 200ms",
         }}>
-          {panel.label}
+          {isSleepDimmed ? "Recovery" : panel.label}
         </span>
       </div>
 
       <span style={{
         fontFamily: serif, fontSize: 56, fontWeight: 300,
-        lineHeight: 1, color: panel.color,
+        lineHeight: 1,
+        color: isSleepDimmed ? "rgba(255,255,255,0.15)" : panel.color,
+        transition: "color 400ms ease 200ms",
       }}>
-        {Math.round(score)}
+        {isSleepDimmed ? "\u2014" : Math.round(score)}
       </span>
 
-      <span style={{ fontFamily: sans, fontSize: 9, color: "#bbb" }}>/{panel.max}</span>
+      <span style={{
+        fontFamily: sans, fontSize: 9,
+        color: dimmed ? "rgba(255,255,255,0.2)" : "#bbb",
+        transition: "color 400ms ease 200ms",
+      }}>
+        /{panel.max}
+      </span>
 
       <div style={{
         width: "100%", height: 3,
-        background: "rgba(0,0,0,0.06)", borderRadius: 1.5,
+        background: dimmed ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
+        borderRadius: 1.5,
+        transition: "background 400ms ease 200ms",
       }}>
         <div style={{
           height: 3, borderRadius: 1.5,
-          width: `${pct}%`,
+          width: isSleepDimmed ? "0%" : `${pct}%`,
           background: panel.color,
-          transition: "width 100ms linear",
+          transition: isSleepDimmed ? "width 400ms ease 200ms" : "width 100ms linear",
         }} />
       </div>
     </div>
@@ -108,7 +124,7 @@ function easeInOut(t: number) {
   return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t
 }
 
-export function LandingPanelStrip() {
+export function LandingPanelStrip({ wearableOff = false }: { wearableOff?: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const paused = useRef(false)
   const resumeTimer = useRef<ReturnType<typeof setTimeout>>(null)
@@ -206,9 +222,10 @@ export function LandingPanelStrip() {
         style={{
           display: "flex",
           gap: 1,
-          background: "rgba(0,0,0,0.08)",
+          background: wearableOff ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)",
           borderRadius: 12,
           overflow: "hidden",
+          transition: "background 400ms ease 200ms",
           cursor: dragging ? "grabbing" : "grab",
           userSelect: "none",
         }}
@@ -216,14 +233,15 @@ export function LandingPanelStrip() {
         {/* TODO: replace with real user data once authenticated
             These are sample scores — not global averages */}
         {PANELS.map(p => (
-          <AnimatedChip key={p.label} panel={p} />
+          <AnimatedChip key={p.label} panel={p} dimmed={wearableOff} />
         ))}
       </div>
       <p style={{
         textAlign: "center", marginTop: 12,
         fontFamily: sans, fontSize: 9,
         letterSpacing: "1.5px", textTransform: "uppercase",
-        color: "#bbb",
+        color: wearableOff ? "rgba(255,255,255,0.2)" : "#bbb",
+        transition: "color 400ms ease 200ms",
       }}>
         Sample &middot; Your numbers will be different
       </p>
