@@ -49,8 +49,8 @@ function AnimatedChip({ panel }: { panel: PanelChip }) {
 
   return (
     <div style={{
-      flex: "0 0 auto",
-      minWidth: 180,
+      flex: 1,
+      minWidth: 0,
       background: "var(--off-white, #F6F4EF)",
       padding: "24px 32px",
       display: "flex",
@@ -98,11 +98,11 @@ function AnimatedChip({ panel }: { panel: PanelChip }) {
   )
 }
 
-// ── Auto-scroll: breathe right→left on a loop, pause on hover ────────────
+// ── Auto-scroll + drag-to-scroll ────────────────────────────────────────
 
-const SCROLL_DUR = 3000  // 3s each direction
-const SCROLL_PAUSE = 1000 // 1s pause at each end
-const RESUME_DELAY = 2000 // 2s after user stops interacting
+const SCROLL_DUR = 3000
+const SCROLL_PAUSE = 1000
+const RESUME_DELAY = 2000
 
 function easeInOut(t: number) {
   return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t
@@ -113,7 +113,8 @@ export function LandingPanelStrip() {
   const paused = useRef(false)
   const resumeTimer = useRef<ReturnType<typeof setTimeout>>(null)
   const rafRef = useRef(0)
-  const [, forceRender] = useState(0)
+  const [dragging, setDragging] = useState(false)
+  const dragStart = useRef({ x: 0, scrollLeft: 0 })
 
   const pauseScroll = useCallback(() => {
     paused.current = true
@@ -124,32 +125,39 @@ export function LandingPanelStrip() {
     if (resumeTimer.current) clearTimeout(resumeTimer.current)
     resumeTimer.current = setTimeout(() => {
       paused.current = false
-      forceRender(n => n + 1) // restart the animation loop
     }, RESUME_DELAY)
   }, [])
 
+  // Auto-scroll loop
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
 
     let phase: "right" | "pause-right" | "left" | "pause-left" = "right"
     let phaseStart = performance.now()
-    const maxScroll = () => el.scrollWidth - el.clientWidth
+    const maxScroll = () => Math.max(0, el.scrollWidth - el.clientWidth)
 
     const tick = (now: number) => {
-      if (paused.current) { rafRef.current = requestAnimationFrame(tick); return }
+      if (paused.current) {
+        phaseStart = now - (phase.startsWith("pause") ? 0 : 0)
+        rafRef.current = requestAnimationFrame(tick)
+        return
+      }
+
+      const ms = maxScroll()
+      if (ms <= 0) { rafRef.current = requestAnimationFrame(tick); return }
 
       const elapsed = now - phaseStart
 
       if (phase === "right") {
         const t = Math.min(elapsed / SCROLL_DUR, 1)
-        el.scrollLeft = easeInOut(t) * maxScroll()
+        el.scrollLeft = easeInOut(t) * ms
         if (t >= 1) { phase = "pause-right"; phaseStart = now }
       } else if (phase === "pause-right") {
         if (elapsed >= SCROLL_PAUSE) { phase = "left"; phaseStart = now }
       } else if (phase === "left") {
         const t = Math.min(elapsed / SCROLL_DUR, 1)
-        el.scrollLeft = (1 - easeInOut(t)) * maxScroll()
+        el.scrollLeft = (1 - easeInOut(t)) * ms
         if (t >= 1) { phase = "pause-left"; phaseStart = now }
       } else if (phase === "pause-left") {
         if (elapsed >= SCROLL_PAUSE) { phase = "right"; phaseStart = now }
@@ -160,24 +168,49 @@ export function LandingPanelStrip() {
 
     rafRef.current = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(rafRef.current)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Mouse drag handlers
+  const onMouseDown = useCallback((e: React.MouseEvent) => {
+    pauseScroll()
+    setDragging(true)
+    dragStart.current = { x: e.clientX, scrollLeft: containerRef.current?.scrollLeft ?? 0 }
+  }, [pauseScroll])
+
+  const onMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!dragging || !containerRef.current) return
+    const dx = e.clientX - dragStart.current.x
+    containerRef.current.scrollLeft = dragStart.current.scrollLeft - dx
+  }, [dragging])
+
+  const onMouseUp = useCallback(() => {
+    setDragging(false)
+    scheduleResume()
+  }, [scheduleResume])
+
+  // Touch already scrolls natively — just pause/resume auto
+  const onTouchStart = useCallback(() => { pauseScroll() }, [pauseScroll])
+  const onTouchEnd = useCallback(() => { scheduleResume() }, [scheduleResume])
 
   return (
     <div>
       <div
         ref={containerRef}
         onMouseEnter={pauseScroll}
-        onMouseLeave={scheduleResume}
-        onTouchStart={pauseScroll}
-        onTouchEnd={scheduleResume}
+        onMouseLeave={() => { setDragging(false); scheduleResume() }}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
         style={{
           display: "flex",
           gap: 1,
           background: "rgba(0,0,0,0.08)",
           borderRadius: 12,
-          overflowX: "scroll",
-          scrollbarWidth: "none",
-          msOverflowStyle: "none",
+          overflow: "hidden",
+          cursor: dragging ? "grabbing" : "grab",
+          userSelect: "none",
         }}
       >
         {/* TODO: replace with real user data once authenticated
@@ -200,8 +233,6 @@ export function LandingPanelStrip() {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.3; }
         }
-        /* Hide scrollbar across browsers */
-        div::-webkit-scrollbar { display: none; }
       `}</style>
     </div>
   )
