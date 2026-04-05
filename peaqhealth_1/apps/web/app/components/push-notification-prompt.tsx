@@ -45,7 +45,7 @@ export function PushNotificationPrompt() {
       padding: "16px 20px",
       background: "var(--white)",
       border: "0.5px solid var(--ink-12)",
-      borderLeft: "3px solid #4A7FB5",
+      borderLeft: "3px solid #185FA5",
       borderRadius: 6,
       display: "flex",
       justifyContent: "space-between",

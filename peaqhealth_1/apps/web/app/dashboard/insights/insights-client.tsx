@@ -24,7 +24,7 @@ export function InsightsClient({ snapshot, weekly }: {
             AI Insights
           </h1>
           <Link href="/dashboard" style={{ fontFamily: "var(--font-body)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--ink-30)", textDecoration: "none" }}
-            onMouseEnter={e => { e.currentTarget.style.color = "#B8860B" }}
+            onMouseEnter={e => { e.currentTarget.style.color = "#C49A3C" }}
             onMouseLeave={e => { e.currentTarget.style.color = "var(--ink-30)" }}>
             ← Dashboard
           </Link>

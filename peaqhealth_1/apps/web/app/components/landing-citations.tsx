@@ -7,13 +7,13 @@ import { useState, useEffect } from "react"
 const serif = "'Cormorant Garamond', Georgia, serif"
 const sans  = "'Instrument Sans', system-ui, sans-serif"
 
-const INK    = "#141410"
+const INK    = "#1a1a18"
 const INK_20 = "rgba(20,20,16,0.20)"
 const INK_40 = "rgba(20,20,16,0.40)"
 const INK_60 = "rgba(20,20,16,0.60)"
 const BORDER = "rgba(20,20,16,0.10)"
-const ORAL   = "#2D6A4F"
-const BLOOD  = "#C0392B"
+const ORAL   = "#3B6D11"
+const BLOOD  = "#A32D2D"
 
 const hexToRgb = (hex: string) => {
   const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
@@ -57,8 +57,8 @@ const citations = [
     authors: "Irwin MR, Olmstead R, Carroll JE",
     quote: "Elevated CRP fragments sleep architecture and suppresses deep sleep \u2014 which further elevates CRP.",
     tag: "Blood \u2192 Sleep",
-    tagColor: "#4A7FB5",
-    panelBorderColor: "#4A7FB5",
+    tagColor: "#185FA5",
+    panelBorderColor: "#185FA5",
     expandedFinding: "Meta-analysis demonstrating that systemic inflammation (hsCRP, IL-6) disrupts slow-wave sleep via hypothalamic-pituitary-adrenal axis activation. Sleep loss then amplifies inflammatory cytokines, creating a self-reinforcing cycle.",
     effectSize: "Short sleep (<6h) associated with 1.45x higher CRP. Each 1 mg/L CRP increase associated with 8\u201312% reduction in N3 sleep.",
     peaqMeaning: "This is why Peaq tracks hsCRP and deep sleep together. When your blood panel shows elevated CRP and your wearable shows declining deep sleep, the cycle is already in motion \u2014 and both panels confirm it.",
@@ -284,4 +284,4 @@ export function LandingCitations({
   )
 }
 
-const BG_COLOR = "#FAFAF8"
+const BG_COLOR = "#F6F4EF"

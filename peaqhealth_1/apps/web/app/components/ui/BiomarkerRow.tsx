@@ -42,7 +42,7 @@ export function BiomarkerRow({
             fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
             fontSize: 13,
             fontWeight: 500,
-            color: "var(--peaq-ink, #141410)",
+            color: "var(--peaq-ink, #1a1a18)",
             display: "block",
             lineHeight: 1.3,
           }}>
@@ -64,7 +64,7 @@ export function BiomarkerRow({
               fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
               fontSize: 15,
               fontWeight: 500,
-              color: "var(--peaq-ink, #141410)",
+              color: "var(--peaq-ink, #1a1a18)",
             }}>
               {typeof value === "number" ? (Number.isInteger(value) ? value : value.toFixed(1)) : value}
             </span>
@@ -101,7 +101,7 @@ export function BiomarkerRow({
           width: 8,
           height: 8,
           borderRadius: "50%",
-          background: "var(--peaq-ink, #141410)",
+          background: "var(--peaq-ink, #1a1a18)",
           border: "2px solid var(--peaq-bg-card, #fff)",
           boxShadow: "0 0 0 0.5px rgba(20,20,16,0.15)",
         }} />

@@ -10,9 +10,9 @@ interface NavProps {
 }
 
 const PANEL_ITEMS = [
-  { href: "/dashboard/sleep", label: "SLEEP", color: "#4A7FB5" },
-  { href: "/dashboard/blood", label: "BLOOD", color: "#C0392B" },
-  { href: "/dashboard/oral", label: "ORAL", color: "#2D6A4F" },
+  { href: "/dashboard/sleep", label: "SLEEP", color: "#185FA5" },
+  { href: "/dashboard/blood", label: "BLOOD", color: "#A32D2D" },
+  { href: "/dashboard/oral", label: "ORAL", color: "#3B6D11" },
   { href: "/dashboard/cross-panel", label: "CROSS-PANEL", color: "#C49A3C" },
 ];
 

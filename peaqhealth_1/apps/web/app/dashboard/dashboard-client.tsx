@@ -181,7 +181,7 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
               <span style={{
                 fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
                 fontSize: 11,
-                color: "#2D6A4F",
+                color: "#3B6D11",
               }}>
                 {syncResult}
               </span>

@@ -8,7 +8,7 @@ interface LogoSvgProps {
 
 export function LogoSvg({
   size = 48,
-  color = "#141410",
+  color = "#1a1a18",
   className,
 }: LogoSvgProps) {
   const width = Math.round(size * (240 / 200));

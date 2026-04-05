@@ -5,9 +5,9 @@ interface FocusItem {
 }
 
 const PANEL_COLOR: Record<FocusItem["panel"], string> = {
-  sleep: "#4A7FB5",
-  blood: "#C0392B",
-  oral:  "#2D6A4F",
+  sleep: "#185FA5",
+  blood: "#A32D2D",
+  oral:  "#3B6D11",
 }
 
 interface NextStepsProps {
@@ -114,7 +114,7 @@ export function NextSteps({
             <span style={{
               fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
               fontSize: 11,
-              color: "#B8860B",
+              color: "#C49A3C",
               flexShrink: 0,
               paddingTop: 1,
             }}>

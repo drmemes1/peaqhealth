@@ -57,11 +57,11 @@ interface Props {
 // ─── Finding priority colors ─────────────────────────────────────────────────
 
 const PRIORITY_STYLE: Record<string, { bg: string; text: string; dot: string }> = {
-  CRITICAL:  { bg: "#FEE2E2", text: "#991B1B", dot: "#C0392B" },
-  HIGH:      { bg: "#FEE2E2", text: "#991B1B", dot: "#C0392B" },
-  MEDIUM:    { bg: "#FEF3C7", text: "#92400E", dot: "#B8860B" },
-  LOW:       { bg: "#EBF2FA", text: "#4A7FB5", dot: "#4A7FB5" },
-  POSITIVE:  { bg: "#EAF3DE", text: "#2D6A4F", dot: "#2D6A4F" },
+  CRITICAL:  { bg: "#FEE2E2", text: "#991B1B", dot: "#A32D2D" },
+  HIGH:      { bg: "#FEE2E2", text: "#991B1B", dot: "#A32D2D" },
+  MEDIUM:    { bg: "#FEF3C7", text: "#92400E", dot: "#C49A3C" },
+  LOW:       { bg: "#EBF2FA", text: "#185FA5", dot: "#185FA5" },
+  POSITIVE:  { bg: "#EAF3DE", text: "#3B6D11", dot: "#3B6D11" },
 }
 
 const PRIORITY_DISPLAY: Record<string, string> = {
@@ -73,10 +73,10 @@ const PRIORITY_DISPLAY: Record<string, string> = {
 }
 
 const PANEL_COLOR: Record<string, string> = {
-  nitrate:    "#4A7FB5",
-  periodontal: "#C0392B",
-  osa:        "#B8860B",
-  diversity:  "#2D6A4F",
+  nitrate:    "#185FA5",
+  periodontal: "#A32D2D",
+  osa:        "#C49A3C",
+  diversity:  "#3B6D11",
   general:    "var(--ink-40)",
 }
 
@@ -95,7 +95,7 @@ const ORAL_ZONES: Record<string, {
   markerColor: string
 }> = {
   shannon: {
-    markerColor: '#2D6A4F',
+    markerColor: '#3B6D11',
     zones: [
       { label: 'Low',     color: '#FFCDD2', min: 0,    max: 2.0  },
       { label: 'Watch',   color: '#FFE0B2', min: 2.0,  max: 2.5  },
@@ -104,7 +104,7 @@ const ORAL_ZONES: Record<string, {
     ]
   },
   nitrate: {
-    markerColor: '#4A7FB5',
+    markerColor: '#185FA5',
     zones: [
       { label: 'Low',     color: '#FFCDD2', min: 0,    max: 2.0  },
       { label: 'Watch',   color: '#FFE0B2', min: 2.0,  max: 5.0  },
@@ -113,7 +113,7 @@ const ORAL_ZONES: Record<string, {
     ]
   },
   periodontal: {
-    markerColor: '#C0392B',
+    markerColor: '#A32D2D',
     zones: [
       { label: 'Optimal', color: '#D4EDDA', min: 0,    max: 0.5  },
       { label: 'Good',    color: '#FFF3CD', min: 0.5,  max: 1.0  },
@@ -122,7 +122,7 @@ const ORAL_ZONES: Record<string, {
     ]
   },
   osa: {
-    markerColor: '#B8860B',
+    markerColor: '#C49A3C',
     zones: [
       { label: 'Optimal', color: '#D4EDDA', min: 0,    max: 1.0  },
       { label: 'Watch',   color: '#FFE0B2', min: 1.0,  max: 3.0  },
@@ -227,13 +227,13 @@ function SpeciesRow({ name, role, val, target, isPathogen, note, learnWhat, lear
   const pct = val.toFixed(2)
 
   const flagStyle: Record<Flag, { bg: string; color: string; label: string }> = {
-    optimal:   { bg: "#EAF3DE", color: "#2D6A4F", label: isPathogen ? "Low — Good" : "Optimal" },
+    optimal:   { bg: "#EAF3DE", color: "#3B6D11", label: isPathogen ? "Low — Good" : "Optimal" },
     watch:     { bg: "#FEF3C7", color: "#92400E", label: "Watch" },
     attention: { bg: "#FEE2E2", color: "#991B1B", label: isPathogen ? "Elevated" : "Low" },
     pending:   { bg: "#F7F5F0", color: "var(--ink-35)", label: "—" },
   }
   const fs = flagStyle[flag]
-  const dotColor = flag === "optimal" ? "#2D6A4F" : flag === "watch" ? "#B8860B" : "#C0392B"
+  const dotColor = flag === "optimal" ? "#3B6D11" : flag === "watch" ? "#C49A3C" : "#A32D2D"
 
   return (
     <div style={{ padding: "10px 0", borderBottom: "0.5px solid var(--ink-06)" }}>
@@ -319,7 +319,7 @@ function MetricCard({ label, sub, value, unit, color, status, statusLabel, zoneK
   numericValue?: number
 }) {
   const statusBg = status === "optimal" ? "#EAF3DE" : status === "watch" ? "#FEF3C7" : "#FEE2E2"
-  const statusTxt = status === "optimal" ? "#2D6A4F" : status === "watch" ? "#92400E" : "#991B1B"
+  const statusTxt = status === "optimal" ? "#3B6D11" : status === "watch" ? "#92400E" : "#991B1B"
   return (
     <div style={{ flex: "1 1 calc(50% - 6px)", border: "0.5px solid var(--ink-12)", padding: "12px 14px", minWidth: 0 }}>
       <p style={{ margin: "0 0 2px", fontFamily: "var(--font-body)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em", color }}>
@@ -436,7 +436,7 @@ export function OralPanelClient({ oral, snapshot }: Props) {
           <Link
             href="/dashboard"
             style={{ fontFamily: "var(--font-body)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--ink-30)", textDecoration: "none" }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = "#B8860B" }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = "#C49A3C" }}
             onMouseLeave={(e) => { e.currentTarget.style.color = "var(--ink-30)" }}
           >
             ← Dashboard
@@ -480,7 +480,7 @@ export function OralPanelClient({ oral, snapshot }: Props) {
             {(typeof aiNarrative.positive_signal === "string" || typeof aiNarrative.watch_signal === "string") && (
               <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {typeof aiNarrative.positive_signal === "string" && (
-                  <span style={{ fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "2px 8px", background: "#EAF3DE", color: "#2D6A4F" }}>
+                  <span style={{ fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "2px 8px", background: "#EAF3DE", color: "#3B6D11" }}>
                     {aiNarrative.positive_signal}
                   </span>
                 )}
@@ -508,7 +508,7 @@ export function OralPanelClient({ oral, snapshot }: Props) {
             sub="Species richness & evenness — target ≥3.0"
             value={shannon.toFixed(2)}
             unit="index"
-            color="#2D6A4F"
+            color="#3B6D11"
             status={shannon >= 3 ? "optimal" : shannon >= 2 ? "watch" : "attention"}
             statusLabel={shannon >= 3 ? "Optimal" : shannon >= 2 ? "Watch" : "Low"}
             zoneKey="shannon"
@@ -519,7 +519,7 @@ export function OralPanelClient({ oral, snapshot }: Props) {
             sub="Neisseria · Rothia · Veillonella — target ≥5%"
             value={nitratePct.toFixed(1)}
             unit="% reads"
-            color="#4A7FB5"
+            color="#185FA5"
             status={nitratePct >= 5 ? "optimal" : nitratePct >= 2 ? "watch" : "attention"}
             statusLabel={nitratePct >= 5 ? "Optimal" : nitratePct >= 2 ? "Watch" : "Low"}
             zoneKey="nitrate"
@@ -530,7 +530,7 @@ export function OralPanelClient({ oral, snapshot }: Props) {
             sub="P. gingivalis · T. denticola — target <0.5%"
             value={periodontalPct.toFixed(2)}
             unit="% reads"
-            color="#C0392B"
+            color="#A32D2D"
             status={periodontalPct < 0.5 ? "optimal" : periodontalPct < 1.5 ? "watch" : "attention"}
             statusLabel={periodontalPct < 0.5 ? "Optimal" : periodontalPct < 1.5 ? "Watch" : "Elevated"}
             zoneKey="periodontal"
@@ -541,7 +541,7 @@ export function OralPanelClient({ oral, snapshot }: Props) {
             sub="Prevotella · Fusobacterium — target <1%"
             value={osaPct.toFixed(2)}
             unit="% reads"
-            color="#B8860B"
+            color="#C49A3C"
             status={osaPct < 1 ? "optimal" : osaPct < 3 ? "watch" : "attention"}
             statusLabel={osaPct < 1 ? "Optimal" : osaPct < 3 ? "Watch" : "Elevated"}
             zoneKey="osa"
@@ -564,7 +564,7 @@ export function OralPanelClient({ oral, snapshot }: Props) {
                   <p style={{ margin: "0 0 5px", fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 400, color: "var(--ink)" }}>{f.title}</p>
                   <p style={{ margin: "0 0 8px", fontFamily: "var(--font-body)", fontSize: 12, lineHeight: 1.65, color: "var(--ink-60)" }}>{f.body}</p>
                   {f.action && (
-                    <p style={{ margin: "0 0 8px", fontFamily: "var(--font-body)", fontSize: 11, color: "#2D6A4F", lineHeight: 1.5 }}>{f.action}</p>
+                    <p style={{ margin: "0 0 8px", fontFamily: "var(--font-body)", fontSize: 11, color: "#3B6D11", lineHeight: 1.5 }}>{f.action}</p>
                   )}
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <span style={{ fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "3px 8px", background: `${panelColor}15`, color: panelColor }}>
@@ -672,10 +672,10 @@ export function OralPanelClient({ oral, snapshot }: Props) {
                     <p style={{ margin: "2px 0 0", fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-60)" }}>Species richness and evenness — target ≥3.0</p>
                   </div>
                   <div style={{ textAlign: "right" }}>
-                    <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 16, color: shannon >= 3 ? "#2D6A4F" : shannon >= 2 ? "#92400E" : "#991B1B" }}>
+                    <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 16, color: shannon >= 3 ? "#3B6D11" : shannon >= 2 ? "#92400E" : "#991B1B" }}>
                       {shannon.toFixed(2)}
                     </p>
-                    <span style={{ fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "2px 6px", background: shannon >= 3 ? "#EAF3DE" : shannon >= 2 ? "#FEF3C7" : "#FEE2E2", color: shannon >= 3 ? "#2D6A4F" : shannon >= 2 ? "#92400E" : "#991B1B" }}>
+                    <span style={{ fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "2px 6px", background: shannon >= 3 ? "#EAF3DE" : shannon >= 2 ? "#FEF3C7" : "#FEE2E2", color: shannon >= 3 ? "#3B6D11" : shannon >= 2 ? "#92400E" : "#991B1B" }}>
                       {shannon >= 3 ? "Optimal" : shannon >= 2 ? "Watch" : "Attention"}
                     </span>
                   </div>
@@ -687,10 +687,10 @@ export function OralPanelClient({ oral, snapshot }: Props) {
                       <p style={{ margin: "2px 0 0", fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-60)" }}>Total OTUs detected — target &gt;150</p>
                     </div>
                     <div style={{ textAlign: "right" }}>
-                      <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 16, color: speciesCount > 150 ? "#2D6A4F" : speciesCount > 80 ? "#92400E" : "#991B1B" }}>
+                      <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 16, color: speciesCount > 150 ? "#3B6D11" : speciesCount > 80 ? "#92400E" : "#991B1B" }}>
                         {speciesCount}
                       </p>
-                      <span style={{ fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "2px 6px", background: speciesCount > 150 ? "#EAF3DE" : speciesCount > 80 ? "#FEF3C7" : "#FEE2E2", color: speciesCount > 150 ? "#2D6A4F" : speciesCount > 80 ? "#92400E" : "#991B1B" }}>
+                      <span style={{ fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "2px 6px", background: speciesCount > 150 ? "#EAF3DE" : speciesCount > 80 ? "#FEF3C7" : "#FEE2E2", color: speciesCount > 150 ? "#3B6D11" : speciesCount > 80 ? "#92400E" : "#991B1B" }}>
                         {speciesCount > 150 ? "Optimal" : speciesCount > 80 ? "Watch" : "Attention"}
                       </span>
                     </div>
@@ -712,7 +712,7 @@ export function OralPanelClient({ oral, snapshot }: Props) {
             </p>
             {oralScore.recommendations.map((r, i) => (
               <div key={i} style={{ display: "flex", gap: 10, padding: "8px 0", borderBottom: "0.5px solid var(--ink-06)" }}>
-                <span style={{ color: "#2D6A4F", flexShrink: 0, fontFamily: "var(--font-body)", fontSize: 12 }}>→</span>
+                <span style={{ color: "#3B6D11", flexShrink: 0, fontFamily: "var(--font-body)", fontSize: 12 }}>→</span>
                 <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 12, color: "var(--ink-60)", lineHeight: 1.6 }}>{r}</p>
               </div>
             ))}
@@ -729,7 +729,7 @@ export function OralPanelClient({ oral, snapshot }: Props) {
             </p>
 
             {neuroSignalPct !== null && neuroSignalPct > 0.5 && (
-              <div style={{ border: "0.5px solid var(--ink-12)", borderLeft: "3px solid #B8860B", padding: "14px 16px", marginBottom: 10 }}>
+              <div style={{ border: "0.5px solid var(--ink-12)", borderLeft: "3px solid #C49A3C", padding: "14px 16px", marginBottom: 10 }}>
                 <p style={{ margin: "0 0 5px", fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 400, color: "var(--ink)" }}>
                   Supporting oral neurological balance
                 </p>
@@ -743,7 +743,7 @@ export function OralPanelClient({ oral, snapshot }: Props) {
             )}
 
             {metabolicSignalPct !== null && metabolicSignalPct > 3 && (
-              <div style={{ border: "0.5px solid var(--ink-12)", borderLeft: "3px solid #B8860B", padding: "14px 16px", marginBottom: 10 }}>
+              <div style={{ border: "0.5px solid var(--ink-12)", borderLeft: "3px solid #C49A3C", padding: "14px 16px", marginBottom: 10 }}>
                 <p style={{ margin: "0 0 5px", fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 400, color: "var(--ink)" }}>
                   Supporting metabolic microbiome balance
                 </p>
@@ -754,7 +754,7 @@ export function OralPanelClient({ oral, snapshot }: Props) {
             )}
 
             {proliferativeSignalPct !== null && proliferativeSignalPct > 0.5 && (
-              <div style={{ border: "0.5px solid var(--ink-12)", borderLeft: "3px solid #B8860B", padding: "14px 16px", marginBottom: 10 }}>
+              <div style={{ border: "0.5px solid var(--ink-12)", borderLeft: "3px solid #C49A3C", padding: "14px 16px", marginBottom: 10 }}>
                 <p style={{ margin: "0 0 5px", fontFamily: "'Cormorant Garamond', serif", fontSize: 16, fontWeight: 400, color: "var(--ink)" }}>
                   Supporting cellular environment balance
                 </p>

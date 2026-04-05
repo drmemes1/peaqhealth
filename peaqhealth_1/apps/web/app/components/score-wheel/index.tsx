@@ -193,7 +193,7 @@ function formatValue(value: number): string {
 
 // Status dot colors
 const STATUS_COLORS: Record<Flag, string> = {
-  good: "#2D6A4F", watch: "#B8860B", attention: "#C2510A", elevated: "#C0392B", pending: "var(--ink-12)", not_tested: "var(--ink-12)",
+  good: "#3B6D11", watch: "#C49A3C", attention: "#C2510A", elevated: "#A32D2D", pending: "var(--ink-12)", not_tested: "var(--ink-12)",
 }
 
 
@@ -204,7 +204,7 @@ const BLOOD_ZONES: Record<string, {
 }> = {
   hsCRP: {
     unit: 'mg/L',
-    markerColor: '#C0392B',
+    markerColor: '#A32D2D',
     zones: [
       { label: 'Optimal', color: '#D4EDDA', min: 0,   max: 0.5  },
       { label: 'Good',    color: '#FFF3CD', min: 0.5, max: 1.0  },
@@ -214,7 +214,7 @@ const BLOOD_ZONES: Record<string, {
   },
   LDL: {
     unit: 'mg/dL',
-    markerColor: '#C0392B',
+    markerColor: '#A32D2D',
     zones: [
       { label: 'Optimal', color: '#D4EDDA', min: 0,   max: 70  },
       { label: 'Good',    color: '#FFF3CD', min: 70,  max: 100 },
@@ -224,7 +224,7 @@ const BLOOD_ZONES: Record<string, {
   },
   HDL: {
     unit: 'mg/dL',
-    markerColor: '#C0392B',
+    markerColor: '#A32D2D',
     zones: [
       { label: 'Low',     color: '#FFCDD2', min: 0,  max: 40  },
       { label: 'Watch',   color: '#FFE0B2', min: 40, max: 50  },
@@ -234,7 +234,7 @@ const BLOOD_ZONES: Record<string, {
   },
   glucose: {
     unit: 'mg/dL',
-    markerColor: '#C0392B',
+    markerColor: '#A32D2D',
     zones: [
       { label: 'Optimal', color: '#D4EDDA', min: 70,  max: 85  },
       { label: 'Good',    color: '#FFF3CD', min: 85,  max: 99  },
@@ -244,7 +244,7 @@ const BLOOD_ZONES: Record<string, {
   },
   lpA: {
     unit: 'nmol/L',
-    markerColor: '#C0392B',
+    markerColor: '#A32D2D',
     zones: [
       { label: 'Optimal', color: '#D4EDDA', min: 0,   max: 75  },
       { label: 'Watch',   color: '#FFE0B2', min: 75,  max: 125 },
@@ -253,7 +253,7 @@ const BLOOD_ZONES: Record<string, {
   },
   triglycerides: {
     unit: 'mg/dL',
-    markerColor: '#C0392B',
+    markerColor: '#A32D2D',
     zones: [
       { label: 'Optimal', color: '#D4EDDA', min: 0,   max: 100 },
       { label: 'Good',    color: '#FFF3CD', min: 100, max: 150 },
@@ -263,7 +263,7 @@ const BLOOD_ZONES: Record<string, {
   },
   eGFR: {
     unit: 'mL/min',
-    markerColor: '#C0392B',
+    markerColor: '#A32D2D',
     zones: [
       { label: 'Low',     color: '#FFCDD2', min: 0,   max: 60  },
       { label: 'Watch',   color: '#FFE0B2', min: 60,  max: 90  },
@@ -273,7 +273,7 @@ const BLOOD_ZONES: Record<string, {
   },
   hemoglobin: {
     unit: 'g/dL',
-    markerColor: '#C0392B',
+    markerColor: '#A32D2D',
     zones: [
       { label: 'Low',     color: '#FFCDD2', min: 0,    max: 12.0 },
       { label: 'Watch',   color: '#FFE0B2', min: 12.0, max: 13.5 },
@@ -283,7 +283,7 @@ const BLOOD_ZONES: Record<string, {
   },
   ldlHdlRatio: {
     unit: 'ratio',
-    markerColor: '#C0392B',
+    markerColor: '#A32D2D',
     zones: [
       { label: 'Optimal', color: '#D4EDDA', min: 0,   max: 1.5 },
       { label: 'Good',    color: '#FFF3CD', min: 1.5, max: 2.0 },
@@ -375,10 +375,10 @@ function BloodMarkerRow({
   const isNotTested = value === null || value === 0
   const effectiveFlag = isNotTested && f !== "pending" ? "not_tested" : f
   const fs = {
-    good:       { bg: "#EAF3DE", text: "#2D6A4F",          label: "Good" },
+    good:       { bg: "#EAF3DE", text: "#3B6D11",          label: "Good" },
     watch:      { bg: "#FEF3C7", text: "#92400E",          label: "Watch" },
     attention:  { bg: "#FEF0E6", text: "#C2510A",          label: "Attention" },
-    elevated:   { bg: "#FEECEC", text: "#C0392B",          label: "Elevated" },
+    elevated:   { bg: "#FEECEC", text: "#A32D2D",          label: "Elevated" },
     pending:    { bg: "var(--warm-50)", text: "var(--ink-60)",  label: "Pending" },
     not_tested: { bg: "var(--warm-50)", text: "var(--ink-30)", label: "—" },
   }[effectiveFlag]
@@ -495,10 +495,10 @@ const INSIGHT_COPY: Record<string, { title: string; body: string; panels: string
 }
 
 const PANEL_COLORS: Record<string, string> = {
-  "Oral":      "#2D6A4F",
-  "Blood":     "#C0392B",
-  "Sleep":     "#4A7FB5",
-  "Lifestyle": "#B8860B",
+  "Oral":      "#3B6D11",
+  "Blood":     "#A32D2D",
+  "Sleep":     "#185FA5",
+  "Lifestyle": "#C49A3C",
 }
 
 type ComputedInteraction = {
@@ -524,7 +524,7 @@ function InteractionCard({ interaction }: { interaction: ComputedInteraction }) 
   return (
     <div style={{
       background: interaction.severity === "high" ? "rgba(192,57,43,0.03)" : "rgba(184,134,11,0.04)",
-      borderLeft: `3px solid ${interaction.severity === "high" ? "#C0392B" : "#B8860B"}`,
+      borderLeft: `3px solid ${interaction.severity === "high" ? "#A32D2D" : "#C49A3C"}`,
       borderRadius: "0 4px 4px 0", padding: "12px 14px",
     }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 6, gap: 8 }}>
@@ -543,8 +543,8 @@ function InteractionCard({ interaction }: { interaction: ComputedInteraction }) 
           <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
             {interaction.panels.map(p => (
               <span key={p} style={{ display: "flex", alignItems: "center", gap: 3 }}>
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: PANEL_COLORS[p] ?? "#B8860B", display: "inline-block", flexShrink: 0 }} />
-                <span style={{ fontFamily: font, fontSize: 10, color: PANEL_COLORS[p] ?? "#B8860B" }}>{p}</span>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: PANEL_COLORS[p] ?? "#C49A3C", display: "inline-block", flexShrink: 0 }} />
+                <span style={{ fontFamily: font, fontSize: 10, color: PANEL_COLORS[p] ?? "#C49A3C" }}>{p}</span>
               </span>
             ))}
           </div>
@@ -889,9 +889,9 @@ function CrossPanelInteractions({
           <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
             {modifiers_applied.map((m, i) => {
               const accentColor = m.direction === "bonus"
-                ? "#2D6A4F"
-                : (m.panels?.includes("blood") ? "#C0392B" : m.panels?.includes("oral") ? "#2D6A4F" : "#4A7FB5")
-              const pointColor = m.direction === "bonus" ? "#2D6A4F" : "#C0392B"
+                ? "#3B6D11"
+                : (m.panels?.includes("blood") ? "#A32D2D" : m.panels?.includes("oral") ? "#3B6D11" : "#185FA5")
+              const pointColor = m.direction === "bonus" ? "#3B6D11" : "#A32D2D"
               return (
                 <div key={m.id}>
                   <div style={{
@@ -915,7 +915,7 @@ function CrossPanelInteractions({
                       <p style={{
                         fontFamily: "'Cormorant Garamond', Georgia, serif",
                         fontSize: 17, fontWeight: 400, lineHeight: 1.35,
-                        color: "var(--ink, #141410)",
+                        color: "var(--ink, #1a1a18)",
                         margin: "0 0 4px",
                       }}>
                         {m.label}
@@ -971,7 +971,7 @@ function CrossPanelInteractions({
               letterSpacing: "0.04em", margin: 0,
             }}>
               Net effect: <span style={{
-                color: (modifier_total ?? 0) < 0 ? "#C0392B" : "#2D6A4F",
+                color: (modifier_total ?? 0) < 0 ? "#A32D2D" : "#3B6D11",
                 fontWeight: 500,
               }}>
                 {(modifier_total ?? 0) > 0 ? "+" : ""}{modifier_total} pts
@@ -1025,7 +1025,7 @@ function CrossPanelInteractions({
             onClick={() => setOpen(o => !o)}
             style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", marginBottom: open ? 16 : 0 }}
           >
-            <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, fontVariant: "small-caps", letterSpacing: "0.1em", color: "#B8860B", fontWeight: 600 }}>
+            <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, fontVariant: "small-caps", letterSpacing: "0.1em", color: "#C49A3C", fontWeight: 600 }}>
               Detailed Patterns
             </span>
             <div
@@ -1033,8 +1033,8 @@ function CrossPanelInteractions({
               onMouseLeave={() => setHoverToggle(false)}
               style={{
                 width: 20, height: 20, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
-                border: `0.5px solid ${hoverToggle ? "#B8860B" : "rgba(184,134,11,0.4)"}`,
-                color: hoverToggle ? "#B8860B" : "rgba(184,134,11,0.6)",
+                border: `0.5px solid ${hoverToggle ? "#C49A3C" : "rgba(184,134,11,0.4)"}`,
+                color: hoverToggle ? "#C49A3C" : "rgba(184,134,11,0.6)",
                 fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 16, lineHeight: 1,
                 transition: "border-color 0.2s ease, color 0.2s ease", flexShrink: 0, marginLeft: 8,
               }}
@@ -1053,7 +1053,7 @@ function CrossPanelInteractions({
             {!showAll && computed.length > 3 && (
               <button
                 onClick={e => { e.stopPropagation(); setShowAll(true) }}
-                style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "#B8860B", background: "none", border: "none", cursor: "pointer", marginTop: 10, padding: 0 }}
+                style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "#C49A3C", background: "none", border: "none", cursor: "pointer", marginTop: 10, padding: 0 }}
               >
                 View all {computed.length} patterns →
               </button>
@@ -1201,15 +1201,15 @@ function OralSpeciesRow({ name, role, val, target, note, isPathogen, flagFn, lea
   const notDetected = val === 0
   const effectiveFlag: Flag = notDetected ? (isPathogen ? "good" : "not_tested") : flagFn(val)
   const BADGE: Record<Flag, { bg: string; text: string; label: string }> = {
-    good:       { bg: "#EAF3DE", text: "#2D6A4F",              label: "Optimal"      },
+    good:       { bg: "#EAF3DE", text: "#3B6D11",              label: "Optimal"      },
     watch:      { bg: "#FEF3C7", text: "#92400E",              label: "Watch"        },
     attention:  { bg: "#FEF0E6", text: "#C2510A",              label: "Attention"    },
-    elevated:   { bg: "#FEECEC", text: "#C0392B",              label: "Elevated"     },
+    elevated:   { bg: "#FEECEC", text: "#A32D2D",              label: "Elevated"     },
     not_tested: { bg: "var(--warm-50)", text: "var(--ink-40)",   label: "Not detected" },
     pending:    { bg: "var(--warm-50)", text: "var(--ink-60)",   label: "—"            },
   }
   const bs = BADGE[effectiveFlag]
-  const leftBorder = effectiveFlag === "attention" ? "#C0392B" : effectiveFlag === "watch" ? "#B8860B" : effectiveFlag === "good" ? "#2D6A4F" : "transparent"
+  const leftBorder = effectiveFlag === "attention" ? "#A32D2D" : effectiveFlag === "watch" ? "#C49A3C" : effectiveFlag === "good" ? "#3B6D11" : "transparent"
   const valueColor = effectiveFlag === "attention" ? "#991B1B" : effectiveFlag === "watch" ? "#92400E" : "var(--ink)"
   return (
     <div
@@ -1300,7 +1300,7 @@ function OralSection({ title, children }: { title: string; children: React.React
         onClick={() => setOpen(o => !o)}
         style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", cursor: "pointer" }}
       >
-        <span style={{ fontFamily: font, fontSize: 10, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "#2D6A4F", fontWeight: 600 }}>
+        <span style={{ fontFamily: font, fontSize: 10, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: "#3B6D11", fontWeight: 600 }}>
           {title}
         </span>
         <div
@@ -1308,8 +1308,8 @@ function OralSection({ title, children }: { title: string; children: React.React
           onMouseLeave={() => setHov(false)}
           style={{
             width: 16, height: 16, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
-            border: `0.5px solid ${hov ? "#2D6A4F" : "rgba(45,106,79,0.35)"}`,
-            color: hov ? "#2D6A4F" : "rgba(45,106,79,0.5)",
+            border: `0.5px solid ${hov ? "#3B6D11" : "rgba(45,106,79,0.35)"}`,
+            color: hov ? "#3B6D11" : "rgba(45,106,79,0.5)",
             fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 13, lineHeight: 1,
             transition: "border-color 0.2s ease, color 0.2s ease", flexShrink: 0,
           }}
@@ -1341,7 +1341,7 @@ function CompleteMicrobiomePanel({ species, shannonDiversity }: {
         style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", cursor: "pointer" }}
       >
         <div>
-          <span style={{ fontFamily: font, fontSize: 10, textTransform: "uppercase" as const, letterSpacing: "0.12em", color: "#2D6A4F", fontWeight: 600 }}>
+          <span style={{ fontFamily: font, fontSize: 10, textTransform: "uppercase" as const, letterSpacing: "0.12em", color: "#3B6D11", fontWeight: 600 }}>
             Complete Microbiome Panel
           </span>
           {!open && (
@@ -1355,8 +1355,8 @@ function CompleteMicrobiomePanel({ species, shannonDiversity }: {
           onMouseLeave={() => setHov(false)}
           style={{
             width: 20, height: 20, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
-            border: `0.5px solid ${hov ? "#2D6A4F" : "rgba(45,106,79,0.4)"}`,
-            color: hov ? "#2D6A4F" : "rgba(45,106,79,0.6)",
+            border: `0.5px solid ${hov ? "#3B6D11" : "rgba(45,106,79,0.4)"}`,
+            color: hov ? "#3B6D11" : "rgba(45,106,79,0.6)",
             fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 16, lineHeight: 1,
             transition: "border-color 0.2s ease, color 0.2s ease", flexShrink: 0,
           }}
@@ -1436,14 +1436,14 @@ function CompleteMicrobiomePanel({ species, shannonDiversity }: {
                 <p style={{ margin: "2px 0 0", fontFamily: font, fontSize: 11, color: "var(--ink-60)" }}>Species richness and evenness — target ≥3.0</p>
               </div>
               <div style={{ textAlign: "right" }}>
-                <p style={{ margin: 0, fontFamily: font, fontSize: 16, color: shannonDiversity >= 3 ? "#2D6A4F" : shannonDiversity >= 2 ? "#92400E" : "#991B1B" }}>
+                <p style={{ margin: 0, fontFamily: font, fontSize: 16, color: shannonDiversity >= 3 ? "#3B6D11" : shannonDiversity >= 2 ? "#92400E" : "#991B1B" }}>
                   {shannonDiversity.toFixed(2)}
                 </p>
                 <span style={{
                   fontFamily: font, fontSize: 9, textTransform: "uppercase" as const, letterSpacing: "0.05em",
                   padding: "2px 6px", borderRadius: 3,
                   background: shannonDiversity >= 3 ? "#EAF3DE" : shannonDiversity >= 2 ? "#FEF3C7" : "#FEE2E2",
-                  color: shannonDiversity >= 3 ? "#2D6A4F" : shannonDiversity >= 2 ? "#92400E" : "#991B1B",
+                  color: shannonDiversity >= 3 ? "#3B6D11" : shannonDiversity >= 2 ? "#92400E" : "#991B1B",
                 }}>
                   {shannonDiversity >= 3 ? "Optimal" : shannonDiversity >= 2 ? "Watch" : "Attention"}
                 </span>
@@ -1457,14 +1457,14 @@ function CompleteMicrobiomePanel({ species, shannonDiversity }: {
                   <p style={{ margin: "2px 0 0", fontFamily: font, fontSize: 11, color: "var(--ink-60)" }}>Total OTUs detected — target &gt;150</p>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <p style={{ margin: 0, fontFamily: font, fontSize: 16, color: sp("Species richness") > 150 ? "#2D6A4F" : sp("Species richness") > 80 ? "#92400E" : "#991B1B" }}>
+                  <p style={{ margin: 0, fontFamily: font, fontSize: 16, color: sp("Species richness") > 150 ? "#3B6D11" : sp("Species richness") > 80 ? "#92400E" : "#991B1B" }}>
                     {Math.round(sp("Species richness"))}
                   </p>
                   <span style={{
                     fontFamily: font, fontSize: 9, textTransform: "uppercase" as const, letterSpacing: "0.05em",
                     padding: "2px 6px", borderRadius: 3,
                     background: sp("Species richness") > 150 ? "#EAF3DE" : sp("Species richness") > 80 ? "#FEF3C7" : "#FEE2E2",
-                    color: sp("Species richness") > 150 ? "#2D6A4F" : sp("Species richness") > 80 ? "#92400E" : "#991B1B",
+                    color: sp("Species richness") > 150 ? "#3B6D11" : sp("Species richness") > 80 ? "#92400E" : "#991B1B",
                   }}>
                     {sp("Species richness") > 150 ? "Optimal" : sp("Species richness") > 80 ? "Watch" : "Attention"}
                   </span>
@@ -1768,7 +1768,7 @@ export function ScoreWheel({
         }}
         style={{
           width: '32px', height: '18px', borderRadius: '9px',
-          background: sleepHidden ? 'var(--ink-12)' : '#4A7FB5',
+          background: sleepHidden ? 'var(--ink-12)' : '#185FA5',
           border: 'none', cursor: 'pointer', position: 'relative',
           transition: 'background 0.2s ease', flexShrink: 0,
           padding: 0,
@@ -1847,16 +1847,16 @@ export function ScoreWheel({
               <svg viewBox="0 0 680 420" preserveAspectRatio="xMidYMid meet" style={{ width: "100%", height: "100%", display: "block" }}>
                 <defs>
                   <linearGradient id="pviz-sleep" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#4A7FB5" stopOpacity=".72" />
-                    <stop offset="100%" stopColor="#4A7FB5" stopOpacity=".04" />
+                    <stop offset="0%" stopColor="#185FA5" stopOpacity=".72" />
+                    <stop offset="100%" stopColor="#185FA5" stopOpacity=".04" />
                   </linearGradient>
                   <linearGradient id="pviz-blood" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#C0392B" stopOpacity=".68" />
-                    <stop offset="100%" stopColor="#C0392B" stopOpacity=".04" />
+                    <stop offset="0%" stopColor="#A32D2D" stopOpacity=".68" />
+                    <stop offset="100%" stopColor="#A32D2D" stopOpacity=".04" />
                   </linearGradient>
                   <linearGradient id="pviz-oral" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#2D6A4F" stopOpacity=".68" />
-                    <stop offset="100%" stopColor="#2D6A4F" stopOpacity=".04" />
+                    <stop offset="0%" stopColor="#3B6D11" stopOpacity=".68" />
+                    <stop offset="100%" stopColor="#3B6D11" stopOpacity=".04" />
                   </linearGradient>
                   <linearGradient id="pviz-cross" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#C49A3C" stopOpacity=".12" />
@@ -1883,19 +1883,19 @@ export function ScoreWheel({
                 <line x1="60" y1={BL} x2="630" y2={BL} stroke="#D5D2CB" strokeWidth=".8" />
 
                 {/* SLEEP — center 130, base 70px */}
-                <polygon points={`95,${BL} 130,${sleepApexY} 165,${BL}`} fill="url(#pviz-sleep)" stroke="#4A7FB5" strokeWidth="1.2" />
-                <circle cx="130" cy={sleepApexY} r="4.5" fill="#4A7FB5" />
-                <text x="130" y={sleepApexY - 14} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="18" fill="#4A7FB5">{sScore}</text>
+                <polygon points={`95,${BL} 130,${sleepApexY} 165,${BL}`} fill="url(#pviz-sleep)" stroke="#185FA5" strokeWidth="1.2" />
+                <circle cx="130" cy={sleepApexY} r="4.5" fill="#185FA5" />
+                <text x="130" y={sleepApexY - 14} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="18" fill="#185FA5">{sScore}</text>
 
                 {/* BLOOD — center 280, base 80px */}
-                <polygon points={`240,${BL} 280,${bloodApexY} 320,${BL}`} fill="url(#pviz-blood)" stroke="#C0392B" strokeWidth="1.2" />
-                <circle cx="280" cy={bloodApexY} r="4.5" fill="#C0392B" />
-                <text x="280" y={bloodApexY - 14} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="18" fill="#C0392B">{bScore}</text>
+                <polygon points={`240,${BL} 280,${bloodApexY} 320,${BL}`} fill="url(#pviz-blood)" stroke="#A32D2D" strokeWidth="1.2" />
+                <circle cx="280" cy={bloodApexY} r="4.5" fill="#A32D2D" />
+                <text x="280" y={bloodApexY - 14} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="18" fill="#A32D2D">{bScore}</text>
 
                 {/* ORAL — center 430, base 54px */}
-                <polygon points={`403,${BL} 430,${oralApexY} 457,${BL}`} fill="url(#pviz-oral)" stroke="#2D6A4F" strokeWidth="1.2" />
-                <circle cx="430" cy={oralApexY} r="4.5" fill="#2D6A4F" />
-                <text x="430" y={oralApexY - 14} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="18" fill="#2D6A4F">{oScore}</text>
+                <polygon points={`403,${BL} 430,${oralApexY} 457,${BL}`} fill="url(#pviz-oral)" stroke="#3B6D11" strokeWidth="1.2" />
+                <circle cx="430" cy={oralApexY} r="4.5" fill="#3B6D11" />
+                <text x="430" y={oralApexY - 14} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="18" fill="#3B6D11">{oScore}</text>
 
                 {/* CROSS-PANEL — center 580, base 48px */}
                 {crossNet !== 0 && crossNet < 0 && (
@@ -2111,7 +2111,7 @@ export function ScoreWheel({
               textDecoration: "none",
               transition: "color 0.2s ease",
             }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "#B8860B" }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "#C49A3C" }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = "var(--ink-40)" }}
           >
             ↑ re-upload labs
@@ -2209,14 +2209,14 @@ export function ScoreWheel({
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <span style={{ fontFamily: font, fontSize: 13, fontWeight: 500, color: "var(--ink)" }}>{m.label}</span>
-                        <span style={{ fontFamily: font, fontSize: 11, color: "#B8860B" }}>+{m.pts} pts</span>
+                        <span style={{ fontFamily: font, fontSize: 11, color: "#C49A3C" }}>+{m.pts} pts</span>
                       </div>
                       <button
                         onClick={() => setOpenMissingTooltip(openMissingTooltip === m.label ? null : m.label)}
                         style={{
                           width: 18, height: 18, borderRadius: "50%",
-                          border: "0.5px solid #B8860B", background: "transparent",
-                          cursor: "pointer", fontSize: 10, color: "#B8860B",
+                          border: "0.5px solid #C49A3C", background: "transparent",
+                          cursor: "pointer", fontSize: 10, color: "#C49A3C",
                           display: "inline-flex", alignItems: "center", justifyContent: "center",
                           lineHeight: 1, flexShrink: 0, padding: 0, fontFamily: font,
                         }}
@@ -2308,7 +2308,7 @@ export function ScoreWheel({
             />
           ))}
           {oralActive && (
-            <a href="/dashboard/oral" style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "#2D6A4F", display: "block", marginTop: 12 }}>
+            <a href="/dashboard/oral" style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "#3B6D11", display: "block", marginTop: 12 }}>
               View full oral panel →
             </a>
           )}
@@ -2346,9 +2346,9 @@ export function ScoreWheel({
           whiteSpace: 'nowrap',
         }}>
           {sleepHidden ? (
-            <><span style={{ color: '#4A7FB5' }}>○</span> Sleep paused — score now out of 70</>
+            <><span style={{ color: '#185FA5' }}>○</span> Sleep paused — score now out of 70</>
           ) : (
-            <><span style={{ color: '#4A7FB5' }}>●</span> Sleep restored — score now out of 100</>
+            <><span style={{ color: '#185FA5' }}>●</span> Sleep restored — score now out of 100</>
           )}
         </div>
       )}

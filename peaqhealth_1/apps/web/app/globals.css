@@ -8,11 +8,11 @@ html {
 :root {
   /* ─── Core palette (light) ─────────────────────────────────────────────── */
   --white: #FFFFFF;
-  --off-white: #FAFAF8;
+  --off-white: #F6F4EF;
   --warm-50: #F7F5F0;
   --warm-100: #EDE9E0;
   --warm-200: #DDD8CC;
-  --ink: #141410;
+  --ink: #1a1a18;
   --ink-80: rgba(20,20,16,0.80);
   --ink-60: rgba(20,20,16,0.60);
   --ink-40: rgba(20,20,16,0.40);
@@ -23,16 +23,16 @@ html {
   --ink-08: rgba(20,20,16,0.08);
   --ink-06: rgba(20,20,16,0.06);
   --ink-04: rgba(20,20,16,0.04);
-  --gold: #B8860B;
-  --gold-dim: rgba(184,134,11,0.15);
+  --gold: #C49A3C;
+  --gold-dim: rgba(196,154,60,0.12);
   --gold-light: #F5E6B8;
 
   /* Panel colors — identical in both modes */
-  --sleep-c: #4A7FB5;
+  --sleep-c: #185FA5;
   --sleep-bg: #EBF2FA;
-  --blood-c: #C0392B;
+  --blood-c: #A32D2D;
   --blood-bg: #FDECEA;
-  --oral-c: #2D6A4F;
+  --oral-c: #3B6D11;
   --oral-bg: #EAF3DE;
 
   --font-display: "Cormorant Garamond", Georgia, serif;
@@ -40,18 +40,18 @@ html {
 
   --amber: #92400E;
   --amber-bg: #FEF3C7;
-  --status-optimal: #2D6A4F;
-  --status-good: #4A7FB5;
-  --status-watch: #B8860B;
-  --status-attention: #C0392B;
+  --status-optimal: #27500A;
+  --status-good: #085041;
+  --status-watch: #633806;
+  --status-attention: #791F1F;
   --status-muted: rgba(20,20,16,0.2);
 
   /* ─── Semantic aliases (used in new components) ────────────────────────── */
-  --peaq-bg: #FAFAF8;
+  --peaq-bg: #F6F4EF;
   --peaq-bg-secondary: #F0EFE8;
   --peaq-bg-card: #FFFFFF;
   --peaq-bg-muted: #F5F4F0;
-  --peaq-ink: #141410;
+  --peaq-ink: #1a1a18;
   --peaq-ink-secondary: #5F5E5A;
   --peaq-ink-tertiary: #888780;
   --peaq-ink-faint: #B4B2A9;

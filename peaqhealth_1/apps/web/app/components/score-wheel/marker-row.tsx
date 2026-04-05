@@ -4,10 +4,10 @@ import { useState } from "react"
 export type Flag = "good" | "watch" | "attention" | "elevated" | "pending" | "not_tested"
 
 const FLAG_STYLES: Record<Flag, { bg: string; text: string; label: string }> = {
-  good:       { bg: "#EAF3DE", text: "#2D6A4F",          label: "Good" },
+  good:       { bg: "#EAF3DE", text: "#3B6D11",          label: "Good" },
   watch:      { bg: "#FEF3C7", text: "#92400E",          label: "Watch" },
   attention:  { bg: "#FEF0E6", text: "#C2510A",          label: "Attention" },
-  elevated:   { bg: "#FEECEC", text: "#C0392B",          label: "Elevated" },
+  elevated:   { bg: "#FEECEC", text: "#A32D2D",          label: "Elevated" },
   pending:    { bg: "var(--warm-50)", text: "var(--ink-60)",  label: "Pending" },
   not_tested: { bg: "var(--warm-50)", text: "var(--ink-30)", label: "—" },
 }
@@ -17,7 +17,7 @@ export const SLEEP_ZONES: Record<string, {
   markerColor: string
 }> = {
   deep: {
-    markerColor: '#4A7FB5',
+    markerColor: '#185FA5',
     zones: [
       { label: 'Low',     color: '#FFCDD2', min: 0,  max: 10 },
       { label: 'Watch',   color: '#FFE0B2', min: 10, max: 17 },
@@ -26,7 +26,7 @@ export const SLEEP_ZONES: Record<string, {
     ]
   },
   hrv: {
-    markerColor: '#4A7FB5',
+    markerColor: '#185FA5',
     zones: [
       { label: 'Low',     color: '#FFCDD2', min: 0,  max: 20  },
       { label: 'Watch',   color: '#FFE0B2', min: 20, max: 40  },
@@ -35,7 +35,7 @@ export const SLEEP_ZONES: Record<string, {
     ]
   },
   spo2Avg: {
-    markerColor: '#4A7FB5',
+    markerColor: '#185FA5',
     zones: [
       { label: 'Low',     color: '#FFCDD2', min: 85, max: 90 },
       { label: 'Watch',   color: '#FFE0B2', min: 90, max: 94 },
@@ -44,7 +44,7 @@ export const SLEEP_ZONES: Record<string, {
     ]
   },
   rem: {
-    markerColor: '#4A7FB5',
+    markerColor: '#185FA5',
     zones: [
       { label: 'Low',     color: '#FFCDD2', min: 0,  max: 12 },
       { label: 'Watch',   color: '#FFE0B2', min: 12, max: 18 },
@@ -53,7 +53,7 @@ export const SLEEP_ZONES: Record<string, {
     ]
   },
   efficiency: {
-    markerColor: '#4A7FB5',
+    markerColor: '#185FA5',
     zones: [
       { label: 'Low',     color: '#FFCDD2', min: 60, max: 70 },
       { label: 'Watch',   color: '#FFE0B2', min: 70, max: 78 },
@@ -68,7 +68,7 @@ export const ORAL_ZONES: Record<string, {
   markerColor: string
 }> = {
   shannon: {
-    markerColor: '#2D6A4F', // oral green
+    markerColor: '#3B6D11', // oral green
     zones: [
       { label: 'Low',     color: '#FFCDD2', min: 0,   max: 2.0 },
       { label: 'Watch',   color: '#FFE0B2', min: 2.0, max: 2.5 },
@@ -77,7 +77,7 @@ export const ORAL_ZONES: Record<string, {
     ]
   },
   nitrate: {
-    markerColor: '#2D6A4F',
+    markerColor: '#3B6D11',
     zones: [
       { label: 'Low',     color: '#FFCDD2', min: 0,  max: 5  },
       { label: 'Watch',   color: '#FFE0B2', min: 5,  max: 10 },
@@ -86,7 +86,7 @@ export const ORAL_ZONES: Record<string, {
     ]
   },
   periodontal: {
-    markerColor: '#2D6A4F',
+    markerColor: '#3B6D11',
     zones: [
       { label: 'Optimal',   color: '#D4EDDA', min: 0,   max: 0.5 },
       { label: 'Good',      color: '#FFF3CD', min: 0.5, max: 2.0 },
@@ -95,7 +95,7 @@ export const ORAL_ZONES: Record<string, {
     ]
   },
   osa: {
-    markerColor: '#2D6A4F',
+    markerColor: '#3B6D11',
     zones: [
       { label: 'Optimal',   color: '#D4EDDA', min: 0,   max: 1.0 },
       { label: 'Watch',     color: '#FFE0B2', min: 1.0, max: 5.0 },
@@ -245,7 +245,7 @@ export function MarkerRow({ name, sub, value, unit, flag, barPct, color, trackCo
                 fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 14,
                 color: isPending ? "var(--ink-30)"
                   : effectiveFlag === "good"      ? color
-                  : effectiveFlag === "elevated"  ? "#C0392B"
+                  : effectiveFlag === "elevated"  ? "#A32D2D"
                   : effectiveFlag === "attention" ? "#C2510A"
                   : "#92400E",
               }}>

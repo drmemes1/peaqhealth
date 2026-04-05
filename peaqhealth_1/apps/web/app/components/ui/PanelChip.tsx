@@ -9,9 +9,9 @@ const PANEL_TOKENS: Record<Panel, { bg: string; text: string; border: string }> 
 }
 
 const DOT_COLORS: Record<Panel, string> = {
-  sleep: "#4A7FB5",
-  blood: "#C0392B",
-  oral:  "#2D6A4F",
+  sleep: "#185FA5",
+  blood: "#A32D2D",
+  oral:  "#3B6D11",
 }
 
 export function PanelChip({ panel, label }: { panel: Panel; label?: string }) {

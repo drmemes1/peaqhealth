@@ -7,7 +7,7 @@ const PANELS = [
   {
     key: "blood",
     label: "Blood",
-    color: "#C0392B",
+    color: "#A32D2D",
     bg: "var(--panel-blood-bg, #FCEBEB)",
     border: "var(--panel-blood-border, #A32D2D)",
     text: "var(--panel-blood-text, #791F1F)",
@@ -19,7 +19,7 @@ const PANELS = [
   {
     key: "sleep",
     label: "Sleep",
-    color: "#4A7FB5",
+    color: "#185FA5",
     bg: "var(--panel-sleep-bg, #E6F1FB)",
     border: "var(--panel-sleep-border, #185FA5)",
     text: "var(--panel-sleep-text, #0C447C)",
@@ -31,7 +31,7 @@ const PANELS = [
   {
     key: "oral",
     label: "Oral Microbiome",
-    color: "#2D6A4F",
+    color: "#3B6D11",
     bg: "var(--panel-oral-bg, #EAF3DE)",
     border: "var(--panel-oral-border, #3B6D11)",
     text: "var(--panel-oral-text, #27500A)",

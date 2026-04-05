@@ -55,9 +55,9 @@ const SIGNAL_DETAILS: Record<string, { why: string; action: string }> = {
 }
 
 const PANEL_COLORS: Record<string, { dot: string; bg: string; text: string }> = {
-  oral:  { dot: "#2D6A4F", bg: "var(--panel-oral-bg, #EAF3DE)",  text: "var(--panel-oral-text, #27500A)" },
-  blood: { dot: "#C0392B", bg: "var(--panel-blood-bg, #FCEBEB)", text: "var(--panel-blood-text, #791F1F)" },
-  sleep: { dot: "#4A7FB5", bg: "var(--panel-sleep-bg, #E6F1FB)", text: "var(--panel-sleep-text, #0C447C)" },
+  oral:  { dot: "#3B6D11", bg: "var(--panel-oral-bg, #EAF3DE)",  text: "var(--panel-oral-text, #27500A)" },
+  blood: { dot: "#A32D2D", bg: "var(--panel-blood-bg, #FCEBEB)", text: "var(--panel-blood-text, #791F1F)" },
+  sleep: { dot: "#185FA5", bg: "var(--panel-sleep-bg, #E6F1FB)", text: "var(--panel-sleep-text, #0C447C)" },
 }
 
 export function CrossPanelClient({ snapshot }: { snapshot: Record<string, unknown> | null }) {
@@ -77,7 +77,7 @@ export function CrossPanelClient({ snapshot }: { snapshot: Record<string, unknow
             Cross-panel signals
           </h1>
           <Link href="/dashboard" style={{ fontFamily: "var(--font-body)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--ink-30)", textDecoration: "none" }}
-            onMouseEnter={e => { e.currentTarget.style.color = "#B8860B" }}
+            onMouseEnter={e => { e.currentTarget.style.color = "#C49A3C" }}
             onMouseLeave={e => { e.currentTarget.style.color = "var(--ink-30)" }}>
             ← Dashboard
           </Link>
@@ -100,7 +100,7 @@ export function CrossPanelClient({ snapshot }: { snapshot: Record<string, unknow
         <div style={{ display: "flex", flexDirection: "column", gap: 20, marginBottom: 48 }}>
           {modifiers.map(m => {
             const details = SIGNAL_DETAILS[m.id]
-            const accentColor = m.direction === "bonus" ? "#2D6A4F" : "#C0392B"
+            const accentColor = m.direction === "bonus" ? "#3B6D11" : "#A32D2D"
             const pointColor = m.direction === "bonus" ? "var(--status-optimal-text, #27500A)" : "var(--status-attention-text, #791F1F)"
             return (
               <div key={m.id} style={{

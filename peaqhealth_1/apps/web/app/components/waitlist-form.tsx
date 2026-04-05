@@ -3,8 +3,8 @@
 import { useState } from "react"
 
 const sans = "'Instrument Sans', system-ui, sans-serif"
-const INK = "#141410"
-const BG = "#FAFAF8"
+const INK = "#1a1a18"
+const BG = "#F6F4EF"
 
 export function WaitlistForm() {
   const [email, setEmail] = useState("")
@@ -34,7 +34,7 @@ export function WaitlistForm() {
   if (status === "sent") {
     return (
       <p style={{
-        fontFamily: sans, fontSize: 13, color: "#2D6A4F",
+        fontFamily: sans, fontSize: 13, color: "#3B6D11",
         padding: "12px 0", margin: 0,
       }}>
         Thanks — we&apos;ll be in touch.
@@ -84,7 +84,7 @@ export function WaitlistForm() {
         {status === "sending" ? "Sending..." : "Join waitlist"}
       </button>
       {status === "error" && (
-        <p style={{ fontFamily: sans, fontSize: 12, color: "#C0392B", margin: "4px 0 0", width: "100%" }}>
+        <p style={{ fontFamily: sans, fontSize: 12, color: "#A32D2D", margin: "4px 0 0", width: "100%" }}>
           Something went wrong. Try again.
         </p>
       )}

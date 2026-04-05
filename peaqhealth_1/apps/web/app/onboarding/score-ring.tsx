@@ -62,10 +62,10 @@ interface ScoreRingProps {
 }
 
 const PANEL_COLORS = {
-  sleep: "#4A7FB5",
-  blood: "#C0392B",
-  oral: "#2D6A4F",
-  lifestyle: "#B8860B",
+  sleep: "#185FA5",
+  blood: "#A32D2D",
+  oral: "#3B6D11",
+  lifestyle: "#C49A3C",
 };
 
 export function ScoreRing({

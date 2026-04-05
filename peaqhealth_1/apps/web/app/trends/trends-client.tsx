@@ -100,10 +100,10 @@ interface TrendsData {
 // ─── Constants ──────────────────────────────────────────────────────────────────
 
 const C = {
-  sleep: "#4A7FB5",
-  blood: "#C0392B",
-  oral: "#2D6A4F",
-  lifestyle: "#B8860B",
+  sleep: "#185FA5",
+  blood: "#A32D2D",
+  oral: "#3B6D11",
+  lifestyle: "#C49A3C",
   ink: "var(--ink)",
 } as const
 
@@ -409,8 +409,8 @@ function WeeklySnapshotCard({ snapshot }: { snapshot: WeeklySnapshot | null }) {
   if (!snapshot?.headline) return null
 
   const trendColor = snapshot.trend_direction === "improving" ? "#1D9E75"
-    : snapshot.trend_direction === "declining" ? "#C0392B"
-    : "#B8860B"
+    : snapshot.trend_direction === "declining" ? "#A32D2D"
+    : "#C49A3C"
 
   const trendLabel = snapshot.trend_direction === "improving" ? "Trending up"
     : snapshot.trend_direction === "declining" ? "Worth watching"
@@ -551,8 +551,8 @@ function SleepNarrativeCard() {
 
   const trendSummary = narrative.raw_response?.trend_summary
   const trendColor = trendSummary === "improving" ? "#1D9E75"
-    : trendSummary === "declining" ? "#C0392B"
-    : "#B8860B"
+    : trendSummary === "declining" ? "#A32D2D"
+    : "#C49A3C"
   const trendLabel = trendSummary === "improving" ? "↑ Improving"
     : trendSummary === "declining" ? "↓ Worth watching"
     : "→ Holding steady"
@@ -606,7 +606,7 @@ function SleepNarrativeCard() {
 
       {/* Watch signal */}
       {typeof narrative.watch_signal === "string" && (
-        <div style={{ padding: "10px 14px", background: "rgba(184,134,11,0.07)", borderRadius: 6, borderLeft: "3px solid #B8860B", fontSize: 13, fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", color: "var(--ink-60)", lineHeight: 1.5, marginBottom: 14 }}>
+        <div style={{ padding: "10px 14px", background: "rgba(184,134,11,0.07)", borderRadius: 6, borderLeft: "3px solid #C49A3C", fontSize: 13, fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", color: "var(--ink-60)", lineHeight: 1.5, marginBottom: 14 }}>
           {narrative.watch_signal}
         </div>
       )}
@@ -687,16 +687,16 @@ function SleepPausedCard() {
     <div style={{
       background: 'var(--white)',
       border: '0.5px solid var(--ink-12)',
-      borderTop: '3px solid #4A7FB5',
+      borderTop: '3px solid #185FA5',
       borderRadius: 8,
       padding: '20px 24px',
       marginBottom: '12px',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-        <span style={{ fontFamily: font, fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#4A7FB5', fontWeight: 500 }}>
+        <span style={{ fontFamily: font, fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#185FA5', fontWeight: 500 }}>
           Sleep · paused
         </span>
-        <a href="/settings#wearables" style={{ fontFamily: font, fontSize: '11px', color: '#4A7FB5', textDecoration: 'none', fontWeight: 500 }}>
+        <a href="/settings#wearables" style={{ fontFamily: font, fontSize: '11px', color: '#185FA5', textDecoration: 'none', fontWeight: 500 }}>
           Manage →
         </a>
       </div>
@@ -712,7 +712,7 @@ function SleepPausedCard() {
         { connection: 'Sleep → Score', text: 'With sleep active, your score reflects 30 additional points based on nightly objective data.' },
       ].map(item => (
         <div key={item.connection} style={{ marginBottom: '10px', paddingLeft: '10px', borderLeft: '2px solid rgba(74,127,181,0.25)' }}>
-          <div style={{ fontFamily: font, fontSize: '10px', fontWeight: 500, color: '#4A7FB5', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: '2px' }}>
+          <div style={{ fontFamily: font, fontSize: '10px', fontWeight: 500, color: '#185FA5', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: '2px' }}>
             {item.connection}
           </div>
           <div style={{ fontFamily: font, fontSize: '12px', color: 'var(--ink-50, var(--ink-60))', lineHeight: 1.55 }}>
@@ -721,7 +721,7 @@ function SleepPausedCard() {
         </div>
       ))}
       <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '0.5px solid var(--ink-08)', display: 'flex', gap: '12px' }}>
-        <a href="/settings#wearables" style={{ fontFamily: font, fontSize: '12px', fontWeight: 500, color: '#4A7FB5', textDecoration: 'none' }}>
+        <a href="/settings#wearables" style={{ fontFamily: font, fontSize: '12px', fontWeight: 500, color: '#185FA5', textDecoration: 'none' }}>
           Re-enable sleep →
         </a>
       </div>
@@ -1104,8 +1104,8 @@ export function TrendsClient() {
                     )}
                   </div>
                 ) : checkinResult ? (
-                  <div style={{ ...card, borderLeft: `3px solid #2D6A4F`, padding: "20px 24px" }}>
-                    <p style={{ fontFamily: body, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.08em", color: "#2D6A4F", margin: "0 0 10px" }}>
+                  <div style={{ ...card, borderLeft: `3px solid #3B6D11`, padding: "20px 24px" }}>
+                    <p style={{ fontFamily: body, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.08em", color: "#3B6D11", margin: "0 0 10px" }}>
                       ✓ Check-in saved
                     </p>
                     {checkinResult.shouldUpdateQuestionnaire ? (

@@ -9,10 +9,10 @@ interface OralInsightsProps {
 
 const PRIORITY_COLORS: Record<string, string> = {
   CRITICAL: "#dc2626",
-  HIGH:     "#B8860B",
+  HIGH:     "#C49A3C",
   MEDIUM:   "rgba(20,20,16,0.6)",
   LOW:      "rgba(20,20,16,0.4)",
-  POSITIVE: "#2D6A4F",
+  POSITIVE: "#3B6D11",
 }
 
 const PRIORITY_BG: Record<string, string> = {
@@ -25,10 +25,10 @@ const PRIORITY_BG: Record<string, string> = {
 
 const PRIORITY_BORDER: Record<string, string> = {
   CRITICAL: "#dc2626",
-  HIGH:     "#B8860B",
+  HIGH:     "#C49A3C",
   MEDIUM:   "rgba(20,20,16,0.15)",
   LOW:      "rgba(20,20,16,0.1)",
-  POSITIVE: "#2D6A4F",
+  POSITIVE: "#3B6D11",
 }
 
 const WATCH_LABELS: Record<string, { label: string; citation: string }> = {
@@ -112,7 +112,7 @@ export function OralInsights({ oralScore, kitStatus }: OralInsightsProps) {
     if (kitStatus === 'processing' || kitStatus === 'received_lab' || kitStatus === 'mailed_back') {
       return (
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "16px 0" }}>
-          <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#B8860B", display: "inline-block", animation: "pulse 2s infinite" }} />
+          <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#C49A3C", display: "inline-block", animation: "pulse 2s infinite" }} />
           <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "rgba(20,20,16,0.5)" }}>
             Your sample is being sequenced. Results arrive in 10–14 days.
           </span>
@@ -130,13 +130,13 @@ export function OralInsights({ oralScore, kitStatus }: OralInsightsProps) {
           background: "rgba(184,134,11,0.08)", border: "1px solid rgba(184,134,11,0.3)",
           borderRadius: 6, padding: "14px 16px",
         }}>
-          <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, fontWeight: 600, color: "#B8860B", margin: "0 0 6px" }}>
+          <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, fontWeight: 600, color: "#C49A3C", margin: "0 0 6px" }}>
             ⚠ Antiseptic mouthwash detected
           </p>
           <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "rgba(20,20,16,0.6)", margin: "0 0 8px", lineHeight: 1.5 }}>
             Stop mouthwash → retest in 14 days → see your score change.
           </p>
-          <a href="/kit/register" style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "#B8860B", textDecoration: "underline" }}>
+          <a href="/kit/register" style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "#C49A3C", textDecoration: "underline" }}>
             Order a retest kit
           </a>
         </div>
@@ -181,13 +181,13 @@ export function OralInsights({ oralScore, kitStatus }: OralInsightsProps) {
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1 }}>
                     <div style={{
                       width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
-                      background: sp.category === 'protective' ? "#2D6A4F" : sp.category === 'pathogenic' ? "#C0392B" : "rgba(20,20,16,0.2)",
+                      background: sp.category === 'protective' ? "#3B6D11" : sp.category === 'pathogenic' ? "#A32D2D" : "rgba(20,20,16,0.2)",
                     }} />
                     <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "var(--ink)", fontStyle: "italic" }}>{sp.species}</span>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <div style={{ width: 60, height: 3, borderRadius: 2, background: "rgba(20,20,16,0.08)", overflow: "hidden" }}>
-                      <div style={{ width: `${Math.min(100, sp.abundance * 4)}%`, height: "100%", background: sp.category === 'protective' ? "#2D6A4F" : sp.category === 'pathogenic' ? "#C0392B" : "rgba(20,20,16,0.3)", borderRadius: 2 }} />
+                      <div style={{ width: `${Math.min(100, sp.abundance * 4)}%`, height: "100%", background: sp.category === 'protective' ? "#3B6D11" : sp.category === 'pathogenic' ? "#A32D2D" : "rgba(20,20,16,0.3)", borderRadius: 2 }} />
                     </div>
                     <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "rgba(20,20,16,0.5)", width: 40, textAlign: "right" }}>{sp.abundance.toFixed(1)}%</span>
                   </div>
@@ -217,7 +217,7 @@ export function OralInsights({ oralScore, kitStatus }: OralInsightsProps) {
                       <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, color: "rgba(20,20,16,0.3)", display: "block" }}>Emerging science — not yet scored · {info.citation}</span>
                     </div>
                     <div style={{ width: 40, height: 4, borderRadius: 2, background: "rgba(20,20,16,0.08)", overflow: "hidden", flexShrink: 0 }}>
-                      <div style={{ width: `${Math.round(val * 100)}%`, height: "100%", background: val > 0.6 ? "#dc2626" : val > 0.3 ? "#B8860B" : "rgba(20,20,16,0.3)", borderRadius: 2 }} />
+                      <div style={{ width: `${Math.round(val * 100)}%`, height: "100%", background: val > 0.6 ? "#dc2626" : val > 0.3 ? "#C49A3C" : "rgba(20,20,16,0.3)", borderRadius: 2 }} />
                     </div>
                   </div>
                 )

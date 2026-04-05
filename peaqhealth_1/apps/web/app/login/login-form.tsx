@@ -12,7 +12,7 @@ function AmbientPeaks() {
   const CENTERS = [40, 95, 150, 205]
   const HALF_W  = 18
   const HEIGHTS = [60, 85, 55, 42]  // static tasteful heights
-  const COLORS  = ["#4A7FB5", "#C0392B", "#2D6A4F", "#B8860B"]
+  const COLORS  = ["#185FA5", "#A32D2D", "#3B6D11", "#C49A3C"]
 
   // Generate a catmull-rom-like smooth curve through apex points
   const apexYs = HEIGHTS.map(h => BASELINE - h)
@@ -170,9 +170,9 @@ export function LoginForm({ defaultTab = "signin" }: { defaultTab?: Tab }) {
   const font = "'Instrument Sans', system-ui, sans-serif"
 
   const VALUE_PROPS = [
-    { label: "Blood", detail: "33 markers tracked from your lab reports", color: "#C0392B" },
-    { label: "Sleep",  detail: "Wearable-synced every night", color: "#4A7FB5" },
-    { label: "Oral",   detail: "16S rRNA microbiome sequencing", color: "#2D6A4F" },
+    { label: "Blood", detail: "33 markers tracked from your lab reports", color: "#A32D2D" },
+    { label: "Sleep",  detail: "Wearable-synced every night", color: "#185FA5" },
+    { label: "Oral",   detail: "16S rRNA microbiome sequencing", color: "#3B6D11" },
   ]
 
   const inputStyle: React.CSSProperties = {
@@ -189,7 +189,7 @@ export function LoginForm({ defaultTab = "signin" }: { defaultTab?: Tab }) {
   return (
     <div style={{ display: "flex", minHeight: "100svh", fontFamily: font }}>
       <style>{`
-        .auth-input:focus { border-color: #B8860B !important; }
+        .auth-input:focus { border-color: #C49A3C !important; }
         .auth-tab { transition: color 0.15s ease, border-color 0.15s ease; }
         .google-btn:hover { background: #F0EEE8 !important; }
         @media (max-width: 1023px) { .auth-left { display: none !important; } }
@@ -199,7 +199,7 @@ export function LoginForm({ defaultTab = "signin" }: { defaultTab?: Tab }) {
       <div
         className="auth-left"
         style={{
-          width: "60%", background: "#141410", display: "flex",
+          width: "60%", background: "#1a1a18", display: "flex",
           flexDirection: "column", padding: "48px 56px", position: "relative", overflow: "hidden",
         }}
       >
@@ -213,12 +213,12 @@ export function LoginForm({ defaultTab = "signin" }: { defaultTab?: Tab }) {
           <h1 style={{
             fontFamily: "'Cormorant Garamond', Georgia, serif",
             fontSize: 52, fontWeight: 300, lineHeight: 1.1,
-            color: "#FAFAF8", margin: "0 0 24px",
+            color: "#F6F4EF", margin: "0 0 24px",
             opacity: mounted ? 1 : 0, transform: mounted ? "none" : "translateY(12px)",
             transition: "opacity 0.6s ease, transform 0.6s ease",
           }}>
             How complete is<br />
-            <em style={{ color: "#B8860B", fontStyle: "italic" }}>your Peaqture?</em>
+            <em style={{ color: "#C49A3C", fontStyle: "italic" }}>your Peaqture?</em>
           </h1>
 
           <p style={{
@@ -317,7 +317,7 @@ export function LoginForm({ defaultTab = "signin" }: { defaultTab?: Tab }) {
                   placeholder="you@example.com"
                   className="auth-input"
                   style={inputStyle}
-                  onFocus={e => (e.currentTarget.style.borderColor = "#B8860B")}
+                  onFocus={e => (e.currentTarget.style.borderColor = "#C49A3C")}
                   onBlur={e => (e.currentTarget.style.borderColor = "#D4D4CF")}
                 />
               </div>
@@ -329,7 +329,7 @@ export function LoginForm({ defaultTab = "signin" }: { defaultTab?: Tab }) {
                     autoComplete="current-password" placeholder="••••••••"
                     className="auth-input"
                     style={{ ...inputStyle, paddingRight: 48 }}
-                    onFocus={e => (e.currentTarget.style.borderColor = "#B8860B")}
+                    onFocus={e => (e.currentTarget.style.borderColor = "#C49A3C")}
                     onBlur={e => (e.currentTarget.style.borderColor = "#D4D4CF")}
                   />
                   <button
@@ -347,7 +347,7 @@ export function LoginForm({ defaultTab = "signin" }: { defaultTab?: Tab }) {
               </div>
 
               {error && (
-                <p style={{ fontFamily: font, fontSize: 13, color: "#C0392B", margin: 0 }}>{error}</p>
+                <p style={{ fontFamily: font, fontSize: 13, color: "#A32D2D", margin: 0 }}>{error}</p>
               )}
 
               <button
@@ -380,7 +380,7 @@ export function LoginForm({ defaultTab = "signin" }: { defaultTab?: Tab }) {
                       type="text" name={f.name} required autoComplete={f.autoComplete}
                       placeholder={f.placeholder} className="auth-input"
                       style={inputStyle}
-                      onFocus={e => (e.currentTarget.style.borderColor = "#B8860B")}
+                      onFocus={e => (e.currentTarget.style.borderColor = "#C49A3C")}
                       onBlur={e => (e.currentTarget.style.borderColor = "#D4D4CF")}
                     />
                   </div>
@@ -392,7 +392,7 @@ export function LoginForm({ defaultTab = "signin" }: { defaultTab?: Tab }) {
                   type="email" name="email" required autoComplete="email"
                   placeholder="you@example.com" className="auth-input"
                   style={inputStyle}
-                  onFocus={e => (e.currentTarget.style.borderColor = "#B8860B")}
+                  onFocus={e => (e.currentTarget.style.borderColor = "#C49A3C")}
                   onBlur={e => (e.currentTarget.style.borderColor = "#D4D4CF")}
                 />
               </div>
@@ -404,7 +404,7 @@ export function LoginForm({ defaultTab = "signin" }: { defaultTab?: Tab }) {
                     required minLength={8} autoComplete="new-password"
                     placeholder="At least 8 characters" className="auth-input"
                     style={{ ...inputStyle, paddingRight: 48 }}
-                    onFocus={e => (e.currentTarget.style.borderColor = "#B8860B")}
+                    onFocus={e => (e.currentTarget.style.borderColor = "#C49A3C")}
                     onBlur={e => (e.currentTarget.style.borderColor = "#D4D4CF")}
                   />
                   <button
@@ -422,10 +422,10 @@ export function LoginForm({ defaultTab = "signin" }: { defaultTab?: Tab }) {
               </div>
 
               {error && (
-                <p style={{ fontFamily: font, fontSize: 13, color: "#C0392B", margin: 0 }}>{error}</p>
+                <p style={{ fontFamily: font, fontSize: 13, color: "#A32D2D", margin: 0 }}>{error}</p>
               )}
               {success && (
-                <p style={{ fontFamily: font, fontSize: 13, color: "#2D6A4F", margin: 0 }}>{success}</p>
+                <p style={{ fontFamily: font, fontSize: 13, color: "#3B6D11", margin: 0 }}>{success}</p>
               )}
 
               <button

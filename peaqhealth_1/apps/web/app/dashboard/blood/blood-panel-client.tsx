@@ -94,30 +94,30 @@ const BLOOD_ZONES: Record<string, {
   zones: { label: string; color: string; min: number; max: number }[]
   markerColor: string
 }> = {
-  ldl_mgdl:             { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 70 }, { label: 'Good', color: '#FFF3CD', min: 70, max: 100 }, { label: 'Watch', color: '#FFE0B2', min: 100, max: 130 }, { label: 'High', color: '#FFCDD2', min: 130, max: 200 }] },
-  hdl_mgdl:             { markerColor: '#C0392B', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 40 }, { label: 'Watch', color: '#FFE0B2', min: 40, max: 50 }, { label: 'Good', color: '#FFF3CD', min: 50, max: 60 }, { label: 'Optimal', color: '#D4EDDA', min: 60, max: 100 }] },
-  triglycerides_mgdl:   { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 100 }, { label: 'Good', color: '#FFF3CD', min: 100, max: 150 }, { label: 'Watch', color: '#FFE0B2', min: 150, max: 200 }, { label: 'High', color: '#FFCDD2', min: 200, max: 400 }] },
-  apob_mgdl:            { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 80 }, { label: 'Good', color: '#FFF3CD', min: 80, max: 100 }, { label: 'Watch', color: '#FFE0B2', min: 100, max: 130 }, { label: 'High', color: '#FFCDD2', min: 130, max: 200 }] },
-  lpa_mgdl:             { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 75 }, { label: 'Watch', color: '#FFE0B2', min: 75, max: 125 }, { label: 'High', color: '#FFCDD2', min: 125, max: 375 }] },
-  totalcholesterol_mgdl:{ markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 200 }, { label: 'Good', color: '#FFF3CD', min: 200, max: 240 }, { label: 'High', color: '#FFCDD2', min: 240, max: 400 }] },
-  hs_crp_mgl:           { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 0.5 }, { label: 'Good', color: '#FFF3CD', min: 0.5, max: 1.0 }, { label: 'Watch', color: '#FFE0B2', min: 1.0, max: 3.0 }, { label: 'High', color: '#FFCDD2', min: 3.0, max: 10.0 }] },
-  wbc_kul:              { markerColor: '#C0392B', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 4 }, { label: 'Optimal', color: '#D4EDDA', min: 4, max: 10 }, { label: 'Watch', color: '#FFE0B2', min: 10, max: 15 }, { label: 'High', color: '#FFCDD2', min: 15, max: 20 }] },
-  albumin_gdl:          { markerColor: '#C0392B', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 3.5 }, { label: 'Watch', color: '#FFE0B2', min: 3.5, max: 4.0 }, { label: 'Optimal', color: '#D4EDDA', min: 4.0, max: 5.5 }] },
-  glucose_mgdl:         { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 65, max: 85 }, { label: 'Good', color: '#FFF3CD', min: 85, max: 99 }, { label: 'Watch', color: '#FFE0B2', min: 99, max: 125 }, { label: 'High', color: '#FFCDD2', min: 125, max: 200 }] },
-  hba1c_pct:            { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 4, max: 5.4 }, { label: 'Good', color: '#FFF3CD', min: 5.4, max: 5.7 }, { label: 'Watch', color: '#FFE0B2', min: 5.7, max: 6.5 }, { label: 'High', color: '#FFCDD2', min: 6.5, max: 10 }] },
-  fastinginsulin_uiuml: { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 2, max: 8 }, { label: 'Watch', color: '#FFE0B2', min: 8, max: 20 }, { label: 'High', color: '#FFCDD2', min: 20, max: 30 }] },
-  uricacid_mgdl:        { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 3, max: 6 }, { label: 'Watch', color: '#FFE0B2', min: 6, max: 7 }, { label: 'High', color: '#FFCDD2', min: 7, max: 12 }] },
-  egfr_mlmin:           { markerColor: '#C0392B', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 60 }, { label: 'Watch', color: '#FFE0B2', min: 60, max: 90 }, { label: 'Good', color: '#FFF3CD', min: 90, max: 105 }, { label: 'Optimal', color: '#D4EDDA', min: 105, max: 150 }] },
-  creatinine_mgdl:      { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0.7, max: 1.3 }, { label: 'Watch', color: '#FFE0B2', min: 1.3, max: 1.5 }, { label: 'High', color: '#FFCDD2', min: 1.5, max: 3.0 }] },
-  bun_mgdl:             { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 7, max: 20 }, { label: 'Watch', color: '#FFE0B2', min: 20, max: 30 }, { label: 'High', color: '#FFCDD2', min: 30, max: 50 }] },
-  alt_ul:               { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 5, max: 33 }, { label: 'Watch', color: '#FFE0B2', min: 33, max: 56 }, { label: 'High', color: '#FFCDD2', min: 56, max: 100 }] },
-  ast_ul:               { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 5, max: 33 }, { label: 'Watch', color: '#FFE0B2', min: 33, max: 40 }, { label: 'High', color: '#FFCDD2', min: 40, max: 100 }] },
-  vitamin_d_ngml:       { markerColor: '#C0392B', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 20 }, { label: 'Watch', color: '#FFE0B2', min: 20, max: 30 }, { label: 'Good', color: '#FFF3CD', min: 30, max: 50 }, { label: 'Optimal', color: '#D4EDDA', min: 50, max: 100 }] },
-  hemoglobin_gdl:       { markerColor: '#C0392B', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 12.0 }, { label: 'Watch', color: '#FFE0B2', min: 12.0, max: 13.5 }, { label: 'Good', color: '#FFF3CD', min: 13.5, max: 14.5 }, { label: 'Optimal', color: '#D4EDDA', min: 14.5, max: 18.0 }] },
-  tsh_uiuml:            { markerColor: '#C0392B', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 0.5 }, { label: 'Optimal', color: '#D4EDDA', min: 0.5, max: 3.0 }, { label: 'Watch', color: '#FFE0B2', min: 3.0, max: 4.0 }, { label: 'High', color: '#FFCDD2', min: 4.0, max: 8.0 }] },
-  testosterone_ngdl:    { markerColor: '#C0392B', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 300 }, { label: 'Watch', color: '#FFE0B2', min: 300, max: 400 }, { label: 'Good', color: '#FFF3CD', min: 400, max: 700 }, { label: 'Optimal', color: '#D4EDDA', min: 700, max: 1200 }] },
-  ferritin_ngml:        { markerColor: '#C0392B', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 20 }, { label: 'Watch', color: '#FFE0B2', min: 20, max: 30 }, { label: 'Good', color: '#FFF3CD', min: 30, max: 100 }, { label: 'Optimal', color: '#D4EDDA', min: 100, max: 300 }] },
-  ldl_hdl_ratio:        { markerColor: '#C0392B', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 1.5 }, { label: 'Good', color: '#FFF3CD', min: 1.5, max: 2.0 }, { label: 'Watch', color: '#FFE0B2', min: 2.0, max: 3.0 }, { label: 'High', color: '#FFCDD2', min: 3.0, max: 5.0 }] },
+  ldl_mgdl:             { markerColor: '#A32D2D', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 70 }, { label: 'Good', color: '#FFF3CD', min: 70, max: 100 }, { label: 'Watch', color: '#FFE0B2', min: 100, max: 130 }, { label: 'High', color: '#FFCDD2', min: 130, max: 200 }] },
+  hdl_mgdl:             { markerColor: '#A32D2D', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 40 }, { label: 'Watch', color: '#FFE0B2', min: 40, max: 50 }, { label: 'Good', color: '#FFF3CD', min: 50, max: 60 }, { label: 'Optimal', color: '#D4EDDA', min: 60, max: 100 }] },
+  triglycerides_mgdl:   { markerColor: '#A32D2D', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 100 }, { label: 'Good', color: '#FFF3CD', min: 100, max: 150 }, { label: 'Watch', color: '#FFE0B2', min: 150, max: 200 }, { label: 'High', color: '#FFCDD2', min: 200, max: 400 }] },
+  apob_mgdl:            { markerColor: '#A32D2D', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 80 }, { label: 'Good', color: '#FFF3CD', min: 80, max: 100 }, { label: 'Watch', color: '#FFE0B2', min: 100, max: 130 }, { label: 'High', color: '#FFCDD2', min: 130, max: 200 }] },
+  lpa_mgdl:             { markerColor: '#A32D2D', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 75 }, { label: 'Watch', color: '#FFE0B2', min: 75, max: 125 }, { label: 'High', color: '#FFCDD2', min: 125, max: 375 }] },
+  totalcholesterol_mgdl:{ markerColor: '#A32D2D', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 200 }, { label: 'Good', color: '#FFF3CD', min: 200, max: 240 }, { label: 'High', color: '#FFCDD2', min: 240, max: 400 }] },
+  hs_crp_mgl:           { markerColor: '#A32D2D', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 0.5 }, { label: 'Good', color: '#FFF3CD', min: 0.5, max: 1.0 }, { label: 'Watch', color: '#FFE0B2', min: 1.0, max: 3.0 }, { label: 'High', color: '#FFCDD2', min: 3.0, max: 10.0 }] },
+  wbc_kul:              { markerColor: '#A32D2D', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 4 }, { label: 'Optimal', color: '#D4EDDA', min: 4, max: 10 }, { label: 'Watch', color: '#FFE0B2', min: 10, max: 15 }, { label: 'High', color: '#FFCDD2', min: 15, max: 20 }] },
+  albumin_gdl:          { markerColor: '#A32D2D', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 3.5 }, { label: 'Watch', color: '#FFE0B2', min: 3.5, max: 4.0 }, { label: 'Optimal', color: '#D4EDDA', min: 4.0, max: 5.5 }] },
+  glucose_mgdl:         { markerColor: '#A32D2D', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 65, max: 85 }, { label: 'Good', color: '#FFF3CD', min: 85, max: 99 }, { label: 'Watch', color: '#FFE0B2', min: 99, max: 125 }, { label: 'High', color: '#FFCDD2', min: 125, max: 200 }] },
+  hba1c_pct:            { markerColor: '#A32D2D', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 4, max: 5.4 }, { label: 'Good', color: '#FFF3CD', min: 5.4, max: 5.7 }, { label: 'Watch', color: '#FFE0B2', min: 5.7, max: 6.5 }, { label: 'High', color: '#FFCDD2', min: 6.5, max: 10 }] },
+  fastinginsulin_uiuml: { markerColor: '#A32D2D', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 2, max: 8 }, { label: 'Watch', color: '#FFE0B2', min: 8, max: 20 }, { label: 'High', color: '#FFCDD2', min: 20, max: 30 }] },
+  uricacid_mgdl:        { markerColor: '#A32D2D', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 3, max: 6 }, { label: 'Watch', color: '#FFE0B2', min: 6, max: 7 }, { label: 'High', color: '#FFCDD2', min: 7, max: 12 }] },
+  egfr_mlmin:           { markerColor: '#A32D2D', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 60 }, { label: 'Watch', color: '#FFE0B2', min: 60, max: 90 }, { label: 'Good', color: '#FFF3CD', min: 90, max: 105 }, { label: 'Optimal', color: '#D4EDDA', min: 105, max: 150 }] },
+  creatinine_mgdl:      { markerColor: '#A32D2D', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0.7, max: 1.3 }, { label: 'Watch', color: '#FFE0B2', min: 1.3, max: 1.5 }, { label: 'High', color: '#FFCDD2', min: 1.5, max: 3.0 }] },
+  bun_mgdl:             { markerColor: '#A32D2D', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 7, max: 20 }, { label: 'Watch', color: '#FFE0B2', min: 20, max: 30 }, { label: 'High', color: '#FFCDD2', min: 30, max: 50 }] },
+  alt_ul:               { markerColor: '#A32D2D', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 5, max: 33 }, { label: 'Watch', color: '#FFE0B2', min: 33, max: 56 }, { label: 'High', color: '#FFCDD2', min: 56, max: 100 }] },
+  ast_ul:               { markerColor: '#A32D2D', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 5, max: 33 }, { label: 'Watch', color: '#FFE0B2', min: 33, max: 40 }, { label: 'High', color: '#FFCDD2', min: 40, max: 100 }] },
+  vitamin_d_ngml:       { markerColor: '#A32D2D', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 20 }, { label: 'Watch', color: '#FFE0B2', min: 20, max: 30 }, { label: 'Good', color: '#FFF3CD', min: 30, max: 50 }, { label: 'Optimal', color: '#D4EDDA', min: 50, max: 100 }] },
+  hemoglobin_gdl:       { markerColor: '#A32D2D', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 12.0 }, { label: 'Watch', color: '#FFE0B2', min: 12.0, max: 13.5 }, { label: 'Good', color: '#FFF3CD', min: 13.5, max: 14.5 }, { label: 'Optimal', color: '#D4EDDA', min: 14.5, max: 18.0 }] },
+  tsh_uiuml:            { markerColor: '#A32D2D', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 0.5 }, { label: 'Optimal', color: '#D4EDDA', min: 0.5, max: 3.0 }, { label: 'Watch', color: '#FFE0B2', min: 3.0, max: 4.0 }, { label: 'High', color: '#FFCDD2', min: 4.0, max: 8.0 }] },
+  testosterone_ngdl:    { markerColor: '#A32D2D', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 300 }, { label: 'Watch', color: '#FFE0B2', min: 300, max: 400 }, { label: 'Good', color: '#FFF3CD', min: 400, max: 700 }, { label: 'Optimal', color: '#D4EDDA', min: 700, max: 1200 }] },
+  ferritin_ngml:        { markerColor: '#A32D2D', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 20 }, { label: 'Watch', color: '#FFE0B2', min: 20, max: 30 }, { label: 'Good', color: '#FFF3CD', min: 30, max: 100 }, { label: 'Optimal', color: '#D4EDDA', min: 100, max: 300 }] },
+  ldl_hdl_ratio:        { markerColor: '#A32D2D', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 1.5 }, { label: 'Good', color: '#FFF3CD', min: 1.5, max: 2.0 }, { label: 'Watch', color: '#FFE0B2', min: 2.0, max: 3.0 }, { label: 'High', color: '#FFCDD2', min: 3.0, max: 5.0 }] },
 }
 
 function RangeBar({ value, markerKey }: { value: number | null; markerKey: string }) {
@@ -176,11 +176,11 @@ function RangeBar({ value, markerKey }: { value: number | null; markerKey: strin
 type MarkerStatus = "optimal" | "good" | "watch" | "attention" | "retest" | "not_tested"
 
 const STATUS_STYLES: Record<MarkerStatus, { bg: string; text: string; label: string; dot: string }> = {
-  optimal:    { bg: "#EAF3DE", text: "#2D6A4F", label: "Optimal",   dot: "#2D6A4F" },
-  good:       { bg: "#EBF2FA", text: "#4A7FB5", label: "Good",      dot: "#4A7FB5" },
-  watch:      { bg: "#FEF3C7", text: "#92400E", label: "Watch",     dot: "#B8860B" },
-  attention:  { bg: "#FEE2E2", text: "#991B1B", label: "Attention", dot: "#C0392B" },
-  retest:     { bg: "#FEF3C7", text: "#92400E", label: "Retest",    dot: "#B8860B" },
+  optimal:    { bg: "#EAF3DE", text: "#3B6D11", label: "Optimal",   dot: "#3B6D11" },
+  good:       { bg: "#EBF2FA", text: "#185FA5", label: "Good",      dot: "#185FA5" },
+  watch:      { bg: "#FEF3C7", text: "#92400E", label: "Watch",     dot: "#C49A3C" },
+  attention:  { bg: "#FEE2E2", text: "#991B1B", label: "Attention", dot: "#A32D2D" },
+  retest:     { bg: "#FEF3C7", text: "#92400E", label: "Retest",    dot: "#C49A3C" },
   not_tested: { bg: "#F7F5F0", text: "var(--ink-35)", label: "—", dot: "var(--ink-20)" },
 }
 
@@ -402,7 +402,7 @@ export function BloodPanelClient({ lab, snapshot, history, ageRange, stressLevel
           <Link
             href="/settings/labs"
             style={{ fontFamily: "var(--font-body)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--ink-30)", textDecoration: "none" }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = "#B8860B" }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = "#C49A3C" }}
             onMouseLeave={(e) => { e.currentTarget.style.color = "var(--ink-30)" }}
           >
             ↑ Re-upload labs
@@ -496,15 +496,15 @@ export function BloodPanelClient({ lab, snapshot, history, ageRange, stressLevel
                     <span style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-60)" }}>
                       {m.name}
                     </span>
-                    <span style={{ fontFamily: "var(--font-body)", fontSize: 10, color: "#B8860B" }}>
+                    <span style={{ fontFamily: "var(--font-body)", fontSize: 10, color: "#C49A3C" }}>
                       +{m.pts} pts
                     </span>
                     <button
                       onClick={() => setOpenMissingTooltip(openMissingTooltip === m.key ? null : m.key)}
                       style={{
                         width: 15, height: 15, borderRadius: "50%",
-                        border: "0.5px solid #B8860B", background: "transparent",
-                        cursor: "pointer", fontSize: 9, color: "#B8860B",
+                        border: "0.5px solid #C49A3C", background: "transparent",
+                        cursor: "pointer", fontSize: 9, color: "#C49A3C",
                         display: "inline-flex", alignItems: "center", justifyContent: "center",
                         lineHeight: 1, flexShrink: 0, padding: 0, fontFamily: "var(--font-body)",
                       }}

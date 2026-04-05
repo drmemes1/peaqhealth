@@ -7,13 +7,13 @@ import { LandingCitations } from "./landing-citations"
 const serif = "'Cormorant Garamond', Georgia, serif"
 const sans  = "'Instrument Sans', system-ui, sans-serif"
 
-const INK    = "#141410"
+const INK    = "#1a1a18"
 const INK_40 = "rgba(20,20,16,0.40)"
 const INK_60 = "rgba(20,20,16,0.60)"
 const BORDER = "rgba(20,20,16,0.10)"
-const ORAL   = "#2D6A4F"
-const BLOOD  = "#C0392B"
-const SLEEP  = "#4A7FB5"
+const ORAL   = "#3B6D11"
+const BLOOD  = "#A32D2D"
+const SLEEP  = "#185FA5"
 
 const wrap: React.CSSProperties = {
   maxWidth: 1080,

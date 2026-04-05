@@ -35,7 +35,7 @@ export function StepOral({ onOrder, onSkip }: Props) {
 
       <div className="w-full max-w-md border border-ink/10 bg-white overflow-hidden">
         {/* Green header */}
-        <div className="bg-[#2D6A4F] px-6 py-5">
+        <div className="bg-[#3B6D11] px-6 py-5">
           <span className="font-body text-[10px] uppercase tracking-widest text-white/60">
             Powered by
           </span>
@@ -59,7 +59,7 @@ export function StepOral({ onOrder, onSkip }: Props) {
             </span>
             {FEATURES.map((f) => (
               <div key={f} className="flex items-center gap-2.5">
-                <div className="h-1.5 w-1.5 rounded-full bg-[#2D6A4F]/60" />
+                <div className="h-1.5 w-1.5 rounded-full bg-[#3B6D11]/60" />
                 <span className="font-body text-sm text-ink/70">{f}</span>
               </div>
             ))}

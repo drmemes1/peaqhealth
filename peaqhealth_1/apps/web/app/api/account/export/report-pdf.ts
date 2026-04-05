@@ -7,21 +7,21 @@ const CONTENT_W = 612 - MARGIN * 2 // 504 pts
 const PAGE_W = 612
 const PAGE_H = 792
 
-const INK = "#141410"
+const INK = "#1a1a18"
 const INK_60 = "#666660"
 const INK_40 = "#888880"
 const INK_20 = "#C8C8C4"
 const INK_12 = "#E8E8E4"
 const WARM = "#F7F5F0"
-const RED = "#C0392B"
-const BLUE = "#4A7FB5"
-const GREEN = "#2D6A4F"
-const GOLD = "#B8860B"
+const RED = "#A32D2D"
+const BLUE = "#185FA5"
+const GREEN = "#3B6D11"
+const GOLD = "#C49A3C"
 
-const OPT_BG = "#D4EDDA"; const OPT_FG = "#2D6A4F"
+const OPT_BG = "#D4EDDA"; const OPT_FG = "#3B6D11"
 const GOOD_BG = "#FFF3CD"; const GOOD_FG = "#856404"
 const WTCH_BG = "#FFE0B2"; const WTCH_FG = "#664D03"
-const ELEV_BG = "#FFCDD2"; const ELEV_FG = "#C0392B"
+const ELEV_BG = "#FFCDD2"; const ELEV_FG = "#A32D2D"
 const NT_BG = "#F0F0EE"; const NT_FG = "#888880"
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

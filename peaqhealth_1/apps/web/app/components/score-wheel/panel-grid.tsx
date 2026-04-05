@@ -128,7 +128,7 @@ function EmptyPanelCard({ panel, oralOrdered = false }: {
 }) {
   const config = {
     sleep: {
-      color: '#4A7FB5',
+      color: '#185FA5',
       label: 'SLEEP',
       headline: 'Connect a wearable',
       why_short: 'Nightly HRV, deep sleep, and efficiency data.',
@@ -138,7 +138,7 @@ function EmptyPanelCard({ panel, oralOrdered = false }: {
       stat2: { label: 'Key signal', value: 'HRV + Deep sleep' },
     },
     blood: {
-      color: '#C0392B',
+      color: '#A32D2D',
       label: 'BLOOD',
       headline: 'Upload your labs',
       why_short: 'Lp(a), hsCRP, ApoB, glucose, and more.',
@@ -148,7 +148,7 @@ function EmptyPanelCard({ panel, oralOrdered = false }: {
       stat2: { label: 'Key signal', value: 'Lp(a) + hsCRP' },
     },
     oral: {
-      color: '#2D6A4F',
+      color: '#3B6D11',
       label: 'ORAL MICROBIOME',
       headline: oralOrdered ? 'Kit processing' : 'Order your oral kit',
       why_short: '16S rRNA sequencing.',
@@ -295,7 +295,7 @@ function CompletePictureBanner({ missingPanels }: { missingPanels: ('sleep' | 'b
       padding: '14px 18px',
       background: 'var(--white)',
       border: '0.5px solid var(--ink-12)',
-      borderLeft: '3px solid #B8860B',
+      borderLeft: '3px solid #C49A3C',
       borderRadius: 4,
       display: 'flex',
       justifyContent: 'space-between',
@@ -308,7 +308,7 @@ function CompletePictureBanner({ missingPanels }: { missingPanels: ('sleep' | 'b
           fontSize: '10px',
           textTransform: 'uppercase' as const,
           letterSpacing: '0.08em',
-          color: '#B8860B',
+          color: '#C49A3C',
           fontWeight: 500,
           marginBottom: '5px',
         }}>
@@ -325,17 +325,17 @@ function CompletePictureBanner({ missingPanels }: { missingPanels: ('sleep' | 'b
         </div>
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' as const }}>
           {missingPanels.includes('sleep') && (
-            <a href="/settings#wearables" style={{ fontFamily: font, fontSize: '12px', color: '#4A7FB5', fontWeight: 500, textDecoration: 'none' }}>
+            <a href="/settings#wearables" style={{ fontFamily: font, fontSize: '12px', color: '#185FA5', fontWeight: 500, textDecoration: 'none' }}>
               Connect wearable →
             </a>
           )}
           {missingPanels.includes('blood') && (
-            <a href="/dashboard/blood" style={{ fontFamily: font, fontSize: '12px', color: '#C0392B', fontWeight: 500, textDecoration: 'none' }}>
+            <a href="/dashboard/blood" style={{ fontFamily: font, fontSize: '12px', color: '#A32D2D', fontWeight: 500, textDecoration: 'none' }}>
               Upload labs →
             </a>
           )}
           {missingPanels.includes('oral') && (
-            <a href="/shop" style={{ fontFamily: font, fontSize: '12px', color: '#2D6A4F', fontWeight: 500, textDecoration: 'none' }}>
+            <a href="/shop" style={{ fontFamily: font, fontSize: '12px', color: '#3B6D11', fontWeight: 500, textDecoration: 'none' }}>
               Order oral kit →
             </a>
           )}
@@ -408,22 +408,22 @@ function WhyAllThree() {
           {[
             {
               connection: 'Oral → Blood',
-              color: '#2D6A4F',
+              color: '#3B6D11',
               text: 'P. gingivalis and T. denticola produce enzymes that enter the bloodstream and contribute to arterial inflammation — directly affecting hsCRP and cardiovascular risk markers.',
             },
             {
               connection: 'Oral → Sleep',
-              color: '#2D6A4F',
+              color: '#3B6D11',
               text: 'Oral nitrate-reducing bacteria convert dietary nitrate into nitric oxide — a molecule essential for vascular relaxation and autonomic balance. Low nitrate reducers are associated with reduced HRV.',
             },
             {
               connection: 'Sleep → Blood',
-              color: '#4A7FB5',
+              color: '#185FA5',
               text: 'Poor sleep architecture (low deep sleep, low HRV) drives cortisol elevation, insulin resistance, and systemic inflammation — all measurable in blood biomarkers.',
             },
             {
               connection: 'All three together',
-              color: '#B8860B',
+              color: '#C49A3C',
               text: 'The cross-panel modifier system detects when signals from multiple panels compound — like elevated periodontal burden + low HRV + elevated Lp(a) — and adjusts your score to reflect the biological reality that these risks multiply, not add.',
             },
           ].map(item => (

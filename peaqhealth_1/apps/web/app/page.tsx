@@ -11,7 +11,7 @@ const BG_CREAM  = "#F6F4EF"
 const ACCENT    = "var(--color-accent-gold)"
 const ACCENT_RAW = "#C49A3C"
 const MUTED     = "#8C8A82"
-const INK       = "#141410"
+const INK       = "#1a1a18"
 const INK_60    = "rgba(20,20,16,0.60)"
 
 const BORDER_DARK  = "rgba(255,255,255,0.1)"

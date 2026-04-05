@@ -57,7 +57,7 @@ type Zone = { label: string; color: string; min: number; max: number }
 
 const SLEEP_ZONES: Record<string, { zones: Zone[]; markerColor: string }> = {
   deepSleep: {
-    markerColor: "#4A7FB5",
+    markerColor: "#185FA5",
     zones: [
       { label: "Low",     color: "#FFCDD2", min: 0,  max: 10 },
       { label: "Watch",   color: "#FFE0B2", min: 10, max: 15 },
@@ -66,7 +66,7 @@ const SLEEP_ZONES: Record<string, { zones: Zone[]; markerColor: string }> = {
     ],
   },
   hrv: {
-    markerColor: "#4A7FB5",
+    markerColor: "#185FA5",
     zones: [
       { label: "Low",     color: "#FFCDD2", min: 0,  max: 25 },
       { label: "Watch",   color: "#FFE0B2", min: 25, max: 35 },
@@ -75,7 +75,7 @@ const SLEEP_ZONES: Record<string, { zones: Zone[]; markerColor: string }> = {
     ],
   },
   spo2: {
-    markerColor: "#4A7FB5",
+    markerColor: "#185FA5",
     zones: [
       { label: "Low",     color: "#FFCDD2", min: 88, max: 92 },
       { label: "Watch",   color: "#FFE0B2", min: 92, max: 95 },
@@ -84,7 +84,7 @@ const SLEEP_ZONES: Record<string, { zones: Zone[]; markerColor: string }> = {
     ],
   },
   rem: {
-    markerColor: "#4A7FB5",
+    markerColor: "#185FA5",
     zones: [
       { label: "Low",     color: "#FFCDD2", min: 0,  max: 12 },
       { label: "Watch",   color: "#FFE0B2", min: 12, max: 16 },
@@ -93,7 +93,7 @@ const SLEEP_ZONES: Record<string, { zones: Zone[]; markerColor: string }> = {
     ],
   },
   efficiency: {
-    markerColor: "#4A7FB5",
+    markerColor: "#185FA5",
     zones: [
       { label: "Low",     color: "#FFCDD2", min: 60, max: 75 },
       { label: "Watch",   color: "#FFE0B2", min: 75, max: 82 },
@@ -209,8 +209,8 @@ function Section({ title, defaultOpen, children }: {
 // ─── Status badge styles ─────────────────────────────────────────────────────
 
 const FLAG_STYLES: Record<Status, { bg: string; color: string; label: string }> = {
-  optimal:   { bg: "#EAF3DE", color: "#2D6A4F", label: "Optimal" },
-  good:      { bg: "#EBF2FA", color: "#4A7FB5", label: "Good" },
+  optimal:   { bg: "#EAF3DE", color: "#3B6D11", label: "Optimal" },
+  good:      { bg: "#EBF2FA", color: "#185FA5", label: "Good" },
   watch:     { bg: "#FEF3C7", color: "#92400E", label: "Watch" },
   attention: { bg: "#FEE2E2", color: "#991B1B", label: "Low" },
 }
@@ -300,7 +300,7 @@ function MetricRow({
 }) {
   const [expanded, setExpanded] = useState(false)
   const fs = FLAG_STYLES[status]
-  const dotColor = status === "optimal" ? "#2D6A4F" : status === "good" ? "#4A7FB5" : status === "watch" ? "#B8860B" : "#C0392B"
+  const dotColor = status === "optimal" ? "#3B6D11" : status === "good" ? "#185FA5" : status === "watch" ? "#C49A3C" : "#A32D2D"
 
   return (
     <div style={{ borderBottom: "0.5px solid var(--ink-06)" }}>
@@ -413,7 +413,7 @@ export function SleepPanelClient({ nights, snapshot, wearable }: Props) {
             <Link
               href="/dashboard"
               style={{ fontFamily: "var(--font-body)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--ink-30)", textDecoration: "none" }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = "#B8860B" }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = "#C49A3C" }}
               onMouseLeave={(e) => { e.currentTarget.style.color = "var(--ink-30)" }}
             >
               ← Dashboard
@@ -498,7 +498,7 @@ export function SleepPanelClient({ nights, snapshot, wearable }: Props) {
           <Link
             href="/dashboard"
             style={{ fontFamily: "var(--font-body)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--ink-30)", textDecoration: "none" }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = "#B8860B" }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = "#C49A3C" }}
             onMouseLeave={(e) => { e.currentTarget.style.color = "var(--ink-30)" }}
           >
             ← Dashboard
@@ -516,7 +516,7 @@ export function SleepPanelClient({ nights, snapshot, wearable }: Props) {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 32 }}>
           {/* Deep Sleep */}
           <div style={{ border: "0.5px solid var(--ink-12)", padding: "14px", background: "#fff" }}>
-            <p style={{ margin: "0 0 2px", fontFamily: "var(--font-body)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em", color: "#4A7FB5" }}>
+            <p style={{ margin: "0 0 2px", fontFamily: "var(--font-body)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em", color: "#185FA5" }}>
               Deep Sleep
             </p>
             <p style={{ margin: "0 0 4px", fontFamily: "var(--font-body)", fontSize: 10, color: "var(--ink-30)" }}>30-day avg</p>
@@ -528,7 +528,7 @@ export function SleepPanelClient({ nights, snapshot, wearable }: Props) {
 
           {/* HRV */}
           <div style={{ border: "0.5px solid var(--ink-12)", padding: "14px", background: "#fff" }}>
-            <p style={{ margin: "0 0 2px", fontFamily: "var(--font-body)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em", color: "#4A7FB5" }}>
+            <p style={{ margin: "0 0 2px", fontFamily: "var(--font-body)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em", color: "#185FA5" }}>
               HRV
             </p>
             <p style={{ margin: "0 0 4px", fontFamily: "var(--font-body)", fontSize: 10, color: "var(--ink-30)" }}>30-day avg</p>
@@ -540,7 +540,7 @@ export function SleepPanelClient({ nights, snapshot, wearable }: Props) {
 
           {/* Sleep Efficiency */}
           <div style={{ border: "0.5px solid var(--ink-12)", padding: "14px", background: "#fff" }}>
-            <p style={{ margin: "0 0 2px", fontFamily: "var(--font-body)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em", color: "#4A7FB5" }}>
+            <p style={{ margin: "0 0 2px", fontFamily: "var(--font-body)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em", color: "#185FA5" }}>
               Efficiency
             </p>
             <p style={{ margin: "0 0 4px", fontFamily: "var(--font-body)", fontSize: 10, color: "var(--ink-30)" }}>30-day avg</p>
@@ -554,11 +554,11 @@ export function SleepPanelClient({ nights, snapshot, wearable }: Props) {
         {/* Sleep Insight */}
         {narrative && (
           <div style={{
-            borderLeft: "3px solid var(--sleep-c, #4A7FB5)",
+            borderLeft: "3px solid var(--sleep-c, #185FA5)",
             background: "var(--peaq-bg-card, #fff)",
             border: "0.5px solid var(--ink-08)",
             borderLeftWidth: 3,
-            borderLeftColor: "var(--sleep-c, #4A7FB5)",
+            borderLeftColor: "var(--sleep-c, #185FA5)",
             borderRadius: 10,
             padding: "20px 24px",
             marginBottom: 24,
@@ -571,7 +571,7 @@ export function SleepPanelClient({ nights, snapshot, wearable }: Props) {
                 <span style={{
                   fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 500,
                   color: narrative.raw_response.trend_summary === "improving" ? "#1D9E75"
-                    : narrative.raw_response.trend_summary === "declining" ? "#C0392B" : "#B8860B",
+                    : narrative.raw_response.trend_summary === "declining" ? "#A32D2D" : "#C49A3C",
                 }}>
                   {narrative.raw_response.trend_summary === "improving" ? "↑ Improving"
                     : narrative.raw_response.trend_summary === "declining" ? "↓ Worth watching" : "→ Holding steady"}
@@ -598,7 +598,7 @@ export function SleepPanelClient({ nights, snapshot, wearable }: Props) {
             )}
 
             {narrative.watch_signal && (
-              <div style={{ padding: "10px 14px", background: "rgba(184,134,11,0.07)", borderRadius: 6, borderLeft: "3px solid #B8860B", fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink-60)", lineHeight: 1.5 }}>
+              <div style={{ padding: "10px 14px", background: "rgba(184,134,11,0.07)", borderRadius: 6, borderLeft: "3px solid #C49A3C", fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink-60)", lineHeight: 1.5 }}>
                 {narrative.watch_signal}
               </div>
             )}
@@ -717,7 +717,7 @@ export function SleepPanelClient({ nights, snapshot, wearable }: Props) {
                     : null,
                 }))}
                 dataKey="value"
-                color="#4A7FB5"
+                color="#185FA5"
                 refY={17}
                 label="Deep sleep"
                 unit="% of TST"
@@ -729,7 +729,7 @@ export function SleepPanelClient({ nights, snapshot, wearable }: Props) {
                   value: n.hrv_rmssd as number | null,
                 }))}
                 dataKey="value"
-                color="#4A7FB5"
+                color="#185FA5"
                 refY={40}
                 label="HRV"
                 unit="ms RMSSD"
@@ -741,7 +741,7 @@ export function SleepPanelClient({ nights, snapshot, wearable }: Props) {
                   value: n.sleep_efficiency as number | null,
                 }))}
                 dataKey="value"
-                color="#4A7FB5"
+                color="#185FA5"
                 refY={85}
                 label="Sleep efficiency"
                 unit="%"
@@ -753,7 +753,7 @@ export function SleepPanelClient({ nights, snapshot, wearable }: Props) {
                   value: n.spo2 as number | null,
                 }))}
                 dataKey="value"
-                color="#4A7FB5"
+                color="#185FA5"
                 refY={96}
                 label="SpO₂"
                 unit="% avg"

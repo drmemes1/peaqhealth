@@ -106,10 +106,10 @@ export function ScoreHistoryChart({ data }: ScoreHistoryChartProps) {
         <Line
           type="monotone"
           dataKey="score"
-          stroke="#B8860B"
+          stroke="#C49A3C"
           strokeWidth={1.5}
-          dot={<Dot r={3} fill="#B8860B" stroke="var(--white)" strokeWidth={1.5} />}
-          activeDot={{ r: 5, fill: "#B8860B", stroke: "var(--white)", strokeWidth: 2 }}
+          dot={<Dot r={3} fill="#C49A3C" stroke="var(--white)" strokeWidth={1.5} />}
+          activeDot={{ r: 5, fill: "#C49A3C", stroke: "var(--white)", strokeWidth: 2 }}
         />
       </LineChart>
     </ResponsiveContainer>

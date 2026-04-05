@@ -9,10 +9,10 @@ const PANEL_CHECKS: {
   trueLabel: string;
   falseLabel: string;
 }[] = [
-  { label: "Sleep", color: "#4A7FB5", dataKey: "wearableConnected", trueLabel: "Wearable connected", falseLabel: "Not connected" },
-  { label: "Blood", color: "#C0392B", dataKey: "bloodUploaded", trueLabel: "Labs uploaded", falseLabel: "Not uploaded" },
-  { label: "Oral", color: "#2D6A4F", dataKey: "oralOrdered", trueLabel: "Kit ordered", falseLabel: "Not ordered" },
-  { label: "Lifestyle", color: "#B8860B", dataKey: "lifestyleCompleted", trueLabel: "Questionnaire done", falseLabel: "Not completed" },
+  { label: "Sleep", color: "#185FA5", dataKey: "wearableConnected", trueLabel: "Wearable connected", falseLabel: "Not connected" },
+  { label: "Blood", color: "#A32D2D", dataKey: "bloodUploaded", trueLabel: "Labs uploaded", falseLabel: "Not uploaded" },
+  { label: "Oral", color: "#3B6D11", dataKey: "oralOrdered", trueLabel: "Kit ordered", falseLabel: "Not ordered" },
+  { label: "Lifestyle", color: "#C49A3C", dataKey: "lifestyleCompleted", trueLabel: "Questionnaire done", falseLabel: "Not completed" },
 ];
 
 interface Props {
@@ -50,7 +50,7 @@ export function StepDone({ data, onFinish, saving }: Props) {
               </div>
               <div className="ml-auto">
                 {active ? (
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-[#2D6A4F]">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-[#3B6D11]">
                     <path d="M3 8.5L6.5 12L13 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 ) : (
