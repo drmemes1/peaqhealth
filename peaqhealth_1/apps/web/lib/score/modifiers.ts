@@ -123,7 +123,7 @@ export function calculateModifiers(inputs: PanelInputs): {
         direction: "penalty",
         points: 3,
         label: "Metabolic-autonomic dysfunction signal",
-        rationale: "Low HRV, poor sleep efficiency, and elevated glucose suggest a compounding metabolic loop",
+        rationale: "Low HRV reflects autonomic nervous system imbalance — specifically declining parasympathetic tone. Combined with poor sleep efficiency and elevated glucose, these signals form a compounding metabolic-autonomic loop. Source: Olivieri F et al., Ageing Res Rev 2024;101:102521 (PMID 39341508).",
       })
     }
   }
@@ -171,7 +171,7 @@ export function calculateModifiers(inputs: PanelInputs): {
       direction: "bonus",
       points: 2,
       label: "Deep sleep and low inflammation aligned",
-      rationale: "Strong deep sleep and low hsCRP suggest effective overnight anti-inflammatory recovery",
+      rationale: "Strong deep sleep supports parasympathetic tone, which suppresses systemic inflammation via the cholinergic anti-inflammatory pathway. When deep sleep is strong and hsCRP is low, the overnight anti-inflammatory recovery loop is intact. Source: Olivieri F et al., Ageing Res Rev 2024;101:102521 (PMID 39341508).",
     })
   }
 

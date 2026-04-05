@@ -37,6 +37,10 @@ const citations: Record<number, { authors: string; title: string; journal: strin
   28: { authors: "Vanhatalo A, et al.", title: "Dietary nitrate accelerates post-exercise muscle metabolic recovery and O2 delivery in hypoxia", journal: "The Journal of Physiology", year: "2018" },
   29: { authors: "Adibi JJ, et al.", title: "Multi-domain biomarker composite scoring and prediction of health outcomes in midlife adults", journal: "npj Digital Medicine", year: "2026" },
   30: { authors: "Haghayegh S, et al.", title: "Accuracy of wristband wearables for measuring sleep and SpO2 in clinical settings", journal: "JMIR mHealth and uHealth", year: "2025" },
+  31: { authors: "Olivieri F, et al.", title: "Heart rate variability and autonomic nervous system imbalance: Potential biomarkers and detectable hallmarks of aging and inflammaging", journal: "Ageing Research Reviews", year: "2024" },
+  32: { authors: "Tegegne BS, et al.", title: "Reference values of heart rate variability from 10-second resting electrocardiograms: the Lifelines Cohort Study", journal: "European Journal of Preventive Cardiology", year: "2020", n: "84,772" },
+  33: { authors: "Brozat M, Böckelmann I, Sammito S.", title: "Systematic review on HRV reference values", journal: "Journal of Cardiovascular Development and Disease", year: "2025" },
+  34: { authors: "López-Otín C, et al.", title: "Hallmarks of aging: An expanding universe", journal: "Cell", year: "2023" },
 };
 
 /* ───────────────────────── helpers ──────────────────────────── */
@@ -540,11 +544,11 @@ export default function SciencePage() {
         />
         <Marker
           num={2}
-          title="HRV (RMSSD) — age-adjusted"
-          target="Age-dependent (e.g. ≥48 ms at 40–49, ≥35 ms at 60+)"
+          title="HRV (RMSSD) — age &amp; sex adjusted"
+          target="Age and sex adjusted (50th percentile, male): Age 20–29: ~42–48 ms · Age 30–39: ~33–37 ms · Age 40–49: ~24–29 ms · Age 50–59: ~21–24 ms · Age 60+: ~18–19 ms. Women: ~5 ms higher in most bands below 60. Personal baseline: a sustained drop ≥20% below your 30-day average flags Watch."
           color="var(--sleep-c)"
-          body={<>Heart rate variability is the most sensitive non-invasive marker of autonomic nervous system function. Low HRV independently predicts all-cause mortality, cardiovascular events, and poor stress resilience. HRV naturally declines with age, so the Peaq Score uses age-adjusted targets: optimal thresholds range from 60 ms for under-30s to 35 ms for 60+.<Cite n={2} /></>}
-          evidence="Thayer et al., Neuroscience & Biobehavioral Reviews 2012. Billman, Frontiers in Physiology 2011."
+          body={<>Heart rate variability is not just a sleep metric. It is one of the most accessible non-invasive windows into a core hallmark of aging.<br /><br />As we age, the balance of the autonomic nervous system shifts. Sympathetic activity (fight-or-flight) increases. Parasympathetic activity (rest and digest) declines. That decline matters beyond sleep — the parasympathetic system actively suppresses systemic inflammation via the cholinergic anti-inflammatory pathway. When parasympathetic tone weakens, that brake is removed, and chronic low-grade inflammation — inflammaging — accelerates.<Cite n={31} /><br /><br />A 2024 review in Ageing Research Reviews formally proposed HRV as a biomarker of aging and inflammaging, affordable and non-invasive enough to monitor in asymptomatic individuals. This is why Peaq connects your HRV to your hsCRP. When both are abnormal, you are not seeing two separate problems. You are seeing the same hallmark measured twice.<Cite n={34} /><br /><br />Peaq scores HRV on two axes:<br /><br /><strong>Population percentile</strong> — where you stand relative to healthy peers of your age and sex, anchored in the Lifelines Cohort study (n=84,772, the largest published single-cohort RMSSD normative dataset), which generated age- and sex-specific centile curves from ECG recordings.<Cite n={32} /><br /><br /><strong>Personal trend</strong> — whether your HRV is rising or falling relative to your own 30-day rolling baseline. A sustained drop of ≥20% below your personal average flags Watch regardless of your population percentile, because acute autonomic stress shows up in personal trend before it shifts your population percentile.<Cite n={33} /><br /><br />Your final HRV status is the more conservative of the two.</>}
+          evidence="Olivieri F et al., Ageing Res Rev 2024. Tegegne BS et al., Eur J Prev Cardiol 2020 (n=84,772). Brozat et al., J Cardiovasc Dev Dis 2025. López-Otín C et al., Cell 2023."
         />
         <Marker
           num={3}
@@ -917,7 +921,7 @@ export default function SciencePage() {
 
         {/* Interaction terms */}
         {[
-          { id: "I1", title: "Sleep \u00D7 Inflammation", penalty: "up to 5 pts", trigger: "Sleep HRV <40ms AND hsCRP >1.0 mg/L", cite: 22, desc: "Poor sleep elevates CRP. Elevated CRP fragments sleep. The cycle is self-reinforcing." },
+          { id: "I1", title: "Sleep \u00D7 Inflammation", penalty: "up to 5 pts", trigger: "Sleep HRV <40ms AND hsCRP >1.0 mg/L", cite: 31, desc: "Low HRV reflects declining parasympathetic tone. The parasympathetic system suppresses inflammation via the cholinergic anti-inflammatory pathway. When HRV is low and hsCRP is elevated, these are two measurements of the same hallmark of aging — inflammaging." },
           { id: "I2", title: "SpO2 \u00D7 Lipids", penalty: "up to 3 pts", trigger: "SpO2 dips >5/night AND ApoB >100 mg/dL", cite: 23, desc: "Nocturnal hypoxia activates sympathetic nervous system and promotes LDL oxidation." },
           { id: "I3", title: "Dual inflammatory", penalty: "up to 2 pts", trigger: "hsCRP >1.0 mg/L AND ESR elevated", cite: null, desc: "Concurrent elevation indicates systemic, multi-pathway inflammation." },
           { id: "I4", title: "HRV \u00D7 Homocysteine", penalty: "up to 2 pts", trigger: "Low HRV + elevated homocysteine", cite: null, desc: "Autonomic dysfunction compounded by endothelial injury — a specific high-risk cardiovascular phenotype." },

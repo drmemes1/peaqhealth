@@ -14,10 +14,27 @@ export const markerInfo: Record<string, MarkerInfo> = {
     tip: "Consistent sleep/wake times and a cooler room (65–68°F) improve deep sleep.",
   },
   hrv: {
-    why: "Heart rate variability measures autonomic nervous system function. Low HRV independently predicts cardiovascular events and poor stress resilience. Targets are age-adjusted.",
-    target: "Age-adjusted — e.g. ≥48 ms at 40–49, ≥35 ms at 60+",
-    citation: "Thayer et al., Int J Cardiology 2010",
-    tip: "HRV improves with consistent training load, reduced alcohol, and stress management.",
+    why: `HRV (RMSSD) is not just a sleep recovery metric — it reflects the balance of your autonomic nervous system. As we age, parasympathetic tone declines. That matters because the parasympathetic system actively suppresses systemic inflammation via the cholinergic anti-inflammatory pathway. When it weakens, the brake on inflammation is released — fuelling inflammaging, now formally recognized as hallmark #11 of aging (López-Otín et al., Cell 2023).
+
+Peaq scores HRV on two axes simultaneously:
+
+1. Population percentile — where you stand relative to healthy people your age and sex, anchored in the Lifelines Cohort (n=84,772), the largest single-cohort RMSSD normative dataset published.
+
+2. Personal trend — whether your HRV is rising or falling relative to your own 30-day rolling baseline. A sustained drop of ≥20% flags Watch regardless of your population score, because acute stress shows up in your personal trend before it shifts your percentile.
+
+Your final HRV status is the more conservative of the two signals. When HRV is low and hsCRP is elevated together, this is not a coincidence — you are seeing two measurements of the same hallmark of aging.`,
+
+    target: `Age and sex adjusted. Examples (50th percentile, male):
+  Age 30–34: ≥37 ms · Age 40–44: ≥29 ms · Age 50–54: ≥24 ms · Age 60–64: ≥19 ms
+  Women run approximately 5 ms higher in most age bands below 60.
+  Personal baseline: ≥20% below your 30-day average flags Watch regardless of percentile.`,
+
+    citation: `Tegegne BS et al. Eur J Prev Cardiol. 2020;27(19):2191–2194. n=84,772 (Lifelines Cohort).
+Brozat M, Böckelmann I, Sammito S. J Cardiovasc Dev Dis. 2025;12(6):214 (systematic review, 58 studies).
+Olivieri F et al. Ageing Res Rev. 2024 Nov;101:102521. PMID 39341508 (HRV as hallmark of inflammaging).
+López-Otín C et al. Cell. 2023;186(2):243–278 (12 hallmarks of aging — dysbiosis #12, inflammaging #11).`,
+
+    tip: `HRV improves over weeks to months — not overnight. The highest-yield interventions: consistent sleep and wake times (your circadian rhythm directly governs parasympathetic tone), reducing evening alcohol (suppresses HRV for 24–48h), sustained aerobic training (zone 2 specifically), and stress reduction. A single bad night will drop your personal trend — that's normal. A sustained multi-week drop is the signal that matters.`,
   },
   spo2: {
     why: "Overnight oxygen desaturation events are the primary screening signal for obstructive sleep apnea, which affects 936 million people globally and is massively underdiagnosed.",

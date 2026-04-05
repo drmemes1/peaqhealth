@@ -2,6 +2,7 @@ import { calculatePeaqScore, type LifestyleInputs, type BloodInputs, type OralIn
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { scoreOralV2, type OralDimensionInputs } from "../oral/dimensions-v2"
 import { calculateModifiers, type PanelInputs } from "./modifiers"
+import { scoreHrv } from "../hrv-scoring"
 
 // Provider priority for best-per-date selection (lower = preferred)
 const PROVIDER_PRIORITY: Record<string, number> = { whoop: 0, oura: 1, garmin: 2 }
@@ -227,8 +228,10 @@ async function _recalculateScore(
       .order("date", { ascending: false }),
   ])
 
-  // ── User age from lifestyle ────────────────────────────────────────────────
+  // ── User age + sex from lifestyle ──────────────────────────────────────────
   const userAge = ageRangeToMidpoint(lifestyleRes.data?.age_range as string | null)
+  const rawSex = lifestyleRes.data?.biological_sex as string | null
+  const userSex: 'male' | 'female' = rawSex === 'female' ? 'female' : 'male' // default male for non-binary/unspecified
 
   // ── Sleep aggregation ──────────────────────────────────────────────────────
   let sleepInputs: SleepInputs | undefined
@@ -322,13 +325,25 @@ async function _recalculateScore(
     // D3 — Sleep efficiency (6pts)
     const effPts = eff >= 90 ? 6 : eff >= 85 ? 5 : eff >= 80 ? 3 : eff >= 75 ? 1 : 0
 
-    // D4 — HRV (5pts, recovery signal — age-adjusted)
-    const hrvTarget = getHRVTarget(userAge)
-    const hrvPts: number | null = (hrv == null || hrv <= 0) ? null :
-      hrv >= hrvTarget.optimal ? 5 :
-      hrv >= hrvTarget.good    ? 3 :
-      hrv >= hrvTarget.watch   ? 1 : 0
-    console.log(`[sleep-engine] hrv age-adjusted: age=${userAge} target_optimal=${hrvTarget.optimal} hrv=${hrv?.toFixed(1)} → ${hrvPts ?? "null"} pts`)
+    // D4 — HRV (5pts, dual-framework: population percentile + personal trend)
+    // Compute 30-day rolling average from all available HRV readings
+    const hrvReadings = bestNights
+      .map(n => Number(n.hrv_rmssd))
+      .filter(v => !isNaN(v) && v > 0)
+    const rollingAvg30d = hrvReadings.length >= 7
+      ? hrvReadings.reduce((a, b) => a + b, 0) / hrvReadings.length
+      : null
+
+    let hrvPts: number | null = null
+    if (hrv != null && hrv > 0) {
+      const hrvResult = scoreHrv(hrv, userAge, userSex, rollingAvg30d)
+      hrvPts = hrvResult.finalStatus === 'optimal' ? 5 :
+               hrvResult.finalStatus === 'good'    ? 3 :
+               hrvResult.finalStatus === 'watch'   ? 1 : 0
+      console.log(`[hrv-scoring] user=${userId.slice(0, 8)} rmssd=${hrv.toFixed(1)} age=${userAge} sex=${userSex} pop=${hrvResult.populationStatus} trend=${hrvResult.trendStatus ?? "n/a"} final=${hrvResult.finalStatus} → ${hrvPts} pts`)
+    } else {
+      console.log(`[hrv-scoring] user=${userId.slice(0, 8)} hrv=null → null pts`)
+    }
 
     // D5 — SpO2 (4pts)
     // spo2DipsPerNight: 0 = good SpO2, higher = worse. avgSpo2 mapped in aggregation.
