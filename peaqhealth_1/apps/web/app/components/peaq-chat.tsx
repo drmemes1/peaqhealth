@@ -138,7 +138,7 @@ export function PeaqChat() {
           width: 360, height: 520,
           background: "#FFFFFF",
           borderRadius: 16,
-          border: "0.5px solid rgba(0,0,0,0.06)",
+          border: "1px solid rgba(0,0,0,0.12)",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",

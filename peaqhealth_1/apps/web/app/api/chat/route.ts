@@ -210,7 +210,7 @@ async function buildUserContext(userId: string): Promise<string> {
   if (lab) {
     lines.push(`\nBLOOD (${snap?.blood_sub ?? "?"}/40) — Last tested: ${lab.collection_date ?? "unknown"}`)
     if (lab.hs_crp_mgl) lines.push(`  hsCRP: ${lab.hs_crp_mgl} mg/L (${status(lab.hs_crp_mgl, { optimal: 0.5, good: 1.0, watch: 3.0 }, false)})`)
-    if (lab.lpa_mgdl) lines.push(`  Lp(a): ${lab.lpa_mgdl} mg/dL (${status(lab.lpa_mgdl, { optimal: 14, good: 30, watch: 50 }, false)})`)
+    if (lab.lpa_mgdl) lines.push(`  Lp(a): ${Math.round(Number(lab.lpa_mgdl) * 2.5)} nmol/L (${status(lab.lpa_mgdl, { optimal: 14, good: 30, watch: 50 }, false)})`)
     if (lab.hba1c_pct) lines.push(`  HbA1c: ${lab.hba1c_pct}% (${status(lab.hba1c_pct, { optimal: 5.0, good: 5.4, watch: 5.7 }, false)})`)
     if (lab.triglycerides_mgdl) lines.push(`  Triglycerides: ${lab.triglycerides_mgdl} mg/dL (${status(lab.triglycerides_mgdl, { optimal: 80, good: 150, watch: 200 }, false)})`)
     if (lab.ldl_mgdl) lines.push(`  LDL: ${lab.ldl_mgdl} mg/dL`)

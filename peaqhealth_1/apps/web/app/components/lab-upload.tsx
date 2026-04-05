@@ -89,7 +89,7 @@ const CATEGORIES: Array<{ name: string; markers: MarkerDef[] }> = [
       { slug: "triglycerides_mgdL",   name: "Triglycerides",     unit: "mg/dL",   placeholder: "95"   },
       { slug: "totalCholesterol_mgdL",name: "Total Cholesterol", unit: "mg/dL",   placeholder: "180"  },
       { slug: "apoB_mgdL",            name: "ApoB",              unit: "mg/dL",   placeholder: "85"   },
-      { slug: "lpa_mgdL",             name: "Lp(a)",             unit: "mg/dL",   placeholder: "18"   },
+      { slug: "lpa_mgdL",             name: "Lp(a)",             unit: "nmol/L",  placeholder: "45"   },
       { slug: "nonHDL_mgdL",          name: "Non-HDL",           unit: "mg/dL",   placeholder: "130"  },
       { slug: "vldl_mgdL",            name: "VLDL",              unit: "mg/dL",   placeholder: "14"   },
       { slug: "ldlHdlRatio",          name: "LDL:HDL Ratio",     unit: "ratio",   placeholder: "2.1"  },
@@ -187,7 +187,7 @@ const PLAUSIBLE_RANGES: Record<string, [number, number]> = {
   triglycerides_mgdL:    [20,  1500],
   totalCholesterol_mgdL: [50,  500],
   apoB_mgdL:             [20,  300],
-  lpa_mgdL:              [0,   400],
+  lpa_mgdL:              [0,   1000],
   nonHDL_mgdL:           [10,  400],
   vldl_mgdL:             [1,   150],
   ldlHdlRatio:           [0.5, 15],
@@ -347,6 +347,10 @@ export function LabUpload({ onSkip, onComplete }: LabUploadProps) {
   }, [selectedFiles])
 
   async function saveMarkers(markers: Record<string, unknown>, src = "upload_pdf", labName?: string) {
+    // Lp(a) form accepts nmol/L — convert to mg/dL for internal storage
+    if (typeof markers.lpa_mgdL === "number") {
+      markers.lpa_mgdL = markers.lpa_mgdL / 2.5
+    }
     setPhase("saving")
     try {
       const res = await fetch("/api/labs/save", {
