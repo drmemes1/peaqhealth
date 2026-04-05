@@ -173,7 +173,7 @@ function NotifyForm({ productId, source }: { productId: string; source: string }
           fontFamily: sans,
           fontSize: 12,
           height: 32,
-          border: "1px solid rgba(0,0,0,0.12)",
+          border: "0.5px solid rgba(0,0,0,0.12)",
           borderRadius: 6,
           padding: "0 10px",
           outline: "none",
@@ -214,7 +214,7 @@ function NotifyForm({ productId, source }: { productId: string; source: string }
             letterSpacing: "0.08em",
             padding: "6px 10px",
             borderRadius: 6,
-            border: "1px solid rgba(0,0,0,0.06)",
+            border: "0.5px solid rgba(0,0,0,0.06)",
             background: "transparent",
             color: "rgba(0,0,0,0.3)",
             cursor: "pointer",
@@ -246,7 +246,7 @@ function WearableRecommendationCard() {
           textTransform: "uppercase",
           letterSpacing: "0.1em",
           color: "#C49A3C",
-          border: "1px solid #C49A3C",
+          border: "0.5px solid #C49A3C",
           background: "var(--off-white, #F6F4EF)",
           padding: "3px 8px",
           borderRadius: 4,
@@ -563,7 +563,7 @@ function StarterKitBundle() {
                       fontFamily: sans,
                       fontSize: 14,
                       height: 40,
-                      border: "1px solid rgba(250,250,248,0.2)",
+                      border: "0.5px solid rgba(250,250,248,0.2)",
                       borderRadius: 6,
                       padding: "0 12px",
                       outline: "none",
@@ -602,7 +602,7 @@ function StarterKitBundle() {
                         padding: "0 12px",
                         fontFamily: sans,
                         fontSize: 12,
-                        border: "1px solid rgba(250,250,248,0.15)",
+                        border: "0.5px solid rgba(250,250,248,0.15)",
                         borderRadius: 6,
                         background: "transparent",
                         color: "rgba(250,250,248,0.3)",
@@ -683,7 +683,7 @@ export function ShopClient({ initials, hasWearable }: ShopClientProps) {
               marginBottom: 0,
             }}
           >
-            Every product is selected for its measurable impact on your Peaq score.
+            Every product is selected for its measurable impact on your Peaq Resilience Index.
             All CTAs capture email — checkout coming soon.
           </p>
           <div

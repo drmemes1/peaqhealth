@@ -70,8 +70,8 @@ export function PanelsClient({ initials }: { initials: string }) {
             maxWidth: 480,
           }}
         >
-          Your Peaq score is built from three biological panels. Each measures a different
-          system — together they reveal what no single test can see.
+          Your Peaq Resilience Index is built from three biological panels. Each measures a
+          different system — together they reveal what no single test can see.
         </p>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -88,18 +88,18 @@ export function PanelsClient({ initials }: { initials: string }) {
                 borderLeft: `3px solid ${p.color}`,
                 background: "#fff",
                 padding: "20px 24px",
-                transition: "transform 150ms ease, box-shadow 150ms ease",
+                transition: "transform 150ms ease, background 150ms ease",
                 cursor: "pointer",
               }}
               onMouseEnter={(e) => {
                 const el = e.currentTarget as HTMLElement
                 el.style.transform = "translateY(-2px)"
-                el.style.boxShadow = `0 8px 24px rgba(0,0,0,0.06), 0 0 0 1.5px ${p.color}`
+                el.style.background = "#FAFAF8"
               }}
               onMouseLeave={(e) => {
                 const el = e.currentTarget as HTMLElement
                 el.style.transform = ""
-                el.style.boxShadow = ""
+                el.style.background = "#fff"
               }}
             >
               {/* Header row */}
