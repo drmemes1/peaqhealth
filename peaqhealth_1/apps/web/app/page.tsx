@@ -121,258 +121,300 @@ export default function Home() {
       </nav>
 
       {/* ══════════════════════════════════════════════════════════════════
-          SECTION 1 — HERO (dark bg)
+          TICKER BAR
           ══════════════════════════════════════════════════════════════════ */}
-      <section style={{ background: BG_DARK }}>
+      <div style={{
+        background: INK,
+        padding: "10px 0",
+        overflow: "hidden",
+        whiteSpace: "nowrap",
+      }}>
+        <div style={{
+          display: "inline-flex",
+          animation: "ticker 22s linear infinite",
+          gap: 0,
+        }}>
+          {[...Array(2)].map((_, rep) => (
+            <span key={rep} style={{ display: "inline-flex" }}>
+              {[
+                "Oral microbiome \u00B7 16S rRNA sequencing",
+                "Blood biomarkers \u00B7 40+ markers",
+                "Nightly HRV \u00B7 WHOOP \u00B7 Oura",
+                "Hallmarks of aging \u00B7 L\u00F3pez-Ot\u00EDn 2023",
+                "Cross-panel signals \u00B7 What no single test shows",
+                "Peaq Resilience Index \u00B7 Three signals. One number.",
+              ].map(item => (
+                <span key={item} style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: "0 28px",
+                  fontFamily: sans,
+                  fontSize: 9,
+                  letterSpacing: "2px",
+                  textTransform: "uppercase",
+                  color: "rgba(255,255,255,0.35)",
+                }}>
+                  <span style={{
+                    width: 3, height: 3, borderRadius: "50%",
+                    background: ACCENT_RAW, opacity: 0.6,
+                  }} />
+                  {item}
+                </span>
+              ))}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* ══════════════════════════════════════════════════════════════════
+          SECTION 1 — HERO (cream bg, centered)
+          ══════════════════════════════════════════════════════════════════ */}
+      <section style={{ background: BG_CREAM, position: "relative", overflow: "hidden" }}>
+        {/* Subtle radial accents */}
+        <div style={{
+          position: "absolute", inset: 0, pointerEvents: "none",
+          background: "radial-gradient(circle at 20% 50%, rgba(196,154,60,0.04) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(24,95,165,0.03) 0%, transparent 40%)",
+        }} />
+
         <div className="landing-hero" style={{
           ...contentWrap,
           display: "flex",
           flexDirection: "column",
-          alignItems: "flex-start",
-          maxWidth: 720,
-          paddingTop: "clamp(72px, 10vw, 120px)",
-          paddingBottom: "clamp(72px, 10vw, 120px)",
-          minHeight: "70vh",
-          justifyContent: "center",
+          alignItems: "center",
+          textAlign: "center",
+          paddingTop: "clamp(60px, 8vw, 100px)",
+          paddingBottom: "clamp(60px, 8vw, 100px)",
+          position: "relative",
+          zIndex: 2,
         }}>
-          <div>
-            {/* Eyebrow */}
-            <p style={{
-              fontFamily: sans,
-              fontSize: "clamp(11px, 1vw, 13px)",
-              fontWeight: 500,
-              textTransform: "uppercase",
-              letterSpacing: "0.18em",
-              color: ACCENT,
-              margin: "0 0 20px",
-            }}>
-              Oral &middot; Blood &middot; Sleep
-            </p>
-
-            {/* H1 */}
-            <h1 style={{
-              fontFamily: serif,
-              fontSize: "clamp(40px, 5vw, 72px)",
-              fontWeight: 400,
-              lineHeight: 1.1,
-              letterSpacing: "-0.02em",
-              color: WHITE,
-              margin: "0 0 20px",
-            }}>
-              Your mouth is affecting your heart. We can show you{" "}
-              <em style={{ fontStyle: "italic", color: ACCENT }}>exactly</em> how.
-            </h1>
-
-            {/* Sub */}
-            <p style={{
-              fontFamily: sans,
-              fontSize: "clamp(14px, 1.2vw, 17px)",
-              lineHeight: 1.7,
-              color: WHITE_45,
-              maxWidth: 420,
-              margin: "0 0 32px",
-            }}>
-              Peaq unifies oral microbiome sequencing, blood biomarkers, and
-              nightly sleep data into a single, clinician-designed score. See
-              the connections your doctors are missing.
-            </p>
-
-            {/* Actions */}
-            <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 48 }}>
-              <a
-                href="#cta"
-                style={{
-                  fontFamily: sans,
-                  fontSize: 13,
-                  fontWeight: 500,
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase",
-                  padding: "13px 28px",
-                  background: ACCENT,
-                  color: BG_DARK,
-                  border: "none",
-                  borderRadius: 3,
-                  textDecoration: "none",
-                  display: "inline-block",
-                }}
-              >
-                Join waitlist
-              </a>
-              <a
-                href="#science"
-                style={{
-                  fontFamily: sans,
-                  fontSize: 13,
-                  letterSpacing: "0.02em",
-                  color: WHITE_40,
-                  textDecoration: "none",
-                }}
-              >
-                See the science &rarr;
-              </a>
-            </div>
-
-            {/* Stats row */}
-            <p style={{
-              fontFamily: sans,
-              fontSize: "clamp(11px, 1vw, 13px)",
-              letterSpacing: "0.04em",
-              color: WHITE_30,
-              margin: 0,
-            }}>
-              100+ species &middot; 40+ biomarkers &middot; 29 cited studies &middot; 1 score
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════════════════════════
-          SECTION 2 — THREE PANELS (dark bg, flush with hero)
-          ══════════════════════════════════════════════════════════════════ */}
-      <section style={{ background: BG_DARK, paddingTop: "clamp(64px, 8vw, 96px)", paddingBottom: "clamp(64px, 8vw, 96px)" }}>
-        <div style={contentWrap}>
           {/* Eyebrow */}
-          <p style={{
+          <p className="fade-up" style={{
             fontFamily: sans,
-            fontSize: "clamp(10px, 0.9vw, 12px)",
-            fontWeight: 500,
+            fontSize: 9,
+            letterSpacing: "3px",
             textTransform: "uppercase",
-            letterSpacing: "0.18em",
-            color: ACCENT,
-            margin: "0 0 12px",
+            color: ACCENT_RAW,
+            margin: "0 0 24px",
           }}>
-            Three panels. One score.
+            Three signals &middot; One measure of resilience
           </p>
 
-          {/* H2 */}
-          <h2 style={{
+          {/* H1 */}
+          <h1 className="fade-up" style={{
             fontFamily: serif,
-            fontSize: "clamp(28px, 3vw, 42px)",
-            fontWeight: 400,
-            lineHeight: 1.2,
-            color: WHITE,
-            margin: "0 0 48px",
+            fontSize: "clamp(48px, 7vw, 88px)",
+            fontWeight: 300,
+            lineHeight: 1.05,
+            letterSpacing: "-0.5px",
+            color: INK,
+            maxWidth: 820,
+            margin: "0 0 12px",
+            animationDelay: "100ms",
           }}>
-            Everything that matters, nothing that doesn&rsquo;t.
-          </h2>
+            Your body is talking.
+            <br />
+            <em style={{ fontStyle: "italic", color: ACCENT_RAW }}>We&rsquo;re listening.</em>
+          </h1>
 
-          {/* Panel grid */}
-          <div className="landing-panels-grid" style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr 1fr",
-            border: `1px solid ${BORDER_DARK}`,
-            borderRadius: 6,
-            overflow: "hidden",
+          {/* Secondary */}
+          <p className="fade-up" style={{
+            fontFamily: serif,
+            fontSize: "clamp(18px, 2.5vw, 24px)",
+            fontWeight: 300,
+            fontStyle: "italic",
+            color: MUTED,
+            margin: "0 0 32px",
+            animationDelay: "200ms",
           }}>
-            {([
-              {
-                color: SLEEP_C,
-                title: "Sleep",
-                source: "Wearable \u00B7 nightly",
-                metrics: "5 metrics nightly",
-                points: "30 pts",
-                devices: "WHOOP \u00B7 Oura \u00B7 Apple Health",
-              },
-              {
-                color: BLOOD_C,
-                title: "Blood",
-                source: "Lab upload \u00B7 any provider",
-                metrics: "40+ biomarkers",
-                points: "40 pts",
-                devices: "LabCorp \u00B7 Quest \u00B7 any lab",
-              },
-              {
-                color: ORAL_C,
-                title: "Oral",
-                source: "16S rRNA \u00B7 at-home swab",
-                metrics: "100+ species",
-                points: "30 pts",
-                devices: "Results in 10\u201314 days",
-              },
-            ] as const).map((panel, i) => (
-              <div key={panel.title} style={{
-                background: BG_DARK2,
-                padding: "36px 28px",
-                borderLeft: i > 0 ? `1px solid ${BORDER_DARK}` : "none",
-              }}>
-                {/* Color dot + title */}
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
+            Most platforms hear one signal. Peaq listens to three.
+          </p>
+
+          {/* Body */}
+          <p className="fade-up" style={{
+            fontFamily: sans,
+            fontSize: 14,
+            color: MUTED,
+            lineHeight: 1.7,
+            maxWidth: 480,
+            margin: "0 0 40px",
+            animationDelay: "300ms",
+          }}>
+            Oral microbiome. Blood biomarkers. Nightly sleep data. Measured
+            separately, they tell partial stories. Measured together &mdash; with
+            cross-panel analysis &mdash; they tell you things no single test ever could.
+          </p>
+
+          {/* CTAs */}
+          <div className="fade-up" style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            marginBottom: 64,
+            animationDelay: "400ms",
+          }}>
+            <a
+              href="#cta"
+              style={{
+                fontFamily: sans,
+                fontSize: 10,
+                letterSpacing: "1.5px",
+                textTransform: "uppercase",
+                padding: "12px 28px",
+                borderRadius: 6,
+                background: INK,
+                color: "#fff",
+                border: "none",
+                textDecoration: "none",
+                display: "inline-block",
+              }}
+            >
+              Start your assessment
+            </a>
+            <a
+              href="#science"
+              style={{
+                fontFamily: sans,
+                fontSize: 10,
+                letterSpacing: "1.5px",
+                textTransform: "uppercase",
+                padding: "12px 20px",
+                borderRadius: 6,
+                background: "transparent",
+                color: MUTED,
+                border: "0.5px solid rgba(0,0,0,0.12)",
+                textDecoration: "none",
+                display: "inline-block",
+              }}
+            >
+              See the science &rarr;
+            </a>
+          </div>
+
+          {/* Quote card */}
+          <div className="fade-up" style={{
+            maxWidth: 560,
+            padding: "24px 32px",
+            background: "#fff",
+            border: `0.5px solid ${BORDER_LIGHT}`,
+            borderRadius: 12,
+            position: "relative",
+            textAlign: "left",
+            marginBottom: 32,
+            animationDelay: "550ms",
+          }}>
+            <span style={{
+              fontFamily: serif,
+              fontSize: 48,
+              fontWeight: 300,
+              color: ACCENT_RAW,
+              lineHeight: "0.6",
+              display: "block",
+              marginBottom: 12,
+              opacity: 0.6,
+            }}>
+              &ldquo;
+            </span>
+            <p style={{
+              fontFamily: serif,
+              fontSize: 18,
+              fontWeight: 400,
+              fontStyle: "italic",
+              color: INK,
+              lineHeight: 1.55,
+              margin: "0 0 16px",
+            }}>
+              Nobody has ever connected my mouth, my blood, and my sleep in the
+              same conversation. Each one alone felt manageable. Together they
+              felt like something I actually needed to{" "}
+              <em style={{ fontStyle: "normal", color: ACCENT_RAW, fontWeight: 500 }}>act on.</em>
+            </p>
+            <span style={{
+              fontFamily: sans,
+              fontSize: 10,
+              letterSpacing: "1px",
+              textTransform: "uppercase",
+              color: "#bbb",
+            }}>
+              Peaq user &middot; 43 &middot; Toronto
+            </span>
+          </div>
+
+          {/* Panel strip */}
+          <div className="fade-up" style={{
+            width: "100%",
+            maxWidth: 640,
+            animationDelay: "700ms",
+          }}>
+            <div style={{
+              display: "flex",
+              gap: 1,
+              background: BORDER_LIGHT,
+              borderRadius: 12,
+              overflow: "hidden",
+            }}>
+              {([
+                { color: "var(--sleep-c)", label: "Sleep", score: 24, max: 30, pct: 80 },
+                { color: "var(--blood-c)", label: "Blood", score: 34, max: 40, pct: 85 },
+                { color: "var(--oral-c)", label: "Oral", score: 10, max: 30, pct: 33 },
+              ] as const).map(p => (
+                <div key={p.label} style={{
+                  flex: 1,
+                  background: BG_CREAM,
+                  padding: "14px 16px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 6,
+                }}>
                   <span style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: "50%",
-                    background: panel.color,
-                    flexShrink: 0,
+                    width: 6, height: 6, borderRadius: "50%",
+                    background: p.color,
                   }} />
                   <span style={{
                     fontFamily: sans,
-                    fontSize: 13,
-                    fontWeight: 600,
-                    letterSpacing: "0.04em",
-                    color: panel.color,
+                    fontSize: 8,
+                    letterSpacing: "2px",
+                    textTransform: "uppercase",
+                    color: "#bbb",
                   }}>
-                    {panel.title}
+                    {p.label}
                   </span>
+                  <span style={{
+                    fontFamily: serif,
+                    fontSize: 26,
+                    fontWeight: 300,
+                    lineHeight: 1,
+                    color: p.color,
+                  }}>
+                    {p.score}
+                  </span>
+                  <span style={{ fontFamily: sans, fontSize: 9, color: "#bbb" }}>/{p.max}</span>
+                  <div style={{
+                    width: "100%", height: 2,
+                    background: "rgba(0,0,0,0.06)", borderRadius: 1,
+                  }}>
+                    <div style={{
+                      height: 2, borderRadius: 1,
+                      width: `${p.pct}%`,
+                      background: p.color,
+                    }} />
+                  </div>
                 </div>
-
-                {/* Source */}
-                <p style={{
-                  fontFamily: sans,
-                  fontSize: 12,
-                  color: WHITE_45,
-                  margin: "0 0 6px",
-                }}>
-                  {panel.source}
-                </p>
-
-                {/* Metrics */}
-                <p style={{
-                  fontFamily: sans,
-                  fontSize: 14,
-                  fontWeight: 500,
-                  color: WHITE_80,
-                  margin: "0 0 4px",
-                }}>
-                  {panel.metrics}
-                </p>
-
-                {/* Points */}
-                <p style={{
-                  fontFamily: serif,
-                  fontSize: 22,
-                  fontWeight: 400,
-                  color: WHITE,
-                  margin: "0 0 16px",
-                }}>
-                  {panel.points}
-                </p>
-
-                {/* Devices */}
-                <p style={{
-                  fontFamily: sans,
-                  fontSize: 11,
-                  color: MUTED,
-                  margin: 0,
-                  lineHeight: 1.5,
-                }}>
-                  {panel.devices}
-                </p>
-              </div>
-            ))}
+              ))}
+            </div>
+            <p style={{
+              textAlign: "center",
+              marginTop: 12,
+              fontFamily: sans,
+              fontSize: 9,
+              letterSpacing: "1.5px",
+              textTransform: "uppercase",
+              color: "#bbb",
+            }}>
+              Sample &middot; Your numbers will be different
+            </p>
           </div>
-
-          {/* Bottom quote */}
-          <p style={{
-            fontFamily: serif,
-            fontSize: "clamp(14px, 1.2vw, 17px)",
-            fontStyle: "italic",
-            color: WHITE_40,
-            textAlign: "center",
-            marginTop: 40,
-            lineHeight: 1.6,
-          }}>
-            &ldquo;Each panel sees a piece. The score sees the pattern.&rdquo;
-          </p>
         </div>
       </section>
 
