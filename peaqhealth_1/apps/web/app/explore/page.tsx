@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react"
 import Link from "next/link"
 import { Nav } from "../components/nav"
+import { FindingsExplorer } from "./findings-explorer"
 
 const serif = "'Cormorant Garamond', Georgia, serif"
 const sans  = "-apple-system, BlinkMacSystemFont, sans-serif"
@@ -30,7 +31,7 @@ const NHANES_OVERALL: Record<string, Record<string, number>> = {
   },
 }
 
-// ── Percentile interpolation (client-side for live curve update) ──────────────
+// ── Percentile interpolation ────────────────────────────────────────────────
 
 function findPercentile(value: number, table: Record<string, number>): number {
   const keys = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95]
@@ -46,16 +47,12 @@ function findPercentile(value: number, table: Record<string, number>): number {
   return 50
 }
 
-// ── Distribution curve SVG ───────────────────────────────────────────────────
+// ── Distribution curve SVG ──────────────────────────────────────────────────
 
 function DistributionPanel({
   label, tooltip, metricKey, userValue, formatVal,
 }: {
-  label: string
-  tooltip: string
-  metricKey: string
-  userValue: number | null
-  formatVal?: (v: number) => string
+  label: string; tooltip: string; metricKey: string; userValue: number | null; formatVal?: (v: number) => string
 }) {
   const table = NHANES_OVERALL[metricKey]
   if (!table) return null
@@ -66,14 +63,12 @@ function DistributionPanel({
 
   const pct = userValue !== null ? findPercentile(userValue, table) : null
 
-  // SVG geometry
   const W = 300, H = 100, padT = 10, padB = 18
   const chartH = H - padT - padB
   const keys = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95]
   const xMin = table.p5 * 0.92, xMax = table.p95 * 1.04
   const toX = (v: number) => ((v - xMin) / (xMax - xMin)) * W
 
-  // Density from percentile spacing
   const pts: { x: number; y: number }[] = []
   for (let i = 0; i < keys.length - 1; i++) {
     const v1 = table[`p${keys[i]}`], v2 = table[`p${keys[i + 1]}`]
@@ -84,7 +79,6 @@ function DistributionPanel({
   const norm = pts.map(p => ({ x: p.x, y: padT + chartH - (p.y / maxD) * chartH * 0.85 }))
   const baseY = padT + chartH
 
-  // Smooth curve
   let fill = `M ${norm[0].x} ${baseY} L ${norm[0].x} ${norm[0].y}`
   let stroke = `M ${norm[0].x} ${norm[0].y}`
   for (let i = 0; i < norm.length - 1; i++) {
@@ -94,7 +88,6 @@ function DistributionPanel({
   }
   fill += ` L ${norm[norm.length - 1].x} ${baseY} Z`
 
-  // User marker Y
   let userX = 0, userY = baseY
   if (userValue !== null) {
     userX = toX(Math.max(xMin, Math.min(xMax, userValue)))
@@ -108,11 +101,7 @@ function DistributionPanel({
   }
 
   return (
-    <div style={{
-      background: "#fff", border: "0.5px solid rgba(0,0,0,0.06)",
-      borderRadius: 12, padding: 20,
-    }}>
-      {/* Header */}
+    <div style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.06)", borderRadius: 12, padding: 20 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{ fontFamily: sans, fontSize: 13, fontWeight: 600, color: "#1a1a18" }}>{label}</span>
@@ -141,65 +130,43 @@ function DistributionPanel({
         {pct !== null && (
           <span style={{
             fontFamily: sans, fontSize: 8, textTransform: "uppercase", letterSpacing: "0.5px",
-            background: "rgba(196,154,60,0.08)", color: "#C49A3C",
-            borderRadius: 4, padding: "2px 8px",
+            background: "rgba(196,154,60,0.08)", color: "#C49A3C", borderRadius: 4, padding: "2px 8px",
           }}>
             {pct}th percentile
           </span>
         )}
       </div>
-
-      {/* SVG */}
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", overflow: "visible" }}>
         <path d={fill} fill="rgba(196,154,60,0.08)" opacity={mounted ? 1 : 0} style={{ transition: "opacity 500ms ease" }} />
         <path d={stroke} fill="none" stroke="rgba(196,154,60,0.35)" strokeWidth={1.5} opacity={mounted ? 1 : 0} style={{ transition: "opacity 500ms ease" }} />
         <line x1={0} y1={baseY} x2={W} y2={baseY} stroke="rgba(0,0,0,0.06)" strokeWidth={0.5} />
-
-        {/* Axis labels */}
         <text x={toX(table.p10)} y={baseY + 12} textAnchor="middle" fontFamily={sans} fontSize={7} fill="#bbb">Low</text>
         <text x={toX(table.p50)} y={baseY + 12} textAnchor="middle" fontFamily={sans} fontSize={7} fill="#8C8A82">Median</text>
         <text x={toX(table.p90)} y={baseY + 12} textAnchor="middle" fontFamily={sans} fontSize={7} fill="#bbb">High</text>
         <text x={toX(table.p10)} y={baseY + 18} textAnchor="middle" fontFamily={sans} fontSize={6} fill="#ccc">{fmt(table.p10)}</text>
         <text x={toX(table.p50)} y={baseY + 18} textAnchor="middle" fontFamily={sans} fontSize={6} fill="#aaa">{fmt(table.p50)}</text>
         <text x={toX(table.p90)} y={baseY + 18} textAnchor="middle" fontFamily={sans} fontSize={6} fill="#ccc">{fmt(table.p90)}</text>
-
-        {/* User marker */}
         {userValue !== null && pct !== null && mounted && (
           <g opacity={1} style={{ transition: "opacity 400ms ease 300ms" }}>
             <line x1={userX} y1={baseY} x2={userX} y2={userY} stroke="#C49A3C" strokeWidth={1.5} />
             <circle cx={userX} cy={userY} r={3} fill="#C49A3C" />
             <text x={userX} y={userY - 8} textAnchor="middle" fontFamily={serif} fontSize={9} fontStyle="italic" fill="#C49A3C">
-              You · {pct}th
+              You &middot; {pct}th
             </text>
           </g>
         )}
       </svg>
-
-      {/* Percentile track */}
       <div style={{ marginTop: 12 }}>
         <div style={{ position: "relative", height: 4, borderRadius: 2, background: "rgba(0,0,0,0.06)" }}>
           {pct !== null && (
             <>
-              <div style={{
-                position: "absolute", left: 0, top: 0, height: "100%", borderRadius: 2,
-                background: "#C49A3C", width: `${pct}%`, transition: "width 600ms ease",
-              }} />
-              <div style={{
-                position: "absolute", left: `${pct}%`, top: -8, transform: "translateX(-50%)",
-                width: 0, height: 0,
-                borderLeft: "3px solid transparent", borderRight: "3px solid transparent",
-                borderTop: "4px solid #C49A3C",
-              }} />
-              <span style={{
-                position: "absolute", left: `${pct}%`, top: -16, transform: "translateX(-50%)",
-                fontFamily: sans, fontSize: 7, color: "#C49A3C",
-              }}>You</span>
+              <div style={{ position: "absolute", left: 0, top: 0, height: "100%", borderRadius: 2, background: "#C49A3C", width: `${pct}%`, transition: "width 600ms ease" }} />
+              <div style={{ position: "absolute", left: `${pct}%`, top: -8, transform: "translateX(-50%)", width: 0, height: 0, borderLeft: "3px solid transparent", borderRight: "3px solid transparent", borderTop: "4px solid #C49A3C" }} />
+              <span style={{ position: "absolute", left: `${pct}%`, top: -16, transform: "translateX(-50%)", fontFamily: sans, fontSize: 7, color: "#C49A3C" }}>You</span>
             </>
           )}
         </div>
       </div>
-
-      {/* Context text */}
       {userValue !== null && pct !== null && (
         <p style={{ fontFamily: sans, fontSize: 11, color: "#8C8A82", lineHeight: 1.5, marginTop: 10, marginBottom: 0 }}>
           The median is {fmt(table.p50)}. You are {pct >= 50 ? "above" : "below"} {pct >= 50 ? pct : 100 - pct}% of the population.
@@ -209,7 +176,7 @@ function DistributionPanel({
   )
 }
 
-// ── Reusable input ───────────────────────────────────────────────────────────
+// ── Reusable input ──────────────────────────────────────────────────────────
 
 function LabeledInput({ label, value, onChange, placeholder, note }: {
   label: string; value: string; onChange: (v: string) => void; placeholder: string; note?: string
@@ -231,29 +198,20 @@ function LabeledInput({ label, value, onChange, placeholder, note }: {
   )
 }
 
-// ── Types for API response ───────────────────────────────────────────────────
+// ── Types for API response ──────────────────────────────────────────────────
 
 interface APIMetric {
-  value: number
-  percentile: number
-  score: number
-  population_median: number
-  population_p25?: number
-  population_p75?: number
-  interpretation: string
+  value: number; percentile: number; score: number
+  population_median: number; population_p25?: number; population_p75?: number; interpretation: string
 }
 
 interface APIResponse {
-  overall_score: number
-  overall_percentile: number
+  overall_score: number; overall_percentile: number
   metrics: Record<string, APIMetric>
-  n_reference: number
-  age_sex_group: string
-  stratified: boolean
-  summary: string
+  n_reference: number; age_sex_group: string; stratified: boolean; summary: string
 }
 
-// ── Main Page ────────────────────────────────────────────────────────────────
+// ── Main Page ───────────────────────────────────────────────────────────────
 
 export default function ExplorePage() {
   const [age, setAge] = useState("")
@@ -308,44 +266,79 @@ export default function ExplorePage() {
   return (
     <div style={{ background: "#F6F4EF", minHeight: "100vh" }}>
       <Nav />
-      <main style={{ maxWidth: 760, margin: "0 auto", padding: "48px 24px 0" }}>
+      <main style={{ maxWidth: 760, margin: "0 auto", padding: "0 24px" }}>
 
-        {/* ── HERO ──────────────────────────────────────────────────────────── */}
-        <div style={{ textAlign: "center", marginBottom: 40 }}>
+        {/* ═══════════════════════════════════════════════════════════════════
+            SECTION 1 — HERO
+            ═══════════════════════════════════════════════════════════════════ */}
+        <div style={{ textAlign: "center", padding: "80px 0 48px" }}>
           <span style={{
-            fontFamily: sans, fontSize: 9, letterSpacing: "2px",
+            fontFamily: sans, fontSize: 10, letterSpacing: "0.12em",
             textTransform: "uppercase", color: "#C49A3C", display: "block", marginBottom: 16,
           }}>
             CDC NHANES Study · 9,660 Americans
           </span>
           <h1 style={{
-            fontFamily: serif, fontSize: 48, fontWeight: 300,
-            color: "#1a1a18", lineHeight: 1.15, margin: "0 0 20px",
+            fontFamily: serif, fontSize: 44, fontWeight: 300,
+            color: "#1A1917", lineHeight: 1.15, margin: "0 0 16px",
           }}>
-            How does your mouth compare to 9,660 Americans?
+            What your mouth bacteria<br />predict about your blood
           </h1>
           <p style={{
-            fontFamily: sans, fontSize: 14, color: "#8C8A82",
-            lineHeight: 1.65, maxWidth: 560, margin: "0 auto 20px",
+            fontFamily: sans, fontSize: 16, color: "#6B6960",
+            lineHeight: 1.6, maxWidth: 520, margin: "0 auto 32px",
           }}>
-            The CDC studied the mouth bacteria of 9,660 people across the US &mdash;
-            the largest study of its kind. We use it to show you exactly where you stand.
+            We ran every genus of oral bacteria against every blood marker in the
+            CDC&rsquo;s national dataset. Specific bacteria showed consistent signals.
+            Overall diversity showed none.
           </p>
-          <span style={{
-            fontFamily: sans, fontSize: 9, color: "#C49A3C",
-            background: "rgba(196,154,60,0.08)", border: "0.5px solid rgba(196,154,60,0.2)",
-            borderRadius: 20, padding: "4px 12px", display: "inline-block",
-            letterSpacing: "1px", textTransform: "uppercase",
+
+          {/* Stat cards */}
+          <div className="stat-cards" style={{
+            display: "grid", gridTemplateColumns: "1fr 1fr 1fr",
+            gap: 16, maxWidth: 640, margin: "0 auto",
           }}>
-            Same sequencing technology · Slightly different collection method · Best available reference
-          </span>
+            {[
+              { num: "9,848", label: "Americans with oral + blood data", sub: null },
+              { num: "28", label: "Significant bacteria\u2013marker pairs", sub: "out of 60 tested" },
+              { num: "0", label: "Shannon diversity correlations", sub: "with any blood marker" },
+            ].map(c => (
+              <div key={c.num} style={{
+                background: "#fff", borderRadius: 12,
+                padding: "20px 24px", border: "0.5px solid rgba(0,0,0,0.06)",
+              }}>
+                <div style={{ fontFamily: serif, fontSize: 32, color: "#1A1917", lineHeight: 1, marginBottom: 6 }}>{c.num}</div>
+                <div style={{ fontFamily: sans, fontSize: 12, color: "#6B6960", lineHeight: 1.4 }}>{c.label}</div>
+                {c.sub && <div style={{ fontFamily: sans, fontSize: 11, color: "#9E9C93", marginTop: 2 }}>{c.sub}</div>}
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* ── INPUT CARD ────────────────────────────────────────────────────── */}
+        {/* ═══════════════════════════════════════════════════════════════════
+            SECTION 2 — INTERACTIVE FINDINGS
+            ═══════════════════════════════════════════════════════════════════ */}
+        <FindingsExplorer />
+
+        {/* ═══════════════════════════════════════════════════════════════════
+            SECTION 3 — HOW YOU COMPARE
+            ═══════════════════════════════════════════════════════════════════ */}
         <div style={{
           background: "#fff", border: "0.5px solid rgba(0,0,0,0.06)",
-          borderRadius: 16, padding: 32, maxWidth: 680, margin: "0 auto 40px",
+          borderRadius: 16, padding: 32, marginBottom: 32,
         }}>
+          <span style={{ fontFamily: sans, fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "#C49A3C", display: "block", marginBottom: 8 }}>
+            Compare yourself
+          </span>
+          <h2 style={{ fontFamily: serif, fontSize: 28, fontWeight: 300, color: "#1A1917", margin: "0 0 8px", lineHeight: 1.2 }}>
+            Where do you stand in the study?
+          </h2>
+          <p style={{ fontFamily: sans, fontSize: 14, color: "#6B6960", lineHeight: 1.6, maxWidth: 480, margin: "0 0 24px" }}>
+            Enter your results from your Zymo report to see how your oral diversity
+            compares to Americans your age and sex.
+          </p>
+
+          {/* Profile inputs */}
           <span style={{ fontFamily: sans, fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "#bbb", display: "block", marginBottom: 16 }}>
             Your profile
           </span>
@@ -386,14 +379,14 @@ export default function ExplorePage() {
               note="Simpson diversity from your Zymo report. Range 0-1, higher = more diverse." />
           </div>
 
-          {/* Advanced */}
+          {/* Advanced genus inputs */}
           <button onClick={() => setAdvancedOpen(!advancedOpen)} style={{
             fontFamily: sans, fontSize: 11, color: "#8C8A82", background: "none",
             border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", gap: 6,
             marginBottom: advancedOpen ? 16 : 0,
           }}>
             <span style={{ fontSize: 8, transform: advancedOpen ? "rotate(90deg)" : "none", transition: "transform 150ms ease", display: "inline-block" }}>▶</span>
-            Advanced: Genus abundances +
+            Enter your genus data (from Zymo report)
           </button>
           {advancedOpen && (
             <div>
@@ -433,14 +426,13 @@ export default function ExplorePage() {
             onMouseDown={e => { (e.currentTarget as HTMLElement).style.transform = "scale(0.98)" }}
             onMouseUp={e => { (e.currentTarget as HTMLElement).style.transform = "" }}
           >
-            {loading ? "Analyzing..." : "See how you compare →"}
+            {loading ? "Analyzing..." : "See how you compare \u2192"}
           </button>
         </div>
 
         {/* ── RESULTS ──────────────────────────────────────────────────────── */}
         {showViz && (
           <div style={{ animation: "fadeUp 0.5s ease forwards", opacity: 0 }}>
-            {/* Summary bar */}
             {results && (
               <div style={{
                 background: "#fff", border: "0.5px solid rgba(0,0,0,0.06)",
@@ -458,7 +450,7 @@ export default function ExplorePage() {
                   <br />
                   <span style={{ fontFamily: sans, fontSize: 9, color: "#bbb" }}>
                     compared to {results.n_reference.toLocaleString()} US adults
-                    {results.stratified ? ` · ${results.age_sex_group}` : ""}
+                    {results.stratified ? ` \u00b7 ${results.age_sex_group}` : ""}
                   </span>
                 </div>
                 <span style={{
@@ -472,8 +464,7 @@ export default function ExplorePage() {
               </div>
             )}
 
-            {/* 4 panels */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
+            <div className="compare-panels" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
               <div>
                 <DistributionPanel metricKey="shannon" label="Shannon Diversity" userValue={shannon ? parseFloat(shannon) : null}
                   tooltip="Richness and evenness of bacterial species" formatVal={v => v.toFixed(1)} />
@@ -487,113 +478,54 @@ export default function ExplorePage() {
                 tooltip="Number of unique amplicon sequence variants" formatVal={v => String(Math.round(v))} />
               <DistributionPanel metricKey="simpson" label="Simpson Diversity" userValue={simpson ? parseFloat(simpson) : null}
                 tooltip="Probability two random sequences are different species. Higher = more diverse." formatVal={v => v.toFixed(3)} />
-              {/* Summary in 4th slot */}
               {results ? (
                 <div style={{
                   background: "#fff", border: "0.5px solid rgba(0,0,0,0.06)",
                   borderRadius: 12, padding: 20, display: "flex", flexDirection: "column", justifyContent: "center",
                 }}>
-                  <p style={{ fontFamily: sans, fontSize: 12, color: "#8C8A82", lineHeight: 1.6, margin: "0 0 12px" }}>
-                    {results.summary}
-                  </p>
-                  {results.stratified && (
-                    <span style={{ fontFamily: sans, fontSize: 9, color: "#C49A3C" }}>
-                      Stratified by {results.age_sex_group}
-                    </span>
-                  )}
+                  <p style={{ fontFamily: sans, fontSize: 12, color: "#8C8A82", lineHeight: 1.6, margin: "0 0 12px" }}>{results.summary}</p>
+                  {results.stratified && <span style={{ fontFamily: sans, fontSize: 9, color: "#C49A3C" }}>Stratified by {results.age_sex_group}</span>}
                 </div>
               ) : (
                 <div style={{
                   background: "#fff", border: "0.5px solid rgba(0,0,0,0.06)",
                   borderRadius: 12, padding: 20, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center",
                 }}>
-                  <p style={{ fontFamily: sans, fontSize: 12, color: "#8C8A82", lineHeight: 1.5, margin: "0 0 12px" }}>
-                    Enter your diversity metrics to see where you stand.
-                  </p>
-                  <Link href="/shop" style={{ fontFamily: sans, fontSize: 9, color: "#C49A3C", letterSpacing: "1.5px", textTransform: "uppercase", textDecoration: "none" }}>
-                    Order your Zymo kit →
-                  </Link>
+                  <p style={{ fontFamily: sans, fontSize: 12, color: "#8C8A82", lineHeight: 1.5, margin: "0 0 12px" }}>Enter your diversity metrics to see where you stand.</p>
+                  <Link href="/shop" style={{ fontFamily: sans, fontSize: 9, color: "#C49A3C", letterSpacing: "1.5px", textTransform: "uppercase", textDecoration: "none" }}>Order your Zymo kit &rarr;</Link>
                 </div>
               )}
             </div>
 
-            {/* ── WHAT THIS MEANS ─────────────────────────────────────────── */}
             {results && (
-              <div style={{
-                background: "#fff", border: "0.5px solid rgba(0,0,0,0.06)",
-                borderRadius: 12, padding: 24, marginBottom: 24,
-              }}>
-                <h3 style={{ fontFamily: serif, fontSize: 22, fontWeight: 300, color: "#1a1a18", margin: "0 0 16px" }}>
-                  Your oral microbiome snapshot
-                </h3>
+              <div style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.06)", borderRadius: 12, padding: 24, marginBottom: 24 }}>
+                <h3 style={{ fontFamily: serif, fontSize: 22, fontWeight: 300, color: "#1a1a18", margin: "0 0 16px" }}>Your oral microbiome snapshot</h3>
                 {Object.entries(results.metrics).map(([key, m]) => (
-                  <div key={key} style={{
-                    padding: "8px 0", borderBottom: "0.5px solid rgba(0,0,0,0.04)",
-                    display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
-                  }}>
-                    <span style={{ fontFamily: sans, fontSize: 11, color: "#555", textTransform: "capitalize", flex: 1 }}>
-                      {key.replace(/_/g, " ")}
-                    </span>
-                    <span style={{ fontFamily: sans, fontSize: 11, color: "#1a1a18", fontWeight: 600 }}>
-                      {m.value < 1 ? m.value.toFixed(3) : m.value < 10 ? m.value.toFixed(1) : Math.round(m.value)}
-                    </span>
-                    <span style={{
-                      fontFamily: sans, fontSize: 8, textTransform: "uppercase", letterSpacing: "0.5px",
-                      padding: "2px 6px", borderRadius: 3,
-                      background: `${pctColor(m.percentile)}12`, color: pctColor(m.percentile),
-                    }}>
-                      {m.percentile}th
-                    </span>
+                  <div key={key} style={{ padding: "8px 0", borderBottom: "0.5px solid rgba(0,0,0,0.04)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                    <span style={{ fontFamily: sans, fontSize: 11, color: "#555", textTransform: "capitalize", flex: 1 }}>{key.replace(/_/g, " ")}</span>
+                    <span style={{ fontFamily: sans, fontSize: 11, color: "#1a1a18", fontWeight: 600 }}>{m.value < 1 ? m.value.toFixed(3) : m.value < 10 ? m.value.toFixed(1) : Math.round(m.value)}</span>
+                    <span style={{ fontFamily: sans, fontSize: 8, textTransform: "uppercase", letterSpacing: "0.5px", padding: "2px 6px", borderRadius: 3, background: `${pctColor(m.percentile)}12`, color: pctColor(m.percentile) }}>{m.percentile}th</span>
                   </div>
                 ))}
-
-                {/* Overall signal */}
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 16, padding: "12px 0 0", borderTop: "0.5px solid rgba(0,0,0,0.06)" }}>
-                  <span style={{
-                    width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
-                    background: results.overall_percentile >= 60 ? "#3B6D11" : results.overall_percentile >= 40 ? "#C49A3C" : "#A32D2D",
-                  }} />
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0, background: results.overall_percentile >= 60 ? "#3B6D11" : results.overall_percentile >= 40 ? "#C49A3C" : "#A32D2D" }} />
                   <span style={{ fontFamily: sans, fontSize: 12, color: "#1a1a18", lineHeight: 1.5 }}>
-                    {results.overall_percentile >= 60
-                      ? "Your oral diversity is stronger than most Americans your age."
-                      : results.overall_percentile >= 40
-                        ? "Your oral diversity is near the median for US adults."
-                        : "Your oral diversity has room to grow. This is one of the most actionable signals in your biology."
-                    }
+                    {results.overall_percentile >= 60 ? "Your oral diversity is stronger than most Americans your age."
+                      : results.overall_percentile >= 40 ? "Your oral diversity is near the median for US adults."
+                        : "Your oral diversity has room to grow. This is one of the most actionable signals in your biology."}
                   </span>
                 </div>
-
-                {/* CTA */}
-                <div style={{
-                  background: "#16150F", borderRadius: 10, padding: 20, marginTop: 20,
-                }}>
-                  <p style={{ fontFamily: sans, fontSize: 12, color: "rgba(255,255,255,0.7)", lineHeight: 1.5, margin: "0 0 4px" }}>
-                    See how your oral score connects to your blood and sleep panels.
-                  </p>
-                  <p style={{ fontFamily: sans, fontSize: 10, color: "rgba(255,255,255,0.4)", margin: "0 0 12px" }}>
-                    The oral panel is one of three signals in your Peaq Resilience Index.
-                  </p>
-                  <Link href="/shop" style={{
-                    display: "inline-block", padding: "8px 20px",
-                    background: "#C49A3C", color: "#fff", borderRadius: 6,
-                    fontFamily: sans, fontSize: 9, letterSpacing: "1.5px",
-                    textTransform: "uppercase", textDecoration: "none",
-                  }}>
-                    Start with Peaq →
-                  </Link>
+                <div style={{ background: "#16150F", borderRadius: 10, padding: 20, marginTop: 20 }}>
+                  <p style={{ fontFamily: sans, fontSize: 12, color: "rgba(255,255,255,0.7)", lineHeight: 1.5, margin: "0 0 4px" }}>See how your oral score connects to your blood and sleep panels.</p>
+                  <p style={{ fontFamily: sans, fontSize: 10, color: "rgba(255,255,255,0.4)", margin: "0 0 12px" }}>The oral panel is one of three signals in your Peaq Resilience Index.</p>
+                  <Link href="/shop" style={{ display: "inline-block", padding: "8px 20px", background: "#C49A3C", color: "#fff", borderRadius: 6, fontFamily: sans, fontSize: 9, letterSpacing: "1.5px", textTransform: "uppercase", textDecoration: "none" }}>Start with Peaq &rarr;</Link>
                 </div>
               </div>
             )}
 
-            {/* No data — population summary */}
             {!hasAnyInput && (
-              <div style={{
-                background: "#fff", border: "0.5px solid rgba(0,0,0,0.06)",
-                borderRadius: 12, padding: 24, marginBottom: 24, textAlign: "center",
-              }}>
-                <p style={{ fontFamily: sans, fontSize: 13, color: "#8C8A82", lineHeight: 1.6, margin: "0 0 16px" }}>
-                  For US adults, the typical oral microbiome looks like this:
-                </p>
+              <div style={{ background: "#fff", border: "0.5px solid rgba(0,0,0,0.06)", borderRadius: 12, padding: 24, marginBottom: 24, textAlign: "center" }}>
+                <p style={{ fontFamily: sans, fontSize: 13, color: "#8C8A82", lineHeight: 1.6, margin: "0 0 16px" }}>For US adults, the typical oral microbiome looks like this:</p>
                 <div style={{ display: "flex", gap: 32, justifyContent: "center", marginBottom: 20, flexWrap: "wrap" }}>
                   {([["Shannon", "4.66"], ["Observed ASVs", "128"], ["Veillonella", "99% have it"]] as const).map(([l, v]) => (
                     <div key={l}>
@@ -602,73 +534,58 @@ export default function ExplorePage() {
                     </div>
                   ))}
                 </div>
-                <Link href="/shop" style={{
-                  display: "inline-block", padding: "10px 24px",
-                  background: "#C49A3C", color: "#fff", borderRadius: 6,
-                  fontFamily: sans, fontSize: 9, letterSpacing: "1.5px",
-                  textTransform: "uppercase", textDecoration: "none",
-                }}>
-                  Order your oral kit to see where you stand →
+                <Link href="/shop" style={{ display: "inline-block", padding: "10px 24px", background: "#C49A3C", color: "#fff", borderRadius: 6, fontFamily: sans, fontSize: 9, letterSpacing: "1.5px", textTransform: "uppercase", textDecoration: "none" }}>
+                  Order your oral kit to see where you stand &rarr;
                 </Link>
               </div>
             )}
           </div>
         )}
-      </main>
 
-      {/* ── SCIENCE FOOTER ──────────────────────────────────────────────────── */}
-      <div style={{ background: "#16150F", padding: "64px 40px", marginTop: 40 }}>
-        <div style={{ maxWidth: 760, margin: "0 auto" }}>
-          <h2 style={{ fontFamily: serif, fontSize: 28, fontWeight: 300, color: "#fff", marginBottom: 32 }}>How this works</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 32 }}>
+        {/* ═══════════════════════════════════════════════════════════════════
+            SECTION 4 — METHODOLOGY
+            ═══════════════════════════════════════════════════════════════════ */}
+        <div style={{
+          background: "#fff", borderRadius: 16,
+          padding: 32, marginBottom: 80,
+        }}>
+          <span style={{ fontFamily: sans, fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "#C49A3C", display: "block", marginBottom: 20 }}>
+            Methodology
+          </span>
+
+          <div className="method-cols" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 24 }}>
             {[
-              { title: "The study", body: "The CDC\u2019s NHANES program studied mouth bacteria from 9,660 Americans of all ages, backgrounds, and health statuses. Their health outcomes were tracked for 9 years through the National Death Index. It\u2019s the largest nationally representative oral microbiome dataset that exists.", cite: "Chaturvedi AK et al. JAMA Network Open 2025" },
-              { title: "Why we use it", body: "There\u2019s no perfect reference for oral microbiome data \u2014 but this is the best one available. Both NHANES and your Zymo kit use the same DNA sequencing technology on the same oral bacteria. The CDC used an oral rinse; Zymo uses a saliva swab. The direction and meaning of the results are directly comparable.", cite: "Vogtmann E et al. Lancet Microbe 2022" },
-              { title: "What it found", body: "People with more diverse mouth bacteria lived longer. In a 9-year follow-up study of 7,055 adults using this same NHANES data, those with the most diverse oral bacteria had a 37% lower risk of dying from any cause. Peaq is the first consumer platform to make this comparison available to you.", cite: "Shen Y et al. J Clin Periodontol 2024" },
-            ].map(col => (
-              <div key={col.title}>
-                <div style={{ fontFamily: sans, fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "#C49A3C", marginBottom: 12 }}>{col.title}</div>
-                <p style={{ fontFamily: sans, fontSize: 12, color: "rgba(255,255,255,0.7)", lineHeight: 1.6, margin: "0 0 12px" }}>{col.body}</p>
-                <span style={{ fontFamily: sans, fontSize: 9, color: "rgba(255,255,255,0.25)" }}>{col.cite}</span>
+              { title: "The study", body: "The CDC\u2019s National Health and Nutrition Examination Survey (NHANES) 2009\u20132012 sequenced the mouth bacteria of 9,660 Americans using 16S rRNA DNA sequencing. It is the largest nationally representative oral microbiome study in the US. The full genus-level data was publicly released in November 2024." },
+              { title: "Our analysis", body: "We linked the oral microbiome data to NHANES blood marker files for 9,848 participants with both datasets. We tested correlations between 10 pre-specified bacterial genera and 7 blood marker categories \u2014 inflammation, lipids, glucose, blood pressure, and HbA1c. This specific analysis has not been previously published." },
+              { title: "Honest framing", body: "NHANES used oral rinse collection; your Zymo kit uses a swab. Both use the same sequencing technology. Comparisons are directionally accurate. NHANES data is genus-level only \u2014 species-level detail was not possible due to NCHS policy. Effect sizes are small (r\u00a0=\u00a00.03\u20130.09). These are population associations, not individual predictors." },
+            ].map(c => (
+              <div key={c.title}>
+                <div style={{ fontFamily: sans, fontSize: 11, fontWeight: 600, color: "#1A1917", marginBottom: 8 }}>{c.title}</div>
+                <p style={{ fontFamily: sans, fontSize: 12, color: "#6B6960", lineHeight: 1.6, margin: 0 }}>{c.body}</p>
               </div>
             ))}
           </div>
-          {/* Methodology note */}
-          <div style={{ marginTop: 32 }}>
-            <p style={{
-              fontFamily: sans, fontSize: 10, color: "rgba(255,255,255,0.3)",
-              lineHeight: 1.7, maxWidth: 640, margin: "0 auto", textAlign: "center",
-            }}>
-              A note on methodology: NHANES collected oral samples using a mouthwash rinse;
-              Zymo Research uses direct saliva collection. Both methods use 16S rRNA DNA sequencing
-              of the same oral bacterial community. The NHANES dataset uses higher-depth sequencing,
-              so we apply a small mathematical adjustment before comparing your results. The comparison
-              is directionally accurate &mdash; higher diversity is consistently associated with better
-              health outcomes in both methods. This is the most scientifically rigorous oral health
-              reference available to any consumer platform.
-            </p>
-          </div>
-          <div style={{ textAlign: "center", paddingTop: 24, borderTop: "0.5px solid rgba(255,255,255,0.07)" }}>
-            <p style={{ fontFamily: sans, fontSize: 9, color: "rgba(255,255,255,0.25)", margin: "0 0 20px" }}>
-              Vogtmann E et al. Lancet Microbe 2022 · Chaturvedi AK et al. JAMA Network Open 2025 · Shen Y et al. J Clin Periodontol 2024
-            </p>
-            <Link href="/shop" style={{
-              display: "inline-block", padding: "12px 32px",
-              background: "#C49A3C", color: "#fff", borderRadius: 6,
-              fontFamily: sans, fontSize: 9, letterSpacing: "1.5px",
-              textTransform: "uppercase", textDecoration: "none",
-            }}>
-              Start with Peaq →
-            </Link>
-          </div>
+
+          <p style={{
+            fontFamily: sans, fontSize: 11, color: "#9E9C93",
+            lineHeight: 1.6, marginTop: 24, paddingTop: 16,
+            borderTop: "0.5px solid rgba(0,0,0,0.06)",
+          }}>
+            Analysis: Peaq Health, April 2026 &middot; Dataset: NHANES 2009&ndash;2012, genus-level
+            16S rRNA V4 sequencing (DADA2-RB pipeline) linked to NHANES laboratory files &middot;
+            Spearman rank correlations on log-transformed genus relative abundances &middot;
+            * p&lt;0.05 ** p&lt;0.01 *** p&lt;0.001
+          </p>
         </div>
-      </div>
+      </main>
 
       <style>{`
+        @media (max-width: 640px) {
+          .stat-cards { grid-template-columns: 1fr !important; }
+        }
         @media (max-width: 768px) {
-          main > div > div[style*="grid-template-columns: 1fr 1fr"] {
-            grid-template-columns: 1fr !important;
-          }
+          .method-cols { grid-template-columns: 1fr !important; gap: 20px !important; }
+          .compare-panels { grid-template-columns: 1fr !important; }
         }
       `}</style>
     </div>
