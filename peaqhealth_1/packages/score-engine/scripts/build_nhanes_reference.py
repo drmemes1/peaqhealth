@@ -53,19 +53,32 @@ def build_scoring_bands(pt):
     ]
 
 
+def load_or_download(url, local_path, sep="\t", **kwargs):
+    """Load from local cache if available, otherwise download."""
+    if os.path.exists(local_path):
+        print(f"  Loading cached: {local_path}")
+        return pd.read_csv(local_path, sep=sep, **kwargs)
+    print(f"  Downloading: {url}")
+    df = pd.read_csv(url, sep=sep, **kwargs)
+    os.makedirs(os.path.dirname(local_path), exist_ok=True)
+    df.to_csv(local_path, sep=sep, index=False)
+    return df
+
+
 def main():
-    print("Downloading NHANES data...")
+    print("Loading NHANES data...")
+    cache_dir = os.path.join(DATA_DIR, "nhanes")
 
     # ── Alpha diversity ──────────────────────────────────────────────────────
-    alpha = pd.read_csv(NHANES_ALPHA_URL, sep="\t")
+    alpha = load_or_download(NHANES_ALPHA_URL, os.path.join(cache_dir, "alpha.tsv"))
     print(f"  Alpha diversity: {len(alpha)} rows")
 
     # ── Genus abundances ─────────────────────────────────────────────────────
-    genus = pd.read_csv(NHANES_GENUS_URL, sep="\t")
+    genus = load_or_download(NHANES_GENUS_URL, os.path.join(cache_dir, "genus_relative.tsv"))
     print(f"  Genus abundances: {len(genus)} rows, {len(genus.columns)} columns")
 
     # ── Taxonomy mapping ─────────────────────────────────────────────────────
-    taxonomy = pd.read_csv(NHANES_TAXONOMY_URL, sep="\t", header=None, names=["variable", "taxonomy"])
+    taxonomy = load_or_download(NHANES_TAXONOMY_URL, os.path.join(cache_dir, "taxonomy.tsv"), header=None, names=["variable", "taxonomy"])
     genus_tax = taxonomy[taxonomy["variable"].str.startswith("RB_genus")].copy()
     genus_tax["genus_name"] = genus_tax["taxonomy"].apply(
         lambda t: str(t).split(";")[-1].strip() if pd.notna(t) else "NA"
@@ -195,6 +208,32 @@ def main():
                 "p90": round(float(series.quantile(0.90)), 6),
                 "percentiles": tbl,
             }
+
+    # Genera by age/sex
+    if has_demo:
+        reference["genera_by_age_sex"] = {}
+        for group in sorted(df["age_sex"].dropna().unique()):
+            subset = df[df["age_sex"] == group]
+            if len(subset) < 30:
+                continue
+            reference["genera_by_age_sex"][group] = {}
+            for genus_name in PROTECTIVE_GENERA + PATHOGEN_GENERA:
+                col = genus_col_map.get(genus_name)
+                if col and col in subset.columns:
+                    series = subset[col].dropna()
+                    if len(series) < 10:
+                        continue
+                    tbl = get_percentile_table(series)
+                    reference["genera_by_age_sex"][group][genus_name] = {
+                        "prevalence_pct": round(float((series > 0).mean() * 100), 2),
+                        "median_abundance": round(float(series.median()), 6),
+                        "p25": round(float(series.quantile(0.25)), 6),
+                        "p75": round(float(series.quantile(0.75)), 6),
+                        "p90": round(float(series.quantile(0.90)), 6),
+                        "percentiles": tbl,
+                    }
+        strat_genera_groups = list(reference["genera_by_age_sex"].keys())
+        print(f"  Genera stratified for {len(strat_genera_groups)} age/sex groups")
 
     # Scoring bands
     for metric_name in reference["diversity"]["overall"]:

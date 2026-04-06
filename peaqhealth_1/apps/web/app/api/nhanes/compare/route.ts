@@ -6,12 +6,13 @@ export const dynamic = "force-dynamic"
 export async function POST(request: Request) {
   const body = await request.json()
 
-  const { age, sex, shannon, observed_asvs, simpson,
+  const { age, sex, source, shannon, observed_asvs, simpson,
     veillonella_pct, rothia_pct, neisseria_pct,
     porphyromonas_pct, treponema_pct, fusobacterium_pct,
   } = body as {
     age?: number
     sex?: "male" | "female"
+    source?: "zymo_raw" | "zymo_pdf_parsed" | "nhanes" | "other"
     shannon?: number
     observed_asvs?: number
     simpson?: number
@@ -35,6 +36,7 @@ export async function POST(request: Request) {
   const input: OralNHANESInput = {}
   if (age !== undefined) input.age = age
   if (sex !== undefined) input.sex = sex
+  if (source !== undefined) input.source = source
   if (shannon !== undefined) input.shannon = shannon
   if (observed_asvs !== undefined) input.observed_asvs = observed_asvs
   if (simpson !== undefined) input.simpson = simpson

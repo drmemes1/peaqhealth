@@ -8,13 +8,16 @@
 
 import nhanesRefRaw from "../data/nhanes_oral_reference.json"
 
+interface GenusData { percentiles: PercentileTable; role: string; median_abundance: number; prevalence_pct?: number }
+
 interface NHANESReference {
   metadata: { n_participants: number; has_demographics: boolean }
   diversity: {
     overall: Record<string, PercentileTable>
     by_age_sex: Record<string, Record<string, PercentileTable>>
   }
-  genera: Record<string, { percentiles: PercentileTable; role: string; median_abundance: number }>
+  genera: Record<string, GenusData>
+  genera_by_age_sex?: Record<string, Record<string, GenusData>>
   scoring_bands: {
     overall: Record<string, unknown>
     by_age_sex: Record<string, Record<string, unknown>>
@@ -25,9 +28,12 @@ const nhanesRef = nhanesRefRaw as unknown as NHANESReference
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+export type SequencingSource = "zymo_raw" | "zymo_pdf_parsed" | "nhanes" | "other"
+
 export interface OralNHANESInput {
   age?: number
   sex?: "male" | "female"
+  source?: SequencingSource
   shannon?: number
   observed_asvs?: number
   simpson?: number
@@ -56,6 +62,7 @@ export interface OralNHANESScore {
   n_reference: number
   age_sex_group: string
   stratified: boolean
+  calibrated: boolean
   summary: string
 }
 
@@ -128,6 +135,33 @@ function interpolatePercentile(value: number, table: PercentileTable): number {
   return 50
 }
 
+// ── Zymo → NHANES calibration ─────────────────────────────────────────────
+// Zymo OTU-level sequencing produces lower Shannon/ASV values than NHANES
+// ASV-level sequencing at 10,000-read rarefaction. Factor is conservative.
+const SHANNON_CALIBRATION = 1.3
+const ASV_CALIBRATION = 1.3
+
+function needsCalibration(source?: SequencingSource): boolean {
+  return source === "zymo_raw" || source === "zymo_pdf_parsed"
+}
+
+function calibrate(value: number, metric: string, source?: SequencingSource): number {
+  if (!needsCalibration(source)) return value
+  if (metric === "shannon") return value * SHANNON_CALIBRATION
+  if (metric === "observed_asvs") return value * ASV_CALIBRATION
+  return value
+}
+
+// ── Genus lookup with age/sex fallback ────────────────────────────────────
+function getGenusData(genus: string, age?: number, sex?: string): GenusData | undefined {
+  if (age !== undefined && sex) {
+    const key = `${sex}_${getAgeGroup(age)}`
+    const stratified = nhanesRef.genera_by_age_sex?.[key]?.[genus]
+    if (stratified) return stratified
+  }
+  return nhanesRef.genera[genus]
+}
+
 function interpret(metric: string, percentile: number, groupLabel: string): string {
   const position = percentile >= 75 ? "well above" :
                    percentile >= 50 ? "above" :
@@ -149,13 +183,14 @@ function interpret(metric: string, percentile: number, groupLabel: string): stri
 // ── Main scoring function ─────────────────────────────────────────────────────
 
 export function scoreOralAgainstNHANES(input: OralNHANESInput): OralNHANESScore {
-  const { age, sex } = input
+  const { age, sex, source } = input
   const groupLabel = age !== undefined && sex
     ? `${sex} aged ${getAgeGroupLabel(age)}`
     : "all adults"
   const stratified = age !== undefined && sex
     ? isStratified("shannon", age, sex)
     : false
+  const calibrated = needsCalibration(source)
 
   const metrics: Record<string, MetricResult> = {}
   const scores: { score: number; weight: number }[] = []
@@ -169,9 +204,10 @@ export function scoreOralAgainstNHANES(input: OralNHANESInput): OralNHANESScore 
   ]
 
   for (const m of diversityMetrics) {
-    const value = input[m.key] as number | undefined
-    if (value === undefined || value === null) continue
+    const rawValue = input[m.key] as number | undefined
+    if (rawValue === undefined || rawValue === null) continue
 
+    const value = calibrate(rawValue, m.refKey, source)
     const table = getDiversityTable(m.refKey, age, sex)
     if (!table) continue
 
@@ -179,7 +215,7 @@ export function scoreOralAgainstNHANES(input: OralNHANESInput): OralNHANESScore 
     const score = Math.round(percentile)
 
     metrics[m.refKey] = {
-      value,
+      value: rawValue,
       percentile,
       score,
       population_median: table.p50,
@@ -205,7 +241,7 @@ export function scoreOralAgainstNHANES(input: OralNHANESInput): OralNHANESScore 
   for (const p of protectiveInputs) {
     const value = input[p.key] as number | undefined
     if (value === undefined || value === null) continue
-    const genusRef = nhanesRef.genera[p.genus]
+    const genusRef = getGenusData(p.genus, age, sex)
     if (!genusRef?.percentiles) continue
     const fraction = value / 100
     const percentile = interpolatePercentile(fraction, genusRef.percentiles)
@@ -237,7 +273,7 @@ export function scoreOralAgainstNHANES(input: OralNHANESInput): OralNHANESScore 
   for (const p of pathogenInputs) {
     const value = input[p.key] as number | undefined
     if (value === undefined || value === null) continue
-    const genusRef = nhanesRef.genera[p.genus]
+    const genusRef = getGenusData(p.genus, age, sex)
     if (!genusRef?.percentiles) continue
     const fraction = value / 100
     const percentile = interpolatePercentile(fraction, genusRef.percentiles)
@@ -292,6 +328,7 @@ export function scoreOralAgainstNHANES(input: OralNHANESInput): OralNHANESScore 
     n_reference: nhanesRef.metadata.n_participants,
     age_sex_group: groupLabel,
     stratified,
+    calibrated,
     summary,
   }
 }
