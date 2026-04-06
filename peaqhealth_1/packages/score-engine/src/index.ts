@@ -25,3 +25,6 @@ export type {
 
 export { parseOralMicrobiome } from './oral-parser'
 export type { ZymoReport, OralScore, OralFinding, SpeciesFinding } from './oral-parser'
+
+export { scoreOralAgainstNHANES } from './oral-nhanes-scorer'
+export type { OralNHANESInput, OralNHANESScore, MetricResult } from './oral-nhanes-scorer'

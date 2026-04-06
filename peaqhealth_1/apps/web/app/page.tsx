@@ -520,7 +520,7 @@ export default function Home() {
           </div>
 
           {/* View full evidence base */}
-          <div style={{ textAlign: "center", marginTop: 40 }}>
+          <div style={{ textAlign: "center", marginTop: 40, display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
             <a
               href="/science"
               style={{
@@ -532,6 +532,20 @@ export default function Home() {
               }}
             >
               View full evidence base &rarr;
+            </a>
+            <a
+              href="/explore"
+              style={{
+                fontFamily: sans,
+                fontSize: 9,
+                letterSpacing: "1.5px",
+                textTransform: "uppercase",
+                color: ACCENT,
+                textDecoration: "none",
+                opacity: 0.7,
+              }}
+            >
+              See how your oral microbiome compares to 9,660 Americans &rarr;
             </a>
           </div>
         </div>

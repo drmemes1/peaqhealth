@@ -349,6 +349,106 @@ type OralNarrative = {
   watch_signal: string | null
 }
 
+// ── NHANES Comparison Component ──────────────────────────────────────────────
+
+const NHANES_PCTLS = {
+  shannon: {
+    p5: 3.409, p10: 3.774, p25: 4.229, p50: 4.662, p75: 5.058, p90: 5.410, p95: 5.636,
+  },
+}
+
+function nhanesPercentile(value: number, table: Record<string, number>): number {
+  const entries = Object.entries(table)
+    .map(([k, v]) => ({ pct: parseInt(k.replace("p", "")), val: v }))
+    .sort((a, b) => a.pct - b.pct)
+  if (value <= entries[0].val) return Math.max(1, Math.round(entries[0].pct * (value / entries[0].val)))
+  if (value >= entries[entries.length - 1].val) return 97
+  for (let i = 0; i < entries.length - 1; i++) {
+    if (value >= entries[i].val && value <= entries[i + 1].val) {
+      const frac = (value - entries[i].val) / (entries[i + 1].val - entries[i].val)
+      return Math.round(entries[i].pct + frac * (entries[i + 1].pct - entries[i].pct))
+    }
+  }
+  return 50
+}
+
+function NHANESComparison({ shannon, nitratePct, periodontalPct }: {
+  shannon: number; nitratePct: number; periodontalPct: number
+}) {
+  const pct = nhanesPercentile(shannon, NHANES_PCTLS.shannon)
+  const median = NHANES_PCTLS.shannon.p50
+
+  return (
+    <div style={{
+      background: "#fff", border: "0.5px solid rgba(0,0,0,0.06)",
+      borderRadius: 10, padding: "18px 20px", marginBottom: 32,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+        <span style={{
+          fontFamily: "var(--font-body)", fontSize: 10, textTransform: "uppercase",
+          letterSpacing: "0.1em", color: "var(--ink-30)",
+        }}>
+          Your NHANES Comparison
+        </span>
+        <span style={{
+          fontFamily: "var(--font-body)", fontSize: 9, color: "#C49A3C",
+          background: "rgba(196,154,60,0.08)", padding: "2px 8px", borderRadius: 10,
+        }}>
+          n=9,660
+        </span>
+      </div>
+
+      {/* Shannon percentile */}
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
+          <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "var(--ink)" }}>
+            Shannon {shannon.toFixed(2)} → <span style={{ color: "#C49A3C", fontWeight: 600 }}>{pct}th percentile</span>
+          </span>
+        </div>
+        <div style={{ position: "relative", height: 6, borderRadius: 3, background: "rgba(0,0,0,0.06)" }}>
+          <div style={{
+            position: "absolute", left: 0, top: 0, height: "100%",
+            borderRadius: 3, background: "#C49A3C",
+            width: `${pct}%`, transition: "width 500ms ease",
+          }} />
+          <div style={{
+            position: "absolute", left: `${pct}%`, top: -8,
+            transform: "translateX(-50%)",
+            width: 0, height: 0,
+            borderLeft: "4px solid transparent", borderRight: "4px solid transparent",
+            borderTop: "5px solid #C49A3C",
+          }} />
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+          <span style={{ fontFamily: "var(--font-body)", fontSize: 8, color: "#bbb" }}>0th</span>
+          <span style={{ fontFamily: "var(--font-body)", fontSize: 8, color: "#8C8A82" }}>50th</span>
+          <span style={{ fontFamily: "var(--font-body)", fontSize: 8, color: "#bbb" }}>100th</span>
+        </div>
+      </div>
+
+      <p style={{
+        fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-60)",
+        lineHeight: 1.5, margin: "0 0 8px",
+      }}>
+        {pct >= 50
+          ? `Your Shannon diversity is above ${pct}% of 9,660 Americans (median: ${median.toFixed(2)}).`
+          : `Your Shannon diversity is below ${100 - pct}% of 9,660 Americans (median: ${median.toFixed(2)}). This is one of the most actionable signals in your biology.`
+        }
+      </p>
+
+      <Link
+        href="/explore"
+        style={{
+          fontFamily: "var(--font-body)", fontSize: 9, color: "#C49A3C",
+          letterSpacing: "1.5px", textTransform: "uppercase", textDecoration: "none",
+        }}
+      >
+        Full NHANES comparison →
+      </Link>
+    </div>
+  )
+}
+
 export function OralPanelClient({ oral, snapshot }: Props) {
   const oralSub = snapshot?.oral_sub as number | undefined
 
@@ -548,6 +648,9 @@ export function OralPanelClient({ oral, snapshot }: Props) {
             numericValue={osaPct}
           />
         </div>
+
+        {/* NHANES Comparison */}
+        <NHANESComparison shannon={shannon} nitratePct={nitratePct} periodontalPct={periodontalPct} />
 
         {/* Secondary insights */}
         {secondaryFindings.length > 0 && (

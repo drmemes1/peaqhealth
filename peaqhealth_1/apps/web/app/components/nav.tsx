@@ -37,6 +37,7 @@ export function Nav({ cartCount = 0, onCartOpen }: NavProps) {
     { href: "/dashboard", label: "Dashboard" },
   ];
   const linksAfterPanels = [
+    { href: "/explore", label: "Explore" },
     { href: "/shop", label: "Shop" },
     { href: "/science", label: "Science" },
     { href: "/settings", label: "Settings" },
