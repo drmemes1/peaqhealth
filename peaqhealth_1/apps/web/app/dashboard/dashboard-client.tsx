@@ -2,11 +2,9 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import type { ScoreWheelProps } from "../components/score-wheel"
-import { AuthLayout } from "../components/auth-layout"
-import { DashboardHero } from "../components/dashboard-hero"
-import { DashboardBiomarkers } from "../components/dashboard-biomarkers"
-import { DashboardRightSidebar } from "../components/dashboard-right-sidebar"
+import { DashboardSidebar } from "../components/dashboard-sidebar"
+import { DashboardTopbar } from "../components/dashboard-topbar"
+import { ScoreWheel, type ScoreWheelProps } from "../components/score-wheel"
 import { ScoreHistoryChart } from "../components/score-history-chart"
 import { PushNotificationPrompt } from "../components/push-notification-prompt"
 import { IOSInstallBanner } from "../components/ios-install-banner"
@@ -126,17 +124,22 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
   const firstName = props.lifestyleData?.ageRange ? "IK" : "IK" // fallback initials
 
   return (
-    <AuthLayout
-      pageId="dashboard"
-      initials={firstName}
-      firstName="Igor"
-      lastSyncAt={props.lastSyncAt}
-      wearableProvider={props.wearableProvider}
-      onSync={props.sleepConnected && !wearableNeedsReconnect ? handleSyncNow : undefined}
-      syncing={syncingNow}
-    >
-      {/* Body grid */}
+    <div style={{ minHeight: "100vh", background: "var(--off-white, #F6F4EF)" }}>
+      {/* ── Sidebar ──────────────────────────────────────────── */}
+      <DashboardSidebar initials={firstName} />
+
+      {/* ── Topbar ───────────────────────────────────────────── */}
+      <DashboardTopbar
+        firstName="Igor"
+        lastSyncAt={props.lastSyncAt}
+        wearableProvider={props.wearableProvider}
+        onSync={props.sleepConnected && !wearableNeedsReconnect ? handleSyncNow : undefined}
+        syncing={syncingNow}
+      />
+
+      {/* ── Body grid ────────────────────────────────────────── */}
       <div style={{
+        marginLeft: 62,
         display: "grid",
         gridTemplateColumns: "1fr 284px",
         height: "calc(100vh - 52px)",
@@ -193,14 +196,8 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
             scrollbarWidth: "thin",
             scrollbarColor: "rgba(0,0,0,0.1) transparent",
           }}>
-            {/* Dashboard Hero */}
-            <DashboardHero
-              score={liveScore}
-              breakdown={liveBreakdown}
-              sleepConnected={props.sleepConnected}
-              modifier_total={props.modifier_total}
-              modifiers_applied={props.modifiers_applied}
-            />
+            {/* ScoreWheel — renders peaks, panels, markers, insights */}
+            <ScoreWheel {...liveProps} />
 
             {/* Interrupt card */}
             {showInterrupt && interruptReady && !interruptDismissed && primaryPenalty && (
@@ -240,17 +237,6 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
               </div>
             )}
 
-            {/* Biomarker sections */}
-            <DashboardBiomarkers
-              sleepData={props.sleepData}
-              bloodData={props.bloodData}
-              oralData={props.oralData}
-              breakdown={liveBreakdown}
-              sleepConnected={props.sleepConnected}
-              oralActive={props.oralActive}
-              labFreshness={props.labFreshness}
-            />
-
             {/* Progress chart */}
             {labHistory.length >= 2 && (
               <div style={{ padding: "0 24px", marginTop: 48, marginBottom: 32 }}>
@@ -266,15 +252,172 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
         </div>
 
         {/* ── RIGHT SIDEBAR ──────────────────────────────────── */}
-        <DashboardRightSidebar
-          modifiers={props.modifiers_applied ?? []}
-          modifierTotal={props.modifier_total ?? 0}
-          score={liveScore}
-        />
+        <div style={{
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}>
+          {/* Top — Insights (white) */}
+          <div style={{
+            padding: "14px 16px",
+            borderBottom: "0.5px solid rgba(0,0,0,0.06)",
+            flexShrink: 0,
+            background: "#fff",
+            animation: "rsidebarIn 400ms ease both",
+            animationDelay: "200ms",
+          }}>
+            <div style={{
+              fontFamily: sans, fontSize: 9,
+              letterSpacing: "2px", textTransform: "uppercase",
+              color: "#bbb", marginBottom: 12,
+            }}>
+              Top Insights
+            </div>
+
+            {/* Insight items — pulled from modifiers + data */}
+            {(props.modifiers_applied ?? []).slice(0, 3).map((m, i, arr) => (
+              <div key={m.id} style={{
+                padding: "8px 0",
+                borderBottom: i < arr.length - 1 ? "0.5px solid rgba(0,0,0,0.04)" : "none",
+              }}>
+                <div style={{
+                  fontFamily: sans, fontSize: 8,
+                  letterSpacing: "1.5px", textTransform: "uppercase",
+                  fontWeight: 600,
+                  color: m.panels.includes("sleep") ? "var(--sleep-c, #185FA5)" :
+                         m.panels.includes("blood") ? "var(--blood-c, #A32D2D)" :
+                         "var(--oral-c, #3B6D11)",
+                  marginBottom: 3,
+                }}>
+                  {m.panels.join(" \u00D7 ")}
+                </div>
+                <div style={{
+                  fontFamily: sans, fontSize: 11,
+                  color: "#555", lineHeight: 1.55,
+                }}>
+                  {m.label}
+                </div>
+              </div>
+            ))}
+
+            {(props.modifiers_applied ?? []).length === 0 && (
+              <div style={{ fontFamily: sans, fontSize: 11, color: "#bbb", lineHeight: 1.55 }}>
+                Complete all three panels to unlock cross-panel insights.
+              </div>
+            )}
+          </div>
+
+          {/* Bottom — Cross-panel signals (dark) */}
+          <div style={{
+            flex: 1,
+            overflowY: "auto",
+            background: "#16150F",
+            padding: 16,
+            animation: "rsidebarIn 400ms ease both",
+            animationDelay: "300ms",
+          }}>
+            <div style={{
+              fontFamily: sans, fontSize: 9,
+              letterSpacing: "2px", textTransform: "uppercase",
+              color: "rgba(255,255,255,0.28)",
+              marginBottom: 4,
+            }}>
+              Cross-Panel Signals
+            </div>
+
+            <div style={{
+              fontFamily: serif, fontSize: 42,
+              color: "#C49A3C", lineHeight: 1,
+            }}>
+              {modTotal > 0 ? "+" : ""}{modTotal}
+            </div>
+
+            <div style={{
+              fontFamily: sans, fontSize: 10,
+              color: "rgba(255,255,255,0.28)",
+              marginBottom: 14,
+            }}>
+              {basePRI} base &middot; {modTotal > 0 ? "+" : ""}{modTotal} applied
+            </div>
+
+            {/* Modifier items */}
+            {modifiers.map((m, i) => (
+              <div key={m.id} style={{
+                padding: "10px 0",
+                borderBottom: i < modifiers.length - 1 ? "0.5px solid rgba(255,255,255,0.06)" : "none",
+              }}>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 2 }}>
+                  <span style={{
+                    fontFamily: sans, fontSize: 12, fontWeight: 500,
+                    color: m.direction === "penalty" ? "#E24B4A" : "#C49A3C",
+                  }}>
+                    {m.direction === "penalty" ? "\u2212" : "+"}{m.points}
+                  </span>
+                  <span style={{
+                    fontFamily: sans, fontSize: 11,
+                    color: "rgba(255,255,255,0.62)",
+                    lineHeight: 1.3,
+                  }}>
+                    {m.label}
+                  </span>
+                </div>
+                <div style={{
+                  fontFamily: sans, fontSize: 10,
+                  color: "rgba(255,255,255,0.28)",
+                  lineHeight: 1.5,
+                  paddingLeft: 32,
+                }}>
+                  {m.rationale}
+                </div>
+              </div>
+            ))}
+
+            {modifiers.length === 0 && (
+              <div style={{
+                fontFamily: sans, fontSize: 11,
+                color: "rgba(255,255,255,0.28)",
+                lineHeight: 1.5, marginTop: 8,
+              }}>
+                No cross-panel signals active yet.
+              </div>
+            )}
+
+            {/* Hallmark chips */}
+            {modifiers.length > 0 && (
+              <div style={{
+                display: "flex", gap: 6, flexWrap: "wrap",
+                marginTop: 14, paddingTop: 14,
+                borderTop: "0.5px solid rgba(255,255,255,0.06)",
+              }}>
+                {[...new Set(modifiers.flatMap(m => m.panels))].map(panel => {
+                  const colors: Record<string, { border: string; text: string; bg: string }> = {
+                    sleep: { border: "rgba(24,95,165,0.35)", text: "rgba(24,95,165,0.75)", bg: "rgba(24,95,165,0.08)" },
+                    blood: { border: "rgba(163,45,45,0.35)", text: "rgba(163,45,45,0.75)", bg: "rgba(163,45,45,0.08)" },
+                    oral:  { border: "rgba(59,109,17,0.35)", text: "rgba(59,109,17,0.75)", bg: "rgba(59,109,17,0.08)" },
+                  }
+                  const c = colors[panel] ?? colors.sleep
+                  return (
+                    <span key={panel} style={{
+                      fontFamily: sans, fontSize: 8,
+                      letterSpacing: "0.8px", textTransform: "uppercase",
+                      padding: "3px 9px", borderRadius: 20,
+                      border: `0.5px solid ${c.border}`,
+                      color: c.text,
+                      background: c.bg,
+                      whiteSpace: "nowrap",
+                    }}>
+                      {panel}
+                    </span>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       <IOSInstallBanner />
       <PeaqChat />
-    </AuthLayout>
+    </div>
   )
 }
