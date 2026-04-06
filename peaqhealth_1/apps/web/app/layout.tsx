@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "./components/theme-provider";
+import { GlobalChat } from "./components/global-chat";
 
 // fb:app_id requires a Facebook App ID from developers.facebook.com.
 // To set up: create a Consumer app, copy the App ID, add to Vercel env
@@ -75,7 +76,10 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased">
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {children}
+          <GlobalChat />
+        </ThemeProvider>
       </body>
     </html>
   );

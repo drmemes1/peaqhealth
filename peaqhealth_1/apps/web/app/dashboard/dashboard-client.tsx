@@ -8,7 +8,6 @@ import { type ScoreWheelProps } from "../components/score-wheel"
 import { PushNotificationPrompt } from "../components/push-notification-prompt"
 import { IOSInstallBanner } from "../components/ios-install-banner"
 import { InterruptCard } from "../components/interrupt-card"
-import { PeaqChat } from "../components/peaq-chat"
 import { PeaqTriangle } from "../components/peaq-triangle"
 
 interface LabHistoryPoint {
@@ -289,7 +288,6 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
       </div>
 
       <IOSInstallBanner />
-      <PeaqChat />
     </div>
   )
 }

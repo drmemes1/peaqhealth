@@ -23,9 +23,22 @@ function timestamp() {
 
 export function PeaqChat() {
   const [open, setOpen] = useState(false)
-  const [messages, setMessages] = useState<Message[]>([])
+  const [messages, setMessages] = useState<Message[]>(() => {
+    if (typeof window === "undefined") return []
+    try {
+      const stored = sessionStorage.getItem("peaq_chat_messages")
+      return stored ? JSON.parse(stored) : []
+    } catch { return [] }
+  })
   const [input, setInput] = useState("")
   const [streaming, setStreaming] = useState(false)
+
+  // Persist messages to sessionStorage
+  useEffect(() => {
+    if (messages.length > 0) {
+      sessionStorage.setItem("peaq_chat_messages", JSON.stringify(messages))
+    }
+  }, [messages])
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -176,7 +189,7 @@ export function PeaqChat() {
               </div>
             </div>
             <button
-              onClick={() => { setOpen(false); setMessages([]) }}
+              onClick={() => setOpen(false)}
               className="chat-close-btn"
               aria-label="Close chat"
             >
