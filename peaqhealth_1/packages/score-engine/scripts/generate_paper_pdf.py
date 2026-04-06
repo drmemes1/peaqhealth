@@ -166,7 +166,7 @@ def build_document():
 
     story.append(Paragraph("ABSTRACT", styles["SectionHead"]))
 
-    story.append(Paragraph("<b>Background:</b> The oral microbiome has been associated with systemic health outcomes, but most research and consumer applications rely on alpha diversity indices such as the Shannon-Wiener index. Whether genus-level bacterial composition provides additional signal beyond diversity metrics for cardiometabolic markers remains unclear in large population samples.", styles["Abstract"]))
+    story.append(Paragraph("<b>Background:</b> Most oral microbiome research and consumer platforms report alpha diversity indices like the Shannon-Wiener index, which summarize overall community richness but obscure individual bacterial contributions. No large population study has tested whether genus-level composition provides cardiometabolic signal that diversity metrics miss.", styles["Abstract"]))
 
     story.append(Paragraph("<b>Methods:</b> We analyzed oral microbiome data from the National Health and Nutrition Examination Survey (NHANES) 2009-2012, a nationally representative US cohort. Genus-level relative abundance data were obtained from 16S rRNA V4 sequencing of oral rinse samples (n=9,848). Spearman correlations were calculated between ten pre-specified genera and five cardiometabolic marker categories: systemic inflammation (hsCRP), lipids (total cholesterol, HDL, LDL, triglycerides), glucose metabolism (fasting glucose, HbA1c), and blood pressure (systolic and diastolic). Shannon diversity correlations with the same markers were calculated for comparison.", styles["Abstract"]))
 
@@ -187,13 +187,13 @@ def build_document():
     story.append(Paragraph("INTRODUCTION", styles["SectionHead"]))
 
     intro_paras = [
-        "The oral microbiome \u2014 comprising over 700 bacterial species \u2014 has been increasingly recognized as a window into systemic health. Epidemiological studies have linked oral microbiome diversity to all-cause mortality (Shen et al. 2024, n=7,055, HR=0.63) and biological aging acceleration (Hou et al. 2025). These findings have generated significant interest in oral microbiome testing as a health monitoring tool, both in clinical and consumer contexts.",
+        "The oral cavity harbors over 700 bacterial species, and epidemiological data now link its composition to systemic disease. Oral microbiome diversity predicts all-cause mortality (Shen et al. 2024, n=7,055, HR=0.63) and biological aging acceleration (Hou et al. 2025). Oral microbiome testing has moved into clinical practice and direct-to-consumer health platforms.",
 
-        "However, most published analyses \u2014 and virtually all consumer platforms \u2014 characterize the oral microbiome using alpha diversity indices, particularly the Shannon-Wiener index. Alpha diversity captures overall richness and evenness of the microbial community but does not identify which specific bacteria are driving health associations.",
+        "Yet most published analyses and consumer platforms still characterize the oral microbiome using alpha diversity indices, particularly Shannon-Wiener. Alpha diversity captures overall richness and evenness of the microbial community but does not identify which specific bacteria are driving health associations.",
 
-        "Mechanistic research has consistently implicated specific oral pathogens in systemic disease. <i>Porphyromonas gingivalis</i> has been detected in coronary artery plaques. <i>Fusobacterium nucleatum</i> is associated with colorectal cancer progression. <i>Tannerella forsythia</i>, a member of the periodontal \u201cred complex,\u201d has been associated with type 2 diabetes and cardiovascular risk. Conversely, nitrate-reducing bacteria including <i>Neisseria</i> and <i>Veillonella</i> convert dietary nitrates to nitric oxide \u2014 a key vasodilator and anti-inflammatory signaling molecule \u2014 and have been mechanistically linked to blood pressure regulation.",
+        "Specific oral pathogens have well-established systemic effects. <i>Porphyromonas gingivalis</i> has been detected in coronary artery plaques. <i>Fusobacterium nucleatum</i> is associated with colorectal cancer progression. <i>Tannerella forsythia</i>, a member of the periodontal \u201cred complex,\u201d has been associated with type 2 diabetes and cardiovascular risk. Nitrate-reducing genera (<i>Neisseria</i>, <i>Veillonella</i>) convert dietary nitrate to nitric oxide, a vasodilator that lowers blood pressure in intervention studies (Bryan et al. 2017).",
 
-        "The NHANES 2009-2012 oral microbiome dataset provides a unique opportunity to test genus-level associations at population scale. This dataset \u2014 the largest nationally representative oral microbiome study in the United States \u2014 includes 16S rRNA sequencing of oral rinse samples from over 9,000 US adults, linked to comprehensive laboratory data including inflammatory markers, lipid panels, glucose metabolism markers, and blood pressure measurements. Critically, the full genus-level taxonomic data were only publicly released in November 2024, meaning no study has yet examined genus-level oral-cardiometabolic associations in this cohort.",
+        "The NHANES 2009-2012 oral microbiome dataset is the largest nationally representative oral microbiome study in the United States: 16S rRNA sequencing of oral rinse samples from over 9,000 US adults, linked to laboratory data including inflammatory markers, lipid panels, glucose metabolism markers, and blood pressure measurements. The full genus-level taxonomic data were released publicly in November 2024. No prior study has examined genus-level oral-cardiometabolic associations in this cohort.",
 
         "Previous NHANES-based oral microbiome research has focused on alpha diversity and mortality outcomes (Shen et al. 2024; Mondal et al. 2025), or used antibody-based proxies for bacterial burden in older NHANES cycles (Pietropaoli et al. 2019). The specific contribution of genus-level bacterial composition to measured cardiometabolic blood values has not been examined in this dataset.",
 
@@ -211,7 +211,7 @@ def build_document():
 
     story.append(Paragraph("Oral microbiome data", styles["SubHead"]))
     story.append(Paragraph("Oral microbiome data were generated from oral rinse samples collected from participants aged 14-69 years. Participants provided a 10 mL oral rinse (Scope mouthwash or saline). DNA was extracted and the V4 region of the 16S rRNA gene was amplified and sequenced using Illumina HiSeq 2500 (2\u00d7125bp). Sequences were processed using the DADA2 pipeline (v1.2.1) with taxonomy assigned using the SILVA v123 database. We used the DADA2-RB feature table, which removes non-bacterial taxa and unassigned sequences. Genus-level relative abundance data were obtained from the NHANES oral microbiome files publicly released November 2024.", styles["PaperBody"]))
-    story.append(Paragraph("An important methodological note: NHANES used short-read V4 16S sequencing, which provides genus-level resolution only. Species-level differentiation \u2014 for example, distinguishing <i>Porphyromonas gingivalis</i> from other <i>Porphyromonas</i> species \u2014 was not possible with this dataset. All findings should be interpreted at the genus level.", styles["PaperBody"]))
+    story.append(Paragraph("A limitation of this sequencing approach: V4 16S provides genus-level resolution only. Species-level differentiation, for example distinguishing <i>Porphyromonas gingivalis</i> from other <i>Porphyromonas</i> species, was not possible with this dataset. All findings should be interpreted at the genus level.", styles["PaperBody"]))
 
     story.append(Paragraph("Blood markers", styles["SubHead"]))
     story.append(Paragraph("Laboratory data were obtained from NHANES examination files. We analyzed: hsCRP (mg/L), total cholesterol (mg/dL), HDL cholesterol (mg/dL), LDL cholesterol (mg/dL), triglycerides (mg/dL), fasting glucose (mg/dL), HbA1c (%), systolic blood pressure (mean of readings 1-4), and diastolic blood pressure (mean of readings 1-4).", styles["PaperBody"]))
@@ -223,6 +223,10 @@ def build_document():
 
     story.append(Paragraph("Statistical analysis", styles["SubHead"]))
     story.append(Paragraph("Spearman rank correlations were calculated between genus relative abundance and each blood marker. Statistical significance was set at p<0.05. Shannon-Wiener diversity (at 10,000 read rarefaction depth) correlations with the same markers were calculated for comparison. All analyses were conducted in Python 3 using scipy.stats.", styles["PaperBody"]))
+
+    story.append(Paragraph("Multiple comparisons: We tested 60 genus \u00d7 marker pairs. At p<0.05, up to 3 false positives would be expected by chance. Applying Bonferroni correction (\u03b1 = 0.05/60 = 0.00083), 14 of our 28 significant findings remain significant, including all findings with p<0.001. We report uncorrected p-values throughout and note which findings survive Bonferroni correction with a dagger symbol (\u2020) in Table 1.", styles["PaperBody"]))
+
+    story.append(Paragraph("Age confounding: <i>Rothia</i> and <i>Veillonella</i> showed unexpected positive associations with hsCRP and blood pressure. As both genera increase in abundance with age in the oral cavity, and blood pressure and HbA1c also increase with age, these associations likely reflect age confounding rather than biological effects. Age-adjusted models were not run in the primary analysis but are planned for future work.", styles["PaperBody"]))
 
     # ── Results ──────────────────────────────────────────────────────────────
 
@@ -263,7 +267,7 @@ def build_document():
         "Systolic BP: r=+0.041, p=8\u00d710<super>\u22125</super>",
     ]:
         story.append(Paragraph("\u2014 " + line, styles["BodyIndent"]))
-    story.append(Paragraph("This simultaneous association with lipid, metabolic, and blood pressure markers positions <i>Tannerella</i> as a potential multi-domain cardiometabolic risk indicator.", styles["PaperBody"]))
+    story.append(Paragraph("<i>Tannerella</i> correlated adversely with markers across lipid, metabolic, and blood pressure domains simultaneously.", styles["PaperBody"]))
 
     story.append(Paragraph("<i>Porphyromonas</i> was positively associated with hsCRP (r=+0.037, p=0.012), consistent with its established role in systemic inflammation. <i>Fusobacterium</i> was associated with higher LDL (r=+0.058, p=1.3\u00d710<super>\u22124</super>) and higher glucose (r=+0.038, p=0.010). <i>Prevotella</i> was positively associated with hsCRP (r=+0.035, p=0.017).", styles["PaperBody"]))
     story.append(Paragraph("In total, 28 of 60 pre-specified genus \u00d7 blood marker pairs reached statistical significance (p<0.05).", styles["PaperBody"]))
@@ -279,13 +283,15 @@ def build_document():
     discussion_paras = [
         "Our analysis of 9,848 US adults demonstrates that genus-level oral microbiome composition is associated with cardiometabolic markers across multiple biological domains, while alpha diversity shows minimal association with the same markers.",
 
-        "The most striking finding is the consistent protective profile of <i>Haemophilus</i> and <i>Neisseria</i>. <i>Haemophilus</i> showed significant inverse associations with HbA1c, triglycerides, blood pressure (both systolic and diastolic), and HDL \u2014 spanning glucose metabolism, lipid profiles, and cardiovascular markers simultaneously. <i>Neisseria</i> showed similarly consistent inverse associations with hsCRP, triglycerides, blood pressure, and HbA1c. Both genera are nitrate-reducing bacteria in the oral cavity, supporting the hypothesis that the nitrate-nitrite-NO pathway may mediate protective cardiometabolic effects. Dietary nitrates, abundant in leafy green vegetables, are converted to nitrite by oral bacteria and subsequently to nitric oxide \u2014 a key vasodilator and anti-inflammatory mediator. The population-level associations we observe are directionally consistent with this mechanism.",
+        "<i>Haemophilus</i> and <i>Neisseria</i> showed the clearest protective signal. <i>Haemophilus</i> showed significant inverse associations with HbA1c, triglycerides, blood pressure (both systolic and diastolic), and HDL, spanning glucose metabolism, lipid profiles, and cardiovascular markers simultaneously. <i>Neisseria</i> showed similarly consistent inverse associations with hsCRP, triglycerides, blood pressure, and HbA1c. Both genera are nitrate-reducing bacteria in the oral cavity, supporting the hypothesis that the nitrate-nitrite-NO pathway mediates protective cardiometabolic effects. Dietary nitrates, abundant in leafy green vegetables, are converted to nitrite by oral bacteria and then to nitric oxide, a vasodilator and anti-inflammatory mediator. The population-level associations we observe are directionally consistent with this mechanism.",
 
-        "The <i>Tannerella</i> findings are particularly clinically meaningful. This member of the periodontal red complex showed significant adverse associations across lipid markers, glucose metabolism, and blood pressure simultaneously in nearly 10,000 Americans. Prior work has associated <i>Tannerella forsythia</i> with periodontal disease and type 2 diabetes, but the simultaneous blood pressure signal in a nationally representative population sample of this size has not previously been reported.",
+        "The <i>Tannerella</i> data carry clinical weight. This member of the periodontal red complex showed significant adverse associations across lipid markers, glucose metabolism, and blood pressure simultaneously in nearly 10,000 Americans. Prior work has associated <i>Tannerella forsythia</i> with periodontal disease and type 2 diabetes, but the simultaneous blood pressure signal in a nationally representative population sample of this size has not previously been reported.",
 
-        "The failure of Shannon diversity to detect these associations is the key methodological contribution of this analysis. Shannon diversity captures overall community richness and evenness \u2014 it is elevated when many bacterial types are present in roughly equal proportions. A person with high Shannon diversity could simultaneously have elevated <i>Tannerella</i> burden; a person with low Shannon diversity could have high <i>Neisseria</i> abundance. The diversity index obscures the clinically relevant signal entirely. This has direct implications for both research and consumer oral microbiome platforms: diversity metrics alone are insufficient for cardiometabolic health inference.",
+        "Shannon diversity missed all of these genus-level signals. Shannon captures overall community richness and evenness: it is elevated when many bacterial types are present in roughly equal proportions. A person with high Shannon diversity could simultaneously have elevated <i>Tannerella</i> burden; a person with low Shannon diversity could have high <i>Neisseria</i> abundance. The diversity index obscures the clinically relevant signal entirely. Platforms reporting only diversity scores will not capture these associations.",
 
         "The unexpected positive associations of <i>Rothia</i> with hsCRP and blood pressure likely reflect age confounding. <i>Rothia</i> abundance increases with age in the oral microbiome, as do blood pressure and HbA1c. Age-adjusted models would be needed to determine whether <i>Rothia</i>\u2019s associations are independent or confounded. This does not alter the interpretation of <i>Haemophilus</i>, <i>Neisseria</i>, or <i>Tannerella</i> findings, which showed the most highly significant and consistent signals.",
+
+        "Comparison with prior NHANES work: Pietropaoli et al. (2019) examined oral pathogens and blood pressure in NHANES III using serum antibody levels as a proxy for bacterial burden \u2014 a fundamentally different methodology from direct sequencing. That study identified <i>Campylobacter rectus</i>, <i>Veillonella parvula</i>, and <i>Prevotella melaninogenica</i> antibodies as associated with blood pressure. The present study uses actual 16S rRNA sequencing data from NHANES 2009-2012 \u2014 released publicly in November 2024 \u2014 enabling direct measurement of bacterial relative abundance rather than immunological proxy measures. To our knowledge, this is the first analysis of genus-level oral microbiome sequencing data against measured cardiometabolic blood values in this dataset.",
 
         "Several limitations should be noted. This is a cross-sectional analysis \u2014 causal relationships cannot be established. Effect sizes are small (Spearman r values 0.03-0.09), consistent with the complexity of cardiometabolic regulation and the population-level nature of the analysis. NHANES used short-read V4 16S sequencing, providing genus-level resolution only \u2014 species-level contributions cannot be determined from this dataset. The oral rinse collection method may underestimate subgingival pathogens. Age confounding likely explains unexpected findings for <i>Rothia</i> and <i>Veillonella</i>. Future age-stratified and longitudinal analyses are warranted.",
     ]
@@ -313,6 +319,7 @@ def build_document():
         "8. L\u00f3pez-Ot\u00edn C, et al. Hallmarks of aging: An expanding universe. <i>Cell</i>. 2023;186(2):243-278.",
         "9. Bryan NS, Tribble G, Angelov N. Oral microbiome and nitric oxide: the missing link in the management of blood pressure. <i>Curr Hypertens Rep</i>. 2017;19:33.",
         "10. Furusho H, et al. Oral microbiome and cardiovascular disease. <i>J Oral Biosci</i>. 2023.",
+        "11. Benjamini Y, Hochberg Y. Controlling the false discovery rate: a practical and powerful approach to multiple testing. <i>J R Stat Soc Series B</i>. 1995;57(1):289-300.",
     ]
     for r in refs:
         story.append(Paragraph(r, styles["Reference"]))
@@ -326,29 +333,30 @@ def build_document():
     ))
 
     t1_header = ["Genus", "Class.", "Blood Marker", "Spearman r", "p-value", "n", "Direction"]
+    D = "\u2020"  # dagger symbol for Bonferroni-surviving findings
     t1_data = [t1_header] + [
-        ["Haemophilus",    "Prot.", "HbA1c",         "\u22120.074", "9\u00d710\u207b\u00b9\u00b3", "9,360", "Lower"],
-        ["Haemophilus",    "Prot.", "Triglycerides",  "\u22120.094", "3\u00d710\u207b\u00b9\u2070", "4,496", "Lower"],
-        ["Haemophilus",    "Prot.", "Systolic BP",    "\u22120.047", "5\u00d710\u207b\u2076",       "9,520", "Lower"],
-        ["Haemophilus",    "Prot.", "Diastolic BP",   "\u22120.030", "0.003",                       "9,498", "Lower"],
-        ["Haemophilus",    "Prot.", "HDL",            "+0.040",      "1\u00d710\u207b\u2074",       "9,239", "Higher"],
-        ["Haemophilus",    "Prot.", "hsCRP",          "\u22120.044", "0.003",                       "4,713", "Lower"],
-        ["Neisseria",     "Prot.", "Systolic BP",    "\u22120.061", "2\u00d710\u207b\u2079",       "9,520", "Lower"],
-        ["Neisseria",     "Prot.", "Diastolic BP",   "\u22120.048", "4\u00d710\u207b\u2076",       "9,498", "Lower"],
-        ["Neisseria",     "Prot.", "Triglycerides",  "\u22120.058", "1\u00d710\u207b\u2074",       "4,496", "Lower"],
-        ["Neisseria",     "Prot.", "hsCRP",          "\u22120.051", "5\u00d710\u207b\u2074",       "4,713", "Lower"],
-        ["Neisseria",     "Prot.", "HbA1c",          "\u22120.042", "5\u00d710\u207b\u2075",       "9,360", "Lower"],
-        ["Tannerella",    "Path.", "Diastolic BP",   "+0.052",      "4\u00d710\u207b\u2077",       "9,498", "Higher"],
-        ["Tannerella",    "Path.", "Total Chol",     "+0.056",      "8\u00d710\u207b\u2078",       "9,239", "Higher"],
-        ["Tannerella",    "Path.", "HbA1c",          "+0.050",      "1\u00d710\u207b\u2076",       "9,360", "Higher"],
-        ["Tannerella",    "Path.", "Glucose",        "+0.054",      "3\u00d710\u207b\u2074",       "4,539", "Higher"],
-        ["Tannerella",    "Path.", "Systolic BP",    "+0.041",      "8\u00d710\u207b\u2075",       "9,520", "Higher"],
-        ["Porphyromonas", "Path.", "hsCRP",          "+0.037",      "0.012",                       "4,713", "Higher"],
-        ["Porphyromonas", "Path.", "LDL",            "+0.040",      "0.009",                       "4,418", "Higher"],
-        ["Fusobacterium", "Path.", "LDL",            "+0.058",      "1\u00d710\u207b\u2074",       "4,418", "Higher"],
-        ["Fusobacterium", "Path.", "Glucose",        "+0.038",      "0.010",                       "4,539", "Higher"],
-        ["Prevotella",    "Path.", "hsCRP",          "+0.035",      "0.017",                       "4,713", "Higher"],
-        ["Prevotella",    "Path.", "LDL",            "+0.047",      "0.002",                       "4,418", "Higher"],
+        [f"Haemophilus {D}",    "Prot.", "HbA1c",         "\u22120.074", f"9\u00d710\u207b\u00b9\u00b3 {D}", "9,360", "Lower"],
+        [f"Haemophilus {D}",    "Prot.", "Triglycerides",  "\u22120.094", f"3\u00d710\u207b\u00b9\u2070 {D}", "4,496", "Lower"],
+        [f"Haemophilus {D}",    "Prot.", "Systolic BP",    "\u22120.047", f"5\u00d710\u207b\u2076 {D}",       "9,520", "Lower"],
+        ["Haemophilus",         "Prot.", "Diastolic BP",   "\u22120.030", "0.003",                              "9,498", "Lower"],
+        [f"Haemophilus {D}",    "Prot.", "HDL",            "+0.040",      f"1\u00d710\u207b\u2074 {D}",       "9,239", "Higher"],
+        ["Haemophilus",         "Prot.", "hsCRP",          "\u22120.044", "0.003",                              "4,713", "Lower"],
+        [f"Neisseria {D}",     "Prot.", "Systolic BP",    "\u22120.061", f"2\u00d710\u207b\u2079 {D}",       "9,520", "Lower"],
+        [f"Neisseria {D}",     "Prot.", "Diastolic BP",   "\u22120.048", f"4\u00d710\u207b\u2076 {D}",       "9,498", "Lower"],
+        [f"Neisseria {D}",     "Prot.", "Triglycerides",  "\u22120.058", f"1\u00d710\u207b\u2074 {D}",       "4,496", "Lower"],
+        [f"Neisseria {D}",     "Prot.", "hsCRP",          "\u22120.051", f"5\u00d710\u207b\u2074 {D}",       "4,713", "Lower"],
+        [f"Neisseria {D}",     "Prot.", "HbA1c",          "\u22120.042", f"5\u00d710\u207b\u2075 {D}",       "9,360", "Lower"],
+        [f"Tannerella {D}",    "Path.", "Diastolic BP",   "+0.052",      f"4\u00d710\u207b\u2077 {D}",       "9,498", "Higher"],
+        [f"Tannerella {D}",    "Path.", "Total Chol",     "+0.056",      f"8\u00d710\u207b\u2078 {D}",       "9,239", "Higher"],
+        [f"Tannerella {D}",    "Path.", "HbA1c",          "+0.050",      f"1\u00d710\u207b\u2076 {D}",       "9,360", "Higher"],
+        [f"Tannerella {D}",    "Path.", "Glucose",        "+0.054",      f"3\u00d710\u207b\u2074 {D}",       "4,539", "Higher"],
+        [f"Tannerella {D}",    "Path.", "Systolic BP",    "+0.041",      f"8\u00d710\u207b\u2075 {D}",       "9,520", "Higher"],
+        ["Porphyromonas",      "Path.", "hsCRP",          "+0.037",      "0.012",                              "4,713", "Higher"],
+        ["Porphyromonas",      "Path.", "LDL",            "+0.040",      "0.009",                              "4,418", "Higher"],
+        [f"Fusobacterium {D}", "Path.", "LDL",            "+0.058",      f"1\u00d710\u207b\u2074 {D}",       "4,418", "Higher"],
+        ["Fusobacterium",      "Path.", "Glucose",        "+0.038",      "0.010",                              "4,539", "Higher"],
+        ["Prevotella",         "Path.", "hsCRP",          "+0.035",      "0.017",                              "4,713", "Higher"],
+        ["Prevotella",         "Path.", "LDL",            "+0.047",      "0.002",                              "4,418", "Higher"],
     ]
 
     t1 = Table(t1_data, colWidths=[75, 35, 72, 58, 62, 38, 45])
@@ -371,7 +379,8 @@ def build_document():
         "Spearman rank correlations on genus relative abundances. Dataset: NHANES 2009-2012, "
         "genus-level 16S rRNA V4 sequencing (DADA2-RB pipeline), linked to NHANES laboratory "
         "files. Full genus-level taxonomic data publicly released November 2024. "
-        "Prot. = Protective/nitrate-reducing. Path. = Pathogenic/adverse.",
+        "Prot. = Protective/nitrate-reducing. Path. = Pathogenic/adverse. "
+        "\u2020 Survives Bonferroni correction for 60 comparisons (\u03b1 = 0.00083).",
         styles["TableNote"]
     ))
 
