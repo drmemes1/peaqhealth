@@ -390,3 +390,10 @@ html, body {
     gap: 40px !important;
   }
 }
+
+/* Insight grid — stack on mobile */
+@media (max-width: 1023px) {
+  .insight-grid-headers { grid-template-columns: 1fr !important; }
+  .insight-grid-headers > div:last-child { margin-top: 24px; }
+  .insight-row { grid-template-columns: 1fr !important; }
+}

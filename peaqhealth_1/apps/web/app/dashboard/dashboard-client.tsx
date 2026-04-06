@@ -159,7 +159,7 @@ function SignalRow({ signal }: { signal: CrossPanelSignal }) {
 
 // ─── Insight Card ────────────────────────────────────────────────────────────
 
-function InsightCard({ item, type }: { item: InsightItem; type: "positive" | "watch" }) {
+function InsightCard({ item, type, dimmed }: { item: InsightItem; type: "positive" | "watch"; dimmed?: boolean }) {
   const borderColor = type === "positive" ? "#3B6D11" : "#C49A3C"
   return (
     <div style={{
@@ -168,6 +168,8 @@ function InsightCard({ item, type }: { item: InsightItem; type: "positive" | "wa
       borderRadius: 10,
       borderLeft: `3px solid ${borderColor}`,
       padding: "16px 18px",
+      opacity: dimmed ? 0.4 : 1,
+      position: "relative",
     }}>
       <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 8 }}>
         {item.panels.map(p => <PanelPill key={p} panel={p} />)}
@@ -246,8 +248,19 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
     finally { setSyncingNow(false) }
   }
 
+  // ── Sleep toggle (persisted in localStorage, shared with landing page) ──────
+  const [sleepHidden, setSleepHidden] = useState(() => {
+    if (typeof window === "undefined") return false
+    return localStorage.getItem("peaq-sleep-panel-hidden") === "true"
+  })
+  const toggleSleep = () => {
+    const next = !sleepHidden
+    setSleepHidden(next)
+    localStorage.setItem("peaq-sleep-panel-hidden", next ? "true" : "false")
+  }
+
   // Determine available panels
-  const hasSleep = props.sleepConnected && props.breakdown.sleepSub > 0
+  const hasSleep = !sleepHidden && props.sleepConnected && props.breakdown.sleepSub > 0
   const hasBlood = !!props.bloodData
   const hasOral  = props.oralActive
 
@@ -304,6 +317,80 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
         )}
 
         <PushNotificationPrompt />
+
+        {/* ── SCORE HEADER ────────────────────────────────────────────────────── */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 32 }}>
+          {/* Panel chips */}
+          {[
+            { key: "sleep", label: sleepHidden ? "RECOVERY" : "SLEEP", color: "#185FA5", score: hasSleep ? props.breakdown.sleepSub : null, max: 30 },
+            { key: "blood", label: "BLOOD", color: "#A32D2D", score: hasBlood ? props.breakdown.bloodSub : null, max: 40 },
+            { key: "oral",  label: "ORAL",  color: "#3B6D11", score: hasOral  ? props.breakdown.oralSub  : null, max: 30 },
+          ].map((p) => (
+            <div key={p.key} style={{
+              flex: 1, background: "#fff", border: "0.5px solid rgba(0,0,0,0.06)",
+              borderRadius: 8, padding: "10px 16px",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: p.color, flexShrink: 0 }} />
+                <span style={{ fontFamily: sans, fontSize: 9, textTransform: "uppercase", letterSpacing: "1.5px", color: "#8C8A82" }}>
+                  {p.label}
+                </span>
+                <span style={{ fontFamily: serif, fontSize: 24, color: p.color, marginLeft: "auto" }}>
+                  {p.score !== null ? Math.round(p.score) : "\u2014"}
+                </span>
+                <span style={{ fontFamily: sans, fontSize: 10, color: "#bbb" }}>/{p.max}</span>
+              </div>
+              <div style={{ height: 2, borderRadius: 1, background: "rgba(0,0,0,0.04)", marginTop: 4 }}>
+                <div style={{
+                  height: "100%", borderRadius: 1, background: p.color,
+                  width: p.score !== null ? `${(p.score / p.max) * 100}%` : "0%",
+                  transition: "width 300ms ease",
+                }} />
+              </div>
+              {/* Sleep toggle below sleep chip */}
+              {p.key === "sleep" && (
+                <button onClick={toggleSleep} style={{
+                  display: "flex", alignItems: "center", gap: 0,
+                  background: "#1a1a18", borderRadius: 20, border: "none",
+                  padding: "3px 4px", marginTop: 8, cursor: "pointer",
+                  transform: "scale(0.85)", transformOrigin: "left center",
+                }}>
+                  <span style={{
+                    fontFamily: sans, fontSize: 9, letterSpacing: "1.5px", textTransform: "uppercase",
+                    padding: "3px 10px", borderRadius: 16,
+                    background: !sleepHidden ? "#C49A3C" : "transparent",
+                    color: !sleepHidden ? "#fff" : "rgba(255,255,255,0.4)",
+                    transition: "background 250ms cubic-bezier(0.4,0.0,0.2,1), color 250ms cubic-bezier(0.4,0.0,0.2,1)",
+                  }}>
+                    Wearable
+                  </span>
+                  <span style={{
+                    fontFamily: sans, fontSize: 9, letterSpacing: "1.5px", textTransform: "uppercase",
+                    padding: "3px 10px", borderRadius: 16,
+                    background: sleepHidden ? "#C49A3C" : "transparent",
+                    color: sleepHidden ? "#fff" : "rgba(255,255,255,0.4)",
+                    transition: "background 250ms cubic-bezier(0.4,0.0,0.2,1), color 250ms cubic-bezier(0.4,0.0,0.2,1)",
+                  }}>
+                    No wearable
+                  </span>
+                </button>
+              )}
+            </div>
+          ))}
+
+          {/* PRI score */}
+          <div style={{ flexShrink: 0, textAlign: "right" }}>
+            <div style={{ fontFamily: sans, fontSize: 8, letterSpacing: "2px", textTransform: "uppercase", color: "#bbb" }}>
+              Peaq Resilience Index
+            </div>
+            <div style={{ fontFamily: serif, fontSize: 48, fontWeight: 300, color: "#1a1a18", lineHeight: 1, marginTop: 2 }}>
+              {Math.round(props.score)}
+            </div>
+            <div style={{ fontFamily: serif, fontStyle: "italic", fontSize: 12, color: "#bbb", marginTop: 4 }}>
+              Three signals. One measure of <span style={{ color: "#C49A3C" }}>resilience.</span>
+            </div>
+          </div>
+        </div>
 
         {/* ── 1. DYNAMIC HEADLINE ─────────────────────────────────────────────── */}
         <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 40px" }}>
@@ -369,50 +456,58 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
           </div>
         )}
 
-        {/* ── 3. INSIGHT GRID ─────────────────────────────────────────────────── */}
+        {/* ── 3. INSIGHT GRID — equal height cards, 2-col desktop / 1-col mobile ── */}
         {insights && ((insights.insights_positive.length > 0) || (insights.insights_watch.length > 0)) && (
           <div style={{ position: "relative", marginBottom: 40 }}>
             <TriangleWatermark />
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, position: "relative" }}>
-              {/* Left — What's Working */}
-              <div>
-                <div style={{
-                  fontFamily: sans, fontSize: 9, letterSpacing: "2px",
-                  textTransform: "uppercase", color: "#3B6D11", marginBottom: 12,
-                }}>
-                  What&rsquo;s Working
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {insights.insights_positive.slice(0, 3).map((item, i) => (
-                    <InsightCard key={i} item={item} type="positive" />
-                  ))}
-                  {insights.insights_positive.length === 0 && (
-                    <p style={{ fontFamily: sans, fontSize: 11, color: "#bbb", lineHeight: 1.5 }}>
-                      More data needed to identify positive patterns.
-                    </p>
-                  )}
-                </div>
-              </div>
 
-              {/* Right — Worth Watching */}
-              <div>
-                <div style={{
-                  fontFamily: sans, fontSize: 9, letterSpacing: "2px",
-                  textTransform: "uppercase", color: "#C49A3C", marginBottom: 12,
-                }}>
-                  Worth Watching
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {insights.insights_watch.slice(0, 3).map((item, i) => (
-                    <InsightCard key={i} item={item} type="watch" />
-                  ))}
-                  {insights.insights_watch.length === 0 && (
-                    <p style={{ fontFamily: sans, fontSize: 11, color: "#bbb", lineHeight: 1.5 }}>
-                      Nothing flagged — your markers are in range.
-                    </p>
-                  )}
-                </div>
+            {/* Column headers */}
+            <div className="insight-grid-headers" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, position: "relative", marginBottom: 12 }}>
+              <div style={{ fontFamily: sans, fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "#3B6D11" }}>
+                What&rsquo;s Working
               </div>
+              <div style={{ fontFamily: sans, fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "#C49A3C" }}>
+                Worth Watching
+              </div>
+            </div>
+
+            {/* Paired rows — each row is a 2-col grid so cards match height */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, position: "relative" }}>
+              {Array.from({ length: Math.max(insights.insights_positive.length, insights.insights_watch.length, 1) }).map((_, i) => {
+                const pos = insights.insights_positive[i]
+                const watch = insights.insights_watch[i]
+                const isSleepOnly = (item: InsightItem | undefined) => item?.panels.length === 1 && item.panels[0] === "sleep"
+                return (
+                  <div key={i} className="insight-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, alignItems: "stretch" }}>
+                    <div style={{ display: "flex" }}>
+                      {pos ? (
+                        <div style={{ flex: 1 }}>
+                          <InsightCard item={pos} type="positive" dimmed={!hasSleep && isSleepOnly(pos)} />
+                        </div>
+                      ) : (
+                        i === 0 ? (
+                          <p style={{ fontFamily: sans, fontSize: 11, color: "#bbb", lineHeight: 1.5, padding: "16px 18px" }}>
+                            More data needed to identify positive patterns.
+                          </p>
+                        ) : <div />
+                      )}
+                    </div>
+                    <div style={{ display: "flex" }}>
+                      {watch ? (
+                        <div style={{ flex: 1 }}>
+                          <InsightCard item={watch} type="watch" dimmed={!hasSleep && isSleepOnly(watch)} />
+                        </div>
+                      ) : (
+                        i === 0 ? (
+                          <p style={{ fontFamily: sans, fontSize: 11, color: "#bbb", lineHeight: 1.5, padding: "16px 18px" }}>
+                            Nothing flagged. Your markers are in range.
+                          </p>
+                        ) : <div />
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
 
             {/* Adaptive note for single panel */}
