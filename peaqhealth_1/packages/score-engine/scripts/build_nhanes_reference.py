@@ -113,6 +113,26 @@ def main():
     df = df.merge(genus[available_cols], on="SEQN", how="left")
     print(f"\n  After merge: {len(df)} participants")
 
+    # ── Load demographics (if available) ────────────────────────────────────
+    demo_path = os.path.join(SCRIPT_DIR, "..", "data", "nhanes", "nhanes_demographics.csv")
+    has_demo = False
+    if os.path.exists(demo_path):
+        demo = pd.read_csv(demo_path)
+        demo["sex_label"] = demo["sex"].map({1: "male", 2: "female", "Male": "male", "Female": "female"})
+        demo["age_group"] = pd.cut(
+            demo["age"],
+            bins=[13, 29, 39, 49, 59, 69, 120],
+            labels=["14_29", "30_39", "40_49", "50_59", "60_69", "70_plus"],
+        )
+        demo["age_sex"] = demo["sex_label"] + "_" + demo["age_group"].astype(str)
+        df = df.merge(demo[["SEQN", "age", "sex_label", "age_group", "age_sex"]], on="SEQN", how="inner")
+        has_demo = True
+        print(f"\n  Demographics merged: {len(df)} participants with age/sex")
+        print(f"  Age/sex groups: {sorted(df['age_sex'].dropna().unique().tolist())}")
+    else:
+        print(f"\n  Demographics not found at {demo_path}")
+        print("  Run get_nhanes_demo.R to add age/sex stratification")
+
     # ── Build reference JSON ─────────────────────────────────────────────────
     reference = {
         "metadata": {
@@ -123,11 +143,11 @@ def main():
             "rarefaction_depth": DEPTH,
             "citation": "Vogtmann E et al. Lancet Microbe 2022; Chaturvedi AK et al. JAMA Network Open 2025",
             "generated_at": pd.Timestamp.now().isoformat(),
-            "demographics_note": "Age/sex stratification unavailable — CDC demographics endpoint returned HTML. Overall population percentiles used for all strata.",
+            "has_demographics": has_demo,
         },
-        "diversity": {"overall": {}},
+        "diversity": {"overall": {}, "by_age_sex": {}},
         "genera": {},
-        "scoring_bands": {"overall": {}},
+        "scoring_bands": {"overall": {}, "by_age_sex": {}},
     }
 
     # Overall percentiles
@@ -138,6 +158,25 @@ def main():
                 reference["diversity"]["overall"][metric_name] = tbl
                 n_valid = df[metric_name].dropna().shape[0]
                 print(f"  Overall {metric_name}: n={n_valid}, median={tbl['p50']:.4f}, p25={tbl['p25']:.4f}, p75={tbl['p75']:.4f}")
+
+    # By age/sex group percentiles
+    if has_demo:
+        for group in sorted(df["age_sex"].dropna().unique()):
+            subset = df[df["age_sex"] == group]
+            if len(subset) < 30:
+                continue
+            reference["diversity"]["by_age_sex"][group] = {}
+            reference["scoring_bands"]["by_age_sex"][group] = {}
+            for metric_name in ["shannon", "simpson", "observed_asvs", "faith_pd"]:
+                if metric_name in subset.columns:
+                    tbl = get_percentile_table(subset[metric_name])
+                    if tbl:
+                        reference["diversity"]["by_age_sex"][group][metric_name] = tbl
+                        reference["scoring_bands"]["by_age_sex"][group][metric_name] = build_scoring_bands(tbl)
+            n = len(subset)
+            sh_med = reference["diversity"]["by_age_sex"][group].get("shannon", {}).get("p50", "?")
+            print(f"  {group}: n={n}, Shannon p50={sh_med}")
+        print(f"  Age/sex groups built: {list(reference['diversity']['by_age_sex'].keys())}")
 
     # Genera analysis
     genera_found = []

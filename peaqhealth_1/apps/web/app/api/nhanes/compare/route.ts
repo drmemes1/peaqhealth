@@ -23,7 +23,6 @@ export async function POST(request: Request) {
     fusobacterium_pct?: number
   }
 
-  // At least one metric required
   const hasAnyMetric = [shannon, observed_asvs, simpson,
     veillonella_pct, rothia_pct, neisseria_pct,
     porphyromonas_pct, treponema_pct, fusobacterium_pct,
@@ -34,6 +33,8 @@ export async function POST(request: Request) {
   }
 
   const input: OralNHANESInput = {}
+  if (age !== undefined) input.age = age
+  if (sex !== undefined) input.sex = sex
   if (shannon !== undefined) input.shannon = shannon
   if (observed_asvs !== undefined) input.observed_asvs = observed_asvs
   if (simpson !== undefined) input.simpson = simpson
@@ -46,15 +47,5 @@ export async function POST(request: Request) {
 
   const result = scoreOralAgainstNHANES(input)
 
-  // Determine age/sex group label
-  let age_sex_group = "all adults"
-  if (age && sex) {
-    const ageGroup = age < 30 ? "18-29" : age < 40 ? "30-39" : age < 50 ? "40-49" : age < 60 ? "50-59" : "60-69"
-    age_sex_group = `${sex} aged ${ageGroup}`
-  }
-
-  return Response.json({
-    age_sex_group,
-    ...result,
-  })
+  return Response.json(result)
 }

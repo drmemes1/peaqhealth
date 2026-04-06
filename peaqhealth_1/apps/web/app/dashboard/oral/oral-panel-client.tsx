@@ -351,16 +351,25 @@ type OralNarrative = {
 
 // ── NHANES Comparison Component ──────────────────────────────────────────────
 
-const NHANES_PCTLS = {
+const NHANES_PCTLS: Record<string, Record<string, number>> = {
   shannon: {
-    p5: 3.409, p10: 3.774, p25: 4.229, p50: 4.662, p75: 5.058, p90: 5.410, p95: 5.636,
+    p5: 3.409, p10: 3.774, p15: 3.964, p20: 4.111, p25: 4.229,
+    p30: 4.326, p35: 4.419, p40: 4.505, p45: 4.586, p50: 4.662,
+    p55: 4.740, p60: 4.809, p65: 4.886, p70: 4.964, p75: 5.058,
+    p80: 5.165, p85: 5.266, p90: 5.410, p95: 5.636,
+  },
+  observed_asvs: {
+    p5: 66.8, p10: 79.9, p15: 88.9, p20: 95.8, p25: 101.6,
+    p30: 107.0, p35: 112.8, p40: 117.6, p45: 122.5, p50: 127.6,
+    p55: 133.1, p60: 138.4, p65: 144.2, p70: 150.2, p75: 156.9,
+    p80: 165.5, p85: 175.2, p90: 186.9, p95: 206.1,
   },
 }
 
 function nhanesPercentile(value: number, table: Record<string, number>): number {
-  const entries = Object.entries(table)
-    .map(([k, v]) => ({ pct: parseInt(k.replace("p", "")), val: v }))
-    .sort((a, b) => a.pct - b.pct)
+  const keys = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95]
+  const entries = keys.map(p => ({ pct: p, val: table[`p${p}`] })).filter(e => e.val !== undefined)
+  if (entries.length === 0) return 50
   if (value <= entries[0].val) return Math.max(1, Math.round(entries[0].pct * (value / entries[0].val)))
   if (value >= entries[entries.length - 1].val) return 97
   for (let i = 0; i < entries.length - 1; i++) {
@@ -372,10 +381,41 @@ function nhanesPercentile(value: number, table: Record<string, number>): number 
   return 50
 }
 
+function NHANESBar({ label, value, formatVal, metricKey }: {
+  label: string; value: number; formatVal: string; metricKey: string
+}) {
+  const table = NHANES_PCTLS[metricKey]
+  if (!table) return null
+  const pct = nhanesPercentile(value, table)
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
+        <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "var(--ink)" }}>
+          {label} {formatVal} → <span style={{ color: "#C49A3C", fontWeight: 600 }}>{pct}th percentile</span>
+        </span>
+      </div>
+      <div style={{ position: "relative", height: 4, borderRadius: 2, background: "rgba(0,0,0,0.06)" }}>
+        <div style={{
+          position: "absolute", left: 0, top: 0, height: "100%",
+          borderRadius: 2, background: "#C49A3C",
+          width: `${pct}%`, transition: "width 500ms ease",
+        }} />
+        <div style={{
+          position: "absolute", left: `${pct}%`, top: -7, transform: "translateX(-50%)",
+          width: 0, height: 0,
+          borderLeft: "3px solid transparent", borderRight: "3px solid transparent",
+          borderTop: "4px solid #C49A3C",
+        }} />
+      </div>
+    </div>
+  )
+}
+
 function NHANESComparison({ shannon, nitratePct, periodontalPct }: {
   shannon: number; nitratePct: number; periodontalPct: number
 }) {
-  const pct = nhanesPercentile(shannon, NHANES_PCTLS.shannon)
+  const [open, setOpen] = useState(true)
+  const shannonPct = nhanesPercentile(shannon, NHANES_PCTLS.shannon)
   const median = NHANES_PCTLS.shannon.p50
 
   return (
@@ -383,68 +423,63 @@ function NHANESComparison({ shannon, nitratePct, periodontalPct }: {
       background: "#fff", border: "0.5px solid rgba(0,0,0,0.06)",
       borderRadius: 10, padding: "18px 20px", marginBottom: 32,
     }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-        <span style={{
-          fontFamily: "var(--font-body)", fontSize: 10, textTransform: "uppercase",
-          letterSpacing: "0.1em", color: "var(--ink-30)",
-        }}>
-          Your NHANES Comparison
-        </span>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: 0, border: "none", background: "transparent", cursor: "pointer",
+          marginBottom: open ? 14 : 0,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{
+            fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase",
+            letterSpacing: "1.5px", color: "#C49A3C", cursor: "pointer",
+          }}>
+            Population comparison {open ? "▾" : "▸"}
+          </span>
+        </div>
         <span style={{
           fontFamily: "var(--font-body)", fontSize: 9, color: "#C49A3C",
           background: "rgba(196,154,60,0.08)", padding: "2px 8px", borderRadius: 10,
         }}>
           n=9,660
         </span>
-      </div>
+      </button>
 
-      {/* Shannon percentile */}
-      <div style={{ marginBottom: 16 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
-          <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "var(--ink)" }}>
-            Shannon {shannon.toFixed(2)} → <span style={{ color: "#C49A3C", fontWeight: 600 }}>{pct}th percentile</span>
-          </span>
-        </div>
-        <div style={{ position: "relative", height: 6, borderRadius: 3, background: "rgba(0,0,0,0.06)" }}>
-          <div style={{
-            position: "absolute", left: 0, top: 0, height: "100%",
-            borderRadius: 3, background: "#C49A3C",
-            width: `${pct}%`, transition: "width 500ms ease",
-          }} />
-          <div style={{
-            position: "absolute", left: `${pct}%`, top: -8,
-            transform: "translateX(-50%)",
-            width: 0, height: 0,
-            borderLeft: "4px solid transparent", borderRight: "4px solid transparent",
-            borderTop: "5px solid #C49A3C",
-          }} />
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
-          <span style={{ fontFamily: "var(--font-body)", fontSize: 8, color: "#bbb" }}>0th</span>
-          <span style={{ fontFamily: "var(--font-body)", fontSize: 8, color: "#8C8A82" }}>50th</span>
-          <span style={{ fontFamily: "var(--font-body)", fontSize: 8, color: "#bbb" }}>100th</span>
-        </div>
-      </div>
+      {open && (
+        <div>
+          <NHANESBar label="Shannon" value={shannon} formatVal={shannon.toFixed(2)} metricKey="shannon" />
 
-      <p style={{
-        fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-60)",
-        lineHeight: 1.5, margin: "0 0 8px",
-      }}>
-        {pct >= 50
-          ? `Your Shannon diversity is above ${pct}% of 9,660 Americans (median: ${median.toFixed(2)}).`
-          : `Your Shannon diversity is below ${100 - pct}% of 9,660 Americans (median: ${median.toFixed(2)}). This is one of the most actionable signals in your biology.`
-        }
-      </p>
+          <p style={{
+            fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-60)",
+            lineHeight: 1.5, margin: "0 0 12px",
+          }}>
+            {shannonPct >= 50
+              ? `Your Shannon diversity is above ${shannonPct}% of 9,660 Americans (median: ${median.toFixed(2)}).`
+              : `Your Shannon diversity is below ${100 - shannonPct}% of 9,660 Americans (median: ${median.toFixed(2)}). This is one of the most actionable signals in your biology.`
+            }
+          </p>
 
-      <Link
-        href="/explore"
-        style={{
-          fontFamily: "var(--font-body)", fontSize: 9, color: "#C49A3C",
-          letterSpacing: "1.5px", textTransform: "uppercase", textDecoration: "none",
-        }}
-      >
-        Full NHANES comparison →
-      </Link>
+          <p style={{
+            fontFamily: "var(--font-body)", fontSize: 9, color: "#bbb",
+            textAlign: "center", margin: "0 0 8px",
+          }}>
+            Compared to 9,660 US adults · NHANES 2009-2012
+          </p>
+
+          <Link
+            href="/explore"
+            style={{
+              fontFamily: "var(--font-body)", fontSize: 9, color: "#C49A3C",
+              letterSpacing: "1.5px", textTransform: "uppercase", textDecoration: "none",
+              display: "block", textAlign: "center",
+            }}
+          >
+            Full NHANES comparison →
+          </Link>
+        </div>
+      )}
     </div>
   )
 }
