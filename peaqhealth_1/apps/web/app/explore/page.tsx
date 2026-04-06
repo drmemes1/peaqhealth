@@ -281,7 +281,7 @@ export default function ExplorePage() {
     setShowViz(true)
     if (!hasAnyInput) { setLoading(false); return }
     try {
-      const body: Record<string, unknown> = { sex }
+      const body: Record<string, unknown> = { sex, source: "zymo_raw" }
       if (age) body.age = parseInt(age)
       if (shannon) body.shannon = parseFloat(shannon)
       if (observedAsvs) body.observed_asvs = parseFloat(observedAsvs)
@@ -316,27 +316,28 @@ export default function ExplorePage() {
             fontFamily: sans, fontSize: 9, letterSpacing: "2px",
             textTransform: "uppercase", color: "#C49A3C", display: "block", marginBottom: 16,
           }}>
-            NHANES Oral Microbiome Reference · 9,660 Americans
+            CDC NHANES Study · 9,660 Americans
           </span>
           <h1 style={{
             fontFamily: serif, fontSize: 48, fontWeight: 300,
             color: "#1a1a18", lineHeight: 1.15, margin: "0 0 20px",
           }}>
-            How does your oral microbiome compare to 9,660 Americans?
+            How does your mouth compare to 9,660 Americans?
           </h1>
           <p style={{
             fontFamily: sans, fontSize: 14, color: "#8C8A82",
             lineHeight: 1.65, maxWidth: 560, margin: "0 auto 20px",
           }}>
-            The CDC&rsquo;s NHANES dataset is the only nationally representative oral
-            microbiome study in the US. Enter your results to see exactly where you stand.
+            The CDC studied the mouth bacteria of 9,660 people across the US &mdash;
+            the largest study of its kind. We use it to show you exactly where you stand.
           </p>
           <span style={{
-            fontFamily: sans, fontSize: 8, color: "#8C8A82",
-            background: "#F6F4EF", border: "0.5px solid rgba(0,0,0,0.08)",
+            fontFamily: sans, fontSize: 9, color: "#C49A3C",
+            background: "rgba(196,154,60,0.08)", border: "0.5px solid rgba(196,154,60,0.2)",
             borderRadius: 20, padding: "4px 12px", display: "inline-block",
+            letterSpacing: "1px", textTransform: "uppercase",
           }}>
-            NHANES 2009-2012 · Lancet Microbe 2022 · JAMA Network Open 2025
+            Same sequencing technology · Slightly different collection method · Best available reference
           </span>
         </div>
 
@@ -378,11 +379,11 @@ export default function ExplorePage() {
           </span>
           <div style={{ display: "flex", gap: 16, marginBottom: 20, flexWrap: "wrap" }}>
             <LabeledInput label="Shannon Index" value={shannon} onChange={setShannon} placeholder="e.g. 3.4"
-              note="Main diversity metric. Found in your Zymo report under &lsquo;Alpha Diversity&rsquo;." />
+              note="Zymo reports typically show 2.0-4.0. We automatically adjust for comparison with the CDC reference population." />
             <LabeledInput label="Observed ASVs" value={observedAsvs} onChange={setObservedAsvs} placeholder="e.g. 180"
               note="Number of unique bacterial variants detected." />
-            <LabeledInput label="Inverse Simpson Index" value={simpson} onChange={setSimpson} placeholder="e.g. 15.2"
-              note="Use &lsquo;InvSimpson&rsquo; from your Zymo report. Range 5-50. Higher = more diverse. Different from standard Simpson (0-1)." />
+            <LabeledInput label="Simpson Index" value={simpson} onChange={setSimpson} placeholder="e.g. 0.94"
+              note="Simpson diversity from your Zymo report. Range 0-1, higher = more diverse." />
           </div>
 
           {/* Advanced */}
@@ -473,12 +474,19 @@ export default function ExplorePage() {
 
             {/* 4 panels */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
-              <DistributionPanel metricKey="shannon" label="Shannon Diversity" userValue={shannon ? parseFloat(shannon) : null}
-                tooltip="Richness and evenness of bacterial species" formatVal={v => v.toFixed(1)} />
+              <div>
+                <DistributionPanel metricKey="shannon" label="Shannon Diversity" userValue={shannon ? parseFloat(shannon) : null}
+                  tooltip="Richness and evenness of bacterial species" formatVal={v => v.toFixed(1)} />
+                {shannon && (
+                  <p style={{ fontFamily: sans, fontSize: 9, color: "#bbb", fontStyle: "italic", margin: "6px 0 0", lineHeight: 1.4 }}>
+                    Your diversity score has been adjusted for comparison with the CDC study (which uses higher-depth sequencing). The comparison is directionally accurate.
+                  </p>
+                )}
+              </div>
               <DistributionPanel metricKey="observed_asvs" label="Observed ASVs" userValue={observedAsvs ? parseFloat(observedAsvs) : null}
                 tooltip="Number of unique amplicon sequence variants" formatVal={v => String(Math.round(v))} />
-              <DistributionPanel metricKey="simpson" label="Inverse Simpson" userValue={simpson ? parseFloat(simpson) : null}
-                tooltip="Probability two random sequences are different species (inverted, higher=better)" formatVal={v => v.toFixed(2)} />
+              <DistributionPanel metricKey="simpson" label="Simpson Diversity" userValue={simpson ? parseFloat(simpson) : null}
+                tooltip="Probability two random sequences are different species. Higher = more diverse." formatVal={v => v.toFixed(3)} />
               {/* Summary in 4th slot */}
               {results ? (
                 <div style={{
@@ -614,9 +622,9 @@ export default function ExplorePage() {
           <h2 style={{ fontFamily: serif, fontSize: 28, fontWeight: 300, color: "#fff", marginBottom: 32 }}>How this works</h2>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 32 }}>
             {[
-              { title: "The dataset", body: "9,660 US adults, ages 14-69. Nationally representative. CDC NHANES 2009-2012.", cite: "Chaturvedi AK et al. JAMA Network Open 2025" },
-              { title: "The method", body: "16S rRNA V4 region sequencing. Same approach as Zymo Research. DADA2 pipeline, SILVA v123 taxonomy.", cite: "Vogtmann E et al. Lancet Microbe 2022" },
-              { title: "Why it matters", body: "Higher oral diversity is associated with lower all-cause mortality. HR=0.63 in 7,055 adults over 9 years.", cite: "Shen Y et al. J Clin Periodontol 2024" },
+              { title: "The study", body: "The CDC\u2019s NHANES program studied mouth bacteria from 9,660 Americans of all ages, backgrounds, and health statuses. Their health outcomes were tracked for 9 years through the National Death Index. It\u2019s the largest nationally representative oral microbiome dataset that exists.", cite: "Chaturvedi AK et al. JAMA Network Open 2025" },
+              { title: "Why we use it", body: "There\u2019s no perfect reference for oral microbiome data \u2014 but this is the best one available. Both NHANES and your Zymo kit use the same DNA sequencing technology on the same oral bacteria. The CDC used an oral rinse; Zymo uses a saliva swab. The direction and meaning of the results are directly comparable.", cite: "Vogtmann E et al. Lancet Microbe 2022" },
+              { title: "What it found", body: "People with more diverse mouth bacteria lived longer. In a 9-year follow-up study of 7,055 adults using this same NHANES data, those with the most diverse oral bacteria had a 37% lower risk of dying from any cause. Peaq is the first consumer platform to make this comparison available to you.", cite: "Shen Y et al. J Clin Periodontol 2024" },
             ].map(col => (
               <div key={col.title}>
                 <div style={{ fontFamily: sans, fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "#C49A3C", marginBottom: 12 }}>{col.title}</div>
@@ -625,7 +633,22 @@ export default function ExplorePage() {
               </div>
             ))}
           </div>
-          <div style={{ textAlign: "center", marginTop: 40, paddingTop: 24, borderTop: "0.5px solid rgba(255,255,255,0.07)" }}>
+          {/* Methodology note */}
+          <div style={{ marginTop: 32 }}>
+            <p style={{
+              fontFamily: sans, fontSize: 10, color: "rgba(255,255,255,0.3)",
+              lineHeight: 1.7, maxWidth: 640, margin: "0 auto", textAlign: "center",
+            }}>
+              A note on methodology: NHANES collected oral samples using a mouthwash rinse;
+              Zymo Research uses direct saliva collection. Both methods use 16S rRNA DNA sequencing
+              of the same oral bacterial community. The NHANES dataset uses higher-depth sequencing,
+              so we apply a small mathematical adjustment before comparing your results. The comparison
+              is directionally accurate &mdash; higher diversity is consistently associated with better
+              health outcomes in both methods. This is the most scientifically rigorous oral health
+              reference available to any consumer platform.
+            </p>
+          </div>
+          <div style={{ textAlign: "center", paddingTop: 24, borderTop: "0.5px solid rgba(255,255,255,0.07)" }}>
             <p style={{ fontFamily: sans, fontSize: 9, color: "rgba(255,255,255,0.25)", margin: "0 0 20px" }}>
               Vogtmann E et al. Lancet Microbe 2022 · Chaturvedi AK et al. JAMA Network Open 2025 · Shen Y et al. J Clin Periodontol 2024
             </p>

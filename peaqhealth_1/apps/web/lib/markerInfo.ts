@@ -32,7 +32,7 @@ Your final HRV status is the more conservative of the two signals. When HRV is l
     citation: `Tegegne BS et al. Eur J Prev Cardiol. 2020;27(19):2191–2194. n=84,772 (Lifelines Cohort).
 Brozat M, Böckelmann I, Sammito S. J Cardiovasc Dev Dis. 2025;12(6):214 (systematic review, 58 studies).
 Olivieri F et al. Ageing Res Rev. 2024 Nov;101:102521. PMID 39341508 (HRV as hallmark of inflammaging).
-López-Otín C et al. Cell. 2023;186(2):243–278 (12 hallmarks of aging — dysbiosis #12, inflammaging #11).`,
+López-Otín C et al. Cell. 2023;186(2):243–278 (hallmarks of aging — includes dysbiosis and inflammaging).`,
 
     tip: `HRV improves over weeks to months — not overnight. The highest-yield interventions: consistent sleep and wake times (your circadian rhythm directly governs parasympathetic tone), reducing evening alcohol (suppresses HRV for 24–48h), sustained aerobic training (zone 2 specifically), and stress reduction. A single bad night will drop your personal trend — that's normal. A sustained multi-week drop is the signal that matters.`,
   },
@@ -81,7 +81,7 @@ López-Otín C et al. Cell. 2023;186(2):243–278 (12 hallmarks of aging — dys
 
   // ── Oral ─────────────────────────────────────────────────────────────────
   "shannon-diversity": {
-    why: "Shannon diversity measures species richness and evenness in the oral cavity. Low diversity is the hallmark of dysbiosis — where pathogenic species overgrow at the expense of beneficial ones.",
+    why: "Bacterial diversity measures species richness and evenness in the oral cavity. Low diversity signals an imbalanced microbiome — where harmful species overgrow at the expense of beneficial ones.",
     target: "≥3.0 index",
     citation: "Belstrøm et al., J Oral Microbiology 2014",
   },

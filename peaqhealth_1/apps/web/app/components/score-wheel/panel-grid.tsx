@@ -151,11 +151,11 @@ function EmptyPanelCard({ panel, oralOrdered = false }: {
       color: '#3B6D11',
       label: 'ORAL MICROBIOME',
       headline: oralOrdered ? 'Kit processing' : 'Order your oral kit',
-      why_short: '16S rRNA sequencing.',
+      why_short: 'DNA sequencing.',
       cta: oralOrdered ? 'View kit status' : 'Order oral kit',
       ctaHref: oralOrdered ? '/dashboard/oral' : '/shop',
-      stat1: { label: 'Technology', value: '16S rRNA' },
-      stat2: { label: 'Key signal', value: 'P. gingivalis + Nitrate reducers' },
+      stat1: { label: 'Technology', value: 'DNA sequencing' },
+      stat2: { label: 'Key signal', value: 'Gum bacteria + Heart-healthy bacteria' },
     },
   }[panel]
 

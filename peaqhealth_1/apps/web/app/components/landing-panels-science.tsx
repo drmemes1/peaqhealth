@@ -38,7 +38,7 @@ const rule: React.CSSProperties = {
 }
 
 const panels = [
-  { key: "oral",  label: "Oral Microbiome", color: ORAL,  lines: ["16S rRNA sequencing", "Species-level resolution"], stat: "100+ species tracked" },
+  { key: "oral",  label: "Oral Microbiome", color: ORAL,  lines: ["DNA sequencing", "Species-level resolution"], stat: "100+ species tracked" },
   { key: "blood", label: "Blood",           color: BLOOD, lines: ["40+ biomarkers", "from any lab"],                  stat: "LabCorp · Quest · any lab" },
   { key: "sleep", label: "Sleep",           color: SLEEP, lines: ["Nightly wearable", "HRV, deep sleep, SpO\u2082"],  stat: "WHOOP · Oura · Apple Health" },
 ] as const

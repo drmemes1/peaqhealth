@@ -436,7 +436,7 @@ function NHANESComparison({ shannon, nitratePct, periodontalPct }: {
             fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase",
             letterSpacing: "1.5px", color: "#C49A3C", cursor: "pointer",
           }}>
-            Population comparison {open ? "▾" : "▸"}
+            How you compare {open ? "▾" : "▸"}
           </span>
         </div>
         <span style={{
@@ -449,23 +449,26 @@ function NHANESComparison({ shannon, nitratePct, periodontalPct }: {
 
       {open && (
         <div>
-          <NHANESBar label="Shannon" value={shannon} formatVal={shannon.toFixed(2)} metricKey="shannon" />
+          <NHANESBar label="Bacterial diversity" value={shannon} formatVal={shannon.toFixed(2)} metricKey="shannon" />
 
           <p style={{
             fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-60)",
             lineHeight: 1.5, margin: "0 0 12px",
           }}>
             {shannonPct >= 50
-              ? `Your Shannon diversity is above ${shannonPct}% of 9,660 Americans (median: ${median.toFixed(2)}).`
-              : `Your Shannon diversity is below ${100 - shannonPct}% of 9,660 Americans (median: ${median.toFixed(2)}). This is one of the most actionable signals in your biology.`
+              ? `Your bacterial diversity is above ${shannonPct}% of 9,660 Americans (median: ${median.toFixed(2)}).`
+              : `Your bacterial diversity is below ${100 - shannonPct}% of 9,660 Americans (median: ${median.toFixed(2)}). This is one of the most actionable signals in your biology.`
             }
           </p>
 
-          <p style={{
-            fontFamily: "var(--font-body)", fontSize: 9, color: "#bbb",
-            textAlign: "center", margin: "0 0 8px",
-          }}>
-            Compared to 9,660 US adults · NHANES 2009-2012
+          <p
+            title="NHANES used an oral rinse; your Zymo kit uses a saliva swab. Both use the same sequencing technology. Results are comparable in direction and meaning."
+            style={{
+              fontFamily: "var(--font-body)", fontSize: 9, color: "#bbb",
+              textAlign: "center", margin: "0 0 8px", cursor: "help",
+            }}
+          >
+            Based on the CDC&rsquo;s NHANES study of 9,660 Americans &mdash; the largest oral microbiome reference dataset available.
           </p>
 
           <Link
@@ -476,7 +479,7 @@ function NHANESComparison({ shannon, nitratePct, periodontalPct }: {
               display: "block", textAlign: "center",
             }}
           >
-            Full NHANES comparison →
+            Full CDC comparison →
           </Link>
         </div>
       )}

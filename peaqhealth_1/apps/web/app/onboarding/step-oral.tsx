@@ -40,7 +40,7 @@ export function StepOral({ onOrder, onSkip }: Props) {
             Powered by
           </span>
           <p className="font-display text-xl font-light text-white mt-1">
-            16S rRNA sequencing
+            DNA sequencing
           </p>
         </div>
 

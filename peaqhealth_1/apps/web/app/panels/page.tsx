@@ -36,8 +36,8 @@ const PANELS = [
     border: "var(--panel-oral-border, #3B6D11)",
     text: "var(--panel-oral-text, #27500A)",
     href: "/dashboard/oral",
-    description: "16S rRNA species-level sequencing of your oral microbiome — Shannon diversity, nitrate reducers, periodontal pathogens, and OSA-associated taxa.",
-    source: "Zymo Research 16S rRNA",
+    description: "DNA species-level sequencing of your oral microbiome — bacterial diversity, heart-healthy bacteria, gum health, and sleep-related bacteria.",
+    source: "Zymo Research DNA sequencing",
     score: "/ 30 pts",
   },
 ]

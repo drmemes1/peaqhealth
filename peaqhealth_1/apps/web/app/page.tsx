@@ -138,7 +138,7 @@ export default function Home() {
           {[...Array(2)].map((_, rep) => (
             <span key={rep} style={{ display: "inline-flex" }}>
               {[
-                "Oral microbiome \u00B7 16S rRNA sequencing",
+                "Oral microbiome \u00B7 DNA sequencing",
                 "Blood biomarkers \u00B7 40+ markers",
                 "Nightly HRV \u00B7 WHOOP \u00B7 Oura",
                 "Hallmarks of aging \u00B7 L\u00F3pez-Ot\u00EDn 2023",
@@ -242,7 +242,7 @@ export default function Home() {
                   lineHeight: 1.7,
                   margin: 0,
                 }}>
-                  Oral microbiome swab &mdash; 16S rRNA sequencing at species-level
+                  Oral microbiome swab &mdash; DNA sequencing at species-level
                   resolution. Results in 2&ndash;3 weeks.
                 </p>
               </div>
@@ -545,7 +545,7 @@ export default function Home() {
                 opacity: 0.7,
               }}
             >
-              See how your oral microbiome compares to 9,660 Americans &rarr;
+              See how your mouth compares to 9,660 Americans &rarr;
             </a>
           </div>
         </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Nav } from "../components/nav";
 
 /* ───────────────────────── citations ───────────────────────── */
@@ -688,7 +689,7 @@ export default function SciencePage() {
             The oral microbiome is the least measured dimension of systemic health. The mouth is not isolated from the rest of the body. It shares blood supply with the heart, lungs, and brain. Dysbiosis in oral bacteria has been directly detected in coronary plaques and systemic tissues in multiple autopsy and biopsy studies.
           </p>
           <p style={{ ...bodyTextStyle, marginBottom: 16 }}>
-            Oral microbiome data comes from 16S rRNA sequencing. A simple at-home swab kit. Results in 10–14 days.
+            Oral microbiome data comes from DNA sequencing. A simple at-home swab kit. Results in 10–14 days.
           </p>
           <p style={{ ...bodyTextStyle, marginBottom: 32 }}>
             Nobody else measures this panel. It is also where the strongest cross-panel signals come from.
@@ -705,6 +706,35 @@ export default function SciencePage() {
               height={400}
               style={{ width: "100%", height: "auto", display: "block" }}
             />
+          </div>
+        </FadeUp>
+
+        {/* Reference population */}
+        <FadeUp delay={90}>
+          <div style={{
+            background: "#fff", border: "0.5px solid rgba(0,0,0,0.06)",
+            borderRadius: 10, padding: "20px 24px", marginBottom: 24,
+          }}>
+            <span style={{ fontFamily: "var(--font-body)", fontSize: 9, letterSpacing: "2px", textTransform: "uppercase" as const, color: "var(--oral-c)", marginBottom: 12, display: "block" }}>
+              Scored against 9,660 Americans
+            </span>
+            <p style={{ ...bodyTextStyle, marginBottom: 12 }}>
+              Your oral microbiome is compared against the CDC&rsquo;s NHANES dataset &mdash;
+              the only nationally representative study of mouth bacteria in the United States.
+              9,660 participants. Health outcomes tracked for 9 years. Same DNA sequencing
+              technology as your Zymo kit.
+            </p>
+            <p style={{ ...bodyTextStyle, marginBottom: 16 }}>
+              There&rsquo;s no other reference population like this. Most oral microbiome tests
+              compare you against &ldquo;healthy&rdquo; samples from a small lab study.
+              We compare you against America.
+            </p>
+            <Link href="/explore" style={{
+              fontFamily: "var(--font-body)", fontSize: 9, color: "#C49A3C",
+              letterSpacing: "1.5px", textTransform: "uppercase", textDecoration: "none",
+            }}>
+              Explore the data &rarr;
+            </Link>
           </div>
         </FadeUp>
 
@@ -733,7 +763,7 @@ export default function SciencePage() {
           title="Shannon diversity index"
           target="≥3.0"
           color="var(--oral-c)"
-          body={<>Shannon diversity measures the richness and evenness of microbial species in the oral cavity. Low diversity is the hallmark of dysbiosis — a state where pathogenic species overgrow at the expense of beneficial ones.<Cite n={13} /></>}
+          body={<>Bacterial diversity measures the richness and evenness of microbial species in the oral cavity. Low diversity signals an imbalanced microbiome — a state where harmful species overgrow at the expense of beneficial ones.<Cite n={13} /></>}
           evidence="Belstrøm et al., Journal of Oral Microbiology 2014."
         />
         <Marker

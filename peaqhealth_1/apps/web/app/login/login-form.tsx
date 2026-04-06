@@ -172,7 +172,7 @@ export function LoginForm({ defaultTab = "signin" }: { defaultTab?: Tab }) {
   const VALUE_PROPS = [
     { label: "Blood", detail: "33 markers tracked from your lab reports", color: "#A32D2D" },
     { label: "Sleep",  detail: "Wearable-synced every night", color: "#185FA5" },
-    { label: "Oral",   detail: "16S rRNA microbiome sequencing", color: "#3B6D11" },
+    { label: "Oral",   detail: "DNA microbiome sequencing", color: "#3B6D11" },
   ]
 
   const inputStyle: React.CSSProperties = {

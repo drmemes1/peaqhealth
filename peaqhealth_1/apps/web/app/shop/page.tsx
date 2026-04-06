@@ -15,7 +15,7 @@ const PRODUCTS = [
     badge: "FEATURED",
     icon: "◎",
     shortDesc:
-      "16S rRNA sequencing profiles your oral microbiome across diversity, pathogens, and nitrate-reducing bacteria. Unlocks 27 pts. Results in 10–14 days.",
+      "DNA sequencing profiles your oral microbiome across bacterial diversity, gum health bacteria, and heart-healthy bacteria. Unlocks 27 pts. Results in 10–14 days.",
     scoreImpact: "+27 pts",
     scoreColor: "var(--oral-c)",
     ship: "Ships in 2–3 days · Results in 10–14 days",
