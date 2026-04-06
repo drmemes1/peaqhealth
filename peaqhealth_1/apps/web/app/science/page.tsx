@@ -225,10 +225,10 @@ export default function SciencePage() {
   ];
 
   const scoreCategories = [
-    { range: "85–100", label: "Optimal", desc: "Peak condition." },
-    { range: "65–84", label: "Good", desc: "Strong foundation. Key levers identified." },
-    { range: "45–64", label: "Moderate", desc: "Meaningful room to improve." },
-    { range: "0–44", label: "Attention", desc: "Your body is asking for attention." },
+    { range: "85–100", label: "Optimal", desc: "All hallmarks well-controlled across panels." },
+    { range: "65–84", label: "Good", desc: "Strong baseline. Specific markers to watch." },
+    { range: "45–64", label: "Moderate", desc: "Multiple markers outside optimal range." },
+    { range: "0–44", label: "Attention", desc: "Several hallmarks flagged. Share with your clinician." },
   ];
 
   const freshnessRows = [
@@ -272,7 +272,7 @@ export default function SciencePage() {
               marginBottom: 20,
             }}
           >
-            Methodology &middot; Evidence &middot; Transparency
+            How the score is built
           </div>
         </FadeUp>
 
@@ -296,8 +296,8 @@ export default function SciencePage() {
 
         <FadeUp delay={160}>
           <p style={{ fontFamily: "var(--font-body)", fontSize: 14, color: "var(--ink-60)", maxWidth: 540, lineHeight: 1.7, marginBottom: 0 }}>
-            Every marker, target, and interaction term in the Peaq Score is grounded in peer-reviewed literature.
-            We cite our sources. Here is exactly how your score is built and why.
+            Every marker, target, and interaction in the Peaq Score maps to peer-reviewed research.
+            We cite every study. Here is exactly how the score works and why each marker was chosen.
           </p>
         </FadeUp>
 
@@ -358,13 +358,13 @@ export default function SciencePage() {
               Apple Watch readiness scores, Oura Ring recovery indices, WHOOP strain and recovery, InsideTracker&rsquo;s InnerAge — none of these have been validated in a prospective clinical trial showing their composite score predicts hard outcomes like mortality, hospitalisation, or disease onset. They are proprietary algorithms with no published methodology.
             </p>
             <p style={{ marginBottom: 16 }}>
-              Peaq is different in one important way: <strong>we show our work.</strong>
+              Peaq shows its work.
             </p>
             <p style={{ marginBottom: 16 }}>
               Every component of the Peaq Score maps directly to peer-reviewed research. We cite the study, the sample size, and the effect size. When we say hsCRP below 0.5 mg/L is associated with lower cardiovascular risk, we link to the study that shows it. When we say periodontal pathogens are found in coronary plaques, we cite <em>Frontiers in Immunology</em> 2023, n=1,791.
             </p>
             <p>
-              The Peaq Score is not a clinical diagnostic tool. It is a precision instrument for tracking the markers that matter most — built on the same evidence your doctor uses, made accessible for daily life.
+              The Peaq Score is not a clinical diagnostic tool. It tracks the markers that matter most, built on the same evidence your doctor uses, made readable for daily life.
             </p>
           </div>
         </FadeUp>
@@ -511,7 +511,7 @@ export default function SciencePage() {
 
         <FadeUp delay={60}>
           <p style={{ ...bodyTextStyle, marginBottom: 16 }}>
-            Sleep is the foundation of the Peaq Score. Poor sleep quality is not merely a performance issue — it is a systemic health signal that drives inflammation, glucose dysregulation, immune suppression, and accelerated biological aging. We weight it accordingly.
+            Sleep carries 30 of the 100 points in the Peaq Score. Poor sleep quality is a systemic health signal. It drives inflammation, glucose dysregulation, immune suppression, and accelerated biological aging.
           </p>
           <p style={{ ...bodyTextStyle, marginBottom: 16 }}>
             Sleep data requires a connected wearable — Apple Watch, Oura, WHOOP, or Garmin. We use a 7-night minimum to avoid single-night noise. Deep sleep is weighted most heavily (8 pts) as the most clinically meaningful sleep quality indicator, followed by REM (7 pts), efficiency (6 pts), HRV (5 pts, age-adjusted), and SpO2 (4 pts).
@@ -586,7 +586,7 @@ export default function SciencePage() {
 
         <FadeUp delay={60}>
           <p style={{ ...bodyTextStyle, marginBottom: 16 }}>
-            The blood panel captures cardiovascular risk, metabolic health, and systemic inflammation — the three dimensions most predictive of premature mortality in middle-aged adults. We use seven markers, each selected for independent predictive value beyond standard lipid panels.
+            The blood panel captures cardiovascular risk, metabolic health, and systemic inflammation. These are the three dimensions most predictive of premature mortality in middle-aged adults. We use seven markers, each selected for independent predictive value beyond standard lipid panels.
           </p>
           <p style={{ ...bodyTextStyle, marginBottom: 32 }}>
             Blood data is accepted via PDF upload — Quest, LabCorp, BioReference, Everlywell, and most major labs. Our parser extracts markers automatically.
@@ -685,13 +685,13 @@ export default function SciencePage() {
 
         <FadeUp delay={60}>
           <p style={{ ...bodyTextStyle, marginBottom: 16 }}>
-            The oral microbiome is the least understood and most underutilised dimension of systemic health. The mouth is not isolated from the rest of the body — it shares blood supply with the heart, lungs, and brain. Dysbiosis in oral bacteria has been directly detected in coronary plaques and systemic tissues in multiple autopsy and biopsy studies.
+            The oral microbiome is the least measured dimension of systemic health. The mouth is not isolated from the rest of the body. It shares blood supply with the heart, lungs, and brain. Dysbiosis in oral bacteria has been directly detected in coronary plaques and systemic tissues in multiple autopsy and biopsy studies.
           </p>
           <p style={{ ...bodyTextStyle, marginBottom: 16 }}>
             Oral microbiome data comes from 16S rRNA sequencing. A simple at-home swab kit. Results in 10–14 days.
           </p>
           <p style={{ ...bodyTextStyle, marginBottom: 32 }}>
-            This is the panel nobody else measures. It is also where the most compelling cross-panel interactions originate.
+            Nobody else measures this panel. It is also where the strongest cross-panel signals come from.
           </p>
         </FadeUp>
 
@@ -908,13 +908,13 @@ export default function SciencePage() {
         <FadeUp delay={60}>
           <div style={bodyTextStyle}>
             <p style={{ marginBottom: 16 }}>
-              This is what makes the Peaq Score different from any other consumer health product.
+              No other consumer health product does this.
             </p>
             <p style={{ marginBottom: 16 }}>
               Cross-panel modifiers detect when signals from multiple panels compound — either amplifying risk (penalties) or reinforcing protection (bonuses). Unlike v1 where interactions were insight-only, modifiers now directly adjust your score: penalties up to &minus;10 points, bonuses up to +8 points.
             </p>
             <p style={{ marginBottom: 32 }}>
-              This models how biology actually works. Inflammation and poor sleep are not independent risks you simply add together. They amplify each other through shared pathways. When a modifier fires, you see it on your dashboard with the panels involved and the point impact.
+              Inflammation and poor sleep are not independent risks you add together. They amplify each other through shared pathways. When a modifier fires, you see it on your dashboard with the panels involved and the point impact.
             </p>
           </div>
         </FadeUp>
@@ -998,10 +998,10 @@ export default function SciencePage() {
         <FadeUp delay={120}>
           <div style={bodyTextStyle}>
             <p style={{ marginBottom: 16 }}>
-              Peaq is a precision tracking tool for people who want to understand their health at a deeper level than standard annual checkups allow. It is built on the same evidence base your doctor uses — made accessible for daily life.
+              Peaq is a tracking tool for people who want to understand their health beyond what standard annual checkups show. It uses the same evidence base your doctor uses, made readable for daily life.
             </p>
             <p>
-              We will never claim more than the evidence supports. We will always show our sources. And we will update the score engine as the science evolves.
+              We do not claim more than the evidence supports. Sources are always visible. The score engine updates as the science does.
             </p>
           </div>
         </FadeUp>
