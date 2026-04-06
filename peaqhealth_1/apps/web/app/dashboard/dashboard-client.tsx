@@ -319,9 +319,8 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
 
         <PushNotificationPrompt />
 
-        {/* ── SCORE HEADER ────────────────────────────────────────────────────── */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 32 }}>
-          {/* Panel chips */}
+        {/* ── SCORE HEADER — panel chips only, no PRI duplicate ────────────── */}
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 32 }}>
           {[
             { key: "sleep", label: sleepHidden ? "RECOVERY" : "SLEEP", color: "#185FA5", score: hasSleep ? props.breakdown.sleepSub : null, max: 30 },
             { key: "blood", label: "BLOOD", color: "#A32D2D", score: hasBlood ? props.breakdown.bloodSub : null, max: 40 },
@@ -339,7 +338,6 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
                 <span style={{ fontFamily: serif, fontSize: 24, color: p.color, marginLeft: "auto" }}>
                   {p.score !== null ? Math.round(p.score) : "\u2014"}
                 </span>
-                <span style={{ fontFamily: sans, fontSize: 10, color: "#bbb" }}>/{p.max}</span>
               </div>
               <div style={{ height: 2, borderRadius: 1, background: "rgba(0,0,0,0.04)", marginTop: 4 }}>
                 <div style={{
@@ -348,49 +346,46 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
                   transition: "width 300ms ease",
                 }} />
               </div>
-              {/* Sleep toggle below sleep chip */}
+              {/* Sleep toggle — small, unobtrusive */}
               {p.key === "sleep" && (
-                <button onClick={toggleSleep} style={{
-                  display: "flex", alignItems: "center", gap: 0,
-                  background: "#1a1a18", borderRadius: 20, border: "none",
-                  padding: "3px 4px", marginTop: 8, cursor: "pointer",
-                  transform: "scale(0.85)", transformOrigin: "left center",
-                }}>
+                <div
+                  onClick={toggleSleep}
+                  style={{
+                    display: "inline-flex", alignItems: "center",
+                    background: "#1a1a18", borderRadius: 14, border: "none",
+                    padding: "4px 5px", marginTop: 6, cursor: "pointer",
+                    position: "relative", height: 28, width: 140,
+                  }}
+                >
+                  {/* Gold knob */}
+                  <div style={{
+                    position: "absolute",
+                    top: 4, left: sleepHidden ? 74 : 4,
+                    width: 20, height: 20, borderRadius: "50%",
+                    background: "#C49A3C",
+                    transition: "left 250ms cubic-bezier(0.4,0.0,0.2,1)",
+                    zIndex: 1,
+                  }} />
                   <span style={{
-                    fontFamily: sans, fontSize: 9, letterSpacing: "1.5px", textTransform: "uppercase",
-                    padding: "3px 10px", borderRadius: 16,
-                    background: !sleepHidden ? "#C49A3C" : "transparent",
-                    color: !sleepHidden ? "#fff" : "rgba(255,255,255,0.4)",
-                    transition: "background 250ms cubic-bezier(0.4,0.0,0.2,1), color 250ms cubic-bezier(0.4,0.0,0.2,1)",
+                    fontFamily: sans, fontSize: 8, letterSpacing: "1px", textTransform: "uppercase",
+                    color: !sleepHidden ? "#fff" : "rgba(255,255,255,0.35)",
+                    transition: "color 250ms cubic-bezier(0.4,0.0,0.2,1)",
+                    flex: 1, textAlign: "center", position: "relative", zIndex: 2,
                   }}>
                     Wearable
                   </span>
                   <span style={{
-                    fontFamily: sans, fontSize: 9, letterSpacing: "1.5px", textTransform: "uppercase",
-                    padding: "3px 10px", borderRadius: 16,
-                    background: sleepHidden ? "#C49A3C" : "transparent",
-                    color: sleepHidden ? "#fff" : "rgba(255,255,255,0.4)",
-                    transition: "background 250ms cubic-bezier(0.4,0.0,0.2,1), color 250ms cubic-bezier(0.4,0.0,0.2,1)",
+                    fontFamily: sans, fontSize: 8, letterSpacing: "1px", textTransform: "uppercase",
+                    color: sleepHidden ? "#fff" : "rgba(255,255,255,0.35)",
+                    transition: "color 250ms cubic-bezier(0.4,0.0,0.2,1)",
+                    flex: 1, textAlign: "center", position: "relative", zIndex: 2,
                   }}>
                     No wearable
                   </span>
-                </button>
+                </div>
               )}
             </div>
           ))}
-
-          {/* PRI score */}
-          <div style={{ flexShrink: 0, textAlign: "right" }}>
-            <div style={{ fontFamily: sans, fontSize: 8, letterSpacing: "2px", textTransform: "uppercase", color: "#bbb" }}>
-              Peaq Resilience Index
-            </div>
-            <div style={{ fontFamily: serif, fontSize: 48, fontWeight: 300, color: "#1a1a18", lineHeight: 1, marginTop: 2 }}>
-              {Math.round(props.score)}
-            </div>
-            <div style={{ fontFamily: serif, fontStyle: "italic", fontSize: 12, color: "#bbb", marginTop: 4 }}>
-              Three signals. One measure of <span style={{ color: "#C49A3C" }}>resilience.</span>
-            </div>
-          </div>
         </div>
 
         {/* ── CONVERGENCE GRAPHIC ──────────────────────────────────────────── */}

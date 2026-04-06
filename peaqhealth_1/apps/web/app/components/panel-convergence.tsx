@@ -174,13 +174,6 @@ export function PanelConvergence({
                 fill={p.connected ? p.color : "#B4B2A9"}
               >
                 {p.connected ? Math.round(p.score) : "\u2014"}
-                <tspan
-                  fontSize={11}
-                  fill="#B4B2A9"
-                  fontFamily={sans}
-                >
-                  {" "}/ {p.max}
-                </tspan>
               </text>
 
               {/* Source or CTA */}
@@ -221,17 +214,6 @@ export function PanelConvergence({
             fill="#141410"
           >
             {displayScore}
-          </text>
-          {/* /100 */}
-          <text
-            x={circleCx} y={circleCy + 28}
-            textAnchor="middle"
-            fontFamily={sans}
-            fontSize={9}
-            letterSpacing="1.5"
-            fill="#B4B2A9"
-          >
-            / 100
           </text>
         </g>
       </svg>
