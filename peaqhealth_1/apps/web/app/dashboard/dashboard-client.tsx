@@ -1,36 +1,233 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { Nav } from "../components/nav"
-import { ScoreWheel, type ScoreWheelProps } from "../components/score-wheel"
-import { ScoreHistoryChart } from "../components/score-history-chart"
+import { type ScoreWheelProps } from "../components/score-wheel"
 import { PushNotificationPrompt } from "../components/push-notification-prompt"
 import { IOSInstallBanner } from "../components/ios-install-banner"
-import { InterruptCard } from "../components/interrupt-card"
+
+const serif = "'Cormorant Garamond', Georgia, serif"
+const sans  = "-apple-system, BlinkMacSystemFont, sans-serif"
+
+const PANEL_COLORS: Record<string, string> = {
+  sleep: "#185FA5",
+  blood: "#A32D2D",
+  oral:  "#3B6D11",
+}
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+interface InsightItem {
+  panels: string[]
+  title: string
+  explanation: string
+  actions?: string[]
+}
+
+interface CrossPanelSignal {
+  panels: string[]
+  title: string
+  description: string
+  positive: boolean
+  actions?: string[]
+}
+
+interface InsightData {
+  headline: string
+  headline_sub: string
+  insights_positive: InsightItem[]
+  insights_watch: InsightItem[]
+  cross_panel_signals: CrossPanelSignal[]
+  panels_available: string[]
+}
 
 interface LabHistoryPoint {
-  locked_at:       string
-  total_score:     number | null
-  blood_score:     number | null
+  locked_at: string
+  total_score: number | null
+  blood_score: number | null
   collection_date: string | null
-  ldl_mgdl:        number | null
-  hdl_mgdl:        number | null
-  hs_crp_mgl:      number | null
-  vitamin_d_ngml:  number | null
+  ldl_mgdl: number | null
+  hdl_mgdl: number | null
+  hs_crp_mgl: number | null
+  vitamin_d_ngml: number | null
 }
 
-const PROVIDER_LABELS: Record<string, string> = {
-  whoop: "WHOOP",
-  oura: "Oura Ring",
-  garmin: "Garmin",
-  fitbit: "Fitbit",
+// ─── Panel Tag Pill ───────────────────────────────────────────���──────────────
+
+function PanelPill({ panel }: { panel: string }) {
+  const color = PANEL_COLORS[panel] ?? "#8C8A82"
+  return (
+    <span style={{
+      fontFamily: sans, fontSize: 8, letterSpacing: "1px",
+      textTransform: "uppercase", fontWeight: 600,
+      color, background: `${color}14`, border: `0.5px solid ${color}30`,
+      borderRadius: 20, padding: "2px 8px", whiteSpace: "nowrap",
+    }}>
+      {panel}
+    </span>
+  )
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// ─── "See why" Expandable ────────────────────────────────────────────────────
+
+function SeeWhy({ title, explanation, panels }: { title: string; explanation: string; panels: string[] }) {
+  const [open, setOpen] = useState(false)
+  const [content, setContent] = useState("")
+  const [loading, setLoading] = useState(false)
+
+  const expand = useCallback(async () => {
+    if (open) { setOpen(false); return }
+    setOpen(true)
+    if (content) return // already loaded
+    setLoading(true)
+    try {
+      const res = await fetch("/api/insights/expand", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ insight_title: title, insight_explanation: explanation, panels }),
+      })
+      if (!res.ok || !res.body) { setContent("Unable to load explanation."); setLoading(false); return }
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let text = ""
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        text += decoder.decode(value, { stream: true })
+        setContent(text)
+      }
+    } catch { setContent("Unable to load explanation.") }
+    finally { setLoading(false) }
+  }, [open, content, title, explanation, panels])
+
+  return (
+    <div>
+      <button onClick={expand} style={{
+        fontFamily: sans, fontSize: 9, color: "#C49A3C",
+        textTransform: "uppercase", letterSpacing: "1.5px",
+        background: "none", border: "none", cursor: "pointer", padding: 0,
+        marginTop: 8, display: "block",
+      }}>
+        {open ? "Close" : "See why →"}
+      </button>
+      {open && (
+        <div style={{
+          marginTop: 10, padding: "12px 14px",
+          background: "#F6F4EF", borderRadius: 8,
+          borderLeft: "2px solid rgba(196,154,60,0.3)",
+        }}>
+          {loading && !content ? (
+            <span style={{
+              display: "inline-block", width: 5, height: 5,
+              borderRadius: "50%", background: "#C49A3C",
+              animation: "chatDotPulse 1.5s ease-in-out infinite",
+            }} />
+          ) : (
+            <p style={{ fontFamily: sans, fontSize: 12, color: "#555", lineHeight: 1.65, margin: 0 }}>
+              {content}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Cross-Panel Signal Row ──────────────────────────────────────────────────
+
+function SignalRow({ signal }: { signal: CrossPanelSignal }) {
+  return (
+    <div style={{ padding: "14px 0", borderBottom: "0.5px solid rgba(0,0,0,0.04)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+        <span style={{
+          width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
+          background: signal.positive ? "#3B6D11" : "#D4A017",
+        }} />
+        {signal.panels.map(p => <PanelPill key={p} panel={p} />)}
+      </div>
+      <div style={{ fontFamily: sans, fontSize: 14, fontWeight: 600, color: "#1a1a18", marginBottom: 4 }}>
+        {signal.title}
+      </div>
+      <div style={{ fontFamily: sans, fontSize: 11, color: "#8C8A82", lineHeight: 1.5 }}>
+        {signal.description}
+      </div>
+      <SeeWhy title={signal.title} explanation={signal.description} panels={signal.panels} />
+    </div>
+  )
+}
+
+// ─── Insight Card ────────────────────────────────────────────────────────────
+
+function InsightCard({ item, type }: { item: InsightItem; type: "positive" | "watch" }) {
+  const borderColor = type === "positive" ? "#3B6D11" : "#C49A3C"
+  return (
+    <div style={{
+      background: "#fff",
+      border: "0.5px solid rgba(0,0,0,0.06)",
+      borderRadius: 10,
+      borderLeft: `3px solid ${borderColor}`,
+      padding: "16px 18px",
+    }}>
+      <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 8 }}>
+        {item.panels.map(p => <PanelPill key={p} panel={p} />)}
+      </div>
+      <div style={{ fontFamily: sans, fontSize: 13, fontWeight: 600, color: "#1a1a18", marginBottom: 4 }}>
+        {item.title}
+      </div>
+      <div style={{ fontFamily: sans, fontSize: 11, color: "#8C8A82", lineHeight: 1.5 }}>
+        {item.explanation}
+      </div>
+      <SeeWhy title={item.title} explanation={item.explanation} panels={item.panels} />
+    </div>
+  )
+}
+
+// ─── Triangle Watermark ──────────────────────────────────────────────────────
+
+function TriangleWatermark() {
+  return (
+    <div style={{
+      position: "absolute", top: "50%", left: "50%",
+      transform: "translate(-50%, -50%)",
+      width: 320, height: 320, pointerEvents: "none", opacity: 0.04,
+    }}>
+      <svg viewBox="0 0 400 400" style={{ width: "100%", height: "100%" }}>
+        <polygon
+          points="200,55 55,305 345,305"
+          fill="none" stroke="#1a1a18" strokeWidth="2"
+        />
+      </svg>
+    </div>
+  )
+}
+
+// ─── Main Component ──────────────────────────────────────────────────────────
 
 export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHistoryPoint[]; wearableNeedsReconnect?: boolean }) {
-  const { labHistory = [], wearableNeedsReconnect = false } = props
+  const { wearableNeedsReconnect = false } = props
+
+  // ── Insight data state ─────────────────────────────────────────────────────
+  const [insights, setInsights] = useState<InsightData | null>(null)
+  const [insightsLoading, setInsightsLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      try {
+        const res = await fetch("/api/insights/generate", { method: "POST" })
+        if (res.ok) {
+          const data = await res.json()
+          if (!cancelled) setInsights(data)
+        }
+      } catch (e) { console.error("[insights] load error:", e) }
+      finally { if (!cancelled) setInsightsLoading(false) }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [])
+
+  // ── Sync logic (kept from original) ────────────────────────────────────────
   const [syncingNow, setSyncingNow] = useState(false)
   const [syncResult, setSyncResult] = useState<string | null>(null)
 
@@ -39,247 +236,259 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
     setSyncResult(null)
     try {
       const res = await fetch("/api/sync/now", { method: "POST" })
-      if (res.status === 429) {
-        setSyncResult("Rate limited — try again in an hour")
-      } else if (res.ok) {
+      if (res.status === 429) setSyncResult("Rate limited — try again in an hour")
+      else if (res.ok) {
         const data = await res.json() as { records?: number }
         setSyncResult(`Synced ${data.records ?? 0} nights`)
-        // Reload page after short delay to reflect new data
         setTimeout(() => window.location.reload(), 1500)
-      } else {
-        setSyncResult("Sync failed — try again later")
-      }
-    } catch {
-      setSyncResult("Sync failed — try again later")
-    } finally {
-      setSyncingNow(false)
-    }
+      } else setSyncResult("Sync failed — try again later")
+    } catch { setSyncResult("Sync failed — try again later") }
+    finally { setSyncingNow(false) }
   }
 
-  // Syncing state: wearable connected but no sleep sub yet (backfill in progress)
-  const startSyncing = props.sleepConnected && props.breakdown.sleepSub === 0
-  const [isSyncing, setIsSyncing]       = useState(startSyncing)
-  const [liveScore, setLiveScore]       = useState(props.score)
-  const [liveSleepSub, setLiveSleepSub] = useState(props.breakdown.sleepSub)
+  // Determine available panels
+  const hasSleep = props.sleepConnected && props.breakdown.sleepSub > 0
+  const hasBlood = !!props.bloodData
+  const hasOral  = props.oralActive
 
-  useEffect(() => {
-    if (!isSyncing) return
-
-    let attempts = 0
-    const maxAttempts = 20 // 60 seconds
-
-    const poll = setInterval(async () => {
-      attempts++
-      try {
-        const res  = await fetch("/api/score/latest")
-        const data = await res.json() as { score?: number; sleep_sub?: number }
-        if ((data.sleep_sub ?? 0) > 0) {
-          setLiveSleepSub(data.sleep_sub!)
-          setLiveScore(data.score ?? liveScore)
-          setIsSyncing(false)
-          clearInterval(poll)
-        }
-      } catch (e) {
-        console.error("[poll] error:", e)
-      }
-      if (attempts >= maxAttempts) {
-        setIsSyncing(false)
-        clearInterval(poll)
-      }
-    }, 3000)
-
-    return () => clearInterval(poll)
-  }, [isSyncing]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const liveBreakdown = { ...props.breakdown, sleepSub: liveSleepSub }
-  const liveProps: ScoreWheelProps = {
-    ...props,
-    score:     liveScore,
-    breakdown: liveBreakdown,
-    isSyncing,
-  }
-
-  // ── Interrupt card: show when modifier_total < 0 ──────────────────────────
-  const modTotal = props.modifier_total ?? 0
-  const modifiers = props.modifiers_applied ?? []
-  const penalties = modifiers.filter(m => m.direction === "penalty")
-  const showInterrupt = modTotal < 0 && penalties.length > 0
-
-  // Delayed appearance — let peaks draw first (800ms)
-  const [interruptReady, setInterruptReady] = useState(false)
-  useEffect(() => {
-    if (!showInterrupt) return
-    const t = setTimeout(() => setInterruptReady(true), 800)
-    return () => clearTimeout(t)
-  }, [showInterrupt])
-
-  // Persist dismissal per modifier fingerprint — re-show only when modifiers change
-  const modFingerprint = penalties.map(m => m.id).sort().join(",")
-  const [interruptDismissed, setInterruptDismissed] = useState(() => {
-    if (typeof window === "undefined") return false
-    return localStorage.getItem("peaq_interrupt_dismissed") === modFingerprint
-  })
-
-  const handleInterruptDismiss = () => {
-    setInterruptDismissed(true)
-    localStorage.setItem("peaq_interrupt_dismissed", modFingerprint)
-  }
-
-  // Build the primary penalty for the interrupt card
-  const primaryPenalty = penalties[0]
-  const basePRI = liveScore - modTotal
+  // Cross-panel signals: separate positive/negative
+  const crossPanelNeg = (insights?.cross_panel_signals ?? []).filter(s => !s.positive)
+  const crossPanelPos = (insights?.cross_panel_signals ?? []).filter(s => s.positive)
+  const hasCrossPanel = (insights?.cross_panel_signals ?? []).length > 0
+  const panelCount = [hasSleep, hasBlood, hasOral].filter(Boolean).length
 
   return (
     <div className="min-h-svh" style={{ background: "#F6F4EF" }}>
       <Nav />
-      <main className="mx-auto pt-14 pb-10" style={{ maxWidth: "var(--layout-max-width, 760px)", padding: "28px 24px" }}>
+      <main className="mx-auto" style={{ maxWidth: 760, padding: "28px 24px 60px" }}>
 
         {/* Reconnect banner */}
         {wearableNeedsReconnect && (
           <div style={{
             background: "rgba(154,114,0,0.08)",
             border: "0.5px solid rgba(154,114,0,0.25)",
-            borderRadius: 8,
-            padding: "14px 18px",
-            marginBottom: 20,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 12,
+            borderRadius: 8, padding: "14px 18px", marginBottom: 20,
+            display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
           }}>
-            <p style={{
-              fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-              fontSize: 13,
-              color: "#9A7200",
-              margin: 0,
-              lineHeight: 1.5,
-            }}>
-              Your {PROVIDER_LABELS[props.wearableProvider ?? ""] ?? "wearable"} connection expired. Nightly syncing is paused.
+            <p style={{ fontFamily: sans, fontSize: 13, color: "#9A7200", margin: 0, lineHeight: 1.5 }}>
+              Your {({ whoop: "WHOOP", oura: "Oura Ring", garmin: "Garmin", fitbit: "Fitbit" } as Record<string,string>)[props.wearableProvider ?? ""] ?? "wearable"} connection expired.
             </p>
             <Link href="/settings" style={{
-              fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-              fontSize: 12,
-              fontWeight: 500,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              color: "#9A7200",
-              textDecoration: "none",
-              whiteSpace: "nowrap",
+              fontFamily: sans, fontSize: 12, fontWeight: 500,
+              letterSpacing: "0.06em", textTransform: "uppercase",
+              color: "#9A7200", textDecoration: "none", whiteSpace: "nowrap",
             }}>
               Reconnect →
             </Link>
           </div>
         )}
 
-        {/* Sync now button */}
+        {/* Sync */}
         {props.sleepConnected && !wearableNeedsReconnect && (
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            marginBottom: 16,
-          }}>
-            <button
-              onClick={handleSyncNow}
-              disabled={syncingNow}
-              style={{
-                fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                fontSize: 11,
-                letterSpacing: "0.06em",
-                textTransform: "uppercase",
-                color: syncingNow ? "var(--ink-30)" : "var(--ink-40)",
-                background: "none",
-                border: `0.5px solid ${syncingNow ? "var(--ink-08)" : "var(--ink-12)"}`,
-                borderRadius: 4,
-                padding: "6px 14px",
-                cursor: syncingNow ? "default" : "pointer",
-              }}
-            >
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+            <button onClick={handleSyncNow} disabled={syncingNow} style={{
+              fontFamily: sans, fontSize: 11, letterSpacing: "0.06em", textTransform: "uppercase",
+              color: syncingNow ? "var(--ink-30)" : "var(--ink-40)",
+              background: "none", border: `0.5px solid ${syncingNow ? "var(--ink-08)" : "var(--ink-12)"}`,
+              borderRadius: 4, padding: "6px 14px", cursor: syncingNow ? "default" : "pointer",
+            }}>
               {syncingNow ? "Syncing…" : "Sync now"}
             </button>
             {props.lastSyncAt && (
-              <span style={{
-                fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                fontSize: 11,
-                color: "var(--ink-30)",
-              }}>
-                Last synced {new Date(props.lastSyncAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                {", "}
-                {new Date(props.lastSyncAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+              <span style={{ fontFamily: sans, fontSize: 11, color: "var(--ink-30)" }}>
+                Last synced {new Date(props.lastSyncAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}, {new Date(props.lastSyncAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
               </span>
             )}
-            {syncResult && (
-              <span style={{
-                fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                fontSize: 11,
-                color: "#3B6D11",
-              }}>
-                {syncResult}
-              </span>
-            )}
+            {syncResult && <span style={{ fontFamily: sans, fontSize: 11, color: "#3B6D11" }}>{syncResult}</span>}
           </div>
         )}
 
         <PushNotificationPrompt />
-        <ScoreWheel {...liveProps} />
 
-        {/* CROSS-PANEL INTERRUPT — fires when modifier_total < 0 */}
-        {showInterrupt && interruptReady && !interruptDismissed && primaryPenalty && (
-          <div style={{ marginTop: 24 }}>
-            <InterruptCard
-              headline={
-                primaryPenalty.panels.length >= 3
-                  ? "Your mouth, your blood, and your sleep"
-                  : `Your ${primaryPenalty.panels.join(" and your ")}`
-              }
-              headlineEmphasis="are telling the same story."
-              subtitle={`${penalties.length} cross-panel signal${penalties.length > 1 ? "s" : ""} detected. ${
-                penalties.length > 1
-                  ? "These patterns are only visible when panels are measured together."
-                  : "This pattern is only visible when panels are measured together."
-              }`}
-              signals={penalties.flatMap(p =>
-                p.panels.map(panel => ({
-                  panel: panel as "sleep" | "blood" | "oral",
-                  label: p.label,
-                  detail: p.panels.join(" + "),
-                  value: p.direction === "penalty" ? `\u2212${p.points}` : `+${p.points}`,
-                  unit: "pts",
-                  status: (p.direction === "penalty" ? "Attention" : "Good") as "Attention" | "Good",
-                })).slice(0, 1)
-              )}
-              connectors={penalties.slice(0, -1).map(p => ({
-                text: p.rationale,
-              }))}
-              insight={`<strong>What this means:</strong> ${penalties.map(p => p.rationale).join(" ")}`}
-              basePRI={basePRI}
-              finalPRI={liveScore}
-              modifierPoints={modTotal}
-              modifierLabel={penalties.map(p => p.label).join(" + ")}
-              modifierPanels={[...new Set(penalties.flatMap(p => p.panels))].map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(" + ")}
-              citation="Based on cross-panel modifier logic. Not a diagnosis. Share with your clinician."
-              onDismiss={handleInterruptDismiss}
-            />
-          </div>
-        )}
-
-        {/* PROGRESS CHART — only shown when 2+ history entries exist */}
-        {labHistory.length >= 2 && (
-          <div style={{ marginTop: 48 }}>
-            <div style={{ borderTop: "0.5px solid var(--ink-12)", paddingTop: 32, marginBottom: 20 }}>
-              <h2 style={{
-                fontFamily: "'Cormorant Garamond', Georgia, serif",
-                fontSize: 24,
-                fontWeight: 300,
-                color: "var(--ink)",
-                margin: 0,
-              }}>
-                Your progress
-              </h2>
+        {/* ── 1. DYNAMIC HEADLINE ─────────────────────────────────────────────── */}
+        <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 40px" }}>
+          {insightsLoading ? (
+            <div style={{ height: 80, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{
+                width: 5, height: 5, borderRadius: "50%", background: "#C49A3C",
+                animation: "chatDotPulse 1.5s ease-in-out infinite",
+              }} />
             </div>
-            <ScoreHistoryChart data={labHistory} />
+          ) : insights ? (
+            <>
+              <h1 style={{
+                fontFamily: serif, fontSize: 36, fontWeight: 300,
+                color: "#1a1a18", margin: "0 0 10px", lineHeight: 1.2,
+              }}>
+                {insights.headline}
+              </h1>
+              <p style={{ fontFamily: sans, fontSize: 13, color: "#8C8A82", lineHeight: 1.6, margin: 0 }}>
+                {insights.headline_sub}
+              </p>
+            </>
+          ) : (
+            <p style={{ fontFamily: sans, fontSize: 13, color: "#bbb" }}>
+              Complete at least one panel to unlock insights.
+            </p>
+          )}
+        </div>
+
+        {/* ── 2. CROSS-PANEL SIGNALS ──────────────────────────────────────────── */}
+        {hasCrossPanel && panelCount >= 2 && (
+          <div style={{
+            background: "#fff", border: "0.5px solid rgba(0,0,0,0.06)",
+            borderRadius: 12, padding: 24, marginBottom: 32,
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <span style={{ fontFamily: sans, fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "#bbb" }}>
+                Cross-Panel Signals
+              </span>
+              <span style={{ fontFamily: sans, fontSize: 9, color: "#bbb" }}>
+                {(insights?.cross_panel_signals ?? []).length} pattern{(insights?.cross_panel_signals ?? []).length !== 1 ? "s" : ""} detected
+              </span>
+            </div>
+
+            {/* Negative signals first */}
+            {crossPanelNeg.map((s, i) => <SignalRow key={`neg-${i}`} signal={s} />)}
+
+            {/* Divider + positive signals */}
+            {crossPanelPos.length > 0 && (
+              <>
+                <div style={{
+                  display: "flex", alignItems: "center", gap: 12, margin: "8px 0",
+                }}>
+                  <div style={{ flex: 1, height: "0.5px", background: "rgba(0,0,0,0.06)" }} />
+                  <span style={{ fontFamily: sans, fontSize: 9, color: "#bbb", whiteSpace: "nowrap" }}>
+                    Also working together
+                  </span>
+                  <div style={{ flex: 1, height: "0.5px", background: "rgba(0,0,0,0.06)" }} />
+                </div>
+                {crossPanelPos.map((s, i) => <SignalRow key={`pos-${i}`} signal={s} />)}
+              </>
+            )}
           </div>
         )}
+
+        {/* ── 3. INSIGHT GRID ─────────────────────────────────────────────────── */}
+        {insights && ((insights.insights_positive.length > 0) || (insights.insights_watch.length > 0)) && (
+          <div style={{ position: "relative", marginBottom: 40 }}>
+            <TriangleWatermark />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, position: "relative" }}>
+              {/* Left — What's Working */}
+              <div>
+                <div style={{
+                  fontFamily: sans, fontSize: 9, letterSpacing: "2px",
+                  textTransform: "uppercase", color: "#3B6D11", marginBottom: 12,
+                }}>
+                  What&rsquo;s Working
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {insights.insights_positive.slice(0, 3).map((item, i) => (
+                    <InsightCard key={i} item={item} type="positive" />
+                  ))}
+                  {insights.insights_positive.length === 0 && (
+                    <p style={{ fontFamily: sans, fontSize: 11, color: "#bbb", lineHeight: 1.5 }}>
+                      More data needed to identify positive patterns.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Right — Worth Watching */}
+              <div>
+                <div style={{
+                  fontFamily: sans, fontSize: 9, letterSpacing: "2px",
+                  textTransform: "uppercase", color: "#C49A3C", marginBottom: 12,
+                }}>
+                  Worth Watching
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {insights.insights_watch.slice(0, 3).map((item, i) => (
+                    <InsightCard key={i} item={item} type="watch" />
+                  ))}
+                  {insights.insights_watch.length === 0 && (
+                    <p style={{ fontFamily: sans, fontSize: 11, color: "#bbb", lineHeight: 1.5 }}>
+                      Nothing flagged — your markers are in range.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Adaptive note for single panel */}
+            {panelCount === 1 && (
+              <p style={{
+                fontFamily: sans, fontSize: 9, color: "#bbb",
+                textAlign: "center", marginTop: 16,
+              }}>
+                {hasOral && !hasBlood ? "Connect blood panel to unlock cross-panel signals" :
+                 hasBlood && !hasOral ? "Add oral microbiome test to unlock cross-panel signals" :
+                 "Add more panels to unlock cross-panel signals"}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* ── 4. PANEL CARDS ──────────────────────────────────────────────────── */}
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: 12,
+          marginBottom: 40,
+        }}>
+          {[
+            { key: "sleep", label: "Sleep", color: "#185FA5", active: hasSleep, score: props.breakdown.sleepSub, max: 30, href: "/dashboard/sleep", insight: props.sleepData ? `${props.sleepData.hrv.toFixed(0)}ms HRV · ${props.sleepData.deepPct.toFixed(0)}% deep` : undefined },
+            { key: "blood", label: "Blood", color: "#A32D2D", active: hasBlood, score: props.breakdown.bloodSub, max: 40, href: "/dashboard/blood", insight: props.bloodData ? `hs-CRP ${props.bloodData.hsCRP.toFixed(1)} · LDL ${props.bloodData.ldl.toFixed(0)}` : undefined },
+            { key: "oral",  label: "Oral",  color: "#3B6D11", active: hasOral,  score: props.breakdown.oralSub,  max: 30, href: "/dashboard/oral",  insight: props.oralData ? `Shannon ${props.oralData.shannonDiversity.toFixed(1)} · ${props.oralData.nitrateReducersPct.toFixed(0)}% nitrate` : undefined },
+          ].map((p) => (
+            p.active ? (
+              <Link key={p.key} href={p.href} style={{
+                textDecoration: "none", color: "inherit", display: "block",
+                background: "#fff", border: "0.5px solid rgba(0,0,0,0.06)",
+                borderRadius: 12, padding: "20px 24px", cursor: "pointer",
+                transition: "transform 150ms cubic-bezier(0.34,1.56,0.64,1)",
+              }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-3px)" }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = "" }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: p.color, flexShrink: 0 }} />
+                  <span style={{ fontFamily: serif, fontSize: 18, color: "#1a1a18" }}>{p.label}</span>
+                </div>
+                <div style={{ marginBottom: 8 }}>
+                  <span style={{ fontFamily: serif, fontSize: 48, fontWeight: 300, color: p.color, lineHeight: 1 }}>
+                    {Math.round(p.score)}
+                  </span>
+                  <span style={{ fontFamily: serif, fontSize: 14, color: "#bbb", marginLeft: 4 }}>/{p.max}</span>
+                </div>
+                {p.insight && (
+                  <p style={{
+                    fontFamily: sans, fontSize: 11, color: "#8C8A82",
+                    lineHeight: 1.5, margin: "0 0 8px",
+                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                  }}>{p.insight}</p>
+                )}
+                <span style={{ fontFamily: sans, fontSize: 9, color: "#C49A3C", textTransform: "uppercase", letterSpacing: "1.5px" }}>
+                  View details →
+                </span>
+              </Link>
+            ) : (
+              <div key={p.key} style={{
+                background: "transparent",
+                border: "0.5px dashed rgba(0,0,0,0.12)",
+                borderRadius: 12, padding: "20px 24px",
+                display: "flex", flexDirection: "column",
+                alignItems: "center", justifyContent: "center",
+                minHeight: 140, textAlign: "center",
+              }}>
+                <span style={{ fontFamily: serif, fontSize: 18, color: "#bbb", marginBottom: 8 }}>{p.label}</span>
+                <span style={{ fontFamily: sans, fontSize: 9, color: "#C49A3C", textTransform: "uppercase", letterSpacing: "1.5px" }}>
+                  Add {p.label.toLowerCase()} →
+                </span>
+              </div>
+            )
+          ))}
+        </div>
       </main>
       <IOSInstallBanner />
     </div>
