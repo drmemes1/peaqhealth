@@ -4,13 +4,12 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { DashboardSidebar } from "../components/dashboard-sidebar"
 import { DashboardTopbar } from "../components/dashboard-topbar"
-import { type ScoreWheelProps } from "../components/score-wheel"
+import { ScoreWheel, type ScoreWheelProps } from "../components/score-wheel"
 import { ScoreHistoryChart } from "../components/score-history-chart"
 import { PushNotificationPrompt } from "../components/push-notification-prompt"
 import { IOSInstallBanner } from "../components/ios-install-banner"
 import { InterruptCard } from "../components/interrupt-card"
 import { PeaqChat } from "../components/peaq-chat"
-import { PeaqTriangle } from "../components/peaq-triangle"
 
 interface LabHistoryPoint {
   locked_at:       string
@@ -89,6 +88,12 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
   }, [isSyncing]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const liveBreakdown = { ...props.breakdown, sleepSub: liveSleepSub }
+  const liveProps: ScoreWheelProps = {
+    ...props,
+    score: liveScore,
+    breakdown: liveBreakdown,
+    isSyncing,
+  }
 
   // ── Interrupt card ──────────────────────────────────────────────────────────
   const modTotal = props.modifier_total ?? 0
@@ -191,31 +196,10 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
             scrollbarWidth: "thin",
             scrollbarColor: "rgba(0,0,0,0.1) transparent",
           }}>
-            {/* ── Triangle Hero ────────────────────────────────── */}
-            <div style={{
-              position: "relative",
-              maxWidth: 380,
-              margin: "32px auto 0",
-              padding: "0 24px",
-            }}>
-              <div style={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                width: "120%",
-                height: "120%",
-                background: "radial-gradient(circle at center, rgba(196,154,60,0.04) 0%, transparent 60%)",
-                pointerEvents: "none",
-              }} />
-              <PeaqTriangle
-                score={liveScore}
-                breakdown={liveBreakdown}
-                modifier_total={props.modifier_total}
-              />
-            </div>
+            {/* ScoreWheel — renders peaks, panels, markers, insights */}
+            <ScoreWheel {...liveProps} />
 
-            {/* ── Interrupt card ────────────────────────────────── */}
+            {/* Interrupt card */}
             {showInterrupt && interruptReady && !interruptDismissed && primaryPenalty && (
               <div style={{ margin: "16px 24px 0" }}>
                 <InterruptCard
@@ -253,111 +237,9 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
               </div>
             )}
 
-            {/* ── Insights row ──────────────────────────────────── */}
-            {modifiers.length > 0 && (
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
-                gap: 10,
-                padding: "0 24px",
-                marginTop: 28,
-              }}>
-                {modifiers.slice(0, 3).map((m) => {
-                  const panelColor = m.panels.includes("sleep") ? "#185FA5" :
-                                     m.panels.includes("blood") ? "#A32D2D" :
-                                     "#3B6D11"
-                  return (
-                    <div key={m.id} style={{
-                      background: "#fff",
-                      border: "0.5px solid rgba(0,0,0,0.06)",
-                      borderRadius: 10,
-                      padding: 16,
-                    }}>
-                      <div style={{
-                        fontFamily: sans,
-                        fontSize: 8,
-                        letterSpacing: "1.5px",
-                        textTransform: "uppercase",
-                        fontWeight: 600,
-                        color: panelColor,
-                        marginBottom: 6,
-                      }}>
-                        {m.panels.join(" \u00D7 ")}
-                      </div>
-                      <div style={{
-                        fontFamily: sans,
-                        fontSize: 12,
-                        color: "#555",
-                        lineHeight: 1.55,
-                      }}>
-                        {m.rationale}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-
-            {/* ── Three panel cards ─────────────────────────────── */}
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: 12,
-              padding: "0 24px",
-              margin: "28px 0 40px",
-            }}>
-              {[
-                { key: "sleep", label: "Sleep", color: "#185FA5", score: liveBreakdown.sleepSub, max: 30, href: "/dashboard/sleep", insight: props.sleepData ? `${props.sleepData.hrv.toFixed(0)}ms HRV \u00B7 ${props.sleepData.deepPct.toFixed(0)}% deep` : "Connect a wearable to unlock" },
-                { key: "blood", label: "Blood", color: "#A32D2D", score: liveBreakdown.bloodSub, max: 40, href: "/dashboard/blood", insight: props.bloodData ? `hs-CRP ${props.bloodData.hsCRP.toFixed(1)} \u00B7 LDL ${props.bloodData.ldl.toFixed(0)}` : "Upload labs to unlock" },
-                { key: "oral",  label: "Oral",  color: "#3B6D11", score: liveBreakdown.oralSub,  max: 30, href: "/dashboard/oral",  insight: props.oralData ? `Shannon ${props.oralData.shannonDiversity.toFixed(1)} \u00B7 ${props.oralData.nitrateReducersPct.toFixed(0)}% nitrate` : "Order a kit to unlock" },
-              ].map((p, i) => (
-                <Link
-                  key={p.key}
-                  href={p.href}
-                  style={{
-                    textDecoration: "none",
-                    color: "inherit",
-                    display: "block",
-                    background: "#fff",
-                    border: "0.5px solid rgba(0,0,0,0.06)",
-                    borderRadius: 12,
-                    padding: "20px 24px",
-                    cursor: "pointer",
-                    transition: "transform 150ms cubic-bezier(0.34,1.56,0.64,1)",
-                    animation: `panelCardIn 350ms cubic-bezier(0.34,1.56,0.64,1) ${1100 + i * 80}ms both`,
-                  }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-3px)" }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = "" }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: p.color, flexShrink: 0 }} />
-                    <span style={{ fontFamily: serif, fontSize: 18, color: "#1a1a18" }}>{p.label}</span>
-                  </div>
-                  <div style={{ marginBottom: 8 }}>
-                    <span style={{ fontFamily: serif, fontSize: 48, fontWeight: 300, color: p.color, lineHeight: 1 }}>
-                      {Math.round(p.score)}
-                    </span>
-                    <span style={{ fontFamily: serif, fontSize: 14, color: "#bbb", marginLeft: 4 }}>
-                      /{p.max}
-                    </span>
-                  </div>
-                  <p style={{
-                    fontFamily: sans, fontSize: 11, color: "#8C8A82",
-                    lineHeight: 1.5, margin: "0 0 8px",
-                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                  }}>
-                    {p.insight}
-                  </p>
-                  <span style={{ fontFamily: sans, fontSize: 9, color: "#C49A3C", textTransform: "uppercase", letterSpacing: "1.5px" }}>
-                    View details →
-                  </span>
-                </Link>
-              ))}
-            </div>
-
             {/* Progress chart */}
             {labHistory.length >= 2 && (
-              <div style={{ padding: "0 24px", marginTop: 24, marginBottom: 32 }}>
+              <div style={{ padding: "0 24px", marginTop: 48, marginBottom: 32 }}>
                 <div style={{ borderTop: "0.5px solid rgba(0,0,0,0.06)", paddingTop: 32, marginBottom: 20 }}>
                   <h2 style={{ fontFamily: serif, fontSize: 24, fontWeight: 300, color: "var(--ink, #1a1a18)", margin: 0 }}>
                     Your progress
@@ -392,6 +274,7 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
               Top Insights
             </div>
 
+            {/* Insight items — pulled from modifiers + data */}
             {(props.modifiers_applied ?? []).slice(0, 3).map((m, i, arr) => (
               <div key={m.id} style={{
                 padding: "8px 0",
@@ -457,6 +340,7 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
               {basePRI} base &middot; {modTotal > 0 ? "+" : ""}{modTotal} applied
             </div>
 
+            {/* Modifier items */}
             {modifiers.map((m, i) => (
               <div key={m.id} style={{
                 padding: "10px 0",
