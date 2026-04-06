@@ -83,16 +83,6 @@ function SkeletonInsightCard({ delay = 0 }: { delay?: number }) {
   )
 }
 
-function SkeletonHeadline() {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <ShimmerBar width={480} height={28} delay={0} radius={4} />
-      <div style={{ marginTop: 8 }}><ShimmerBar width={320} height={28} delay={200} radius={4} /></div>
-      <div style={{ marginTop: 16 }}><ShimmerBar width={420} height={12} bg="rgba(0,0,0,0.04)" delay={400} radius={2} /></div>
-    </div>
-  )
-}
-
 function SkeletonSignalRow({ delay = 0 }: { delay?: number }) {
   return (
     <div style={{ padding: "14px 0", borderBottom: "0.5px solid rgba(0,0,0,0.04)" }}>
@@ -380,79 +370,94 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
 
         <PushNotificationPrompt />
 
-        {/* ── SCORE HEADER — panel chips only, no PRI duplicate ────────────── */}
+        {/* ── SCORE HEADER — panel chips, equal size ────────────────────── */}
         <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 32 }}>
           {[
             { key: "sleep", label: sleepHidden ? "RECOVERY" : "SLEEP", color: "#185FA5", score: hasSleep ? props.breakdown.sleepSub : null, max: 30 },
             { key: "blood", label: "BLOOD", color: "#A32D2D", score: hasBlood ? props.breakdown.bloodSub : null, max: 40 },
             { key: "oral",  label: "ORAL",  color: "#3B6D11", score: hasOral  ? props.breakdown.oralSub  : null, max: 30 },
-          ].map((p) => (
-            <div key={p.key} style={{
-              flex: 1, background: "#fff", border: "0.5px solid rgba(0,0,0,0.06)",
-              borderRadius: 8, padding: "10px 16px",
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: p.color, flexShrink: 0 }} />
-                <span style={{ fontFamily: sans, fontSize: 9, textTransform: "uppercase", letterSpacing: "1.5px", color: "#8C8A82" }}>
-                  {p.label}
-                </span>
-                <span style={{ fontFamily: serif, fontSize: 24, color: p.color, marginLeft: "auto" }}>
-                  {p.score !== null ? Math.round(p.score) : "\u2014"}
-                </span>
-              </div>
-              <div style={{ height: 2, borderRadius: 1, background: "rgba(0,0,0,0.04)", marginTop: 4 }}>
+          ].map((p) => {
+            const isSleepOff = p.key === "sleep" && sleepHidden
+            const chipColor = isSleepOff ? "rgba(0,0,0,0.2)" : p.color
+            const chipScore = isSleepOff ? 0 : p.score
+            return (
+              <div key={p.key} style={{ flex: 1, minWidth: 0 }}>
+                {/* Chip card — identical height for all three */}
                 <div style={{
-                  height: "100%", borderRadius: 1, background: p.color,
-                  width: p.score !== null ? `${(p.score / p.max) * 100}%` : "0%",
-                  transition: "width 300ms ease",
-                }} />
-              </div>
-              {/* Sleep toggle — small, unobtrusive */}
-              {p.key === "sleep" && (
-                <div
-                  onClick={toggleSleep}
-                  style={{
-                    display: "inline-flex", alignItems: "center",
-                    background: "#1a1a18", borderRadius: 14, border: "none",
-                    padding: "4px 5px", marginTop: 6, cursor: "pointer",
-                    position: "relative", height: 28, width: 140,
-                  }}
-                >
-                  {/* Gold knob */}
-                  <div style={{
-                    position: "absolute",
-                    top: 4, left: sleepHidden ? 74 : 4,
-                    width: 20, height: 20, borderRadius: "50%",
-                    background: "#C49A3C",
-                    transition: "left 250ms cubic-bezier(0.4,0.0,0.2,1)",
-                    zIndex: 1,
-                  }} />
-                  <span style={{
-                    fontFamily: sans, fontSize: 8, letterSpacing: "1px", textTransform: "uppercase",
-                    color: !sleepHidden ? "#fff" : "rgba(255,255,255,0.35)",
-                    transition: "color 250ms cubic-bezier(0.4,0.0,0.2,1)",
-                    flex: 1, textAlign: "center", position: "relative", zIndex: 2,
-                  }}>
-                    Wearable
-                  </span>
-                  <span style={{
-                    fontFamily: sans, fontSize: 8, letterSpacing: "1px", textTransform: "uppercase",
-                    color: sleepHidden ? "#fff" : "rgba(255,255,255,0.35)",
-                    transition: "color 250ms cubic-bezier(0.4,0.0,0.2,1)",
-                    flex: 1, textAlign: "center", position: "relative", zIndex: 2,
-                  }}>
-                    No wearable
-                  </span>
+                  background: "#fff", border: "0.5px solid rgba(0,0,0,0.06)",
+                  borderRadius: 8, padding: "10px 16px",
+                  transition: "all 400ms ease",
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{
+                      width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
+                      background: chipColor, transition: "background 400ms ease",
+                    }} />
+                    <span style={{ fontFamily: sans, fontSize: 9, textTransform: "uppercase", letterSpacing: "1.5px", color: "#8C8A82" }}>
+                      {p.label}
+                    </span>
+                    <span style={{
+                      fontFamily: serif, fontSize: 24, marginLeft: "auto",
+                      color: chipColor, transition: "color 400ms ease",
+                    }}>
+                      {chipScore !== null ? Math.round(chipScore) : "\u2014"}
+                    </span>
+                  </div>
+                  <div style={{ height: 2, borderRadius: 1, background: "rgba(0,0,0,0.04)", marginTop: 4 }}>
+                    <div style={{
+                      height: "100%", borderRadius: 1,
+                      background: chipColor,
+                      width: chipScore !== null ? `${(chipScore / p.max) * 100}%` : "0%",
+                      transition: "width 400ms ease, background 400ms ease",
+                    }} />
+                  </div>
                 </div>
-              )}
-            </div>
-          ))}
+                {/* Sleep toggle — outside the card, left-aligned, 6px gap */}
+                {p.key === "sleep" && (
+                  <div
+                    onClick={toggleSleep}
+                    style={{
+                      display: "inline-flex", alignItems: "center",
+                      background: "#1a1a18", borderRadius: 14, border: "none",
+                      padding: "4px 5px", marginTop: 6, cursor: "pointer",
+                      position: "relative", height: 28, width: 140,
+                    }}
+                  >
+                    <div style={{
+                      position: "absolute",
+                      top: 4, left: sleepHidden ? 74 : 4,
+                      width: 20, height: 20, borderRadius: "50%",
+                      background: "#C49A3C",
+                      transition: "left 250ms cubic-bezier(0.4,0.0,0.2,1)",
+                      zIndex: 1,
+                    }} />
+                    <span style={{
+                      fontFamily: sans, fontSize: 8, letterSpacing: "1px", textTransform: "uppercase",
+                      color: !sleepHidden ? "#fff" : "rgba(255,255,255,0.35)",
+                      transition: "color 250ms cubic-bezier(0.4,0.0,0.2,1)",
+                      flex: 1, textAlign: "center", position: "relative", zIndex: 2,
+                    }}>
+                      Wearable
+                    </span>
+                    <span style={{
+                      fontFamily: sans, fontSize: 8, letterSpacing: "1px", textTransform: "uppercase",
+                      color: sleepHidden ? "#fff" : "rgba(255,255,255,0.35)",
+                      transition: "color 250ms cubic-bezier(0.4,0.0,0.2,1)",
+                      flex: 1, textAlign: "center", position: "relative", zIndex: 2,
+                    }}>
+                      No wearable
+                    </span>
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
 
         {/* ── CONVERGENCE GRAPHIC ──────────────────────────────────────────── */}
-        <div style={{ marginBottom: 40 }}>
+        <div style={{ marginBottom: 24 }}>
           <PanelConvergence
-            score={props.score}
+            score={sleepHidden ? props.score - props.breakdown.sleepSub : props.score}
             breakdown={props.breakdown}
             sleepConnected={props.sleepConnected}
             oralActive={props.oralActive}
@@ -460,33 +465,11 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
             wearableProvider={props.wearableProvider}
             bloodLabName={props.bloodData?.labName}
             oralKitStatus={props.oralKitStatus}
+            sleepHidden={sleepHidden}
           />
         </div>
 
-        {/* ── 1. DYNAMIC HEADLINE ─────────────────────────────────────────────── */}
-        <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 40px" }}>
-          {insightsLoading ? (
-            <SkeletonHeadline />
-          ) : insights ? (
-            <>
-              <h1 style={{
-                fontFamily: serif, fontSize: 36, fontWeight: 300,
-                color: "#1a1a18", margin: "0 0 10px", lineHeight: 1.2,
-              }}>
-                {insights.headline}
-              </h1>
-              <p style={{ fontFamily: sans, fontSize: 13, color: "#8C8A82", lineHeight: 1.6, margin: 0 }}>
-                {insights.headline_sub}
-              </p>
-            </>
-          ) : (
-            <p style={{ fontFamily: sans, fontSize: 13, color: "#bbb" }}>
-              Complete at least one panel to unlock insights.
-            </p>
-          )}
-        </div>
-
-        {/* ── 2. CROSS-PANEL SIGNALS ──────────────────────────────────────────── */}
+        {/* ── CROSS-PANEL SIGNALS ──────────────────────────────────────────── */}
         {insightsLoading && panelCount >= 2 && (
           <div style={{
             background: "#fff", border: "0.5px solid rgba(0,0,0,0.06)",

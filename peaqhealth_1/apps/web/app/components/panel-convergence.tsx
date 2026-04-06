@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 
 const serif = "'Cormorant Garamond', Georgia, serif"
 const sans  = "'Instrument Sans', -apple-system, sans-serif"
@@ -27,16 +27,18 @@ interface PanelConvergenceProps {
   wearableProvider?: string
   bloodLabName?: string
   oralKitStatus?: "none" | "ordered" | "complete"
+  sleepHidden?: boolean
 }
 
 export function PanelConvergence({
   score, breakdown, sleepConnected, oralActive, hasBlood,
-  wearableProvider, bloodLabName, oralKitStatus,
+  wearableProvider, bloodLabName, oralKitStatus, sleepHidden = false,
 }: PanelConvergenceProps) {
   const panels: PanelState[] = [
     {
-      key: "sleep", label: "Sleep", color: "#4A7FB5", colorMuted: "#B4B2A9",
-      score: breakdown.sleepSub, max: 30, connected: sleepConnected && breakdown.sleepSub > 0,
+      key: "sleep", label: sleepHidden ? "Recovery" : "Sleep", color: "#4A7FB5", colorMuted: "#B4B2A9",
+      score: sleepHidden ? 0 : breakdown.sleepSub, max: 30,
+      connected: !sleepHidden && sleepConnected && breakdown.sleepSub > 0,
       source: wearableProvider ? ({ whoop: "WHOOP", oura: "Oura", garmin: "Garmin" } as Record<string,string>)[wearableProvider] ?? "Wearable" : "",
       cta: "Connect wearable", href: "/settings#wearables",
     },
@@ -113,7 +115,8 @@ export function PanelConvergence({
         {/* Connection lines — draw from each panel to score circle */}
         {panels.map((p, i) => {
           const path = curvePath(panelXs[i], panelY)
-          const lineColor = p.connected ? p.color : p.colorMuted
+          const isSleepDimmed = p.key === "sleep" && sleepHidden
+          const lineColor = isSleepDimmed ? "rgba(0,0,0,0.10)" : (p.connected ? p.color : p.colorMuted)
           return (
             <path
               key={`line-${p.key}`}
@@ -123,9 +126,9 @@ export function PanelConvergence({
               strokeWidth={p.connected ? 1.5 : 1}
               strokeDasharray={p.connected ? "none" : "4,3"}
               strokeLinecap="round"
-              opacity={mounted ? (p.connected ? 0.6 : 0.25) : 0}
+              opacity={mounted ? (isSleepDimmed ? 0.15 : (p.connected ? 0.6 : 0.25)) : 0}
               style={{
-                transition: `opacity 600ms ease ${300 + i * 150}ms`,
+                transition: `opacity 400ms ease ${300 + i * 150}ms, stroke 400ms ease`,
               }}
             />
           )
@@ -134,8 +137,9 @@ export function PanelConvergence({
         {/* Panel boxes */}
         {panels.map((p, i) => {
           const x = panelXs[i]
-          const borderColor = p.connected ? p.color : p.colorMuted
-          const fillColor = p.connected ? `${p.color}1A` : "#F1EFE8"
+          const isSleepDimmed = p.key === "sleep" && sleepHidden
+          const borderColor = isSleepDimmed ? "rgba(0,0,0,0.10)" : (p.connected ? p.color : p.colorMuted)
+          const fillColor = isSleepDimmed ? "rgba(0,0,0,0.03)" : (p.connected ? `${p.color}1A` : "#F1EFE8")
           return (
             <g
               key={p.key}
@@ -150,6 +154,7 @@ export function PanelConvergence({
                 stroke={borderColor}
                 strokeWidth={0.5}
                 strokeDasharray={p.connected ? "none" : "4,3"}
+                style={{ transition: "fill 400ms ease, stroke 400ms ease" }}
               />
 
               {/* Panel label */}
@@ -159,7 +164,8 @@ export function PanelConvergence({
                 fontFamily={serif}
                 fontSize={16}
                 fontWeight={400}
-                fill={p.connected ? "#141410" : "#B4B2A9"}
+                fill={isSleepDimmed ? "rgba(0,0,0,0.2)" : (p.connected ? "#141410" : "#B4B2A9")}
+                style={{ transition: "fill 400ms ease" }}
               >
                 {p.label}
               </text>
@@ -171,9 +177,10 @@ export function PanelConvergence({
                 fontFamily={serif}
                 fontSize={22}
                 fontWeight={300}
-                fill={p.connected ? p.color : "#B4B2A9"}
+                fill={isSleepDimmed ? "rgba(0,0,0,0.2)" : (p.connected ? p.color : "#B4B2A9")}
+                style={{ transition: "fill 400ms ease" }}
               >
-                {p.connected ? Math.round(p.score) : "\u2014"}
+                {isSleepDimmed ? "0" : (p.connected ? Math.round(p.score) : "\u2014")}
               </text>
 
               {/* Source or CTA */}
@@ -183,10 +190,10 @@ export function PanelConvergence({
                 fontFamily={sans}
                 fontSize={8.5}
                 letterSpacing="1.2"
-                fill={p.connected ? "#8C8A82" : "#C49A3C"}
-                style={{ textTransform: "uppercase" } as React.CSSProperties}
+                fill={isSleepDimmed ? "rgba(0,0,0,0.15)" : (p.connected ? "#8C8A82" : "#C49A3C")}
+                style={{ textTransform: "uppercase", transition: "fill 400ms ease" } as React.CSSProperties}
               >
-                {p.connected ? p.source : p.cta}
+                {isSleepDimmed ? "No wearable" : (p.connected ? p.source : p.cta)}
               </text>
             </g>
           )
