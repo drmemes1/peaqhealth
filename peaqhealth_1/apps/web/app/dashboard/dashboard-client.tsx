@@ -54,6 +54,58 @@ interface LabHistoryPoint {
   vitamin_d_ngml: number | null
 }
 
+// ─── Skeleton Loading Components ─────────────────────────────────────────────
+
+function ShimmerBar({ width, height, delay = 0, bg = "rgba(0,0,0,0.06)", radius = 3 }: {
+  width: string | number; height: number; delay?: number; bg?: string; radius?: number
+}) {
+  return (
+    <div style={{
+      width, height, background: bg, borderRadius: radius,
+      animation: "shimmer 1.8s ease-in-out infinite",
+      animationDelay: `${delay}ms`,
+    }} />
+  )
+}
+
+function SkeletonInsightCard({ delay = 0 }: { delay?: number }) {
+  return (
+    <div style={{
+      background: "#fff", border: "0.5px solid rgba(0,0,0,0.06)",
+      borderRadius: 10, padding: "18px 20px",
+    }}>
+      <ShimmerBar width={60} height={16} delay={delay} />
+      <div style={{ marginTop: 10 }}><ShimmerBar width="80%" height={14} delay={delay + 200} /></div>
+      <div style={{ marginTop: 6 }}><ShimmerBar width="55%" height={14} delay={delay + 400} /></div>
+      <div style={{ marginTop: 12 }}><ShimmerBar width="100%" height={10} bg="rgba(0,0,0,0.04)" radius={2} delay={delay + 600} /></div>
+      <div style={{ marginTop: 4 }}><ShimmerBar width="75%" height={10} bg="rgba(0,0,0,0.04)" radius={2} delay={delay + 800} /></div>
+    </div>
+  )
+}
+
+function SkeletonHeadline() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <ShimmerBar width={480} height={28} delay={0} radius={4} />
+      <div style={{ marginTop: 8 }}><ShimmerBar width={320} height={28} delay={200} radius={4} /></div>
+      <div style={{ marginTop: 16 }}><ShimmerBar width={420} height={12} bg="rgba(0,0,0,0.04)" delay={400} radius={2} /></div>
+    </div>
+  )
+}
+
+function SkeletonSignalRow({ delay = 0 }: { delay?: number }) {
+  return (
+    <div style={{ padding: "14px 0", borderBottom: "0.5px solid rgba(0,0,0,0.04)" }}>
+      <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
+        <ShimmerBar width={48} height={16} delay={delay} />
+        <ShimmerBar width={48} height={16} delay={delay + 200} />
+      </div>
+      <div style={{ marginBottom: 4 }}><ShimmerBar width={200} height={13} delay={delay + 400} /></div>
+      <ShimmerBar width={320} height={10} bg="rgba(0,0,0,0.04)" radius={2} delay={delay + 600} />
+    </div>
+  )
+}
+
 // ─── Panel Tag Pill ───────────────────────────────────────────���──────────────
 
 function PanelPill({ panel }: { panel: string }) {
@@ -119,11 +171,20 @@ function SeeWhy({ title, explanation, panels }: { title: string; explanation: st
           borderLeft: "2px solid rgba(196,154,60,0.3)",
         }}>
           {loading && !content ? (
-            <span style={{
-              display: "inline-block", width: 5, height: 5,
-              borderRadius: "50%", background: "#C49A3C",
-              animation: "chatDotPulse 1.5s ease-in-out infinite",
-            }} />
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "8px 0" }}>
+              <span style={{
+                display: "inline-block", width: 8, height: 8,
+                borderRadius: "50%", background: "#C49A3C",
+                animation: "seeWhyPulse 1.2s ease-in-out infinite",
+              }} />
+              <span style={{
+                fontFamily: sans, fontSize: 9, color: "#bbb",
+                letterSpacing: "1px", marginTop: 10,
+                animation: "seeWhyFadeIn 300ms ease 600ms both",
+              }}>
+                Analyzing your data...
+              </span>
+            </div>
           ) : (
             <p style={{ fontFamily: sans, fontSize: 12, color: "#555", lineHeight: 1.65, margin: 0 }}>
               {content}
@@ -405,12 +466,7 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
         {/* ── 1. DYNAMIC HEADLINE ─────────────────────────────────────────────── */}
         <div style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 40px" }}>
           {insightsLoading ? (
-            <div style={{ height: 80, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{
-                width: 5, height: 5, borderRadius: "50%", background: "#C49A3C",
-                animation: "chatDotPulse 1.5s ease-in-out infinite",
-              }} />
-            </div>
+            <SkeletonHeadline />
           ) : insights ? (
             <>
               <h1 style={{
@@ -431,7 +487,19 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
         </div>
 
         {/* ── 2. CROSS-PANEL SIGNALS ──────────────────────────────────────────── */}
-        {hasCrossPanel && panelCount >= 2 && (
+        {insightsLoading && panelCount >= 2 && (
+          <div style={{
+            background: "#fff", border: "0.5px solid rgba(0,0,0,0.06)",
+            borderRadius: 12, padding: 24, marginBottom: 32,
+          }}>
+            <div style={{ marginBottom: 12 }}>
+              <ShimmerBar width={120} height={10} delay={0} />
+            </div>
+            <SkeletonSignalRow delay={0} />
+            <SkeletonSignalRow delay={200} />
+          </div>
+        )}
+        {!insightsLoading && hasCrossPanel && panelCount >= 2 && (
           <div style={{
             background: "#fff", border: "0.5px solid rgba(0,0,0,0.06)",
             borderRadius: 12, padding: 24, marginBottom: 32,
@@ -467,7 +535,25 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
         )}
 
         {/* ── 3. INSIGHT GRID — equal height cards, 2-col desktop / 1-col mobile ── */}
-        {insights && ((insights.insights_positive.length > 0) || (insights.insights_watch.length > 0)) && (
+        {insightsLoading && (
+          <div style={{ marginBottom: 40 }}>
+            <div className="insight-grid-headers" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 12 }}>
+              <ShimmerBar width={100} height={10} delay={0} />
+              <ShimmerBar width={100} height={10} delay={200} />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div className="insight-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <SkeletonInsightCard delay={0} />
+                <SkeletonInsightCard delay={100} />
+              </div>
+              <div className="insight-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <SkeletonInsightCard delay={200} />
+                <SkeletonInsightCard delay={300} />
+              </div>
+            </div>
+          </div>
+        )}
+        {!insightsLoading && insights && ((insights.insights_positive.length > 0) || (insights.insights_watch.length > 0)) && (
           <div style={{ position: "relative", marginBottom: 40 }}>
             <TriangleWatermark />
 
