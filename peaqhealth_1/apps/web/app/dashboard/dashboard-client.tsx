@@ -6,6 +6,7 @@ import { Nav } from "../components/nav"
 import { type ScoreWheelProps } from "../components/score-wheel"
 import { PushNotificationPrompt } from "../components/push-notification-prompt"
 import { IOSInstallBanner } from "../components/ios-install-banner"
+import { PanelConvergence } from "../components/panel-convergence"
 
 const serif = "'Cormorant Garamond', Georgia, serif"
 const sans  = "-apple-system, BlinkMacSystemFont, sans-serif"
@@ -390,6 +391,20 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
               Three signals. One measure of <span style={{ color: "#C49A3C" }}>resilience.</span>
             </div>
           </div>
+        </div>
+
+        {/* ── CONVERGENCE GRAPHIC ──────────────────────────────────────────── */}
+        <div style={{ marginBottom: 40 }}>
+          <PanelConvergence
+            score={props.score}
+            breakdown={props.breakdown}
+            sleepConnected={props.sleepConnected}
+            oralActive={props.oralActive}
+            hasBlood={hasBlood}
+            wearableProvider={props.wearableProvider}
+            bloodLabName={props.bloodData?.labName}
+            oralKitStatus={props.oralKitStatus}
+          />
         </div>
 
         {/* ── 1. DYNAMIC HEADLINE ─────────────────────────────────────────────── */}
