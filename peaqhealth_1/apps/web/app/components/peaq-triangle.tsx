@@ -11,10 +11,10 @@ interface PeaqTriangleProps {
 const serif = "'Cormorant Garamond', Georgia, serif"
 const sans = "-apple-system, BlinkMacSystemFont, sans-serif"
 
-// Triangle vertices (equilateral, centered in 400x400)
-const TOP = { x: 200, y: 55 }
-const BL  = { x: 55,  y: 305 }
-const BR  = { x: 345, y: 305 }
+// Triangle vertices (equilateral, 30% smaller, centered in 400x400)
+const TOP = { x: 200, y: 107 }
+const BL  = { x: 98,  y: 282 }
+const BR  = { x: 302, y: 282 }
 
 function lineLength(a: { x: number; y: number }, b: { x: number; y: number }) {
   return Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2)
@@ -53,8 +53,8 @@ export function PeaqTriangle({ score, breakdown, modifier_total }: PeaqTriangleP
   const [fillHeight, setFillHeight] = useState(0)
   const triHeight = BR.y - TOP.y // 250
 
-  // Logo opacity
-  const [logoOpacity, setLogoOpacity] = useState(0)
+  // Score inside triangle
+  const [scoreVisible, setScoreVisible] = useState(false)
 
   // Label opacity
   const [labelsVisible, setLabelsVisible] = useState(false)
@@ -103,8 +103,8 @@ export function PeaqTriangle({ score, breakdown, modifier_total }: PeaqTriangleP
     }
     requestAnimationFrame(fillTick)
 
-    // Logo fade in at 600ms
-    const logoTimer = setTimeout(() => setLogoOpacity(0.85), 600)
+    // Score inside triangle at 600ms
+    const scoreTimer = setTimeout(() => setScoreVisible(true), 600)
 
     // Labels at 700ms
     const labelTimer = setTimeout(() => setLabelsVisible(true), 700)
@@ -121,7 +121,7 @@ export function PeaqTriangle({ score, breakdown, modifier_total }: PeaqTriangleP
     requestAnimationFrame(countTick)
 
     return () => {
-      clearTimeout(logoTimer)
+      clearTimeout(scoreTimer)
       clearTimeout(labelTimer)
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -182,13 +182,24 @@ export function PeaqTriangle({ score, breakdown, modifier_total }: PeaqTriangleP
           strokeLinecap="round"
         />
 
-        {/* Logo */}
-        <image
-          href="/images/peaq_logo_transparent.png"
-          x={200 - 26} y={centroidY - 18}
-          width={52} height={36}
-          style={{ opacity: logoOpacity, transition: "opacity 400ms ease" }}
-        />
+        {/* PRI score inside triangle */}
+        <g style={{ opacity: scoreVisible ? 1 : 0, transition: "opacity 400ms ease" }}>
+          <text
+            x={200} y={centroidY - 12}
+            textAnchor="middle"
+            style={{ fontFamily: sans, fontSize: 8, letterSpacing: "2px", textTransform: "uppercase" as const, fill: "#bbb" }}
+          >
+            PEAQ RESILIENCE INDEX
+          </text>
+          <text
+            x={200} y={centroidY + 28}
+            textAnchor="middle"
+            dominantBaseline="central"
+            style={{ fontFamily: serif, fontSize: 52, fontWeight: 300, fill: "#1a1a18" }}
+          >
+            {displayScore}
+          </text>
+        </g>
 
         {/* Panel labels */}
         {/* Sleep — top-left */}
@@ -267,35 +278,13 @@ export function PeaqTriangle({ score, breakdown, modifier_total }: PeaqTriangleP
         </g>
       </svg>
 
-      {/* Below SVG: PRI label + score + tagline */}
-      <div style={{ textAlign: "center", marginTop: 24 }}>
-        <div style={{
-          fontFamily: sans,
-          fontSize: 9,
-          letterSpacing: "2px",
-          textTransform: "uppercase",
-          color: "#bbb",
-        }}>
-          PEAQ RESILIENCE INDEX
-        </div>
-
-        <div style={{
-          fontFamily: serif,
-          fontSize: 72,
-          fontWeight: 300,
-          color: "#1a1a18",
-          lineHeight: 1,
-          marginTop: 4,
-        }}>
-          {displayScore}
-        </div>
-
+      {/* Below SVG: tagline */}
+      <div style={{ textAlign: "center", marginTop: 12 }}>
         <div style={{
           fontFamily: serif,
           fontStyle: "italic",
           fontSize: 14,
           color: "#bbb",
-          marginTop: 8,
         }}>
           Three signals. One measure of{" "}
           <span style={{ color: "#C49A3C" }}>resilience.</span>
