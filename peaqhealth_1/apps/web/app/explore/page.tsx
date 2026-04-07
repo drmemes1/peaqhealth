@@ -283,14 +283,14 @@ export default function ExplorePage() {
             textAlign: "center",
           }}>
             <div style={{
-              fontFamily: serif, fontSize: 40, fontWeight: 300,
+              fontFamily: serif, fontSize: 52, fontWeight: 300,
               color: "#141410", lineHeight: 1, marginBottom: 8,
             }}>
               <AnimatedNumber target={9848} duration={1500} formatComma />
             </div>
             <div style={{
               fontFamily: sans, fontSize: 12,
-              color: "rgba(20,20,16,0.45)", lineHeight: 1.4,
+              color: "rgba(20,20,16,0.5)", lineHeight: 1.4,
             }}>
               People with oral + blood data
             </div>
@@ -304,15 +304,14 @@ export default function ExplorePage() {
             textAlign: "center",
           }}>
             <div style={{
-              fontFamily: serif, fontSize: 48, fontWeight: 300,
-              color: "rgba(20,20,16,0.18)", lineHeight: 1, marginBottom: 8,
+              fontFamily: serif, fontSize: 52, fontWeight: 300,
+              color: "#141410", lineHeight: 1, marginBottom: 8,
             }}>
               <PulsingZero />
             </div>
             <div style={{
-              fontFamily: sans, fontSize: 11,
-              color: "rgba(20,20,16,0.35)", lineHeight: 1.4,
-              letterSpacing: "0.5px", textTransform: "uppercase",
+              fontFamily: sans, fontSize: 12,
+              color: "rgba(20,20,16,0.5)", lineHeight: 1.4,
             }}>
               Connections found using<br />diversity score alone
             </div>
@@ -457,9 +456,9 @@ export default function ExplorePage() {
           border-color: #9A7200 !important;
         }
         @keyframes zeroPulse {
-          0% { transform: scale(1); opacity: 0.18; }
-          50% { transform: scale(1.15); opacity: 0.35; }
-          100% { transform: scale(1); opacity: 0.18; }
+          0% { transform: scale(0.8); opacity: 0; }
+          60% { transform: scale(1.08); opacity: 1; }
+          100% { transform: scale(1); opacity: 1; }
         }
       `}</style>
     </div>
