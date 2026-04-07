@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
+import Link from "next/link"
 
 const serif = "'Cormorant Garamond', Georgia, serif"
 const sans  = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
@@ -8,6 +9,7 @@ const sans  = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 // ── Data ────────────────────────────────────────────────────────────────────
 
 interface BacteriaCard {
+  slug: string
   name: string
   type: "protective" | "pathogenic"
   headline: string
@@ -19,6 +21,7 @@ interface BacteriaCard {
 
 const PROTECTIVE: BacteriaCard[] = [
   {
+    slug: "haemophilus",
     name: "Haemophilus",
     type: "protective",
     headline: "Higher levels linked to lower blood sugar, lower triglycerides, lower blood pressure",
@@ -27,6 +30,7 @@ const PROTECTIVE: BacteriaCard[] = [
     dataLine: "In 9,848 Americans: HbA1c r=\u22120.074 (p=9\u00d710\u207b\u00b9\u00b3) \u00b7 Triglycerides r=\u22120.094 (p=3\u00d710\u207b\u00b9\u2070)",
   },
   {
+    slug: "neisseria",
     name: "Neisseria",
     type: "protective",
     headline: "Higher levels linked to lower inflammation and lower blood pressure",
@@ -38,6 +42,7 @@ const PROTECTIVE: BacteriaCard[] = [
 
 const PATHOGENIC: BacteriaCard[] = [
   {
+    slug: "p-gingivalis",
     name: "P. gingivalis",
     type: "pathogenic",
     featured: true,
@@ -47,6 +52,7 @@ const PATHOGENIC: BacteriaCard[] = [
     dataLine: "Source: Dominy et al., Science Advances 2019 \u00b7 Haditsch et al., J Alzheimer\u2019s Disease 2020",
   },
   {
+    slug: "tannerella",
     name: "Tannerella",
     type: "pathogenic",
     headline: "Higher levels linked to higher blood sugar, higher inflammation, higher blood pressure",
@@ -55,6 +61,7 @@ const PATHOGENIC: BacteriaCard[] = [
     dataLine: "In 9,848 Americans: HbA1c r=+0.050 (p=1\u00d710\u207b\u2076) \u00b7 Diastolic BP r=+0.052 (p=4\u00d710\u207b\u2077)",
   },
   {
+    slug: "fusobacterium",
     name: "Fusobacterium",
     type: "pathogenic",
     headline: "Higher levels linked to higher LDL cholesterol and higher blood sugar",
@@ -63,6 +70,7 @@ const PATHOGENIC: BacteriaCard[] = [
     dataLine: "In 9,848 Americans: LDL r=+0.058 (p=1\u00d710\u207b\u2074) \u00b7 Glucose r=+0.038 (p=0.010)",
   },
   {
+    slug: "prevotella",
     name: "Prevotella",
     type: "pathogenic",
     headline: "Elevated levels linked to higher systemic inflammation",
@@ -108,12 +116,14 @@ function Card({ card, stagger }: { card: BacteriaCard; stagger: number }) {
 
   return (
     <div ref={reveal.ref} style={reveal.style}>
+      <Link href={`/explore/bacteria/${card.slug}`} style={{ textDecoration: "none", color: "inherit", display: "block" }}>
       <div className="explore-card" style={{
         background: "#fff",
         borderLeft: `3px solid ${accentColor}`,
         borderRadius: 10,
         padding: "24px 24px 20px",
         position: "relative",
+        cursor: "pointer",
       }}>
         {/* Featured badge — P. gingivalis */}
         {card.featured && (
@@ -187,7 +197,7 @@ function Card({ card, stagger }: { card: BacteriaCard; stagger: number }) {
 
         {/* Expand toggle */}
         <button
-          onClick={() => setOpen(o => !o)}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpen(o => !o) }}
           style={{
             fontFamily: sans, fontSize: 11, color: "#9A7200",
             background: "none", border: "none", cursor: "pointer",
@@ -222,6 +232,7 @@ function Card({ card, stagger }: { card: BacteriaCard; stagger: number }) {
           </div>
         </div>
       </div>
+      </Link>
     </div>
   )
 }

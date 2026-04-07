@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import Link from "next/link"
 import { Nav } from "../components/nav"
 import { FindingsExplorer } from "./findings-explorer"
+import { BACTERIA } from "../../lib/bacteria-data"
 
 const serif = "'Cormorant Garamond', Georgia, serif"
 const sans  = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
@@ -69,6 +70,137 @@ function PulsingZero() {
     }}>
       0
     </span>
+  )
+}
+
+// ── Ranking teaser ─────────────────────────────────────────────────────────
+
+const RANKING_BACTERIA = [
+  { name: "Haemophilus", type: "protective" as const, width: 72 },
+  { name: "P. gingivalis", type: "pathogenic" as const, width: 58 },
+  { name: "Neisseria", type: "protective" as const, width: 64 },
+  { name: "Tannerella", type: "pathogenic" as const, width: 45 },
+  { name: "Fusobacterium", type: "pathogenic" as const, width: 38 },
+]
+
+function RankingTeaser() {
+  const ref = useRef<HTMLDivElement>(null)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); observer.disconnect() } },
+      { threshold: 0.2 },
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  return (
+    <div ref={ref} style={{
+      background: "#141410", borderRadius: 14,
+      padding: "40px 36px 36px",
+      marginBottom: 56,
+      position: "relative", overflow: "hidden",
+    }}>
+      {/* Subtle gradient overlay */}
+      <div style={{
+        position: "absolute", top: 0, right: 0,
+        width: "50%", height: "100%",
+        background: "radial-gradient(ellipse at 100% 50%, rgba(154,114,0,0.06) 0%, transparent 70%)",
+        pointerEvents: "none",
+      }} />
+
+      <span style={{
+        fontFamily: sans, fontSize: 11, letterSpacing: "2px",
+        textTransform: "uppercase", color: "#9A7200",
+        display: "block", marginBottom: 12,
+        position: "relative", zIndex: 1,
+      }}>
+        Where do you rank?
+      </span>
+
+      <p style={{
+        fontFamily: serif, fontSize: 24, fontWeight: 400,
+        color: "#fff", lineHeight: 1.3,
+        margin: "0 0 28px", maxWidth: 420,
+        position: "relative", zIndex: 1,
+      }}>
+        See how your bacteria compare to<br />
+        <em style={{ fontStyle: "italic", color: "#9A7200" }}>9,848 Americans.</em>
+      </p>
+
+      {/* Animated bars */}
+      <div style={{ position: "relative", zIndex: 1 }}>
+        {RANKING_BACTERIA.map((b, i) => {
+          const isProtective = b.type === "protective"
+          const barColor = isProtective ? "#2D6A4F" : "#C0392B"
+          const pillDelay = 600 + i * 200
+
+          return (
+            <div key={b.name} style={{ marginBottom: i < RANKING_BACTERIA.length - 1 ? 14 : 0 }}>
+              <div style={{
+                display: "flex", alignItems: "center", gap: 12,
+              }}>
+                <span style={{
+                  fontFamily: sans, fontSize: 11, color: "rgba(255,255,255,0.4)",
+                  width: 100, flexShrink: 0, textAlign: "right",
+                }}>
+                  {b.name}
+                </span>
+                <div style={{
+                  flex: 1, height: 6, borderRadius: 3,
+                  background: "rgba(255,255,255,0.06)",
+                  position: "relative", overflow: "visible",
+                }}>
+                  {/* Population bar */}
+                  <div style={{
+                    height: "100%", borderRadius: 3,
+                    background: `${barColor}60`,
+                    width: visible ? `${b.width}%` : "0%",
+                    transition: `width 1000ms cubic-bezier(0.4, 0, 0.2, 1) ${i * 150}ms`,
+                  }} />
+
+                  {/* "you?" pill */}
+                  <div style={{
+                    position: "absolute", top: -11,
+                    left: visible ? `${Math.min(b.width + 4, 88)}%` : "0%",
+                    transition: `left 1200ms cubic-bezier(0.4, 0, 0.2, 1) ${pillDelay}ms, opacity 400ms ease ${pillDelay}ms`,
+                    opacity: visible ? 1 : 0,
+                  }}>
+                    <span style={{
+                      fontFamily: sans, fontSize: 9, fontWeight: 600,
+                      color: "#141410", background: "#9A7200",
+                      borderRadius: 10, padding: "3px 8px",
+                      whiteSpace: "nowrap",
+                      letterSpacing: "0.5px",
+                    }}>
+                      you?
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* CTA */}
+      <div style={{ textAlign: "center", marginTop: 32, position: "relative", zIndex: 1 }}>
+        <Link href="/dashboard/oral" className="ranking-cta" style={{
+          fontFamily: sans, fontSize: 11, letterSpacing: "1.5px",
+          textTransform: "uppercase", textDecoration: "none",
+          color: "#9A7200", border: "1px solid rgba(154,114,0,0.4)",
+          borderRadius: 6, padding: "10px 24px",
+          display: "inline-block",
+          transition: "background 200ms ease, color 200ms ease, border-color 200ms ease",
+        }}>
+          Find out &rarr;
+        </Link>
+      </div>
+    </div>
   )
 }
 
@@ -193,6 +325,11 @@ export default function ExplorePage() {
         <FindingsExplorer />
 
         {/* ═══════════════════════════════════════════════════════════════════
+            SECTION 3b — ANIMATED RANKING TEASER
+            ═══════════════════════════════════════════════════════════════════ */}
+        <RankingTeaser />
+
+        {/* ═══════════════════════════════════════════════════════════════════
             SECTION 4 — METHODOLOGY
             ═══════════════════════════════════════════════════════════════════ */}
         <div style={{
@@ -313,6 +450,11 @@ export default function ExplorePage() {
         .explore-cta:hover {
           background: #9A7200 !important;
           color: #fff !important;
+        }
+        .ranking-cta:hover {
+          background: #9A7200 !important;
+          color: #141410 !important;
+          border-color: #9A7200 !important;
         }
         @keyframes zeroPulse {
           0% { transform: scale(1); opacity: 0.18; }
