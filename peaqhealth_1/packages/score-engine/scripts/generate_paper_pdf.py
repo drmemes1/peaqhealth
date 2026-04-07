@@ -33,22 +33,33 @@ def load_csv(name):
             rows.append(r)
     return rows
 
-def fmt_p(p_str):
-    """Format p-value as scientific notation string for PDF."""
+def _sci(p_str):
+    """Return (coeff, exp) for scientific notation."""
     p = float(p_str)
-    if p >= 0.01: return f"{p:.3f}"
-    if p >= 0.001: return f"{p:.4f}"
+    if p == 0: return (0, 0)
     exp = 0
     v = p
     while v < 1:
         v *= 10
         exp += 1
     coeff = p * (10 ** exp)
-    # Use unicode superscript minus and digits
-    sup_map = {"0":"\u2070","1":"\u00b9","2":"\u00b2","3":"\u00b3","4":"\u2074",
-               "5":"\u2075","6":"\u2076","7":"\u2077","8":"\u2078","9":"\u2079"}
-    exp_str = "\u207b" + "".join(sup_map[d] for d in str(exp))
-    return f"{coeff:.1f}\u00d710{exp_str}"
+    return (coeff, exp)
+
+def fmt_p(p_str):
+    """Format p-value for table cells (plain text, no XML)."""
+    p = float(p_str)
+    if p >= 0.01: return f"{p:.3f}"
+    if p >= 0.001: return f"{p:.4f}"
+    coeff, exp = _sci(p_str)
+    return f"{coeff:.1f}e-{exp}"
+
+def fmt_p_xml(p_str):
+    """Format p-value for Paragraph text (uses reportlab <super> tag)."""
+    p = float(p_str)
+    if p >= 0.01: return f"{p:.3f}"
+    if p >= 0.001: return f"{p:.4f}"
+    coeff, exp = _sci(p_str)
+    return f"{coeff:.1f}\u00d710<super>\u2212{exp}</super>"
 
 all90 = load_csv("all_60_tests.csv")
 adj = load_csv("age_adjusted_correlations.csv")
@@ -114,7 +125,7 @@ def build():
     add(p(S["SH"], "ABSTRACT"))
     add(p(S["AB"], "<b>Background:</b> Most oral microbiome research and consumer platforms report alpha diversity indices like the Shannon-Wiener index, which summarize overall community richness but obscure individual bacterial contributions. No large population study has tested whether genus-level composition provides cardiometabolic signal that diversity metrics miss."))
     add(p(S["AB"], "<b>Methods:</b> We analyzed oral microbiome data from NHANES 2009-2012 (n=9,848). Spearman correlations were calculated between ten pre-specified genera and nine cardiometabolic markers (90 tests). Partial Spearman correlations adjusting for age, sex, BMI, and smoking were calculated for all 90 pairs (n=8,103 with complete covariates). Shannon diversity correlations with the same markers were calculated for comparison."))
-    add(p(S["AB"], "<b>Results:</b> Shannon diversity showed no significant correlation with hsCRP (r=+0.003, p=0.86), triglycerides (r=+0.010, p=0.50), or glucose (r=\u22120.009, p=0.55). Genus-level analysis identified 52 significant associations (p<0.05), of which 28 survived Bonferroni correction and 47 survived FDR correction. After adjusting for age, sex, BMI, and smoking, 29 associations survived. <i>Porphyromonas</i> \u00d7 hsCRP strengthened after adjustment (unadjusted r=+0.037 \u2192 adjusted r=+0.080, p=5.1\u00d710\u207b\u2077). <i>Neisseria</i> \u00d7 systolic BP survived with minimal attenuation (adjusted r=\u22120.052, p=4.7\u00d710\u207b\u2076). <i>Tannerella</i> \u00d7 LDL was the largest single effect size (r=+0.110, p=2.6\u00d710\u207b\u00b9\u00b3). All <i>Rothia</i> associations collapsed after age adjustment."))
+    add(p(S["AB"], "<b>Results:</b> Shannon diversity showed no significant correlation with hsCRP (r=+0.003, p=0.86), triglycerides (r=+0.010, p=0.50), or glucose (r=\u22120.009, p=0.55). Genus-level analysis identified 52 significant associations (p<0.05), of which 28 survived Bonferroni correction and 47 survived FDR correction. After adjusting for age, sex, BMI, and smoking, 29 associations survived. <i>Porphyromonas</i> \u00d7 hsCRP strengthened after adjustment (unadjusted r=+0.037 \u2192 adjusted r=+0.080, p=5.1\u00d710<super>\u22127</super>). <i>Neisseria</i> \u00d7 systolic BP survived with minimal attenuation (adjusted r=\u22120.052, p=4.7\u00d710<super>\u22126</super>). <i>Tannerella</i> \u00d7 LDL was the largest single effect size (r=+0.110, p=2.6\u00d710<super>\u221213</super>). All <i>Rothia</i> associations collapsed after age adjustment."))
     add(p(S["AB"], "<b>Conclusions:</b> Genus-level oral microbiome composition is associated with cardiometabolic markers across inflammation, lipids, glucose metabolism, and blood pressure in 9,848 US adults. Key associations survived adjustment for age, sex, BMI, and smoking. Alpha diversity showed no association with any of these markers. These findings suggest genus-level profiling may provide cardiometabolic information not captured by diversity indices alone."))
     add(Spacer(1,.5*cm), p(S["KW"], "<b>Keywords:</b> oral microbiome, cardiometabolic risk, NHANES, alpha diversity, <i>Haemophilus</i>, <i>Neisseria</i>, <i>Tannerella</i>, <i>Porphyromonas</i>, blood pressure, HbA1c, hsCRP"))
     add(PageBreak())
@@ -153,24 +164,24 @@ def build():
     add(p(S["PB"], "Shannon diversity showed no significant association with hsCRP (r=+0.003, p=0.86), triglycerides (r=+0.010, p=0.50), fasting glucose (r=\u22120.009, p=0.55), or systolic blood pressure. The only associations reaching significance were HDL (r=\u22120.023, p=0.03) and LDL (r=+0.038, p=0.01), both with minimal effect sizes."))
 
     add(p(S["SB"], "Genus-level associations"))
-    add(p(S["PB"], "<i>Tannerella</i> showed the largest effect size in the entire analysis with LDL cholesterol (r=+0.110, p=2.6\u00d710\u207b\u00b9\u00b3, n=4,418), exceeding even the <i>Haemophilus</i> \u00d7 triglycerides signal. <i>Tannerella</i> also correlated adversely with total cholesterol (r=+0.077, p=1.3\u00d710\u207b\u00b9\u00b3; lower p-value reflects larger sample, n=9,239), glucose (r=+0.084, p=1.4\u00d710\u207b\u2078), HbA1c (r=+0.050, p=1.3\u00d710\u207b\u2076), and diastolic BP (r=+0.052, p=3.8\u00d710\u207b\u2077)."))
-    add(p(S["PB"], "<i>Haemophilus</i> demonstrated the broadest protective profile: lower triglycerides (r=\u22120.110, p=1.5\u00d710\u207b\u00b9\u00b3), lower HbA1c (r=\u22120.074, p=8.6\u00d710\u207b\u00b9\u00b3), lower systolic BP (r=\u22120.047, p=5.2\u00d710\u207b\u2076), lower hsCRP (r=\u22120.053, p=2.4\u00d710\u207b\u2074), and higher HDL (r=+0.049, p=3.0\u00d710\u207b\u2076)."))
-    add(p(S["PB"], "<i>Neisseria</i> showed consistent inverse associations: systolic BP (r=\u22120.061, p=2.0\u00d710\u207b\u2079), diastolic BP (r=\u22120.048, p=3.5\u00d710\u207b\u2076), triglycerides (r=\u22120.084, p=1.4\u00d710\u207b\u2078), hsCRP (r=\u22120.051, p=5.0\u00d710\u207b\u2074), HbA1c (r=\u22120.042, p=4.9\u00d710\u207b\u2075). These are consistent with Neisseria\u2019s role as a nitrate-reducing bacterium."))
-    add(p(S["PB"], "<i>Porphyromonas</i> was positively associated with hsCRP (r=+0.037, p=0.012). <i>Fusobacterium</i> was associated with higher LDL (r=+0.052, p=5.7\u00d710\u207b\u2074) and higher glucose (r=+0.038, p=0.010). <i>Prevotella</i> was positively associated with hsCRP (r=+0.035, p=0.017). In total, 52 of 90 genus \u00d7 marker pairs reached significance (p<0.05); 28 survived Bonferroni correction."))
+    add(p(S["PB"], "<i>Tannerella</i> showed the largest effect size in the entire analysis with LDL cholesterol (r=+0.110, p=2.6\u00d710<super>\u221213</super>, n=4,418), exceeding even the <i>Haemophilus</i> \u00d7 triglycerides signal. <i>Tannerella</i> also correlated adversely with total cholesterol (r=+0.077, p=1.3\u00d710<super>\u221213</super>; lower p-value reflects larger sample, n=9,239), glucose (r=+0.084, p=1.4\u00d710<super>\u22128</super>), HbA1c (r=+0.050, p=1.3\u00d710<super>\u22126</super>), and diastolic BP (r=+0.052, p=3.8\u00d710<super>\u22127</super>)."))
+    add(p(S["PB"], "<i>Haemophilus</i> demonstrated the broadest protective profile: lower triglycerides (r=\u22120.110, p=1.5\u00d710<super>\u221213</super>), lower HbA1c (r=\u22120.074, p=8.6\u00d710<super>\u221213</super>), lower systolic BP (r=\u22120.047, p=5.2\u00d710<super>\u22126</super>), lower hsCRP (r=\u22120.053, p=2.4\u00d710<super>\u22124</super>), and higher HDL (r=+0.049, p=3.0\u00d710<super>\u22126</super>)."))
+    add(p(S["PB"], "<i>Neisseria</i> showed consistent inverse associations: systolic BP (r=\u22120.061, p=2.0\u00d710<super>\u22129</super>), diastolic BP (r=\u22120.048, p=3.5\u00d710<super>\u22126</super>), triglycerides (r=\u22120.084, p=1.4\u00d710<super>\u22128</super>), hsCRP (r=\u22120.051, p=5.0\u00d710<super>\u22124</super>), HbA1c (r=\u22120.042, p=4.9\u00d710<super>\u22125</super>). These are consistent with Neisseria\u2019s role as a nitrate-reducing bacterium."))
+    add(p(S["PB"], "<i>Porphyromonas</i> was positively associated with hsCRP (r=+0.037, p=0.012). <i>Fusobacterium</i> was associated with higher LDL (r=+0.052, p=5.7\u00d710<super>\u22124</super>) and higher glucose (r=+0.038, p=0.010). <i>Prevotella</i> was positively associated with hsCRP (r=+0.035, p=0.017). In total, 52 of 90 genus \u00d7 marker pairs reached significance (p<0.05); 28 survived Bonferroni correction."))
 
     add(p(S["SB"], "Age-adjusted sensitivity analysis"))
     add(p(S["PB"], "Of 52 associations significant at p<0.05 in unadjusted analysis, 29 survived adjustment for age, sex, BMI, and smoking. Nine associations changed direction, indicating confounding."))
-    add(p(S["PB"], "<i>Porphyromonas</i> \u00d7 hsCRP strengthened after adjustment (unadjusted r=+0.037 \u2192 adjusted r=+0.080, p=5.1\u00d710\u207b\u2077). Age was suppressing the true inflammatory signal \u2014 older adults may have adapted immune responses that dampen CRP elevation despite high <i>Porphyromonas</i> burden. This is the strongest age-adjusted association in the dataset and is consistent with the established role of <i>P. gingivalis</i> in systemic inflammation."))
-    add(p(S["PB"], "<i>Neisseria</i> \u00d7 systolic BP survived adjustment with minimal attenuation (adjusted r=\u22120.052, p=4.7\u00d710\u207b\u2076), providing population-level support for the nitrate-nitrite-NO pathway in blood pressure regulation independent of age and metabolic status."))
-    add(p(S["PB"], "<i>Tannerella</i> \u00d7 LDL (adjusted r=+0.090, p=4.9\u00d710\u207b\u2078), <i>Tannerella</i> \u00d7 glucose (adjusted r=+0.065, p=6.9\u00d710\u207b\u2075), <i>Tannerella</i> \u00d7 HbA1c (adjusted r=+0.047, p=3.4\u00d710\u207b\u2075), and <i>Tannerella</i> \u00d7 total cholesterol (adjusted r=+0.054, p=2.4\u00d710\u207b\u2076) all survived, confirming <i>Tannerella</i> as a multi-domain adverse marker. <i>Haemophilus</i> \u00d7 triglycerides survived (adjusted r=\u22120.063, p=1.1\u00d710\u207b\u2074) and <i>Haemophilus</i> \u00d7 HDL was essentially unchanged (adjusted r=+0.047, p=3.7\u00d710\u207b\u2075)."))
+    add(p(S["PB"], "<i>Porphyromonas</i> \u00d7 hsCRP strengthened after adjustment (unadjusted r=+0.037 \u2192 adjusted r=+0.080, p=5.1\u00d710<super>\u22127</super>). Age was suppressing the true inflammatory signal \u2014 older adults may have adapted immune responses that dampen CRP elevation despite high <i>Porphyromonas</i> burden. This is the strongest age-adjusted association in the dataset and is consistent with the established role of <i>P. gingivalis</i> in systemic inflammation."))
+    add(p(S["PB"], "<i>Neisseria</i> \u00d7 systolic BP survived adjustment with minimal attenuation (adjusted r=\u22120.052, p=4.7\u00d710<super>\u22126</super>), providing population-level support for the nitrate-nitrite-NO pathway in blood pressure regulation independent of age and metabolic status."))
+    add(p(S["PB"], "<i>Tannerella</i> \u00d7 LDL (adjusted r=+0.090, p=4.9\u00d710<super>\u22128</super>), <i>Tannerella</i> \u00d7 glucose (adjusted r=+0.065, p=6.9\u00d710<super>\u22125</super>), <i>Tannerella</i> \u00d7 HbA1c (adjusted r=+0.047, p=3.4\u00d710<super>\u22125</super>), and <i>Tannerella</i> \u00d7 total cholesterol (adjusted r=+0.054, p=2.4\u00d710<super>\u22126</super>) all survived, confirming <i>Tannerella</i> as a multi-domain adverse marker. <i>Haemophilus</i> \u00d7 triglycerides survived (adjusted r=\u22120.063, p=1.1\u00d710<super>\u22124</super>) and <i>Haemophilus</i> \u00d7 HDL was essentially unchanged (adjusted r=+0.047, p=3.7\u00d710<super>\u22125</super>)."))
     add(p(S["PB"], "<i>Rothia</i> associations collapsed entirely after adjustment \u2014 all seven unadjusted findings were fully explained by age confounding. <i>Rothia</i> abundance increases with age, as do blood pressure and HbA1c, producing spurious unadjusted associations. The collapse of <i>Rothia</i> associations was predicted in our pre-specified hypotheses prior to running adjusted models, providing a prospective validation of the analytical framework."))
     add(p(S["PB"], "<i>Haemophilus</i> \u00d7 systolic BP and <i>Tannerella</i> \u00d7 diastolic BP did not survive adjustment, indicating these BP signals are partially mediated by age and BMI."))
 
     # ── Discussion ───────────────────────────────────────────────────────────
     add(p(S["SH"], "DISCUSSION"))
     add(p(S["PB"], "Our analysis of 9,848 US adults demonstrates that genus-level oral microbiome composition is associated with cardiometabolic markers across multiple biological domains, while alpha diversity shows minimal association with the same markers. Age-adjusted models confirmed the core findings."))
-    add(p(S["PB"], "The <i>Porphyromonas</i> \u00d7 hsCRP result is the most notable finding from age-adjusted analysis. The association strengthened after controlling for age, sex, BMI, and smoking (r=+0.037 unadjusted \u2192 r=+0.080 adjusted, p=5.1\u00d710\u207b\u2077). Age was suppressing the true inflammatory signal: younger adults with high <i>Porphyromonas</i> showed the strongest CRP elevation. This is consistent with the detection of <i>P. gingivalis</i> in coronary artery plaques and its established role in systemic inflammation."))
-    add(p(S["PB"], "<i>Neisseria</i> \u00d7 systolic BP (adjusted r=\u22120.052, p=4.7\u00d710\u207b\u2076) survived adjustment with minimal attenuation. This provides population-level support for the nitrate-nitrite-NO pathway in blood pressure regulation, independent of age and metabolic status."))
+    add(p(S["PB"], "The <i>Porphyromonas</i> \u00d7 hsCRP result is the most notable finding from age-adjusted analysis. The association strengthened after controlling for age, sex, BMI, and smoking (r=+0.037 unadjusted \u2192 r=+0.080 adjusted, p=5.1\u00d710<super>\u22127</super>). Age was suppressing the true inflammatory signal: younger adults with high <i>Porphyromonas</i> showed the strongest CRP elevation. This is consistent with the detection of <i>P. gingivalis</i> in coronary artery plaques and its established role in systemic inflammation."))
+    add(p(S["PB"], "<i>Neisseria</i> \u00d7 systolic BP (adjusted r=\u22120.052, p=4.7\u00d710<super>\u22126</super>) survived adjustment with minimal attenuation. This provides population-level support for the nitrate-nitrite-NO pathway in blood pressure regulation, independent of age and metabolic status."))
     add(p(S["PB"], "<i>Haemophilus</i> and <i>Neisseria</i> showed the clearest protective signals across domains. <i>Haemophilus</i> was inversely associated with triglycerides, HbA1c, and BP, and positively with HDL. <i>Neisseria</i> was inversely associated with hsCRP, triglycerides, BP, and HbA1c. Both are nitrate-reducing bacteria, supporting the nitrate-nitrite-NO hypothesis."))
     add(p(S["PB"], "The <i>Tannerella</i> data carry clinical weight. This red complex member correlated adversely with LDL (the strongest single r in the dataset), total cholesterol, glucose, HbA1c, and BP. All lipid and metabolic associations survived age adjustment. The simultaneous signal across this many marker domains in nearly 10,000 Americans has not previously been reported."))
     add(p(S["PB"], "Shannon diversity missed all of these genus-level signals. A person with high Shannon diversity could simultaneously have elevated <i>Tannerella</i> burden; a person with low Shannon diversity could have high <i>Neisseria</i> abundance. The diversity index obscures the clinically relevant signal entirely. Platforms reporting only diversity scores will not capture these associations."))
