@@ -8,7 +8,8 @@ import { BACTERIA } from "../../../../lib/bacteria-data"
 import type { BacteriaEntry, BacteriaInteraction } from "../../../../lib/bacteria-data"
 import {
   HeartPulse, Brain, Bone, Microscope, Activity, FlaskConical, Baby, Dna,
-  TrendingDown, Wind, AlertTriangle, Flame, ArrowRight, ChevronRight,
+  TrendingDown, TrendingUp, Droplets, Wind, Flame, AlertTriangle, Zap,
+  ArrowRight, Clock, ChevronRight,
 } from "lucide-react"
 
 const serif = "'Cormorant Garamond', Georgia, serif"
@@ -18,7 +19,8 @@ const sans  = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 
 const ICON_MAP: Record<string, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
   HeartPulse, Brain, Bone, Microscope, Activity, FlaskConical, Baby, Dna,
-  TrendingDown, Wind, AlertTriangle, Flame, ArrowRight,
+  TrendingDown, TrendingUp, Droplets, Wind, Flame, AlertTriangle, Zap,
+  ArrowRight, Clock,
 }
 
 function getIcon(name: string) {
@@ -125,18 +127,16 @@ function InteractionCard({ item, color, accentBg, stagger }: {
         height: "100%",
       }}>
         <div style={{
-          width: 36, height: 36, borderRadius: 8,
-          background: accentBg,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          marginBottom: 12,
+          display: "flex", alignItems: "center", gap: 8,
+          marginBottom: 8,
         }}>
-          <Icon size={18} color={color} strokeWidth={1.8} />
-        </div>
-        <div style={{
-          fontFamily: serif, fontSize: 15, fontWeight: 500,
-          color: "#141410", lineHeight: 1.3, marginBottom: 8,
-        }}>
-          {item.title}
+          <Icon size={18} color={color} strokeWidth={1.5} />
+          <div style={{
+            fontFamily: serif, fontSize: 15, fontWeight: 500,
+            color: "#141410", lineHeight: 1.3,
+          }}>
+            {item.title}
+          </div>
         </div>
         <p style={{
           fontFamily: sans, fontSize: 12,

@@ -2,6 +2,10 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import Link from "next/link"
+import {
+  Brain, AlertTriangle, Dna, Flame,
+  TrendingDown, Wind, ArrowRight,
+} from "lucide-react"
 
 const serif = "'Cormorant Garamond', Georgia, serif"
 const sans  = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
@@ -80,6 +84,18 @@ const PATHOGENIC: BacteriaCard[] = [
   },
 ]
 
+// ── Primary icon per bacteria ───────────────────────────────────────────────
+
+const PRIMARY_ICON: Record<string, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
+  "p-gingivalis": Brain,
+  "tannerella": AlertTriangle,
+  "fusobacterium": Dna,
+  "prevotella": Flame,
+  "haemophilus": TrendingDown,
+  "neisseria": Wind,
+  "veillonella": ArrowRight,
+}
+
 // ── Scroll reveal hook ──────────────────────────────────────────────────────
 
 function useScrollReveal(staggerMs = 0) {
@@ -138,23 +154,20 @@ function Card({ card, stagger }: { card: BacteriaCard; stagger: number }) {
           </span>
         )}
 
-        {/* Image placeholder */}
-        <div style={{
-          position: "absolute", top: 20, right: 20,
-          width: 72, height: 72, borderRadius: 8,
-          background: "rgba(20,20,16,0.04)",
-          border: "0.5px solid rgba(20,20,16,0.1)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          flexDirection: "column",
-        }}>
-          <span style={{
-            fontFamily: sans, fontSize: 9,
-            color: "rgba(20,20,16,0.2)",
-            textAlign: "center", lineHeight: 1.3,
-          }}>
-            image<br />coming
-          </span>
-        </div>
+        {/* Primary icon badge */}
+        {(() => {
+          const Icon = PRIMARY_ICON[card.slug]
+          const iconColor = isProtective ? "rgba(45,106,79,0.4)" : "rgba(192,57,43,0.4)"
+          return Icon ? (
+            <div style={{
+              position: "absolute", top: 20, right: 20,
+              width: 72, height: 72, borderRadius: 8,
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <Icon size={28} strokeWidth={1} color={iconColor} />
+            </div>
+          ) : null
+        })()}
 
         {/* Bacteria name + tag */}
         <div style={{ marginBottom: 10, paddingRight: 84, marginTop: card.featured ? 28 : 0 }}>
