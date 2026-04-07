@@ -7,9 +7,10 @@ import { type ScoreWheelProps } from "../components/score-wheel"
 import { PushNotificationPrompt } from "../components/push-notification-prompt"
 import { IOSInstallBanner } from "../components/ios-install-banner"
 import { PanelConvergence } from "../components/panel-convergence"
+import { RefreshCw } from "lucide-react"
 
 const serif = "'Cormorant Garamond', Georgia, serif"
-const sans  = "-apple-system, BlinkMacSystemFont, sans-serif"
+const sans  = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 
 const PANEL_COLORS: Record<string, string> = {
   sleep: "#185FA5",
@@ -147,8 +148,8 @@ function SeeWhy({ title, explanation, panels }: { title: string; explanation: st
   return (
     <div>
       <button onClick={expand} style={{
-        fontFamily: sans, fontSize: 9, color: "#C49A3C",
-        textTransform: "uppercase", letterSpacing: "1.5px",
+        fontFamily: sans, fontSize: 11, color: "#9A7200",
+        textTransform: "uppercase", letterSpacing: "1px",
         background: "none", border: "none", cursor: "pointer", padding: 0,
         marginTop: 8, display: "block",
       }}>
@@ -198,7 +199,7 @@ function SignalRow({ signal }: { signal: CrossPanelSignal }) {
         }} />
         {signal.panels.map(p => <PanelPill key={p} panel={p} />)}
       </div>
-      <div style={{ fontFamily: sans, fontSize: 14, fontWeight: 600, color: "#1a1a18", marginBottom: 4 }}>
+      <div style={{ fontFamily: serif, fontSize: 18, fontWeight: 400, color: "#1a1a18", marginBottom: 4 }}>
         {signal.title}
       </div>
       <div style={{ fontFamily: sans, fontSize: 11, color: "#8C8A82", lineHeight: 1.5 }}>
@@ -258,8 +259,14 @@ function TriangleWatermark() {
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
-export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHistoryPoint[]; wearableNeedsReconnect?: boolean }) {
-  const { wearableNeedsReconnect = false } = props
+export function DashboardClient(props: ScoreWheelProps & {
+  labHistory?: LabHistoryPoint[];
+  wearableNeedsReconnect?: boolean;
+  firstName?: string;
+  latestSleepDate?: string | null;
+  trendDeltas?: { sleep: number | null; blood: number | null; oral: number | null };
+}) {
+  const { wearableNeedsReconnect = false, firstName, latestSleepDate, trendDeltas } = props
 
   // ── Insight data state ─────────────────────────────────────────────────────
   const [insights, setInsights] = useState<InsightData | null>(null)
@@ -348,114 +355,99 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
           </div>
         )}
 
-        {/* Sync */}
-        {props.sleepConnected && !wearableNeedsReconnect && (
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-            <button onClick={handleSyncNow} disabled={syncingNow} style={{
-              fontFamily: sans, fontSize: 11, letterSpacing: "0.06em", textTransform: "uppercase",
-              color: syncingNow ? "var(--ink-30)" : "var(--ink-40)",
-              background: "none", border: `0.5px solid ${syncingNow ? "var(--ink-08)" : "var(--ink-12)"}`,
-              borderRadius: 4, padding: "6px 14px", cursor: syncingNow ? "default" : "pointer",
-            }}>
-              {syncingNow ? "Syncing…" : "Sync now"}
-            </button>
-            {props.lastSyncAt && (
-              <span style={{ fontFamily: sans, fontSize: 11, color: "var(--ink-30)" }}>
-                Last synced {new Date(props.lastSyncAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}, {new Date(props.lastSyncAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
-              </span>
-            )}
-            {syncResult && <span style={{ fontFamily: sans, fontSize: 11, color: "#3B6D11" }}>{syncResult}</span>}
-          </div>
-        )}
-
         <PushNotificationPrompt />
 
-        {/* ── SCORE HEADER — panel chips, equal size ────────────────────── */}
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 32 }}>
-          {[
-            { key: "sleep", label: sleepHidden ? "RECOVERY" : "SLEEP", color: "#185FA5", score: hasSleep ? props.breakdown.sleepSub : null, max: 30 },
-            { key: "blood", label: "BLOOD", color: "#A32D2D", score: hasBlood ? props.breakdown.bloodSub : null, max: 40 },
-            { key: "oral",  label: "ORAL",  color: "#3B6D11", score: hasOral  ? props.breakdown.oralSub  : null, max: 30 },
-          ].map((p) => {
-            const isSleepOff = p.key === "sleep" && sleepHidden
-            const chipColor = isSleepOff ? "rgba(0,0,0,0.2)" : p.color
-            const chipScore = isSleepOff ? 0 : p.score
-            return (
-              <div key={p.key} style={{ flex: 1, minWidth: 0 }}>
-                {/* Chip card — identical height for all three */}
-                <div style={{
-                  background: "#fff", border: "0.5px solid rgba(0,0,0,0.06)",
-                  borderRadius: 8, padding: "10px 16px",
-                  transition: "all 400ms ease",
-                }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{
-                      width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
-                      background: chipColor, transition: "background 400ms ease",
-                    }} />
-                    <span style={{ fontFamily: sans, fontSize: 9, textTransform: "uppercase", letterSpacing: "1.5px", color: "#8C8A82" }}>
-                      {p.label}
-                    </span>
-                    <span style={{
-                      fontFamily: serif, fontSize: 24, marginLeft: "auto",
-                      color: chipColor, transition: "color 400ms ease",
-                    }}>
-                      {chipScore !== null ? Math.round(chipScore) : "\u2014"}
-                    </span>
-                  </div>
-                  <div style={{ height: 2, borderRadius: 1, background: "rgba(0,0,0,0.04)", marginTop: 4 }}>
-                    <div style={{
-                      height: "100%", borderRadius: 1,
-                      background: chipColor,
-                      width: chipScore !== null ? `${(chipScore / p.max) * 100}%` : "0%",
-                      transition: "width 400ms ease, background 400ms ease",
-                    }} />
-                  </div>
-                </div>
-                {/* Sleep toggle — outside the card, left-aligned, 6px gap */}
-                {p.key === "sleep" && (
-                  <div
-                    onClick={toggleSleep}
-                    style={{
-                      display: "inline-flex", alignItems: "center",
-                      background: "#1a1a18", borderRadius: 14, border: "none",
-                      padding: "4px 5px", marginTop: 6, cursor: "pointer",
-                      position: "relative", height: 28, width: 140,
-                    }}
-                  >
-                    <div style={{
-                      position: "absolute",
-                      top: 4, left: sleepHidden ? 74 : 4,
-                      width: 20, height: 20, borderRadius: "50%",
-                      background: "#C49A3C",
-                      transition: "left 250ms cubic-bezier(0.4,0.0,0.2,1)",
-                      zIndex: 1,
-                    }} />
-                    <span style={{
-                      fontFamily: sans, fontSize: 8, letterSpacing: "1px", textTransform: "uppercase",
-                      color: !sleepHidden ? "#fff" : "rgba(255,255,255,0.35)",
-                      transition: "color 250ms cubic-bezier(0.4,0.0,0.2,1)",
-                      flex: 1, textAlign: "center", position: "relative", zIndex: 2,
-                    }}>
-                      Wearable
-                    </span>
-                    <span style={{
-                      fontFamily: sans, fontSize: 8, letterSpacing: "1px", textTransform: "uppercase",
-                      color: sleepHidden ? "#fff" : "rgba(255,255,255,0.35)",
-                      transition: "color 250ms cubic-bezier(0.4,0.0,0.2,1)",
-                      flex: 1, textAlign: "center", position: "relative", zIndex: 2,
-                    }}>
-                      No wearable
-                    </span>
-                  </div>
-                )}
-              </div>
-            )
-          })}
+        {/* ── HEADER ROW — date + sync button ──────────────────────────── */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          marginBottom: 8,
+        }}>
+          <span style={{
+            fontFamily: sans, fontSize: 10, letterSpacing: "1.5px",
+            textTransform: "uppercase", color: "rgba(20,20,16,0.35)",
+          }}>
+            {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }).toUpperCase()}
+          </span>
+
+          {props.sleepConnected && !wearableNeedsReconnect && (
+            <button
+              onClick={handleSyncNow}
+              disabled={syncingNow}
+              className="sync-btn"
+              style={{
+                fontFamily: sans, fontSize: 11, color: "rgba(20,20,16,0.4)",
+                background: "none", border: "none", cursor: syncingNow ? "default" : "pointer",
+                padding: "4px 8px", display: "inline-flex", alignItems: "center", gap: 5,
+                transition: "opacity 150ms ease",
+              }}
+            >
+              <RefreshCw
+                size={12}
+                strokeWidth={1.5}
+                style={{
+                  animation: syncingNow ? "syncSpin 800ms linear infinite" : "none",
+                }}
+              />
+              <span>{syncResult ?? "sync"}</span>
+            </button>
+          )}
+        </div>
+
+        {/* ── GREETING ─────────────────────────────────────────────────── */}
+        <div style={{ marginBottom: 16 }}>
+          <h1 style={{
+            fontFamily: serif, fontSize: 22, fontWeight: 400,
+            color: "rgba(20,20,16,0.5)", margin: 0, lineHeight: 1.2,
+          }}>
+            {(() => {
+              const h = new Date().getHours()
+              const name = firstName ?? ""
+              const greeting = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening"
+              return name ? `${greeting}, ${name}.` : `${greeting}.`
+            })()}
+          </h1>
+        </div>
+
+        {/* ── SLEEP TOGGLE ─────────────────────────────────────────────── */}
+        <div style={{ marginBottom: 20 }}>
+          <div
+            onClick={toggleSleep}
+            style={{
+              display: "inline-flex", alignItems: "center",
+              background: "#1a1a18", borderRadius: 14, border: "none",
+              padding: "4px 5px", cursor: "pointer",
+              position: "relative", height: 28, width: 140,
+            }}
+          >
+            <div style={{
+              position: "absolute",
+              top: 4, left: sleepHidden ? 74 : 4,
+              width: 20, height: 20, borderRadius: "50%",
+              background: "#C49A3C",
+              transition: "left 250ms cubic-bezier(0.4,0.0,0.2,1)",
+              zIndex: 1,
+            }} />
+            <span style={{
+              fontFamily: sans, fontSize: 8, letterSpacing: "1px", textTransform: "uppercase",
+              color: !sleepHidden ? "#fff" : "rgba(255,255,255,0.35)",
+              transition: "color 250ms cubic-bezier(0.4,0.0,0.2,1)",
+              flex: 1, textAlign: "center", position: "relative", zIndex: 2,
+            }}>
+              Wearable
+            </span>
+            <span style={{
+              fontFamily: sans, fontSize: 8, letterSpacing: "1px", textTransform: "uppercase",
+              color: sleepHidden ? "#fff" : "rgba(255,255,255,0.35)",
+              transition: "color 250ms cubic-bezier(0.4,0.0,0.2,1)",
+              flex: 1, textAlign: "center", position: "relative", zIndex: 2,
+            }}>
+              No wearable
+            </span>
+          </div>
         </div>
 
         {/* ── CONVERGENCE GRAPHIC ──────────────────────────────────────────── */}
-        <div style={{ marginBottom: 24 }}>
+        <div style={{ marginBottom: 12 }}>
           <PanelConvergence
             score={sleepHidden ? props.score - props.breakdown.sleepSub : props.score}
             breakdown={props.breakdown}
@@ -466,7 +458,30 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
             bloodLabName={props.bloodData?.labName}
             oralKitStatus={props.oralKitStatus}
             sleepHidden={sleepHidden}
+            trendDeltas={trendDeltas}
           />
+        </div>
+
+        {/* ── PANEL NAV ANCHORS ───────────────────────────────────────────── */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "center",
+          gap: 6, marginBottom: 28,
+        }}>
+          {[
+            { label: "Sleep", href: "#panel-sleep" },
+            { label: "Blood", href: "#panel-blood" },
+            { label: "Oral", href: "#panel-oral" },
+          ].map((nav, i) => (
+            <span key={nav.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              {i > 0 && <span style={{ color: "rgba(20,20,16,0.15)", fontSize: 10 }}>&middot;</span>}
+              <a href={nav.href} style={{
+                fontFamily: sans, fontSize: 11, letterSpacing: "1px",
+                color: "#9A7200", textDecoration: "none", textTransform: "uppercase",
+              }}>
+                {nav.label}
+              </a>
+            </span>
+          ))}
         </div>
 
         {/* ── CROSS-PANEL SIGNALS ──────────────────────────────────────────── */}
@@ -485,6 +500,7 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
         {!insightsLoading && hasCrossPanel && panelCount >= 2 && (
           <div style={{
             background: "#fff", border: "0.5px solid rgba(0,0,0,0.06)",
+            borderLeft: "3px solid rgba(192,57,43,0.3)",
             borderRadius: 12, padding: 24, marginBottom: 32,
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
@@ -497,7 +513,9 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
             </div>
 
             {/* Negative signals first */}
-            {crossPanelNeg.map((s, i) => <SignalRow key={`neg-${i}`} signal={s} />)}
+            {crossPanelNeg.map((s, i) => (
+              <SignalRow key={`neg-${i}`} signal={s} />
+            ))}
 
             {/* Divider + positive signals */}
             {crossPanelPos.length > 0 && (
@@ -611,12 +629,12 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
           marginBottom: 40,
         }}>
           {[
-            { key: "sleep", label: "Sleep", color: "#185FA5", active: hasSleep, score: props.breakdown.sleepSub, max: 30, href: "/dashboard/sleep", insight: props.sleepData ? `${props.sleepData.hrv.toFixed(0)}ms HRV · ${props.sleepData.deepPct.toFixed(0)}% deep` : undefined },
-            { key: "blood", label: "Blood", color: "#A32D2D", active: hasBlood, score: props.breakdown.bloodSub, max: 40, href: "/dashboard/blood", insight: props.bloodData ? `hs-CRP ${props.bloodData.hsCRP.toFixed(1)} · LDL ${props.bloodData.ldl.toFixed(0)}` : undefined },
-            { key: "oral",  label: "Oral",  color: "#3B6D11", active: hasOral,  score: props.breakdown.oralSub,  max: 30, href: "/dashboard/oral",  insight: props.oralData ? `Shannon ${props.oralData.shannonDiversity.toFixed(1)} · ${props.oralData.nitrateReducersPct.toFixed(0)}% nitrate` : undefined },
+            { key: "sleep", label: "Sleep", color: "#4A7FB5", active: hasSleep, score: props.breakdown.sleepSub, max: 30, href: "/dashboard/sleep", insight: props.sleepData ? `${props.sleepData.hrv.toFixed(0)}ms HRV · ${props.sleepData.deepPct.toFixed(0)}% deep` : undefined },
+            { key: "blood", label: "Blood", color: "#C0392B", active: hasBlood, score: props.breakdown.bloodSub, max: 40, href: "/dashboard/blood", insight: props.bloodData ? `hs-CRP ${props.bloodData.hsCRP.toFixed(1)} · LDL ${props.bloodData.ldl.toFixed(0)}` : undefined },
+            { key: "oral",  label: "Oral",  color: "#2D6A4F", active: hasOral,  score: props.breakdown.oralSub,  max: 30, href: "/dashboard/oral",  insight: props.oralData ? `Shannon ${props.oralData.shannonDiversity.toFixed(1)} · ${props.oralData.nitrateReducersPct.toFixed(0)}% nitrate` : undefined },
           ].map((p) => (
             p.active ? (
-              <Link key={p.key} href={p.href} style={{
+              <Link key={p.key} id={`panel-${p.key}`} href={p.href} style={{
                 textDecoration: "none", color: "inherit", display: "block",
                 background: "#fff", border: "0.5px solid rgba(0,0,0,0.06)",
                 borderRadius: 12, padding: "20px 24px", cursor: "pointer",
@@ -642,12 +660,51 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
                     overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                   }}>{p.insight}</p>
                 )}
-                <span style={{ fontFamily: sans, fontSize: 9, color: "#C49A3C", textTransform: "uppercase", letterSpacing: "1.5px" }}>
+
+                {/* Wearable pill inside sleep card (Fix 2) */}
+                {p.key === "sleep" && (
+                  <div style={{ marginTop: 8 }}>
+                    {props.sleepConnected ? (
+                      <>
+                        <span style={{
+                          fontFamily: sans, fontSize: 10, color: "#4A7FB5",
+                          opacity: 0.7, display: "inline-flex", alignItems: "center", gap: 5,
+                        }}>
+                          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#4A7FB5" }} />
+                          {({ whoop: "WHOOP", oura: "Oura", garmin: "Garmin" } as Record<string,string>)[props.wearableProvider ?? ""] ?? "Wearable"}
+                        </span>
+                        {/* Sync freshness (Fix 3) */}
+                        {latestSleepDate && (
+                          <span style={{
+                            fontFamily: sans, fontSize: 9, color: "rgba(20,20,16,0.3)",
+                            display: "block", marginTop: 3,
+                          }}>
+                            {(() => {
+                              const days = Math.floor((Date.now() - new Date(latestSleepDate).getTime()) / 86400000)
+                              if (days === 0) return "Synced today"
+                              if (days === 1) return "Synced yesterday"
+                              return `Synced ${days} days ago`
+                            })()}
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <Link href="/settings" onClick={e => e.stopPropagation()} style={{
+                        fontFamily: sans, fontSize: 10, color: "rgba(20,20,16,0.35)",
+                        textDecoration: "none",
+                      }}>
+                        + connect wearable
+                      </Link>
+                    )}
+                  </div>
+                )}
+
+                <span style={{ fontFamily: sans, fontSize: 9, color: "#9A7200", textTransform: "uppercase", letterSpacing: "1.5px", display: "block", marginTop: p.key === "sleep" ? 4 : 0 }}>
                   View details →
                 </span>
               </Link>
             ) : (
-              <div key={p.key} style={{
+              <div key={p.key} id={`panel-${p.key}`} style={{
                 background: "transparent",
                 border: "0.5px dashed rgba(0,0,0,0.12)",
                 borderRadius: 12, padding: "20px 24px",
@@ -656,7 +713,7 @@ export function DashboardClient(props: ScoreWheelProps & { labHistory?: LabHisto
                 minHeight: 140, textAlign: "center",
               }}>
                 <span style={{ fontFamily: serif, fontSize: 18, color: "#bbb", marginBottom: 8 }}>{p.label}</span>
-                <span style={{ fontFamily: sans, fontSize: 9, color: "#C49A3C", textTransform: "uppercase", letterSpacing: "1.5px" }}>
+                <span style={{ fontFamily: sans, fontSize: 9, color: "#9A7200", textTransform: "uppercase", letterSpacing: "1.5px" }}>
                   Add {p.label.toLowerCase()} →
                 </span>
               </div>

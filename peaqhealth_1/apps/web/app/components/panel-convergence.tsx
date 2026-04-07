@@ -28,11 +28,13 @@ interface PanelConvergenceProps {
   bloodLabName?: string
   oralKitStatus?: "none" | "ordered" | "complete"
   sleepHidden?: boolean
+  trendDeltas?: { sleep: number | null; blood: number | null; oral: number | null }
 }
 
 export function PanelConvergence({
   score, breakdown, sleepConnected, oralActive, hasBlood,
   wearableProvider, bloodLabName, oralKitStatus, sleepHidden = false,
+  trendDeltas,
 }: PanelConvergenceProps) {
   const panels: PanelState[] = [
     {
@@ -195,6 +197,27 @@ export function PanelConvergence({
               >
                 {isSleepDimmed ? "No wearable" : (p.connected ? p.source : p.cta)}
               </text>
+
+              {/* Trend indicator (Fix 7) */}
+              {(() => {
+                const delta = trendDeltas?.[p.key as "sleep" | "blood" | "oral"] ?? null
+                if (delta === null || delta === 0 || !p.connected) return null
+                const arrow = delta > 0 ? "\u2191" : "\u2193"
+                const color = delta > 0 ? "#2D6A4F" : "#C0392B"
+                return (
+                  <text
+                    x={x + panelW - 10} y={panelY + panelH - 8}
+                    textAnchor="end"
+                    fontFamily={sans}
+                    fontSize={10}
+                    fill={color}
+                    opacity={isSleepDimmed ? 0 : 1}
+                    style={{ transition: "opacity 400ms ease" }}
+                  >
+                    {arrow}
+                  </text>
+                )
+              })()}
             </g>
           )
         })}
@@ -207,12 +230,12 @@ export function PanelConvergence({
           <circle
             cx={circleCx} cy={circleCy} r={circleR}
             fill="#FFFFFF"
-            stroke="#141410"
-            strokeWidth={0.5}
+            stroke="rgba(20,20,16,0.2)"
+            strokeWidth={1}
           />
           {/* Score number */}
           <text
-            x={circleCx} y={circleCy + 4}
+            x={circleCx} y={circleCy - 2}
             textAnchor="middle"
             dominantBaseline="central"
             fontFamily={serif}
@@ -221,6 +244,17 @@ export function PanelConvergence({
             fill="#141410"
           >
             {displayScore}
+          </text>
+          {/* Date label */}
+          <text
+            x={circleCx} y={circleCy + 24}
+            textAnchor="middle"
+            fontFamily={sans}
+            fontSize={9}
+            letterSpacing="1.5"
+            fill="rgba(20,20,16,0.35)"
+          >
+            {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }).toUpperCase()}
           </text>
         </g>
       </svg>

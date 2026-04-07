@@ -20,6 +20,8 @@ export default async function DashboardPage() {
     { data: lifestyle },
     { data: labHistoryRows },
     { data: sleepNights },
+    { data: profile },
+    { data: prevSnapshot },
   ] = await Promise.all([
     supabase.from("score_snapshots").select("*").eq("user_id", user.id).order("calculated_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("wearable_connections_v2").select("provider,last_synced_at,needs_reconnect").eq("user_id", user.id).order("connected_at", { ascending: false }).limit(1).maybeSingle(),
@@ -28,6 +30,8 @@ export default async function DashboardPage() {
     supabase.from("lifestyle_records").select("*").eq("user_id", user.id).single(),
     supabase.from("lab_history").select("locked_at, total_score, blood_score, collection_date, ldl_mgdl, hdl_mgdl, hs_crp_mgl, vitamin_d_ngml").eq("user_id", user.id).order("locked_at", { ascending: true }),
     supabase.from("sleep_data").select("date,source,total_sleep_minutes,deep_sleep_minutes,rem_sleep_minutes,sleep_efficiency,hrv_rmssd,spo2").eq("user_id", user.id).order("date", { ascending: false }).limit(30),
+    supabase.from("profiles").select("first_name").eq("id", user.id).single(),
+    supabase.from("score_snapshots").select("sleep_sub,blood_sub,oral_sub,calculated_at").eq("user_id", user.id).order("calculated_at", { ascending: false }).range(1, 1).maybeSingle(),
   ])
 
   const wearableRaw = wearableConn  // unified connection (replaces old wearable_connections + whoop_connections)
@@ -276,5 +280,22 @@ export default async function DashboardPage() {
     } : { connected: false, lastSynced: null, recentNights: [] },
   }
 
-  return <DashboardClient {...props} labHistory={labHistoryRows ?? []} wearableNeedsReconnect={wearableNeedsReconnect} />
+  // Compute most recent sleep data date for sync freshness
+  const latestSleepDate = bestNights.length > 0 ? bestNights[0].date : null
+
+  // Compute trend deltas (current vs previous snapshot)
+  const trendDeltas = prevSnapshot ? {
+    sleep: snapshot && prevSnapshot.sleep_sub != null ? (snapshot.sleep_sub ?? 0) - (prevSnapshot.sleep_sub ?? 0) : null,
+    blood: snapshot && prevSnapshot.blood_sub != null ? (snapshot.blood_sub ?? 0) - (prevSnapshot.blood_sub ?? 0) : null,
+    oral:  snapshot && prevSnapshot.oral_sub  != null ? (snapshot.oral_sub  ?? 0) - (prevSnapshot.oral_sub  ?? 0) : null,
+  } : undefined
+
+  return <DashboardClient
+    {...props}
+    labHistory={labHistoryRows ?? []}
+    wearableNeedsReconnect={wearableNeedsReconnect}
+    firstName={(profile?.first_name as string | null) ?? undefined}
+    latestSleepDate={latestSleepDate}
+    trendDeltas={trendDeltas}
+  />
 }
