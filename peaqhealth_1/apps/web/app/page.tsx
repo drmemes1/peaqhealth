@@ -784,13 +784,14 @@ export default function Home() {
 
           <div className="landing-team-grid" style={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 48,
+            gridTemplateColumns: "1fr 1fr 1fr",
+            gap: 36,
             marginTop: 40,
           }}>
             {([
               { name: "Dr. Igor Khabensky", title: "General Dentist", photo: "/images/dr-igor-khabensky.jpg" },
               { name: "Dr. Paul Leis", title: "Cardiologist", photo: "/images/dr-paul-leis.jpg" },
+              { name: "Alex Najarian", title: "Health Entrepreneur", photo: "/images/alex-najarian.png" },
             ] as const).map(doc => (
               <div key={doc.name} style={{ display: "flex", alignItems: "center", gap: 20 }}>
                 <img
