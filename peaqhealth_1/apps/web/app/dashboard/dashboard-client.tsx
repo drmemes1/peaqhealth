@@ -621,6 +621,21 @@ export function DashboardClient(props: ScoreWheelProps & {
           </div>
         )}
 
+        {/* ── GUIDANCE LINK ─────────────────────────────────────────────────── */}
+        {!insightsLoading && panelCount >= 1 && (
+          <Link href="/dashboard/guidance" style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "12px 0", marginBottom: 24,
+            borderTop: "0.5px solid rgba(0,0,0,0.06)",
+            textDecoration: "none",
+          }}>
+            <span style={{ fontFamily: sans, fontSize: 12, color: "#9A7200" }}>
+              See full guidance for all signals
+            </span>
+            <span style={{ fontFamily: sans, fontSize: 12, color: "#9A7200" }}>&rarr;</span>
+          </Link>
+        )}
+
         {/* ── 4. PANEL CARDS ──────────────────────────────────────────────────── */}
         <div style={{
           display: "grid",
