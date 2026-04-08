@@ -1,0 +1,295 @@
+// lib/emails/quiz-confirmation.ts
+// Inline-styled HTML email — no React Email dependency, no CSS classes.
+// All layouts use <table> for Outlook compatibility.
+
+interface QuizEmailProps {
+  score: number
+  maxScore: number
+  tier: "low" | "moderate" | "high"
+  tags: string[]
+}
+
+// ── Tag → label + panel mapping ──────────────────────────────────────────
+
+const TAG_LABELS: Record<string, { label: string; panel: "sleep" | "blood" | "oral" }> = {
+  nitrateLow:   { label: "Nitrate low",    panel: "oral" },
+  nitrateHigh:  { label: "Nitrate strong", panel: "oral" },
+  mouthwash:    { label: "Mouthwash use",  panel: "oral" },
+  periodontal:  { label: "Periodontal",    panel: "oral" },
+  cvHistory:    { label: "CV history",     panel: "blood" },
+  cvRisk:       { label: "CV risk",        panel: "blood" },
+  inflammation: { label: "Inflammation",   panel: "blood" },
+  airway:       { label: "Airway",         panel: "sleep" },
+  osa:          { label: "OSA signal",     panel: "sleep" },
+}
+
+const PANEL_COLORS: Record<string, { main: string; bg: string }> = {
+  sleep: { main: "#5B9BD5", bg: "rgba(91,155,213,0.15)" },
+  blood: { main: "#C97070", bg: "rgba(201,112,112,0.15)" },
+  oral:  { main: "#7AB87A", bg: "rgba(122,184,122,0.15)" },
+}
+
+// ── Signal bars ──────────────────────────────────────────────────────────
+
+function getSignalBars(tags: string[]) {
+  const hasSleep = tags.some(t => ["airway", "osa"].includes(t))
+  const hasBlood = tags.some(t => ["cvHistory", "cvRisk", "inflammation"].includes(t))
+  const hasOral  = tags.some(t => ["nitrateLow", "periodontal", "mouthwash"].includes(t))
+  return {
+    sleep: { pct: hasSleep ? 65 : 85, status: hasSleep ? "Watch" : "Good" },
+    blood: { pct: hasBlood ? 70 : 88, status: hasBlood ? "Watch" : "Good" },
+    oral:  { pct: hasOral  ? 28 : 55, status: hasOral  ? "Attention" : "Watch" },
+  }
+}
+
+function statusBadge(status: string): string {
+  const styles: Record<string, string> = {
+    Watch:     "background-color:#FAEEDA;color:#633806;",
+    Attention: "background-color:#FCEBEB;color:#791F1F;",
+    Good:      "background-color:#E1F5EE;color:#085041;",
+  }
+  return `<span style="font-family:Arial,sans-serif;font-size:9px;font-weight:500;padding:1px 6px;border-radius:2px;${styles[status] ?? ""}">${status}</span>`
+}
+
+// ── Primary signal copy ──────────────────────────────────────────────────
+
+function getPrimarySignalCopy(tags: string[]): { h2: string; body: string } {
+  const hasPerio  = tags.includes("periodontal")
+  const hasCv     = tags.includes("cvHistory") || tags.includes("cvRisk")
+  const hasAirway = tags.includes("airway") || tags.includes("osa")
+  const hasNitrate = tags.includes("nitrateLow") || tags.includes("mouthwash")
+  const hasInflam = tags.includes("inflammation")
+
+  if (hasPerio && hasCv && hasAirway) return {
+    h2: "Your cardiovascular history, sleep signals, and oral health share one biological pathway.",
+    body: "Periodontal bacteria enter the bloodstream and trigger the same inflammatory response your doctor measures with CRP. Those same bacteria predict sleep-disordered breathing before a polysomnogram would catch it. You have flagged signals in all three panels &mdash; and the oral microbiome is where they converge.",
+  }
+  if (hasPerio && hasCv) return {
+    h2: "Your cardiovascular history has an oral origin most cardiologists never check.",
+    body: "P. gingivalis and T. denticola &mdash; periodontal pathogens &mdash; have been physically detected in human coronary artery plaques at autopsy. Your cardiovascular risk profile and your oral microbiome are not separate conversations. They are the same conversation.",
+  }
+  if (hasAirway && (hasPerio || hasNitrate)) return {
+    h2: "Your airway signals have an oral microbiome signature.",
+    body: "OSA-associated bacteria &mdash; Prevotella and Fusobacterium &mdash; are detectable in the oral cavity before a sleep study would flag disordered breathing. Your nitrate pathway may also be compromised, reducing the nitric oxide your airways need for healthy muscle tone during sleep.",
+  }
+  if (hasCv && hasInflam) return {
+    h2: "Elevated inflammation and cardiovascular history compound each other &mdash; and the oral microbiome drives both.",
+    body: "Residual inflammatory risk is now considered at least as predictive of cardiac events as residual cholesterol risk. Periodontal pathogen load is a primary driver of systemic CRP elevation &mdash; through a bacteraemia pathway your cardiologist is almost certainly not monitoring.",
+  }
+  if (hasNitrate && !hasPerio && !hasCv && !hasAirway) return {
+    h2: "Your nitrate pathway may be compromised &mdash; and a daily habit could be the cause.",
+    body: "The bacteria that convert dietary nitrate into nitric oxide &mdash; your blood vessels' primary vasodilator &mdash; are among the first casualties of antiseptic mouthwash. This is a vascular risk factor hiding in your bathroom cabinet.",
+  }
+  return {
+    h2: "Your oral microbiome, blood biomarkers, and sleep signals are part of the same system.",
+    body: "Most health platforms measure one of these. Peaq measures all three &mdash; and finds the connections between them that no single test can see. Your quiz answers have identified at least one cross-panel signal worth measuring.",
+  }
+}
+
+// ── What Peaq would measure copy ─────────────────────────────────────────
+
+function getMeasureCopy(tags: string[]): { h2: string; body: string } {
+  const hasPerio  = tags.includes("periodontal")
+  const hasCv     = tags.includes("cvHistory") || tags.includes("cvRisk")
+  const hasAirway = tags.includes("airway") || tags.includes("osa")
+  const hasNitrate = tags.includes("nitrateLow") || tags.includes("mouthwash")
+
+  if (hasPerio && hasCv && hasAirway) return {
+    h2: "Three panels. Three signals. One picture no single test has shown you.",
+    body: "Your periodontal pathogen load connected to your hs-CRP. Your OSA-associated oral taxa connected to your nightly SpO2. Your nitrate-reducing bacteria connected to your HRV and blood pressure. These are not separate measurements &mdash; they are one conversation.",
+  }
+  if (hasPerio && hasCv) return {
+    h2: "The oral-cardiovascular connection, made measurable.",
+    body: "Peaq connects your periodontal pathogen load directly to your hs-CRP and Lp(a) &mdash; the two blood markers most predictive of cardiovascular events beyond standard LDL panels.",
+  }
+  if (hasAirway && hasNitrate) return {
+    h2: "Your oral microbiome as a sleep health predictor.",
+    body: "Peaq tracks OSA-associated taxa at species-level resolution and connects them to your nightly HRV and SpO2 from your wearable. The nitrate pathway shows up in both your blood pressure data and your sleep architecture.",
+  }
+  return {
+    h2: "One score. Three panels. The connections between them.",
+    body: "Oral microbiome sequencing at species-level resolution, 40+ blood biomarkers from any lab, and nightly sleep data from your wearable &mdash; unified into a single Peaq score that recalculates as your data updates.",
+  }
+}
+
+// ── Build HTML ────────────────────────────────────────────────────────────
+
+export function renderQuizConfirmationEmail(props: QuizEmailProps): string {
+  const { score, maxScore, tier, tags } = props
+  const bars = getSignalBars(tags)
+  const primary = getPrimarySignalCopy(tags)
+  const measure = getMeasureCopy(tags)
+
+  const tierLabel = tier === "high" ? "High" : tier === "moderate" ? "Moderate" : "Low"
+
+  // Build tag pills HTML
+  const tagPills = tags.map(t => {
+    const info = TAG_LABELS[t]
+    if (!info) return ""
+    const pc = PANEL_COLORS[info.panel]
+    return `<span style="display:inline-block;font-family:Arial,sans-serif;font-size:9px;padding:2px 8px;border-radius:10px;margin:2px 4px 2px 0;background-color:${pc.bg};color:${pc.main};">${info.label}</span>`
+  }).filter(Boolean).join("")
+
+  // Tag-filtered citations
+  const citations: Array<{ journal: string; finding: string; path: string }> = [
+    { journal: "Frontiers Immunol &middot; 2023", finding: "&ldquo;P. gingivalis directly detected in human coronary artery plaques.&rdquo; n=1,791", path: "Oral &rarr; Blood" },
+    { journal: "Eur J Prev Card &middot; 2019", finding: "&ldquo;Twice-daily brushing associated with 14% lower cardiovascular disease risk.&rdquo; n=247,696", path: "Oral &rarr; Blood" },
+  ]
+  if (tags.some(t => ["airway", "osa"].includes(t)))
+    citations.push({ journal: "mSystems &middot; 2022", finding: "&ldquo;Oral microbiome composition alone predicts obstructive sleep apnea.&rdquo; AUC 91.9%", path: "Oral &rarr; Sleep" })
+  if (tags.some(t => ["cvHistory", "cvRisk"].includes(t)))
+    citations.push({ journal: "Circulation &middot; 2026", finding: "&ldquo;Periodontal disease increases ASCVD risk through bacteremia and chronic inflammation.&rdquo;", path: "Oral &rarr; Blood" })
+  if (tags.includes("inflammation"))
+    citations.push({ journal: "Biol Psych &middot; 2016", finding: "&ldquo;Elevated CRP fragments sleep architecture and suppresses deep sleep.&rdquo;", path: "Blood &rarr; Sleep" })
+  if (tags.includes("nitrateLow"))
+    citations.push({ journal: "Hypertension &middot; 2015", finding: "&ldquo;Dietary nitrate provides sustained blood pressure lowering.&rdquo; n=300", path: "Oral &rarr; Blood" })
+
+  const citationRows = citations.map(c => `
+    <tr>
+      <td style="font-family:Arial,sans-serif;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:rgba(255,255,255,0.2);padding:10px 12px 10px 0;vertical-align:top;width:120px;border-bottom:1px solid rgba(255,255,255,0.06);">${c.journal}</td>
+      <td style="font-family:Georgia,serif;font-size:12px;font-style:italic;color:rgba(255,255,255,0.5);line-height:1.5;padding:10px 12px 10px 0;border-bottom:1px solid rgba(255,255,255,0.06);">${c.finding}</td>
+      <td style="font-family:Arial,sans-serif;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:#C49A3C;white-space:nowrap;padding:10px 0;vertical-align:top;border-bottom:1px solid rgba(255,255,255,0.06);">${c.path}</td>
+    </tr>
+  `).join("")
+
+  function panelBarHtml(panel: string, label: string, color: string, pct: number, status: string) {
+    return `
+      <td style="width:33%;padding:0 8px;vertical-align:top;">
+        <div style="font-family:Arial,sans-serif;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:${color};margin-bottom:8px;">${label}</div>
+        <div style="height:3px;background:rgba(255,255,255,0.08);border-radius:2px;margin-bottom:6px;">
+          <div style="height:3px;width:${pct}%;background:${color};border-radius:2px;"></div>
+        </div>
+        ${statusBadge(status)}
+      </td>
+    `
+  }
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#F6F4EF;">
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color:#F6F4EF;">
+<tr><td align="center" style="padding:20px 0;">
+<table role="presentation" cellpadding="0" cellspacing="0" width="580" style="max-width:580px;width:100%;">
+
+<!-- 1. DARK HEADER -->
+<tr><td style="background-color:#16150F;padding:40px 48px 36px;border-radius:8px 8px 0 0;">
+  <div style="font-family:Georgia,serif;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:24px;">peaq</div>
+  <h1 style="font-family:Georgia,serif;font-size:34px;font-weight:400;color:#ffffff;margin:0 0 12px;line-height:1.15;">You&rsquo;re on the list.</h1>
+  <p style="font-family:Arial,sans-serif;font-size:13px;color:rgba(255,255,255,0.4);line-height:1.65;margin:0;">Your quiz signals are saved. Here&rsquo;s what they&rsquo;re telling us &mdash; and why the oral panel is where we&rsquo;d look first.</p>
+</td></tr>
+
+<!-- 2. SIGNAL PROFILE BAR -->
+<tr><td style="background-color:#1E1D16;padding:24px 48px;">
+  <div style="font-family:Arial,sans-serif;font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:rgba(255,255,255,0.25);margin-bottom:16px;">Your signal profile &middot; ${score}/${maxScore} &middot; ${tierLabel} signal density</div>
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>
+    ${panelBarHtml("sleep", "Sleep", "#5B9BD5", bars.sleep.pct, bars.sleep.status)}
+    ${panelBarHtml("blood", "Blood", "#C97070", bars.blood.pct, bars.blood.status)}
+    ${panelBarHtml("oral", "Oral", "#7AB87A", bars.oral.pct, bars.oral.status)}
+  </tr></table>
+  <div style="margin-top:12px;">${tagPills}</div>
+</td></tr>
+
+<!-- 3. PRIMARY SIGNAL -->
+<tr><td style="background-color:#ffffff;padding:40px 48px 28px;">
+  <div style="font-family:Arial,sans-serif;font-size:9px;color:#C49A3C;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:12px;">Your primary signal</div>
+  <h2 style="font-family:Georgia,serif;font-size:19px;font-weight:400;color:#16150F;line-height:1.35;margin:0 0 12px;">${primary.h2}</h2>
+  <p style="font-family:Arial,sans-serif;font-size:13px;color:#666666;line-height:1.75;margin:0;">${primary.body}</p>
+</td></tr>
+
+<!-- 4. ORAL RISK SECTION -->
+<tr><td style="background-color:#16150F;padding:28px 48px;">
+  <div style="font-family:Arial,sans-serif;font-size:9px;color:#C49A3C;letter-spacing:0.16em;text-transform:uppercase;margin-bottom:16px;">Why the oral panel comes first</div>
+  <h2 style="font-family:Georgia,serif;font-size:20px;font-weight:400;color:#ffffff;line-height:1.3;margin:0 0 16px;">The most underestimated risk factor &mdash; and the most <em style="font-style:italic;color:#C49A3C;">actionable one.</em></h2>
+  <p style="font-family:Arial,sans-serif;font-size:13px;color:rgba(255,255,255,0.5);line-height:1.75;margin:0 0 12px;">Most risks you discover are hard to move quickly. Elevated Lp(a) is largely genetic. Low HRV takes months of lifestyle work. But periodontal disease is different &mdash; it is the rare systemic risk factor where a single appointment changes your numbers.</p>
+  <p style="font-family:Arial,sans-serif;font-size:13px;color:rgba(255,255,255,0.5);line-height:1.75;margin:0 0 20px;">The oral microbiome is where cardiovascular risk, sleep disruption, and systemic inflammation all share a common origin. And it is the panel nobody else is measuring.</p>
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+      <td style="font-family:Georgia,serif;font-size:18px;color:#C49A3C;vertical-align:top;padding:10px 12px 10px 0;width:70px;border-bottom:1px solid rgba(255,255,255,0.06);">n=1,791</td>
+      <td style="font-family:Arial,sans-serif;font-size:12px;color:rgba(255,255,255,0.45);line-height:1.5;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><span style="color:rgba(255,255,255,0.75);font-weight:500;">P. gingivalis directly detected</span> in human coronary artery plaques at autopsy. Not associated &mdash; physically present. Frontiers in Immunology, 2023.</td>
+    </tr>
+    <tr>
+      <td style="font-family:Georgia,serif;font-size:18px;color:#C49A3C;vertical-align:top;padding:10px 12px 10px 0;width:70px;border-bottom:1px solid rgba(255,255,255,0.06);">91.9%</td>
+      <td style="font-family:Arial,sans-serif;font-size:12px;color:rgba(255,255,255,0.45);line-height:1.5;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);">Accuracy of <span style="color:rgba(255,255,255,0.75);font-weight:500;">oral microbiome composition alone</span> in predicting obstructive sleep apnea &mdash; before a sleep study would catch it. mSystems, 2022.</td>
+    </tr>
+    <tr>
+      <td style="font-family:Georgia,serif;font-size:18px;color:#C49A3C;vertical-align:top;padding:10px 12px 10px 0;width:70px;border-bottom:1px solid rgba(255,255,255,0.06);">14%</td>
+      <td style="font-family:Arial,sans-serif;font-size:12px;color:rgba(255,255,255,0.45);line-height:1.5;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);">Lower cardiovascular disease risk associated with <span style="color:rgba(255,255,255,0.75);font-weight:500;">twice-daily brushing and regular dental visits</span>. n=247,696. Eur J Preventive Cardiology, 2019.</td>
+    </tr>
+    <tr>
+      <td style="font-family:Georgia,serif;font-size:18px;color:#C49A3C;vertical-align:top;padding:10px 12px 10px 0;width:70px;">&darr; NO</td>
+      <td style="font-family:Arial,sans-serif;font-size:12px;color:rgba(255,255,255,0.45);line-height:1.5;padding:10px 0;"><span style="color:rgba(255,255,255,0.75);font-weight:500;">Antiseptic mouthwash kills</span> the nitrate-reducing bacteria that produce nitric oxide for blood pressure regulation. Most people are actively making this worse.</td>
+    </tr>
+  </table>
+  <div style="background-color:#1E1D16;border-radius:6px;padding:16px 18px;border-left:2px solid #C49A3C;margin-top:20px;">
+    <div style="font-family:Arial,sans-serif;font-size:9px;color:#C49A3C;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;">The leverage point</div>
+    <p style="font-family:Georgia,serif;font-size:14px;font-style:italic;color:rgba(255,255,255,0.55);line-height:1.6;margin:0;">A professional dental cleaning reduces subgingival pathogen load more effectively than any supplement or lifestyle intervention. It is the only systemic risk factor you can meaningfully address in a dentist&rsquo;s chair.</p>
+  </div>
+</td></tr>
+
+<!-- 5. WHAT PEAQ WOULD MEASURE -->
+<tr><td style="background-color:#ffffff;padding:28px 48px;">
+  <div style="font-family:Arial,sans-serif;font-size:9px;color:#C49A3C;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:12px;">What Peaq would measure first</div>
+  <h2 style="font-family:Georgia,serif;font-size:19px;font-weight:400;color:#16150F;line-height:1.35;margin:0 0 12px;">${measure.h2}</h2>
+  <p style="font-family:Arial,sans-serif;font-size:13px;color:#666666;line-height:1.75;margin:0;">${measure.body}</p>
+</td></tr>
+
+<!-- 6. WHAT HAPPENS NEXT -->
+<tr><td style="background-color:#ffffff;padding:28px 48px;">
+  <div style="font-family:Arial,sans-serif;font-size:9px;color:#C49A3C;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:16px;">What happens next</div>
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+    <tr><td style="padding:12px 0;border-bottom:1px solid #F0EEE8;">
+      <span style="font-family:Georgia,serif;font-size:12px;color:#C49A3C;">01</span>
+      <span style="font-family:Arial,sans-serif;font-size:13px;font-weight:500;color:#16150F;margin-left:12px;">You&rsquo;re on the founding member waitlist</span>
+      <p style="font-family:Arial,sans-serif;font-size:12px;color:#999999;line-height:1.5;margin:4px 0 0 28px;">We&rsquo;ll reach out when your oral kit is ready to ship. Founding members get priority access and founding pricing.</p>
+    </td></tr>
+    <tr><td style="padding:12px 0;border-bottom:1px solid #F0EEE8;">
+      <span style="font-family:Georgia,serif;font-size:12px;color:#C49A3C;">02</span>
+      <span style="font-family:Arial,sans-serif;font-size:13px;font-weight:500;color:#16150F;margin-left:12px;">Your kit ships &mdash; swab takes 2 minutes</span>
+      <p style="font-family:Arial,sans-serif;font-size:12px;color:#999999;line-height:1.5;margin:4px 0 0 28px;">At-home oral swab. 16S rRNA sequencing at species-level resolution. Results in 10&ndash;14 days.</p>
+    </td></tr>
+    <tr><td style="padding:12px 0;border-bottom:1px solid #F0EEE8;">
+      <span style="font-family:Georgia,serif;font-size:12px;color:#C49A3C;">03</span>
+      <span style="font-family:Arial,sans-serif;font-size:13px;font-weight:500;color:#16150F;margin-left:12px;">Upload your labs, connect your wearable</span>
+      <p style="font-family:Arial,sans-serif;font-size:12px;color:#999999;line-height:1.5;margin:4px 0 0 28px;">LabCorp, Quest, or any standard bloodwork. WHOOP or Oura syncs nightly.</p>
+    </td></tr>
+    <tr><td style="padding:12px 0;">
+      <span style="font-family:Georgia,serif;font-size:12px;color:#C49A3C;">04</span>
+      <span style="font-family:Arial,sans-serif;font-size:13px;font-weight:500;color:#16150F;margin-left:12px;">Your Peaq score</span>
+      <p style="font-family:Arial,sans-serif;font-size:12px;color:#999999;line-height:1.5;margin:4px 0 0 28px;">A single number from 0&ndash;100. With the cross-panel signals your doctors aren&rsquo;t seeing.</p>
+    </td></tr>
+  </table>
+</td></tr>
+
+<!-- 7. CTA -->
+<tr><td style="background-color:#ffffff;padding:0 48px 28px;">
+  <div style="background-color:#F6F4EF;border-radius:8px;padding:26px;text-align:center;">
+    <div style="font-family:Arial,sans-serif;font-size:9px;color:#aaaaaa;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:8px;">In the meantime</div>
+    <p style="font-family:Georgia,serif;font-size:17px;color:#16150F;margin:0 0 16px;">Read the science behind <em style="font-style:italic;color:#C49A3C;">your score.</em></p>
+    <a href="https://peaqhealth.me/science" style="display:inline-block;font-family:Arial,sans-serif;font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;background-color:#C49A3C;color:#16150F;padding:12px 32px;border-radius:3px;text-decoration:none;">VIEW THE EVIDENCE BASE &rarr;</a>
+  </div>
+</td></tr>
+
+<!-- 8. SCIENCE STRIP -->
+<tr><td style="background-color:#16150F;padding:24px 48px;">
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+    ${citationRows}
+  </table>
+</td></tr>
+
+<!-- 9. FOOTER -->
+<tr><td style="background-color:#ffffff;padding:24px 48px;border-top:1px solid #F0EEE8;border-radius:0 0 8px 8px;">
+  <div style="font-family:Georgia,serif;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#bbbbbb;margin-bottom:12px;">peaq health</div>
+  <p style="font-family:Arial,sans-serif;font-size:10px;color:#cccccc;line-height:1.6;margin:0 0 10px;">For informational purposes only. Not a medical device. Not intended to diagnose, treat, cure, or prevent any disease. Built by Dr. Igor Khabensky (General Dentist) and Dr. Paul Leis (Cardiologist).</p>
+  <p style="font-family:Arial,sans-serif;font-size:10px;color:#bbbbbb;margin:0;">
+    <a href="https://peaqhealth.me/science" style="color:#bbbbbb;text-decoration:none;border-bottom:1px solid #dddddd;">Science</a> &nbsp;&middot;&nbsp;
+    <a href="https://peaqhealth.me" style="color:#bbbbbb;text-decoration:none;border-bottom:1px solid #dddddd;">peaqhealth.me</a>
+  </p>
+</td></tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>`
+}
