@@ -2,10 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import Link from "next/link"
-import {
-  Brain, AlertTriangle, Dna, Flame,
-  TrendingDown, Wind, ArrowRight,
-} from "lucide-react"
 
 const serif = "'Cormorant Garamond', Georgia, serif"
 const sans  = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
@@ -84,16 +80,18 @@ const PATHOGENIC: BacteriaCard[] = [
   },
 ]
 
-// ── Primary icon per bacteria ───────────────────────────────────────────────
+// ── Bacteria icon sprites ───────────────────────────────────────────────────
+// Cropped from 5x5 grid in /bacteria-icons.png (1024x1024, ~204px per cell)
+// objectPosition picks the cell: "col% row%"
 
-const PRIMARY_ICON: Record<string, React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>> = {
-  "p-gingivalis": Brain,
-  "tannerella": AlertTriangle,
-  "fusobacterium": Dna,
-  "prevotella": Flame,
-  "haemophilus": TrendingDown,
-  "neisseria": Wind,
-  "veillonella": ArrowRight,
+const BACTERIA_SPRITE: Record<string, { col: number; row: number }> = {
+  "p-gingivalis":  { col: 0, row: 0 },   // concentric target shape
+  "tannerella":    { col: 2, row: 0 },   // spiky circular
+  "fusobacterium": { col: 1, row: 1 },   // rod-shaped
+  "prevotella":    { col: 0, row: 2 },   // wavy flagellated
+  "haemophilus":   { col: 0, row: 1 },   // cluster
+  "neisseria":     { col: 1, row: 3 },   // double lobe (diplococcus)
+  "veillonella":   { col: 3, row: 4 },   // branching
 }
 
 // ── Scroll reveal hook ──────────────────────────────────────────────────────
@@ -154,19 +152,42 @@ function Card({ card, stagger }: { card: BacteriaCard; stagger: number }) {
           </span>
         )}
 
-        {/* Primary icon badge */}
+        {/* Bacteria icon from sprite sheet */}
         {(() => {
-          const Icon = PRIMARY_ICON[card.slug]
-          const iconColor = isProtective ? "rgba(45,106,79,0.4)" : "rgba(192,57,43,0.4)"
-          return Icon ? (
+          const sprite = BACTERIA_SPRITE[card.slug]
+          if (!sprite) return null
+          // Each cell in the 5x5 grid is ~204px. Display at 56px = scale 0.274
+          const cellSize = 204
+          const displaySize = 56
+          const scaledTotal = 1024 * (displaySize / cellSize)  // ~280px
+          const offsetX = -sprite.col * displaySize
+          const offsetY = -sprite.row * displaySize
+          // Recolor via CSS filter: screen blend removes black bg,
+          // hue-rotate shifts neon colors to red/green
+          const hue = isProtective ? "hue-rotate(90deg)" : "hue-rotate(330deg)"
+          return (
             <div style={{
               position: "absolute", top: 20, right: 20,
-              width: 72, height: 72, borderRadius: 8,
-              display: "flex", alignItems: "center", justifyContent: "center",
+              width: displaySize, height: displaySize, borderRadius: 8,
+              overflow: "hidden",
+              mixBlendMode: "screen",
+              opacity: 0.45,
             }}>
-              <Icon size={28} strokeWidth={1} color={iconColor} />
+              <img
+                src="/bacteria-icons.png"
+                alt=""
+                draggable={false}
+                style={{
+                  display: "block",
+                  width: scaledTotal,
+                  height: scaledTotal,
+                  marginLeft: offsetX,
+                  marginTop: offsetY,
+                  filter: `${hue} saturate(0.5) brightness(1.2)`,
+                }}
+              />
             </div>
-          ) : null
+          )
         })()}
 
         {/* Bacteria name + tag */}
