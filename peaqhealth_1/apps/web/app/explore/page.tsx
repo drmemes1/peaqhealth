@@ -244,25 +244,43 @@ export default function ExplorePage() {
             HERO VISUAL — microscopy placeholder
             ═══════════════════════════════════════════════════════════════════ */}
         <div style={{
-          width: "100%", height: 280, borderRadius: 12,
+          width: "100%", height: 320, borderRadius: 12,
           background: "#141410",
-          backgroundImage: "radial-gradient(ellipse at center, rgba(40,38,30,1) 0%, #141410 70%)",
           display: "flex", flexDirection: "column",
           alignItems: "center", justifyContent: "center",
           marginBottom: 40, overflow: "hidden",
           position: "relative",
         }}>
+          {/* Bacteria microscopy image */}
+          <img
+            src="/bacteria.png"
+            alt=""
+            style={{
+              position: "absolute", inset: 0,
+              width: "100%", height: "100%",
+              objectFit: "cover", objectPosition: "center 40%",
+              opacity: 0.55,
+            }}
+          />
+          {/* Dark vignette overlay */}
+          <div style={{
+            position: "absolute", inset: 0,
+            background: "radial-gradient(ellipse at center, transparent 30%, rgba(20,20,16,0.7) 100%)",
+            pointerEvents: "none",
+          }} />
           <span style={{
             fontFamily: serif, fontSize: 72, fontWeight: 300,
             color: "#9A7200", lineHeight: 1, letterSpacing: "-2px",
-            opacity: 0.9,
+            position: "relative", zIndex: 1,
+            textShadow: "0 2px 20px rgba(0,0,0,0.5)",
           }}>
             10,000&times;
           </span>
           <span style={{
             fontFamily: sans, fontSize: 12,
-            color: "rgba(255,255,255,0.35)",
+            color: "rgba(255,255,255,0.45)",
             marginTop: 8, letterSpacing: "0.5px",
+            position: "relative", zIndex: 1,
           }}>
             What lives in your mouth, magnified.
           </span>
