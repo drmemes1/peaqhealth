@@ -74,7 +74,7 @@ function getPrimarySignalCopy(tags: string[]): { h2: string; body: string } {
   }
   if (hasCv && hasInflam) return {
     h2: "Elevated inflammation and cardiovascular history compound each other &mdash; and the oral microbiome drives both.",
-    body: "Residual inflammatory risk is now considered at least as predictive of cardiac events as residual cholesterol risk. Periodontal pathogen load is a primary driver of systemic CRP elevation &mdash; through a bacteraemia pathway your cardiologist is almost certainly not monitoring.",
+    body: "Residual inflammatory risk is predictive of cardiac events independent of cholesterol. Periodontal pathogen load contributes to systemic CRP elevation &mdash; through a bacteraemia pathway that is rarely monitored.",
   }
   if (hasNitrate && !hasPerio && !hasCv && !hasAirway) return {
     h2: "Your nitrate pathway may be compromised &mdash; and a daily habit could be the cause.",
@@ -100,7 +100,7 @@ function getMeasureCopy(tags: string[]): { h2: string; body: string } {
   }
   if (hasPerio && hasCv) return {
     h2: "The oral-cardiovascular connection, made measurable.",
-    body: "Peaq connects your periodontal pathogen load directly to your hs-CRP and Lp(a) &mdash; the two blood markers most predictive of cardiovascular events beyond standard LDL panels.",
+    body: "Peaq connects your periodontal pathogen load directly to your hs-CRP and Lp(a) &mdash; two blood markers predictive of cardiovascular events beyond standard LDL panels.",
   }
   if (hasAirway && hasNitrate) return {
     h2: "Your oral microbiome as a sleep health predictor.",

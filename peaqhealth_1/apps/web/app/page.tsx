@@ -789,16 +789,27 @@ export default function Home() {
             marginTop: 40,
           }}>
             {([
-              { name: "Dr. Igor Khabensky", title: "General Dentist", photo: "/images/dr-igor-khabensky.jpg" },
-              { name: "Dr. Paul Leis", title: "Cardiologist", photo: "/images/dr-paul-leis.jpg" },
-              { name: "Alex Najarian", title: "Health Entrepreneur", photo: "/images/alex-najarian.png" },
+              { name: "Dr. Igor Khabensky", title: "General Dentist", photo: "/images/dr-igor-khabensky.jpg", pos: "center 15%", scale: 0.85 },
+              { name: "Dr. Paul Leis", title: "Cardiologist", photo: "/images/dr-paul-leis.jpg", pos: "center 20%", scale: 1 },
+              { name: "Alex Najarian", title: "Health Entrepreneur", photo: "/images/alex-najarian.png", pos: "center 15%", scale: 1.25 },
             ] as const).map(doc => (
               <div key={doc.name} style={{ display: "flex", alignItems: "center", gap: 20 }}>
-                <img
-                  src={doc.photo}
-                  alt={doc.name}
-                  style={{ width: 120, height: 120, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
-                />
+                <div style={{
+                  width: 120, height: 120, borderRadius: "50%",
+                  overflow: "hidden", flexShrink: 0,
+                  background: "#F0EEE8",
+                }}>
+                  <img
+                    src={doc.photo}
+                    alt={doc.name}
+                    style={{
+                      width: "100%", height: "100%",
+                      objectFit: "cover",
+                      objectPosition: doc.pos,
+                      transform: `scale(${doc.scale})`,
+                    }}
+                  />
+                </div>
                 <div>
                   <p style={{ fontFamily: sans, fontSize: 16, fontWeight: 500, color: INK, margin: 0 }}>{doc.name}</p>
                   <p style={{ fontFamily: sans, fontSize: 13, color: MUTED, margin: "4px 0 0" }}>{doc.title}</p>

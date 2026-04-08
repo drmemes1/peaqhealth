@@ -106,10 +106,10 @@ export function OralSnapshot() {
             padding: "24px 24px 20px", marginBottom: 28,
           }}>
             <p style={{ fontFamily: serif, fontSize: 20, fontWeight: 400, color: INK, margin: "0 0 8px" }}>
-              Your snapshot is ready.
+              Enter your email for your assessment.
             </p>
             <p style={{ fontFamily: sans, fontSize: 13, color: "rgba(20,20,16,0.5)", lineHeight: 1.6, margin: "0 0 16px" }}>
-              Enter your email to see your personalized results and get early access to Peaq.
+              We&rsquo;ll send your personalized signal profile and early access details.
             </p>
             <div style={{ display: "flex", gap: 8 }}>
               <input

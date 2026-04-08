@@ -124,7 +124,7 @@ function buildInsights(tags: string[]): Pick<QuizResult, "primaryInsight" | "sec
   } else if (hasPerio && hasCv) {
     primaryInsight = "Your cardiovascular history has an oral origin most cardiologists never check. P. gingivalis and T. denticola \u2014 periodontal pathogens \u2014 have been physically detected in human coronary artery plaques at autopsy. Your cardiovascular risk profile and your oral microbiome are not separate conversations."
   } else if (hasCv && hasInflam) {
-    primaryInsight = "Elevated inflammation and cardiovascular history compound each other \u2014 and the oral microbiome drives both. Residual inflammatory risk is now considered at least as predictive of cardiac events as residual cholesterol risk. Periodontal pathogen load is a primary driver of systemic CRP elevation."
+    primaryInsight = "Elevated inflammation and cardiovascular history compound each other \u2014 and the oral microbiome contributes to both. Residual inflammatory risk is predictive of cardiac events independent of cholesterol. Periodontal pathogen load contributes to systemic CRP elevation."
   } else if (hasAirway && (hasPerio || hasNitrate)) {
     primaryInsight = "Your airway signals have an oral microbiome signature. OSA-associated bacteria \u2014 Prevotella and Fusobacterium \u2014 are detectable in the oral cavity before a sleep study would flag disordered breathing. Your nitrate pathway may also be compromised, reducing the nitric oxide your airways need."
   } else if (hasCv) {
