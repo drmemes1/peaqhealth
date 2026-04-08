@@ -25,7 +25,7 @@ const citations: Record<number, { authors: string; title: string; journal: strin
   15: { authors: "Kapil V, et al.", title: "Dietary nitrate provides sustained blood pressure lowering in hypertension", journal: "Hypertension", year: "2015", n: "300" },
   16: { authors: "Hussain M, et al.", title: "Oral bacteria in cardiovascular specimens", journal: "Frontiers in Immunology", year: "2023", n: "1,791" },
   17: { authors: "Dominy SS, et al.", title: "Porphyromonas gingivalis in human brain tissue", journal: "Science Advances", year: "2019" },
-  18: { authors: "Chen X, et al.", title: "Oral microbiome as a potential biomarker for OSA", journal: "mSystems", year: "2022", n: "156" },
+  18: { authors: "Portelli M, et al.", title: "Association between OSA and periodontitis: systematic review & meta-analysis", journal: "Dentistry Journal", year: "2024", n: "88,040" },
   19: { authors: "Dalton B, et al.", title: "Bidirectional relationship between oral microbiome and sleep quality", journal: "Sleep Medicine", year: "2025", n: "1,139" },
   20: { authors: "Park SY, et al.", title: "Association of toothbrushing with cardiovascular risk", journal: "European Journal of Preventive Cardiology", year: "2019", n: "247,696" },
   21: { authors: "Lee IM, et al.", title: "Effect of physical inactivity on major non-communicable diseases worldwide", journal: "Lancet", year: "2012" },
@@ -242,7 +242,7 @@ export default function SciencePage() {
   const doSay = [
     "\u201ChsCRP below 0.5 mg/L is associated with lower cardiovascular risk in population studies.\u201D",
     "\u201CPeriodontal pathogens have been directly detected in coronary plaques in autopsy studies.\u201D",
-    "\u201COral microbiome composition predicts OSA with AUC 91.9% in Chen et al. 2022.\u201D",
+    "\u201COSA patients are 2.46\u00d7 more likely to have periodontitis across meta-analyses of 88,000+ patients.\u201D",
     "\u201CYour Peaq Score reflects the current state of evidence on these markers.\u201D",
   ];
 
@@ -749,11 +749,11 @@ export default function SciencePage() {
             color="var(--oral-c)"
           />
           <StudyCard
-            journal="mSystems"
-            title="Oral microbiome predicts OSA"
-            stat="AUC 91.9%"
-            statLabel="Predictive accuracy"
-            finding="Oral microbiome composition alone can predict obstructive sleep apnea."
+            journal="Dentistry Journal"
+            title="OSA–periodontitis association"
+            stat="OR 2.46"
+            statLabel="Meta-analysis"
+            finding="OSA patients are 2.46× more likely to have periodontitis across 88,040 patients."
             color="var(--oral-c)"
           />
         </div>
@@ -787,8 +787,8 @@ export default function SciencePage() {
           title="OSA-associated taxa"
           target="<1% of reads"
           color="var(--oral-c)"
-          body={<>Prevotella and Fusobacterium species are enriched in patients with obstructive sleep apnea. Their abundance is a microbiome-based signal for sleep-disordered breathing. This is the most novel marker in the Peaq Score — and the direct bridge between oral health and sleep quality.<Cite n={18} /><Cite n={19} /></>}
-          evidence="Chen et al., mSystems 2022, n=156. Dalton et al., Sleep Medicine 2025, n=1,139."
+          body={<>Prevotella and Fusobacterium species are enriched in patients with obstructive sleep apnea. OSA patients are 2.46&times; more likely to have periodontitis across meta-analyses covering 88,000+ patients. The mechanism: intermittent hypoxia from OSA drives oxidative stress that accelerates periodontal tissue breakdown, while periodontal inflammation elevates systemic CRP &mdash; disrupting sleep architecture. Peaq tracks these taxa as a signal that the oral-inflammatory-sleep pathway may be active.<Cite n={18} /><Cite n={19} /></>}
+          evidence="Portelli et al., Dentistry Journal 2024, n=88,040. Zhu et al., Sleep and Breathing 2023, n=31,800. Mi et al., BMC Oral Health 2023 (Mendelian randomization)."
         />
 
         <FadeUp delay={60}>

@@ -98,8 +98,9 @@ López-Otín C et al. Cell. 2023;186(2):243–278 (hallmarks of aging — includ
     tip: "Professional dental cleaning is the most effective way to reduce subgingival pathogen load.",
   },
   "osa-taxa": {
-    why: "Prevotella and Fusobacterium species are enriched in patients with obstructive sleep apnea — the direct microbiome bridge between oral health and sleep quality.",
+    why: "People with obstructive sleep apnea are 2.46\u00d7 more likely to have periodontitis, confirmed across meta-analyses covering 88,000+ patients. OSA-related intermittent hypoxia drives oxidative stress that accelerates periodontal tissue breakdown \u2014 while elevated periodontal pathogen load raises systemic CRP, disrupting sleep architecture. Peaq tracks Prevotella and Fusobacterium abundance as a signal that this shared inflammatory pathway may be active in your oral panel.",
     target: "<1% of reads",
-    citation: "Chen et al., mSystems 2022, n=156",
+    citation: "Portelli et al., Dentistry Journal 2024 (meta-analysis, n=88,040); Mi et al., BMC Oral Health 2023 (Mendelian randomization); Zhu et al., Sleep and Breathing 2023 (meta-analysis, n=31,800)",
+    tip: "If OSA-associated taxa are elevated alongside low HRV or SpO2 on your sleep panel, discuss sleep-disordered breathing with your physician. Professional dental cleaning reduces the periodontal pathogen load that may be driving systemic inflammation.",
   },
 }

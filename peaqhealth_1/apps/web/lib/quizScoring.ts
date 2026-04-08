@@ -58,7 +58,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   {
     id: "sleep",
     question: "Do you snore, wake up unrefreshed, or have you been told you stop breathing in your sleep?",
-    subtext: "Oral microbiome composition predicts obstructive sleep apnea with 91.9% accuracy \u2014 before a sleep study would catch it. These taxa are measurable in a simple swab.",
+    subtext: "People with obstructive sleep apnea are nearly 2.5 times more likely to have periodontal disease \u2014 confirmed across meta-analyses of 88,000+ patients. OSA-related intermittent hypoxia accelerates periodontal tissue breakdown, while periodontal inflammation elevates the CRP that disrupts sleep architecture. Peaq tracks OSA-associated oral taxa as a signal that this shared inflammatory pathway may be active.",
     options: [
       { label: "All of the above", value: "sleep-all", points: 3, tags: ["airway", "osa"] },
       { label: "Snoring or unrefreshed sleep", value: "sleep-some", points: 2, tags: ["airway"] },
@@ -130,7 +130,7 @@ function buildInsights(tags: string[]): Pick<QuizResult, "primaryInsight" | "sec
   } else if (hasCv) {
     primaryInsight = "The conditions you flagged are directly connected to the oral microbiome through shared inflammatory pathways. Periodontal bacteria have been physically detected in coronary artery plaques in autopsy studies. Most people managing these conditions have never looked at the oral source."
   } else if (hasAirway) {
-    primaryInsight = "The sleep and airway signals you flagged are often detectable in the oral microbiome before a sleep study would catch them. A 2022 study found oral microbiome composition predicted obstructive sleep apnea with 91.9% accuracy."
+    primaryInsight = "The sleep and airway signals you flagged share a biological pathway with your oral health. People with OSA are nearly 2.5 times more likely to have periodontal disease. OSA-related intermittent hypoxia accelerates periodontal tissue breakdown, while periodontal inflammation elevates the CRP that disrupts sleep architecture."
   } else if (hasNitrate) {
     primaryInsight = "Your nitrate pathway may be compromised \u2014 and a daily habit could be the cause. The bacteria that convert dietary nitrate into nitric oxide \u2014 your blood vessels\u2019 primary vasodilator \u2014 are among the first casualties of antiseptic mouthwash. This is a vascular risk factor hiding in your bathroom cabinet."
   } else {

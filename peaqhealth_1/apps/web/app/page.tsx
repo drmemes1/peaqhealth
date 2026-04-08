@@ -467,10 +467,10 @@ export default function Home() {
                 tag: "Blood \u2192 Sleep",
               },
               {
-                journal: "mSystems, 2022",
-                quote: "Oral microbiome composition alone predicts obstructive sleep apnea with AUC 91.9%.",
-                note: "n = 156" as string | undefined,
-                tag: "Oral \u2192 Sleep",
+                journal: "Sleep Breath, 2023 / Dent J, 2024",
+                quote: "OSA patients are 2.4\u00d7 more likely to have periodontitis. Intermittent hypoxia and periodontal inflammation share an oxidative stress pathway.",
+                note: "n = 88,040" as string | undefined,
+                tag: "Oral \u2194 Sleep",
               },
             ]).map((cite, i) => (
               <div className="landing-science-row" key={i} style={{

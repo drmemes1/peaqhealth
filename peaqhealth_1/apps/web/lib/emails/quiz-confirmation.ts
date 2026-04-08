@@ -69,8 +69,8 @@ function getPrimarySignalCopy(tags: string[]): { h2: string; body: string } {
     body: "P. gingivalis and T. denticola &mdash; periodontal pathogens &mdash; have been physically detected in human coronary artery plaques at autopsy. Your cardiovascular risk profile and your oral microbiome are not separate conversations. They are the same conversation.",
   }
   if (hasAirway && (hasPerio || hasNitrate)) return {
-    h2: "Your airway signals have an oral microbiome signature.",
-    body: "OSA-associated bacteria &mdash; Prevotella and Fusobacterium &mdash; are detectable in the oral cavity before a sleep study would flag disordered breathing. Your nitrate pathway may also be compromised, reducing the nitric oxide your airways need for healthy muscle tone during sleep.",
+    h2: "Your airway signals and oral health share an inflammatory pathway.",
+    body: "People with obstructive sleep apnea are nearly 2.5 times more likely to have periodontal disease &mdash; confirmed across 88,000+ patients in multiple meta-analyses. OSA-related intermittent hypoxia accelerates periodontal tissue breakdown, while elevated periodontal pathogen load raises the systemic CRP that disrupts sleep architecture.",
   }
   if (hasCv && hasInflam) return {
     h2: "Elevated inflammation and cardiovascular history compound each other &mdash; and the oral microbiome drives both.",
@@ -136,7 +136,7 @@ export function renderQuizConfirmationEmail(props: QuizEmailProps): string {
     { journal: "Eur J Prev Card &middot; 2019", finding: "&ldquo;Twice-daily brushing associated with 14% lower cardiovascular disease risk.&rdquo; n=247,696", path: "Oral &rarr; Blood" },
   ]
   if (tags.some(t => ["airway", "osa"].includes(t)))
-    citations.push({ journal: "mSystems &middot; 2022", finding: "&ldquo;Oral microbiome composition alone predicts obstructive sleep apnea.&rdquo; AUC 91.9%", path: "Oral &rarr; Sleep" })
+    citations.push({ journal: "Sleep Breath &middot; 2023 + Dent J &middot; 2024", finding: "&ldquo;OSA patients are 2.46&times; more likely to have periodontitis across meta-analyses of 88,000+ patients.&rdquo;", path: "Oral &harr; Sleep" })
   if (tags.some(t => ["cvHistory", "cvRisk"].includes(t)))
     citations.push({ journal: "Circulation &middot; 2026", finding: "&ldquo;Periodontal disease increases ASCVD risk through bacteremia and chronic inflammation.&rdquo;", path: "Oral &rarr; Blood" })
   if (tags.includes("inflammation"))
@@ -209,8 +209,8 @@ export function renderQuizConfirmationEmail(props: QuizEmailProps): string {
       <td style="font-family:Arial,sans-serif;font-size:12px;color:rgba(255,255,255,0.45);line-height:1.5;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><span style="color:rgba(255,255,255,0.75);font-weight:500;">P. gingivalis directly detected</span> in human coronary artery plaques at autopsy. Not associated &mdash; physically present. Frontiers in Immunology, 2023.</td>
     </tr>
     <tr>
-      <td style="font-family:Georgia,serif;font-size:18px;color:#C49A3C;vertical-align:top;padding:10px 12px 10px 0;width:70px;border-bottom:1px solid rgba(255,255,255,0.06);">91.9%</td>
-      <td style="font-family:Arial,sans-serif;font-size:12px;color:rgba(255,255,255,0.45);line-height:1.5;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);">Accuracy of <span style="color:rgba(255,255,255,0.75);font-weight:500;">oral microbiome composition alone</span> in predicting obstructive sleep apnea &mdash; before a sleep study would catch it. mSystems, 2022.</td>
+      <td style="font-family:Georgia,serif;font-size:18px;color:#C49A3C;vertical-align:top;padding:10px 12px 10px 0;width:70px;border-bottom:1px solid rgba(255,255,255,0.06);">2.46&times;</td>
+      <td style="font-family:Arial,sans-serif;font-size:12px;color:rgba(255,255,255,0.45);line-height:1.5;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><span style="color:rgba(255,255,255,0.75);font-weight:500;">OSA patients are 2.46&times; more likely to have periodontitis</span> across meta-analyses of 88,000+ patients. Intermittent hypoxia and periodontal inflammation share an oxidative stress pathway. Dentistry Journal, 2024.</td>
     </tr>
     <tr>
       <td style="font-family:Georgia,serif;font-size:18px;color:#C49A3C;vertical-align:top;padding:10px 12px 10px 0;width:70px;border-bottom:1px solid rgba(255,255,255,0.06);">14%</td>
