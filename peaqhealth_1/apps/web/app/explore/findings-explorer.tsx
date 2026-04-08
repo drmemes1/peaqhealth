@@ -156,22 +156,27 @@ function Card({ card, stagger }: { card: BacteriaCard; stagger: number }) {
         {(() => {
           const sprite = BACTERIA_SPRITE[card.slug]
           if (!sprite) return null
-          // Each cell in the 5x5 grid is ~204px. Display at 56px = scale 0.274
-          const cellSize = 204
+          // 5x5 grid, 1024px source → each cell ~204px. Display at 56px.
           const displaySize = 56
-          const scaledTotal = 1024 * (displaySize / cellSize)  // ~280px
+          const scale = displaySize / 204
+          const scaledTotal = Math.round(1024 * scale) // ~280px
           const offsetX = -sprite.col * displaySize
           const offsetY = -sprite.row * displaySize
-          // Recolor via CSS filter: screen blend removes black bg,
-          // hue-rotate shifts neon colors to red/green
-          const hue = isProtective ? "hue-rotate(90deg)" : "hue-rotate(330deg)"
+          // Step 1: invert(1) flips black bg → white bg, light icons → dark icons
+          // Step 2: sepia(1) makes everything brown
+          // Step 3: hue-rotate shifts brown to target color
+          // Step 4: saturate controls intensity
+          // Protective (green): hue-rotate(75deg) → forest green
+          // Pathogenic (red): hue-rotate(320deg) → crimson
+          const colorFilter = isProtective
+            ? "invert(1) sepia(1) hue-rotate(75deg) saturate(0.6) brightness(0.7)"
+            : "invert(1) sepia(1) hue-rotate(320deg) saturate(0.8) brightness(0.7)"
           return (
             <div style={{
-              position: "absolute", top: 20, right: 20,
+              position: "absolute", top: 16, right: 16,
               width: displaySize, height: displaySize, borderRadius: 8,
               overflow: "hidden",
-              mixBlendMode: "screen",
-              opacity: 0.45,
+              opacity: 0.35,
             }}>
               <img
                 src="/bacteria-icons.png"
@@ -183,7 +188,7 @@ function Card({ card, stagger }: { card: BacteriaCard; stagger: number }) {
                   height: scaledTotal,
                   marginLeft: offsetX,
                   marginTop: offsetY,
-                  filter: `${hue} saturate(0.5) brightness(1.2)`,
+                  filter: colorFilter,
                 }}
               />
             </div>
