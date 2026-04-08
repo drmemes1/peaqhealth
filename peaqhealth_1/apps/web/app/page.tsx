@@ -691,7 +691,10 @@ export default function Home() {
               }}>
                 Shannon diversity, nitrate-reducing bacteria, periodontal
                 pathogens, OSA-associated taxa &mdash; each scored against
-                clinical targets with clear status indicators.
+                clinical targets with clear status indicators. Nearly half
+                of all susceptibility to periodontal disease is genetic &mdash;
+                an elevated oral panel score reflects biological vulnerability,
+                not just hygiene habits.
               </p>
             </div>
           </div>

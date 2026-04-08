@@ -54,9 +54,9 @@ López-Otín C et al. Cell. 2023;186(2):243–278 (hallmarks of aging — includ
 
   // ── Blood ────────────────────────────────────────────────────────────────
   "hs-crp": {
-    why: "High-sensitivity CRP is the benchmark inflammatory marker. Values above 3.0 mg/L confer 2× the cardiovascular risk of values below 1.0 mg/L, independent of LDL cholesterol.",
+    why: "High-sensitivity CRP is the benchmark inflammatory marker. Values above 3.0 mg/L confer 2\u00d7 the cardiovascular risk of values below 1.0 mg/L, independent of LDL cholesterol. Note: statin medications have independent anti-inflammatory effects that may suppress CRP below your true underlying inflammatory burden. If you are taking a statin, your hs-CRP reading may underestimate baseline inflammation.",
     target: "<0.5 mg/L",
-    citation: "Ridker et al., NEJM 2008 — Jupiter trial, n=17,802",
+    citation: "Ridker et al., NEJM 2008 \u2014 Jupiter trial, n=17,802; Mensah GA et al. (incl. Ridker PM), J Am Coll Cardiol 2025 (ACC Scientific Statement)",
   },
   lpa: {
     why: "Lipoprotein(a) is largely genetically determined and missed by standard lipid panels. Elevated Lp(a) above 125 nmol/L doubles cardiovascular risk independently.",
@@ -69,9 +69,10 @@ López-Otín C et al. Cell. 2023;186(2):243–278 (hallmarks of aging — includ
     citation: "Austin et al., Am J Cardiology 1998",
   },
   hba1c: {
-    why: "Glycated haemoglobin reflects average blood glucose over 90 days. Pre-diabetic range elevates risk of kidney disease and cardiovascular events years before diagnosis.",
+    why: "Glycated haemoglobin reflects average blood glucose over 90 days. Pre-diabetic range elevates risk of kidney disease and cardiovascular events years before diagnosis. The relationship with periodontal disease is bidirectional: poorly controlled diabetes (HbA1c >7%) increases periodontal susceptibility by 2\u20133x, while periodontal treatment has been shown to reduce HbA1c by a mean of 1% over 6 months in diabetics \u2014 a clinically meaningful reduction. Well-controlled diabetes (HbA1c <7%) is not significantly associated with increased periodontal risk.",
     target: "<5.4%",
-    citation: "Selvin et al., NEJM 2010, n=11,092",
+    citation: "Selvin et al., NEJM 2010, n=11,092; Altamash M et al., J Oral Rehabil 2016, n=129 (1% HbA1c reduction from periodontal treatment)",
+    tip: "If your HbA1c is in the fair-to-poor range and your oral panel shows elevated periodontal pathogens, treating the gum disease may meaningfully improve your glycemic control \u2014 not just your oral score.",
   },
   "vitamin-d": {
     why: "Vitamin D deficiency affects ~40% of Americans and is linked to elevated inflammatory cytokines, impaired sleep quality, and all-cause mortality.",
@@ -81,21 +82,21 @@ López-Otín C et al. Cell. 2023;186(2):243–278 (hallmarks of aging — includ
 
   // ── Oral ─────────────────────────────────────────────────────────────────
   "shannon-diversity": {
-    why: "Bacterial diversity measures species richness and evenness in the oral cavity. Low diversity signals an imbalanced microbiome — where harmful species overgrow at the expense of beneficial ones.",
-    target: "≥3.0 index",
-    citation: "Belstrøm et al., J Oral Microbiology 2014",
+    why: "Shannon diversity measures the richness and evenness of microbial species in the oral cavity. Low diversity (dysbiosis) is the hallmark state where pathogenic species overgrow at the expense of protective ones. Approximately 50% of individual susceptibility to dysbiosis is genetic \u2014 twin studies confirm heritability of periodontal disease risk. Low salivary flow (from stress, medications, mouth breathing, or aging) also reduces diversity. A NHANES analysis of 4,729 U.S. adults found lower oral microbiome diversity associated with higher sleep disorder risk at the population level.",
+    target: "\u22653.0 index",
+    citation: "Belstr\u00f8m D et al., J Oral Microbiology 2014; Twin study literature \u2014 ~50% heritability; Hao G et al., BMC Oral Health 2025, NHANES n=4,729",
   },
   "nitrate-reducing": {
-    why: "Neisseria, Rothia, and Veillonella convert dietary nitrate into nitric oxide — a potent vasodilator critical for blood pressure regulation. Antiseptic mouthwash kills these bacteria.",
-    target: "≥5% of reads",
-    citation: "Kapil et al., Hypertension 2015, n=300",
-    tip: "Avoid antiseptic mouthwash. Green leafy vegetables (spinach, arugula, beetroot) feed these bacteria.",
+    why: "Neisseria, Rothia, and Veillonella convert dietary nitrate into nitric oxide (NO) \u2014 the primary vasodilator your blood vessels use to regulate blood pressure. Antiseptic mouthwash kills these bacteria, acutely impairing the NO pathway. Dry mouth (from stress, medications, mouth breathing, or aging) also depletes these bacteria by reducing the salivary flow they depend on. Emotional stress increases sympathetic tone, reducing parasympathetically-driven salivary secretion \u2014 creating a direct HRV \u2192 salivary flow \u2192 nitrate-reducer depletion pathway.",
+    target: "\u22655% of reads",
+    citation: "Kapil V et al., Hypertension 2015, n=300; Petersson J et al., Free Radical Biology & Medicine 2009",
+    tip: "Avoid antiseptic mouthwash. Green leafy vegetables (spinach, arugula, beetroot, celery) directly feed nitrate-reducing bacteria. Stress management and adequate hydration also protect salivary flow.",
   },
   "periodontal-pathogens": {
-    why: "P. gingivalis and T. denticola have been directly detected in human coronary artery plaques in autopsy studies, establishing a bacteraemia pathway from the mouth to vascular tissue.",
+    why: "P. gingivalis, T. denticola, and T. forsythia \u2014 the \u201cred complex\u201d periodontal pathogens \u2014 have been physically detected in human coronary artery plaques at autopsy (Hussain et al., 2023, n=1,791). They enter the bloodstream through inflamed gum tissue and trigger the same inflammatory cascade measured by your hs-CRP. P. gingivalis has also been detected in Alzheimer\u2019s disease brain tissue, with gingipain proteases implicated in neuroinflammatory cascades. Note: smokers may show low bleeding on probing despite elevated pathogen counts \u2014 nicotine-induced vasoconstriction masks the bleeding response. Heredity accounts for approximately 50% of periodontal susceptibility (twin studies), meaning elevated pathogen load is not simply a hygiene failure.",
     target: "<0.5% of reads",
-    citation: "Hussain et al., Frontiers in Immunology 2023, n=1,791",
-    tip: "Professional dental cleaning is the most effective way to reduce subgingival pathogen load.",
+    citation: "Hussain M et al., Frontiers in Immunology 2023, n=1,791; Dominy SS et al., Science Advances 2019; Twin study literature \u2014 ~50% heritability",
+    tip: "Professional dental cleaning (scaling and root planing) is the most effective intervention for reducing subgingival pathogen load. Effect is measurable within weeks in oral microbiome sequencing.",
   },
   "osa-taxa": {
     why: "People with obstructive sleep apnea are 2.46\u00d7 more likely to have periodontitis, confirmed across meta-analyses covering 88,000+ patients. OSA-related intermittent hypoxia drives oxidative stress that accelerates periodontal tissue breakdown \u2014 while elevated periodontal pathogen load raises systemic CRP, disrupting sleep architecture. Peaq tracks Prevotella and Fusobacterium abundance as a signal that this shared inflammatory pathway may be active in your oral panel.",

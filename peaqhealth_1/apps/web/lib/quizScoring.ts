@@ -76,6 +76,57 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       { label: "No \u2014 normal inflammatory markers", value: "crp-normal", points: 0, tags: [] },
     ],
   },
+  {
+    id: "family-perio",
+    question: "Have you ever been told you are prone to gum disease, or does gum disease run in your family?",
+    subtext: "Twin studies show that approximately 50% of susceptibility to periodontal disease is genetic. IL-1\u03b2 gene polymorphisms independently increase disease severity. A family history of periodontitis is a clinically meaningful risk signal \u2014 independent of hygiene habits.",
+    options: [
+      { label: "Yes \u2014 dentist has told me I\u2019m prone to gum disease", value: "family-perio-yes", points: 3, tags: ["familyHistoryPerio", "geneticPerioRisk"] },
+      { label: "Yes \u2014 family members have gum disease", value: "family-perio-family", points: 2, tags: ["familyHistoryPerio"] },
+      { label: "No known history", value: "family-perio-no", points: 0, tags: [] },
+    ],
+  },
+  {
+    id: "reflux",
+    question: "Do you experience frequent heartburn, acid reflux, or wake with a sour taste?",
+    subtext: "GERD is strongly associated with sleep bruxism and has been shown to directly decrease parasympathetic nervous system activity \u2014 contributing to micro-arousals and disrupted sleep architecture. GERD is also common in children and adults with obstructive sleep apnea.",
+    options: [
+      { label: "Yes \u2014 diagnosed with GERD or reflux", value: "reflux-diagnosed", points: 2, tags: ["reflux", "airway"] },
+      { label: "Occasionally", value: "reflux-sometimes", points: 1, tags: ["reflux"] },
+      { label: "Rarely or never", value: "reflux-never", points: 0, tags: [] },
+    ],
+  },
+  {
+    id: "chronic-stress",
+    question: "Would you describe yourself as chronically stressed, anxious, or burned out?",
+    subtext: "Chronic stress elevates cortisol, which suppresses immune function and impairs the periodontal host defense. Stress also reduces salivary flow through increased sympathetic tone \u2014 depleting the nitrate-reducing bacteria that produce nitric oxide for blood pressure regulation. Low HRV is Peaq\u2019s objective measure of this autonomic imbalance.",
+    options: [
+      { label: "Yes \u2014 chronically", value: "stress-chronic", points: 2, tags: ["chronicStress"] },
+      { label: "Periodically", value: "stress-periodic", points: 1, tags: ["chronicStress"] },
+      { label: "Rarely", value: "stress-rarely", points: 0, tags: [] },
+    ],
+  },
+  {
+    id: "fatigue",
+    question: "Do you feel exhausted or unrefreshed even after what seems like a full night of sleep?",
+    subtext: "Chronic exhaustion despite adequate sleep duration is a primary screening signal for sleep-disordered breathing. Obstructive sleep apnea is massively underdiagnosed \u2014 an estimated 936 million adults globally have it. The oral microbiome carries signatures of sleep-disordered breathing that Peaq tracks.",
+    options: [
+      { label: "Yes \u2014 most mornings", value: "fatigue-most", points: 2, tags: ["fatigue", "airway"] },
+      { label: "Sometimes", value: "fatigue-some", points: 1, tags: ["fatigue"] },
+      { label: "Rarely or never", value: "fatigue-never", points: 0, tags: [] },
+    ],
+  },
+  {
+    id: "systemic-conditions",
+    question: "Have you been diagnosed with rheumatoid arthritis, high blood pressure, or are you post-menopausal?",
+    subtext: "Rheumatoid arthritis patients are 4.68\u00d7 more likely to have periodontitis. High blood pressure strongly correlates with OSA. Risk of sleep apnea increases after menopause. Each of these conditions activates Peaq\u2019s oral-systemic cross-panel signals.",
+    options: [
+      { label: "Rheumatoid arthritis", value: "systemic-ra", points: 2, tags: ["rheumatoidArthritis", "periodontal"] },
+      { label: "High blood pressure", value: "systemic-htn", points: 2, tags: ["hypertension", "airway"] },
+      { label: "Post-menopausal", value: "systemic-menopause", points: 1, tags: ["menopause", "airway"] },
+      { label: "None of the above", value: "systemic-none", points: 0, tags: [] },
+    ],
+  },
 ]
 
 // ── Scoring ────────────────────────────────────────────────────────────────
@@ -131,10 +182,19 @@ function buildInsights(tags: string[]): Pick<QuizResult, "primaryInsight" | "sec
     primaryInsight = "The conditions you flagged are directly connected to the oral microbiome through shared inflammatory pathways. Periodontal bacteria have been physically detected in coronary artery plaques in autopsy studies. Most people managing these conditions have never looked at the oral source."
   } else if (hasAirway) {
     primaryInsight = "The sleep and airway signals you flagged share a biological pathway with your oral health. People with OSA are nearly 2.5 times more likely to have periodontal disease. OSA-related intermittent hypoxia accelerates periodontal tissue breakdown, while periodontal inflammation elevates the CRP that disrupts sleep architecture."
+  } else if (tags.includes("rheumatoidArthritis")) {
+    primaryInsight = "Rheumatoid arthritis and periodontal disease share a biological pathway \u2014 and treating one may improve the other. RA patients are 4.68x more likely to have periodontitis. P. gingivalis possesses an enzyme that citrullinates host proteins, potentially triggering the anti-citrullinated protein antibodies that are the hallmark biomarker of RA."
+  } else if (tags.includes("chronicStress") && (hasPerio || hasNitrate)) {
+    primaryInsight = "Chronic stress is depleting the bacteria your blood vessels depend on for pressure regulation. Stress increases sympathetic tone, reducing parasympathetically-driven salivary secretion. Lower salivary flow depletes nitrate-reducing bacteria \u2014 Neisseria, Rothia, Veillonella \u2014 that convert dietary nitrate to nitric oxide."
   } else if (hasNitrate) {
     primaryInsight = "Your nitrate pathway may be compromised \u2014 and a daily habit could be the cause. The bacteria that convert dietary nitrate into nitric oxide \u2014 your blood vessels\u2019 primary vasodilator \u2014 are among the first casualties of antiseptic mouthwash. This is a vascular risk factor hiding in your bathroom cabinet."
   } else {
     primaryInsight = "Your answers suggest your oral microbiome may be under mild stress \u2014 not from a single dramatic signal, but from a combination of small gaps in the pathways that connect your mouth to your cardiovascular and sleep health."
+  }
+
+  // Append genetic susceptibility note when relevant
+  if (tags.includes("familyHistoryPerio") || tags.includes("geneticPerioRisk")) {
+    primaryInsight += " Note: approximately 50% of periodontal susceptibility is genetic. An elevated oral panel score reflects biological vulnerability \u2014 not just hygiene habits."
   }
 
   let secondaryInsight: string

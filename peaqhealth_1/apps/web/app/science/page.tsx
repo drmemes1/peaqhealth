@@ -41,7 +41,13 @@ const citations: Record<number, { authors: string; title: string; journal: strin
   31: { authors: "Olivieri F, et al.", title: "Heart rate variability and autonomic nervous system imbalance: Potential biomarkers and detectable hallmarks of aging and inflammaging", journal: "Ageing Research Reviews", year: "2024" },
   32: { authors: "Tegegne BS, et al.", title: "Reference values of heart rate variability from 10-second resting electrocardiograms: the Lifelines Cohort Study", journal: "European Journal of Preventive Cardiology", year: "2020", n: "84,772" },
   33: { authors: "Brozat M, Böckelmann I, Sammito S.", title: "Systematic review on HRV reference values", journal: "Journal of Cardiovascular Development and Disease", year: "2025" },
-  34: { authors: "López-Otín C, et al.", title: "Hallmarks of aging: An expanding universe", journal: "Cell", year: "2023" },
+  34: { authors: "L\u00f3pez-Ot\u00edn C, et al.", title: "Hallmarks of aging: An expanding universe", journal: "Cell", year: "2023" },
+  35: { authors: "Mi Z, et al.", title: "OSA causally promotes periodontitis: Mendelian randomization", journal: "BMC Oral Health", year: "2023" },
+  36: { authors: "Hao G, et al.", title: "Oral microbiome diversity and sleep disorder risk", journal: "BMC Oral Health", year: "2025", n: "4,729" },
+  37: { authors: "Tang Q, et al.", title: "RA and periodontitis: systematic review & meta-analysis", journal: "Int J Periodontics Restorative Dent", year: "2017", n: "151,569" },
+  38: { authors: "Olsen I, Singhrao SK.", title: "Oral pathogens in Alzheimer\u2019s disease brains", journal: "J Oral Microbiology", year: "2015" },
+  39: { authors: "Altamash M, et al.", title: "HbA1c reduction from periodontal treatment in diabetics", journal: "J Oral Rehabil", year: "2016", n: "129" },
+  40: { authors: "Gamsiz-Isik H, et al.", title: "Periodontitis prevalence in polysomnogram-confirmed OSA", journal: "J Periodontol", year: "2017", n: "163" },
 };
 
 /* ───────────────────────── helpers ──────────────────────────── */
@@ -242,7 +248,7 @@ export default function SciencePage() {
   const doSay = [
     "\u201ChsCRP below 0.5 mg/L is associated with lower cardiovascular risk in population studies.\u201D",
     "\u201CPeriodontal pathogens have been directly detected in coronary plaques in autopsy studies.\u201D",
-    "\u201COSA patients are 2.46\u00d7 more likely to have periodontitis across meta-analyses of 88,000+ patients.\u201D",
+    "\u201COSA patients are 2.46\u00d7 more likely to have periodontitis across meta-analyses of 88,000+ patients.\u201D (Portelli et al., 2024; Zhu et al., 2023)",
     "\u201CYour Peaq Score reflects the current state of evidence on these markers.\u201D",
   ];
 

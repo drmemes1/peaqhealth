@@ -205,6 +205,37 @@ export function calculateModifiers(inputs: PanelInputs): {
     })
   }
 
+  // HbA1c + periodontal — metabolic-inflammatory compound
+  if (
+    inputs.has_blood && inputs.has_oral &&
+    inputs.periodontal_burden !== null && inputs.periodontal_burden > 0.005 &&
+    inputs.glucose !== null && inputs.glucose > 125
+  ) {
+    modifiers.push({
+      id: "hba1c_perio_compound",
+      panels: ["blood", "oral"],
+      direction: "penalty",
+      points: 2,
+      label: "Metabolic-inflammatory compound signal",
+      rationale: "Elevated glucose and elevated periodontal pathogen load compound each other. Poorly controlled blood sugar impairs immune cell function in periodontal tissues, while periodontal inflammation makes glycemic control harder. Periodontal treatment has been shown to reduce HbA1c by ~1% in diabetics.",
+    })
+  }
+
+  // Low HRV + elevated periodontal pathogens — autonomic-inflammatory
+  if (
+    inputs.hrv_ms !== null && inputs.hrv_ms < 25 &&
+    inputs.periodontal_burden !== null && inputs.periodontal_burden > 0.005
+  ) {
+    modifiers.push({
+      id: "hrv_stress_perio",
+      panels: ["sleep", "oral"],
+      direction: "penalty",
+      points: 2,
+      label: "Autonomic-inflammatory signal",
+      rationale: "Low HRV reflects reduced parasympathetic tone. This reduces salivary flow, depletes nitrate-reducing bacteria, and impairs periodontal immune defense. When HRV is low alongside elevated periodontal pathogens, the autonomic and inflammatory systems are reinforcing each other.",
+    })
+  }
+
   // Cap between -10 and +8
   const rawTotal = modifiers.reduce(
     (sum, m) => sum + (m.direction === "bonus" ? m.points : -m.points),
