@@ -1,5 +1,6 @@
 import { WaitlistForm } from "./components/waitlist-form"
 import { LandingHero } from "./components/landing-hero"
+import { OralSnapshot } from "./components/quiz/OralSnapshot"
 
 /* ─── Design tokens ───────────────────────────────────────────────────────── */
 
@@ -99,25 +100,40 @@ export default function Home() {
             ))}
           </div>
 
-          {/* CTA pill */}
-          <a
-            className="landing-nav-cta"
-            href="#cta"
-            style={{
-              fontFamily: sans,
-              fontSize: 12,
-              fontWeight: 500,
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-              color: ACCENT,
-              textDecoration: "none",
-              border: `1px solid ${ACCENT_RAW}`,
-              borderRadius: 4,
-              padding: "10px 22px",
-            }}
-          >
-            Join waitlist &rarr;
-          </a>
+          {/* CTA pills */}
+          <div className="landing-nav-cta" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <a
+              href="#quiz"
+              style={{
+                fontFamily: sans,
+                fontSize: 12,
+                fontWeight: 500,
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                color: "rgba(255,255,255,0.5)",
+                textDecoration: "none",
+              }}
+            >
+              Take the snapshot
+            </a>
+            <a
+              href="#cta"
+              style={{
+                fontFamily: sans,
+                fontSize: 12,
+                fontWeight: 500,
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                color: ACCENT,
+                textDecoration: "none",
+                border: `1px solid ${ACCENT_RAW}`,
+                borderRadius: 4,
+                padding: "10px 22px",
+              }}
+            >
+              Join waitlist &rarr;
+            </a>
+          </div>
         </div>
       </nav>
 
@@ -548,6 +564,51 @@ export default function Home() {
               See how your mouth compares to 9,660 Americans &rarr;
             </a>
           </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════════
+          QUIZ — 90-SECOND ORAL SNAPSHOT
+          ══════════════════════════════════════════════════════════════════ */}
+      <section id="quiz" style={{ background: BG_CREAM }}>
+        <div style={{
+          maxWidth: 640,
+          margin: "0 auto",
+          padding: "clamp(64px, 8vw, 96px) 24px",
+          textAlign: "center",
+        }}>
+          <p style={{
+            fontFamily: sans,
+            fontSize: 11,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            color: MUTED,
+            margin: "0 0 16px",
+          }}>
+            90-second snapshot
+          </p>
+          <h2 style={{
+            fontFamily: serif,
+            fontSize: "clamp(28px, 3.5vw, 36px)",
+            fontWeight: 400,
+            color: INK,
+            margin: "0 0 12px",
+            lineHeight: 1.2,
+          }}>
+            See how your habits connect<br />
+            <em style={{ color: ACCENT_RAW, fontStyle: "italic" }}>to these pathways.</em>
+          </h2>
+          <p style={{
+            fontFamily: sans,
+            fontSize: 14,
+            color: MUTED,
+            margin: "0 0 40px",
+            lineHeight: 1.6,
+          }}>
+            Six questions. No testing required.
+            Each answer reveals a connection your doctor has never shown you.
+          </p>
+          <OralSnapshot />
         </div>
       </section>
 
