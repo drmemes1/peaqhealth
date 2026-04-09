@@ -26,7 +26,7 @@ const PROTECTIVE: BacteriaCard[] = [
     type: "protective",
     headline: "Higher levels linked to lower blood sugar, lower triglycerides, lower blood pressure",
     pills: ["HbA1c", "Triglycerides", "Blood pressure", "HDL"],
-    expanded: "Haemophilus helps your body produce nitric oxide \u2014 a molecule that relaxes blood vessels, improves blood flow, and reduces blood sugar buildup. People with more Haemophilus tend to have lower HbA1c and better cardiovascular markers. It declines naturally with age, which may partly explain why metabolic health worsens over time.",
+    expanded: "Haemophilus helps your body produce nitric oxide, a molecule that relaxes blood vessels, improves blood flow, and reduces blood sugar buildup. People with more Haemophilus tend to have lower HbA1c and better cardiovascular markers. It declines naturally with age, which may partly explain why metabolic health worsens over time.",
     dataLine: "In 9,848 Americans: HbA1c r=\u22120.074 (p=9\u00d710\u207b\u00b9\u00b3) \u00b7 Triglycerides r=\u22120.094 (p=3\u00d710\u207b\u00b9\u2070)",
   },
   {
@@ -35,7 +35,7 @@ const PROTECTIVE: BacteriaCard[] = [
     type: "protective",
     headline: "Higher levels linked to lower inflammation and lower blood pressure",
     pills: ["hsCRP", "Blood pressure", "Triglycerides"],
-    expanded: "Neisseria is the primary nitrate-reducing bacteria in your mouth. It converts dietary nitrates from vegetables into nitric oxide \u2014 the molecule your blood vessels use to stay relaxed and flexible. People with more Neisseria consistently show lower hsCRP and lower blood pressure. It\u2019s one reason leafy greens improve cardiovascular health: your mouth bacteria do the converting.",
+    expanded: "Neisseria is the primary nitrate-reducing bacteria in your mouth. It converts dietary nitrates from vegetables into nitric oxide, the molecule your blood vessels use to stay relaxed and flexible. People with more Neisseria consistently show lower hsCRP and lower blood pressure. It\u2019s one reason leafy greens improve cardiovascular health: your mouth bacteria do the converting.",
     dataLine: "In 9,848 Americans: Systolic BP r=\u22120.061 (p=2\u00d710\u207b\u2079) \u00b7 hsCRP r=\u22120.051 (p=5\u00d710\u207b\u2074)",
   },
 ]
@@ -57,7 +57,7 @@ const PATHOGENIC: BacteriaCard[] = [
     type: "pathogenic",
     headline: "Higher levels linked to higher blood sugar, higher inflammation, higher blood pressure",
     pills: ["Glucose", "HbA1c", "hsCRP", "Blood pressure"],
-    expanded: "Tannerella forsythia is part of the \u2018red complex\u2019 \u2014 three bacteria strongly associated with advanced gum disease and systemic inflammation. In the CDC dataset, higher Tannerella showed up consistently across blood sugar, HbA1c, hsCRP, and blood pressure simultaneously. One of the clearest examples of an oral pathogen leaving a fingerprint in your bloodstream.",
+    expanded: "Tannerella forsythia is part of the \u2018red complex,\u2019 three bacteria strongly associated with advanced gum disease and systemic inflammation. In the CDC dataset, higher Tannerella showed up consistently across blood sugar, HbA1c, hsCRP, and blood pressure simultaneously. One of the clearest examples of an oral pathogen leaving a fingerprint in your bloodstream.",
     dataLine: "In 9,848 Americans: HbA1c r=+0.050 (p=1\u00d710\u207b\u2076) \u00b7 Diastolic BP r=+0.052 (p=4\u00d710\u207b\u2077)",
   },
   {
@@ -66,7 +66,7 @@ const PATHOGENIC: BacteriaCard[] = [
     type: "pathogenic",
     headline: "Higher levels linked to higher LDL cholesterol and higher blood sugar",
     pills: ["LDL", "Glucose", "Colorectal cancer risk"],
-    expanded: "Fusobacterium nucleatum is one of the most studied bacteria in cancer research \u2014 consistently found enriched in colorectal tumor tissue and studied as an early detection biomarker. In the CDC blood marker data, elevated Fusobacterium correlated with higher LDL and blood glucose. A bacteria most people have never heard of, found in most mouths, with implications well beyond oral health.",
+    expanded: "Fusobacterium nucleatum is one of the most studied bacteria in cancer research, consistently found enriched in colorectal tumor tissue and studied as an early detection biomarker. In the CDC blood marker data, elevated Fusobacterium correlated with higher LDL and blood glucose. A bacteria most people have never heard of, found in most mouths, with implications well beyond oral health.",
     dataLine: "In 9,848 Americans: LDL r=+0.058 (p=1\u00d710\u207b\u2074) \u00b7 Glucose r=+0.038 (p=0.010)",
   },
   {
@@ -75,7 +75,7 @@ const PATHOGENIC: BacteriaCard[] = [
     type: "pathogenic",
     headline: "Elevated levels linked to higher systemic inflammation",
     pills: ["hsCRP", "Inflammation"],
-    expanded: "Prevotella intermedia is a periodontal pathogen linked to gum inflammation and bleeding. It thrives in inflamed tissue and produces compounds that further drive immune activation. In the CDC data, higher Prevotella correlated with elevated hsCRP \u2014 a marker of systemic inflammation that predicts cardiovascular events. Inflammation that starts in the mouth doesn\u2019t always stay there.",
+    expanded: "Prevotella intermedia is a periodontal pathogen linked to gum inflammation and bleeding. It thrives in inflamed tissue and produces compounds that further drive immune activation. In the CDC data, higher Prevotella correlated with elevated hsCRP, a marker of systemic inflammation that predicts cardiovascular events. Inflammation that starts in the mouth doesn\u2019t always stay there.",
     dataLine: "In 9,848 Americans: hsCRP r=+0.035 (p=0.017)",
   },
 ]
@@ -311,7 +311,7 @@ export function FindingsExplorer() {
           margin: "0 0 10px", maxWidth: 560,
         }}>
           Vegetables improve your heart health partly because your mouth bacteria convert
-          their nitrates into nitric oxide &mdash; the molecule your blood vessels use to
+          their nitrates into nitric oxide, the molecule your blood vessels use to
           stay relaxed. Without the right bacteria, the conversion doesn&rsquo;t happen.
         </p>
         <span style={{
@@ -356,7 +356,7 @@ export function FindingsExplorer() {
           color: "rgba(20,20,16,0.55)", lineHeight: 1.65,
           margin: 0, maxWidth: 560,
         }}>
-          Shannon diversity &mdash; a measure of how many different bacteria you have &mdash;
+          Shannon diversity (a measure of how many different bacteria you have)
           showed no significant connection to blood markers when tested alone across 9,848 people.
           Peaq still includes diversity as one signal in your oral score, because research shows it
           matters for overall oral ecosystem health. But diversity alone doesn&rsquo;t tell you which

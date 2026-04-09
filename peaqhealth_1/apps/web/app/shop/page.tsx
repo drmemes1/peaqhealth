@@ -329,7 +329,7 @@ function StarterKitBundle() {
 
             <p className="font-body text-sm leading-relaxed" style={{ color: "rgba(250,250,248,0.55)" }}>
               Everything you need to begin measuring what matters. Oral Microbiome Kit, Tongue Scraper,
-              Mouth Tape, Nose Tape, and Sleep Mask — curated for your first 30 days.
+              Mouth Tape, Nose Tape, and Sleep Mask, curated for your first 30 days.
             </p>
 
             {/* Included items */}
@@ -479,7 +479,7 @@ export default function ShopPage() {
           style={{ color: "var(--ink-60)", animationDelay: "160ms" }}
         >
           Every product is selected for its measurable impact on your Peaq score.
-          All CTAs capture email — checkout coming soon.
+          All CTAs capture email. Checkout coming soon.
         </p>
         <div
           className="h-px mt-6 fade-up"

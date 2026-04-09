@@ -14,7 +14,7 @@ const citations: Record<number, { authors: string; title: string; journal: strin
   4:  { authors: "Walker MP, Stickgold R.", title: "Sleep, memory, and plasticity", journal: "Annual Review of Psychology", year: "2006" },
   5:  { authors: "Buysse DJ, et al.", title: "The Pittsburgh Sleep Quality Index", journal: "Psychiatry Research", year: "1989" },
   6:  { authors: "Ridker PM, et al.", title: "Rosuvastatin to prevent vascular events in men and women with elevated C-reactive protein (Jupiter)", journal: "NEJM", year: "2008", n: "17,802" },
-  7:  { authors: "Sniderman AD, et al.", title: "ApoB vs LDL-C — which better predicts cardiovascular risk", journal: "JAMA Cardiology", year: "2019" },
+  7:  { authors: "Sniderman AD, et al.", title: "ApoB vs LDL-C: which better predicts cardiovascular risk", journal: "JAMA Cardiology", year: "2019" },
   8:  { authors: "Forrest KY, Stuhldreher WL.", title: "Prevalence and correlates of vitamin D deficiency in US adults", journal: "Nutrition Research", year: "2011", n: "4,495" },
   9:  { authors: "Millan J, et al.", title: "Lipoprotein ratios: physiological significance and clinical usefulness in cardiovascular prevention", journal: "Vascular Health and Risk Management", year: "2009" },
   10: { authors: "Selvin E, et al.", title: "Glycated hemoglobin, diabetes, and cardiovascular risk in nondiabetic adults", journal: "NEJM", year: "2010", n: "11,092" },
@@ -330,10 +330,10 @@ export default function SciencePage() {
         <FadeUp delay={60}>
           <div style={bodyTextStyle}>
             <p style={{ marginBottom: 16 }}>
-              A 2026 analysis by Adibi et al. (<em>npj Digital Medicine</em>) examined whether composite multi-domain biomarker scoring — combining sleep physiology, cardiometabolic blood markers, oral microbiome composition, and lifestyle behaviors — demonstrated significantly stronger predictive validity for health outcomes than single-domain approaches.<Cite n={29} />
+              A 2026 analysis by Adibi et al. (<em>npj Digital Medicine</em>) examined whether composite multi-domain biomarker scoring, combining sleep physiology, cardiometabolic blood markers, oral microbiome composition, and lifestyle behaviors, demonstrated significantly stronger predictive validity for health outcomes than single-domain approaches.<Cite n={29} />
             </p>
             <p style={{ marginBottom: 16 }}>
-              The study found that integration across these four domains improved outcome prediction beyond any single panel alone — supporting the fundamental design choice of the Peaq Score: that health is measured in dimensions, not a single number from one test.
+              The study found that integration across these four domains improved outcome prediction beyond any single panel alone. This supports the fundamental design choice of the Peaq Score: that health is measured in dimensions, not a single number from one test.
             </p>
           </div>
         </FadeUp>
@@ -359,10 +359,10 @@ export default function SciencePage() {
         <FadeUp delay={60}>
           <div style={bodyTextStyle}>
             <p style={{ marginBottom: 16 }}>
-              The honest answer is: not yet — and neither is any other consumer health score.
+              The honest answer is: not yet. Neither is any other consumer health score.
             </p>
             <p style={{ marginBottom: 16 }}>
-              Apple Watch readiness scores, Oura Ring recovery indices, WHOOP strain and recovery, InsideTracker&rsquo;s InnerAge — none of these have been validated in a prospective clinical trial showing their composite score predicts hard outcomes like mortality, hospitalisation, or disease onset. They are proprietary algorithms with no published methodology.
+              Apple Watch readiness scores, Oura Ring recovery indices, WHOOP strain and recovery, InsideTracker&rsquo;s InnerAge. None of these have been validated in a prospective clinical trial showing their composite score predicts hard outcomes like mortality, hospitalisation, or disease onset. They are proprietary algorithms with no published methodology.
             </p>
             <p style={{ marginBottom: 16 }}>
               Peaq shows its work.
@@ -401,7 +401,7 @@ export default function SciencePage() {
 
         <FadeUp delay={60}>
           <p style={{ ...bodyTextStyle, marginBottom: 32 }}>
-            The Peaq Score runs from 0 to 100. It is composed of three measured panels — Blood (40 pts), Sleep (30 pts), and Oral Microbiome (30 pts) — that sum to a base score. Cross-panel modifiers then adjust the total up or down (capped at &minus;10 to +8) based on multi-panel signal combinations. Lifestyle data informs your insights but is not scored — only objective, measured data contributes to your Peaq Score.
+            The Peaq Score runs from 0 to 100. It is composed of three measured panels: Blood (40 pts), Sleep (30 pts), and Oral Microbiome (30 pts). These sum to a base score. Cross-panel modifiers then adjust the total up or down (capped at &minus;10 to +8) based on multi-panel signal combinations. Lifestyle data informs your insights but is not scored. Only objective, measured data contributes to your Peaq Score.
           </p>
         </FadeUp>
 
@@ -480,7 +480,7 @@ export default function SciencePage() {
         {/* Freshness note */}
         <FadeUp delay={180}>
           <p style={{ ...bodyTextStyle, marginBottom: 16 }}>
-            <strong>Freshness.</strong> Blood panel results are time-gated. Labs older than 12 months lock the blood panel entirely. We do this because stale data is worse than no data — it creates false confidence.
+            <strong>Freshness.</strong> Blood panel results are time-gated. Labs older than 12 months lock the blood panel entirely. We do this because stale data is worse than no data. It creates false confidence.
           </p>
           <div style={{ marginBottom: 0 }}>
             {freshnessRows.map((r) => (
@@ -521,7 +521,7 @@ export default function SciencePage() {
             Sleep carries 30 of the 100 points in the Peaq Score. Poor sleep quality is a systemic health signal. It drives inflammation, glucose dysregulation, immune suppression, and accelerated biological aging.
           </p>
           <p style={{ ...bodyTextStyle, marginBottom: 16 }}>
-            Sleep data requires a connected wearable — Apple Watch, Oura, WHOOP, or Garmin. We use a 7-night minimum to avoid single-night noise. Deep sleep is weighted most heavily (8 pts) as the most clinically meaningful sleep quality indicator, followed by REM (7 pts), efficiency (6 pts), HRV (5 pts, age-adjusted), and SpO2 (4 pts).
+            Sleep data requires a connected wearable: Apple Watch, Oura, WHOOP, or Garmin. We use a 7-night minimum to avoid single-night noise. Deep sleep is weighted most heavily (8 pts) as the most clinically meaningful sleep quality indicator, followed by REM (7 pts), efficiency (6 pts), HRV (5 pts, age-adjusted), and SpO2 (4 pts).
           </p>
           <p style={{ ...bodyTextStyle, marginBottom: 32 }}>
             Sleep scoring requires a minimum of 7 nights of wearable data to ensure statistical reliability. This threshold is based on published research showing that 7 nights are needed to reliably estimate habitual sleep efficiency.<Cite n={26} /> Scores update nightly as new data arrives.
@@ -551,10 +551,10 @@ export default function SciencePage() {
         />
         <Marker
           num={2}
-          title="HRV (RMSSD) — age &amp; sex adjusted"
+          title="HRV (RMSSD), age &amp; sex adjusted"
           target="Age and sex adjusted (50th percentile, male): Age 20–29: ~42–48 ms · Age 30–39: ~33–37 ms · Age 40–49: ~24–29 ms · Age 50–59: ~21–24 ms · Age 60+: ~18–19 ms. Women: ~5 ms higher in most bands below 60. Personal baseline: a sustained drop ≥20% below your 30-day average flags Watch."
           color="var(--sleep-c)"
-          body={<>Heart rate variability is not just a sleep metric. It is one of the most accessible non-invasive windows into a core hallmark of aging.<br /><br />As we age, the balance of the autonomic nervous system shifts. Sympathetic activity (fight-or-flight) increases. Parasympathetic activity (rest and digest) declines. That decline matters beyond sleep — the parasympathetic system actively suppresses systemic inflammation via the cholinergic anti-inflammatory pathway. When parasympathetic tone weakens, that brake is removed, and chronic low-grade inflammation — inflammaging — accelerates.<Cite n={31} /><br /><br />A 2024 review in Ageing Research Reviews formally proposed HRV as a biomarker of aging and inflammaging, affordable and non-invasive enough to monitor in asymptomatic individuals. This is why Peaq connects your HRV to your hsCRP. When both are abnormal, you are not seeing two separate problems. You are seeing the same hallmark measured twice.<Cite n={34} /><br /><br />Peaq scores HRV on two axes:<br /><br /><strong>Population percentile</strong> — where you stand relative to healthy peers of your age and sex, anchored in the Lifelines Cohort study (n=84,772, the largest published single-cohort RMSSD normative dataset), which generated age- and sex-specific centile curves from ECG recordings.<Cite n={32} /><br /><br /><strong>Personal trend</strong> — whether your HRV is rising or falling relative to your own 30-day rolling baseline. A sustained drop of ≥20% below your personal average flags Watch regardless of your population percentile, because acute autonomic stress shows up in personal trend before it shifts your population percentile.<Cite n={33} /><br /><br />Your final HRV status is the more conservative of the two.</>}
+          body={<>Heart rate variability is not just a sleep metric. It is one of the most accessible non-invasive windows into a core hallmark of aging.<br /><br />As we age, the balance of the autonomic nervous system shifts. Sympathetic activity (fight-or-flight) increases. Parasympathetic activity (rest and digest) declines. That decline matters beyond sleep. The parasympathetic system actively suppresses systemic inflammation via the cholinergic anti-inflammatory pathway. When parasympathetic tone weakens, that brake is removed, and chronic low-grade inflammation (inflammaging) accelerates.<Cite n={31} /><br /><br />A 2024 review in Ageing Research Reviews formally proposed HRV as a biomarker of aging and inflammaging, affordable and non-invasive enough to monitor in asymptomatic individuals. This is why Peaq connects your HRV to your hsCRP. When both are abnormal, you are not seeing two separate problems. You are seeing the same hallmark measured twice.<Cite n={34} /><br /><br />Peaq scores HRV on two axes:<br /><br /><strong>Population percentile:</strong> where you stand relative to healthy peers of your age and sex, anchored in the Lifelines Cohort study (n=84,772, the largest published single-cohort RMSSD normative dataset), which generated age- and sex-specific centile curves from ECG recordings.<Cite n={32} /><br /><br /><strong>Personal trend:</strong> whether your HRV is rising or falling relative to your own 30-day rolling baseline. A sustained drop of ≥20% below your personal average flags Watch regardless of your population percentile, because acute autonomic stress shows up in personal trend before it shifts your population percentile.<Cite n={33} /><br /><br />Your final HRV status is the more conservative of the two.</>}
           evidence="Olivieri F et al., Ageing Res Rev 2024. Tegegne BS et al., Eur J Prev Cardiol 2020 (n=84,772). Brozat et al., J Cardiovasc Dev Dis 2025. López-Otín C et al., Cell 2023."
         />
         <Marker
@@ -579,7 +579,7 @@ export default function SciencePage() {
           target="≥85%"
           color="var(--sleep-c)"
           body={<>Time asleep as a fraction of time in bed. Low efficiency (fragmented sleep, long wake-after-sleep-onset) indicates poor sleep architecture regardless of total hours.<Cite n={5} /></>}
-          evidence="Buysse et al., Psychiatry Research 1989 — Pittsburgh Sleep Quality Index."
+          evidence="Buysse et al., Psychiatry Research 1989. Pittsburgh Sleep Quality Index."
         />
 
         <SectionDivider />
@@ -596,14 +596,14 @@ export default function SciencePage() {
             The blood panel captures cardiovascular risk, metabolic health, and systemic inflammation. These are the three dimensions most predictive of premature mortality in middle-aged adults. We use seven markers, each selected for independent predictive value beyond standard lipid panels.
           </p>
           <p style={{ ...bodyTextStyle, marginBottom: 32 }}>
-            Blood data is accepted via PDF upload — Quest, LabCorp, BioReference, Everlywell, and most major labs. Our parser extracts markers automatically.
+            Blood data is accepted via PDF upload: Quest, LabCorp, BioReference, Everlywell, and most major labs. Our parser extracts markers automatically.
           </p>
         </FadeUp>
 
         {/* Featured study: Jupiter Trial */}
         <StudyCard
           journal="New England Journal of Medicine"
-          title="Jupiter Trial — Rosuvastatin in patients with elevated CRP"
+          title="Jupiter Trial: Rosuvastatin in patients with elevated CRP"
           stat="n=17,802"
           statLabel="Participants"
           finding="44% reduction in major cardiovascular events in patients with normal LDL but elevated CRP."
@@ -616,8 +616,8 @@ export default function SciencePage() {
           title="hsCRP"
           target="<0.5 mg/L"
           color="var(--blood-c)"
-          body={<>High-sensitivity C-reactive protein is the benchmark inflammatory marker. Values above 3.0 mg/L confer 2&times; the cardiovascular risk of values below 1.0 mg/L, independent of LDL cholesterol.<Cite n={6} /> The 2025 ACC Scientific Statement now identifies hsCRP &gt;2.0 mg/L as an independent action threshold — requiring clinical attention regardless of LDL level.<Cite n={25} /></>}
-          evidence="Ridker et al., NEJM 2008 — Jupiter Trial. n=17,802. Updated per Mensah et al., JACC 2025."
+          body={<>High-sensitivity C-reactive protein is the benchmark inflammatory marker. Values above 3.0 mg/L confer 2&times; the cardiovascular risk of values below 1.0 mg/L, independent of LDL cholesterol.<Cite n={6} /> The 2025 ACC Scientific Statement now identifies hsCRP &gt;2.0 mg/L as an independent action threshold, requiring clinical attention regardless of LDL level.<Cite n={25} /></>}
+          evidence="Ridker et al., NEJM 2008 (Jupiter Trial). n=17,802. Updated per Mensah et al., JACC 2025."
         />
         <FadeUp>
           <div style={{ background: "rgba(180,60,60,0.04)", borderLeft: "3px solid var(--blood-c)", borderRadius: "0 4px 4px 0", padding: "14px 18px", margin: "0 0 24px" }}>
@@ -645,7 +645,7 @@ export default function SciencePage() {
           title="Vitamin D"
           target="30–60 ng/mL"
           color="var(--blood-c)"
-          body={<>Vitamin D deficiency affects ~40% of Americans and is associated with elevated inflammatory cytokines, impaired immune function, depression, and all-cause mortality. The relationship is bidirectional — poor sleep reduces vitamin D synthesis; low vitamin D impairs sleep quality.<Cite n={8} /></>}
+          body={<>Vitamin D deficiency affects ~40% of Americans and is associated with elevated inflammatory cytokines, impaired immune function, depression, and all-cause mortality. The relationship is bidirectional: poor sleep reduces vitamin D synthesis; low vitamin D impairs sleep quality.<Cite n={8} /></>}
           evidence="Forrest & Stuhldreher, Nutrition Research 2011. n=4,495."
         />
         <Marker
@@ -661,7 +661,7 @@ export default function SciencePage() {
           title="HbA1c"
           target="<5.4%"
           color="var(--blood-c)"
-          body={<>Glycated haemoglobin reflects average blood glucose over 90 days. Pre-diabetic range (5.7–6.4%) confers elevated risk of kidney disease, neuropathy, and cardiovascular events — often years before diagnosis.<Cite n={10} /></>}
+          body={<>Glycated haemoglobin reflects average blood glucose over 90 days. Pre-diabetic range (5.7–6.4%) confers elevated risk of kidney disease, neuropathy, and cardiovascular events, often years before diagnosis.<Cite n={10} /></>}
           evidence="Selvin et al., NEJM 2010. n=11,092."
         />
         <Marker
@@ -725,7 +725,7 @@ export default function SciencePage() {
               Scored against 9,660 Americans
             </span>
             <p style={{ ...bodyTextStyle, marginBottom: 12 }}>
-              Your oral microbiome is compared against the CDC&rsquo;s NHANES dataset &mdash;
+              Your oral microbiome is compared against the CDC&rsquo;s NHANES dataset,
               the only nationally representative study of mouth bacteria in the United States.
               9,660 participants. Health outcomes tracked for 9 years. Same DNA sequencing
               technology as your Zymo kit.
@@ -769,7 +769,7 @@ export default function SciencePage() {
           title="Shannon diversity index"
           target="≥3.0"
           color="var(--oral-c)"
-          body={<>Bacterial diversity measures the richness and evenness of microbial species in the oral cavity. Low diversity signals an imbalanced microbiome — a state where harmful species overgrow at the expense of beneficial ones.<Cite n={13} /></>}
+          body={<>Bacterial diversity measures the richness and evenness of microbial species in the oral cavity. Low diversity signals an imbalanced microbiome, a state where harmful species overgrow at the expense of beneficial ones.<Cite n={13} /></>}
           evidence="Belstrøm et al., Journal of Oral Microbiology 2014."
         />
         <Marker
@@ -778,14 +778,14 @@ export default function SciencePage() {
           target="≥5% of reads"
           color="var(--oral-c)"
           body={<>Neisseria, Rothia, and Veillonella species convert dietary nitrate into nitrite, which is then converted to nitric oxide (NO) in the circulation. NO is a potent vasodilator critical for blood pressure regulation. Antiseptic mouthwash kills these bacteria, acutely impairing the NO pathway.<Cite n={14} /><Cite n={15} /><Cite n={28} /></>}
-          evidence="Petersson et al., 2009. Kapil et al., Hypertension 2015 — ORIGINS study, n=300. Vanhatalo et al., J Physiol 2018."
+          evidence="Petersson et al., 2009. Kapil et al., Hypertension 2015 (ORIGINS study), n=300. Vanhatalo et al., J Physiol 2018."
         />
         <Marker
           num={15}
           title="Periodontal pathogens"
           target="<0.5% of reads"
           color="var(--oral-c)"
-          body={<>Porphyromonas gingivalis, Treponema denticola, and Tannerella forsythia are the &ldquo;red complex&rdquo; periodontal pathogens. P. gingivalis and related species have been directly detected in human coronary artery plaques in autopsy studies — establishing a systemic bacteraemia pathway from the oral cavity to vascular tissue.<Cite n={16} /> P. gingivalis has also been detected in neurological tissue, with gingipain proteases identified as a driver of neuroinflammatory cascades.<Cite n={17} /></>}
+          body={<>Porphyromonas gingivalis, Treponema denticola, and Tannerella forsythia are the &ldquo;red complex&rdquo; periodontal pathogens. P. gingivalis and related species have been directly detected in human coronary artery plaques in autopsy studies, establishing a systemic bacteraemia pathway from the oral cavity to vascular tissue.<Cite n={16} /> P. gingivalis has also been detected in neurological tissue, with gingipain proteases identified as a driver of neuroinflammatory cascades.<Cite n={17} /></>}
           evidence="Hussain et al., Frontiers in Immunology 2023, n=1,791. Dominy et al., Science Advances 2019."
         />
         <Marker
@@ -793,7 +793,7 @@ export default function SciencePage() {
           title="OSA-associated taxa"
           target="<1% of reads"
           color="var(--oral-c)"
-          body={<>Prevotella and Fusobacterium species are enriched in patients with obstructive sleep apnea. OSA patients are 2.46&times; more likely to have periodontitis across meta-analyses covering 88,000+ patients. The mechanism: intermittent hypoxia from OSA drives oxidative stress that accelerates periodontal tissue breakdown, while periodontal inflammation elevates systemic CRP &mdash; disrupting sleep architecture. Peaq tracks these taxa as a signal that the oral-inflammatory-sleep pathway may be active.<Cite n={18} /><Cite n={19} /></>}
+          body={<>Prevotella and Fusobacterium species are enriched in patients with obstructive sleep apnea. OSA patients are 2.46&times; more likely to have periodontitis across meta-analyses covering 88,000+ patients. The mechanism: intermittent hypoxia from OSA drives oxidative stress that accelerates periodontal tissue breakdown, while periodontal inflammation elevates systemic CRP, disrupting sleep architecture. Peaq tracks these taxa as a signal that the oral-inflammatory-sleep pathway may be active.<Cite n={18} /><Cite n={19} /></>}
           evidence="Portelli et al., Dentistry Journal 2024, n=88,040. Zhu et al., Sleep and Breathing 2023, n=31,800. Mi et al., BMC Oral Health 2023 (Mendelian randomization)."
         />
 
@@ -822,8 +822,8 @@ export default function SciencePage() {
           title="Neurological balance"
           target="P. gingivalis + T. denticola combined <0.1%"
           color="var(--oral-c)"
-          body={<>P. gingivalis has been detected in human brain tissue in Alzheimer&rsquo;s disease patients, with its gingipain proteases identified as a potential driver of neuroinflammatory cascades. T. denticola compounds the burden. We frame this as &ldquo;neurological balance&rdquo; — a wellness signal, not a disease prediction.<Cite n={17} /></>}
-          evidence="Dominy et al., Science Advances 2019. Emerging research — effect sizes not yet established for oral screening."
+          body={<>P. gingivalis has been detected in human brain tissue in Alzheimer&rsquo;s disease patients, with its gingipain proteases identified as a potential driver of neuroinflammatory cascades. T. denticola compounds the burden. We frame this as &ldquo;neurological balance,&rdquo; a wellness signal, not a disease prediction.<Cite n={17} /></>}
+          evidence="Dominy et al., Science Advances 2019. Emerging research; effect sizes not yet established for oral screening."
         />
         <Marker
           num={18}
@@ -831,7 +831,7 @@ export default function SciencePage() {
           target="Prevotella group <3%"
           color="var(--oral-c)"
           body={<>Certain Prevotella species are associated with metabolic health pathways. Elevated Prevotella abundance has been observed in metabolic dysbiosis states. A diet rich in diverse plant fibers supports a balanced oral microbiome.</>}
-          evidence="Emerging research — observational associations, not yet causal."
+          evidence="Emerging research; observational associations, not yet causal."
         />
         <Marker
           num={19}
@@ -839,7 +839,7 @@ export default function SciencePage() {
           target="Fusobacterium group <0.5%"
           color="var(--oral-c)"
           body={<>Fusobacterium nucleatum is being studied in connection with cellular health pathways, including its role in tissue adhesion and immune modulation. Regular dental cleaning, good oral hygiene, and dietary fiber support a balanced microbiome.</>}
-          evidence="Emerging research — mechanisms under active investigation."
+          evidence="Emerging research; mechanisms under active investigation."
         />
 
         <SectionDivider />
@@ -853,10 +853,10 @@ export default function SciencePage() {
 
         <FadeUp delay={60}>
           <p style={{ ...bodyTextStyle, marginBottom: 16 }}>
-            Lifestyle data is no longer scored numerically. Your Peaq Score is based entirely on objective, measured data — blood labs, wearable sleep data, and oral microbiome sequencing. Lifestyle information (exercise, diet, oral hygiene, smoking, stress) informs your insights and cross-panel analysis but does not contribute points to your total score.
+            Lifestyle data is no longer scored numerically. Your Peaq Score is based entirely on objective, measured data: blood labs, wearable sleep data, and oral microbiome sequencing. Lifestyle information (exercise, diet, oral hygiene, smoking, stress) informs your insights and cross-panel analysis but does not contribute points to your total score.
           </p>
           <p style={{ ...bodyTextStyle, marginBottom: 32 }}>
-            This design choice reflects a core principle: self-reported behaviours are valuable context, but measured biomarkers are more reliable for scoring. Lifestyle context helps us generate more personalised insights — connecting your habits to your numbers — without inflating your score based on questionnaire answers.
+            This design choice reflects a core principle: self-reported behaviours are valuable context, but measured biomarkers are more reliable for scoring. Lifestyle context helps us generate more personalised insights, connecting your habits to your numbers, without inflating your score based on questionnaire answers.
           </p>
         </FadeUp>
 
@@ -892,7 +892,7 @@ export default function SciencePage() {
           title="Dental visits"
           target="2 points"
           color="var(--gold)"
-          body={<>Annual dental visits allow professional debridement of subgingival biofilm — the primary reservoir of periodontal pathogens. ≥1 visit per year: 2 pts. Less frequent: 0 pts.<Cite n={20} /></>}
+          body={<>Annual dental visits allow professional debridement of subgingival biofilm, the primary reservoir of periodontal pathogens. ≥1 visit per year: 2 pts. Less frequent: 0 pts.<Cite n={20} /></>}
           evidence="Park et al., 2019."
         />
         <Marker
@@ -908,7 +908,7 @@ export default function SciencePage() {
           title="Fermented foods"
           target="2 points"
           color="var(--gold)"
-          body={<>Fermented foods — including yogurt, kefir, kimchi, sauerkraut, and kombucha — directly seed the gut and oral microbiome with beneficial microorganisms and reduce systemic inflammatory markers. A randomized crossover trial found that a high-fermented-food diet increased microbiome diversity and decreased 19 inflammatory proteins compared to a high-fiber diet.<Cite n={27} /> Daily consumption: 2 pts. Sometimes: 1 pt. Rarely: 0 pts.</>}
+          body={<>Fermented foods, including yogurt, kefir, kimchi, sauerkraut, and kombucha, directly seed the gut and oral microbiome with beneficial microorganisms and reduce systemic inflammatory markers. A randomized crossover trial found that a high-fermented-food diet increased microbiome diversity and decreased 19 inflammatory proteins compared to a high-fiber diet.<Cite n={27} /> Daily consumption: 2 pts. Sometimes: 1 pt. Rarely: 0 pts.</>}
           evidence="Wastyk et al., Cell 2021. n=36."
         />
 
@@ -927,7 +927,7 @@ export default function SciencePage() {
               Oral &times; Lifestyle: a compounding relationship
             </p>
             <p style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink-60)", lineHeight: 1.6, margin: 0 }}>
-              Antiseptic mouthwash depletes nitrate-reducing bacteria from the oral cavity — the same species that produce nitric oxide for blood pressure regulation. Fermented foods help replenish beneficial microbial populations. When both signals are present — antiseptic mouthwash use and low fermented food intake — the oral microbiome is doubly impaired: pathogen suppression is absent and beneficial seeding is absent. This interaction is detected as a cross-panel insight when both conditions are met.
+              Antiseptic mouthwash depletes nitrate-reducing bacteria from the oral cavity, the same species that produce nitric oxide for blood pressure regulation. Fermented foods help replenish beneficial microbial populations. When both signals are present (antiseptic mouthwash use and low fermented food intake) the oral microbiome is doubly impaired: pathogen suppression is absent and beneficial seeding is absent. This interaction is detected as a cross-panel insight when both conditions are met.
             </p>
           </div>
         </FadeUp>
@@ -947,7 +947,7 @@ export default function SciencePage() {
               No other consumer health product does this.
             </p>
             <p style={{ marginBottom: 16 }}>
-              Cross-panel modifiers detect when signals from multiple panels compound — either amplifying risk (penalties) or reinforcing protection (bonuses). Unlike v1 where interactions were insight-only, modifiers now directly adjust your score: penalties up to &minus;10 points, bonuses up to +8 points.
+              Cross-panel modifiers detect when signals from multiple panels compound, either amplifying risk (penalties) or reinforcing protection (bonuses). Unlike v1 where interactions were insight-only, modifiers now directly adjust your score: penalties up to &minus;10 points, bonuses up to +8 points.
             </p>
             <p style={{ marginBottom: 32 }}>
               Inflammation and poor sleep are not independent risks you add together. They amplify each other through shared pathways. When a modifier fires, you see it on your dashboard with the panels involved and the point impact.
@@ -957,10 +957,10 @@ export default function SciencePage() {
 
         {/* Interaction terms */}
         {[
-          { id: "I1", title: "Sleep \u00D7 Inflammation", penalty: "up to 5 pts", trigger: "Sleep HRV <40ms AND hsCRP >1.0 mg/L", cite: 31, desc: "Low HRV reflects declining parasympathetic tone. The parasympathetic system suppresses inflammation via the cholinergic anti-inflammatory pathway. When HRV is low and hsCRP is elevated, these are two measurements of the same hallmark of aging — inflammaging." },
+          { id: "I1", title: "Sleep \u00D7 Inflammation", penalty: "up to 5 pts", trigger: "Sleep HRV <40ms AND hsCRP >1.0 mg/L", cite: 31, desc: "Low HRV reflects declining parasympathetic tone. The parasympathetic system suppresses inflammation via the cholinergic anti-inflammatory pathway. When HRV is low and hsCRP is elevated, these are two measurements of the same hallmark of aging: inflammaging." },
           { id: "I2", title: "SpO2 \u00D7 Lipids", penalty: "up to 3 pts", trigger: "SpO2 dips >5/night AND ApoB >100 mg/dL", cite: 23, desc: "Nocturnal hypoxia activates sympathetic nervous system and promotes LDL oxidation." },
           { id: "I3", title: "Dual inflammatory", penalty: "up to 2 pts", trigger: "hsCRP >1.0 mg/L AND ESR elevated", cite: null, desc: "Concurrent elevation indicates systemic, multi-pathway inflammation." },
-          { id: "I4", title: "HRV \u00D7 Homocysteine", penalty: "up to 2 pts", trigger: "Low HRV + elevated homocysteine", cite: null, desc: "Autonomic dysfunction compounded by endothelial injury — a specific high-risk cardiovascular phenotype." },
+          { id: "I4", title: "HRV \u00D7 Homocysteine", penalty: "up to 2 pts", trigger: "Low HRV + elevated homocysteine", cite: null, desc: "Autonomic dysfunction compounded by endothelial injury, a specific high-risk cardiovascular phenotype." },
           { id: "I5", title: "Periodontal \u00D7 CRP", penalty: "up to 4 pts", trigger: "Periodontal pathogens >1% AND hsCRP >0.8 mg/L", cite: 24, desc: "The most important interaction term. Periodontal pathogen burden directly elevates systemic CRP via bacteraemia." },
           { id: "I6", title: "OSA taxa \u00D7 SpO2", penalty: "up to 3 pts", trigger: "OSA taxa >2% AND SpO2 dips >3/night", cite: 18, desc: "Convergent signal: the microbiome flags OSA risk, the wearable detects its physiological consequence." },
           { id: "I7", title: "Low nitrate \u00D7 CRP", penalty: "up to 2 pts", trigger: "Nitrate-reducers <3% AND hsCRP >1.0 mg/L", cite: null, desc: "Depleted oral NO pathway + elevated inflammation = dual hit on vascular health." },

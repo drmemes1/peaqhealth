@@ -38,8 +38,8 @@ export function LandingHero() {
         {/* Body */}
         <p className="fade-up hero-body" style={{ animationDelay: "300ms" }}>
           Oral microbiome. Blood biomarkers. Nightly sleep data. Measured
-          separately, they tell partial stories. Measured together &mdash; with
-          cross-panel analysis &mdash; they tell you things no single test ever could.
+          separately, they tell partial stories. Measured together, with
+          cross-panel analysis, they tell you things no single test ever could.
         </p>
 
         {/* CTAs */}
@@ -60,7 +60,7 @@ export function LandingHero() {
         {/* No-wearable explainer — only visible in off state */}
         <p className="hero-no-wearable-note">
           Peaq works with or without a wearable. Sleep and HRV data adds a powerful
-          third signal &mdash; but your oral and blood panels tell a complete story on their own.
+          third signal, but your oral and blood panels tell a complete story on their own.
         </p>
       </div>
 

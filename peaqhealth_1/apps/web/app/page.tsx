@@ -421,7 +421,7 @@ export default function Home() {
                   lineHeight: 1.7,
                   margin: 0,
                 }}>
-                  Oral microbiome swab &mdash; DNA sequencing at species-level
+                  Oral microbiome swab, DNA sequencing at species-level
                   resolution. Results in 2&ndash;3 weeks.
                 </p>
               </div>
@@ -560,7 +560,7 @@ export default function Home() {
                   lineHeight: 1.7,
                   margin: "0 0 8px",
                 }}>
-                  A single number &mdash; recalculated as your data updates.
+                  A single number, recalculated as your data updates.
                   With the cross-panel signals that change how you understand
                   your health.
                 </p>
@@ -657,10 +657,10 @@ export default function Home() {
                 margin: 0,
               }}>
                 Shannon diversity, nitrate-reducing bacteria, periodontal
-                pathogens, OSA-associated taxa &mdash; each scored against
+                pathogens, OSA-associated taxa. Each scored against
                 clinical targets with clear status indicators. Nearly half
-                of all susceptibility to periodontal disease is genetic &mdash;
-                an elevated oral panel score reflects biological vulnerability,
+                of all susceptibility to periodontal disease is genetic,
+                and an elevated oral panel score reflects biological vulnerability,
                 not just hygiene habits.
               </p>
             </div>
@@ -704,7 +704,7 @@ export default function Home() {
                 margin: 0,
               }}>
                 Your sleep data interpreted through your oral and blood panels.
-                Not just numbers &mdash; the connections between deep sleep, HRV,
+                Not just numbers: the connections between deep sleep, HRV,
                 and your oral nitrate pathways.
               </p>
             </div>
@@ -862,7 +862,7 @@ export default function Home() {
             color: WHITE,
             margin: "0 0 48px",
           }}>
-            What we say &mdash; and what we don&rsquo;t.
+            What we say, and what we don&rsquo;t.
           </h2>
 
           {/* 2x2 grid */}

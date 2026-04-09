@@ -41,9 +41,9 @@ const PANEL_COLORS: Record<string, { main: string; bg: string }> = {
 
 function getOpeningFraming(tags: string[]): string {
   if (tags.includes("sexFemale"))
-    return "Your answers reveal connections between your oral health and some of the most important health signals in women &mdash; from cardiovascular risk to hormonal health, pregnancy outcomes, and autoimmune disease."
+    return "Your answers reveal connections between your oral health and some of the most important health signals in women: cardiovascular risk, hormonal health, pregnancy outcomes, and autoimmune disease."
   if (tags.includes("sexMale"))
-    return "Your answers reveal connections between your oral health and cardiovascular risk, blood pressure regulation, and sleep &mdash; the three systems where oral bacteria have the strongest documented impact in men."
+    return "Your answers reveal connections between your oral health and cardiovascular risk, blood pressure regulation, and sleep, the three systems where oral bacteria have the strongest documented impact in men."
   return "Your answers reveal connections between your oral health and your cardiovascular, metabolic, and sleep systems that most doctors have never discussed with you."
 }
 
@@ -57,10 +57,10 @@ function getSignalBarLabel(tags: string[]): string {
 
 function getClosingCta(tags: string[]): string {
   if (tags.includes("sexFemale"))
-    return "Peaq measures the oral signals most relevant to women&rsquo;s cardiovascular, hormonal, and reproductive health &mdash; connected to your blood biomarkers and sleep data in a single score."
+    return "Peaq measures the oral signals most relevant to women&rsquo;s cardiovascular, hormonal, and reproductive health, connected to your blood biomarkers and sleep data in a single score."
   if (tags.includes("sexMale"))
-    return "Peaq measures the oral signals most relevant to men&rsquo;s cardiovascular, blood pressure, and sleep health &mdash; connected to your blood biomarkers in a single score."
-  return "Peaq measures oral, blood, and sleep signals together &mdash; because no single panel tells the whole story."
+    return "Peaq measures the oral signals most relevant to men&rsquo;s cardiovascular, blood pressure, and sleep health, connected to your blood biomarkers in a single score."
+  return "Peaq measures oral, blood, and sleep signals together because no single panel tells the whole story."
 }
 
 // ── Signal bars ──────────────────────────────────────────────────────────
@@ -113,7 +113,7 @@ function getPrimarySignalCopy(tags: string[]): { h2: string; body: string } {
   }
   if (isFemale && hasAutoimmune && hasPerio) return {
     h2: "Your immune system and your oral microbiome are speaking the same inflammatory language.",
-    body: "RA, lupus, and other autoimmune conditions are 3-9&times; more common in women. P. gingivalis &mdash; the primary periodontal pathogen &mdash; produces an enzyme called PAD that citrullinates host proteins, potentially triggering the autoimmune cascades underlying RA. Nonsurgical periodontal treatment has been shown to reduce disease activity markers in RA patients.",
+    body: "RA, lupus, and other autoimmune conditions are 3-9&times; more common in women. P. gingivalis, the primary periodontal pathogen, produces an enzyme called PAD that citrullinates host proteins, potentially triggering the autoimmune cascades underlying RA. Nonsurgical periodontal treatment has been shown to reduce disease activity markers in RA patients.",
   }
   if (isFemale && hasAutoimmune) return {
     h2: "Autoimmune conditions and periodontal disease share overlapping inflammatory pathways.",
@@ -121,67 +121,67 @@ function getPrimarySignalCopy(tags: string[]): { h2: string; body: string } {
   }
   if (isFemale && hasHormonal && (hasPerio || hasNitrate)) return {
     h2: "Hormonal shifts directly alter your oral microbiome.",
-    body: "Estrogen fluctuations affect periodontal tissue inflammation throughout the cycle, during pregnancy, and at menopause. Thyroid dysfunction depletes nitrate-reducing bacteria &mdash; the same bacteria your blood vessels depend on for pressure regulation. Peaq tracks both.",
+    body: "Estrogen fluctuations affect periodontal tissue inflammation throughout the cycle, during pregnancy, and at menopause. Thyroid dysfunction depletes nitrate-reducing bacteria, the same bacteria your blood vessels depend on for pressure regulation. Peaq tracks both.",
   }
   if (isFemale && hasPostMeno && (hasAirway || hasCv)) return {
     h2: "After menopause, cardiovascular and sleep apnea risk converge.",
     body: "Risk of sleep apnea increases significantly after menopause due to loss of progesterone&rsquo;s protective effect on upper airway tone. OSA patients are 2.46&times; more likely to have periodontitis. Estrogen loss simultaneously accelerates periodontal attachment loss and cardiovascular risk. Peaq tracks the intersection of all three.",
   }
   if (isFemale && hasCv) return {
-    h2: "Cardiovascular disease is the leading killer of women &mdash; and your oral microbiome is part of that story.",
+    h2: "Cardiovascular disease is the leading killer of women, and your oral microbiome is part of that story.",
     body: "Women are more likely than men to have atypical cardiovascular symptoms and are frequently underdiagnosed. Periodontal disease increases ASCVD risk independently of traditional risk factors. The AHA&rsquo;s 2026 Scientific Statement confirmed this with Mendelian randomization. Your oral panel tracks the bacterial burden driving this risk.",
   }
   if (isFemale) return {
     h2: "Your oral microbiome is influencing systems your doctor has never connected to your mouth.",
-    body: "Peaq measures four oral signals &mdash; nitrate-reducing bacteria, periodontal pathogens, microbial diversity, and OSA-associated taxa &mdash; and connects them to your blood and sleep data. For women, these connections run through cardiovascular health, hormonal biology, and inflammatory disease in ways that are only now being documented at scale.",
+    body: "Peaq measures four oral signals: nitrate-reducing bacteria, periodontal pathogens, microbial diversity, and OSA-associated taxa. It connects them to your blood and sleep data. For women, these connections run through cardiovascular health, hormonal biology, and inflammatory disease in ways that are only now being documented at scale.",
   }
 
   // ── Male-specific paths ────────────────────────────────────────────────
   if (isMale && hasCv && hasPerio) return {
     h2: "Your heart history and your oral microbiome are connected through the same inflammatory pathway.",
-    body: "Periodontal pathogens have been physically detected in human coronary artery plaques at autopsy. The AHA&rsquo;s 2026 Scientific Statement confirmed periodontal disease increases ASCVD risk through bacteremia and chronic systemic inflammation &mdash; with Mendelian randomization confirming directional causality. If you have a cardiac history, your oral panel is not just a dental metric.",
+    body: "Periodontal pathogens have been physically detected in human coronary artery plaques at autopsy. The AHA&rsquo;s 2026 Scientific Statement confirmed periodontal disease increases ASCVD risk through bacteremia and chronic systemic inflammation. Mendelian randomization confirms directional causality. If you have a cardiac history, your oral panel is not just a dental metric.",
   }
   if (isMale && hasHtn && hasNitrate) return {
     h2: "The bacteria in your mouth may be influencing your blood pressure.",
-    body: "Nitrate-reducing oral bacteria &mdash; Neisseria, Rothia, Veillonella &mdash; convert dietary nitrate to nitric oxide, the molecule your blood vessels use to regulate pressure. Men using antiseptic mouthwash show measurable blood pressure increases within 7 days as these bacteria are depleted. Two out of three hypertensive patients on medication don&rsquo;t have their blood pressure adequately controlled &mdash; this pathway may explain part of why.",
+    body: "Nitrate-reducing oral bacteria (Neisseria, Rothia, Veillonella) convert dietary nitrate to nitric oxide, the molecule your blood vessels use to regulate pressure. Men using antiseptic mouthwash show measurable blood pressure increases within 7 days as these bacteria are depleted. Two out of three hypertensive patients on medication don&rsquo;t have their blood pressure adequately controlled. This pathway may explain part of why.",
   }
   if (isMale && hasOsa && hasPerio) return {
-    h2: "Sleep apnea and gum disease share a biological pathway &mdash; and you may have both.",
+    h2: "Sleep apnea and gum disease share a biological pathway, and you may have both.",
     body: "OSA patients are 2.46&times; more likely to have periodontitis across meta-analyses of 88,000+ people. Intermittent hypoxia from OSA drives oxidative stress that accelerates periodontal tissue breakdown, while periodontal inflammation elevates systemic CRP that disrupts sleep architecture. Peaq tracks both panels because treating one affects the other.",
   }
   if (isMale && hasCv && !hasPerio) return {
     h2: "Family history of heart disease changes how we interpret your oral panel.",
-    body: "Periodontal disease is an independent cardiovascular risk factor &mdash; one your cardiologist is unlikely to have mentioned. Men with a family history of early heart disease and elevated periodontal pathogen burden face compounding risk. The bacteremia from inflamed gum tissue is continuous and systemic, not limited to dental appointments.",
+    body: "Periodontal disease is an independent cardiovascular risk factor, one your cardiologist is unlikely to have mentioned. Men with a family history of early heart disease and elevated periodontal pathogen burden face compounding risk. The bacteremia from inflamed gum tissue is continuous and systemic, not limited to dental appointments.",
   }
   if (isMale) return {
     h2: "Your oral microbiome is influencing systems your doctor has never connected to your mouth.",
-    body: "Peaq measures nitrate-reducing bacteria, periodontal pathogens, microbial diversity, and OSA-associated taxa &mdash; and connects them to your blood and sleep data. For men, these connections run through cardiovascular risk, blood pressure regulation, and sleep-disordered breathing in ways that are only now being documented at population scale.",
+    body: "Peaq measures nitrate-reducing bacteria, periodontal pathogens, microbial diversity, and OSA-associated taxa, then connects them to your blood and sleep data. For men, these connections run through cardiovascular risk, blood pressure regulation, and sleep-disordered breathing in ways that are only now being documented at population scale.",
   }
 
   // ── Generic paths ──────────────────────────────────────────────────────
   if (hasPerio && hasCv && hasAirway) return {
     h2: "Your cardiovascular history, sleep signals, and oral health share one biological pathway.",
-    body: "Periodontal bacteria enter the bloodstream and trigger the same inflammatory response your doctor measures with CRP. Those same bacteria predict sleep-disordered breathing before a polysomnogram would catch it. You have flagged signals in all three panels &mdash; and the oral microbiome is where they converge.",
+    body: "Periodontal bacteria enter the bloodstream and trigger the same inflammatory response your doctor measures with CRP. Those same bacteria predict sleep-disordered breathing before a polysomnogram would catch it. You have flagged signals in all three panels, and the oral microbiome is where they converge.",
   }
   if (hasPerio && hasCv) return {
     h2: "Your cardiovascular history has an oral origin most cardiologists never check.",
-    body: "P. gingivalis and T. denticola &mdash; periodontal pathogens &mdash; have been physically detected in human coronary artery plaques at autopsy. Your cardiovascular risk profile and your oral microbiome are not separate conversations. They are the same conversation.",
+    body: "P. gingivalis and T. denticola, both periodontal pathogens, have been physically detected in human coronary artery plaques at autopsy. Your cardiovascular risk profile and your oral microbiome are not separate conversations. They are the same conversation.",
   }
   if (hasAirway && (hasPerio || hasNitrate)) return {
     h2: "Your airway signals and oral health share an inflammatory pathway.",
-    body: "People with obstructive sleep apnea are nearly 2.5 times more likely to have periodontal disease &mdash; confirmed across 88,000+ patients in multiple meta-analyses. OSA-related intermittent hypoxia accelerates periodontal tissue breakdown, while elevated periodontal pathogen load raises the systemic CRP that disrupts sleep architecture.",
+    body: "People with obstructive sleep apnea are nearly 2.5 times more likely to have periodontal disease, confirmed across 88,000+ patients in multiple meta-analyses. OSA-related intermittent hypoxia accelerates periodontal tissue breakdown, while elevated periodontal pathogen load raises the systemic CRP that disrupts sleep architecture.",
   }
   if (hasCv && hasInflam) return {
-    h2: "Elevated inflammation and cardiovascular history compound each other &mdash; and the oral microbiome drives both.",
-    body: "Residual inflammatory risk is predictive of cardiac events independent of cholesterol. Periodontal pathogen load contributes to systemic CRP elevation &mdash; through a bacteraemia pathway that is rarely monitored.",
+    h2: "Elevated inflammation and cardiovascular history compound each other, and the oral microbiome drives both.",
+    body: "Residual inflammatory risk is predictive of cardiac events independent of cholesterol. Periodontal pathogen load contributes to systemic CRP elevation through a bacteraemia pathway that is rarely monitored.",
   }
   if (hasNitrate && !hasPerio && !hasCv && !hasAirway) return {
-    h2: "Your nitrate pathway may be compromised &mdash; and a daily habit could be the cause.",
-    body: "The bacteria that convert dietary nitrate into nitric oxide &mdash; your blood vessels' primary vasodilator &mdash; are among the first casualties of antiseptic mouthwash. This is a vascular risk factor hiding in your bathroom cabinet.",
+    h2: "Your nitrate pathway may be compromised, and a daily habit could be the cause.",
+    body: "The bacteria that convert dietary nitrate into nitric oxide, your blood vessels' primary vasodilator, are among the first casualties of antiseptic mouthwash. This is a vascular risk factor hiding in your bathroom cabinet.",
   }
   return {
     h2: "Your oral microbiome, blood biomarkers, and sleep signals are part of the same system.",
-    body: "Most health platforms measure one of these. Peaq measures all three &mdash; and finds the connections between them that no single test can see. Your quiz answers have identified at least one cross-panel signal worth measuring.",
+    body: "Most health platforms measure one of these. Peaq measures all three and finds the connections between them that no single test can see. Your quiz answers have identified at least one cross-panel signal worth measuring.",
   }
 }
 
@@ -195,11 +195,11 @@ function getMeasureCopy(tags: string[]): { h2: string; body: string } {
 
   if (hasPerio && hasCv && hasAirway) return {
     h2: "Three panels. Three signals. One picture no single test has shown you.",
-    body: "Your periodontal pathogen load connected to your hs-CRP. Your OSA-associated oral taxa connected to your nightly SpO2. Your nitrate-reducing bacteria connected to your HRV and blood pressure. These are not separate measurements &mdash; they are one conversation.",
+    body: "Your periodontal pathogen load connected to your hs-CRP. Your OSA-associated oral taxa connected to your nightly SpO2. Your nitrate-reducing bacteria connected to your HRV and blood pressure. These are not separate measurements. They are one conversation.",
   }
   if (hasPerio && hasCv) return {
     h2: "The oral-cardiovascular connection, made measurable.",
-    body: "Peaq connects your periodontal pathogen load directly to your hs-CRP and Lp(a) &mdash; two blood markers predictive of cardiovascular events beyond standard LDL panels.",
+    body: "Peaq connects your periodontal pathogen load directly to your hs-CRP and Lp(a), two blood markers predictive of cardiovascular events beyond standard LDL panels.",
   }
   if (hasAirway && hasNitrate) return {
     h2: "Your oral microbiome as a sleep health predictor.",
@@ -207,7 +207,7 @@ function getMeasureCopy(tags: string[]): { h2: string; body: string } {
   }
   return {
     h2: "One score. Three panels. The connections between them.",
-    body: "Oral microbiome sequencing at species-level resolution, 40+ blood biomarkers from any lab, and nightly sleep data from your wearable &mdash; unified into a single Peaq score that recalculates as your data updates.",
+    body: "Oral microbiome sequencing at species-level resolution, 40+ blood biomarkers from any lab, and nightly sleep data from your wearable, unified into a single Peaq score that recalculates as your data updates.",
   }
 }
 
@@ -317,13 +317,13 @@ export function renderQuizConfirmationEmail(props: QuizEmailProps): string {
 <!-- 4. ORAL RISK SECTION -->
 <tr><td style="background-color:#16150F;padding:28px 48px;">
   <div style="font-family:Arial,sans-serif;font-size:9px;color:#C49A3C;letter-spacing:0.16em;text-transform:uppercase;margin-bottom:16px;">Why the oral panel comes first</div>
-  <h2 style="font-family:Georgia,serif;font-size:20px;font-weight:400;color:#ffffff;line-height:1.3;margin:0 0 16px;">The most underestimated risk factor &mdash; and the most <em style="font-style:italic;color:#C49A3C;">actionable one.</em></h2>
-  <p style="font-family:Arial,sans-serif;font-size:13px;color:rgba(255,255,255,0.5);line-height:1.75;margin:0 0 12px;">Most risks you discover are hard to move quickly. Elevated Lp(a) is largely genetic. Low HRV takes months of lifestyle work. But periodontal disease is different &mdash; it is the rare systemic risk factor where a single appointment changes your numbers.</p>
+  <h2 style="font-family:Georgia,serif;font-size:20px;font-weight:400;color:#ffffff;line-height:1.3;margin:0 0 16px;">The most underestimated risk factor, and the most <em style="font-style:italic;color:#C49A3C;">actionable one.</em></h2>
+  <p style="font-family:Arial,sans-serif;font-size:13px;color:rgba(255,255,255,0.5);line-height:1.75;margin:0 0 12px;">Most risks you discover are hard to move quickly. Elevated Lp(a) is largely genetic. Low HRV takes months of lifestyle work. But periodontal disease is different. It is the rare systemic risk factor where a single appointment changes your numbers.</p>
   <p style="font-family:Arial,sans-serif;font-size:13px;color:rgba(255,255,255,0.5);line-height:1.75;margin:0 0 20px;">The oral microbiome is where cardiovascular risk, sleep disruption, and systemic inflammation all share a common origin. And it is the panel nobody else is measuring.</p>
   <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
     <tr>
       <td style="font-family:Georgia,serif;font-size:18px;color:#C49A3C;vertical-align:top;padding:10px 12px 10px 0;width:70px;border-bottom:1px solid rgba(255,255,255,0.06);">n=1,791</td>
-      <td style="font-family:Arial,sans-serif;font-size:12px;color:rgba(255,255,255,0.45);line-height:1.5;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><span style="color:rgba(255,255,255,0.75);font-weight:500;">P. gingivalis directly detected</span> in human coronary artery plaques at autopsy. Not associated &mdash; physically present. Frontiers in Immunology, 2023.</td>
+      <td style="font-family:Arial,sans-serif;font-size:12px;color:rgba(255,255,255,0.45);line-height:1.5;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><span style="color:rgba(255,255,255,0.75);font-weight:500;">P. gingivalis directly detected</span> in human coronary artery plaques at autopsy. Not associated. Physically present. Frontiers in Immunology, 2023.</td>
     </tr>
     <tr>
       <td style="font-family:Georgia,serif;font-size:18px;color:#C49A3C;vertical-align:top;padding:10px 12px 10px 0;width:70px;border-bottom:1px solid rgba(255,255,255,0.06);">2.46&times;</td>
@@ -362,7 +362,7 @@ export function renderQuizConfirmationEmail(props: QuizEmailProps): string {
     </td></tr>
     <tr><td style="padding:12px 0;border-bottom:1px solid #F0EEE8;">
       <span style="font-family:Georgia,serif;font-size:12px;color:#C49A3C;">02</span>
-      <span style="font-family:Arial,sans-serif;font-size:13px;font-weight:500;color:#16150F;margin-left:12px;">Your kit ships &mdash; swab takes 2 minutes</span>
+      <span style="font-family:Arial,sans-serif;font-size:13px;font-weight:500;color:#16150F;margin-left:12px;">Your kit ships. Swab takes 2 minutes</span>
       <p style="font-family:Arial,sans-serif;font-size:12px;color:#999999;line-height:1.5;margin:4px 0 0 28px;">At-home oral swab. 16S rRNA sequencing at species-level resolution. Results in 10&ndash;14 days.</p>
     </td></tr>
     <tr><td style="padding:12px 0;border-bottom:1px solid #F0EEE8;">
