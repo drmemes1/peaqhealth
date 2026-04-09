@@ -806,7 +806,7 @@ export default function Home() {
             marginTop: 40,
           }}>
             {([
-              { name: "Dr. Igor Khabensky", title: "General Dentist", photo: "/images/dr-igor-khabensky.jpg", pos: "center 15%", scale: 0.85 },
+              { name: "Dr. Igor Khabensky", title: "General Dentist", photo: "/images/dr-igor-khabensky.jpg", pos: "center 15%", scale: 1 },
               { name: "Dr. Paul Leis", title: "Cardiologist", photo: "/images/dr-paul-leis.jpg", pos: "center 20%", scale: 1 },
               { name: "Alex Najarian", title: "Health Entrepreneur", photo: "/images/alex-najarian.png", pos: "center 15%", scale: 1.25 },
             ] as const).map(doc => (
@@ -814,7 +814,7 @@ export default function Home() {
                 <div style={{
                   width: 120, height: 120, borderRadius: "50%",
                   overflow: "hidden", flexShrink: 0,
-                  background: "#F0EEE8",
+                  background: "#ffffff",
                 }}>
                   <img
                     src={doc.photo}
