@@ -14,6 +14,7 @@ export function OralSnapshot() {
   const [selections, setSelections] = useState<Record<string, string[]>>({})
   const [showRevelation, setShowRevelation] = useState(false)
   const [showNext, setShowNext] = useState(false)
+  const [multiConfirmed, setMultiConfirmed] = useState(false)
   const [result, setResult] = useState<QuizResult | null>(null)
   const [email, setEmail] = useState("")
   const [submitting, setSubmitting] = useState(false)
@@ -45,28 +46,53 @@ export function OralSnapshot() {
   useEffect(() => {
     setShowRevelation(false)
     setShowNext(false)
+    setMultiConfirmed(false)
   }, [step])
 
-  // Show revelation after answer is selected
+  // Show revelation after answer is selected (single-select only — multi waits for Done)
   useEffect(() => {
     if (!hasAnswer) return
+    if (q?.multiSelect && !multiConfirmed) return // multi-select waits for Done tap
     const t1 = setTimeout(() => setShowRevelation(true), 200)
     const t2 = setTimeout(() => setShowNext(true), 600)
     return () => { clearTimeout(t1); clearTimeout(t2) }
-  }, [hasAnswer, step]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [hasAnswer, step, multiConfirmed]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Detect "None of the above" options (0 points, empty tags, label contains "None")
+  const noneValues = useMemo(() => {
+    return new Set(
+      QUIZ_QUESTIONS.flatMap(question =>
+        question.options
+          .filter(o => o.points === 0 && o.tags.length === 0 && /none/i.test(o.label))
+          .map(o => o.value)
+      )
+    )
+  }, [])
 
   function selectOption(value: string) {
     if (q.multiSelect) {
-      // Multi-select: toggle on/off
       const current = selections[q.id] ?? []
-      const next = current.includes(value)
-        ? current.filter(v => v !== value)
-        : [...current, value]
-      setSelections(s => ({ ...s, [q.id]: next }))
+      const isNone = noneValues.has(value)
+
+      if (isNone) {
+        // "None of the above" — exclusive: deselect everything else, select only this
+        setSelections(s => ({ ...s, [q.id]: [value] }))
+      } else {
+        // Regular option — remove any "none" option, then toggle this one
+        const withoutNone = current.filter(v => !noneValues.has(v))
+        const next = withoutNone.includes(value)
+          ? withoutNone.filter(v => v !== value)
+          : [...withoutNone, value]
+        setSelections(s => ({ ...s, [q.id]: next }))
+      }
     } else {
       // Single-select: replace previous selection
       setSelections(s => ({ ...s, [q.id]: [value] }))
     }
+  }
+
+  function confirmMultiSelect() {
+    setMultiConfirmed(true)
   }
 
   function advance() {
@@ -264,29 +290,57 @@ export function OralSnapshot() {
         </div>
       </div>
 
-      {/* Next button */}
-      <div style={{
-        marginTop: 20,
-        opacity: showNext ? 1 : 0,
-        transform: showNext ? "translateY(0)" : "translateY(8px)",
-        transition: "opacity 250ms ease, transform 250ms ease",
-        textAlign: "right",
-      }}>
-        <button
-          onClick={advance} disabled={!hasAnswer}
-          style={{
-            fontFamily: sans, fontSize: 11, letterSpacing: "1px",
-            textTransform: "uppercase", fontWeight: 500,
-            color: ACCENT, background: "none",
-            border: `1px solid ${ACCENT}`, borderRadius: 6,
-            padding: "10px 24px", cursor: hasAnswer ? "pointer" : "default",
-            opacity: hasAnswer ? 1 : 0.4, transition: "opacity 150ms ease",
-            pointerEvents: hasAnswer ? "auto" : "none",
-          }}
-        >
-          {isLastQuestion ? "See your results" : "Next \u2192"}
-        </button>
-      </div>
+      {/* Done button — multi-select only, before reveal */}
+      {q.multiSelect && !multiConfirmed && (
+        <div style={{
+          marginTop: 20,
+          opacity: hasAnswer ? 1 : 0,
+          transform: hasAnswer ? "translateY(0)" : "translateY(8px)",
+          transition: "opacity 250ms ease, transform 250ms ease",
+          textAlign: "right",
+        }}>
+          <button
+            onClick={confirmMultiSelect} disabled={!hasAnswer}
+            style={{
+              fontFamily: sans, fontSize: 11, letterSpacing: "1px",
+              textTransform: "uppercase", fontWeight: 500,
+              color: ACCENT, background: "none",
+              border: `1px solid ${ACCENT}`, borderRadius: 6,
+              padding: "10px 24px", cursor: hasAnswer ? "pointer" : "default",
+              opacity: hasAnswer ? 1 : 0.4, transition: "opacity 150ms ease",
+              pointerEvents: hasAnswer ? "auto" : "none",
+            }}
+          >
+            Done &rarr;
+          </button>
+        </div>
+      )}
+
+      {/* Next button — shows after reveal (single-select: after selection, multi-select: after Done) */}
+      {(!q.multiSelect || multiConfirmed) && (
+        <div style={{
+          marginTop: 20,
+          opacity: showNext ? 1 : 0,
+          transform: showNext ? "translateY(0)" : "translateY(8px)",
+          transition: "opacity 250ms ease, transform 250ms ease",
+          textAlign: "right",
+        }}>
+          <button
+            onClick={advance} disabled={!hasAnswer}
+            style={{
+              fontFamily: sans, fontSize: 11, letterSpacing: "1px",
+              textTransform: "uppercase", fontWeight: 500,
+              color: ACCENT, background: "none",
+              border: `1px solid ${ACCENT}`, borderRadius: 6,
+              padding: "10px 24px", cursor: hasAnswer ? "pointer" : "default",
+              opacity: hasAnswer ? 1 : 0.4, transition: "opacity 150ms ease",
+              pointerEvents: hasAnswer ? "auto" : "none",
+            }}
+          >
+            {isLastQuestion ? "See your results" : "Next \u2192"}
+          </button>
+        </div>
+      )}
 
       <style>{`
         @keyframes quizFadeIn {

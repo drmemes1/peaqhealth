@@ -31,9 +31,10 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     id: "female-context",
-    question: "Which of these apply to you?",
+    question: "Which of these apply to you as a woman?",
     subtext: "Women experience oral and cardiovascular health differently across life stages. These signals help us personalize your interpretation.",
     showIf: { questionId: "biological-sex", value: "sex-female" },
+    multiSelect: true,
     options: [
       { label: "Currently pregnant or postpartum (within 1 year)", value: "pregnant-postpartum", points: 2, tags: ["pregnant", "periodontal"] },
       { label: "Planning to become pregnant", value: "planning-pregnancy", points: 1, tags: ["planningPregnancy", "periodontal"] },
@@ -44,9 +45,10 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     id: "male-context",
-    question: "Which of these apply to you?",
+    question: "Which of these apply to you as a man?",
     subtext: "Men face distinct cardiovascular and metabolic risk patterns. These signals help us personalize your oral-systemic interpretation.",
     showIf: { questionId: "biological-sex", value: "sex-male" },
+    multiSelect: true,
     options: [
       { label: "High blood pressure or on blood pressure medication", value: "male-htn", points: 2, tags: ["hypertension", "airway", "cvRisk"] },
       { label: "History of heart disease or cardiac event", value: "male-cv", points: 3, tags: ["cvHistory", "cvRisk", "inflammation"] },

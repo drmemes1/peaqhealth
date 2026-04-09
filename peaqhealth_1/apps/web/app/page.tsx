@@ -761,7 +761,7 @@ export default function Home() {
             margin: "0 0 40px",
             lineHeight: 1.6,
           }}>
-            Six questions. No testing required.
+            11 questions. No testing required.
             Each answer reveals a connection your doctor has never shown you.
           </p>
           <OralSnapshot />
