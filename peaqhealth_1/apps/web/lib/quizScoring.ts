@@ -14,6 +14,8 @@ export interface QuizQuestion {
   options: QuizOption[]
   /** If set, this question only appears when the specified answer was selected */
   showIf?: { questionId: string; value: string }
+  /** Allow multiple selections. Default false (single-select). */
+  multiSelect?: boolean
 }
 
 export const QUIZ_QUESTIONS: QuizQuestion[] = [
@@ -138,6 +140,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     id: "systemic-conditions",
     question: "Do you have rheumatoid arthritis, lupus, or high blood pressure?",
     subtext: "Rheumatoid arthritis, lupus, and other autoimmune conditions are 3-9\u00d7 more common in women than men. P. gingivalis \u2014 the primary periodontal pathogen \u2014 produces an enzyme that may trigger the autoimmune cascades underlying RA. Treating periodontitis has been shown to reduce RA disease activity markers.",
+    multiSelect: true,
     options: [
       { label: "Rheumatoid arthritis", value: "systemic-ra", points: 2, tags: ["rheumatoidArthritis", "periodontal", "autoimmune"] },
       { label: "Lupus or other autoimmune condition", value: "systemic-autoimmune", points: 2, tags: ["autoimmune", "periodontal"] },
@@ -190,24 +193,44 @@ function buildInsights(tags: string[]): Pick<QuizResult, "primaryInsight" | "sec
   const hasPerio = tags.includes("periodontal")
   const hasCv = tags.includes("cvHistory") || tags.includes("cvRisk")
   const hasAirway = tags.includes("airway") || tags.includes("osa")
+  const hasOsa = tags.includes("osa")
   const hasNitrate = tags.includes("nitrateLow") || tags.includes("mouthwash")
   const hasInflam = tags.includes("inflammation")
   const hasPregnant = tags.includes("pregnant") || tags.includes("planningPregnancy")
   const hasAutoimmune = tags.includes("autoimmune") || tags.includes("rheumatoidArthritis")
   const hasHormonal = tags.includes("hormonalCondition")
+  const hasPostMeno = tags.includes("postMenopausal")
+  const isFemale = tags.includes("sexFemale")
+  const isMale = tags.includes("sexMale")
+  const hasHtn = tags.includes("hypertension")
 
   let primaryInsight: string
-  // Female-specific paths take priority when present
-  if (hasPregnant && hasPerio) {
-    primaryInsight = "Periodontal disease during pregnancy carries risks most OBs never check. Women with periodontitis are 5.56\u00d7 more likely to develop preeclampsia. Periodontal bacteria cross the placental barrier and are associated with 2-3\u00d7 higher preterm delivery risk. Your oral health and pregnancy status are directly connected \u2014 and the oral panel is the most actionable intervention point."
-  } else if (hasPregnant) {
+
+  // ── Female-specific paths ──────────────────────────────────────────────
+  if (isFemale && hasPregnant && hasPerio) {
+    primaryInsight = "Your oral health is directly connected to your pregnancy outcomes. Women with periodontitis are 5.56\u00d7 more likely to develop preeclampsia, and 2-3\u00d7 more likely to experience preterm delivery. The good news: periodontal treatment in the second trimester is safe and recommended. Your oral panel measures the specific bacterial burden driving this risk."
+  } else if (isFemale && hasPregnant) {
     primaryInsight = "Pregnancy changes your oral microbiome in ways that matter beyond your mouth. Hormonal shifts increase gingival inflammation and create conditions that favor periodontal pathogens. Women with periodontitis face 5.56\u00d7 higher preeclampsia risk. Peaq would measure your periodontal pathogen load alongside your inflammatory markers to give you a complete picture."
-  } else if (hasAutoimmune && hasPerio) {
-    primaryInsight = "Your autoimmune condition and oral health share a biological pathway. P. gingivalis produces an enzyme (peptidylarginine deiminase) that citrullinates host proteins \u2014 potentially triggering the anti-citrullinated protein antibodies that define RA. Treating periodontitis has been shown to reduce RA disease activity markers. The oral microbiome is not separate from your autoimmune condition \u2014 it may be driving it."
-  } else if (hasAutoimmune) {
+  } else if (isFemale && hasAutoimmune && hasPerio) {
+    primaryInsight = "Your immune system and your oral microbiome are speaking the same inflammatory language. RA, lupus, and other autoimmune conditions are 3-9\u00d7 more common in women. P. gingivalis \u2014 the primary periodontal pathogen \u2014 produces an enzyme called PAD that citrullinates host proteins, potentially triggering the autoimmune cascades underlying RA. Nonsurgical periodontal treatment has been shown to reduce disease activity markers in RA patients."
+  } else if (isFemale && hasAutoimmune) {
     primaryInsight = "Autoimmune conditions and periodontal disease share overlapping inflammatory pathways. RA patients are 4.68\u00d7 more likely to have periodontitis. P. gingivalis possesses an enzyme that citrullinates host proteins, potentially triggering the autoimmune cascades underlying RA. The oral microbiome is a modifiable factor in autoimmune disease activity."
-  } else if (hasHormonal && hasPerio) {
-    primaryInsight = "Hormonal conditions like PCOS, endometriosis, and thyroid disorders shift the oral microbiome in ways that compound periodontal risk. Estrogen fluctuations directly affect gingival tissue inflammation, while thyroid dysfunction alters salivary gland function. Your oral health signals and hormonal status are connected."
+  } else if (isFemale && hasHormonal && (hasPerio || hasNitrate)) {
+    primaryInsight = "Hormonal shifts directly alter your oral microbiome. Estrogen fluctuations affect periodontal tissue inflammation throughout the cycle, during pregnancy, and at menopause. Thyroid dysfunction is associated with salivary gland changes that deplete nitrate-reducing bacteria \u2014 the same bacteria your blood vessels depend on for blood pressure regulation. Peaq tracks both signals."
+  } else if (isFemale && hasPostMeno && (hasAirway || hasCv)) {
+    primaryInsight = "After menopause, cardiovascular and sleep apnea risk converge. Risk of sleep apnea increases significantly after menopause due to loss of progesterone\u2019s protective effect on upper airway tone. OSA patients are 2.46\u00d7 more likely to have periodontitis. Meanwhile estrogen loss accelerates periodontal attachment loss and cardiovascular risk simultaneously. Peaq tracks the intersection of all three."
+
+  // ── Male-specific paths ────────────────────────────────────────────────
+  } else if (isMale && hasCv && hasPerio) {
+    primaryInsight = "Your heart history and your oral microbiome are connected through the same inflammatory pathway. Periodontal pathogens have been physically detected in human coronary artery plaques at autopsy. The AHA\u2019s 2026 Scientific Statement confirmed periodontal disease increases ASCVD risk through bacteremia and chronic systemic inflammation \u2014 with Mendelian randomization confirming directional causality. If you have a cardiac history, your oral panel is not just a dental metric."
+  } else if (isMale && hasHtn && hasNitrate) {
+    primaryInsight = "The bacteria in your mouth may be influencing your blood pressure. Nitrate-reducing oral bacteria \u2014 Neisseria, Rothia, Veillonella \u2014 convert dietary nitrate to nitric oxide, the molecule your blood vessels use to regulate pressure. Men using antiseptic mouthwash show measurable blood pressure increases within 7 days as these bacteria are depleted. Two out of three hypertensive patients on medication don\u2019t have their blood pressure adequately controlled \u2014 this pathway may explain part of why."
+  } else if (isMale && hasOsa && hasPerio) {
+    primaryInsight = "Sleep apnea and gum disease share a biological pathway \u2014 and you may have both. OSA patients are 2.46\u00d7 more likely to have periodontitis across meta-analyses of 88,000+ people. Intermittent hypoxia from OSA drives oxidative stress that accelerates periodontal tissue breakdown, while periodontal inflammation elevates the systemic CRP that disrupts sleep architecture. Peaq tracks both panels because treating one affects the other."
+  } else if (isMale && hasCv && !hasPerio) {
+    primaryInsight = "Family history of heart disease changes how we interpret your oral panel. Periodontal disease is an independent cardiovascular risk factor \u2014 one your cardiologist is unlikely to have mentioned. Men with a family history of early heart disease and elevated periodontal pathogen burden face compounding risk. The bacteremia from inflamed gum tissue is continuous and systemic, not limited to dental appointments."
+
+  // ── Generic paths (no sex match or prefer-not-to-say) ──────────────────
   } else if (hasPerio && hasCv && hasAirway) {
     primaryInsight = "Your cardiovascular history, sleep signals, and oral health share one biological pathway. Periodontal bacteria enter the bloodstream and trigger the same inflammatory response your doctor measures with CRP. Those same bacteria predict sleep-disordered breathing before a polysomnogram would catch it. You have flagged signals in all three panels."
   } else if (hasPerio && hasCv) {

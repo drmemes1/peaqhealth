@@ -56,8 +56,17 @@ export function OralSnapshot() {
   }, [hasAnswer, step]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function selectOption(value: string) {
-    // Single-select: replace previous selection for this question
-    setSelections(s => ({ ...s, [q.id]: [value] }))
+    if (q.multiSelect) {
+      // Multi-select: toggle on/off
+      const current = selections[q.id] ?? []
+      const next = current.includes(value)
+        ? current.filter(v => v !== value)
+        : [...current, value]
+      setSelections(s => ({ ...s, [q.id]: next }))
+    } else {
+      // Single-select: replace previous selection
+      setSelections(s => ({ ...s, [q.id]: [value] }))
+    }
   }
 
   function advance() {
