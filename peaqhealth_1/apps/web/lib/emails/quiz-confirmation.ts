@@ -27,6 +27,8 @@ const TAG_LABELS: Record<string, { label: string; panel: "sleep" | "blood" | "or
   postMenopausal:    { label: "Post-menopausal",   panel: "sleep" },
   hormonalCondition: { label: "Hormonal condition", panel: "blood" },
   autoimmune:        { label: "Autoimmune",        panel: "oral" },
+  sexMale:           { label: "Male",              panel: "blood" },
+  hypertension:      { label: "Hypertension",      panel: "blood" },
 }
 
 const PANEL_COLORS: Record<string, { main: string; bg: string }> = {
@@ -167,6 +169,10 @@ export function renderQuizConfirmationEmail(props: QuizEmailProps): string {
     citations.push({ journal: "Tang et al. &middot; Int J Periodontics &middot; 2017", finding: "&ldquo;RA patients are 4.68&times; more likely to have periodontitis. P. gingivalis citrullination may trigger autoimmune cascades.&rdquo; n=151,569", path: "Oral &rarr; Autoimmune" })
   if (tags.includes("hormonalCondition"))
     citations.push({ journal: "Clinical literature", finding: "&ldquo;Estrogen fluctuations affect periodontal tissue inflammation. Thyroid dysfunction associated with salivary gland changes and oral microbiome shifts.&rdquo;", path: "Hormonal &rarr; Oral" })
+  if (tags.includes("sexMale") && tags.some(t => ["cvHistory", "cvRisk", "hypertension"].includes(t)))
+    citations.push({ journal: "Circulation &middot; 2026 + AHA", finding: "&ldquo;Periodontal disease increases ASCVD risk through bacteremia and chronic systemic inflammation. Men with periodontitis and cardiovascular risk factors face compounding risk.&rdquo;", path: "Oral &rarr; Blood" })
+  if (tags.includes("hypertension"))
+    citations.push({ journal: "Clinical literature", finding: "&ldquo;Strong correlation between OSA and hypertension. Intensive periodontal therapy measurably lowered blood pressure in pre-hypertensive patients with periodontitis.&rdquo;", path: "Oral &rarr; Blood" })
 
   const citationRows = citations.map(c => `
     <tr>

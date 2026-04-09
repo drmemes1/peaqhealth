@@ -10,7 +10,7 @@ const INK    = "#1a1a18"
 
 export function OralSnapshot() {
   const [step, setStep] = useState(0)
-  // Selections per question: { questionId: [selectedValues] }
+  // Selections per question: { questionId: [selectedValue] } (single-select, array for compat)
   const [selections, setSelections] = useState<Record<string, string[]>>({})
   const [showRevelation, setShowRevelation] = useState(false)
   const [showNext, setShowNext] = useState(false)
@@ -55,12 +55,9 @@ export function OralSnapshot() {
     return () => { clearTimeout(t1); clearTimeout(t2) }
   }, [hasAnswer, step]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  function toggleOption(value: string) {
-    const current = selections[q.id] ?? []
-    const next = current.includes(value)
-      ? current.filter(v => v !== value)
-      : [...current, value]
-    setSelections(s => ({ ...s, [q.id]: next }))
+  function selectOption(value: string) {
+    // Single-select: replace previous selection for this question
+    setSelections(s => ({ ...s, [q.id]: [value] }))
   }
 
   function advance() {
@@ -218,14 +215,14 @@ export function OralSnapshot() {
         {q.question}
       </h3>
 
-      {/* Options — all multi-select */}
+      {/* Options — single-select */}
       <div style={{ display: "flex", flexDirection: "column", gap: 8, textAlign: "left" }}>
         {q.options.map(opt => {
           const isSelected = currentSelections.includes(opt.value)
           return (
             <button
               key={opt.value}
-              onClick={() => toggleOption(opt.value)}
+              onClick={() => selectOption(opt.value)}
               style={{
                 fontFamily: sans, fontSize: 14, color: INK,
                 textAlign: "left", lineHeight: 1.5,

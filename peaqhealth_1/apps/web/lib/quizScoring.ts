@@ -1,4 +1,4 @@
-// lib/quizScoring.ts — multi-select scoring with points + tags per option
+// lib/quizScoring.ts — single-select scoring with points + tags per option
 
 export interface QuizOption {
   label: string
@@ -38,6 +38,19 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
       { label: "Post-menopausal", value: "post-menopausal", points: 1, tags: ["postMenopausal", "airway"] },
       { label: "Diagnosed with endometriosis, PCOS, or thyroid condition", value: "hormonal-condition", points: 2, tags: ["hormonalCondition", "inflammation"] },
       { label: "None of the above", value: "female-none", points: 0, tags: [] },
+    ],
+  },
+  {
+    id: "male-context",
+    question: "Which of these apply to you?",
+    subtext: "Men face distinct cardiovascular and metabolic risk patterns. These signals help us personalize your oral-systemic interpretation.",
+    showIf: { questionId: "biological-sex", value: "sex-male" },
+    options: [
+      { label: "High blood pressure or on blood pressure medication", value: "male-htn", points: 2, tags: ["hypertension", "airway", "cvRisk"] },
+      { label: "History of heart disease or cardiac event", value: "male-cv", points: 3, tags: ["cvHistory", "cvRisk", "inflammation"] },
+      { label: "Told I snore heavily or have sleep apnea", value: "male-osa", points: 2, tags: ["airway", "osa"] },
+      { label: "Father or brother with heart disease before age 55", value: "male-family-cv", points: 2, tags: ["cvHistory", "cvRisk"] },
+      { label: "None of the above", value: "male-none", points: 0, tags: [] },
     ],
   },
   {
