@@ -37,6 +37,32 @@ const PANEL_COLORS: Record<string, { main: string; bg: string }> = {
   oral:  { main: "#7AB87A", bg: "rgba(122,184,122,0.15)" },
 }
 
+// ── Sex-specific copy helpers ────────────────────────────────────────────
+
+function getOpeningFraming(tags: string[]): string {
+  if (tags.includes("sexFemale"))
+    return "Your answers reveal connections between your oral health and some of the most important health signals in women &mdash; from cardiovascular risk to hormonal health, pregnancy outcomes, and autoimmune disease."
+  if (tags.includes("sexMale"))
+    return "Your answers reveal connections between your oral health and cardiovascular risk, blood pressure regulation, and sleep &mdash; the three systems where oral bacteria have the strongest documented impact in men."
+  return "Your answers reveal connections between your oral health and your cardiovascular, metabolic, and sleep systems that most doctors have never discussed with you."
+}
+
+function getSignalBarLabel(tags: string[]): string {
+  if (tags.includes("sexFemale"))
+    return "Based on your answers, here are the pathways most relevant to your health as a woman:"
+  if (tags.includes("sexMale"))
+    return "Based on your answers, here are the pathways most relevant to your health as a man:"
+  return "Based on your answers, here are the pathways most relevant to your health:"
+}
+
+function getClosingCta(tags: string[]): string {
+  if (tags.includes("sexFemale"))
+    return "Peaq measures the oral signals most relevant to women&rsquo;s cardiovascular, hormonal, and reproductive health &mdash; connected to your blood biomarkers and sleep data in a single score."
+  if (tags.includes("sexMale"))
+    return "Peaq measures the oral signals most relevant to men&rsquo;s cardiovascular, blood pressure, and sleep health &mdash; connected to your blood biomarkers in a single score."
+  return "Peaq measures oral, blood, and sleep signals together &mdash; because no single panel tells the whole story."
+}
+
 // ── Signal bars ──────────────────────────────────────────────────────────
 
 function getSignalBars(tags: string[]) {
@@ -95,11 +121,19 @@ function getPrimarySignalCopy(tags: string[]): { h2: string; body: string } {
   }
   if (isFemale && hasHormonal && (hasPerio || hasNitrate)) return {
     h2: "Hormonal shifts directly alter your oral microbiome.",
-    body: "Estrogen fluctuations affect periodontal tissue inflammation throughout the cycle, during pregnancy, and at menopause. Thyroid dysfunction is associated with salivary gland changes that deplete nitrate-reducing bacteria &mdash; the same bacteria your blood vessels depend on for blood pressure regulation. Peaq tracks both signals.",
+    body: "Estrogen fluctuations affect periodontal tissue inflammation throughout the cycle, during pregnancy, and at menopause. Thyroid dysfunction depletes nitrate-reducing bacteria &mdash; the same bacteria your blood vessels depend on for pressure regulation. Peaq tracks both.",
   }
   if (isFemale && hasPostMeno && (hasAirway || hasCv)) return {
     h2: "After menopause, cardiovascular and sleep apnea risk converge.",
-    body: "Risk of sleep apnea increases significantly after menopause due to loss of progesterone&rsquo;s protective effect on upper airway tone. OSA patients are 2.46&times; more likely to have periodontitis. Meanwhile estrogen loss accelerates periodontal attachment loss and cardiovascular risk simultaneously. Peaq tracks the intersection of all three.",
+    body: "Risk of sleep apnea increases significantly after menopause due to loss of progesterone&rsquo;s protective effect on upper airway tone. OSA patients are 2.46&times; more likely to have periodontitis. Estrogen loss simultaneously accelerates periodontal attachment loss and cardiovascular risk. Peaq tracks the intersection of all three.",
+  }
+  if (isFemale && hasCv) return {
+    h2: "Cardiovascular disease is the leading killer of women &mdash; and your oral microbiome is part of that story.",
+    body: "Women are more likely than men to have atypical cardiovascular symptoms and are frequently underdiagnosed. Periodontal disease increases ASCVD risk independently of traditional risk factors. The AHA&rsquo;s 2026 Scientific Statement confirmed this with Mendelian randomization. Your oral panel tracks the bacterial burden driving this risk.",
+  }
+  if (isFemale) return {
+    h2: "Your oral microbiome is influencing systems your doctor has never connected to your mouth.",
+    body: "Peaq measures four oral signals &mdash; nitrate-reducing bacteria, periodontal pathogens, microbial diversity, and OSA-associated taxa &mdash; and connects them to your blood and sleep data. For women, these connections run through cardiovascular health, hormonal biology, and inflammatory disease in ways that are only now being documented at scale.",
   }
 
   // ── Male-specific paths ────────────────────────────────────────────────
@@ -113,11 +147,15 @@ function getPrimarySignalCopy(tags: string[]): { h2: string; body: string } {
   }
   if (isMale && hasOsa && hasPerio) return {
     h2: "Sleep apnea and gum disease share a biological pathway &mdash; and you may have both.",
-    body: "OSA patients are 2.46&times; more likely to have periodontitis across meta-analyses of 88,000+ people. Intermittent hypoxia from OSA drives oxidative stress that accelerates periodontal tissue breakdown, while periodontal inflammation elevates the systemic CRP that disrupts sleep architecture. Peaq tracks both panels because treating one affects the other.",
+    body: "OSA patients are 2.46&times; more likely to have periodontitis across meta-analyses of 88,000+ people. Intermittent hypoxia from OSA drives oxidative stress that accelerates periodontal tissue breakdown, while periodontal inflammation elevates systemic CRP that disrupts sleep architecture. Peaq tracks both panels because treating one affects the other.",
   }
   if (isMale && hasCv && !hasPerio) return {
     h2: "Family history of heart disease changes how we interpret your oral panel.",
     body: "Periodontal disease is an independent cardiovascular risk factor &mdash; one your cardiologist is unlikely to have mentioned. Men with a family history of early heart disease and elevated periodontal pathogen burden face compounding risk. The bacteremia from inflamed gum tissue is continuous and systemic, not limited to dental appointments.",
+  }
+  if (isMale) return {
+    h2: "Your oral microbiome is influencing systems your doctor has never connected to your mouth.",
+    body: "Peaq measures nitrate-reducing bacteria, periodontal pathogens, microbial diversity, and OSA-associated taxa &mdash; and connects them to your blood and sleep data. For men, these connections run through cardiovascular risk, blood pressure regulation, and sleep-disordered breathing in ways that are only now being documented at population scale.",
   }
 
   // ── Generic paths ──────────────────────────────────────────────────────
@@ -180,6 +218,9 @@ export function renderQuizConfirmationEmail(props: QuizEmailProps): string {
   const bars = getSignalBars(tags)
   const primary = getPrimarySignalCopy(tags)
   const measure = getMeasureCopy(tags)
+  const openingFraming = getOpeningFraming(tags)
+  const signalBarLabel = getSignalBarLabel(tags)
+  const closingCta = getClosingCta(tags)
 
   const tierLabel = tier === "high" ? "High" : tier === "moderate" ? "Moderate" : "Low"
 
@@ -204,14 +245,18 @@ export function renderQuizConfirmationEmail(props: QuizEmailProps): string {
     citations.push({ journal: "Biol Psych &middot; 2016", finding: "&ldquo;Elevated CRP fragments sleep architecture and suppresses deep sleep.&rdquo;", path: "Blood &rarr; Sleep" })
   if (tags.includes("nitrateLow"))
     citations.push({ journal: "Hypertension &middot; 2015", finding: "&ldquo;Dietary nitrate provides sustained blood pressure lowering.&rdquo; n=300", path: "Oral &rarr; Blood" })
-  if (tags.includes("sexFemale") || tags.includes("pregnant") || tags.includes("planningPregnancy"))
+  // Female-specific citations
+  if (tags.includes("sexFemale") && (tags.includes("pregnant") || tags.includes("planningPregnancy") || tags.includes("periodontal")))
     citations.push({ journal: "J Clin Periodontol &middot; 2014", finding: "&ldquo;Women with periodontitis are 5.56&times; more likely to develop preeclampsia. Periodontal disease associated with 2-3&times; higher preterm delivery risk.&rdquo; n=283", path: "Oral &rarr; Pregnancy" })
   if (tags.includes("autoimmune") || tags.includes("rheumatoidArthritis"))
     citations.push({ journal: "Tang et al. &middot; Int J Periodontics &middot; 2017", finding: "&ldquo;RA patients are 4.68&times; more likely to have periodontitis. P. gingivalis citrullination may trigger autoimmune cascades.&rdquo; n=151,569", path: "Oral &rarr; Autoimmune" })
   if (tags.includes("hormonalCondition"))
     citations.push({ journal: "Clinical literature", finding: "&ldquo;Estrogen fluctuations affect periodontal tissue inflammation. Thyroid dysfunction associated with salivary gland changes and oral microbiome shifts.&rdquo;", path: "Hormonal &rarr; Oral" })
-  if (tags.includes("sexMale") && tags.some(t => ["cvHistory", "cvRisk", "hypertension"].includes(t)))
-    citations.push({ journal: "Circulation &middot; 2026 + AHA", finding: "&ldquo;Periodontal disease increases ASCVD risk through bacteremia and chronic systemic inflammation. Men with periodontitis and cardiovascular risk factors face compounding risk.&rdquo;", path: "Oral &rarr; Blood" })
+  // Male-specific citations
+  if (tags.includes("sexMale") && tags.some(t => ["cvHistory", "cvRisk"].includes(t)))
+    citations.push({ journal: "Circulation &middot; 2026 + AHA", finding: "&ldquo;Periodontal disease increases ASCVD risk through bacteremia and chronic systemic inflammation. Mendelian randomization confirms directional causality.&rdquo;", path: "Oral &rarr; Blood" })
+  if (tags.includes("sexMale") && (tags.includes("hypertension") || tags.includes("nitrateLow")))
+    citations.push({ journal: "Bryan et al. &middot; Curr Hypertens Rep &middot; 2017", finding: "&ldquo;Oral nitrate-reducing bacteria are essential for nitric oxide homeostasis and blood pressure regulation. Antiseptic mouthwash disrupts this pathway within days.&rdquo;", path: "Oral &rarr; Blood" })
   if (tags.includes("hypertension"))
     citations.push({ journal: "Clinical literature", finding: "&ldquo;Strong correlation between OSA and hypertension. Intensive periodontal therapy measurably lowered blood pressure in pre-hypertensive patients with periodontitis.&rdquo;", path: "Oral &rarr; Blood" })
 
@@ -243,16 +288,17 @@ export function renderQuizConfirmationEmail(props: QuizEmailProps): string {
 <tr><td align="center" style="padding:20px 0;">
 <table role="presentation" cellpadding="0" cellspacing="0" width="580" style="max-width:580px;width:100%;">
 
-<!-- 1. DARK HEADER -->
+<!-- 1. DARK HEADER — sex-specific opening -->
 <tr><td style="background-color:#16150F;padding:40px 48px 36px;border-radius:8px 8px 0 0;">
   <div style="font-family:Georgia,serif;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:24px;">peaq</div>
   <h1 style="font-family:Georgia,serif;font-size:34px;font-weight:400;color:#ffffff;margin:0 0 12px;line-height:1.15;">You&rsquo;re on the list.</h1>
-  <p style="font-family:Arial,sans-serif;font-size:13px;color:rgba(255,255,255,0.4);line-height:1.65;margin:0;">Your quiz signals are saved. Here&rsquo;s what they&rsquo;re telling us &mdash; and why the oral panel is where we&rsquo;d look first.</p>
+  <p style="font-family:Arial,sans-serif;font-size:13px;color:rgba(255,255,255,0.4);line-height:1.65;margin:0;">${openingFraming}</p>
 </td></tr>
 
-<!-- 2. SIGNAL PROFILE BAR -->
+<!-- 2. SIGNAL PROFILE BAR — sex-specific label -->
 <tr><td style="background-color:#1E1D16;padding:24px 48px;">
-  <div style="font-family:Arial,sans-serif;font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:rgba(255,255,255,0.25);margin-bottom:16px;">Your signal profile &middot; ${score}/${maxScore} &middot; ${tierLabel} signal density</div>
+  <div style="font-family:Arial,sans-serif;font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:rgba(255,255,255,0.25);margin-bottom:6px;">Your signal profile &middot; ${score}/${maxScore} &middot; ${tierLabel} signal density</div>
+  <p style="font-family:Arial,sans-serif;font-size:11px;color:rgba(255,255,255,0.35);line-height:1.5;margin:0 0 16px;">${signalBarLabel}</p>
   <table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>
     ${panelBarHtml("sleep", "Sleep", "#5B9BD5", bars.sleep.pct, bars.sleep.status)}
     ${panelBarHtml("blood", "Blood", "#C97070", bars.blood.pct, bars.blood.status)}
@@ -332,11 +378,12 @@ export function renderQuizConfirmationEmail(props: QuizEmailProps): string {
   </table>
 </td></tr>
 
-<!-- 7. CTA -->
+<!-- 7. CTA — sex-specific closing -->
 <tr><td style="background-color:#ffffff;padding:0 48px 28px;">
   <div style="background-color:#F6F4EF;border-radius:8px;padding:26px;text-align:center;">
     <div style="font-family:Arial,sans-serif;font-size:9px;color:#aaaaaa;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:8px;">In the meantime</div>
-    <p style="font-family:Georgia,serif;font-size:17px;color:#16150F;margin:0 0 16px;">Read the science behind <em style="font-style:italic;color:#C49A3C;">your score.</em></p>
+    <p style="font-family:Georgia,serif;font-size:17px;color:#16150F;margin:0 0 8px;">Read the science behind <em style="font-style:italic;color:#C49A3C;">your score.</em></p>
+    <p style="font-family:Arial,sans-serif;font-size:12px;color:#888888;line-height:1.6;margin:0 0 16px;">${closingCta}</p>
     <a href="https://peaqhealth.me/science" style="display:inline-block;font-family:Arial,sans-serif;font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;background-color:#C49A3C;color:#16150F;padding:12px 32px;border-radius:3px;text-decoration:none;">VIEW THE EVIDENCE BASE &rarr;</a>
   </div>
 </td></tr>
