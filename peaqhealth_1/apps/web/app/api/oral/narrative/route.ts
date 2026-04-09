@@ -127,7 +127,7 @@ export async function GET() {
   const ageRange = lifestyleRes.data?.age_range as string | null
   const biologicalSex = lifestyleRes.data?.biological_sex as string | null
   const age = ageRangeToMidpoint(ageRange)
-  const hrvTarget = getHRVTarget(age)
+  const hrvTarget = getHRVTarget(age, biologicalSex)
 
   // ── Build prompts ──────────────────────────────────────────────────────────
   const systemPrompt = `You are the oral microbiome intelligence engine for Peaq Health, a longevity platform built by a cardiologist and periodontist.

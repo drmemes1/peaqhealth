@@ -12,9 +12,34 @@ export interface QuizQuestion {
   question: string
   subtext: string
   options: QuizOption[]
+  /** If set, this question only appears when the specified answer was selected */
+  showIf?: { questionId: string; value: string }
 }
 
 export const QUIZ_QUESTIONS: QuizQuestion[] = [
+  {
+    id: "biological-sex",
+    question: "Which best describes you?",
+    subtext: "This helps us interpret your results accurately \u2014 HRV targets, cardiovascular risk thresholds, and hormonal signals all differ meaningfully between sexes.",
+    options: [
+      { label: "Male", value: "sex-male", points: 0, tags: ["sexMale"] },
+      { label: "Female", value: "sex-female", points: 0, tags: ["sexFemale"] },
+      { label: "Prefer not to say", value: "sex-other", points: 0, tags: [] },
+    ],
+  },
+  {
+    id: "female-context",
+    question: "Which of these apply to you?",
+    subtext: "Women experience oral and cardiovascular health differently across life stages. These signals help us personalize your interpretation.",
+    showIf: { questionId: "biological-sex", value: "sex-female" },
+    options: [
+      { label: "Currently pregnant or postpartum (within 1 year)", value: "pregnant-postpartum", points: 2, tags: ["pregnant", "periodontal"] },
+      { label: "Planning to become pregnant", value: "planning-pregnancy", points: 1, tags: ["planningPregnancy", "periodontal"] },
+      { label: "Post-menopausal", value: "post-menopausal", points: 1, tags: ["postMenopausal", "airway"] },
+      { label: "Diagnosed with endometriosis, PCOS, or thyroid condition", value: "hormonal-condition", points: 2, tags: ["hormonalCondition", "inflammation"] },
+      { label: "None of the above", value: "female-none", points: 0, tags: [] },
+    ],
+  },
   {
     id: "nitrate",
     question: "How often do you eat foods like arugula, beetroot, spinach, or celery?",
@@ -38,7 +63,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   {
     id: "gums",
     question: "Have you ever been told you have gum disease, or do your gums bleed when you brush?",
-    subtext: "Bleeding gums are a sign of periodontal inflammation \u2014 and the bacteria responsible have been directly detected in coronary artery plaques at autopsy.",
+    subtext: "Bleeding gums are a sign of periodontal inflammation \u2014 and the bacteria responsible have been directly detected in coronary artery plaques at autopsy. For women, gum disease during pregnancy is associated with a 5.56\u00d7 increased risk of preeclampsia and 2-3\u00d7 higher risk of preterm delivery. Periodontal treatment in the second trimester is recommended.",
     options: [
       { label: "Yes, diagnosed with gum disease", value: "gums-diagnosed", points: 3, tags: ["periodontal", "cvRisk"] },
       { label: "My gums bleed sometimes", value: "gums-bleed", points: 2, tags: ["periodontal"] },
@@ -87,26 +112,6 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     ],
   },
   {
-    id: "reflux",
-    question: "Do you experience frequent heartburn, acid reflux, or wake with a sour taste?",
-    subtext: "GERD is strongly associated with sleep bruxism and has been shown to directly decrease parasympathetic nervous system activity \u2014 contributing to micro-arousals and disrupted sleep architecture. GERD is also common in children and adults with obstructive sleep apnea.",
-    options: [
-      { label: "Yes \u2014 diagnosed with GERD or reflux", value: "reflux-diagnosed", points: 2, tags: ["reflux", "airway"] },
-      { label: "Occasionally", value: "reflux-sometimes", points: 1, tags: ["reflux"] },
-      { label: "Rarely or never", value: "reflux-never", points: 0, tags: [] },
-    ],
-  },
-  {
-    id: "chronic-stress",
-    question: "Would you describe yourself as chronically stressed, anxious, or burned out?",
-    subtext: "Chronic stress elevates cortisol, which suppresses immune function and impairs the periodontal host defense. Stress also reduces salivary flow through increased sympathetic tone \u2014 depleting the nitrate-reducing bacteria that produce nitric oxide for blood pressure regulation. Low HRV is Peaq\u2019s objective measure of this autonomic imbalance.",
-    options: [
-      { label: "Yes \u2014 chronically", value: "stress-chronic", points: 2, tags: ["chronicStress"] },
-      { label: "Periodically", value: "stress-periodic", points: 1, tags: ["chronicStress"] },
-      { label: "Rarely", value: "stress-rarely", points: 0, tags: [] },
-    ],
-  },
-  {
     id: "fatigue",
     question: "Do you feel exhausted or unrefreshed even after what seems like a full night of sleep?",
     subtext: "Chronic exhaustion despite adequate sleep duration is a primary screening signal for sleep-disordered breathing. Obstructive sleep apnea is massively underdiagnosed \u2014 an estimated 936 million adults globally have it. The oral microbiome carries signatures of sleep-disordered breathing that Peaq tracks.",
@@ -118,12 +123,12 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     id: "systemic-conditions",
-    question: "Have you been diagnosed with rheumatoid arthritis, high blood pressure, or are you post-menopausal?",
-    subtext: "Rheumatoid arthritis patients are 4.68\u00d7 more likely to have periodontitis. High blood pressure strongly correlates with OSA. Risk of sleep apnea increases after menopause. Each of these conditions activates Peaq\u2019s oral-systemic cross-panel signals.",
+    question: "Do you have rheumatoid arthritis, lupus, or high blood pressure?",
+    subtext: "Rheumatoid arthritis, lupus, and other autoimmune conditions are 3-9\u00d7 more common in women than men. P. gingivalis \u2014 the primary periodontal pathogen \u2014 produces an enzyme that may trigger the autoimmune cascades underlying RA. Treating periodontitis has been shown to reduce RA disease activity markers.",
     options: [
-      { label: "Rheumatoid arthritis", value: "systemic-ra", points: 2, tags: ["rheumatoidArthritis", "periodontal"] },
+      { label: "Rheumatoid arthritis", value: "systemic-ra", points: 2, tags: ["rheumatoidArthritis", "periodontal", "autoimmune"] },
+      { label: "Lupus or other autoimmune condition", value: "systemic-autoimmune", points: 2, tags: ["autoimmune", "periodontal"] },
       { label: "High blood pressure", value: "systemic-htn", points: 2, tags: ["hypertension", "airway"] },
-      { label: "Post-menopausal", value: "systemic-menopause", points: 1, tags: ["menopause", "airway"] },
       { label: "None of the above", value: "systemic-none", points: 0, tags: [] },
     ],
   },
@@ -150,10 +155,16 @@ export function scoreQuiz(selectedValues: string[]): QuizResult {
 
   const selected = selectedValues.map(v => optionMap.get(v)).filter(Boolean) as QuizOption[]
   const totalScore = selected.reduce((sum, o) => sum + o.points, 0)
-  const maxScore = QUIZ_QUESTIONS.reduce((sum, q) => sum + Math.max(...q.options.map(o => o.points)), 0)
   const tags = [...new Set(selected.flatMap(o => o.tags))]
 
-  const ratio = totalScore / maxScore
+  // Determine which questions were visible (check showIf conditions)
+  const visibleQuestions = QUIZ_QUESTIONS.filter(q => {
+    if (!q.showIf) return true
+    return selectedValues.some(v => v === q.showIf!.value)
+  })
+  const maxScore = visibleQuestions.reduce((sum, q) => sum + Math.max(...q.options.map(o => o.points)), 0)
+
+  const ratio = maxScore > 0 ? totalScore / maxScore : 0
   const tier: QuizResult["tier"] = ratio >= 0.6 ? "high" : ratio >= 0.3 ? "moderate" : "low"
 
   const insights = buildInsights(tags)
@@ -168,9 +179,23 @@ function buildInsights(tags: string[]): Pick<QuizResult, "primaryInsight" | "sec
   const hasAirway = tags.includes("airway") || tags.includes("osa")
   const hasNitrate = tags.includes("nitrateLow") || tags.includes("mouthwash")
   const hasInflam = tags.includes("inflammation")
+  const hasPregnant = tags.includes("pregnant") || tags.includes("planningPregnancy")
+  const hasAutoimmune = tags.includes("autoimmune") || tags.includes("rheumatoidArthritis")
+  const hasHormonal = tags.includes("hormonalCondition")
 
   let primaryInsight: string
-  if (hasPerio && hasCv && hasAirway) {
+  // Female-specific paths take priority when present
+  if (hasPregnant && hasPerio) {
+    primaryInsight = "Periodontal disease during pregnancy carries risks most OBs never check. Women with periodontitis are 5.56\u00d7 more likely to develop preeclampsia. Periodontal bacteria cross the placental barrier and are associated with 2-3\u00d7 higher preterm delivery risk. Your oral health and pregnancy status are directly connected \u2014 and the oral panel is the most actionable intervention point."
+  } else if (hasPregnant) {
+    primaryInsight = "Pregnancy changes your oral microbiome in ways that matter beyond your mouth. Hormonal shifts increase gingival inflammation and create conditions that favor periodontal pathogens. Women with periodontitis face 5.56\u00d7 higher preeclampsia risk. Peaq would measure your periodontal pathogen load alongside your inflammatory markers to give you a complete picture."
+  } else if (hasAutoimmune && hasPerio) {
+    primaryInsight = "Your autoimmune condition and oral health share a biological pathway. P. gingivalis produces an enzyme (peptidylarginine deiminase) that citrullinates host proteins \u2014 potentially triggering the anti-citrullinated protein antibodies that define RA. Treating periodontitis has been shown to reduce RA disease activity markers. The oral microbiome is not separate from your autoimmune condition \u2014 it may be driving it."
+  } else if (hasAutoimmune) {
+    primaryInsight = "Autoimmune conditions and periodontal disease share overlapping inflammatory pathways. RA patients are 4.68\u00d7 more likely to have periodontitis. P. gingivalis possesses an enzyme that citrullinates host proteins, potentially triggering the autoimmune cascades underlying RA. The oral microbiome is a modifiable factor in autoimmune disease activity."
+  } else if (hasHormonal && hasPerio) {
+    primaryInsight = "Hormonal conditions like PCOS, endometriosis, and thyroid disorders shift the oral microbiome in ways that compound periodontal risk. Estrogen fluctuations directly affect gingival tissue inflammation, while thyroid dysfunction alters salivary gland function. Your oral health signals and hormonal status are connected."
+  } else if (hasPerio && hasCv && hasAirway) {
     primaryInsight = "Your cardiovascular history, sleep signals, and oral health share one biological pathway. Periodontal bacteria enter the bloodstream and trigger the same inflammatory response your doctor measures with CRP. Those same bacteria predict sleep-disordered breathing before a polysomnogram would catch it. You have flagged signals in all three panels."
   } else if (hasPerio && hasCv) {
     primaryInsight = "Your cardiovascular history has an oral origin most cardiologists never check. P. gingivalis and T. denticola \u2014 periodontal pathogens \u2014 have been physically detected in human coronary artery plaques at autopsy. Your cardiovascular risk profile and your oral microbiome are not separate conversations."
@@ -182,10 +207,8 @@ function buildInsights(tags: string[]): Pick<QuizResult, "primaryInsight" | "sec
     primaryInsight = "The conditions you flagged are directly connected to the oral microbiome through shared inflammatory pathways. Periodontal bacteria have been physically detected in coronary artery plaques in autopsy studies. Most people managing these conditions have never looked at the oral source."
   } else if (hasAirway) {
     primaryInsight = "The sleep and airway signals you flagged share a biological pathway with your oral health. People with OSA are nearly 2.5 times more likely to have periodontal disease. OSA-related intermittent hypoxia accelerates periodontal tissue breakdown, while periodontal inflammation elevates the CRP that disrupts sleep architecture."
-  } else if (tags.includes("rheumatoidArthritis")) {
-    primaryInsight = "Rheumatoid arthritis and periodontal disease share a biological pathway \u2014 and treating one may improve the other. RA patients are 4.68x more likely to have periodontitis. P. gingivalis possesses an enzyme that citrullinates host proteins, potentially triggering the anti-citrullinated protein antibodies that are the hallmark biomarker of RA."
-  } else if (tags.includes("chronicStress") && (hasPerio || hasNitrate)) {
-    primaryInsight = "Chronic stress is depleting the bacteria your blood vessels depend on for pressure regulation. Stress increases sympathetic tone, reducing parasympathetically-driven salivary secretion. Lower salivary flow depletes nitrate-reducing bacteria \u2014 Neisseria, Rothia, Veillonella \u2014 that convert dietary nitrate to nitric oxide."
+  } else if (hasAutoimmune) {
+    primaryInsight = "Autoimmune conditions and periodontal disease share a biological pathway \u2014 and treating one may improve the other. RA patients are 4.68\u00d7 more likely to have periodontitis. P. gingivalis possesses an enzyme that citrullinates host proteins, potentially triggering the anti-citrullinated protein antibodies that are the hallmark biomarker of RA."
   } else if (hasNitrate) {
     primaryInsight = "Your nitrate pathway may be compromised \u2014 and a daily habit could be the cause. The bacteria that convert dietary nitrate into nitric oxide \u2014 your blood vessels\u2019 primary vasodilator \u2014 are among the first casualties of antiseptic mouthwash. This is a vascular risk factor hiding in your bathroom cabinet."
   } else {

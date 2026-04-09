@@ -124,7 +124,7 @@ export async function GET() {
   const ageRange = lifestyleRes.data?.age_range as string | null
   const biologicalSex = lifestyleRes.data?.biological_sex as string | null
   const age = ageRangeToMidpoint(ageRange)
-  const hrvTarget = getHRVTarget(age)
+  const hrvTarget = getHRVTarget(age, biologicalSex)
 
   // ── Build prompt ──────────────────────────────────────────────────────────
   const systemPrompt = `You are the sleep intelligence engine for Peaq Health, a longevity platform built by a cardiologist and periodontist.
@@ -144,7 +144,7 @@ RULES:
 - If deep sleep is above 20% → celebrate it specifically with the number
 - If efficiency is above 85% → acknowledge it with the number
 - If HRV is below 50ms → note it without alarm
-- If age range is provided, contextualize HRV relative to their age group using the age-adjusted targets in the user prompt. A 43ms HRV may be good for a 45-year-old but below target for a 28-year-old. Never invent thresholds — only use the ones provided.
+- If age range is provided, contextualize HRV relative to their age group using the age-adjusted targets in the user prompt. A 43ms HRV may be good for a 45-year-old but below target for a 28-year-old. Never invent thresholds — only use the ones provided.${hrvTarget.cycleCaveat ? `\n- IMPORTANT: This user is female. ${hrvTarget.cycleCaveat} If HRV has dropped but other sleep metrics are stable, mention this possibility gently.` : ""}
 - Return ONLY valid JSON. No markdown. No backticks.`
 
   const hrvTrendStr = hrvTrendPct != null

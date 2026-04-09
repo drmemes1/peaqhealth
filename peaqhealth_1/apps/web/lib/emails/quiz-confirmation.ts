@@ -12,15 +12,21 @@ interface QuizEmailProps {
 // ── Tag → label + panel mapping ──────────────────────────────────────────
 
 const TAG_LABELS: Record<string, { label: string; panel: "sleep" | "blood" | "oral" }> = {
-  nitrateLow:   { label: "Nitrate low",    panel: "oral" },
-  nitrateHigh:  { label: "Nitrate strong", panel: "oral" },
-  mouthwash:    { label: "Mouthwash use",  panel: "oral" },
-  periodontal:  { label: "Periodontal",    panel: "oral" },
-  cvHistory:    { label: "CV history",     panel: "blood" },
-  cvRisk:       { label: "CV risk",        panel: "blood" },
-  inflammation: { label: "Inflammation",   panel: "blood" },
-  airway:       { label: "Airway",         panel: "sleep" },
-  osa:          { label: "OSA signal",     panel: "sleep" },
+  nitrateLow:        { label: "Nitrate low",       panel: "oral" },
+  nitrateHigh:       { label: "Nitrate strong",    panel: "oral" },
+  mouthwash:         { label: "Mouthwash use",     panel: "oral" },
+  periodontal:       { label: "Periodontal",       panel: "oral" },
+  cvHistory:         { label: "CV history",        panel: "blood" },
+  cvRisk:            { label: "CV risk",           panel: "blood" },
+  inflammation:      { label: "Inflammation",      panel: "blood" },
+  airway:            { label: "Airway",            panel: "sleep" },
+  osa:               { label: "OSA signal",        panel: "sleep" },
+  sexFemale:         { label: "Female",            panel: "blood" },
+  pregnant:          { label: "Pregnant/postpartum", panel: "oral" },
+  planningPregnancy: { label: "Planning pregnancy", panel: "oral" },
+  postMenopausal:    { label: "Post-menopausal",   panel: "sleep" },
+  hormonalCondition: { label: "Hormonal condition", panel: "blood" },
+  autoimmune:        { label: "Autoimmune",        panel: "oral" },
 }
 
 const PANEL_COLORS: Record<string, { main: string; bg: string }> = {
@@ -59,6 +65,18 @@ function getPrimarySignalCopy(tags: string[]): { h2: string; body: string } {
   const hasAirway = tags.includes("airway") || tags.includes("osa")
   const hasNitrate = tags.includes("nitrateLow") || tags.includes("mouthwash")
   const hasInflam = tags.includes("inflammation")
+  const hasPregnant = tags.includes("pregnant") || tags.includes("planningPregnancy")
+  const hasAutoimmune = tags.includes("autoimmune") || tags.includes("rheumatoidArthritis")
+
+  // Female-specific paths take priority when present
+  if (hasPregnant && hasPerio) return {
+    h2: "Periodontal disease during pregnancy carries risks most OBs never check.",
+    body: "Women with periodontitis are 5.56&times; more likely to develop preeclampsia. Periodontal bacteria cross the placental barrier and are associated with 2-3&times; higher preterm delivery risk. Your oral health signals and pregnancy status are directly connected &mdash; and the oral panel is the most actionable intervention point.",
+  }
+  if (hasAutoimmune && hasPerio) return {
+    h2: "Your autoimmune condition and oral health share a biological pathway.",
+    body: "P. gingivalis produces an enzyme (peptidylarginine deiminase) that citrullinates host proteins &mdash; potentially triggering the anti-citrullinated protein antibodies that define RA. Treating periodontitis has been shown to reduce RA disease activity markers. The oral microbiome is not separate from your autoimmune condition &mdash; it may be driving it.",
+  }
 
   if (hasPerio && hasCv && hasAirway) return {
     h2: "Your cardiovascular history, sleep signals, and oral health share one biological pathway.",
@@ -143,6 +161,12 @@ export function renderQuizConfirmationEmail(props: QuizEmailProps): string {
     citations.push({ journal: "Biol Psych &middot; 2016", finding: "&ldquo;Elevated CRP fragments sleep architecture and suppresses deep sleep.&rdquo;", path: "Blood &rarr; Sleep" })
   if (tags.includes("nitrateLow"))
     citations.push({ journal: "Hypertension &middot; 2015", finding: "&ldquo;Dietary nitrate provides sustained blood pressure lowering.&rdquo; n=300", path: "Oral &rarr; Blood" })
+  if (tags.includes("sexFemale") || tags.includes("pregnant") || tags.includes("planningPregnancy"))
+    citations.push({ journal: "J Clin Periodontol &middot; 2014", finding: "&ldquo;Women with periodontitis are 5.56&times; more likely to develop preeclampsia. Periodontal disease associated with 2-3&times; higher preterm delivery risk.&rdquo; n=283", path: "Oral &rarr; Pregnancy" })
+  if (tags.includes("autoimmune") || tags.includes("rheumatoidArthritis"))
+    citations.push({ journal: "Tang et al. &middot; Int J Periodontics &middot; 2017", finding: "&ldquo;RA patients are 4.68&times; more likely to have periodontitis. P. gingivalis citrullination may trigger autoimmune cascades.&rdquo; n=151,569", path: "Oral &rarr; Autoimmune" })
+  if (tags.includes("hormonalCondition"))
+    citations.push({ journal: "Clinical literature", finding: "&ldquo;Estrogen fluctuations affect periodontal tissue inflammation. Thyroid dysfunction associated with salivary gland changes and oral microbiome shifts.&rdquo;", path: "Hormonal &rarr; Oral" })
 
   const citationRows = citations.map(c => `
     <tr>

@@ -472,6 +472,18 @@ export default function Home() {
                 note: "n = 88,040" as string | undefined,
                 tag: "Oral \u2194 Sleep",
               },
+              {
+                journal: "J Clin Periodontol, 2014",
+                quote: "Women with periodontitis are 5.56\u00d7 more likely to develop preeclampsia. Periodontal disease is associated with 2-3\u00d7 higher preterm delivery risk.",
+                note: "n = 283" as string | undefined,
+                tag: "Oral \u2192 Pregnancy",
+              },
+              {
+                journal: "Tang et al. \u00b7 Int J Periodontics, 2017",
+                quote: "RA patients are 4.68\u00d7 more likely to have periodontitis across meta-analyses. P. gingivalis may trigger autoimmune cascades through citrullination.",
+                note: "n = 151,569" as string | undefined,
+                tag: "Oral \u2192 Autoimmune",
+              },
             ]).map((cite, i) => (
               <div className="landing-science-row" key={i} style={{
                 display: "grid",

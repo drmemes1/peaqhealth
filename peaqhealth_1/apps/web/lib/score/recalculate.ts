@@ -24,12 +24,19 @@ export function ageRangeToMidpoint(range: string | null | undefined): number {
   return isNaN(n) ? 45 : n
 }
 
-export function getHRVTarget(age: number): { optimal: number; good: number; watch: number } {
-  if (age < 30) return { optimal: 60, good: 45, watch: 30 }
-  if (age < 40) return { optimal: 55, good: 40, watch: 28 }
-  if (age < 50) return { optimal: 48, good: 35, watch: 25 }
-  if (age < 60) return { optimal: 42, good: 30, watch: 22 }
-  return { optimal: 35, good: 25, watch: 18 }
+export function getHRVTarget(age: number, sex?: string | null): { optimal: number; good: number; watch: number; cycleCaveat: string | null } {
+  let thresholds: { optimal: number; good: number; watch: number }
+  if (age < 30) thresholds = { optimal: 60, good: 45, watch: 30 }
+  else if (age < 40) thresholds = { optimal: 55, good: 40, watch: 28 }
+  else if (age < 50) thresholds = { optimal: 48, good: 35, watch: 25 }
+  else if (age < 60) thresholds = { optimal: 42, good: 30, watch: 22 }
+  else thresholds = { optimal: 35, good: 25, watch: 18 }
+
+  const cycleCaveat = sex === "female"
+    ? "Note: HRV naturally fluctuates with menstrual cycle phase. A temporary drop in the second half of the cycle (luteal phase, roughly days 15-28) is physiologically normal and does not necessarily indicate a health concern. Sustained low HRV across a full cycle warrants attention."
+    : null
+
+  return { ...thresholds, cycleCaveat }
 }
 
 // ─── DB row → engine type mappers ─────────────────────────────────────────────

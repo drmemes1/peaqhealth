@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { QUIZ_QUESTIONS, scoreQuiz, type QuizResult } from "../../../lib/quizScoring"
 
 const serif = "'Cormorant Garamond', Georgia, serif"
@@ -20,10 +20,26 @@ export function OralSnapshot() {
   const [submitted, setSubmitted] = useState(false)
   const revelRef = useRef<HTMLDivElement>(null)
 
-  const q = QUIZ_QUESTIONS[step]
-  const isLastQuestion = step === QUIZ_QUESTIONS.length - 1
+  // Compute visible questions based on current selections (for showIf support)
+  const visibleQuestions = useMemo(() => {
+    return QUIZ_QUESTIONS.filter(q => {
+      if (!q.showIf) return true
+      const parentSelections = selections[q.showIf.questionId] ?? []
+      return parentSelections.includes(q.showIf.value)
+    })
+  }, [selections])
+
+  const q = visibleQuestions[step]
+  const isLastQuestion = step === visibleQuestions.length - 1
   const currentSelections = selections[q?.id] ?? []
   const hasAnswer = currentSelections.length > 0
+
+  // Clamp step if visible questions shrink (e.g. user deselects female)
+  useEffect(() => {
+    if (step >= visibleQuestions.length && visibleQuestions.length > 0) {
+      setStep(visibleQuestions.length - 1)
+    }
+  }, [visibleQuestions.length, step])
 
   // Reset revelation when step changes
   useEffect(() => {
@@ -49,8 +65,11 @@ export function OralSnapshot() {
 
   function advance() {
     if (isLastQuestion) {
-      // Flatten all selected values across all questions
-      const allSelected = Object.values(selections).flat()
+      // Flatten all selected values across all questions (only visible ones)
+      const visibleIds = new Set(visibleQuestions.map(vq => vq.id))
+      const allSelected = Object.entries(selections)
+        .filter(([id]) => visibleIds.has(id))
+        .flatMap(([, vals]) => vals)
       setResult(scoreQuiz(allSelected))
     } else {
       setStep(s => s + 1)
@@ -61,7 +80,10 @@ export function OralSnapshot() {
     if (!email.includes("@") || !result) return
     setSubmitting(true)
     try {
-      const allSelected = Object.values(selections).flat()
+      const visibleIds = new Set(visibleQuestions.map(vq => vq.id))
+      const allSelected = Object.entries(selections)
+        .filter(([id]) => visibleIds.has(id))
+        .flatMap(([, vals]) => vals)
       await fetch("/api/quiz/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -179,12 +201,12 @@ export function OralSnapshot() {
         <div style={{ flex: 1, height: 2, borderRadius: 1, background: "rgba(0,0,0,0.06)" }}>
           <div style={{
             height: "100%", borderRadius: 1, background: ACCENT,
-            width: `${((step + 1) / QUIZ_QUESTIONS.length) * 100}%`,
+            width: `${((step + 1) / visibleQuestions.length) * 100}%`,
             transition: "width 300ms ease",
           }} />
         </div>
         <span style={{ fontFamily: sans, fontSize: 11, color: "rgba(20,20,16,0.35)", flexShrink: 0 }}>
-          {step + 1}/{QUIZ_QUESTIONS.length}
+          {step + 1}/{visibleQuestions.length}
         </span>
       </div>
 
