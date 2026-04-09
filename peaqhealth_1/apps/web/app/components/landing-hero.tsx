@@ -45,7 +45,7 @@ export function LandingHero() {
         {/* CTAs */}
         <div className="fade-up hero-ctas" style={{ animationDelay: "400ms" }}>
           <a href="#quiz" className="hero-cta-primary">
-            Take the snapshot
+            Let&rsquo;s take a Peaq
           </a>
           <a href="#cta" className="hero-cta-secondary">
             Join waitlist &rarr;

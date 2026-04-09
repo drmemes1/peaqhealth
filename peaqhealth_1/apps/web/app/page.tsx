@@ -114,7 +114,7 @@ export default function Home() {
                 textDecoration: "none",
               }}
             >
-              Take the snapshot
+              Let&rsquo;s take a Peaq
             </a>
             <a
               href="#cta"
@@ -188,6 +188,169 @@ export default function Home() {
           SECTION 1 — HERO (with wearable toggle)
           ══════════════════════════════════════════════════════════════════ */}
       <LandingHero />
+
+      {/* ══════════════════════════════════════════════════════════════════
+          SECTION 2 — SCIENCE STRIP (dark bg)
+          ══════════════════════════════════════════════════════════════════ */}
+      <section id="science" style={{ background: BG_DARK }}>
+        <div style={{ ...contentWrap, paddingTop: "clamp(64px, 8vw, 96px)", paddingBottom: "clamp(64px, 8vw, 96px)" }}>
+          {/* Eyebrow */}
+          <p style={{
+            fontFamily: sans,
+            fontSize: "clamp(10px, 0.9vw, 12px)",
+            fontWeight: 500,
+            textTransform: "uppercase",
+            letterSpacing: "0.18em",
+            color: ACCENT,
+            margin: "0 0 12px",
+          }}>
+            The evidence
+          </p>
+
+          <h2 style={{
+            fontFamily: serif,
+            fontSize: "clamp(28px, 3vw, 42px)",
+            fontWeight: 400,
+            lineHeight: 1.2,
+            color: WHITE,
+            margin: "0 0 48px",
+          }}>
+            Built on peer-reviewed research.
+          </h2>
+
+          {/* Citation rows */}
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {([
+              {
+                journal: "Circulation, 2026",
+                quote: "Periodontal disease increases ASCVD risk independently of traditional risk factors.",
+                note: undefined as string | undefined,
+                tag: "Oral \u2192 Blood",
+              },
+              {
+                journal: "Eur Heart Journal, 2025",
+                quote: "Residual inflammatory risk is at least as strong a predictor of recurrent events as residual cholesterol risk.",
+                note: "n = 448,653" as string | undefined,
+                tag: "Blood",
+              },
+              {
+                journal: "Biol Psychiatry, 2016",
+                quote: "Elevated CRP fragments sleep architecture, reducing slow-wave sleep and increasing nocturnal arousal.",
+                note: undefined as string | undefined,
+                tag: "Blood \u2192 Sleep",
+              },
+              {
+                journal: "Sleep Breath, 2023 / Dent J, 2024",
+                quote: "OSA patients are 2.4\u00d7 more likely to have periodontitis. Intermittent hypoxia and periodontal inflammation share an oxidative stress pathway.",
+                note: "n = 88,040" as string | undefined,
+                tag: "Oral \u2194 Sleep",
+              },
+              {
+                journal: "J Clin Periodontol, 2014",
+                quote: "Women with periodontitis are 5.56\u00d7 more likely to develop preeclampsia. Periodontal disease is associated with 2-3\u00d7 higher preterm delivery risk.",
+                note: "n = 283" as string | undefined,
+                tag: "Oral \u2192 Pregnancy",
+              },
+              {
+                journal: "Tang et al. \u00b7 Int J Periodontics, 2017",
+                quote: "RA patients are 4.68\u00d7 more likely to have periodontitis across meta-analyses. P. gingivalis may trigger autoimmune cascades through citrullination.",
+                note: "n = 151,569" as string | undefined,
+                tag: "Oral \u2192 Autoimmune",
+              },
+            ]).map((cite, i) => (
+              <div className="landing-science-row" key={i} style={{
+                display: "grid",
+                gridTemplateColumns: "120px 1fr auto",
+                gap: 24,
+                alignItems: "baseline",
+                padding: "24px 0",
+                borderBottom: `1px solid ${BORDER_DARK}`,
+              }}>
+                {/* Journal */}
+                <span style={{
+                  fontFamily: sans,
+                  fontSize: "clamp(10px, 0.9vw, 12px)",
+                  fontWeight: 500,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  color: MUTED,
+                  lineHeight: 1.8,
+                }}>
+                  {cite.journal}
+                </span>
+
+                {/* Quote */}
+                <p style={{
+                  fontFamily: serif,
+                  fontSize: "clamp(14px, 1.2vw, 17px)",
+                  fontStyle: "italic",
+                  lineHeight: 1.6,
+                  color: "rgba(255,255,255,0.65)",
+                  margin: 0,
+                }}>
+                  &ldquo;{cite.quote}&rdquo;
+                  {cite.note && (
+                    <span style={{
+                      fontFamily: sans,
+                      fontSize: 11,
+                      fontStyle: "normal",
+                      color: MUTED,
+                      marginLeft: 8,
+                    }}>
+                      {cite.note}
+                    </span>
+                  )}
+                </p>
+
+                {/* Path tag */}
+                <span style={{
+                  fontFamily: sans,
+                  fontSize: "clamp(10px, 0.9vw, 12px)",
+                  fontWeight: 500,
+                  letterSpacing: "0.06em",
+                  color: ACCENT,
+                  border: `1px solid rgba(196,154,60,0.3)`,
+                  borderRadius: 999,
+                  padding: "4px 12px",
+                  whiteSpace: "nowrap",
+                }}>
+                  {cite.tag}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* View full evidence base */}
+          <div style={{ textAlign: "center", marginTop: 40, display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
+            <a
+              href="/science"
+              style={{
+                fontFamily: sans,
+                fontSize: 13,
+                letterSpacing: "0.02em",
+                color: ACCENT,
+                textDecoration: "none",
+              }}
+            >
+              View full evidence base &rarr;
+            </a>
+            <a
+              href="/explore"
+              style={{
+                fontFamily: sans,
+                fontSize: 9,
+                letterSpacing: "1.5px",
+                textTransform: "uppercase",
+                color: ACCENT,
+                textDecoration: "none",
+                opacity: 0.7,
+              }}
+            >
+              See how your mouth compares to 9,660 Americans &rarr;
+            </a>
+          </div>
+        </div>
+      </section>
 
       {/* ══════════════════════════════════════════════════════════════════
           SECTION 3 — HOW IT WORKS (cream bg)
@@ -417,215 +580,7 @@ export default function Home() {
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════
-          SECTION 4 — SCIENCE STRIP (dark bg)
-          ══════════════════════════════════════════════════════════════════ */}
-      <section id="science" style={{ background: BG_DARK }}>
-        <div style={{ ...contentWrap, paddingTop: "clamp(64px, 8vw, 96px)", paddingBottom: "clamp(64px, 8vw, 96px)" }}>
-          {/* Eyebrow */}
-          <p style={{
-            fontFamily: sans,
-            fontSize: "clamp(10px, 0.9vw, 12px)",
-            fontWeight: 500,
-            textTransform: "uppercase",
-            letterSpacing: "0.18em",
-            color: ACCENT,
-            margin: "0 0 12px",
-          }}>
-            The evidence
-          </p>
-
-          <h2 style={{
-            fontFamily: serif,
-            fontSize: "clamp(28px, 3vw, 42px)",
-            fontWeight: 400,
-            lineHeight: 1.2,
-            color: WHITE,
-            margin: "0 0 48px",
-          }}>
-            Built on peer-reviewed research.
-          </h2>
-
-          {/* Citation rows */}
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            {([
-              {
-                journal: "Circulation, 2026",
-                quote: "Periodontal disease increases ASCVD risk independently of traditional risk factors.",
-                note: undefined as string | undefined,
-                tag: "Oral \u2192 Blood",
-              },
-              {
-                journal: "Eur Heart Journal, 2025",
-                quote: "Residual inflammatory risk is at least as strong a predictor of recurrent events as residual cholesterol risk.",
-                note: "n = 448,653" as string | undefined,
-                tag: "Blood",
-              },
-              {
-                journal: "Biol Psychiatry, 2016",
-                quote: "Elevated CRP fragments sleep architecture, reducing slow-wave sleep and increasing nocturnal arousal.",
-                note: undefined as string | undefined,
-                tag: "Blood \u2192 Sleep",
-              },
-              {
-                journal: "Sleep Breath, 2023 / Dent J, 2024",
-                quote: "OSA patients are 2.4\u00d7 more likely to have periodontitis. Intermittent hypoxia and periodontal inflammation share an oxidative stress pathway.",
-                note: "n = 88,040" as string | undefined,
-                tag: "Oral \u2194 Sleep",
-              },
-              {
-                journal: "J Clin Periodontol, 2014",
-                quote: "Women with periodontitis are 5.56\u00d7 more likely to develop preeclampsia. Periodontal disease is associated with 2-3\u00d7 higher preterm delivery risk.",
-                note: "n = 283" as string | undefined,
-                tag: "Oral \u2192 Pregnancy",
-              },
-              {
-                journal: "Tang et al. \u00b7 Int J Periodontics, 2017",
-                quote: "RA patients are 4.68\u00d7 more likely to have periodontitis across meta-analyses. P. gingivalis may trigger autoimmune cascades through citrullination.",
-                note: "n = 151,569" as string | undefined,
-                tag: "Oral \u2192 Autoimmune",
-              },
-            ]).map((cite, i) => (
-              <div className="landing-science-row" key={i} style={{
-                display: "grid",
-                gridTemplateColumns: "120px 1fr auto",
-                gap: 24,
-                alignItems: "baseline",
-                padding: "24px 0",
-                borderBottom: `1px solid ${BORDER_DARK}`,
-              }}>
-                {/* Journal */}
-                <span style={{
-                  fontFamily: sans,
-                  fontSize: "clamp(10px, 0.9vw, 12px)",
-                  fontWeight: 500,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  color: MUTED,
-                  lineHeight: 1.8,
-                }}>
-                  {cite.journal}
-                </span>
-
-                {/* Quote */}
-                <p style={{
-                  fontFamily: serif,
-                  fontSize: "clamp(14px, 1.2vw, 17px)",
-                  fontStyle: "italic",
-                  lineHeight: 1.6,
-                  color: "rgba(255,255,255,0.65)",
-                  margin: 0,
-                }}>
-                  &ldquo;{cite.quote}&rdquo;
-                  {cite.note && (
-                    <span style={{
-                      fontFamily: sans,
-                      fontSize: 11,
-                      fontStyle: "normal",
-                      color: MUTED,
-                      marginLeft: 8,
-                    }}>
-                      {cite.note}
-                    </span>
-                  )}
-                </p>
-
-                {/* Path tag */}
-                <span style={{
-                  fontFamily: sans,
-                  fontSize: "clamp(10px, 0.9vw, 12px)",
-                  fontWeight: 500,
-                  letterSpacing: "0.06em",
-                  color: ACCENT,
-                  border: `1px solid rgba(196,154,60,0.3)`,
-                  borderRadius: 999,
-                  padding: "4px 12px",
-                  whiteSpace: "nowrap",
-                }}>
-                  {cite.tag}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {/* View full evidence base */}
-          <div style={{ textAlign: "center", marginTop: 40, display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
-            <a
-              href="/science"
-              style={{
-                fontFamily: sans,
-                fontSize: 13,
-                letterSpacing: "0.02em",
-                color: ACCENT,
-                textDecoration: "none",
-              }}
-            >
-              View full evidence base &rarr;
-            </a>
-            <a
-              href="/explore"
-              style={{
-                fontFamily: sans,
-                fontSize: 9,
-                letterSpacing: "1.5px",
-                textTransform: "uppercase",
-                color: ACCENT,
-                textDecoration: "none",
-                opacity: 0.7,
-              }}
-            >
-              See how your mouth compares to 9,660 Americans &rarr;
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════════════════════════
-          QUIZ — 90-SECOND ORAL SNAPSHOT
-          ══════════════════════════════════════════════════════════════════ */}
-      <section id="quiz" style={{ background: BG_CREAM }}>
-        <div style={{
-          maxWidth: 640,
-          margin: "0 auto",
-          padding: "clamp(64px, 8vw, 96px) 24px",
-          textAlign: "center",
-        }}>
-          <p style={{
-            fontFamily: sans,
-            fontSize: 11,
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-            color: MUTED,
-            margin: "0 0 16px",
-          }}>
-            90-second snapshot
-          </p>
-          <h2 style={{
-            fontFamily: serif,
-            fontSize: "clamp(28px, 3.5vw, 36px)",
-            fontWeight: 400,
-            color: INK,
-            margin: "0 0 12px",
-            lineHeight: 1.2,
-          }}>
-            See how your habits connect<br />
-            <em style={{ color: ACCENT_RAW, fontStyle: "italic" }}>to these pathways.</em>
-          </h2>
-          <p style={{
-            fontFamily: sans,
-            fontSize: 14,
-            color: MUTED,
-            margin: "0 0 40px",
-            lineHeight: 1.6,
-          }}>
-            Six questions. No testing required.
-            Each answer reveals a connection your doctor has never shown you.
-          </p>
-          <OralSnapshot />
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════════════════════════
-          SECTION 5 — APP SCREENSHOTS (cream bg)
+          SECTION 4 — APP SCREENSHOTS (cream bg)
           ══════════════════════════════════════════════════════════════════ */}
       <section style={{ background: BG_CREAM }}>
         <div style={{ ...contentWrap, paddingTop: "clamp(64px, 8vw, 96px)", paddingBottom: "clamp(64px, 8vw, 96px)" }}>
@@ -765,6 +720,51 @@ export default function Home() {
               }}
             />
           </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════════
+          VISUAL CHAPTER BREAK + QUIZ
+          ══════════════════════════════════════════════════════════════════ */}
+      <section id="quiz" style={{ background: BG_CREAM }}>
+        <div style={{
+          maxWidth: 640,
+          margin: "0 auto",
+          padding: "clamp(64px, 8vw, 96px) 24px",
+          textAlign: "center",
+        }}>
+          <p style={{
+            fontFamily: sans,
+            fontSize: 11,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            color: MUTED,
+            margin: "0 0 16px",
+          }}>
+            Let&rsquo;s take a Peaq
+          </p>
+          <h2 style={{
+            fontFamily: serif,
+            fontSize: "clamp(28px, 3.5vw, 36px)",
+            fontWeight: 400,
+            color: INK,
+            margin: "0 0 12px",
+            lineHeight: 1.2,
+          }}>
+            See how your habits connect<br />
+            <em style={{ color: ACCENT_RAW, fontStyle: "italic" }}>to these pathways.</em>
+          </h2>
+          <p style={{
+            fontFamily: sans,
+            fontSize: 14,
+            color: MUTED,
+            margin: "0 0 40px",
+            lineHeight: 1.6,
+          }}>
+            Six questions. No testing required.
+            Each answer reveals a connection your doctor has never shown you.
+          </p>
+          <OralSnapshot />
         </div>
       </section>
 
