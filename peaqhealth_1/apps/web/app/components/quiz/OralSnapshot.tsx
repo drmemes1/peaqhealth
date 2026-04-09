@@ -155,14 +155,14 @@ export function OralSnapshot() {
         {/* Email capture */}
         {!submitted && (
           <div style={{
-            background: "#fff", borderRadius: 10,
-            border: "0.5px solid rgba(0,0,0,0.08)",
+            background: "#0A0A0A", borderRadius: 10,
+            border: "0.5px solid rgba(255,255,255,0.1)",
             padding: "24px 24px 20px", marginBottom: 28,
           }}>
-            <p style={{ fontFamily: serif, fontSize: 20, fontWeight: 400, color: INK, margin: "0 0 8px" }}>
+            <p style={{ fontFamily: serif, fontSize: 20, fontWeight: 400, color: "#ffffff", margin: "0 0 8px" }}>
               Enter your email for your assessment.
             </p>
-            <p style={{ fontFamily: sans, fontSize: 13, color: "rgba(20,20,16,0.5)", lineHeight: 1.6, margin: "0 0 16px" }}>
+            <p style={{ fontFamily: sans, fontSize: 13, color: "rgba(255,255,255,0.45)", lineHeight: 1.6, margin: "0 0 16px" }}>
               We&rsquo;ll send your personalized signal profile and early access details.
             </p>
             <div style={{ display: "flex", gap: 8 }}>
@@ -171,8 +171,8 @@ export function OralSnapshot() {
                 placeholder="you@email.com"
                 style={{
                   flex: 1, fontFamily: sans, fontSize: 14, padding: "10px 14px",
-                  borderRadius: 6, border: "0.5px solid rgba(0,0,0,0.12)",
-                  outline: "none", background: "#FAFAF8", color: INK,
+                  borderRadius: 6, border: "0.5px solid rgba(255,255,255,0.12)",
+                  outline: "none", background: "#111111", color: "#ffffff",
                 }}
               />
               <button
@@ -204,7 +204,7 @@ export function OralSnapshot() {
                   fontFamily: sans, fontSize: 10, letterSpacing: "1.5px",
                   textTransform: "uppercase", color: ACCENT, display: "block", marginBottom: 8,
                 }}>{insight.label}</span>
-                <p style={{ fontFamily: sans, fontSize: 14, color: "rgba(20,20,16,0.65)", lineHeight: 1.7, margin: 0 }}>
+                <p style={{ fontFamily: sans, fontSize: 14, color: "rgba(255,255,255,0.55)", lineHeight: 1.7, margin: 0 }}>
                   {insight.text}
                 </p>
               </div>
@@ -230,14 +230,14 @@ export function OralSnapshot() {
     <div>
       {/* Progress bar */}
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 32 }}>
-        <div style={{ flex: 1, height: 2, borderRadius: 1, background: "rgba(0,0,0,0.06)" }}>
+        <div style={{ flex: 1, height: 2, borderRadius: 1, background: "rgba(255,255,255,0.1)" }}>
           <div style={{
             height: "100%", borderRadius: 1, background: ACCENT,
             width: `${((step + 1) / visibleQuestions.length) * 100}%`,
             transition: "width 300ms ease",
           }} />
         </div>
-        <span style={{ fontFamily: sans, fontSize: 11, color: "rgba(20,20,16,0.35)", flexShrink: 0 }}>
+        <span style={{ fontFamily: sans, fontSize: 11, color: "rgba(255,255,255,0.3)", flexShrink: 0 }}>
           {step + 1}/{visibleQuestions.length}
         </span>
       </div>
@@ -245,7 +245,7 @@ export function OralSnapshot() {
       {/* Question */}
       <h3 style={{
         fontFamily: serif, fontSize: 22, fontWeight: 400,
-        color: INK, lineHeight: 1.3, margin: "0 0 24px", textAlign: "left",
+        color: "#ffffff", lineHeight: 1.3, margin: "0 0 24px", textAlign: "left",
       }}>
         {q.question}
       </h3>
@@ -259,10 +259,10 @@ export function OralSnapshot() {
               key={opt.value}
               onClick={() => selectOption(opt.value)}
               style={{
-                fontFamily: sans, fontSize: 14, color: INK,
+                fontFamily: sans, fontSize: 14, color: "#ffffff",
                 textAlign: "left", lineHeight: 1.5,
-                background: isSelected ? "rgba(196,154,60,0.12)" : "#fff",
-                border: isSelected ? `1.5px solid ${ACCENT}` : "0.5px solid rgba(0,0,0,0.08)",
+                background: isSelected ? "rgba(196,154,60,0.15)" : "#0A0A0A",
+                border: isSelected ? `1.5px solid ${ACCENT}` : "0.5px solid rgba(255,255,255,0.1)",
                 borderRadius: 8, padding: "12px 16px", cursor: "pointer",
                 transition: "border-color 150ms ease, background 150ms ease",
               }}
@@ -281,10 +281,10 @@ export function OralSnapshot() {
       }}>
         <div style={{
           marginTop: 20, padding: "16px 18px",
-          background: "rgba(196,154,60,0.06)",
+          background: "rgba(196,154,60,0.08)",
           borderLeft: `3px solid ${ACCENT}`, borderRadius: 6,
         }}>
-          <p style={{ fontFamily: sans, fontSize: 13, color: "rgba(20,20,16,0.6)", lineHeight: 1.65, margin: 0 }}>
+          <p style={{ fontFamily: sans, fontSize: 13, color: "rgba(255,255,255,0.5)", lineHeight: 1.65, margin: 0 }}>
             {q.subtext}
           </p>
         </div>

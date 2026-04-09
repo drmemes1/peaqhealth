@@ -726,7 +726,7 @@ export default function Home() {
       {/* ══════════════════════════════════════════════════════════════════
           VISUAL CHAPTER BREAK + QUIZ
           ══════════════════════════════════════════════════════════════════ */}
-      <section id="quiz" style={{ background: BG_CREAM }}>
+      <section id="quiz" style={{ background: "#000000" }}>
         <div style={{
           maxWidth: 640,
           margin: "0 auto",
@@ -738,7 +738,7 @@ export default function Home() {
             fontSize: 11,
             letterSpacing: "0.14em",
             textTransform: "uppercase",
-            color: MUTED,
+            color: ACCENT_RAW,
             margin: "0 0 16px",
           }}>
             Let&rsquo;s take a Peaq
@@ -747,7 +747,7 @@ export default function Home() {
             fontFamily: serif,
             fontSize: "clamp(28px, 3.5vw, 36px)",
             fontWeight: 400,
-            color: INK,
+            color: "#ffffff",
             margin: "0 0 12px",
             lineHeight: 1.2,
           }}>
@@ -757,14 +757,16 @@ export default function Home() {
           <p style={{
             fontFamily: sans,
             fontSize: 14,
-            color: MUTED,
+            color: "rgba(255,255,255,0.45)",
             margin: "0 0 40px",
             lineHeight: 1.6,
           }}>
             11 questions. No testing required.
             Each answer reveals a connection your doctor has never shown you.
           </p>
-          <OralSnapshot />
+          <div className="quiz-dark-wrapper">
+            <OralSnapshot />
+          </div>
         </div>
       </section>
 
