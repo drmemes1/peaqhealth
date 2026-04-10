@@ -61,7 +61,7 @@ def fmt_p_xml(p_str):
     coeff, exp = _sci(p_str)
     return f"{coeff:.1f}\u00d710<super>\u2212{exp}</super>"
 
-all90 = load_csv("all_60_tests.csv")
+all90 = load_csv("all_90_tests.csv")
 adj = load_csv("age_adjusted_correlations.csv")
 
 # Build adj lookup
