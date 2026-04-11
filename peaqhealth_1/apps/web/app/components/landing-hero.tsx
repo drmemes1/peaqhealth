@@ -9,32 +9,32 @@ const sans  = "'Instrument Sans', system-ui, sans-serif"
 const LS_THEME_KEY = "peaq-landing-theme"
 
 // The wearable toggle doubles as the site-wide dark/light theme toggle.
-// wearable=true  → LIGHT theme (wearable "on" / connected, bright UI)
-// wearable=false → DARK  theme (wearable "off" / dramatic photo hero)
-// Default = DARK to match the current site's dominant visual language.
+// wearable=true  → DARK  theme (toggle ON,  default, dramatic photo hero)
+// wearable=false → LIGHT theme (toggle OFF, bright cream overlay)
+// Default = toggle ON / DARK to match the dominant site visual language.
 function readStoredTheme(): boolean {
-  if (typeof window === "undefined") return false // SSR default: dark
+  if (typeof window === "undefined") return true // SSR default: dark / toggle on
   const stored = window.localStorage.getItem(LS_THEME_KEY)
-  if (stored === "light") return true
-  if (stored === "dark") return false
-  return false // no stored preference → dark
+  if (stored === "light") return false
+  if (stored === "dark") return true
+  return true // no stored preference → dark / toggle on
 }
 
-function applyThemeToDocument(isLight: boolean) {
+function applyThemeToDocument(wearable: boolean) {
   if (typeof document === "undefined") return
-  document.documentElement.dataset.landingTheme = isLight ? "light" : "dark"
+  document.documentElement.dataset.landingTheme = wearable ? "dark" : "light"
 }
 
 export function LandingHero() {
-  // SSR starts dark (default). Client bootstrap effect reads localStorage and
-  // may flip it on mount; accept one potential flicker on return visitors.
-  const [wearable, setWearable] = useState(false)
+  // SSR starts with toggle ON / dark theme. Client bootstrap may flip on
+  // mount from localStorage; accept one potential flicker on return visitors.
+  const [wearable, setWearable] = useState(true)
 
   // Bootstrap: read stored preference, sync state + <html> attribute
   useEffect(() => {
-    const isLight = readStoredTheme()
-    setWearable(isLight)
-    applyThemeToDocument(isLight)
+    const nextWearable = readStoredTheme()
+    setWearable(nextWearable)
+    applyThemeToDocument(nextWearable)
   }, [])
 
   const handleToggle = useCallback(() => {
@@ -42,7 +42,7 @@ export function LandingHero() {
       const next = !prev
       applyThemeToDocument(next)
       if (typeof window !== "undefined") {
-        window.localStorage.setItem(LS_THEME_KEY, next ? "light" : "dark")
+        window.localStorage.setItem(LS_THEME_KEY, next ? "dark" : "light")
       }
       return next
     })
