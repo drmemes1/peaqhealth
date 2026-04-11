@@ -54,10 +54,13 @@ export function LandingHero() {
       data-wearable={wearable ? "on" : "off"}
     >
       {/* Full-bleed hero video — autoplays, muted, loops. Same .hero-bg-image
-          class so object-fit/position + mobile crop anchor still apply. */}
+          class so object-fit/position + mobile crop anchor still apply.
+          Poster shows during the ~1s video load window + fallback for users
+          who have autoplay disabled or prefers-reduced-motion enforced. */}
       <video
         className="hero-bg-image"
         src="/videos/heropeaq.mp4"
+        poster="/images/heropeaq-poster.jpg"
         autoPlay
         loop
         muted
