@@ -69,9 +69,12 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Instrument+Sans:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
+        {/* Runs synchronously before hydration — no theme flicker on return visits.
+            - Authenticated app always gets data-theme="light" (unchanged product behavior)
+            - Landing reads localStorage and sets data-landing-theme before CSS paints */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){document.documentElement.setAttribute('data-theme','light')})()`,
+            __html: `(function(){var d=document.documentElement;d.setAttribute('data-theme','light');try{var t=localStorage.getItem('peaq-landing-theme');d.setAttribute('data-landing-theme',t==='light'?'light':'dark')}catch(e){d.setAttribute('data-landing-theme','dark')}})()`,
           }}
         />
       </head>

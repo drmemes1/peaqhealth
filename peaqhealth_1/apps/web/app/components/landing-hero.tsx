@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useCallback, useEffect, useState } from "react"
 import { LandingPanelStrip } from "./landing-panel-strip"
 
@@ -53,12 +54,16 @@ export function LandingHero() {
       className="landing-hero-section"
       data-wearable={wearable ? "on" : "off"}
     >
-      {/* Full-bleed hero image — sits behind everything */}
-      <img
+      {/* Full-bleed hero image — Next.js serves WebP/AVIF + responsive sizes */}
+      <Image
         src="/images/heropeaq.png"
         alt=""
         aria-hidden="true"
         className="hero-bg-image"
+        fill
+        priority
+        sizes="100vw"
+        quality={80}
       />
 
       {/* Dark gradient overlay — top-to-bottom, keeps text and CTAs legible */}
