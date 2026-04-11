@@ -6,6 +6,11 @@ import { ageRangeToMidpoint, getHRVTarget } from "../../../../lib/score/recalcul
 
 export const dynamic = "force-dynamic"
 
+// Bump on material prompt changes (new rules, tone shifts, new modifier branches).
+// Cosmetic changes (spelling, punctuation) do not require a bump.
+// See memory/project_oral_narrative_prompt_versioning.md.
+const PROMPT_VERSION = "v3"
+
 function svc() {
   return createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -66,11 +71,13 @@ export async function GET() {
   const today = new Date().toISOString().split("T")[0]
 
   // ── Cache check — skip if < 7 days old ────────────────────────────────────
+  // Filter by prompt_version so a version bump auto-bypasses stale rows.
   const { data: cached } = await supabase
     .from("oral_narratives")
     .select("*")
     .eq("user_id", userId)
     .eq("collection_date", kitDate)
+    .eq("prompt_version", PROMPT_VERSION)
     .maybeSingle()
 
   const cacheAgeDays = cached
@@ -112,7 +119,7 @@ export async function GET() {
 
     supabase
       .from("lifestyle_records")
-      .select("age_range, biological_sex")
+      .select("age_range, biological_sex, smoking_status, nasal_obstruction, sinus_history, snoring_reported, mouth_breathing")
       .eq("user_id", userId)
       .order("updated_at", { ascending: false })
       .limit(1)
@@ -126,31 +133,111 @@ export async function GET() {
 
   const ageRange = lifestyleRes.data?.age_range as string | null
   const biologicalSex = lifestyleRes.data?.biological_sex as string | null
+  const smokingStatus = lifestyleRes.data?.smoking_status as string | null
+  const nasalObstruction = lifestyleRes.data?.nasal_obstruction as string | null
+  const sinusHistory = lifestyleRes.data?.sinus_history as string | null
+  const snoringReported = lifestyleRes.data?.snoring_reported as string | null
+  const mouthBreathing = lifestyleRes.data?.mouth_breathing as string | null
   const age = ageRangeToMidpoint(ageRange)
   const hrvTarget = getHRVTarget(age, biologicalSex)
+  const anyAirwayProvided = Boolean(nasalObstruction || sinusHistory || snoringReported || mouthBreathing)
 
   // ── Build prompts ──────────────────────────────────────────────────────────
-  const systemPrompt = `You are the oral microbiome intelligence engine for Peaq Health, a longevity platform built by a cardiologist and periodontist.
+  const systemPrompt = `You are Peaq's health intelligence layer. You write warm, plain-English oral health insights for real people — not patients, not lab reports. Your job is to connect what we found in their mouth to something they can actually feel or track, and give them one or two things worth trying.
 
-Generate a short, personal oral health narrative for this user based on their latest microbiome kit. Connect oral signals to their sleep or blood panels where the data supports it.
+RESPONSE SHAPE — return valid JSON matching this schema exactly:
+{
+  "headline": string,        // 6-10 words, present tense, no jargon
+  "narrative": string,       // 3-5 sentences, plain English, see rules below
+  "positive_signal": string, // 1-2 sentences, genuine strength, ends on warmth
+  "watch_signal": string     // 1-2 sentences, soft concern + one concrete action
+}
 
-VOICE:
-- Warm, direct, like a knowledgeable friend reviewing your results
-- Specific — use actual numbers where available
-- Never alarming — observational and curious
-- 2-3 sentences max for the narrative
-- Use "consider" for actions, never "you should"
-- Use "research has shown" or "this has been linked to" for mechanism language — never "causes"
-- Never mention disease, diagnosis, or clinical urgency
+─────────────────────────────────────────
+TONE — non-negotiable
+─────────────────────────────────────────
+- Write like a knowledgeable friend, not a clinician filing a report
+- Warm and curious, never alarming
+- "worth keeping an eye on" not "elevated and concerning"
+- "something to try" not "you should"
+- "linked to" not "causes" or "indicates"
+- One idea per sentence. Short sentences.
 
-RULES:
-- Never cite raw burden percentages — use qualitative descriptors only (within target, mildly elevated, elevated, notably elevated)
-- Cross-panel connection to HRV or blood only when the data supports it; never forced
-- If nitrate reducers are below 20% AND HRV is below the age-adjusted target → mention the nitric oxide pathway connection
-- If Shannon diversity is above 3.0 → celebrate it specifically with the number
-- If periodontal burden is elevated → note it without alarm, frame as "worth keeping an eye on"
-- If mouthwash is detected: mention it once, gently — "antiseptic mouthwash can suppress nitrate-reducing bacteria"
-- Return ONLY valid JSON. No markdown. No backticks.`
+NEVER USE these words or phrases:
+dysbiosis, taxa, genus, species, ASV, OTU, 16S, RMSSD, VSC, narG,
+percentile (use "for someone your age" instead),
+clinically significant, statistically, your data suggests, it appears,
+you have [condition], diagnosed, at risk for
+
+BACTERIA NAMES: use at most once per insight, immediately followed by plain-English explanation in parentheses. Example: "Neisseria (bacteria that help make nitric oxide)"
+
+─────────────────────────────────────────
+NARRATIVE RULES
+─────────────────────────────────────────
+1. Lead with what it means for the person — not what the bacteria is doing
+2. Connect oral finding → something they can see or feel (HRV, energy, breath, sleep)
+3. Cross-panel connections (HRV, blood) ONLY when the context data supports it
+4. Never diagnose. Use: "linked to" / "associated with" / "worth looking into"
+5. Never mention raw percentages or abundance numbers
+6. Use burden language: within target / mildly elevated / elevated / notably elevated
+
+─────────────────────────────────────────
+HRV FRAMING — use age/sex context when provided
+─────────────────────────────────────────
+Do not say "your HRV is low" — always contextualise:
+"your HRV is a little lower than we'd expect for someone your age"
+"this is on the lower end for a woman in her 30s"
+
+If user is female: add one soft mention that HRV naturally dips in the second half of the monthly cycle — this is normal and shouldn't be alarming.
+
+─────────────────────────────────────────
+QUESTIONNAIRE MODIFIERS — check before writing
+─────────────────────────────────────────
+IF antiseptic mouthwash flagged:
+  → Lead the narrative with this — it is the most likely root cause of low nitrate-reducing bacteria
+  → "The mouthwash you mentioned is very likely reducing the bacteria that make nitric oxide — this is a well-documented effect and entirely reversible."
+
+IF current smoker:
+  → Acknowledge in watch_signal: "Smoking reduces nitric oxide-producing bacteria more than almost anything else — even small reductions in smoking make a meaningful difference here"
+
+AIRWAY MODIFIERS — only fire when the user provided airway data.
+If all four airway fields are "not provided", skip every airway rule below and do not assume defaults.
+
+IF nasal_obstruction is "often" or "chronic", OR sinus_history is anything other than "none", OR mouth_breathing is "often" or "confirmed":
+  → Reframe the oral findings as mouth-breathing-driven, not sleep-apnoea-driven
+  → Reframe any elevated respiratory signals as nasal obstruction rather than OSA
+  → Soften with: "Since nasal breathing can be tricky for you, some of these signals are likely your mouth doing the breathing work overnight — not a deeper issue. Improving nasal airflow often improves these numbers on its own."
+  → Suggest in watch_signal one concrete, gentle action: nasal strips at night, a saline rinse, or a check-in with an ENT if it's been a while
+
+IF sinus_history is "nasal_polyps":
+  → Additionally note, softly: nasal polyps are linked to eosinophilic airway inflammation, and a periodic ENT review is worth considering if not done recently
+
+IF snoring_reported is "osa_diagnosed":
+  → Suppress all sleep-apnoea framing — the user already knows about it
+  → Reframe as: "Given your sleep history, your oral bacteria pattern fits what we'd expect. Here's how to improve it from the oral side."
+  → Do not suggest sleep studies, CPAP, or ENT referral in this case
+
+─────────────────────────────────────────
+POSITIVE SIGNAL — genuine, specific, not generic
+─────────────────────────────────────────
+Find the actual strongest finding in the data and name it.
+Examples of good positive signals:
+- "Your nitric oxide bacteria are working well — this is linked to healthier blood pressure and better overnight recovery"
+- "Your cavity-protection bacteria are strong — this is a real advantage"
+- "Your oral diversity is genuinely impressive — a rich ecosystem is protective"
+
+Never use generic praise like "you're doing great" or "your overall score is good"
+
+─────────────────────────────────────────
+WATCH SIGNAL — soft, one concrete action
+─────────────────────────────────────────
+One thing worth keeping an eye on. End with one specific, easy action.
+Examples:
+- "Your breath bacteria are a little elevated — tongue scraping each morning is the simplest way to start shifting this"
+- "Some bacteria linked to gum sensitivity are present — daily flossing or a water flosser targets exactly this"
+- "Your nitric oxide bacteria are on the lower side — leafy greens or beetroot a few times a week directly feeds these"
+
+OUTPUT — valid JSON only, no markdown, no preamble, no backticks.`
 
   const nitrateStr = nitrateRaw != null ? `${nitrateRaw.toFixed(1)}% (target ≥20%)` : "not available"
   const periodontalStr = burdenLevel(periodontalRaw)
@@ -177,6 +264,13 @@ CROSS-PANEL CONTEXT:
 - Recent HRV (7-day avg): ${hrvStr}
 - Active cross-panel modifiers: ${modifiers.length > 0 ? modifiers.map(m => m.label).join(", ") : "none"}
 - User age / sex: ${ageStr}
+- Smoking status: ${smokingStatus ?? "not provided"}
+
+AIRWAY / SINUS CONTEXT:
+${anyAirwayProvided ? `- Nasal obstruction: ${nasalObstruction ?? "not provided"}
+- Sinus history: ${sinusHistory ?? "not provided"}
+- Snoring / OSA: ${snoringReported ?? "not provided"}
+- Mouth breathing: ${mouthBreathing ?? "not provided"}` : "- All airway fields: not provided (skip airway modifiers entirely)"}
 
 Return this exact JSON:
 {
@@ -197,8 +291,8 @@ Return this exact JSON:
   try {
     const completion = await openai.chat.completions.create({
       model,
-      max_tokens: 400,
-      temperature: 0.65,
+      max_tokens: 600,
+      temperature: 0.3,
       store: false, // HIPAA ZDR
       messages: [
         { role: "system", content: systemPrompt },
@@ -220,6 +314,7 @@ Return this exact JSON:
     .upsert({
       user_id:         userId,
       collection_date: kitDate,
+      prompt_version:  PROMPT_VERSION,
       generated_at:    new Date().toISOString(),
       headline:        typeof result.headline === "string" ? result.headline : null,
       narrative:       typeof result.narrative === "string" ? result.narrative : null,
@@ -227,9 +322,9 @@ Return this exact JSON:
       watch_signal:    typeof result.watch_signal === "string" ? result.watch_signal : null,
       oral_context:    { shannon, nitrateRaw, periodontalRaw, osaBurdenRaw, mouthwashDetected },
       blood_context:   { modifiers },
-      sleep_context:   { avgHrv, ageRange, biologicalSex },
+      sleep_context:   { avgHrv, ageRange, biologicalSex, smokingStatus, nasalObstruction, sinusHistory, snoringReported, mouthBreathing },
       raw_response:    result,
-    }, { onConflict: "user_id,collection_date" })
+    }, { onConflict: "user_id,collection_date,prompt_version" })
     .select()
     .single()
 

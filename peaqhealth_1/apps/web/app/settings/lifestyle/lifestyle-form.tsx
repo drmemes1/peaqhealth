@@ -10,6 +10,7 @@ interface QuestionDef {
   dbKey: string;
   label: string;
   context?: string;
+  introBefore?: string;
   options: { value: string; label: string; sub?: string }[];
   type: "choice" | "boolean";
 }
@@ -48,7 +49,7 @@ const SECTIONS: {
     subtitle: "Self-reported sleep calibrates your baseline and drives interaction scoring",
     ptsLabel: "sleep estimate",
     color: "#185FA5",
-    keys: ["sleepDuration", "sleepLatency", "nightWakings", "daytimeFatigue"],
+    keys: ["sleepDuration", "sleepLatency", "nightWakings", "daytimeFatigue", "nasalObstruction", "sinusHistory", "snoringReported", "mouthBreathing"],
   },
   {
     title: "Diet & Nutrition",
@@ -205,6 +206,54 @@ const QUESTIONS: QuestionDef[] = [
       { value: "mild",     label: "Occasionally (1–2×/week)" },
       { value: "moderate", label: "Frequently (3–5×/week)" },
       { value: "severe",   label: "Daily" },
+    ],
+  },
+  // ── Airway & Breathing (renders inside Sleep Patterns) ────────────────────
+  {
+    key: "nasalObstruction", dbKey: "nasal_obstruction",
+    label: "How often do you find it difficult to breathe through your nose?",
+    introBefore: "These questions help us personalise your breathing and sleep insights.",
+    type: "choice",
+    options: [
+      { value: "never",      label: "Never" },
+      { value: "occasional", label: "Occasionally" },
+      { value: "often",      label: "Often" },
+      { value: "chronic",    label: "Chronically" },
+    ],
+  },
+  {
+    key: "sinusHistory", dbKey: "sinus_history",
+    label: "Do you have any history of sinus problems or surgery?",
+    context: "Include anything you've been told by a doctor, even if it was years ago.",
+    type: "choice",
+    options: [
+      { value: "none",                 label: "None" },
+      { value: "recurrent_sinusitis",  label: "Recurrent sinus infections" },
+      { value: "sinus_surgery",        label: "Sinus surgery" },
+      { value: "nasal_polyps",         label: "Nasal polyps" },
+      { value: "deviated_septum",      label: "Deviated septum" },
+    ],
+  },
+  {
+    key: "snoringReported", dbKey: "snoring_reported",
+    label: "Has anyone told you that you snore, or have you been diagnosed with sleep apnoea?",
+    type: "choice",
+    options: [
+      { value: "no",            label: "No" },
+      { value: "occasional",    label: "Occasionally" },
+      { value: "frequent",      label: "Frequently" },
+      { value: "osa_diagnosed", label: "Diagnosed with sleep apnoea" },
+    ],
+  },
+  {
+    key: "mouthBreathing", dbKey: "mouth_breathing",
+    label: "Do you breathe through your mouth during the day or while sleeping?",
+    type: "choice",
+    options: [
+      { value: "rarely",    label: "Rarely" },
+      { value: "sometimes", label: "Sometimes" },
+      { value: "often",     label: "Often" },
+      { value: "confirmed", label: "Yes, I know I do" },
     ],
   },
   // ── Diet & Nutrition ──────────────────────────────────────────────────────
@@ -653,6 +702,12 @@ export function LifestyleForm({ existing }: Props) {
 
                   {sectionQs.map((q) => (
                     <div key={q.key}>
+                      {/* Optional group intro — appears above the first question of a subgroup */}
+                      {q.introBefore && (
+                        <p className="font-body text-xs text-ink/45 leading-relaxed mb-5 italic">
+                          {q.introBefore}
+                        </p>
+                      )}
                       {/* Question text */}
                       <p className="font-display text-[17px] font-light leading-snug text-ink mb-1">
                         {q.label}
