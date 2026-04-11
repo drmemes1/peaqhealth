@@ -1,6 +1,5 @@
 "use client"
 
-import Image from "next/image"
 import { useCallback, useEffect, useState } from "react"
 import { LandingPanelStrip } from "./landing-panel-strip"
 
@@ -54,16 +53,17 @@ export function LandingHero() {
       className="landing-hero-section"
       data-wearable={wearable ? "on" : "off"}
     >
-      {/* Full-bleed hero image — Next.js serves WebP/AVIF + responsive sizes */}
-      <Image
-        src="/images/heropeaq.png"
-        alt=""
-        aria-hidden="true"
+      {/* Full-bleed hero video — autoplays, muted, loops. Same .hero-bg-image
+          class so object-fit/position + mobile crop anchor still apply. */}
+      <video
         className="hero-bg-image"
-        fill
-        priority
-        sizes="100vw"
-        quality={80}
+        src="/videos/heropeaq.mp4"
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="auto"
+        aria-hidden="true"
       />
 
       {/* Dark gradient overlay — top-to-bottom, keeps text and CTAs legible */}
