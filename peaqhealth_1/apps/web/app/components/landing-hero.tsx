@@ -164,11 +164,11 @@ export function LandingHero() {
           pointer-events: none;
           user-select: none;
         }
-        /* Mobile: anchor crop toward the left so the woman stays in frame
-           when the 16:9 landscape photo gets cropped for narrow viewports. */
+        /* Mobile: anchor crop toward the right so the woman stays in frame
+           when the 16:9 landscape asset gets cropped for narrow viewports. */
         @media (max-width: 768px) {
           .hero-bg-image {
-            object-position: 18% center;
+            object-position: 78% center;
           }
         }
 
