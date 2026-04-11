@@ -68,7 +68,6 @@ html {
   --lp-border-light: rgba(0,0,0,0.08);
   --lp-muted:        #8C8A82;
   --lp-logo-filter:  brightness(0) invert(1);
-  --lp-hero-photo-display: block;
   --lp-hero-fallback: #0E0D08;
 
   /* ─── Semantic aliases (used in new components) ────────────────────────── */
@@ -148,7 +147,6 @@ html {
   --lp-border-light: rgba(0,0,0,0.06);
   --lp-muted:        #5F5E5A;
   --lp-logo-filter:  brightness(0);
-  --lp-hero-photo-display: none;
   --lp-hero-fallback: #F6F4EF;
 }
 

@@ -147,7 +147,9 @@ export function LandingHero() {
         }
 
         /* ── Full-bleed hero image + overlay ──────────────────── */
-        /* Photo only shows in dark theme — controlled via --lp-hero-photo-display */
+        /* Photo renders in both themes; overlay gradient flips per theme to
+           keep text legible (dark warm wash in dark mode, heavy cream wash in
+           light mode so the photo reads as a subtle tint behind dark text). */
         .hero-bg-image {
           position: absolute;
           inset: 0;
@@ -158,23 +160,30 @@ export function LandingHero() {
           z-index: 0;
           pointer-events: none;
           user-select: none;
-          display: var(--lp-hero-photo-display);
         }
 
-        /* Dark gradient overlay — only visible when photo is visible (dark theme) */
         .hero-bg-overlay {
           position: absolute;
           inset: 0;
           z-index: 1;
           pointer-events: none;
-          display: var(--lp-hero-photo-display);
           background:
             linear-gradient(to bottom,
               rgba(14,13,8,0.62) 0%,
               rgba(14,13,8,0.48) 32%,
               rgba(14,13,8,0.64) 68%,
               rgba(14,13,8,0.92) 100%);
-          transition: opacity 600ms cubic-bezier(0.4,0.0,0.2,1);
+          transition: background 600ms cubic-bezier(0.4,0.0,0.2,1);
+        }
+
+        /* Light theme: cream wash — photo becomes a textured tint */
+        [data-landing-theme="light"] .hero-bg-overlay {
+          background:
+            linear-gradient(to bottom,
+              rgba(246,244,239,0.88) 0%,
+              rgba(246,244,239,0.76) 32%,
+              rgba(246,244,239,0.84) 68%,
+              rgba(246,244,239,0.98) 100%);
         }
 
         /* Radial accents — sit above the image/overlay for warmth */
