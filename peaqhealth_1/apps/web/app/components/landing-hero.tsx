@@ -186,14 +186,15 @@ export function LandingHero() {
           transition: background 600ms cubic-bezier(0.4,0.0,0.2,1);
         }
 
-        /* Light theme: cream wash — photo becomes a textured tint */
+        /* Light theme: cream wash — photo stays legible as background while
+           dark text remains readable at the top and bottom where it sits. */
         [data-landing-theme="light"] .hero-bg-overlay {
           background:
             linear-gradient(to bottom,
-              rgba(246,244,239,0.88) 0%,
-              rgba(246,244,239,0.76) 32%,
-              rgba(246,244,239,0.84) 68%,
-              rgba(246,244,239,0.98) 100%);
+              rgba(246,244,239,0.74) 0%,
+              rgba(246,244,239,0.52) 32%,
+              rgba(246,244,239,0.66) 68%,
+              rgba(246,244,239,0.94) 100%);
         }
 
         /* Radial accents — sit above the image/overlay for warmth */
