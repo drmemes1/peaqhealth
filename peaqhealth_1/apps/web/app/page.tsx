@@ -8,28 +8,32 @@ import { WhyPeaq } from "./components/why-peaq"
 const serif = "'Cormorant Garamond', Georgia, serif"
 const sans  = "'Instrument Sans', system-ui, sans-serif"
 
-const BG_DARK   = "#16150F"
-const BG_DARK2  = "#1E1D16"
-const BG_CREAM  = "#F6F4EF"
+// Landing page color tokens — all reactive to [data-landing-theme] via CSS vars in globals.css.
+// Semantics stay stable: BG_DARK is the "primary section bg", WHITE is the "text on primary bg",
+// INK is the "text on cream contrast bg". In dark theme these resolve to dark/white/dark; in
+// light theme they resolve to cream/dark/dark.
+const BG_DARK   = "var(--lp-bg-dark)"
+const BG_DARK2  = "var(--lp-bg-dark-alt)"
+const BG_CREAM  = "var(--lp-bg-cream)"
 const ACCENT    = "var(--color-accent-gold)"
 const ACCENT_RAW = "#C49A3C"
-const MUTED     = "#8C8A82"
-const INK       = "#1a1a18"
-const INK_60    = "rgba(20,20,16,0.60)"
+const MUTED     = "var(--lp-muted)"
+const INK       = "var(--lp-ink)"
+const INK_60    = "var(--lp-ink-60)"
 
-const BORDER_DARK  = "rgba(255,255,255,0.1)"
-const BORDER_LIGHT = "rgba(0,0,0,0.08)"
+const BORDER_DARK  = "var(--lp-border-dark)"
+const BORDER_LIGHT = "var(--lp-border-light)"
 
 const SLEEP_C = "#5B9BD5"
 const BLOOD_C = "#C97070"
 const ORAL_C  = "#7AB87A"
 
-const WHITE     = "#FFFFFF"
-const WHITE_80  = "rgba(255,255,255,0.8)"
-const WHITE_45  = "rgba(255,255,255,0.45)"
-const WHITE_40  = "rgba(255,255,255,0.4)"
-const WHITE_30  = "rgba(255,255,255,0.3)"
-const WHITE_10  = "rgba(255,255,255,0.1)"
+const WHITE     = "var(--lp-text)"
+const WHITE_80  = "var(--lp-text-80)"
+const WHITE_45  = "var(--lp-text-45)"
+const WHITE_40  = "var(--lp-text-40)"
+const WHITE_30  = "var(--lp-text-30)"
+const WHITE_10  = "var(--lp-text-10)"
 
 const contentWrap: React.CSSProperties = {
   maxWidth: "var(--layout-max-width)",
@@ -50,7 +54,7 @@ export default function Home() {
         position: "sticky",
         top: 0,
         zIndex: 50,
-        background: "rgba(22,21,15,0.92)",
+        background: "var(--lp-nav-bg)",
         backdropFilter: "blur(8px)",
         WebkitBackdropFilter: "blur(8px)",
         borderBottom: `1px solid ${BORDER_DARK}`,
@@ -71,7 +75,7 @@ export default function Home() {
               style={{
                 height: 75,
                 width: "auto",
-                filter: "brightness(0) invert(1)",
+                filter: "var(--lp-logo-filter)",
               }}
             />
           </div>
@@ -92,7 +96,7 @@ export default function Home() {
                   fontWeight: 500,
                   textTransform: "uppercase",
                   letterSpacing: "0.12em",
-                  color: "rgba(255,255,255,0.4)",
+                  color: WHITE_40,
                   textDecoration: "none",
                 }}
               >
@@ -111,7 +115,7 @@ export default function Home() {
                 fontWeight: 500,
                 textTransform: "uppercase",
                 letterSpacing: "0.08em",
-                color: "rgba(255,255,255,0.5)",
+                color: "var(--lp-text-50)",
                 textDecoration: "none",
               }}
             >
@@ -142,10 +146,12 @@ export default function Home() {
           TICKER BAR
           ══════════════════════════════════════════════════════════════════ */}
       <div style={{
-        background: INK,
+        background: BG_DARK,
         padding: "10px 0",
         overflow: "hidden",
         whiteSpace: "nowrap",
+        borderTop: `1px solid ${BORDER_DARK}`,
+        borderBottom: `1px solid ${BORDER_DARK}`,
       }}>
         <div style={{
           display: "inline-flex",
@@ -171,7 +177,7 @@ export default function Home() {
                   fontSize: 9,
                   letterSpacing: "2px",
                   textTransform: "uppercase",
-                  color: "rgba(255,255,255,0.35)",
+                  color: "var(--lp-text-35)",
                 }}>
                   <span style={{
                     width: 3, height: 3, borderRadius: "50%",
@@ -286,7 +292,7 @@ export default function Home() {
                   fontSize: "clamp(14px, 1.2vw, 17px)",
                   fontStyle: "italic",
                   lineHeight: 1.6,
-                  color: "rgba(255,255,255,0.65)",
+                  color: WHITE_80,
                   margin: 0,
                 }}>
                   &ldquo;{cite.quote}&rdquo;
@@ -753,7 +759,7 @@ export default function Home() {
               <ul style={{
                 fontFamily: sans,
                 fontSize: 14,
-                color: "rgba(255,255,255,0.6)",
+                color: WHITE_80,
                 lineHeight: 1.8,
                 margin: 0,
                 paddingLeft: 18,
@@ -781,7 +787,7 @@ export default function Home() {
               <ul style={{
                 fontFamily: sans,
                 fontSize: 14,
-                color: "rgba(255,255,255,0.6)",
+                color: WHITE_80,
                 lineHeight: 1.8,
                 margin: 0,
                 paddingLeft: 18,

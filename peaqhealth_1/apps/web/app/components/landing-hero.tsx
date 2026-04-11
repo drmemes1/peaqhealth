@@ -1,19 +1,69 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { LandingPanelStrip } from "./landing-panel-strip"
 
 const serif = "'Cormorant Garamond', Georgia, serif"
 const sans  = "'Instrument Sans', system-ui, sans-serif"
 
+const LS_THEME_KEY = "peaq-landing-theme"
+
+// The wearable toggle doubles as the site-wide dark/light theme toggle.
+// wearable=true  → LIGHT theme (wearable "on" / connected, bright UI)
+// wearable=false → DARK  theme (wearable "off" / dramatic photo hero)
+// Default = DARK to match the current site's dominant visual language.
+function readStoredTheme(): boolean {
+  if (typeof window === "undefined") return false // SSR default: dark
+  const stored = window.localStorage.getItem(LS_THEME_KEY)
+  if (stored === "light") return true
+  if (stored === "dark") return false
+  return false // no stored preference → dark
+}
+
+function applyThemeToDocument(isLight: boolean) {
+  if (typeof document === "undefined") return
+  document.documentElement.dataset.landingTheme = isLight ? "light" : "dark"
+}
+
 export function LandingHero() {
-  const [wearable, setWearable] = useState(true)
+  // SSR starts dark (default). Client bootstrap effect reads localStorage and
+  // may flip it on mount; accept one potential flicker on return visitors.
+  const [wearable, setWearable] = useState(false)
+
+  // Bootstrap: read stored preference, sync state + <html> attribute
+  useEffect(() => {
+    const isLight = readStoredTheme()
+    setWearable(isLight)
+    applyThemeToDocument(isLight)
+  }, [])
+
+  const handleToggle = useCallback(() => {
+    setWearable(prev => {
+      const next = !prev
+      applyThemeToDocument(next)
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(LS_THEME_KEY, next ? "light" : "dark")
+      }
+      return next
+    })
+  }, [])
 
   return (
     <section
       className="landing-hero-section"
       data-wearable={wearable ? "on" : "off"}
     >
+      {/* Full-bleed hero image — sits behind everything */}
+      <img
+        src="/images/heropeaq.png"
+        alt=""
+        aria-hidden="true"
+        className="hero-bg-image"
+      />
+
+      {/* Dark gradient overlay — top-to-bottom, keeps text and CTAs legible */}
+      <div className="hero-bg-overlay" />
+
       {/* Radial accent — swaps between warm cream and dark gold glow */}
       <div className="hero-radial" />
 
@@ -52,9 +102,9 @@ export function LandingHero() {
           </a>
         </div>
 
-        {/* Panel strip — toggle lives inside Sleep chip */}
+        {/* Panel strip — toggle lives inside Sleep chip, also flips site theme */}
         <div className="fade-up" style={{ width: "100%", maxWidth: 640, animationDelay: "450ms" }}>
-          <LandingPanelStrip wearableOff={!wearable} onToggle={() => setWearable(w => !w)} />
+          <LandingPanelStrip wearableOff={!wearable} onToggle={handleToggle} />
         </div>
 
         {/* No-wearable explainer — only visible in off state */}
@@ -66,45 +116,72 @@ export function LandingHero() {
 
       <style>{`
         /* ── Hero section base ─────────────────────────────────── */
+        /* Hero locals derive from --lp-* globals so the theme toggle cascades.
+           Dark theme is the default; light theme overrides further down. */
         .landing-hero-section {
           position: relative;
           overflow: hidden;
-          background: var(--hero-bg);
+          background: var(--lp-hero-fallback);
           transition: background 600ms cubic-bezier(0.4, 0.0, 0.2, 1);
-          --hero-bg: #F6F4EF;
-          --hero-ink: #1a1a18;
+          --hero-ink: var(--lp-text);
           --hero-gold: #C49A3C;
-          --hero-muted: #8C8A82;
-          --hero-body: #8C8A82;
-          --hero-cta-bg: #1a1a18;
+          --hero-muted: var(--lp-text-50);
+          --hero-body:  var(--lp-text-50);
+          --hero-cta-bg: #C49A3C;
           --hero-cta-color: #fff;
-          --hero-cta2-border: rgba(0,0,0,0.12);
-          --hero-cta2-color: #8C8A82;
+          --hero-cta2-border: var(--lp-text-12);
+          --hero-cta2-color: var(--lp-text-50);
+          --hero-eyebrow-alpha: 0.9;
+        }
+
+        /* Light theme override — dark ink CTA on cream */
+        [data-landing-theme="light"] .landing-hero-section {
+          --hero-cta-bg: var(--lp-text);
+          --hero-cta-color: var(--lp-hero-fallback);
           --hero-eyebrow-alpha: 1;
         }
 
-        .landing-hero-section[data-wearable="off"] {
-          --hero-bg: #16150F;
-          --hero-ink: #ffffff;
-          --hero-gold: #C49A3C;
-          --hero-muted: rgba(255,255,255,0.55);
-          --hero-body: rgba(255,255,255,0.55);
-          --hero-cta-bg: #C49A3C;
-          --hero-cta-color: #fff;
-          --hero-cta2-border: rgba(255,255,255,0.15);
-          --hero-cta2-color: rgba(255,255,255,0.5);
-          --hero-eyebrow-alpha: 0.7;
+        /* ── Full-bleed hero image + overlay ──────────────────── */
+        /* Photo only shows in dark theme — controlled via --lp-hero-photo-display */
+        .hero-bg-image {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center;
+          z-index: 0;
+          pointer-events: none;
+          user-select: none;
+          display: var(--lp-hero-photo-display);
         }
 
-        /* Radial accents */
+        /* Dark gradient overlay — only visible when photo is visible (dark theme) */
+        .hero-bg-overlay {
+          position: absolute;
+          inset: 0;
+          z-index: 1;
+          pointer-events: none;
+          display: var(--lp-hero-photo-display);
+          background:
+            linear-gradient(to bottom,
+              rgba(14,13,8,0.62) 0%,
+              rgba(14,13,8,0.48) 32%,
+              rgba(14,13,8,0.64) 68%,
+              rgba(14,13,8,0.92) 100%);
+          transition: opacity 600ms cubic-bezier(0.4,0.0,0.2,1);
+        }
+
+        /* Radial accents — sit above the image/overlay for warmth */
+        /* Default (dark) sits stronger; light theme softens it */
         .hero-radial {
           position: absolute; inset: 0; pointer-events: none;
-          background: radial-gradient(circle at 20% 50%, rgba(196,154,60,0.04) 0%, transparent 50%),
-                      radial-gradient(circle at 80% 20%, rgba(24,95,165,0.03) 0%, transparent 40%);
+          z-index: 2;
+          background: radial-gradient(circle at 50% 50%, rgba(196,154,60,0.12) 0%, transparent 60%);
           transition: background 600ms cubic-bezier(0.4,0.0,0.2,1);
         }
-        .landing-hero-section[data-wearable="off"] .hero-radial {
-          background: radial-gradient(circle at 50% 50%, rgba(196,154,60,0.06) 0%, transparent 60%);
+        [data-landing-theme="light"] .landing-hero-section .hero-radial {
+          background: radial-gradient(circle at 50% 40%, rgba(196,154,60,0.05) 0%, transparent 55%);
         }
 
         /* Inner container */
@@ -117,7 +194,7 @@ export function LandingHero() {
           align-items: center;
           text-align: center;
           position: relative;
-          z-index: 2;
+          z-index: 3;
         }
 
         /* ── Text elements ──────────────────────────────────────── */
