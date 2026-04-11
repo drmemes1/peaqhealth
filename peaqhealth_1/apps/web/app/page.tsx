@@ -1,6 +1,7 @@
 import { WaitlistForm } from "./components/waitlist-form"
 import { LandingHero } from "./components/landing-hero"
 import { OralSnapshot } from "./components/quiz/OralSnapshot"
+import { WhyPeaq } from "./components/why-peaq"
 
 /* ─── Design tokens ───────────────────────────────────────────────────────── */
 
@@ -580,148 +581,9 @@ export default function Home() {
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════
-          SECTION 4 — APP SCREENSHOTS (cream bg)
+          SECTION 4 — WHY PEAQ (dark ink, comparison table)
           ══════════════════════════════════════════════════════════════════ */}
-      <section style={{ background: BG_CREAM }}>
-        <div style={{ ...contentWrap, paddingTop: "clamp(64px, 8vw, 96px)", paddingBottom: "clamp(64px, 8vw, 96px)" }}>
-          <p style={{
-            fontFamily: sans,
-            fontSize: "clamp(10px, 0.9vw, 12px)",
-            fontWeight: 500,
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
-            color: MUTED,
-            margin: "0 0 12px",
-          }}>
-            Inside the app
-          </p>
-
-          <h2 style={{
-            fontFamily: serif,
-            fontSize: "clamp(28px, 3vw, 42px)",
-            fontWeight: 400,
-            lineHeight: 1.2,
-            color: INK,
-            margin: "0 0 56px",
-          }}>
-            This is what you actually see.
-          </h2>
-
-          {/* Row 1 — oral image left, text right */}
-          <div className="landing-app-feature" style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 48,
-            alignItems: "center",
-            marginBottom: 64,
-          }}>
-            <img
-              src="/images/landing-oral.png"
-              alt="Peaq oral microbiome panel showing Shannon diversity, nitrate reducers, periodontal burden, and OSA-associated taxa"
-              style={{
-                width: "100%",
-                height: "auto",
-                display: "block",
-                borderRadius: 8,
-                border: `0.5px solid ${BORDER_LIGHT}`,
-              }}
-            />
-            <div>
-              <p style={{
-                fontFamily: sans,
-                fontSize: "clamp(10px, 0.9vw, 12px)",
-                fontWeight: 600,
-                textTransform: "uppercase",
-                letterSpacing: "0.1em",
-                color: ORAL_C,
-                margin: "0 0 8px",
-              }}>
-                Oral Microbiome
-              </p>
-              <p style={{
-                fontFamily: serif,
-                fontSize: 24,
-                fontWeight: 400,
-                color: INK,
-                margin: "0 0 14px",
-                lineHeight: 1.3,
-              }}>
-                Species-level resolution
-              </p>
-              <p style={{
-                fontFamily: sans,
-                fontSize: 14,
-                color: INK_60,
-                lineHeight: 1.7,
-                maxWidth: 380,
-                margin: 0,
-              }}>
-                Shannon diversity, nitrate-reducing bacteria, periodontal
-                pathogens, OSA-associated taxa. Each scored against
-                clinical targets with clear status indicators. Nearly half
-                of all susceptibility to periodontal disease is genetic,
-                and an elevated oral panel score reflects biological vulnerability,
-                not just hygiene habits.
-              </p>
-            </div>
-          </div>
-
-          {/* Row 2 — text left, sleep image right */}
-          <div className="landing-app-feature" style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 48,
-            alignItems: "center",
-          }}>
-            <div>
-              <p style={{
-                fontFamily: sans,
-                fontSize: "clamp(10px, 0.9vw, 12px)",
-                fontWeight: 600,
-                textTransform: "uppercase",
-                letterSpacing: "0.1em",
-                color: SLEEP_C,
-                margin: "0 0 8px",
-              }}>
-                AI Insights
-              </p>
-              <p style={{
-                fontFamily: serif,
-                fontSize: 24,
-                fontWeight: 400,
-                color: INK,
-                margin: "0 0 14px",
-                lineHeight: 1.3,
-              }}>
-                Cross-panel context
-              </p>
-              <p style={{
-                fontFamily: sans,
-                fontSize: 14,
-                color: INK_60,
-                lineHeight: 1.7,
-                maxWidth: 380,
-                margin: 0,
-              }}>
-                Your sleep data interpreted through your oral and blood panels.
-                Not just numbers: the connections between deep sleep, HRV,
-                and your oral nitrate pathways.
-              </p>
-            </div>
-            <img
-              src="/images/landing-sleep.png"
-              alt="Peaq sleep narrative showing deep sleep, HRV, efficiency analysis with cross-panel context"
-              style={{
-                width: "100%",
-                height: "auto",
-                display: "block",
-                borderRadius: 8,
-                border: `0.5px solid ${BORDER_LIGHT}`,
-              }}
-            />
-          </div>
-        </div>
-      </section>
+      <WhyPeaq />
 
       {/* ══════════════════════════════════════════════════════════════════
           VISUAL CHAPTER BREAK + QUIZ
