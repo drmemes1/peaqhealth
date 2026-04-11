@@ -161,6 +161,13 @@ export function LandingHero() {
           pointer-events: none;
           user-select: none;
         }
+        /* Mobile: anchor crop toward the left so the woman stays in frame
+           when the 16:9 landscape photo gets cropped for narrow viewports. */
+        @media (max-width: 768px) {
+          .hero-bg-image {
+            object-position: 18% center;
+          }
+        }
 
         .hero-bg-overlay {
           position: absolute;
