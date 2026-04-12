@@ -17,11 +17,22 @@ interface PanelChip {
   pulseDelay: number
 }
 
+// Hardcoded panel colors — these cards live on the dark photo overlay
+// regardless of site theme, so the numbers stay in their brand hues.
 const PANELS: PanelChip[] = [
-  { color: "var(--sleep-c, #185FA5)", label: "Sleep", max: 30, scoreMin: 18, scoreMax: 27, pctMin: 60, pctMax: 85, cycleSec: 4.5, pulseDelay: 0 },
-  { color: "var(--blood-c, #A32D2D)", label: "Blood", max: 40, scoreMin: 28, scoreMax: 38, pctMin: 75, pctMax: 95, cycleSec: 5.2, pulseDelay: 600 },
-  { color: "var(--oral-c, #3B6D11)",  label: "Oral",  max: 30, scoreMin: 16, scoreMax: 24, pctMin: 53, pctMax: 80, cycleSec: 3.8, pulseDelay: 1200 },
+  { color: "#4A7FB5", label: "Sleep", max: 30, scoreMin: 18, scoreMax: 27, pctMin: 60, pctMax: 85, cycleSec: 4.5, pulseDelay: 0 },
+  { color: "#C0392B", label: "Blood", max: 40, scoreMin: 28, scoreMax: 38, pctMin: 75, pctMax: 95, cycleSec: 5.2, pulseDelay: 600 },
+  { color: "#2D6A4F", label: "Oral",  max: 30, scoreMin: 16, scoreMax: 24, pctMin: 53, pctMax: 80, cycleSec: 3.8, pulseDelay: 1200 },
 ]
+
+// Card styling — glass over the photo, identical in both theme states.
+const CARD_BG         = "rgba(250,250,248,0.12)"
+const CARD_BORDER     = "1px solid rgba(250,250,248,0.20)"
+const CARD_LABEL      = "rgba(250,250,248,0.60)"
+const CARD_LABEL_DIM  = "rgba(250,250,248,0.35)"
+const CARD_TEXT_FAINT = "rgba(250,250,248,0.45)"
+const CARD_TRACK_BG   = "rgba(250,250,248,0.10)"
+const CARD_DIM_FILL   = "rgba(250,250,248,0.15)"
 
 function useOscillate(min: number, max: number, cycleSec: number) {
   const [value, setValue] = useState(min)
@@ -51,63 +62,60 @@ function AnimatedChip({ panel, dimmed, onToggle }: {
   const score = useOscillate(panel.scoreMin, panel.scoreMax, panel.cycleSec)
   const pct = useOscillate(panel.pctMin, panel.pctMax, panel.cycleSec)
 
-  const chipBg = dimmed ? "rgba(255,255,255,0.04)" : "var(--off-white, #F6F4EF)"
   const isSleep = panel.label === "Sleep"
   const isSleepDimmed = dimmed && isSleep
   const showToggle = isSleep && onToggle
 
   return (
     <div style={{
-      flex: 1,
       minWidth: 0,
-      background: chipBg,
-      padding: "24px 32px",
+      background: CARD_BG,
+      border: CARD_BORDER,
+      borderRadius: 10,
+      backdropFilter: "blur(12px)",
+      WebkitBackdropFilter: "blur(12px)",
+      padding: "20px clamp(10px, 2vw, 28px)",
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
       gap: 6,
-      transition: "background 400ms ease 200ms",
+      overflow: "hidden",
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
         <span style={{
           width: 3, height: 3, borderRadius: "50%",
-          background: isSleepDimmed ? "rgba(255,255,255,0.15)" : panel.color,
+          background: isSleepDimmed ? CARD_DIM_FILL : panel.color,
           animation: isSleepDimmed ? "none" : "chipPulse 2s ease-in-out infinite",
           animationDelay: `${panel.pulseDelay}ms`,
-          transition: "background 400ms ease 200ms",
         }} />
         <span style={{
           fontFamily: sans, fontSize: 10,
           letterSpacing: "2px", textTransform: "uppercase",
-          color: dimmed ? "rgba(255,255,255,0.35)" : "#bbb",
-          transition: "color 400ms ease 200ms",
+          color: isSleepDimmed ? CARD_LABEL_DIM : CARD_LABEL,
         }}>
           {isSleepDimmed ? "Recovery" : panel.label}
         </span>
       </div>
 
       <span style={{
-        fontFamily: serif, fontSize: 56, fontWeight: 300,
+        fontFamily: serif, fontSize: "clamp(36px, 6vw, 56px)", fontWeight: 300,
         lineHeight: 1,
-        color: isSleepDimmed ? "rgba(255,255,255,0.15)" : panel.color,
-        transition: "color 400ms ease 200ms",
+        color: isSleepDimmed ? CARD_DIM_FILL : panel.color,
       }}>
         {isSleepDimmed ? "\u2014" : Math.round(score)}
       </span>
 
       <span style={{
         fontFamily: sans, fontSize: 9,
-        color: dimmed ? "rgba(255,255,255,0.2)" : "#bbb",
-        transition: "color 400ms ease 200ms",
+        color: CARD_TEXT_FAINT,
       }}>
         /{panel.max}
       </span>
 
       <div style={{
         width: "100%", height: 3,
-        background: dimmed ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
+        background: CARD_TRACK_BG,
         borderRadius: 1.5,
-        transition: "background 400ms ease 200ms",
       }}>
         <div style={{
           height: 3, borderRadius: 1.5,
@@ -129,19 +137,18 @@ function AnimatedChip({ panel, dimmed, onToggle }: {
             padding: "3px 8px",
             borderRadius: 999,
             border: "none",
-            background: dimmed ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
+            background: "rgba(250,250,248,0.10)",
             cursor: "pointer",
-            transition: "background 400ms ease 200ms",
+            transition: "background 200ms ease",
           }}
         >
           {/* Track */}
           <span style={{
             width: 22, height: 12,
             borderRadius: 6,
-            background: dimmed ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)",
+            background: "rgba(250,250,248,0.18)",
             position: "relative",
             flexShrink: 0,
-            transition: "background 250ms ease",
           }}>
             <span style={{
               position: "absolute",
@@ -149,7 +156,7 @@ function AnimatedChip({ panel, dimmed, onToggle }: {
               left: dimmed ? 2 : 12,
               width: 8, height: 8,
               borderRadius: 4,
-              background: dimmed ? "rgba(255,255,255,0.3)" : "#C49A3C",
+              background: dimmed ? "rgba(250,250,248,0.4)" : "#B8860B",
               transition: "left 250ms cubic-bezier(0.4,0.0,0.2,1), background 250ms ease",
             }} />
           </span>
@@ -158,8 +165,7 @@ function AnimatedChip({ panel, dimmed, onToggle }: {
             fontSize: 7,
             letterSpacing: "1px",
             textTransform: "uppercase",
-            color: dimmed ? "rgba(255,255,255,0.3)" : "#bbb",
-            transition: "color 400ms ease 200ms",
+            color: CARD_LABEL,
           }}>
             {dimmed ? "Off" : "On"}
           </span>
@@ -275,13 +281,11 @@ export function LandingPanelStrip({ wearableOff = false, onToggle }: { wearableO
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
         style={{
-          display: "flex",
-          gap: 1,
-          background: wearableOff ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)",
-          borderRadius: 12,
+          display: "grid",
+          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+          gap: 10,
           overflow: "hidden",
-          transition: "background 400ms ease 200ms",
-          cursor: dragging ? "grabbing" : "grab",
+          cursor: dragging ? "grabbing" : "default",
           userSelect: "none",
         }}
       >
@@ -300,8 +304,7 @@ export function LandingPanelStrip({ wearableOff = false, onToggle }: { wearableO
         textAlign: "center", marginTop: 12,
         fontFamily: sans, fontSize: 9,
         letterSpacing: "1.5px", textTransform: "uppercase",
-        color: wearableOff ? "rgba(255,255,255,0.2)" : "#bbb",
-        transition: "color 400ms ease 200ms",
+        color: CARD_TEXT_FAINT,
       }}>
         Sample &middot; Your numbers will be different
       </p>

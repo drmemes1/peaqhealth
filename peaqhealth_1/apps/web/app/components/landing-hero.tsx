@@ -124,35 +124,25 @@ export function LandingHero() {
 
       <style>{`
         /* ── Hero section base ─────────────────────────────────── */
-        /* Hero locals derive from --lp-* globals so the theme toggle cascades.
-           Dark theme is the default; light theme overrides further down. */
+        /* The hero always sits on a dark-overlaid photo regardless of the
+           site theme toggle, so every color here is hardcoded dark-mode. */
         .landing-hero-section {
           position: relative;
           overflow: hidden;
-          background: var(--lp-hero-fallback);
-          transition: background 600ms cubic-bezier(0.4, 0.0, 0.2, 1);
-          --hero-ink: var(--lp-text);
-          --hero-gold: #C49A3C;
-          --hero-muted: var(--lp-text-50);
-          --hero-body:  var(--lp-text-50);
-          --hero-cta-bg: #C49A3C;
-          --hero-cta-color: #fff;
-          --hero-cta2-border: var(--lp-text-12);
-          --hero-cta2-color: var(--lp-text-50);
-          --hero-eyebrow-alpha: 0.9;
-        }
-
-        /* Light theme override — dark ink CTA on cream */
-        [data-landing-theme="light"] .landing-hero-section {
-          --hero-cta-bg: var(--lp-text);
-          --hero-cta-color: var(--lp-hero-fallback);
+          background: #0E0D08;
+          --hero-ink: #FAFAF8;
+          --hero-gold: #B8860B;
+          --hero-muted: rgba(250,250,248,0.70);
+          --hero-body:  rgba(250,250,248,0.70);
+          --hero-cta-bg: #B8860B;
+          --hero-cta-color: #FAFAF8;
+          --hero-cta2-border: rgba(250,250,248,0.40);
+          --hero-cta2-color: #FAFAF8;
           --hero-eyebrow-alpha: 1;
         }
 
         /* ── Full-bleed hero image + overlay ──────────────────── */
-        /* Photo renders in both themes; overlay gradient flips per theme to
-           keep text legible (dark warm wash in dark mode, heavy cream wash in
-           light mode so the photo reads as a subtle tint behind dark text). */
+        /* Overlay is always the same dark wash — no theme variants. */
         .hero-bg-image {
           position: absolute;
           inset: 0;
@@ -177,36 +167,14 @@ export function LandingHero() {
           inset: 0;
           z-index: 1;
           pointer-events: none;
-          background:
-            linear-gradient(to bottom,
-              rgba(14,13,8,0.62) 0%,
-              rgba(14,13,8,0.48) 32%,
-              rgba(14,13,8,0.64) 68%,
-              rgba(14,13,8,0.92) 100%);
-          transition: background 600ms cubic-bezier(0.4,0.0,0.2,1);
+          background: linear-gradient(to bottom, rgba(20,20,16,0.55) 0%, rgba(20,20,16,0.70) 100%);
         }
 
-        /* Light theme: cream wash — photo stays legible as background while
-           dark text remains readable at the top and bottom where it sits. */
-        [data-landing-theme="light"] .hero-bg-overlay {
-          background:
-            linear-gradient(to bottom,
-              rgba(246,244,239,0.74) 0%,
-              rgba(246,244,239,0.52) 32%,
-              rgba(246,244,239,0.66) 68%,
-              rgba(246,244,239,0.94) 100%);
-        }
-
-        /* Radial accents — sit above the image/overlay for warmth */
-        /* Default (dark) sits stronger; light theme softens it */
+        /* Radial accent — gold warmth, same strength regardless of theme */
         .hero-radial {
           position: absolute; inset: 0; pointer-events: none;
           z-index: 2;
           background: radial-gradient(circle at 50% 50%, rgba(196,154,60,0.12) 0%, transparent 60%);
-          transition: background 600ms cubic-bezier(0.4,0.0,0.2,1);
-        }
-        [data-landing-theme="light"] .landing-hero-section .hero-radial {
-          background: radial-gradient(circle at 50% 40%, rgba(196,154,60,0.05) 0%, transparent 55%);
         }
 
         /* Inner container */
@@ -223,6 +191,7 @@ export function LandingHero() {
         }
 
         /* ── Text elements ──────────────────────────────────────── */
+        /* All hero text is hardcoded for the dark photo backdrop. */
         .hero-eyebrow {
           font-family: ${sans};
           font-size: 9px;
@@ -231,7 +200,7 @@ export function LandingHero() {
           color: var(--hero-gold);
           opacity: var(--hero-eyebrow-alpha);
           margin: 0 0 24px;
-          transition: color 250ms ease 100ms, opacity 250ms ease 100ms;
+          text-shadow: 0 1px 20px rgba(0,0,0,0.4);
         }
 
         .hero-h1 {
@@ -243,11 +212,12 @@ export function LandingHero() {
           color: var(--hero-ink);
           max-width: 820px;
           margin: 0 0 12px;
-          transition: color 250ms ease 100ms;
+          text-shadow: 0 1px 20px rgba(0,0,0,0.4);
         }
         .hero-h1 em {
           font-style: italic;
           color: var(--hero-gold);
+          text-shadow: 0 1px 20px rgba(0,0,0,0.4);
         }
 
         .hero-secondary {
@@ -257,7 +227,7 @@ export function LandingHero() {
           font-style: italic;
           color: var(--hero-muted);
           margin: 0 0 32px;
-          transition: color 250ms ease 100ms;
+          text-shadow: 0 1px 20px rgba(0,0,0,0.4);
         }
 
         .hero-body {
@@ -267,7 +237,7 @@ export function LandingHero() {
           line-height: 1.7;
           max-width: 480px;
           margin: 0 0 40px;
-          transition: color 250ms ease 100ms;
+          text-shadow: 0 1px 20px rgba(0,0,0,0.4);
         }
 
         /* ── CTAs ───────────────────────────────────────────────── */
@@ -278,26 +248,32 @@ export function LandingHero() {
           margin-bottom: 24px;
         }
 
+        /* Primary — gold on the photo, always */
         .hero-cta-primary {
           font-family: ${sans};
           font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
           padding: 12px 28px; border-radius: 6px;
-          background: var(--hero-cta-bg);
-          color: var(--hero-cta-color);
+          background: #B8860B;
+          color: #FAFAF8;
           border: none; text-decoration: none; display: inline-block;
-          transition: background 250ms ease 100ms, color 250ms ease 100ms, opacity 80ms ease;
+          transition: opacity 120ms ease;
         }
-        .hero-cta-primary:hover { opacity: 0.82; }
+        .hero-cta-primary:hover { opacity: 0.85; }
 
+        /* Secondary — outlined cream on the photo, always */
         .hero-cta-secondary {
           font-family: ${sans};
           font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
           padding: 12px 20px; border-radius: 6px;
           background: transparent;
-          color: var(--hero-cta2-color);
-          border: 0.5px solid var(--hero-cta2-border);
+          color: #FAFAF8;
+          border: 1px solid rgba(250,250,248,0.40);
           text-decoration: none; display: inline-block;
-          transition: color 250ms ease 100ms, border-color 250ms ease 100ms;
+          transition: background 150ms ease, border-color 150ms ease;
+        }
+        .hero-cta-secondary:hover {
+          background: rgba(250,250,248,0.06);
+          border-color: rgba(250,250,248,0.6);
         }
 
         /* ── No-wearable explainer ──────────────────────────────── */
