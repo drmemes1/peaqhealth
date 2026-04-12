@@ -1,10 +1,12 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { LandingPanelStrip } from "./landing-panel-strip"
 
 const serif = "'Cormorant Garamond', Georgia, serif"
 const sans  = "'Instrument Sans', system-ui, sans-serif"
+
+const HERO_VIDEOS = ["/videos/heropeaq.mp4", "/videos/heromovie.mp4"]
 
 const LS_THEME_KEY = "peaq-landing-theme"
 
@@ -48,26 +50,47 @@ export function LandingHero() {
     })
   }, [])
 
+  // ── Hero video playlist — crossfade between clips on "ended" ──────────
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([])
+  const [activeVideo, setActiveVideo] = useState(0)
+
+  useEffect(() => {
+    const current = videoRefs.current[activeVideo]
+    if (!current) return
+
+    current.currentTime = 0
+    current.play().catch(() => {})
+
+    const onEnded = () => setActiveVideo(prev => (prev + 1) % HERO_VIDEOS.length)
+    current.addEventListener("ended", onEnded)
+    return () => current.removeEventListener("ended", onEnded)
+  }, [activeVideo])
+
   return (
     <section
       className="landing-hero-section"
       data-wearable={wearable ? "on" : "off"}
     >
-      {/* Full-bleed hero video — autoplays, muted, loops. Same .hero-bg-image
-          class so object-fit/position + mobile crop anchor still apply.
-          Poster shows during the ~1s video load window + fallback for users
-          who have autoplay disabled or prefers-reduced-motion enforced. */}
-      <video
-        className="hero-bg-image"
-        src="/videos/heropeaq.mp4"
-        poster="/images/heropeaq-poster.jpg"
-        autoPlay
-        loop
-        muted
-        playsInline
-        preload="auto"
-        aria-hidden="true"
-      />
+      {/* Two hero videos stacked — only activeVideo is opaque. Each plays
+          once, fires "ended", JS crossfades to the next, loops forever.
+          Both share .hero-bg-image for object-fit/position/mobile crop. */}
+      {HERO_VIDEOS.map((src, i) => (
+        <video
+          key={src}
+          ref={el => { videoRefs.current[i] = el }}
+          className="hero-bg-image"
+          src={src}
+          poster={i === 0 ? "/images/heropeaq-poster.jpg" : undefined}
+          muted
+          playsInline
+          preload="auto"
+          aria-hidden="true"
+          style={{
+            opacity: activeVideo === i ? 1 : 0,
+            transition: "opacity 1.2s ease",
+          }}
+        />
+      ))}
 
       {/* Dark gradient overlay — top-to-bottom, keeps text and CTAs legible */}
       <div className="hero-bg-overlay" />
