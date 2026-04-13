@@ -1,3 +1,5 @@
+// LEGACY: OralInsights component — not imported anywhere; displays legacy OralScore sub-scores.
+// Remove after V5 migration confirmed (all users have score_version = 'v5').
 "use client"
 import React, { useState } from "react"
 import type { OralScore, OralFinding } from "@peaq/score-engine"

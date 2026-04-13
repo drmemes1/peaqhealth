@@ -1,3 +1,4 @@
+// LEGACY: Panel "pts" labels (27/33/13) reflect legacy /100 scoring. Update after onboarding redesign.
 "use client";
 
 import { LogoSvg } from "../components/logo-svg";

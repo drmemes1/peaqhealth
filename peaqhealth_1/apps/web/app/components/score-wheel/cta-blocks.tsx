@@ -1,3 +1,5 @@
+// LEGACY: Sub-component of score-wheel — used only for users without a V5 snapshot.
+// Remove after V5 migration confirmed (all users have score_version = 'v5').
 "use client"
 import React from "react"
 import { useRouter } from "next/navigation"

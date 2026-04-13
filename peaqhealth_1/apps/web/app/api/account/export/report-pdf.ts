@@ -1,3 +1,4 @@
+// LEGACY: PDF export still uses legacy /100 score layout.
 // TODO Phase 5d: Update PDF layout for Peaq Age V5
 // - Replace score circle with peaq_age + band display
 // - Panel summary table: status chip + year contribution
