@@ -72,6 +72,34 @@ const SECTIONS: {
     color: "#6B4D8A",
     keys: ["smokingStatus", "hypertensionDx", "onBPMeds", "onStatins", "familyHistoryCVD"],
   },
+  {
+    title: "Lab Data",
+    subtitle: "Gates PhenoAge calculation and two cross-panel interactions",
+    ptsLabel: "Peaq Age input",
+    color: "#C0392B",
+    keys: ["hsCrpAvailable"],
+  },
+  {
+    title: "Cardiorespiratory Fitness",
+    subtitle: "VO₂ max is the single strongest predictor of all-cause mortality (Ross 2016, n=122,007)",
+    ptsLabel: "13% of Peaq Age",
+    color: "#4A7FB5",
+    keys: ["vo2Source"],
+  },
+  {
+    title: "Oral Health Context",
+    subtitle: "Antibiotic history affects oral microbiome accuracy",
+    ptsLabel: "QC gate",
+    color: "#2D6A4F",
+    keys: ["antibioticsRecent"],
+  },
+  {
+    title: "Health Context",
+    subtitle: "Helps Peaq Age avoid false connections and personalize AI insights",
+    ptsLabel: "AI accuracy",
+    color: "#6B4D8A",
+    keys: ["eosinophilHistory"],
+  },
 ]
 
 const QUESTIONS: QuestionDef[] = [
@@ -124,15 +152,20 @@ const QUESTIONS: QuestionDef[] = [
     ],
   },
   {
+    // Internal note: CPC (cetylpyridinium chloride), essential oils (thymol, eucalyptol,
+    // menthol), and other non-alcohol/non-chlorhexidine actives are not yet classified.
+    // Evidence for their effect on nitrate-reducing bacteria is insufficient. When data
+    // is available, add a separate classification tier. For now, only chlorhexidine and
+    // alcohol-containing formulations are flagged.
     key: "mouthwashType", dbKey: "mouthwash_type",
-    label: "What type of oral rinse do you use regularly?",
-    context: "Antiseptic mouthwashes — like Listerine, Scope, and prescription chlorhexidine — are designed to kill bacteria broadly. While this reduces harmful bacteria, it also eliminates the beneficial nitrate-reducing bacteria responsible for producing nitric oxide — a molecule that regulates blood pressure and vascular health. Fluoride mouthwashes clean teeth without this effect. (Kapil et al., 2013)",
+    label: "Does your mouthwash contain chlorhexidine or alcohol?",
+    context: "Alcohol-free and fluoride-only rinses don't affect the bacteria we measure. If you're not sure, check for 'ethanol' or a % alcohol figure on the label.",
     type: "choice",
     options: [
-      { value: "none",     label: "None" },
-      { value: "fluoride", label: "Fluoride or other" },
-      { value: "natural",  label: "Natural or oil-pulling" },
-      { value: "alcohol",  label: "Antiseptic (Listerine, Scope, chlorhexidine)" },
+      { value: "antiseptic", label: "Yes — contains chlorhexidine or alcohol", sub: "e.g. Corsodyl / Peridex (chlorhexidine), Listerine Original, Cool Mint, Fresh Burst (alcohol)" },
+      { value: "fluoride",   label: "No — fluoride only, alcohol-free", sub: "e.g. ACT Anticavity Fluoride Rinse, Listerine Zero Alcohol, plain fluoride rinses" },
+      { value: "none",       label: "I don't use mouthwash" },
+      { value: "unknown",    label: "Not sure — I'll check the label" },
     ],
   },
   {
@@ -423,6 +456,54 @@ const QUESTIONS: QuestionDef[] = [
       { value: "unsure", label: "Unsure" },
     ],
   },
+  // ── Lab Data ──────────────────────────────────────────────────────────────
+  {
+    key: "hsCrpAvailable", dbKey: "hs_crp_available",
+    label: "Does your most recent blood panel include hs-CRP (high-sensitivity C-reactive protein)?",
+    context: "Standard CRP cannot substitute. hs-CRP unlocks full Peaq Age calculation and two cross-panel interactions. It's a ~$15 add-on at Quest or LabCorp.",
+    type: "choice",
+    options: [
+      { value: "yes",      label: "Yes, it's on my results" },
+      { value: "no",       label: "No" },
+      { value: "not_sure", label: "Not sure" },
+    ],
+  },
+  // ── Cardiorespiratory Fitness ─────────────────────────────────────────────
+  {
+    key: "vo2Source", dbKey: "vo2_source",
+    label: "How are we getting your VO₂ max estimate?",
+    type: "choice",
+    options: [
+      { value: "oura",      label: "Oura Ring", sub: "Complete the Cardio Capacity walking test in the Oura app" },
+      { value: "whoop",     label: "WHOOP", sub: "Visible in your Health dashboard" },
+      { value: "manual",    label: "I'll enter it manually" },
+      { value: "estimated", label: "Estimate from my activity level", sub: "Less precise" },
+    ],
+  },
+  // ── Oral Health Context ───────────────────────────────────────────────────
+  {
+    key: "antibioticsRecent", dbKey: "antibiotics_last_60d",
+    label: "Have you taken antibiotics in the last 90 days?",
+    context: "Antibiotics alter the oral microbiome for 60+ days. If recent, we'll flag your OMA as pending until recovery.",
+    type: "choice",
+    options: [
+      { value: "no",        label: "No" },
+      { value: "within_60", label: "Yes, within 60 days" },
+      { value: "60_to_90",  label: "Yes, 60–90 days ago", sub: "Fluoroquinolones or broad-spectrum" },
+    ],
+  },
+  // ── Health Context ────────────────────────────────────────────────────────
+  {
+    key: "eosinophilHistory", dbKey: "eosinophil_history",
+    label: "History of elevated eosinophils or allergic airway disease?",
+    context: "Relevant for interpreting oral microbiome and respiratory rate patterns.",
+    type: "choice",
+    options: [
+      { value: "yes",      label: "Yes" },
+      { value: "no",       label: "No" },
+      { value: "not_sure", label: "Not sure" },
+    ],
+  },
 ]
 
 interface Props {
@@ -507,6 +588,28 @@ export function LifestyleForm({ existing }: Props) {
     row["dexa_done"]                 = answers["dexaDone"]               === "yes";
     row["psa_discussed"]             = answers["psaDiscussed"]           === "yes";
     row["cervical_screening_done"]   = answers["cervicalScreeningDone"]  === "yes";
+
+    // ── V5 fields ──────────────────────────────────────────────────────────
+    const hsCrpAvail = answers["hsCrpAvailable"] === "yes";
+    row["hs_crp_available"]    = hsCrpAvail;
+    row["vo2_source"]          = answers["vo2Source"] || null;
+    row["vo2_manual"]          = answers["vo2Source"] === "manual" && answers["vo2Manual"]
+                                   ? parseFloat(answers["vo2Manual"]) : null;
+    row["antibiotics_last_60d"] = answers["antibioticsRecent"] === "within_60";
+    row["antibiotics_last_90d"] = answers["antibioticsRecent"] === "within_60" || answers["antibioticsRecent"] === "60_to_90";
+    row["eosinophil_history"]   = answers["eosinophilHistory"] === "yes";
+    row["medications"]          = answers["medications"]
+                                   ? answers["medications"].split(",").map((s: string) => s.trim()).filter(Boolean)
+                                   : null;
+
+    // ── QC flags (computed, never null) ─────────────────────────────────────
+    row["hs_crp_qc_pass"] = hsCrpAvail;
+    row["oma_qc_pass"]    = !(row["antibiotics_last_60d"] || row["antibiotics_last_90d"]);
+
+    // Health context — multi-select writes to existing TEXT/BOOLEAN columns
+    if (answers["hasOSA"] === "true") row["snoring_reported"] = "osa_diagnosed";
+    if (answers["hasHypertension"] === "true") row["known_hypertension"] = true;
+    if (answers["hasDiabetes"] === "true") row["known_diabetes"] = true;
 
     const res = await fetch("/api/lifestyle/save", {
       method: "POST",
@@ -755,6 +858,21 @@ export function LifestyleForm({ existing }: Props) {
                           );
                         })}
                       </div>
+                      {/* Mouthwash antiseptic callout */}
+                      {q.key === "mouthwashType" && answers["mouthwashType"] === "antiseptic" && (
+                        <div className="mt-3 flex items-start gap-2 p-3 rounded" style={{ background: "rgba(192,57,43,0.06)", border: "0.5px solid rgba(192,57,43,0.2)" }}>
+                          <span style={{ color: "#C0392B", flexShrink: 0 }}>⚑</span>
+                          <span className="font-body text-xs leading-relaxed" style={{ color: "#7f1d1d" }}>
+                            Chlorhexidine and alcohol-containing mouthwashes suppress the bacteria your body uses to produce nitric oxide, which regulates blood pressure and cardiovascular function. (Kapil et al., Lancet 2020)
+                          </span>
+                        </div>
+                      )}
+                      {/* Mouthwash subtext hint */}
+                      {q.key === "mouthwashType" && (
+                        <p className="font-body text-[10px] text-ink/30 leading-relaxed mt-2">
+                          Check the label: alcohol appears as &ldquo;ethanol&rdquo; or listed as a percentage (e.g. 21.6% alcohol).
+                        </p>
+                      )}
                     </div>
                   ))}
 
@@ -998,6 +1116,101 @@ export function LifestyleForm({ existing }: Props) {
                       )}
                     </>
                   )}
+
+                  {/* Conditional VO₂ manual entry — Cardiorespiratory Fitness section only */}
+                  {section.title === "Cardiorespiratory Fitness" && answers["vo2Source"] === "manual" && (
+                    <div>
+                      <p className="font-display text-[17px] font-light leading-snug text-ink mb-1">
+                        Enter your VO₂ max
+                      </p>
+                      <p className="font-body text-[11px] text-ink/35 leading-relaxed mb-3 italic">
+                        From a lab test, wearable estimate, or fitness assessment. Typical range: 25–60 ml/kg/min.
+                      </p>
+                      <input
+                        type="number"
+                        min={15}
+                        max={75}
+                        step={0.1}
+                        value={answers["vo2Manual"] || ""}
+                        onChange={(e) => setAnswer("vo2Manual", e.target.value)}
+                        placeholder="e.g. 38.5"
+                        className="font-body text-sm text-ink border border-ink/10 px-3 py-2 w-32"
+                        style={{ background: "transparent" }}
+                      />
+                      <span className="font-body text-xs text-ink/30 ml-2">ml/kg/min</span>
+                    </div>
+                  )}
+                  {section.title === "Cardiorespiratory Fitness" && answers["vo2Source"] === "oura" && (
+                    <p className="font-body text-[11px] text-ink/35 leading-relaxed italic">
+                      Go to Oura app → Heart Health → Cardio Capacity and complete the 6-minute walking test. VO₂ max is NOT in the CSV export.
+                    </p>
+                  )}
+
+                  {/* Antibiotics banner */}
+                  {section.title === "Oral Health Context" && answers["antibioticsRecent"] === "within_60" && (
+                    <div className="flex items-center gap-2 p-3 rounded" style={{ background: "rgba(192,57,43,0.06)", border: "0.5px solid rgba(192,57,43,0.2)" }}>
+                      <span style={{ color: "#C0392B" }}>⚑</span>
+                      <span className="font-body text-xs" style={{ color: "#7f1d1d" }}>
+                        Your OMA results will be marked pending. Antibiotics alter the oral microbiome for 60+ days. We will remind you when to retest.
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Health Context — multi-select conditions + medications (custom render) */}
+                  {section.title === "Health Context" && (
+                    <>
+                      <div>
+                        <p className="font-display text-[17px] font-light leading-snug text-ink mb-1">
+                          Do you have any of the following?
+                        </p>
+                        <p className="font-body text-[11px] text-ink/35 leading-relaxed mb-3 italic">
+                          Select all that apply. Helps Peaq avoid flagging expected patterns.
+                        </p>
+                        <div className="flex flex-col gap-2 mt-3">
+                          {([
+                            { key: "hasOSA",          label: "Obstructive sleep apnea (OSA) — diagnosed" },
+                            { key: "hasHypertension", label: "High blood pressure (hypertension)" },
+                            { key: "hasDiabetes",     label: "Type 2 diabetes or pre-diabetes" },
+                          ] as const).map((item) => {
+                            const checked = answers[item.key] === "true";
+                            return (
+                              <button
+                                key={item.key}
+                                onClick={() => setAnswer(item.key, checked ? "false" : "true")}
+                                className="flex items-center gap-3 transition-all text-left"
+                                style={{
+                                  padding: "10px 14px",
+                                  border: checked ? "1px solid var(--gold)" : "1px solid rgba(20,20,16,0.1)",
+                                  background: checked ? "rgba(184,134,11,0.07)" : "transparent",
+                                }}
+                              >
+                                <span className="font-body text-sm" style={{ color: checked ? "var(--ink)" : "rgba(20,20,16,0.5)" }}>
+                                  {checked ? "☑" : "☐"} {item.label}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="font-display text-[17px] font-light leading-snug text-ink mb-1">
+                          Current medications (optional)
+                        </p>
+                        <p className="font-body text-[11px] text-ink/35 leading-relaxed mb-3 italic">
+                          Helps Peaq avoid flagging expected lab patterns as anomalies.
+                        </p>
+                        <input
+                          type="text"
+                          value={answers["medications"] || ""}
+                          onChange={(e) => setAnswer("medications", e.target.value)}
+                          placeholder="e.g. lisinopril, metformin, levothyroxine"
+                          className="font-body text-sm text-ink border border-ink/10 px-3 py-2 w-full"
+                          style={{ background: "transparent" }}
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             );
@@ -1015,7 +1228,7 @@ export function LifestyleForm({ existing }: Props) {
             className="h-12 bg-ink font-body text-sm font-medium uppercase tracking-[0.15em]
                        text-off-white transition-colors hover:bg-gold disabled:opacity-30"
           >
-            {saving ? "Saving…" : saved ? "Score updated ✓" : "Save & recalculate score"}
+            {saving ? "Saving…" : saved ? "Peaq Age updated ✓" : "Save & recalculate Peaq Age"}
           </button>
           {!allAnswered && (
             <p className="font-body text-xs text-ink/30 text-center">

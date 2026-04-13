@@ -42,6 +42,15 @@ const SECTIONS: SectionDef[] = [
           { value: "prefer_not_to_say", label: "Prefer not to say" },
         ],
       },
+      {
+        key: "hsCrpAvailable",
+        label: "Does your most recent blood panel include hs-CRP (high-sensitivity C-reactive protein)?",
+        options: [
+          { value: "yes", label: "Yes, it's on my results" },
+          { value: "no", label: "No" },
+          { value: "not_sure", label: "Not sure" },
+        ],
+      },
     ],
   },
   {
@@ -141,12 +150,12 @@ const SECTIONS: SectionDef[] = [
       },
       {
         key: "mouthwashType",
-        label: "Do you use mouthwash?",
+        label: "Does your mouthwash contain chlorhexidine or alcohol?",
         options: [
-          { value: "none", label: "None" },
-          { value: "alcohol", label: "Alcohol-based" },
-          { value: "fluoride", label: "Fluoride" },
-          { value: "natural", label: "Natural" },
+          { value: "antiseptic", label: "Yes — chlorhexidine or alcohol" },
+          { value: "fluoride",   label: "No — fluoride only, alcohol-free" },
+          { value: "none",       label: "I don't use mouthwash" },
+          { value: "unknown",    label: "Not sure" },
         ],
       },
       {
@@ -330,6 +339,7 @@ const INITIAL_ANSWERS: LifestyleAnswers = {
   sugaryDrinks: "",
   alcoholDrinks: "",
   stressLevel: "",
+  hsCrpAvailable: "",
 };
 
 type Phase = "questionnaire" | "saving" | "complete";
@@ -395,6 +405,8 @@ export function StepLifestyle({ onComplete }: Props) {
       return null;
     };
 
+    const hsCrpAvail = answers.hsCrpAvailable === "yes";
+
     const row = {
       age_range:                  answers.ageRange                 || null,
       biological_sex:             answers.biologicalSex            || null,
@@ -423,6 +435,10 @@ export function StepLifestyle({ onComplete }: Props) {
       sugary_drinks_per_week:     toInt(answers.sugaryDrinks),
       alcohol_drinks_per_week:    toInt(answers.alcoholDrinks),
       stress_level:               answers.stressLevel              || null,
+      // V5 fields captured at onboarding
+      hs_crp_available:           hsCrpAvail,
+      hs_crp_qc_pass:             hsCrpAvail,
+      oma_qc_pass:                true, // no antibiotics question at onboarding — default pass
     };
 
     try {
