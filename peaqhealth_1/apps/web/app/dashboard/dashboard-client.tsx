@@ -258,6 +258,71 @@ function TriangleWatermark() {
   )
 }
 
+// ─── Panel Card ─────────────────────────────────────────────────────────────
+
+function PanelCard({ name, color, href, delta, metrics, freshness }: {
+  name: string; color: string; href: string; delta: number
+  metrics: { label: string; value: string; bar: number }[]
+  freshness?: string
+}) {
+  const deltaColor = delta < -0.1 ? "#34d399" : delta > 0.1 ? "#f87171" : "rgba(250,250,248,0.4)"
+  const deltaStr = delta < 0 ? `${delta.toFixed(2)} yrs` : delta > 0 ? `+${delta.toFixed(2)} yrs` : "0.00 yrs"
+  const status = delta < -0.1 ? "Positive" : delta > 0.5 ? "Attention" : "On Pace"
+  const statusColor = delta < -0.1 ? "#34d399" : delta > 0.5 ? "#f87171" : "#fbbf24"
+
+  return (
+    <a href={href} style={{
+      background: "var(--card-bg, rgba(250,250,248,0.04))",
+      border: "var(--card-border, 0.5px solid rgba(250,250,248,0.10))",
+      borderRadius: 12, padding: "18px 16px", textDecoration: "none",
+      display: "flex", flexDirection: "column", gap: 12,
+      transition: "border-color 200ms ease",
+    }}
+    onMouseEnter={e => { e.currentTarget.style.borderColor = `${color}40` }}
+    onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(250,250,248,0.10)" }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ width: 7, height: 7, borderRadius: "50%", background: color }} />
+          <span style={{ fontFamily: sans, fontSize: 11, fontWeight: 500, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-primary, #FAFAF8)" }}>
+            {name}
+          </span>
+        </div>
+        <span style={{
+          fontFamily: sans, fontSize: 9, fontWeight: 500, letterSpacing: "0.06em", textTransform: "uppercase",
+          padding: "2px 10px", borderRadius: 20,
+          background: `${statusColor}18`, color: statusColor, border: `0.5px solid ${statusColor}40`,
+        }}>
+          {status}
+        </span>
+      </div>
+      <span style={{ fontFamily: serif, fontSize: 16, fontStyle: "italic", color: deltaColor, lineHeight: 1 }}>
+        {deltaStr}
+      </span>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {metrics.map(m => (
+          <div key={m.label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontFamily: sans, fontSize: 9, color: "var(--text-muted, rgba(250,250,248,0.45))", width: 52, textAlign: "right", flexShrink: 0 }}>
+              {m.label}
+            </span>
+            <div style={{ flex: 1, height: 3, background: "rgba(250,250,248,0.06)", borderRadius: 2, overflow: "hidden" }}>
+              <div style={{ width: `${Math.max(0, Math.min(100, m.bar * 100))}%`, height: "100%", background: color, borderRadius: 2, opacity: 0.7 }} />
+            </div>
+            <span style={{ fontFamily: sans, fontSize: 10, color: "var(--text-primary, #FAFAF8)", width: 48, textAlign: "right", flexShrink: 0 }}>
+              {m.value}
+            </span>
+          </div>
+        ))}
+      </div>
+      {freshness && (
+        <span style={{ fontFamily: sans, fontSize: 9, color: "var(--text-muted, rgba(250,250,248,0.45))" }}>
+          {freshness}
+        </span>
+      )}
+    </a>
+  )
+}
+
 // ─── Main Component ──────────────────────────────────────────────────────────
 
 export function DashboardClient(props: ScoreWheelProps & {
@@ -519,6 +584,209 @@ export function DashboardClient(props: ScoreWheelProps & {
               </div>
             )
           })()}
+
+          {/* ── COMPONENT BREAKDOWN BAR ──────────────────────────────────── */}
+          {(() => {
+            const b = peaqAgeBreakdown
+            const components: { label: string; weight: number; delta: number; color: string }[] = [
+              { label: "PhenoAge",  weight: (b.wP as number ?? 0), delta: (b.wP as number ?? 0) * (b.phenoDelta as number ?? 0), color: "#C0392B" },
+              { label: "OMA",       weight: (b.wO as number ?? 0), delta: (b.wO as number ?? 0) * (b.omaDelta as number ?? 0),   color: "#2D6A4F" },
+              { label: "VO₂ max",   weight: (b.wV as number ?? 0), delta: (b.wV as number ?? 0) * (b.vo2Delta as number ?? 0),   color: "#4A7FB5" },
+              { label: "RHR",       weight: (b.wR as number ?? 0), delta: (b.wR as number ?? 0) * (b.rhrDelta as number ?? 0),   color: "#4A7FB5" },
+              { label: "Sleep",     weight: (b.wD as number ?? 0) + (b.wG as number ?? 0), delta: (b.wD as number ?? 0) * (b.durDelta as number ?? 0) + (b.wG as number ?? 0) * (b.regDelta as number ?? 0), color: "#4A7FB5" },
+              { label: "Cross",     weight: (b.crossW as number ?? 0), delta: (b.crossW as number ?? 0) * (b.crossPanel as number ?? 0), color: "#B8860B" },
+            ].filter(c => c.weight > 0)
+            const maxAbsDelta = Math.max(...components.map(c => Math.abs(c.delta)), 0.1)
+
+            return (
+              <div style={{
+                background: "var(--card-bg, rgba(250,250,248,0.04))",
+                border: "var(--card-border, 0.5px solid rgba(250,250,248,0.10))",
+                borderRadius: 12, padding: "18px 20px", marginBottom: 24,
+              }}>
+                <span style={{
+                  fontFamily: sans, fontSize: 9, letterSpacing: "1.5px",
+                  textTransform: "uppercase", color: "var(--text-muted, rgba(250,250,248,0.45))",
+                  display: "block", marginBottom: 14,
+                }}>
+                  Component breakdown
+                </span>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {components.map(c => (
+                    <div key={c.label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontFamily: sans, fontSize: 10, color: "var(--text-muted, rgba(250,250,248,0.45))", width: 60, textAlign: "right", flexShrink: 0 }}>
+                        {c.label}
+                      </span>
+                      <div style={{ flex: 1, height: 5, background: "rgba(250,250,248,0.04)", borderRadius: 3, position: "relative", overflow: "hidden" }}>
+                        <div style={{
+                          position: "absolute",
+                          top: 0, height: "100%", borderRadius: 3,
+                          left: c.delta < 0 ? `${50 - (Math.abs(c.delta) / maxAbsDelta) * 50}%` : "50%",
+                          width: `${(Math.abs(c.delta) / maxAbsDelta) * 50}%`,
+                          background: c.delta < 0 ? "#34d399" : c.delta > 0 ? "#f87171" : "rgba(250,250,248,0.1)",
+                          opacity: 0.7,
+                        }} />
+                        <div style={{ position: "absolute", left: "50%", top: 0, width: "1px", height: "100%", background: "rgba(250,250,248,0.12)" }} />
+                      </div>
+                      <span style={{ fontFamily: sans, fontSize: 10, width: 48, textAlign: "right", flexShrink: 0, color: c.delta < 0 ? "#34d399" : c.delta > 0 ? "#f87171" : "var(--text-muted, rgba(250,250,248,0.45))" }}>
+                        {c.delta < 0 ? "" : "+"}{c.delta.toFixed(2)}
+                      </span>
+                      <span style={{ fontFamily: sans, fontSize: 9, color: "var(--text-muted, rgba(250,250,248,0.45))", width: 28, textAlign: "right", flexShrink: 0 }}>
+                        {Math.round(c.weight * 100)}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          })()}
+
+          {/* ── PANEL CARDS (Sleep · Blood · Oral) ──────────────────────── */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, marginBottom: 24 }}>
+            {/* Sleep card */}
+            {hasSleep && props.sleepData && (
+              <PanelCard
+                name="Sleep" color="#4A7FB5" href="/dashboard/sleep"
+                delta={(peaqAgeBreakdown.durDelta as number ?? 0) + (peaqAgeBreakdown.regDelta as number ?? 0)}
+                metrics={[
+                  { label: "Deep", value: `${props.sleepData.deepPct.toFixed(0)}%`, bar: props.sleepData.deepPct / 25 },
+                  { label: "REM", value: `${props.sleepData.remPct.toFixed(0)}%`, bar: props.sleepData.remPct / 25 },
+                  { label: "HRV", value: `${props.sleepData.hrv.toFixed(0)} ms`, bar: Math.min(1, props.sleepData.hrv / 60) },
+                  { label: "Efficiency", value: `${props.sleepData.efficiency.toFixed(0)}%`, bar: props.sleepData.efficiency / 100 },
+                ]}
+                freshness={latestSleepDate ? `Last: ${latestSleepDate}` : undefined}
+              />
+            )}
+            {/* Blood card */}
+            {hasBlood && props.bloodData && (
+              <PanelCard
+                name="Blood" color="#C0392B" href="/dashboard/blood"
+                delta={peaqAgeBreakdown.phenoDelta as number ?? 0}
+                metrics={[
+                  { label: "LDL", value: `${props.bloodData.ldl.toFixed(0)}`, bar: Math.min(1, 1 - props.bloodData.ldl / 200) },
+                  { label: "HbA1c", value: `${props.bloodData.hba1c.toFixed(1)}%`, bar: Math.min(1, 1 - (props.bloodData.hba1c - 4) / 3) },
+                  { label: "hs-CRP", value: props.bloodData.hsCRP > 0 ? `${props.bloodData.hsCRP.toFixed(1)}` : "pending", bar: props.bloodData.hsCRP > 0 ? Math.min(1, 1 - props.bloodData.hsCRP / 5) : 0 },
+                  { label: "PhenoAge", value: peaqAgeBreakdown.phenoAge != null ? `${(peaqAgeBreakdown.phenoAge as number).toFixed(1)}` : "needs hs-CRP", bar: 0 },
+                ]}
+                freshness={props.bloodData.collectionDate ? `Labs: ${props.bloodData.collectionDate}` : undefined}
+              />
+            )}
+            {/* Oral card */}
+            {hasOral && props.oralData && (
+              <PanelCard
+                name="Oral" color="#2D6A4F" href="/dashboard/oral"
+                delta={peaqAgeBreakdown.omaDelta as number ?? 0}
+                metrics={[
+                  { label: "OMA", value: `${(peaqAgeBreakdown.omaPct as number ?? 50).toFixed(0)}th`, bar: (peaqAgeBreakdown.omaPct as number ?? 50) / 100 },
+                  { label: "Shannon", value: `${props.oralData.shannonDiversity.toFixed(1)}`, bar: Math.min(1, props.oralData.shannonDiversity / 5) },
+                  { label: "Nitrate", value: `${props.oralData.nitrateReducersPct.toFixed(0)}%`, bar: Math.min(1, props.oralData.nitrateReducersPct / 25) },
+                  { label: "Pathogen", value: `${props.oralData.periodontPathPct.toFixed(1)}%`, bar: Math.min(1, 1 - props.oralData.periodontPathPct / 5) },
+                ]}
+              />
+            )}
+          </div>
+
+          {/* ── ACTION PLAN (ordered by impact × speed) ─────────────────── */}
+          {(() => {
+            const b = peaqAgeBreakdown
+            const mwType = props.lifestyleData?.mouthwashType
+            const usesAntiseptic = mwType === "antiseptic" || mwType === "alcohol"
+            const noHsCrp = !(b.hasBW && (b.missingPhenoMarkers as string[] ?? []).length === 0)
+            const hasNoVO2 = !b.hasVO2
+            const omaQcFail = typeof b.omaPct === "number" && (b.omaPct as number) < 40
+
+            const actions: { label: string; timing: string; cost: string }[] = []
+            if (usesAntiseptic)
+              actions.push({ label: "Switch from antiseptic mouthwash", timing: "Today", cost: "Free" })
+            if (omaQcFail)
+              actions.push({ label: "Leafy greens or beetroot a few times a week", timing: "Week 1", cost: "~$8/wk" })
+            if (noHsCrp)
+              actions.push({ label: "Add hs-CRP to next blood draw", timing: "Next draw", cost: "~$15" })
+            if (hasNoVO2)
+              actions.push({ label: "Complete VO₂ max estimate in Settings", timing: "Today", cost: "Free" })
+            if (typeof b.rhrDelta === "number" && (b.rhrDelta as number) > 1)
+              actions.push({ label: "Increase aerobic exercise frequency", timing: "This month", cost: "Free" })
+
+            if (actions.length === 0) return null
+
+            return (
+              <div style={{
+                background: "var(--card-bg, rgba(250,250,248,0.04))",
+                border: "var(--card-border, 0.5px solid rgba(250,250,248,0.10))",
+                borderRadius: 12, padding: "18px 20px", marginBottom: 24,
+              }}>
+                <span style={{
+                  fontFamily: sans, fontSize: 9, letterSpacing: "1.5px",
+                  textTransform: "uppercase", color: "var(--text-muted, rgba(250,250,248,0.45))",
+                  display: "block", marginBottom: 14,
+                }}>
+                  Action plan
+                </span>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {actions.map((a, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{
+                        fontFamily: serif, fontSize: 16, fontWeight: 300,
+                        color: "#B8860B", width: 20, textAlign: "center", flexShrink: 0,
+                      }}>
+                        {i + 1}
+                      </span>
+                      <span style={{ fontFamily: sans, fontSize: 13, color: "var(--text-primary, #FAFAF8)", flex: 1, lineHeight: 1.4 }}>
+                        {a.label}
+                      </span>
+                      <span style={{ fontFamily: sans, fontSize: 10, color: "var(--text-muted, rgba(250,250,248,0.45))", flexShrink: 0 }}>
+                        {a.timing}
+                      </span>
+                      <span style={{ fontFamily: sans, fontSize: 10, color: "var(--text-muted, rgba(250,250,248,0.45))", flexShrink: 0, width: 48, textAlign: "right" }}>
+                        {a.cost}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          })()}
+
+          {/* ── DATA FRESHNESS FOOTER ───────────────────────────────────── */}
+          <div style={{
+            display: "flex", flexWrap: "wrap", gap: 16, alignItems: "center",
+            padding: "12px 0", borderTop: "0.5px solid rgba(250,250,248,0.06)",
+          }}>
+            {props.bloodData?.collectionDate && (
+              <span style={{ fontFamily: sans, fontSize: 10, color: "var(--text-muted, rgba(250,250,248,0.45))", display: "flex", alignItems: "center", gap: 4 }}>
+                <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#C0392B" }} />
+                Blood: {props.bloodData.collectionDate}
+              </span>
+            )}
+            {hasOral && (
+              <span style={{ fontFamily: sans, fontSize: 10, color: "var(--text-muted, rgba(250,250,248,0.45))", display: "flex", alignItems: "center", gap: 4 }}>
+                <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#2D6A4F" }} />
+                Oral: active
+              </span>
+            )}
+            {hasSleep && latestSleepDate && (
+              <span style={{ fontFamily: sans, fontSize: 10, color: "var(--text-muted, rgba(250,250,248,0.45))", display: "flex", alignItems: "center", gap: 4 }}>
+                <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#4A7FB5" }} />
+                Sleep: {(() => {
+                  const nights = props.sleepNightsAvailable ?? 0
+                  const src = props.wearableProvider ?? "wearable"
+                  return `${nights} nights (${src})`
+                })()}
+              </span>
+            )}
+            {/* QC warnings */}
+            {peaqAgeBreakdown.phenoAge == null && (peaqAgeBreakdown.hasBW as boolean) && (
+              <span style={{ fontFamily: sans, fontSize: 10, color: "#fb923c" }}>
+                ⚠ hs-CRP pending — add to next draw
+              </span>
+            )}
+            {!peaqAgeBreakdown.hasVO2 && (
+              <span style={{ fontFamily: sans, fontSize: 10, color: "#fb923c" }}>
+                ⚠ VO₂ max — complete estimate in Settings
+              </span>
+            )}
+          </div>
+
         </>) : (
           <div style={{ marginBottom: 12 }}>
             <PanelConvergence
@@ -561,7 +829,7 @@ export function DashboardClient(props: ScoreWheelProps & {
         {/* ── CROSS-PANEL SIGNALS ──────────────────────────────────────────── */}
         {insightsLoading && panelCount >= 2 && (
           <div style={{
-            background: "#fff", border: "0.5px solid rgba(0,0,0,0.06)",
+            background: "var(--card-bg, #fff)", border: "var(--card-border, 0.5px solid rgba(0,0,0,0.06))",
             borderRadius: 12, padding: 24, marginBottom: 32,
           }}>
             <div style={{ marginBottom: 12 }}>
@@ -573,15 +841,15 @@ export function DashboardClient(props: ScoreWheelProps & {
         )}
         {!insightsLoading && hasCrossPanel && panelCount >= 2 && (
           <div style={{
-            background: "#fff", border: "0.5px solid rgba(0,0,0,0.06)",
+            background: "var(--card-bg, #fff)", border: "var(--card-border, 0.5px solid rgba(0,0,0,0.06))",
             borderLeft: "3px solid rgba(192,57,43,0.3)",
             borderRadius: 12, padding: 24, marginBottom: 32,
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <span style={{ fontFamily: sans, fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "#bbb" }}>
+              <span style={{ fontFamily: sans, fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: "var(--text-muted, #bbb)" }}>
                 Cross-Panel Signals
               </span>
-              <span style={{ fontFamily: sans, fontSize: 9, color: "#bbb" }}>
+              <span style={{ fontFamily: sans, fontSize: 9, color: "var(--text-muted, #bbb)" }}>
                 {(insights?.cross_panel_signals ?? []).length} pattern{(insights?.cross_panel_signals ?? []).length !== 1 ? "s" : ""} detected
               </span>
             </div>
