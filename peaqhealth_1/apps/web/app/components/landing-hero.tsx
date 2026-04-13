@@ -6,7 +6,7 @@ import { LandingPanelStrip } from "./landing-panel-strip"
 const serif = "'Cormorant Garamond', Georgia, serif"
 const sans  = "'Instrument Sans', system-ui, sans-serif"
 
-const HERO_VIDEOS = ["/videos/heropeaq.mp4", "/videos/heromovie.mp4"]
+const HERO_VIDEOS = ["/videos/heropeaq.mp4", "/videos/heromovie.mp4", "/videos/heroclimbing.mp4"]
 
 const LS_THEME_KEY = "peaq-landing-theme"
 
@@ -74,23 +74,27 @@ export function LandingHero() {
       {/* Two hero videos stacked — only activeVideo is opaque. Each plays
           once, fires "ended", JS crossfades to the next, loops forever.
           Both share .hero-bg-image for object-fit/position/mobile crop. */}
-      {HERO_VIDEOS.map((src, i) => (
-        <video
-          key={src}
-          ref={el => { videoRefs.current[i] = el }}
-          className="hero-bg-image"
-          src={src}
-          poster={i === 0 ? "/images/heropeaq-poster.jpg" : undefined}
-          muted
-          playsInline
-          preload="auto"
-          aria-hidden="true"
-          style={{
-            opacity: activeVideo === i ? 1 : 0,
-            transition: "opacity 1.2s ease",
-          }}
-        />
-      ))}
+      {HERO_VIDEOS.map((src, i) => {
+        const isActive = activeVideo === i
+        const isNext = (activeVideo + 1) % HERO_VIDEOS.length === i
+        return (
+          <video
+            key={src}
+            ref={el => { videoRefs.current[i] = el }}
+            className="hero-bg-image"
+            src={src}
+            poster={i === 0 ? "/images/heropeaq-poster.jpg" : undefined}
+            muted
+            playsInline
+            preload={isActive || isNext ? "auto" : "metadata"}
+            aria-hidden="true"
+            style={{
+              opacity: isActive ? 1 : 0,
+              transition: "opacity 1.2s ease",
+            }}
+          />
+        )
+      })}
 
       {/* Dark gradient overlay — top-to-bottom, keeps text and CTAs legible */}
       <div className="hero-bg-overlay" />
