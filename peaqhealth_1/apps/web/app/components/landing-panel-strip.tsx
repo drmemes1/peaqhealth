@@ -207,9 +207,13 @@ export function LandingPanelStrip({ wearableOff = false, onToggle }: { wearableO
       </p>
 
       <style>{`
-        .hp-stage{position:relative;width:100%;height:270px;display:flex;align-items:center;justify-content:center;overflow:visible;--card-w:200px;--spread:300px;--expanded-w:520px;}
-        @media(max-width:680px){.hp-stage{--card-w:140px;--spread:155px;--expanded-w:min(420px,calc(100vw - 48px));height:250px;}}
-        @media(max-width:420px){.hp-stage{--spread:130px;--expanded-w:min(320px,calc(100vw - 32px));height:230px;}}
+        .hp-stage{position:relative;width:100%;height:270px;display:flex;align-items:center;justify-content:center;overflow:visible;
+          --card-w:clamp(105px, 28vw, 200px);
+          --card-h:clamp(160px, 24vw, 190px);
+          --spread:clamp(115px, 30vw, 300px);
+          --expanded-w:min(520px, calc(100vw - 48px));
+        }
+        @media(max-width:420px){.hp-stage{height:240px;}}
 
         .hp-wrap{position:absolute;transition:transform .9s cubic-bezier(.4,0,.2,1),opacity .7s ease;}
         .hp-wrap-sleep{transform:translateX(calc(-1 * var(--spread)));}
@@ -219,7 +223,7 @@ export function LandingPanelStrip({ wearableOff = false, onToggle }: { wearableO
         .hp-merged .hp-wrap-blood{transform:translateX(0);}
         .hp-merged .hp-wrap-oral{transform:translateX(10px);opacity:0;}
 
-        .hp-card{background:rgba(250,250,248,.08);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:.5px solid rgba(250,250,248,.13);border-radius:14px;padding:20px 18px 18px;width:var(--card-w);display:flex;flex-direction:column;align-items:center;position:relative;overflow:hidden;}
+        .hp-card{background:rgba(250,250,248,.08);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:.5px solid rgba(250,250,248,.13);border-radius:14px;padding:20px 18px 18px;width:var(--card-w);min-height:var(--card-h);display:flex;flex-direction:column;align-items:center;position:relative;overflow:hidden;}
 
         .hp-card-blood{transition:width .85s cubic-bezier(.4,0,.2,1),min-height .85s cubic-bezier(.4,0,.2,1),border-color .7s ease,box-shadow .7s ease;}
         .hp-merged .hp-card-blood{width:var(--expanded-w);min-height:245px;border-color:rgba(184,134,11,.5);box-shadow:0 0 48px 8px rgba(184,134,11,.08),0 20px 60px rgba(0,0,0,.55);}
@@ -232,16 +236,14 @@ export function LandingPanelStrip({ wearableOff = false, onToggle }: { wearableO
 
         .hp-header{display:flex;align-items:center;gap:6px;margin-bottom:12px;}
         .hp-dot{width:7px;height:7px;border-radius:50%;}
-        .hp-name{font-family:${sans};font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:rgba(250,250,248,.48);}
-        .hp-bars{width:100%;display:flex;flex-direction:column;gap:5px;margin-bottom:12px;}
+        .hp-name{font-family:${sans};font-size:clamp(7px, 1.4vw, 10px);font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:rgba(250,250,248,.48);}
+        .hp-bars{width:100%;display:flex;flex-direction:column;gap:5px;margin-bottom:12px;flex:1;justify-content:center;}
         .hp-bar-row{display:flex;align-items:center;gap:7px;}
-        .hp-bar-lbl{font-family:${sans};font-size:9px;color:rgba(250,250,248,.3);width:42px;text-align:right;flex-shrink:0;}
-        @media(max-width:680px){.hp-bar-lbl{width:30px;font-size:7px;}}
+        .hp-bar-lbl{font-family:${sans};font-size:clamp(6px, 1.2vw, 9px);color:rgba(250,250,248,.3);width:clamp(24px, 6vw, 42px);text-align:right;flex-shrink:0;}
         .hp-bar-track{flex:1;height:3px;background:rgba(250,250,248,.07);border-radius:2px;overflow:hidden;}
         .hp-bar-fill{height:100%;border-radius:2px;}
 
-        .hp-chip{font-family:${sans};font-size:10px;font-weight:500;letter-spacing:.09em;text-transform:uppercase;padding:4px 14px;border-radius:20px;}
-        @media(max-width:680px){.hp-chip{font-size:8px;padding:3px 10px;}}
+        .hp-chip{font-family:${sans};font-size:clamp(7px, 1.3vw, 10px);font-weight:500;letter-spacing:.09em;text-transform:uppercase;padding:clamp(2px, .5vw, 4px) clamp(8px, 1.8vw, 14px);border-radius:20px;}
         .hp-chip-pos{background:rgba(45,106,79,.18);color:#5DBE8A;border:.5px solid rgba(45,106,79,.35);}
         .hp-chip-att{background:rgba(192,57,43,.15);color:#E07B72;border:.5px solid rgba(192,57,43,.3);}
         .hp-chip-watch{background:rgba(184,134,11,.13);color:#D4A835;border:.5px solid rgba(184,134,11,.3);}
