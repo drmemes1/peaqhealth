@@ -12,6 +12,7 @@ interface Props {
   email: string
   firstName: string
   lastName: string
+  dateOfBirth: string | null
   createdAt: string
   whoopConnected: boolean
   whoopLastSynced: string | null
@@ -85,13 +86,14 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 
 // ─── Main settings component ─────────────────────────────────────────────────
 
-export function SettingsClient({ userId, email, firstName: initialFirst, lastName: initialLast, createdAt, whoopConnected: initialWhoopConnected, whoopLastSynced, whoopNeedsReconnect, junctionConnections: initialJunctionConnections = [] }: Props) {
+export function SettingsClient({ userId, email, firstName: initialFirst, lastName: initialLast, dateOfBirth: initialDob, createdAt, whoopConnected: initialWhoopConnected, whoopLastSynced, whoopNeedsReconnect, junctionConnections: initialJunctionConnections = [] }: Props) {
   const router = useRouter()
   const supabase = createClient()
   const { setTheme, resolvedTheme } = useTheme()
 
   const [firstName, setFirstName] = useState(initialFirst)
   const [lastName, setLastName] = useState(initialLast)
+  const [dob, setDob] = useState(initialDob ?? "")
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
@@ -133,7 +135,7 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
     try {
       await supabase
         .from("profiles")
-        .update({ first_name: firstName, last_name: lastName })
+        .update({ first_name: firstName, last_name: lastName, date_of_birth: dob || null })
         .eq("id", userId)
       setSaved(true)
       setTimeout(() => setSaved(false), 2500)
@@ -239,6 +241,27 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
                 />
               </div>
             ))}
+          </div>
+
+          <div className="mb-3">
+            <FieldLabel>Date of birth</FieldLabel>
+            <input
+              type="date"
+              value={dob}
+              onChange={e => setDob(e.target.value)}
+              className="h-11 w-full px-3 font-body text-sm outline-none"
+              style={{
+                background: "var(--off-white)",
+                border: "0.5px solid var(--ink-30)",
+                color: "var(--ink)",
+                transition: "border-color 0.15s",
+              }}
+              onFocus={e => (e.currentTarget.style.borderColor = "var(--ink)")}
+              onBlur={e => (e.currentTarget.style.borderColor = "var(--ink-30)")}
+            />
+            <p className="mt-1 font-body text-[10px]" style={{ color: "var(--ink-30)" }}>
+              Required for accurate Peaq Age calculation
+            </p>
           </div>
 
           <div className="mb-4">

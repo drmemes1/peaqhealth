@@ -2,16 +2,21 @@
  * Peaq Age V5 — Biological age in years
  *
  * Components:
- *   PhenoAge  49%  — Levine 2018 (9 blood markers, hs-CRP mandatory)
- *   OMA       15%  — Oral Microbiome Assessment (NHANES-anchored)
- *   VO₂ max   13%  — FRIEND Registry (Kaminsky 2015/2022)
+ *   PhenoAge  48%  — Levine 2018 (9 blood markers, hs-CRP mandatory)
+ *   OMA       22%  — Oral Microbiome Assessment (NHANES-anchored)
  *   RHR       11%  — Aune 2017 / Sheppard 2017
+ *   HRV        8%  — Shaffer & Ginsberg 2022 (placeholder, not computed yet)
  *   Sleep dur  5%  — Cappuccio 2010
  *   Sleep reg  4%  — Cribb 2023
  *   Cross-panel 3% — I1/I2/I3 interaction terms (require BW + OMA)
  *
+ * VO₂ max removed from scored formula — see proposal doc.
+ * Displayed as informational only on dashboard.
+ *
  * When a component is unavailable, its weight redistributes
  * proportionally to the remaining components.
+ * HRV is always unavailable for now (hasHRV = false); its 8%
+ * redistributes to RHR and sleep proportionally.
  */
 
 import { calcOMA, type OMAInputs } from "./oma"
@@ -71,8 +76,8 @@ export interface PeaqAgeResult {
   missingPhenoMarkers: string[]
   omaPct: number
   omaDelta: number
-  vo2Pct: number
-  vo2Delta: number
+  vo2Pct: number | null       // VO₂ removed from scored formula — informational only (always null)
+  vo2Delta: number            // always 0
   expRHR: number
   rhrDelta: number
   durDelta: number
@@ -83,21 +88,25 @@ export interface PeaqAgeResult {
   crossPanel: number
   wP: number
   wO: number
-  wV: number
+  wV: number                  // VO₂ weight — always 0
+  wH: number                 // HRV weight (placeholder — redistributed when hasHRV=false)
   wR: number
   wD: number
   wG: number
   crossW: number
   hasBW: boolean
   hasOMA: boolean
-  hasVO2: boolean
+  hasVO2: boolean             // always false — VO₂ removed from scored formula
+  hasHRV: boolean
 }
 
 // ── Base weights ─────────────────────────────────────────────────────────────
 
 const W_PHENO = 0.48
 const W_OMA   = 0.22
-const W_VO2   = 0.13
+// W_VO2 removed from scored formula — see co-founder proposal doc
+// Retained for future re-promotion when reliable API access improves across wearable platforms
+const W_HRV   = 0.08  // placeholder — hasHRV = false; redistributes to remaining components
 const W_RHR   = 0.11
 const W_DUR   = 0.05
 const W_REG   = 0.04
@@ -146,47 +155,17 @@ function calcPhenoAge(bw: BloodworkInputs, age: number): { phenoAge: number | nu
 }
 
 // ── FRIEND Registry · Kaminsky 2015/2022 ─────────────────────────────────────
-
-const FRIEND_F = [[5,14],[10,17],[20,21],[30,25],[40,28],[50,32],[60,36],[70,40],[80,44],[90,49],[95,52]] as const
-const FRIEND_M = [[5,19],[10,22],[20,27],[30,33],[40,37],[50,42],[60,46],[70,50],[80,54],[90,59],[95,63]] as const
-
-function vo2ToPct(vo2: number, sex: "male" | "female"): number {
-  const tbl = sex === "female" ? FRIEND_F : FRIEND_M
-  for (let i = 0; i < tbl.length - 1; i++) {
-    const [p0, v0] = tbl[i]
-    const [p1, v1] = tbl[i + 1]
-    if (vo2 >= v0 && vo2 <= v1) {
-      return Math.round(p0 + ((vo2 - v0) / (v1 - v0)) * (p1 - p0))
-    }
-  }
-  if (vo2 < tbl[0][1]) return Math.max(1, tbl[0][0] - (tbl[0][1] - vo2) * 2)
-  return Math.min(99, tbl[tbl.length - 1][0] + (vo2 - tbl[tbl.length - 1][1]))
-}
-
-const ACTIVITY_TO_PCT: Record<string, number> = {
-  sedentary: 20,
-  moderate: 40,
-  active: 60,
-  very_active: 75,
-}
-
-function resolveVO2(fitness: FitnessInputs | null, sex: "male" | "female"): { vo2Pct: number; hasVO2: boolean } {
-  if (!fitness) return { vo2Pct: 50, hasVO2: false }
-
-  if (fitness.vo2max != null && fitness.vo2Source === "manual") {
-    return { vo2Pct: vo2ToPct(fitness.vo2max, sex), hasVO2: true }
-  }
-
-  if (fitness.vo2Source === "estimated" && fitness.activityLevel) {
-    return { vo2Pct: ACTIVITY_TO_PCT[fitness.activityLevel] ?? 50, hasVO2: true }
-  }
-
-  if (fitness.vo2max != null) {
-    return { vo2Pct: vo2ToPct(fitness.vo2max, sex), hasVO2: true }
-  }
-
-  return { vo2Pct: 50, hasVO2: false }
-}
+// VO₂ max removed from scored formula — see co-founder proposal doc.
+// Retained for future re-promotion when reliable API access improves.
+//
+// const FRIEND_F = [[5,14],[10,17],[20,21],[30,25],[40,28],[50,32],[60,36],[70,40],[80,44],[90,49],[95,52]] as const
+// const FRIEND_M = [[5,19],[10,22],[20,27],[30,33],[40,37],[50,42],[60,46],[70,50],[80,54],[90,59],[95,63]] as const
+//
+// function vo2ToPct(vo2: number, sex: "male" | "female"): number { ... }
+//
+// const ACTIVITY_TO_PCT: Record<string, number> = { sedentary: 20, moderate: 40, active: 60, very_active: 75 }
+//
+// function resolveVO2(...): { vo2Pct: number; hasVO2: boolean } { ... }
 
 // ── Expected RHR · Aune 2017 / Sheppard 2017 ────────────────────────────────
 
@@ -263,9 +242,11 @@ export function calcPeaqAge(inputs: PeaqAgeInputs): PeaqAgeResult {
     omaDelta = omaResult.omaDelta
   }
 
-  // ── VO₂ max ──────────────────────────────────────────────────────────────
-  const { vo2Pct, hasVO2 } = resolveVO2(fitness, sex)
-  const vo2Delta = capVal(-(vo2Pct - 50) * 0.10, 8)
+  // ── VO₂ max — removed from scored formula (informational only) ───────────
+  // vo2Pct = null, vo2Delta = 0, hasVO2 = false — see co-founder proposal doc
+
+  // ── HRV — placeholder (pending Bale advisory call) ───────────────────────
+  const hasHRV = false  // always false until post-Bale implementation
 
   // ── RHR ──────────────────────────────────────────────────────────────────
   const expRHR = getExpectedRHR(chronoAge, sex)
@@ -301,7 +282,7 @@ export function calcPeaqAge(inputs: PeaqAgeInputs): PeaqAgeResult {
   const slots: { weight: number; present: boolean }[] = [
     { weight: W_PHENO, present: hasBW && phenoAge != null },
     { weight: W_OMA,   present: hasOMA },
-    { weight: W_VO2,   present: hasVO2 },
+    { weight: W_HRV,   present: hasHRV },   // always false — redistributes to other components
     { weight: W_RHR,   present: hasRHR },
     { weight: W_DUR,   present: hasDur },
     { weight: W_REG,   present: hasReg },
@@ -312,7 +293,7 @@ export function calcPeaqAge(inputs: PeaqAgeInputs): PeaqAgeResult {
 
   const wP = (slots[0].present ? slots[0].weight : 0) * scale
   const wO = (slots[1].present ? slots[1].weight : 0) * scale
-  const wV = (slots[2].present ? slots[2].weight : 0) * scale
+  const wH = (slots[2].present ? slots[2].weight : 0) * scale   // HRV weight (always 0 for now)
   const wR = (slots[3].present ? slots[3].weight : 0) * scale
   const wD = (slots[4].present ? slots[4].weight : 0) * scale
   const wG = (slots[5].present ? slots[5].weight : 0) * scale
@@ -322,7 +303,6 @@ export function calcPeaqAge(inputs: PeaqAgeInputs): PeaqAgeResult {
     chronoAge +
     wP * phenoDelta +
     wO * omaDelta +
-    wV * vo2Delta +
     wR * rhrDelta +
     wD * durDelta +
     wG * regDelta +
@@ -338,18 +318,19 @@ export function calcPeaqAge(inputs: PeaqAgeInputs): PeaqAgeResult {
     missingPhenoMarkers,
     omaPct: Math.round(omaPct * 10) / 10,
     omaDelta: Math.round(omaDelta * 100) / 100,
-    vo2Pct, vo2Delta: Math.round(vo2Delta * 100) / 100,
+    vo2Pct: null, vo2Delta: 0,
     expRHR, rhrDelta: Math.round(rhrDelta * 100) / 100,
     durDelta, regDelta,
     i1, i2, i3, crossPanel,
     wP: Math.round(wP * 1000) / 1000,
     wO: Math.round(wO * 1000) / 1000,
-    wV: Math.round(wV * 1000) / 1000,
+    wH: Math.round(wH * 1000) / 1000,
+    wV: 0,
     wR: Math.round(wR * 1000) / 1000,
     wD: Math.round(wD * 1000) / 1000,
     wG: Math.round(wG * 1000) / 1000,
     crossW,
-    hasBW, hasOMA, hasVO2,
+    hasBW, hasOMA, hasVO2: false, hasHRV,
   }
 }
 

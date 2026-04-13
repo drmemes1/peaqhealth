@@ -166,7 +166,7 @@ test("Missing OMA: oma weight redistributes, crossW=0", () => {
   approx(totalW, 1.0, 0.01)
 })
 
-test("Missing VO2: vo2 weight redistributes", () => {
+test("Missing fitness: wV=0, wR=0, hasVO2=false always", () => {
   const result = calcPeaqAge({
     chronoAge: 32, sex: "female",
     bloodwork: GABRIELLA_BW_WITH_CRP,
@@ -179,7 +179,7 @@ test("Missing VO2: vo2 weight redistributes", () => {
   assert.equal(result.hasVO2, false)
 })
 
-test("All panels present: weights sum to ~1.0", () => {
+test("All panels present: weights sum to ~1.0 (HRV redistributed, VO2=0)", () => {
   const result = calcPeaqAge({
     chronoAge: 32, sex: "female",
     bloodwork: GABRIELLA_BW_WITH_CRP,
@@ -187,7 +187,12 @@ test("All panels present: weights sum to ~1.0", () => {
     fitness: GABRIELLA_FITNESS,
     sleep: GABRIELLA_SLEEP,
   })
-  const totalW = result.wP + result.wO + result.wV + result.wR + result.wD + result.wG + result.crossW
+  // wH=0 (hasHRV=false), wV=0 (VO2 removed) — both redistributed to other components
+  assert.equal(result.wV, 0)
+  assert.equal(result.wH, 0)
+  assert.equal(result.hasVO2, false)
+  assert.equal(result.hasHRV, false)
+  const totalW = result.wP + result.wO + result.wH + result.wV + result.wR + result.wD + result.wG + result.crossW
   approx(totalW, 1.0, 0.01)
 })
 
@@ -299,38 +304,42 @@ test("delta < -5 → ACCELERATED", () => {
   assert.equal(result.band, "ACCELERATED")
 })
 
-console.log("\n── VO₂ estimated fallback ──")
+console.log("\n── VO₂ removed / HRV redistribution ──")
 
-test("Activity level 'sedentary' maps to 20th percentile", () => {
-  const result = calcPeaqAge({
+test("VO₂ always null and hasVO2 always false (removed from formula)", () => {
+  const withVo2 = calcPeaqAge({
     chronoAge: 35, sex: "male",
     bloodwork: null, oma: null,
-    fitness: { vo2max: null, vo2Source: "estimated", activityLevel: "sedentary", rhr: null },
+    fitness: { vo2max: 55, vo2Source: "manual", activityLevel: "very_active", rhr: null },
     sleep: null,
   })
-  assert.equal(result.vo2Pct, 20)
-  assert.equal(result.hasVO2, true)
-})
+  assert.equal(withVo2.vo2Pct, null)
+  assert.equal(withVo2.hasVO2, false)
+  assert.equal(withVo2.wV, 0)
 
-test("Activity level 'very_active' maps to 75th percentile", () => {
-  const result = calcPeaqAge({
-    chronoAge: 35, sex: "male",
-    bloodwork: null, oma: null,
-    fitness: { vo2max: null, vo2Source: "estimated", activityLevel: "very_active", rhr: null },
-    sleep: null,
-  })
-  assert.equal(result.vo2Pct, 75)
-})
-
-test("No VO₂ data at all: hasVO2=false, weight redistributed", () => {
-  const result = calcPeaqAge({
+  const noVo2 = calcPeaqAge({
     chronoAge: 35, sex: "male",
     bloodwork: null, oma: null,
     fitness: { vo2max: null, vo2Source: null, activityLevel: null, rhr: null },
     sleep: null,
   })
-  assert.equal(result.hasVO2, false)
-  assert.equal(result.wV, 0)
+  assert.equal(noVo2.vo2Pct, null)
+  assert.equal(noVo2.hasVO2, false)
+  assert.equal(noVo2.wV, 0)
+})
+
+test("hasHRV=false redistributes 8% to remaining components", () => {
+  // With RHR only (no blood, no OMA, no sleep)
+  const result = calcPeaqAge({
+    chronoAge: 35, sex: "male",
+    bloodwork: null, oma: null,
+    fitness: { vo2max: null, vo2Source: null, activityLevel: null, rhr: 65 },
+    sleep: null,
+  })
+  assert.equal(result.hasHRV, false)
+  assert.equal(result.wH, 0)
+  // HRV's 8% redistributes to RHR — wR should scale up to account for all non-cross weight
+  approx(result.wR, 1.0, 0.01)
 })
 
 console.log("\n── Gabriella scenarios ──")

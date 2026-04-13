@@ -542,8 +542,7 @@ export function DashboardClient(props: ScoreWheelProps & {
               strengths.push({ label: "Metabolic health", detail: `PhenoAge ${(b.phenoAge as number)?.toFixed(1)} — ${Math.abs(b.phenoDelta as number).toFixed(1)} yrs younger than expected`, color: "#C0392B" })
             if (typeof b.omaDelta === "number" && b.omaDelta < -0.5)
               strengths.push({ label: "Oral microbiome", detail: `OMA ${(b.omaPct as number)?.toFixed(0)}th percentile — protective bacteria working for you`, color: "#2D6A4F" })
-            if (typeof b.vo2Delta === "number" && b.vo2Delta < -0.5)
-              strengths.push({ label: "Cardiorespiratory fitness", detail: `VO₂ max ${(b.vo2Pct as number)}th percentile for your age and sex`, color: "#4A7FB5" })
+            // VO₂ max removed from scored strengths — informational only
             if (typeof b.rhrDelta === "number" && b.rhrDelta < -0.3)
               strengths.push({ label: "Resting heart rate", detail: `RHR ${Math.abs(b.rhrDelta as number).toFixed(1)} yrs below expected — cardiovascular conditioning evident`, color: "#4A7FB5" })
             if (typeof b.durDelta === "number" && b.durDelta === 0)
@@ -692,7 +691,7 @@ export function DashboardClient(props: ScoreWheelProps & {
             const mwType = props.lifestyleData?.mouthwashType
             const usesAntiseptic = mwType === "antiseptic" || mwType === "alcohol"
             const noHsCrp = !(b.hasBW && (b.missingPhenoMarkers as string[] ?? []).length === 0)
-            const hasNoVO2 = !b.hasVO2
+            // hasNoVO2 removed — VO₂ max is informational only, not user-actionable
             const omaQcFail = typeof b.omaPct === "number" && (b.omaPct as number) < 40
 
             const actions: { label: string; timing: string; cost: string }[] = []
@@ -702,8 +701,7 @@ export function DashboardClient(props: ScoreWheelProps & {
               actions.push({ label: "Leafy greens or beetroot a few times a week", timing: "Week 1", cost: "~$8/wk" })
             if (noHsCrp)
               actions.push({ label: "Add hs-CRP to next blood draw", timing: "Next draw", cost: "~$15" })
-            if (hasNoVO2)
-              actions.push({ label: "Complete VO₂ max estimate in Settings", timing: "Today", cost: "Free" })
+            // VO₂ max action removed — informational only, not user-actionable via API
             if (typeof b.rhrDelta === "number" && (b.rhrDelta as number) > 1)
               actions.push({ label: "Increase aerobic exercise frequency", timing: "This month", cost: "Free" })
 
@@ -780,11 +778,7 @@ export function DashboardClient(props: ScoreWheelProps & {
                 ⚠ hs-CRP pending — add to next draw
               </span>
             )}
-            {!peaqAgeBreakdown.hasVO2 && (
-              <span style={{ fontFamily: sans, fontSize: 10, color: "#fb923c" }}>
-                ⚠ VO₂ max — complete estimate in Settings
-              </span>
-            )}
+            {/* VO₂ max warning removed — informational only */}
           </div>
 
         </>) : (

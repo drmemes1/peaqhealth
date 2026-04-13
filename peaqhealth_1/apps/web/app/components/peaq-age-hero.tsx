@@ -33,44 +33,42 @@ export interface PeaqAgeHeroProps {
 function Gauge({ peaqAge, chronoAge, band }: { peaqAge: number; chronoAge: number; band: string }) {
   const MIN_AGE = 18
   const MAX_AGE = 80
-  const clamp = (v: number) => Math.max(MIN_AGE, Math.min(MAX_AGE, v))
-  const pct = (age: number) => (clamp(age) - MIN_AGE) / (MAX_AGE - MIN_AGE)
+  const cx = 200, cy = 175, r = 140
 
-  const cx = 200, cy = 170, r = 140
-  const startAngle = Math.PI * 0.8
-  const endAngle   = Math.PI * 0.2
-  const sweep      = 2 * Math.PI - (startAngle - endAngle)
-  const totalLength = r * sweep
-
-  const pointOnArc = (frac: number) => {
-    const angle = startAngle - frac * sweep
-    return { x: cx + r * Math.cos(angle), y: cy - r * Math.sin(angle) }
+  // Upper semicircle: 0° (left=18yo) → 180° (right=80yo) through the top
+  // toPos maps an age to a point on the arc
+  const toPos = (age: number) => {
+    const clamped = Math.max(MIN_AGE, Math.min(MAX_AGE, age))
+    const gaugeAngle = ((clamped - MIN_AGE) / (MAX_AGE - MIN_AGE)) * Math.PI
+    // x = cx - r*cos(gaugeAngle), y = cy - r*sin(gaugeAngle)
+    return {
+      x: cx - r * Math.cos(gaugeAngle),
+      y: cy - r * Math.sin(gaugeAngle),
+    }
   }
 
-  const needleFrac = pct(peaqAge)
-  const chronoPos  = pointOnArc(pct(chronoAge))
-  const startPos   = pointOnArc(0)
-  const needlePos  = pointOnArc(needleFrac)
-  const color      = BAND_COLORS[band] ?? "#fbbf24"
+  const gaugeAngle = ((Math.max(MIN_AGE, Math.min(MAX_AGE, peaqAge)) - MIN_AGE) / (MAX_AGE - MIN_AGE)) * Math.PI
+  const totalLength = r * Math.PI                          // semicircle arc length
+  const targetDashoffset = totalLength * (1 - gaugeAngle / Math.PI)
 
-  const arcPath = (frac: number) => {
-    const s = pointOnArc(0)
-    const e = pointOnArc(frac)
-    const angle = frac * sweep
-    const large = angle > Math.PI ? 1 : 0
-    return `M ${s.x} ${s.y} A ${r} ${r} 0 ${large} 0 ${e.x} ${e.y}`
-  }
+  const startPos  = { x: cx - r, y: cy }                  // left edge (18yo)
+  const endPos    = { x: cx + r, y: cy }                  // right edge (80yo)
+  const needlePos = toPos(peaqAge)
+  const chronoPos = toPos(chronoAge)
+  const color     = BAND_COLORS[band] ?? "#fbbf24"
+
+  // Full upper semicircle: M left A r r 0 0 1 right (clockwise → through top)
+  const fullArc = `M ${startPos.x} ${startPos.y} A ${r} ${r} 0 0 1 ${endPos.x} ${endPos.y}`
 
   const spline = "0.34 1.2 0.64 1"
-  const targetDashoffset = totalLength * (1 - needleFrac)
 
   return (
     <svg viewBox="0 0 400 220" style={{ width: "100%", maxWidth: 360, height: "auto" }}>
-      {/* Background arc */}
-      <path d={arcPath(1)} fill="none" stroke="rgba(250,250,248,0.06)" strokeWidth="6" strokeLinecap="round" />
-      {/* Filled arc — animated via stroke-dashoffset (Firefox-safe) */}
+      {/* Background arc — full semicircle */}
+      <path d={fullArc} fill="none" stroke="rgba(250,250,248,0.06)" strokeWidth="6" strokeLinecap="round" />
+      {/* Filled arc — animated via stroke-dashoffset */}
       <path
-        d={arcPath(1)}
+        d={fullArc}
         fill="none" stroke={color} strokeWidth="6" strokeLinecap="round"
         strokeDasharray={totalLength}
         strokeDashoffset={totalLength}
@@ -97,8 +95,8 @@ function Gauge({ peaqAge, chronoAge, band }: { peaqAge: number; chronoAge: numbe
         PEAQ AGE
       </text>
       {/* Min/max labels */}
-      <text x={pointOnArc(0).x - 5} y={pointOnArc(0).y + 16} textAnchor="middle" fontFamily={sans} fontSize="9" fill="rgba(250,250,248,0.2)">18</text>
-      <text x={pointOnArc(1).x + 5} y={pointOnArc(1).y + 16} textAnchor="middle" fontFamily={sans} fontSize="9" fill="rgba(250,250,248,0.2)">80</text>
+      <text x={startPos.x - 6} y={startPos.y + 4} textAnchor="end" fontFamily={sans} fontSize="9" fill="rgba(250,250,248,0.2)">18</text>
+      <text x={endPos.x + 6} y={endPos.y + 4} textAnchor="start" fontFamily={sans} fontSize="9" fill="rgba(250,250,248,0.2)">80</text>
     </svg>
   )
 }

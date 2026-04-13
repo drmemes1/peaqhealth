@@ -6,7 +6,7 @@ export default async function SettingsPage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   const [{ data: profile }, { data: wearableConns }] = await Promise.all([
-    supabase.from("profiles").select("first_name, last_name").eq("id", user!.id).single(),
+    supabase.from("profiles").select("first_name, last_name, date_of_birth").eq("id", user!.id).single(),
     supabase.from("wearable_connections_v2").select("provider,last_synced_at,needs_reconnect").eq("user_id", user!.id),
   ])
 
@@ -21,6 +21,7 @@ export default async function SettingsPage() {
       email={user!.email ?? ""}
       firstName={profile?.first_name ?? ""}
       lastName={profile?.last_name ?? ""}
+      dateOfBirth={(profile?.date_of_birth as string | null) ?? null}
       createdAt={user!.created_at}
       whoopConnected={!!whoopConn}
       whoopLastSynced={(whoopConn?.last_synced_at as string | null) ?? null}

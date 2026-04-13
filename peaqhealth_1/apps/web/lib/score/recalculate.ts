@@ -223,7 +223,7 @@ async function _recalculateScore(
   userId: string,
   supabase: SupabaseClient
 ): Promise<number> {
-  const [labsRes, oralRes, lifestyleRes, manualSleepRes, sleepNightsRes] = await Promise.all([
+  const [labsRes, oralRes, lifestyleRes, manualSleepRes, sleepNightsRes, profileRes] = await Promise.all([
     supabase.from("lab_results").select("*").eq("user_id", userId).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("oral_kit_orders").select("*").eq("user_id", userId).not("shannon_diversity", "is", null).order("ordered_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("lifestyle_records").select("*").eq("user_id", userId).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
@@ -234,12 +234,17 @@ async function _recalculateScore(
       .gt("sleep_efficiency", 0)
       .gte("date", (() => { const d = new Date(); d.setDate(d.getDate() - 30); return d.toISOString().slice(0, 10) })())
       .order("date", { ascending: false }),
+    supabase.from("profiles").select("date_of_birth").eq("id", userId).maybeSingle(),
   ])
 
-  // ── User age + sex from lifestyle ──────────────────────────────────────────
-  const userAge = ageRangeToMidpoint(lifestyleRes.data?.age_range as string | null)
+  // ── User age + sex ────────────────────────────────────────────────────────
+  // Prefer exact age from DOB; fall back to age_range bucket estimate
+  const dobStr = profileRes.data?.date_of_birth as string | null
+  const userAge = dobStr
+    ? Math.floor((Date.now() - new Date(dobStr).getTime()) / (365.25 * 86400000))
+    : ageRangeToMidpoint(lifestyleRes.data?.age_range as string | null)
   const rawSex = lifestyleRes.data?.biological_sex as string | null
-  const userSex: 'male' | 'female' = rawSex === 'female' ? 'female' : 'male' // default male for non-binary/unspecified
+  const userSex: 'male' | 'female' = rawSex === 'female' ? 'female' : 'male'
 
   // ── Sleep aggregation ──────────────────────────────────────────────────────
   let sleepInputs: SleepInputs | undefined
