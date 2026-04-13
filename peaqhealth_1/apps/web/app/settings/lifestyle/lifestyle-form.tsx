@@ -152,18 +152,14 @@ const QUESTIONS: QuestionDef[] = [
     ],
   },
   {
-    // Internal note: CPC (cetylpyridinium chloride), essential oils (thymol, eucalyptol,
-    // menthol), and other non-alcohol/non-chlorhexidine actives are not yet classified.
-    // Evidence for their effect on nitrate-reducing bacteria is insufficient. When data
-    // is available, add a separate classification tier. For now, only chlorhexidine and
-    // alcohol-containing formulations are flagged.
     key: "mouthwashType", dbKey: "mouthwash_type",
-    label: "Does your mouthwash contain chlorhexidine or alcohol?",
-    context: "Alcohol-free and fluoride-only rinses don't affect the bacteria we measure. If you're not sure, check for 'ethanol' or a % alcohol figure on the label.",
+    label: "Does your mouthwash contain any of these active ingredients?",
+    context: "If you see alcohol, chlorhexidine, thymol, eucalyptol, or menthol listed as Active Ingredients, select Yes.",
+    introBefore: "Check the back label under 'Active Ingredients'",
     type: "choice",
     options: [
-      { value: "antiseptic", label: "Yes — contains chlorhexidine or alcohol", sub: "e.g. Corsodyl / Peridex (chlorhexidine), Listerine Original, Cool Mint, Fresh Burst (alcohol)" },
-      { value: "fluoride",   label: "No — fluoride only, alcohol-free", sub: "e.g. ACT Anticavity Fluoride Rinse, Listerine Zero Alcohol, plain fluoride rinses" },
+      { value: "antiseptic", label: "Yes — alcohol, chlorhexidine, or essential oils (thymol, eucalyptol, menthol)", sub: "e.g. most Listerine products, Corsodyl, prescription rinses" },
+      { value: "fluoride",   label: "No — fluoride only, no antimicrobial agents", sub: "e.g. ACT Anticavity Fluoride Rinse" },
       { value: "none",       label: "I don't use mouthwash" },
       { value: "unknown",    label: "Not sure — I'll check the label" },
     ],
@@ -863,15 +859,9 @@ export function LifestyleForm({ existing }: Props) {
                         <div className="mt-3 flex items-start gap-2 p-3 rounded" style={{ background: "rgba(192,57,43,0.06)", border: "0.5px solid rgba(192,57,43,0.2)" }}>
                           <span style={{ color: "#C0392B", flexShrink: 0 }}>⚑</span>
                           <span className="font-body text-xs leading-relaxed" style={{ color: "#7f1d1d" }}>
-                            Chlorhexidine and alcohol-containing mouthwashes suppress the bacteria your body uses to produce nitric oxide, which regulates blood pressure and cardiovascular function. (Kapil et al., Lancet 2020)
+                            The active ingredients in your mouthwash kill the bacteria your body uses to produce nitric oxide, which helps regulate blood pressure and HRV. Switching to a fluoride-only rinse or no mouthwash is free and one of the fastest changes you can make.
                           </span>
                         </div>
-                      )}
-                      {/* Mouthwash subtext hint */}
-                      {q.key === "mouthwashType" && (
-                        <p className="font-body text-[10px] text-ink/30 leading-relaxed mt-2">
-                          Check the label: alcohol appears as &ldquo;ethanol&rdquo; or listed as a percentage (e.g. 21.6% alcohol).
-                        </p>
                       )}
                     </div>
                   ))}

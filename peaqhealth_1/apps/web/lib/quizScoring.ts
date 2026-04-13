@@ -69,8 +69,8 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   },
   {
     id: "mouthwash",
-    question: "Do you use antiseptic mouthwash (Listerine, Scope, or similar)?",
-    subtext: "Antiseptic mouthwash kills the nitrate-reducing bacteria that produce nitric oxide for blood pressure regulation \u2014 often without people realising it.",
+    question: "Does your mouthwash contain alcohol, chlorhexidine, or essential oils (thymol, eucalyptol, menthol)?",
+    subtext: "These active ingredients kill the bacteria your body uses to produce nitric oxide, which helps regulate blood pressure and HRV. Check the back label under 'Active Ingredients'.",
     options: [
       { label: "Daily", value: "mouthwash-daily", points: 2, tags: ["nitrateLow", "mouthwash"] },
       { label: "A few times a week", value: "mouthwash-sometimes", points: 1, tags: ["mouthwash"] },
@@ -248,7 +248,7 @@ function buildInsights(tags: string[]): Pick<QuizResult, "primaryInsight" | "sec
   } else if (hasAutoimmune) {
     primaryInsight = "Autoimmune conditions and periodontal disease share a biological pathway \u2014 and treating one may improve the other. RA patients are 4.68\u00d7 more likely to have periodontitis. P. gingivalis possesses an enzyme that citrullinates host proteins, potentially triggering the anti-citrullinated protein antibodies that are the hallmark biomarker of RA."
   } else if (hasNitrate) {
-    primaryInsight = "Your nitrate pathway may be compromised \u2014 and a daily habit could be the cause. The bacteria that convert dietary nitrate into nitric oxide \u2014 your blood vessels\u2019 primary vasodilator \u2014 are among the first casualties of antiseptic mouthwash. This is a vascular risk factor hiding in your bathroom cabinet."
+    primaryInsight = "Your nitrate pathway may be compromised \u2014 and a daily habit could be the cause. The bacteria that convert dietary nitrate into nitric oxide \u2014 your blood vessels\u2019 primary vasodilator \u2014 are killed by the active ingredients in many mouthwashes (alcohol, chlorhexidine, and essential oils like thymol). Switching to a fluoride-only rinse is free and one of the fastest changes you can make."
   } else {
     primaryInsight = "Your answers suggest your oral microbiome may be under mild stress \u2014 not from a single dramatic signal, but from a combination of small gaps in the pathways that connect your mouth to your cardiovascular and sleep health."
   }

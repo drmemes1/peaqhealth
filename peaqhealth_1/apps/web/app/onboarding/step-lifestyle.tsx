@@ -150,12 +150,12 @@ const SECTIONS: SectionDef[] = [
       },
       {
         key: "mouthwashType",
-        label: "Does your mouthwash contain chlorhexidine or alcohol?",
+        label: "Does your mouthwash contain any of these active ingredients?",
         options: [
-          { value: "antiseptic", label: "Yes — chlorhexidine or alcohol" },
-          { value: "fluoride",   label: "No — fluoride only, alcohol-free" },
+          { value: "antiseptic", label: "Yes — alcohol, chlorhexidine, or essential oils" },
+          { value: "fluoride",   label: "No — fluoride only" },
           { value: "none",       label: "I don't use mouthwash" },
-          { value: "unknown",    label: "Not sure" },
+          { value: "unknown",    label: "Not sure — I'll check the label" },
         ],
       },
       {

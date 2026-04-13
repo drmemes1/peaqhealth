@@ -117,7 +117,7 @@ export const BACTERIA: BacteriaEntry[] = [
     ],
     whatToDo: [
       "Eat nitrate-rich leafy greens \u2014 spinach, arugula, beets",
-      "Avoid antiseptic mouthwash \u2014 it kills nitrate-reducing bacteria",
+      "Switch to a fluoride-only mouthwash \u2014 alcohol, chlorhexidine, and essential oils kill nitrate-reducing bacteria",
       "Don\u2019t smoke \u2014 tobacco disrupts oral nitrate metabolism",
     ],
   },
@@ -155,7 +155,7 @@ export const BACTERIA: BacteriaEntry[] = [
     ],
     whatToDo: [
       "Eat leafy greens and beets \u2014 they provide the nitrates Neisseria converts",
-      "Avoid chlorhexidine mouthwash \u2014 it decimates nitrate-reducing bacteria",
+      "Switch to fluoride-only mouthwash \u2014 alcohol, chlorhexidine, and essential oils decimate nitrate-reducing bacteria",
       "Exercise regularly \u2014 physical activity supports oral nitrate metabolism",
     ],
   },

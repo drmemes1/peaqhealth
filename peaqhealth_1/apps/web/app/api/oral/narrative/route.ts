@@ -193,9 +193,9 @@ If user is female: add one soft mention that HRV naturally dips in the second ha
 ─────────────────────────────────────────
 QUESTIONNAIRE MODIFIERS — check before writing
 ─────────────────────────────────────────
-IF antiseptic mouthwash flagged:
+IF antiseptic mouthwash flagged (alcohol, chlorhexidine, or essential oils):
   → Lead the narrative with this — it is the most likely root cause of low nitrate-reducing bacteria
-  → "The mouthwash you mentioned is very likely reducing the bacteria that make nitric oxide — this is a well-documented effect and entirely reversible."
+  → "The active ingredients in your mouthwash kill the bacteria your body uses to produce nitric oxide, which helps regulate blood pressure and HRV. Switching to a fluoride-only rinse or stopping mouthwash entirely is free and one of the fastest changes you can make."
 
 IF current smoker:
   → Acknowledge in watch_signal: "Smoking reduces nitric oxide-producing bacteria more than almost anything else — even small reductions in smoking make a meaningful difference here"
