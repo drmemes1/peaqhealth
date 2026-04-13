@@ -111,6 +111,16 @@ export interface Database {
           daytime_fatigue: string
           night_wakings: string
           sleep_medication: string
+          // V5 additions
+          hs_crp_available: boolean
+          vo2_source: string | null
+          vo2_manual: number | null
+          antibiotics_last_60d: boolean
+          antibiotics_last_90d: boolean
+          medications: string[] | null
+          eosinophil_history: boolean
+          oma_qc_pass: boolean | null
+          hs_crp_qc_pass: boolean | null
         }
         Insert: Omit<Database['public']['Tables']['lifestyle_records']['Row'], 'id' | 'answered_at'>
         Update: Partial<Database['public']['Tables']['lifestyle_records']['Insert']>
@@ -134,6 +144,21 @@ export interface Database {
           wearable_connection_id: string | null
           lifestyle_record_id: string | null
           lab_freshness: string
+          // Peaq Age V5 fields
+          peaq_age: number | null
+          pheno_age: number | null
+          oma_percentile: number | null
+          vo2_percentile: number | null
+          rhr_delta: number | null
+          sleep_dur_delta: number | null
+          sleep_reg_delta: number | null
+          cross_panel_i1: number | null
+          cross_panel_i2: number | null
+          cross_panel_i3: number | null
+          peaq_age_delta: number | null
+          peaq_age_band: string | null
+          score_version: string
+          peaq_age_breakdown: Record<string, unknown> | null
         }
         Insert: Omit<Database['public']['Tables']['score_snapshots']['Row'], 'id'>
         Update: Partial<Database['public']['Tables']['score_snapshots']['Insert']>

@@ -10,7 +10,9 @@
     "./flags": "./src/flags.ts",
     "./oral-parser": "./src/oral-parser.ts",
     "./oral-mock-data": "./src/oral-mock-data.ts",
-    "./oral-nhanes": "./src/oral-nhanes-scorer.ts"
+    "./oral-nhanes": "./src/oral-nhanes-scorer.ts",
+    "./peaq-age": "./src/peaqAge.ts",
+    "./oma": "./src/oma.ts"
   },
   "scripts": {
     "test": "node --import tsx src/engine.ts",

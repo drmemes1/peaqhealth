@@ -110,6 +110,7 @@ function parseWithRegexFallback(text: string): Record<string, unknown> {
     ["hemoglobin_gdL",      "hemoglobin", "hgb"],
     ["rdw_pct",             "rdw", "red cell distribution"],
     ["mcv_fL",              "mcv", "mean corpuscular volume"],
+    ["lymphs_pct",          "lymphocytes %", "lymphocyte %", "lymph %", "lymphocytes", "lymphs"],
     ["albumin_gdL",         "albumin, serum", "albumin"],
     ["bun_mgdL",            "bun", "urea nitrogen"],
     ["alkPhos_UL",          "alkaline phosphatase", "alk phos"],
