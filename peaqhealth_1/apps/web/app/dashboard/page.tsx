@@ -94,7 +94,10 @@ export default async function DashboardPage() {
   // 1. No snapshot at all (first load ever)
   // 2. score=0 but panel data exists (disconnect regression / cron race)
   // 3. v1 snapshot (no base_score column) — force v2 recalculation
-  // 4. Engine version < 8.0 — force recalculation with latest weights
+  // 4. Engine version check — accepts both legacy and V5 during transition.
+  // TODO 6c: After deploy is confirmed and at least one V5 snapshot exists in prod,
+  // change to: snapshot.engine_version !== "v5"
+  // This will force all remaining "8.1" users to recalculate with the V5 engine.
   const snapshotIsV1 = snapshot && !snapshot.base_score
   const snapshotIsOutdated = snapshot && snapshot.engine_version !== "8.1" && snapshot.engine_version !== "v5"
   const snapshotIsStaleZero = !snapshot || (Number(snapshot.score) === 0 && (!!lab || !!oral || !!lifestyle)) || snapshotIsV1 || snapshotIsOutdated

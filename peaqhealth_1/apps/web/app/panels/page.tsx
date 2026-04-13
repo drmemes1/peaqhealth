@@ -14,7 +14,7 @@ const PANELS = [
     href: "/dashboard/blood",
     description: "40+ biomarkers from your bloodwork: cardiovascular, metabolic, inflammatory, and organ function markers scored against clinical thresholds.",
     source: "LabCorp · Quest · Any standard lab",
-    score: "/ 40 pts",
+    score: "PhenoAge · 48%",
   },
   {
     key: "sleep",
@@ -26,7 +26,7 @@ const PANELS = [
     href: "/dashboard/sleep",
     description: "Nightly deep sleep, HRV, SpO₂, REM, and sleep efficiency, synced from your wearable and scored against age-adjusted clinical targets.",
     source: "WHOOP · Oura · Garmin",
-    score: "/ 30 pts",
+    score: "Duration + regularity · 9%",
   },
   {
     key: "oral",
@@ -38,7 +38,7 @@ const PANELS = [
     href: "/dashboard/oral",
     description: "DNA species-level sequencing of your oral microbiome: bacterial diversity, heart-healthy bacteria, gum health, and sleep-related bacteria.",
     source: "Zymo Research DNA sequencing",
-    score: "/ 30 pts",
+    score: "OMA · 22%",
   },
 ]
 
@@ -60,7 +60,7 @@ export default function PanelsPage() {
           fontSize: 14, color: "var(--ink-60)", lineHeight: 1.7,
           margin: "0 0 40px", maxWidth: 480,
         }}>
-          Your Peaq score is built from three biological panels. Each measures a different system. Together, they reveal what no single test can see.
+          Your Peaq Age is built from three biological panels. Each measures a different system. Together, they reveal what no single test can see.
         </p>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>

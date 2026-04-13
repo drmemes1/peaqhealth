@@ -918,7 +918,7 @@ export function TrendsClient() {
                       {fmt(data!.current?.sleep, 0)}
                     </p>
                     <p style={{ fontFamily: body, fontSize: 9, color: "var(--ink-30)", margin: "4px 0 0", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                      Sleep /30
+                      Sleep panel
                     </p>
                   </div>
                 </div>

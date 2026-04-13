@@ -1,7 +1,5 @@
 "use client";
 
-import { ScoreRing } from "./score-ring";
-
 interface Props {
   onNext: () => void;
 }
@@ -14,12 +12,16 @@ export function StepWelcome({ onNext }: Props) {
           Reach for the peaq.
         </h1>
         <p className="max-w-sm font-body text-base leading-relaxed text-ink/50">
-          We&apos;ll connect your wearable, upload blood labs, and score your
-          oral microbiome — then combine everything into one number.
+          We&apos;ll connect your wearable, upload blood labs, and sequence your
+          oral microbiome — then combine everything into your biological age.
         </p>
       </div>
 
-      <ScoreRing preview animate size={180} />
+      <div className="flex flex-col items-center gap-1">
+        <span style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 64, fontWeight: 300, color: "var(--ink)", lineHeight: 1, opacity: 0.15 }}>
+          Peaq Age
+        </span>
+      </div>
 
       <button
         onClick={onNext}

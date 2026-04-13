@@ -568,7 +568,7 @@ export function OralPanelClient({ oral, snapshot }: Props) {
           <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
             <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 36, fontWeight: 300, color: "var(--ink)", margin: 0 }}>Oral</h1>
             {oralSub !== undefined && (
-              <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink-30)" }}>{oralSub}/30 pts</span>
+              <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink-30)" }}>OMA panel</span>
             )}
           </div>
           <Link

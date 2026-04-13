@@ -1,3 +1,4 @@
+// LEGACY: Not imported anywhere. Remove after V5 migration confirmed.
 "use client"
 
 import {

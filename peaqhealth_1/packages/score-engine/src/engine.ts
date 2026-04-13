@@ -1,3 +1,6 @@
+// LEGACY: Used only for users without a V5 snapshot.
+// Remove after V5 migration is confirmed complete (all
+// users have score_version = 'v5' in score_snapshots).
 /**
  * Peaq Score Engine — v7.0
  *

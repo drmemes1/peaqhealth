@@ -396,7 +396,7 @@ export function BloodPanelClient({ lab, snapshot, history, ageRange, stressLevel
           <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
             <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 36, fontWeight: 300, color: "var(--ink)", margin: 0 }}>Blood</h1>
             {bloodScore !== undefined && (
-              <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink-30)" }}>{bloodScore}/33 pts</span>
+              <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink-30)" }}>PhenoAge panel</span>
             )}
           </div>
           <Link

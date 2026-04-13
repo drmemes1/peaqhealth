@@ -492,7 +492,7 @@ export function SleepPanelClient({ nights, snapshot, wearable }: Props) {
           <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
             <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 36, fontWeight: 300, color: "var(--ink)", margin: 0 }}>Sleep</h1>
             {sleepSub !== undefined && (
-              <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink-30)" }}>{sleepSub}/30 pts</span>
+              <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink-30)" }}>Sleep panel</span>
             )}
           </div>
           <Link
