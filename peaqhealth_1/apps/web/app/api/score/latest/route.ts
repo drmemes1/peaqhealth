@@ -7,7 +7,7 @@ export async function GET() {
 
   const { data } = await supabase
     .from("score_snapshots")
-    .select("score, sleep_sub, blood_sub, oral_sub, lifestyle_sub, sleep_source, calculated_at")
+    .select("score, sleep_sub, blood_sub, oral_sub, lifestyle_sub, sleep_source, calculated_at, peaq_age, peaq_age_delta, peaq_age_band, peaq_age_breakdown")
     .eq("user_id", user.id)
     .order("calculated_at", { ascending: false })
     .limit(1)

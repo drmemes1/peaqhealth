@@ -225,17 +225,12 @@ function StudyCard({
 export default function SciencePage() {
   /* scroll-reveal for all FadeUp elements handled inline */
 
-  const panelBars = [
-    { label: "Blood", pts: 40, color: "var(--blood-c)", pct: 40 },
-    { label: "Sleep", pts: 30, color: "var(--sleep-c)", pct: 30 },
-    { label: "Oral microbiome", pts: 30, color: "var(--oral-c)", pct: 30 },
-  ];
-
   const scoreCategories = [
-    { range: "85–100", label: "Optimal", desc: "All hallmarks well-controlled across panels." },
-    { range: "65–84", label: "Good", desc: "Strong baseline. Specific markers to watch." },
-    { range: "45–64", label: "Moderate", desc: "Multiple markers outside optimal range." },
-    { range: "0–44", label: "Attention", desc: "Several hallmarks flagged. Share with your clinician." },
+    { range: "delta > 5", label: "Exceptional", desc: "Biological age significantly younger than chronological." },
+    { range: "delta > 2", label: "Optimized", desc: "Strong multi-panel health. Active improvement visible." },
+    { range: "delta ±2", label: "On Pace", desc: "Aging at the expected rate. Specific markers to optimize." },
+    { range: "delta > -5", label: "Elevated", desc: "Biological age above chronological. Targeted interventions recommended." },
+    { range: "delta ≤ -5", label: "Accelerated", desc: "Multiple signals indicate accelerated aging. Share with your clinician." },
   ];
 
   const freshnessRows = [
@@ -394,59 +389,56 @@ export default function SciencePage() {
 
         <SectionDivider />
 
-        {/* ═══ SCORE ARCHITECTURE ═══ */}
+        {/* ═══ PEAQ AGE ARCHITECTURE ═══ */}
         <FadeUp>
-          <h2 style={sectionTitleStyle}>Score architecture</h2>
+          <h2 style={sectionTitleStyle}>Peaq Age architecture</h2>
         </FadeUp>
 
         <FadeUp delay={60}>
           <p style={{ ...bodyTextStyle, marginBottom: 32 }}>
-            The Peaq Score runs from 0 to 100. It is composed of three measured panels: Blood (40 pts), Sleep (30 pts), and Oral Microbiome (30 pts). These sum to a base score. Cross-panel modifiers then adjust the total up or down (capped at &minus;10 to +8) based on multi-panel signal combinations. Lifestyle data informs your insights but is not scored. Only objective, measured data contributes to your Peaq Score.
+            Peaq Age is a biological age in years, not a score out of 100. It combines six measured components: PhenoAge from blood biomarkers (49%), oral microbiome assessment (15%), VO&#x2082; max (13%), resting heart rate (11%), sleep duration (5%), and sleep regularity (4%). Cross-panel interaction terms contribute 3% when both blood and oral panels are available. When a component is missing, its weight redistributes proportionally to the remaining components.
           </p>
         </FadeUp>
 
-        {/* Architecture bars */}
+        {/* V5 weight table */}
         <FadeUp delay={120}>
           <div style={{ marginBottom: 12 }}>
-            {panelBars.map((b) => (
-              <div key={b.label} style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
-                <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "var(--ink-60)", width: 120, flexShrink: 0 }}>
+            {([
+              { label: "PhenoAge (blood)", pct: 49, color: "#C0392B", source: "Quest/LabCorp mandatory panel", evidence: "Levine 2018, n=11,432" },
+              { label: "OMA (oral microbiome)", pct: 15, color: "#2D6A4F", source: "Zymo 16S species-level", evidence: "Shen 2024, Mondal 2025" },
+              { label: "VO₂ max", pct: 13, color: "#4A7FB5", source: "Wearable / walking test", evidence: "Ross 2016, n=122,007" },
+              { label: "Resting HR", pct: 11, color: "#4A7FB5", source: "Wearable 30-night avg", evidence: "Aune 2017, n=1.2M" },
+              { label: "Sleep duration", pct: 5, color: "#4A7FB5", source: "Wearable 30-night avg", evidence: "Cappuccio 2010, n=1.3M" },
+              { label: "Sleep regularity", pct: 4, color: "#4A7FB5", source: "Wearable 30-night avg", evidence: "Cribb 2023, n=88,975" },
+              { label: "Cross-panel", pct: 3, color: "#B8860B", source: "Peaq proprietary", evidence: "I1/I2/I3 interaction terms" },
+            ] as const).map((b) => (
+              <div key={b.label} style={{ display: "flex", alignItems: "center", marginBottom: 8, gap: 8 }}>
+                <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "var(--ink-60)", width: 160, flexShrink: 0 }}>
                   {b.label}
                 </span>
                 <div style={{ flex: 1, height: 14, background: "var(--ink-06)", borderRadius: 2, overflow: "hidden" }}>
                   <div style={{ width: `${b.pct}%`, height: "100%", background: b.color, borderRadius: 2 }} />
                 </div>
-                <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "var(--ink-60)", width: 60, textAlign: "right", flexShrink: 0 }}>
-                  {b.pts} pts
+                <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "var(--ink-60)", width: 36, textAlign: "right", flexShrink: 0 }}>
+                  {b.pct}%
                 </span>
               </div>
             ))}
-            {/* Modifiers note */}
-            <div style={{ display: "flex", alignItems: "center", marginBottom: 8, opacity: 0.5 }}>
-              <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "var(--ink-60)", width: 120, flexShrink: 0 }}>
-                Cross-panel
-              </span>
-              <div style={{ flex: 1, height: 14, borderBottom: "1px dashed var(--ink-12)" }} />
-              <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "var(--ink-60)", width: 60, textAlign: "right", flexShrink: 0 }}>
-                &minus;10 / +8
-              </span>
-            </div>
-            {/* Total */}
-            <div style={{ display: "flex", alignItems: "center", borderTop: "0.5px solid var(--ink-12)", paddingTop: 8 }}>
-              <span style={{ fontFamily: "var(--font-body)", fontSize: 12, fontWeight: 600, color: "var(--ink)", width: 120, flexShrink: 0 }}>
-                Total
-              </span>
-              <div style={{ flex: 1 }} />
-              <span style={{ fontFamily: "var(--font-body)", fontSize: 12, fontWeight: 600, color: "var(--ink)", width: 60, textAlign: "right", flexShrink: 0 }}>
-                100 pts
-              </span>
-            </div>
           </div>
         </FadeUp>
 
         <FadeUp delay={140}>
+          <p style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", lineHeight: 1.5, marginBottom: 16 }}>
+            PhenoAge (Levine 2018) uses 9 blood biomarkers: albumin, creatinine, glucose, hs-CRP, lymphocyte %, MCV, RDW, ALP, and WBC. Standard CRP cannot substitute for hs-CRP. When hs-CRP is missing, PhenoAge returns null and its 49% weight redistributes to the other components.
+          </p>
+          <p style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", lineHeight: 1.5, marginBottom: 16 }}>
+            OMA (Oral Microbiome Assessment) is a composite percentile: 45% protective bacteria, 35% pathogen-inverted, 20% Shannon diversity, anchored against the NHANES 2009-2012 oral microbiome reference (n=9,660).
+          </p>
+          <p style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", lineHeight: 1.5, marginBottom: 16 }}>
+            Cross-panel interactions detect convergent signals across panels: I1 (Oral &times; Blood, &minus;0.3 yrs when Neisseria+Rothia &gt;5% AND hs-CRP &lt;1.0), I2 (Oral &times; Fitness, &minus;0.2 yrs when OMA &gt;70th pct AND RHR below expected), I3 (Blood &times; Sleep, &minus;0.2 yrs when hs-CRP &lt;1.0 AND sleep 7-8h AND bedtime SD &lt;30min). All three are favorable only. Cap: &plusmn;1.0 yr.
+          </p>
           <p style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", lineHeight: 1.5, marginBottom: 32 }}>
-            Cross-panel modifiers apply bonuses or penalties when signals from multiple panels compound. Penalties cap at &minus;10, bonuses at +8.
+            Band thresholds: delta &gt;5 = Exceptional, &gt;2 = Optimized, &plusmn;2 = On Pace, &gt;&minus;5 = Elevated, &le;&minus;5 = Accelerated.
           </p>
         </FadeUp>
 
@@ -512,13 +504,13 @@ export default function SciencePage() {
         {/* ═══ SLEEP PANEL ═══ */}
         <FadeUp>
           <h2 style={{ ...sectionTitleStyle, borderLeft: "3px solid var(--sleep-c)", paddingLeft: 16 }}>
-            Sleep &middot; 30 points
+            Sleep &middot; duration + regularity (9%)
           </h2>
         </FadeUp>
 
         <FadeUp delay={60}>
           <p style={{ ...bodyTextStyle, marginBottom: 16 }}>
-            Sleep carries 30 of the 100 points in the Peaq Score. Poor sleep quality is a systemic health signal. It drives inflammation, glucose dysregulation, immune suppression, and accelerated biological aging.
+            Sleep contributes 9% of Peaq Age through two components: duration (5%) and regularity (4%). Poor sleep quality is a systemic health signal. It drives inflammation, glucose dysregulation, immune suppression, and accelerated biological aging.
           </p>
           <p style={{ ...bodyTextStyle, marginBottom: 16 }}>
             Sleep data requires a connected wearable: Apple Watch, Oura, WHOOP, or Garmin. We use a 7-night minimum to avoid single-night noise. Deep sleep is weighted most heavily (8 pts) as the most clinically meaningful sleep quality indicator, followed by REM (7 pts), efficiency (6 pts), HRV (5 pts, age-adjusted), and SpO2 (4 pts).
@@ -587,7 +579,7 @@ export default function SciencePage() {
         {/* ═══ BLOOD PANEL ═══ */}
         <FadeUp>
           <h2 style={{ ...sectionTitleStyle, borderLeft: "3px solid var(--blood-c)", paddingLeft: 16 }}>
-            Blood &middot; 40 points
+            Blood &middot; PhenoAge (49%)
           </h2>
         </FadeUp>
 
@@ -686,7 +678,7 @@ export default function SciencePage() {
         {/* ═══ ORAL MICROBIOME PANEL ═══ */}
         <FadeUp>
           <h2 style={{ ...sectionTitleStyle, borderLeft: "3px solid var(--oral-c)", paddingLeft: 16 }}>
-            Oral microbiome &middot; 30 points
+            Oral microbiome &middot; OMA (15%)
           </h2>
         </FadeUp>
 

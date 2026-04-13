@@ -108,6 +108,7 @@ const C = {
 } as const
 
 const serif = "'Cormorant Garamond', Georgia, serif"
+const sans  = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 const body = "var(--font-body, 'Instrument Sans', sans-serif)"
 
 const card: React.CSSProperties = {
@@ -1000,7 +1001,7 @@ export function TrendsClient() {
             )}
 
             {/* ─── 6. SCORE HISTORY (open by default) ──────── */}
-            <CollapsibleSection title="Score history" defaultOpen={true}>
+            <CollapsibleSection title="Peaq Age history" defaultOpen={true}>
               <div style={{ marginBottom: 8 }}>
                 <div style={{ display: "flex", gap: 20, marginBottom: 12, flexWrap: "wrap" }}>
                   {[
@@ -1037,7 +1038,7 @@ export function TrendsClient() {
                       <ResponsiveContainer width="100%" height={180}>
                         <ComposedChart data={data!.snapshots.map(s => ({ ...s, label: fmtDate(s.date) }))} margin={{ top: 8, right: 16, left: -20, bottom: 0 }}>
                           <XAxis dataKey="label" tick={{ fontFamily: serif, fontSize: 12, fill: "var(--ink-40)" }} axisLine={false} tickLine={false} />
-                          <YAxis domain={[0, 100]} tick={{ fontFamily: serif, fontSize: 12, fill: "var(--ink-40)" }} axisLine={false} tickLine={false} tickCount={5} />
+                          <YAxis domain={["auto", "auto"]} tick={{ fontFamily: serif, fontSize: 12, fill: "var(--ink-40)" }} axisLine={false} tickLine={false} tickCount={5} label={{ value: "Biological age (yrs)", angle: -90, position: "insideLeft", style: { fontFamily: sans, fontSize: 9, fill: "var(--ink-30)", textAnchor: "middle" } }} />
                           <Tooltip content={<ScoreTooltip />} cursor={{ stroke: "var(--ink-12)", strokeWidth: 1 }} />
                           {data!.events.map((ev, i) => {
                             const evDate = fmtDate(ev.date)
