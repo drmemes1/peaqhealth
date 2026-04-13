@@ -137,6 +137,8 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
         .from("profiles")
         .update({ first_name: firstName, last_name: lastName, date_of_birth: dob || null })
         .eq("id", userId)
+      // Re-score so DOB feeds exact chronological age immediately
+      await fetch("/api/score/recalculate", { method: "POST" })
       setSaved(true)
       setTimeout(() => setSaved(false), 2500)
     } finally {
