@@ -233,7 +233,9 @@ RETEST THRESHOLDS:
 BANNED IN OUTPUT:
 - Never cite a raw percentage for periodontal burden or OSA-associated taxa
 - Use qualitative descriptors only: "within target", "mildly elevated", "elevated", "notably elevated"
-- Example: "your periodontal burden is notably elevated" NOT "your periodontal burden is 384.5%"`
+- Example: "your periodontal burden is notably elevated" NOT "your periodontal burden is 384.5%"
+
+Always express the score as 'Peaq Age' in years, not points or /100. A negative delta means younger (favorable). Components: PhenoAge 48%, OMA 22%, VO₂ 13%, RHR 11%, Sleep 9%, Cross-panel 3%.`
 
   const userPrompt = `Generate a weekly snapshot for week of ${weekStart}.
 

@@ -93,7 +93,9 @@ APPROVED BIOLOGICAL RELATIONSHIPS you may reference (frame as interesting patter
 PROHIBITED ASSOCIATIONS — never generate insights based on these:
 - Sleep stages and lipid levels (LDL, HDL, triglycerides, ApoB) — not established enough
 - Any connection described as "may suggest" or "could be linked" in a POSITIVE card
-- Oral microbiome and lipid markers directly`
+- Oral microbiome and lipid markers directly
+
+Always express the score as 'Peaq Age' in years, not points or /100. A negative delta means younger (favorable). Components: PhenoAge 48%, OMA 22%, VO₂ 13%, RHR 11%, Sleep 9%, Cross-panel 3%.`
 
 // burden is now simple sum of fractional abundances (0–1 scale)
 // 0.005 = 0.5%, 0.02 = 2%, 0.05 = 5%, 0.10 = 10%
@@ -195,7 +197,7 @@ export async function GET() {
   // ── Cross-panel modifiers ──────────────────────────────────────────────────
   const { data: latestSnapshot } = await svc
     .from("score_snapshots")
-    .select("score, base_score, modifier_total, modifiers_applied")
+    .select("score, base_score, modifier_total, modifiers_applied, peaq_age, peaq_age_delta, peaq_age_band, pheno_age, oma_percentile, vo2_percentile, cross_panel_i1, cross_panel_i2, cross_panel_i3")
     .eq("user_id", user.id)
     .order("calculated_at", { ascending: false })
     .limit(1)

@@ -208,5 +208,6 @@ ordered: attention first, then watch.
 Prioritise metrics where cross-panel signals are active —
 the oral-blood-sleep connections are what make Peaq different.
 Generate goodMetrics for all good/optimal metrics.
-Return only valid JSON matching the schema. No other text.`
+Return only valid JSON matching the schema. No other text.
+Express contributions as ±X years, not points. Order actions: (1) free/immediate first, (2) formula unlocks second (hs-CRP, VO₂), (3) clinical referrals third. Never recommend stopping a prescription medication — always say 'discuss with your doctor'.`
 }

@@ -237,7 +237,8 @@ Examples:
 - "Some bacteria linked to gum sensitivity are present — daily flossing or a water flosser targets exactly this"
 - "Your nitric oxide bacteria are on the lower side — leafy greens or beetroot a few times a week directly feeds these"
 
-OUTPUT — valid JSON only, no markdown, no preamble, no backticks.`
+OUTPUT — valid JSON only, no markdown, no preamble, no backticks.
+Always express the score as 'Peaq Age' in years, not points or /100. A negative delta means younger (favorable). Components: PhenoAge 48%, OMA 22%, VO₂ 13%, RHR 11%, Sleep 9%, Cross-panel 3%.`
 
   const nitrateStr = nitrateRaw != null ? `${nitrateRaw.toFixed(1)}% (target ≥20%)` : "not available"
   const periodontalStr = burdenLevel(periodontalRaw)
@@ -259,6 +260,7 @@ ORAL DATA:
 - OSA-associated taxa (Prevotella + Fusobacterium composite): ${osaStr}
 ${pGingivalisRaw != null ? `- P. gingivalis: ${pGingivalisRaw.toFixed(2)}% (target <0.1%)` : ""}
 ${mouthwashDetected ? "- Antiseptic mouthwash detected" : ""}
+Mouthwash status: ${mouthwashDetected ? 'antiseptic detected in sample' : 'not detected'}. If antiseptic, reference Kapil 2020 when discussing oral-cardiovascular connection.
 
 CROSS-PANEL CONTEXT:
 - Recent HRV (7-day avg): ${hrvStr}

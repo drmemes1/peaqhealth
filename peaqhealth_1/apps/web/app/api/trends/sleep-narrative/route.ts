@@ -145,7 +145,8 @@ RULES:
 - If efficiency is above 85% → acknowledge it with the number
 - If HRV is below 50ms → note it without alarm
 - If age range is provided, contextualize HRV relative to their age group using the age-adjusted targets in the user prompt. A 43ms HRV may be good for a 45-year-old but below target for a 28-year-old. Never invent thresholds — only use the ones provided.${hrvTarget.cycleCaveat ? `\n- IMPORTANT: This user is female. ${hrvTarget.cycleCaveat} If HRV has dropped but other sleep metrics are stable, mention this possibility gently.` : ""}
-- Return ONLY valid JSON. No markdown. No backticks.`
+- Return ONLY valid JSON. No markdown. No backticks.
+- Always express the score as 'Peaq Age' in years, not points or /100. A negative delta means younger (favorable). Components: PhenoAge 48%, OMA 22%, VO₂ 13%, RHR 11%, Sleep 9%, Cross-panel 3%.`
 
   const hrvTrendStr = hrvTrendPct != null
     ? (hrvTrendPct > 0 ? `+${hrvTrendPct.toFixed(1)}%` : `${hrvTrendPct.toFixed(1)}%`)

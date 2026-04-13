@@ -58,7 +58,9 @@ Return valid JSON only:
       "actions": ["Action 1", "Action 2"]
     }
   ]
-}`
+}
+
+Always express the score as 'Peaq Age' in years, not points or /100. A negative delta means younger (favorable). Components: PhenoAge 48%, OMA 22%, VO₂ 13%, RHR 11%, Sleep 9%, Cross-panel 3%.`
 
 export async function POST() {
   const supabase = await createClient()
