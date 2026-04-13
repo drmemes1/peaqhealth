@@ -491,7 +491,7 @@ export function StepLifestyle({ onComplete }: Props) {
             Lifestyle profile complete
           </h2>
           <p className="mt-3 font-body text-sm leading-relaxed text-ink/50 max-w-sm mx-auto">
-            Your lifestyle score is now active. Connect a wearable, upload labs, or order an oral kit to unlock your full Peaq score.
+            Your lifestyle score is now active. Connect a wearable, upload labs, or order an oral kit to unlock your full Peaq Age.
           </p>
         </div>
 

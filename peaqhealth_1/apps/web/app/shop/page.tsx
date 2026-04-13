@@ -478,7 +478,7 @@ export default function ShopPage() {
           className="font-body text-sm mt-2 fade-up"
           style={{ color: "var(--ink-60)", animationDelay: "160ms" }}
         >
-          Every product is selected for its measurable impact on your Peaq score.
+          Every product is selected for its measurable impact on your Peaq Age.
           All CTAs capture email. Checkout coming soon.
         </p>
         <div

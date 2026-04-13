@@ -244,14 +244,14 @@ export default function SciencePage() {
     "\u201ChsCRP below 0.5 mg/L is associated with lower cardiovascular risk in population studies.\u201D",
     "\u201CPeriodontal pathogens have been directly detected in coronary plaques in autopsy studies.\u201D",
     "\u201COSA patients are 2.46\u00d7 more likely to have periodontitis across meta-analyses of 88,000+ patients.\u201D (Portelli et al., 2024; Zhu et al., 2023)",
-    "\u201CYour Peaq Score reflects the current state of evidence on these markers.\u201D",
+    "\u201CYour Peaq Age reflects the current state of evidence on these markers.\u201D",
   ];
 
   const dontSay = [
-    "\u201CYour Peaq Score predicts your risk of any specific disease or outcome.\u201D",
-    "\u201CImproving your Peaq Score will extend your life.\u201D",
-    "\u201CThe Peaq Score is a validated clinical diagnostic tool.\u201D",
-    "\u201CYou should make medical decisions based on your Peaq Score without consulting a doctor.\u201D",
+    "\u201CYour Peaq Age predicts your risk of any specific disease or outcome.\u201D",
+    "\u201CImproving your Peaq Age will extend your life.\u201D",
+    "\u201CThe Peaq Age is a validated clinical diagnostic tool.\u201D",
+    "\u201CYou should make medical decisions based on your Peaq Age without consulting a doctor.\u201D",
   ];
 
   return (
@@ -298,7 +298,7 @@ export default function SciencePage() {
 
         <FadeUp delay={160}>
           <p style={{ fontFamily: "var(--font-body)", fontSize: 14, color: "var(--ink-60)", maxWidth: 540, lineHeight: 1.7, marginBottom: 0 }}>
-            Every marker, target, and interaction in the Peaq Score maps to peer-reviewed research.
+            Every marker, target, and interaction in the Peaq Age maps to peer-reviewed research.
             We cite every study. Here is exactly how the score works and why each marker was chosen.
           </p>
         </FadeUp>
@@ -328,7 +328,7 @@ export default function SciencePage() {
               A 2026 analysis by Adibi et al. (<em>npj Digital Medicine</em>) examined whether composite multi-domain biomarker scoring, combining sleep physiology, cardiometabolic blood markers, oral microbiome composition, and lifestyle behaviors, demonstrated significantly stronger predictive validity for health outcomes than single-domain approaches.<Cite n={29} />
             </p>
             <p style={{ marginBottom: 16 }}>
-              The study found that integration across these four domains improved outcome prediction beyond any single panel alone. This supports the fundamental design choice of the Peaq Score: that health is measured in dimensions, not a single number from one test.
+              The study found that integration across these four domains improved outcome prediction beyond any single panel alone. This supports the fundamental design choice of the Peaq Age: that health is measured in dimensions, not a single number from one test.
             </p>
           </div>
         </FadeUp>
@@ -348,7 +348,7 @@ export default function SciencePage() {
 
         {/* ═══ THE VALIDATION QUESTION ═══ */}
         <FadeUp>
-          <h2 style={sectionTitleStyle}>Is the Peaq Score validated?</h2>
+          <h2 style={sectionTitleStyle}>Is the Peaq Age validated?</h2>
         </FadeUp>
 
         <FadeUp delay={60}>
@@ -363,10 +363,10 @@ export default function SciencePage() {
               Peaq shows its work.
             </p>
             <p style={{ marginBottom: 16 }}>
-              Every component of the Peaq Score maps directly to peer-reviewed research. We cite the study, the sample size, and the effect size. When we say hsCRP below 0.5 mg/L is associated with lower cardiovascular risk, we link to the study that shows it. When we say periodontal pathogens are found in coronary plaques, we cite <em>Frontiers in Immunology</em> 2023, n=1,791.
+              Every component of the Peaq Age maps directly to peer-reviewed research. We cite the study, the sample size, and the effect size. When we say hsCRP below 0.5 mg/L is associated with lower cardiovascular risk, we link to the study that shows it. When we say periodontal pathogens are found in coronary plaques, we cite <em>Frontiers in Immunology</em> 2023, n=1,791.
             </p>
             <p>
-              The Peaq Score is not a clinical diagnostic tool. It tracks the markers that matter most, built on the same evidence your doctor uses, made readable for daily life.
+              The Peaq Age is not a clinical diagnostic tool. It tracks the markers that matter most, built on the same evidence your doctor uses, made readable for daily life.
             </p>
           </div>
         </FadeUp>
@@ -848,7 +848,7 @@ export default function SciencePage() {
 
         <FadeUp delay={60}>
           <p style={{ ...bodyTextStyle, marginBottom: 16 }}>
-            Lifestyle data is no longer scored numerically. Your Peaq Score is based entirely on objective, measured data: blood labs, wearable sleep data, and oral microbiome sequencing. Lifestyle information (exercise, diet, oral hygiene, smoking, stress) informs your insights and cross-panel analysis but does not contribute points to your total score.
+            Lifestyle data is no longer scored numerically. Your Peaq Age is based entirely on objective, measured data: blood labs, wearable sleep data, and oral microbiome sequencing. Lifestyle information (exercise, diet, oral hygiene, smoking, stress) informs your insights and cross-panel analysis but does not contribute points to your total score.
           </p>
           <p style={{ ...bodyTextStyle, marginBottom: 32 }}>
             This design choice reflects a core principle: self-reported behaviours are valuable context, but measured biomarkers are more reliable for scoring. Lifestyle context helps us generate more personalised insights, connecting your habits to your numbers, without inflating your score based on questionnaire answers.
@@ -1085,7 +1085,7 @@ export default function SciencePage() {
               margin: "0 auto",
             }}
           >
-            Peaq Health is not a medical device. The Peaq Score is for informational purposes only and does not constitute medical advice, diagnosis, or treatment. Always consult a licensed healthcare provider regarding your health. Score engine version 8.1 &middot; Last updated March 2026.
+            Peaq Health is not a medical device. The Peaq Age is for informational purposes only and does not constitute medical advice, diagnosis, or treatment. Always consult a licensed healthcare provider regarding your health. Score engine version 8.1 &middot; Last updated March 2026.
           </p>
         </FadeUp>
       </main>

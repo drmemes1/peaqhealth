@@ -425,7 +425,7 @@ export default function AdminOralResultsPage() {
               Results saved.
             </p>
             <p style={{ fontFamily: "var(--font-body, sans-serif)", fontSize: 13, color: "#1e7e34", margin: "4px 0 0", opacity: 0.8 }}>
-              Kit {kitCode.toUpperCase()} has been scored and the user's peaq score recalculated.
+              Kit {kitCode.toUpperCase()} has been scored and the user's Peaq Age recalculated.
             </p>
           </div>
         )}

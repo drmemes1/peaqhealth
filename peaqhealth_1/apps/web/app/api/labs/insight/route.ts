@@ -355,7 +355,7 @@ ${modifiersApplied.length > 0
 
 Base score: ${latestSnapshot?.base_score ?? 'unknown'}
 Modifier total: ${latestSnapshot?.modifier_total ?? 0}
-Final Peaq score: ${latestSnapshot?.score ?? 'unknown'}
+Final Peaq Age: ${latestSnapshot?.score ?? 'unknown'}
 
 When generating insights, prioritize explaining any active modifiers first. Each active modifier represents a clinically meaningful interaction between panels that the user needs to understand. Frame modifier explanations as actionable insights — what the interaction means biologically and what the user can do about it.
 

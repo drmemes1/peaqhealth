@@ -657,7 +657,7 @@ export function LifestyleForm({ existing }: Props) {
             Health baseline
           </h1>
           <p className="mt-2 font-body text-sm text-ink/50 leading-relaxed">
-            Clinical questionnaire used to calibrate your Peaq score. Lifestyle contributes up to{" "}
+            Clinical questionnaire used to calibrate your Peaq Age. Lifestyle contributes up to{" "}
             <span className="text-ink/70">13 points</span>. Takes about 3 minutes.
           </p>
           <div className="mt-4 flex items-center gap-3">

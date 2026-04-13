@@ -332,9 +332,9 @@ function drawCoverPage(doc: InstanceType<typeof PDFDocument>, data: ReportData, 
   const pad = 18
   let curY = scoreBlockY + pad
 
-  // Peaq Score label
+  // Peaq Age label
   doc.font("Helvetica").fontSize(8).fillColor(INK_40)
-  doc.text("PEAQ SCORE", MARGIN + pad, curY, { characterSpacing: 1.5 })
+  doc.text("PEAQ AGE", MARGIN + pad, curY, { characterSpacing: 1.5 })
   curY += 14
   // Big score number
   doc.font("Helvetica-Bold").fontSize(52).fillColor(INK)

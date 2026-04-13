@@ -207,7 +207,7 @@ function getMeasureCopy(tags: string[]): { h2: string; body: string } {
   }
   return {
     h2: "One score. Three panels. The connections between them.",
-    body: "Oral microbiome sequencing at species-level resolution, 40+ blood biomarkers from any lab, and nightly sleep data from your wearable, unified into a single Peaq score that recalculates as your data updates.",
+    body: "Oral microbiome sequencing at species-level resolution, 40+ blood biomarkers from any lab, and nightly sleep data from your wearable, unified into a single Peaq Age that recalculates as your data updates.",
   }
 }
 
@@ -372,7 +372,7 @@ export function renderQuizConfirmationEmail(props: QuizEmailProps): string {
     </td></tr>
     <tr><td style="padding:12px 0;">
       <span style="font-family:Georgia,serif;font-size:12px;color:#C49A3C;">04</span>
-      <span style="font-family:Arial,sans-serif;font-size:13px;font-weight:500;color:#16150F;margin-left:12px;">Your Peaq score</span>
+      <span style="font-family:Arial,sans-serif;font-size:13px;font-weight:500;color:#16150F;margin-left:12px;">Your Peaq Age</span>
       <p style="font-family:Arial,sans-serif;font-size:12px;color:#999999;line-height:1.5;margin:4px 0 0 28px;">A single number from 0&ndash;100. With the cross-panel signals your doctors aren&rsquo;t seeing.</p>
     </td></tr>
   </table>

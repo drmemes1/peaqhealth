@@ -558,7 +558,7 @@ export default function Home() {
                   color: INK,
                   margin: "0 0 6px",
                 }}>
-                  Get your Peaq score
+                  Get your Peaq Age
                 </p>
                 <p style={{
                   fontFamily: sans,
@@ -767,7 +767,7 @@ export default function Home() {
                 <li>Your oral microbiome correlates with systemic inflammation</li>
                 <li>Periodontal pathogens are associated with elevated ASCVD risk</li>
                 <li>Sleep disruption and CRP share a bidirectional relationship</li>
-                <li>Your Peaq score tracks multi-system health signals over time</li>
+                <li>Your Peaq Age tracks multi-system health signals over time</li>
               </ul>
             </div>
 

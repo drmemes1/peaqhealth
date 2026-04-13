@@ -186,7 +186,7 @@ export function CrossPanelClient({ snapshot }: { snapshot: Record<string, unknow
           padding: 24,
         }}>
           <p style={{ fontFamily: "var(--font-body)", fontSize: 14, color: "var(--ink-60)", lineHeight: 1.7, margin: "0 0 16px" }}>
-            Without cross-panel modifiers your base score would be {baseScore}. The {modifierTotal >= 0 ? "+" : ""}{modifierTotal} net effect brings your Peaq score to {score}. {modifiers.find(m => m.id === "triple_cardio_risk") ? "Improving the Triple cardiovascular signal alone would recover up to 5 points." : ""}
+            Without cross-panel modifiers your base score would be {baseScore}. The {modifierTotal >= 0 ? "+" : ""}{modifierTotal} net effect brings your Peaq Age to {score}. {modifiers.find(m => m.id === "triple_cardio_risk") ? "Improving the Triple cardiovascular signal alone would recover up to 5 points." : ""}
           </p>
           <Link href="/dashboard" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--color-accent-gold, #C49A3C)", textDecoration: "none" }}>
             View your full score breakdown →

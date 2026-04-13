@@ -26,7 +26,7 @@ const sections = [
   {
     title: "How it's used",
     body: [
-      "Your health data is used exclusively to calculate your Peaq score, generate your personalized dashboard, and produce AI-generated insights tailored to your data.",
+      "Your health data is used exclusively to calculate your Peaq Age, generate your personalized dashboard, and produce AI-generated insights tailored to your data.",
       "We do not use your health data to train AI models.",
       "We may use aggregated, de-identified statistics (e.g. 'average HRV across all users') internally to improve the scoring methodology. No individual can be identified from this data.",
       "We may send you transactional emails (score updates, kit shipping notifications) and, if you opt in, educational health content. You can unsubscribe at any time.",
@@ -133,7 +133,7 @@ export default function PrivacyPage() {
           <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
             {[
               "Your health data is yours. We never sell it.",
-              "It's used only to power your Peaq score and insights.",
+              "It's used only to power your Peaq Age and insights.",
               "AI models receive anonymized numbers — never your identity.",
               "You can export or delete everything, any time.",
               "We don't advertise to you based on your health data.",

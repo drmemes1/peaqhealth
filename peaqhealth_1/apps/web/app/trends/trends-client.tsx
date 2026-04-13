@@ -148,7 +148,7 @@ function getRetestRecommendation(daysSinceBlood: number | null, daysSinceOral: n
   const noOral  = daysSinceOral  === null
 
   if (noBlood && noOral) {
-    return "Upload your blood panel and order an oral kit to unlock your full Peaq score. For the most meaningful snapshot, consider doing both around the same time — blood and oral data taken together paint a much clearer picture of your cardiovascular and systemic health."
+    return "Upload your blood panel and order an oral kit to unlock your full Peaq Age. For the most meaningful snapshot, consider doing both around the same time — blood and oral data taken together paint a much clearer picture of your cardiovascular and systemic health."
   }
   if (!noBlood && noOral) {
     return "You have blood data but no oral microbiome results yet. Order an oral kit — when tested around the same time as your blood panel, the two together reveal cross-panel signals (like how your oral bacteria may be influencing your Lp(a) and hsCRP) that neither panel can show alone."
