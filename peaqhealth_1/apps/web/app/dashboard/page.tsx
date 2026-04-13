@@ -96,7 +96,7 @@ export default async function DashboardPage() {
   // 3. v1 snapshot (no base_score column) — force v2 recalculation
   // 4. Engine version < 8.0 — force recalculation with latest weights
   const snapshotIsV1 = snapshot && !snapshot.base_score
-  const snapshotIsOutdated = snapshot && snapshot.engine_version !== "8.1"
+  const snapshotIsOutdated = snapshot && snapshot.engine_version !== "8.1" && snapshot.engine_version !== "v5"
   const snapshotIsStaleZero = !snapshot || (Number(snapshot.score) === 0 && (!!lab || !!oral || !!lifestyle)) || snapshotIsV1 || snapshotIsOutdated
   if (snapshotIsV1) console.log("[dashboard] v1 snapshot detected — forcing v2 recalculation for:", user.id)
   if (snapshotIsOutdated) console.log("[dashboard] outdated engine version", snapshot?.engine_version, "— forcing recalculation for:", user.id)
@@ -290,6 +290,9 @@ export default async function DashboardPage() {
     oral:  snapshot && prevSnapshot.oral_sub  != null ? (snapshot.oral_sub  ?? 0) - (prevSnapshot.oral_sub  ?? 0) : null,
   } : undefined
 
+  // Extract Peaq Age V5 breakdown from snapshot (written by dual-write in recalculate.ts)
+  const peaqAgeBreakdown = snapshot?.peaq_age_breakdown as Record<string, unknown> | null
+
   return <DashboardClient
     {...props}
     labHistory={labHistoryRows ?? []}
@@ -297,5 +300,6 @@ export default async function DashboardPage() {
     firstName={(profile?.first_name as string | null) ?? undefined}
     latestSleepDate={latestSleepDate}
     trendDeltas={trendDeltas}
+    peaqAgeBreakdown={peaqAgeBreakdown}
   />
 }

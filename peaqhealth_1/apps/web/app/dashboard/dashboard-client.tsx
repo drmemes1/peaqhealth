@@ -7,6 +7,7 @@ import { type ScoreWheelProps } from "../components/score-wheel"
 import { PushNotificationPrompt } from "../components/push-notification-prompt"
 import { IOSInstallBanner } from "../components/ios-install-banner"
 import { PanelConvergence } from "../components/panel-convergence"
+import { PeaqAgeHero } from "../components/peaq-age-hero"
 import { RefreshCw } from "lucide-react"
 
 const serif = "'Cormorant Garamond', Georgia, serif"
@@ -265,8 +266,9 @@ export function DashboardClient(props: ScoreWheelProps & {
   firstName?: string;
   latestSleepDate?: string | null;
   trendDeltas?: { sleep: number | null; blood: number | null; oral: number | null };
+  peaqAgeBreakdown?: Record<string, unknown> | null;
 }) {
-  const { wearableNeedsReconnect = false, firstName, latestSleepDate, trendDeltas } = props
+  const { wearableNeedsReconnect = false, firstName, latestSleepDate, trendDeltas, peaqAgeBreakdown } = props
 
   // ── Insight data state ─────────────────────────────────────────────────────
   const [insights, setInsights] = useState<InsightData | null>(null)
@@ -330,7 +332,15 @@ export function DashboardClient(props: ScoreWheelProps & {
   const panelCount = [hasSleep, hasBlood, hasOral].filter(Boolean).length
 
   return (
-    <div className="min-h-svh" style={{ background: "#F6F4EF" }}>
+    <div className="min-h-svh" style={peaqAgeBreakdown ? {
+      background: "#141410",
+      // Card baseline CSS custom properties — all child panel components
+      // use var(--card-bg) etc. so they adapt to dark mode automatically.
+      "--card-bg":      "rgba(250,250,248,0.04)",
+      "--card-border":  "0.5px solid rgba(250,250,248,0.10)",
+      "--text-primary": "#FAFAF8",
+      "--text-muted":   "rgba(250,250,248,0.45)",
+    } as React.CSSProperties : { background: "#F6F4EF" }}>
       <Nav />
       <main className="mx-auto" style={{ maxWidth: 760, padding: "28px 24px 60px" }}>
 
@@ -446,12 +456,75 @@ export function DashboardClient(props: ScoreWheelProps & {
           </div>
         </div>
 
-        {/* ── CONVERGENCE GRAPHIC ──────────────────────────────────────────── */}
-        <div style={{ marginBottom: 12 }}>
-          <PanelConvergence
-            score={sleepHidden ? props.score - props.breakdown.sleepSub : props.score}
-            breakdown={props.breakdown}
-            sleepConnected={props.sleepConnected}
+        {/* ── PEAQ AGE HERO (V5) or LEGACY CONVERGENCE ──────────────────── */}
+        {peaqAgeBreakdown && typeof peaqAgeBreakdown.peaqAge === "number" ? (<>
+          <PeaqAgeHero
+            peaqAge={peaqAgeBreakdown.peaqAge as number}
+            chronoAge={peaqAgeBreakdown.chronoAge as number}
+            delta={peaqAgeBreakdown.delta as number}
+            band={(peaqAgeBreakdown.band as string) ?? "ON PACE"}
+            phenoAge={peaqAgeBreakdown.phenoAge as number | null}
+            firstName={firstName}
+            headline={insights?.headline_sub}
+          />
+
+          {/* ── WHAT'S WORKING FOR YOU (strengths from Peaq Age deltas) ──── */}
+          {(() => {
+            const b = peaqAgeBreakdown
+            const strengths: { label: string; detail: string; color: string }[] = []
+
+            if (typeof b.phenoDelta === "number" && b.phenoDelta < -1)
+              strengths.push({ label: "Metabolic health", detail: `PhenoAge ${(b.phenoAge as number)?.toFixed(1)} — ${Math.abs(b.phenoDelta as number).toFixed(1)} yrs younger than expected`, color: "#C0392B" })
+            if (typeof b.omaDelta === "number" && b.omaDelta < -0.5)
+              strengths.push({ label: "Oral microbiome", detail: `OMA ${(b.omaPct as number)?.toFixed(0)}th percentile — protective bacteria working for you`, color: "#2D6A4F" })
+            if (typeof b.vo2Delta === "number" && b.vo2Delta < -0.5)
+              strengths.push({ label: "Cardiorespiratory fitness", detail: `VO₂ max ${(b.vo2Pct as number)}th percentile for your age and sex`, color: "#4A7FB5" })
+            if (typeof b.rhrDelta === "number" && b.rhrDelta < -0.3)
+              strengths.push({ label: "Resting heart rate", detail: `RHR ${Math.abs(b.rhrDelta as number).toFixed(1)} yrs below expected — cardiovascular conditioning evident`, color: "#4A7FB5" })
+            if (typeof b.durDelta === "number" && b.durDelta === 0)
+              strengths.push({ label: "Sleep duration", detail: "7-8 hours — optimal range", color: "#4A7FB5" })
+            if (typeof b.regDelta === "number" && b.regDelta < 0)
+              strengths.push({ label: "Sleep regularity", detail: "Consistent bedtime — associated with lower mortality risk", color: "#4A7FB5" })
+
+            if (strengths.length === 0) return null
+
+            return (
+              <div style={{
+                background: "var(--card-bg, rgba(250,250,248,0.04))",
+                border: "var(--card-border, 0.5px solid rgba(250,250,248,0.10))",
+                borderRadius: 12, padding: "20px 22px", marginBottom: 24,
+              }}>
+                <span style={{
+                  fontFamily: sans, fontSize: 9, letterSpacing: "1.5px",
+                  textTransform: "uppercase", color: "var(--text-muted, rgba(250,250,248,0.45))",
+                  display: "block", marginBottom: 14,
+                }}>
+                  What&rsquo;s working for you
+                </span>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {strengths.map(s => (
+                    <div key={s.label} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.color, marginTop: 5, flexShrink: 0, opacity: 0.8 }} />
+                      <div>
+                        <span style={{ fontFamily: sans, fontSize: 13, fontWeight: 500, color: "var(--text-primary, #FAFAF8)", display: "block", lineHeight: 1.3 }}>
+                          {s.label}
+                        </span>
+                        <span style={{ fontFamily: sans, fontSize: 12, color: "var(--text-muted, rgba(250,250,248,0.45))", lineHeight: 1.4 }}>
+                          {s.detail}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          })()}
+        </>) : (
+          <div style={{ marginBottom: 12 }}>
+            <PanelConvergence
+              score={sleepHidden ? props.score - props.breakdown.sleepSub : props.score}
+              breakdown={props.breakdown}
+              sleepConnected={props.sleepConnected}
             oralActive={props.oralActive}
             hasBlood={hasBlood}
             wearableProvider={props.wearableProvider}
@@ -461,6 +534,7 @@ export function DashboardClient(props: ScoreWheelProps & {
             trendDeltas={trendDeltas}
           />
         </div>
+        )}
 
         {/* ── PANEL NAV ANCHORS ───────────────────────────────────────────── */}
         <div style={{
