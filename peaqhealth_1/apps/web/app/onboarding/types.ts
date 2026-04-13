@@ -76,6 +76,8 @@ export interface LifestyleAnswers {
   alcoholDrinks: string;
   // Stress
   stressLevel: string;
+  // V5
+  hsCrpAvailable: string;
 }
 
 export interface OnboardingData {
