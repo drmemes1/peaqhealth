@@ -114,11 +114,13 @@ Always express the result as "Peaq Age" in years. Never reference points or /100
 Components (approved weights):
 PhenoAge (48%): blood-derived biological age from 9 markers (Levine 2018)
 OMA (22%): oral microbiome assessment — 45% protective, 35% pathogen-inverted, 20% Shannon diversity
-VO₂ max (13%): cardiorespiratory fitness (FRIEND Registry)
+HRV (8%): pending — implementation after clinical advisory review
 RHR (11%): resting heart rate vs age/sex expected
 Sleep duration (5%): 7-8h optimal
 Sleep regularity (4%): bedtime consistency
 Cross-panel (3%): I1 Oral×Blood, I2 Oral×Fitness, I3 Blood×Sleep
+
+VO₂ max is informational only — do not reference it as a scored component. If VO₂ data is present, you may mention it as context but not as part of the Peaq Age calculation.
 
 Express panel contributions as "+X years" or "-X years" relative to chronological age.
 A negative delta means younger — this is favorable.`
@@ -203,7 +205,7 @@ async function buildUserContext(userId: string): Promise<string> {
     lines.push(`Cross-panel triggers: ${trigger}`)
     if (snap.peaq_age != null) {
       lines.push(`\nPEAQ AGE V5: ${snap.peaq_age} yrs (delta ${snap.peaq_age_delta}, band ${snap.peaq_age_band})`)
-      lines.push(`PhenoAge: ${snap.pheno_age ?? "pending"} | OMA: ${snap.oma_percentile}th | VO2: ${snap.vo2_percentile ?? "n/a"}th`)
+      lines.push(`PhenoAge: ${snap.pheno_age ?? "pending"} | OMA: ${snap.oma_percentile}th`)
       lines.push(`I1=${snap.cross_panel_i1} I2=${snap.cross_panel_i2} I3=${snap.cross_panel_i3}`)
     }
   }

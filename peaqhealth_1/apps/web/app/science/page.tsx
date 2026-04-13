@@ -396,7 +396,7 @@ export default function SciencePage() {
 
         <FadeUp delay={60}>
           <p style={{ ...bodyTextStyle, marginBottom: 32 }}>
-            Peaq Age is a biological age in years, not a score out of 100. It combines six measured components: PhenoAge from blood biomarkers (48%), oral microbiome assessment (22%), VO&#x2082; max (13%), resting heart rate (11%), sleep duration (5%), and sleep regularity (4%). Cross-panel interaction terms contribute 3% when both blood and oral panels are available. When a component is missing, its weight redistributes proportionally to the remaining components.
+            Peaq Age is a biological age in years, not a score out of 100. It combines six measured components: PhenoAge from blood biomarkers (48%), oral microbiome assessment (22%), resting heart rate (11%), HRV (8%, pending implementation), sleep duration (5%), and sleep regularity (4%). Cross-panel interaction terms contribute 3% when both blood and oral panels are available. When a component is missing, its weight redistributes proportionally to the remaining components.
           </p>
         </FadeUp>
 
@@ -406,7 +406,7 @@ export default function SciencePage() {
             {([
               { label: "PhenoAge (blood)", pct: 48, color: "#C0392B", source: "Quest/LabCorp mandatory panel", evidence: "Levine 2018, n=11,432" },
               { label: "OMA (oral microbiome)", pct: 22, color: "#2D6A4F", source: "Zymo 16S species-level", evidence: "Shen 2024, Mondal 2025" },
-              { label: "VO₂ max", pct: 13, color: "#4A7FB5", source: "Wearable / walking test", evidence: "Ross 2016, n=122,007" },
+              { label: "HRV (RMSSD)", pct: 8, color: "#4A7FB5", source: "Wearable overnight avg", evidence: "Shaffer & Ginsberg 2022, n=38,008" },
               { label: "Resting HR", pct: 11, color: "#4A7FB5", source: "Wearable 30-night avg", evidence: "Aune 2017, n=1.2M" },
               { label: "Sleep duration", pct: 5, color: "#4A7FB5", source: "Wearable 30-night avg", evidence: "Cappuccio 2010, n=1.3M" },
               { label: "Sleep regularity", pct: 4, color: "#4A7FB5", source: "Wearable 30-night avg", evidence: "Cribb 2023, n=88,975" },
@@ -437,8 +437,11 @@ export default function SciencePage() {
           <p style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", lineHeight: 1.5, marginBottom: 16 }}>
             Cross-panel interactions detect convergent signals across panels: I1 (Oral &times; Blood, &minus;0.3 yrs when Neisseria+Rothia &gt;5% AND hs-CRP &lt;1.0), I2 (Oral &times; Fitness, &minus;0.2 yrs when OMA &gt;70th pct AND RHR below expected), I3 (Blood &times; Sleep, &minus;0.2 yrs when hs-CRP &lt;1.0 AND sleep 7-8h AND bedtime SD &lt;30min). All three are favorable only. Cap: &plusmn;1.0 yr.
           </p>
-          <p style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", lineHeight: 1.5, marginBottom: 32 }}>
+          <p style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", lineHeight: 1.5, marginBottom: 16 }}>
             Band thresholds: delta &gt;5 = Exceptional, &gt;2 = Optimized, &plusmn;2 = On Pace, &gt;&minus;5 = Elevated, &le;&minus;5 = Accelerated.
+          </p>
+          <p style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", lineHeight: 1.5, marginBottom: 32, fontStyle: "italic" }}>
+            VO&#x2082; max is displayed as an informational metric on your dashboard. It will be re-introduced as a scored component when reliable API access becomes available across all wearable platforms.
           </p>
         </FadeUp>
 

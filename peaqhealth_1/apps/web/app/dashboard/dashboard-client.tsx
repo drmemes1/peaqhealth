@@ -587,14 +587,14 @@ export function DashboardClient(props: ScoreWheelProps & {
           {/* ── COMPONENT BREAKDOWN BAR ──────────────────────────────────── */}
           {(() => {
             const b = peaqAgeBreakdown
-            const components: { label: string; weight: number; delta: number; color: string }[] = [
+            const components: { label: string; weight: number; delta: number; color: string; info?: boolean }[] = [
               { label: "PhenoAge",  weight: (b.wP as number ?? 0), delta: (b.wP as number ?? 0) * (b.phenoDelta as number ?? 0), color: "#C0392B" },
               { label: "OMA",       weight: (b.wO as number ?? 0), delta: (b.wO as number ?? 0) * (b.omaDelta as number ?? 0),   color: "#2D6A4F" },
-              { label: "VO₂ max",   weight: (b.wV as number ?? 0), delta: (b.wV as number ?? 0) * (b.vo2Delta as number ?? 0),   color: "#4A7FB5" },
               { label: "RHR",       weight: (b.wR as number ?? 0), delta: (b.wR as number ?? 0) * (b.rhrDelta as number ?? 0),   color: "#4A7FB5" },
               { label: "Sleep",     weight: (b.wD as number ?? 0) + (b.wG as number ?? 0), delta: (b.wD as number ?? 0) * (b.durDelta as number ?? 0) + (b.wG as number ?? 0) * (b.regDelta as number ?? 0), color: "#4A7FB5" },
               { label: "Cross",     weight: (b.crossW as number ?? 0), delta: (b.crossW as number ?? 0) * (b.crossPanel as number ?? 0), color: "#B8860B" },
             ].filter(c => c.weight > 0)
+            components.push({ label: "VO₂ max", weight: 0, delta: 0, color: "rgba(250,250,248,0.15)", info: true })
             const maxAbsDelta = Math.max(...components.map(c => Math.abs(c.delta)), 0.1)
 
             return (
@@ -612,26 +612,30 @@ export function DashboardClient(props: ScoreWheelProps & {
                 </span>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   {components.map(c => (
-                    <div key={c.label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div key={c.label} style={{ display: "flex", alignItems: "center", gap: 8, opacity: c.info ? 0.35 : 1 }}>
                       <span style={{ fontFamily: sans, fontSize: 10, color: "var(--text-muted, rgba(250,250,248,0.45))", width: 60, textAlign: "right", flexShrink: 0 }}>
                         {c.label}
                       </span>
-                      <div style={{ flex: 1, height: 5, background: "rgba(250,250,248,0.04)", borderRadius: 3, position: "relative", overflow: "hidden" }}>
-                        <div style={{
-                          position: "absolute",
-                          top: 0, height: "100%", borderRadius: 3,
-                          left: c.delta < 0 ? `${50 - (Math.abs(c.delta) / maxAbsDelta) * 50}%` : "50%",
-                          width: `${(Math.abs(c.delta) / maxAbsDelta) * 50}%`,
-                          background: c.delta < 0 ? "#34d399" : c.delta > 0 ? "#f87171" : "rgba(250,250,248,0.1)",
-                          opacity: 0.7,
-                        }} />
-                        <div style={{ position: "absolute", left: "50%", top: 0, width: "1px", height: "100%", background: "rgba(250,250,248,0.12)" }} />
-                      </div>
-                      <span style={{ fontFamily: sans, fontSize: 10, width: 48, textAlign: "right", flexShrink: 0, color: c.delta < 0 ? "#34d399" : c.delta > 0 ? "#f87171" : "var(--text-muted, rgba(250,250,248,0.45))" }}>
-                        {c.delta < 0 ? "" : "+"}{c.delta.toFixed(2)}
+                      {c.info ? (
+                        <span style={{ flex: 1, fontFamily: sans, fontSize: 9, color: "var(--text-muted, rgba(250,250,248,0.35))", borderBottom: "1px dashed rgba(250,250,248,0.12)", lineHeight: "5px" }}>&nbsp;</span>
+                      ) : (
+                        <div style={{ flex: 1, height: 5, background: "rgba(250,250,248,0.04)", borderRadius: 3, position: "relative", overflow: "hidden" }}>
+                          <div style={{
+                            position: "absolute",
+                            top: 0, height: "100%", borderRadius: 3,
+                            left: c.delta < 0 ? `${50 - (Math.abs(c.delta) / maxAbsDelta) * 50}%` : "50%",
+                            width: `${(Math.abs(c.delta) / maxAbsDelta) * 50}%`,
+                            background: c.delta < 0 ? "#34d399" : c.delta > 0 ? "#f87171" : "rgba(250,250,248,0.1)",
+                            opacity: 0.7,
+                          }} />
+                          <div style={{ position: "absolute", left: "50%", top: 0, width: "1px", height: "100%", background: "rgba(250,250,248,0.12)" }} />
+                        </div>
+                      )}
+                      <span style={{ fontFamily: sans, fontSize: 10, width: 48, textAlign: "right", flexShrink: 0, color: c.info ? "var(--text-muted, rgba(250,250,248,0.3))" : c.delta < 0 ? "#34d399" : c.delta > 0 ? "#f87171" : "var(--text-muted, rgba(250,250,248,0.45))" }}>
+                        {c.info ? "info only" : `${c.delta < 0 ? "" : "+"}${c.delta.toFixed(2)}`}
                       </span>
                       <span style={{ fontFamily: sans, fontSize: 9, color: "var(--text-muted, rgba(250,250,248,0.45))", width: 28, textAlign: "right", flexShrink: 0 }}>
-                        {Math.round(c.weight * 100)}%
+                        {c.info ? "0%" : `${Math.round(c.weight * 100)}%`}
                       </span>
                     </div>
                   ))}
@@ -683,6 +687,43 @@ export function DashboardClient(props: ScoreWheelProps & {
                 ]}
               />
             )}
+          </div>
+
+          {/* ── CARDIORESPIRATORY FITNESS (informational — not in Peaq Age) ── */}
+          <div style={{
+            background: "var(--card-bg, rgba(250,250,248,0.04))",
+            border: "var(--card-border, 0.5px solid rgba(250,250,248,0.10))",
+            borderRadius: 12, padding: "16px 20px", marginBottom: 24,
+            borderLeft: "3px solid rgba(74,127,181,0.25)",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <span style={{
+                fontFamily: sans, fontSize: 9, letterSpacing: "1.5px",
+                textTransform: "uppercase", color: "var(--text-muted, rgba(250,250,248,0.45))",
+              }}>
+                Cardiorespiratory fitness
+              </span>
+              <span style={{
+                fontFamily: sans, fontSize: 8, letterSpacing: "1px",
+                textTransform: "uppercase", padding: "1px 6px",
+                borderRadius: 3, background: "rgba(250,250,248,0.06)",
+                color: "var(--text-muted, rgba(250,250,248,0.3))",
+              }}>
+                Informational
+              </span>
+            </div>
+            <p style={{
+              fontFamily: sans, fontSize: 11, color: "var(--text-muted, rgba(250,250,248,0.4))",
+              lineHeight: 1.5, margin: "0 0 8px",
+            }}>
+              VO&#x2082; max is displayed for context but not included in your Peaq Age calculation. It will be re-introduced as a scored component when reliable API access becomes available across wearable platforms.
+            </p>
+            <p style={{
+              fontFamily: sans, fontSize: 10, color: "var(--text-muted, rgba(250,250,248,0.3))",
+              lineHeight: 1.5, margin: 0,
+            }}>
+              To get an accurate reading: Oura, complete Cardio Capacity test. WHOOP and Apple Watch VO&#x2082; are not available via backend API.
+            </p>
           </div>
 
           {/* ── ACTION PLAN (ordered by impact × speed) ─────────────────── */}

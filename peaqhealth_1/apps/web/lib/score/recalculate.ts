@@ -482,7 +482,7 @@ async function _recalculateScore(
 
   // ── Log ────────────────────────────────────────────────────────────────────
   console.log(`[recalculate] user=${userId} blood=${bloodSub} sleep=${sleepSub} oral=${oralSub} base=${baseScore} modifiers=${modifierTotal} (${modifiers.map(m => m.id).join(", ")}) final=${finalScore}`)
-  console.log(`[peaq-age-v5] user=${userId.slice(0, 8)} peaqAge=${peaqAgeResult.peaqAge} pheno=${peaqAgeResult.phenoAge ?? "null"} oma=${peaqAgeResult.omaPct.toFixed(0)} vo2pct=${peaqAgeResult.vo2Pct} delta=${peaqAgeResult.delta} band=${peaqAgeResult.band} missing=[${peaqAgeResult.missingPhenoMarkers.join(",")}]`)
+  console.log(`[peaq-age-v5] user=${userId.slice(0, 8)} peaqAge=${peaqAgeResult.peaqAge} pheno=${peaqAgeResult.phenoAge ?? "null"} oma=${peaqAgeResult.omaPct.toFixed(0)} delta=${peaqAgeResult.delta} band=${peaqAgeResult.band} missing=[${peaqAgeResult.missingPhenoMarkers.join(",")}]`)
 
   // ── Save snapshot (dual-write: legacy v4 score + Peaq Age v5) ──────────────
   const { error: insertError } = await supabase.from("score_snapshots").insert({
@@ -550,7 +550,7 @@ interface PeaqAgeContext {
 }
 
 function computePeaqAgeFromContext(ctx: PeaqAgeContext): PeaqAgeResult {
-  const { userAge, userSex, labRow, bloodInputs, oralSnap, oralKit, lifestyle, sleepNights } = ctx
+  const { userAge, userSex, labRow, oralSnap, oralKit, sleepNights } = ctx
 
   // ── Bloodwork → PeaqBW (read directly from lab_results row for PhenoAge) ──
   let bw: PeaqBW | null = null
@@ -590,24 +590,16 @@ function computePeaqAgeFromContext(ctx: PeaqAgeContext): PeaqAgeResult {
     oma = { protective_pct: protPct, pathogen_inv_pct: pathInvPct, shannon_pct: shannonPct, neisseria_pct: neisseria }
   }
 
-  // ── Fitness → FitnessInputs ────────────────────────────────────────────
+  // ── Fitness → FitnessInputs (VO₂ removed from scored formula) ──────────
   const avgRHR = sleepNights.length > 0
     ? sleepNights.reduce((s, n) => s + (n.resting_heart_rate ?? 0), 0) /
       sleepNights.filter(n => n.resting_heart_rate != null && n.resting_heart_rate > 0).length || null
     : null
 
-  const exerciseLevel = lifestyle?.exercise_level as string | null
-  const vo2Manual = lifestyle?.vo2_manual as number | null
-  const vo2Source = lifestyle?.vo2_source as string | null
-
-  const activityMap: Record<string, "sedentary" | "moderate" | "active" | "very_active"> = {
-    sedentary: "sedentary", light: "moderate", moderate: "active", active: "very_active",
-  }
-
   const fitness = {
-    vo2max: vo2Manual,
-    vo2Source: (vo2Source === "manual" ? "manual" : vo2Source === "estimated" ? "estimated" : exerciseLevel ? "estimated" : null) as "manual" | "estimated" | null,
-    activityLevel: exerciseLevel ? (activityMap[exerciseLevel] ?? "moderate") : null,
+    vo2max: null,
+    vo2Source: null as "manual" | "estimated" | null,
+    activityLevel: null as "sedentary" | "moderate" | "active" | "very_active" | null,
     rhr: avgRHR != null && isFinite(avgRHR) ? Math.round(avgRHR) : null,
   }
 

@@ -238,7 +238,7 @@ Examples:
 - "Your nitric oxide bacteria are on the lower side — leafy greens or beetroot a few times a week directly feeds these"
 
 OUTPUT — valid JSON only, no markdown, no preamble, no backticks.
-Always express the score as 'Peaq Age' in years, not points or /100. A negative delta means younger (favorable). Components: PhenoAge 48%, OMA 22%, VO₂ 13%, RHR 11%, Sleep 9%, Cross-panel 3%.`
+Always express the score as 'Peaq Age' in years, not points or /100. A negative delta means younger (favorable). Components: PhenoAge 48%, OMA 22%, RHR 11%, HRV 8% (pending), Sleep 9%, Cross-panel 3%. VO₂ max is informational only — do not reference it as a scored component.`
 
   const nitrateStr = nitrateRaw != null ? `${nitrateRaw.toFixed(1)}% (target ≥20%)` : "not available"
   const periodontalStr = burdenLevel(periodontalRaw)

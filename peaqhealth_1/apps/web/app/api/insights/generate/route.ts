@@ -60,7 +60,7 @@ Return valid JSON only:
   ]
 }
 
-Always express the score as 'Peaq Age' in years, not points or /100. A negative delta means younger (favorable). Components: PhenoAge 48%, OMA 22%, VO₂ 13%, RHR 11%, Sleep 9%, Cross-panel 3%.`
+Always express the score as 'Peaq Age' in years, not points or /100. A negative delta means younger (favorable). Components: PhenoAge 48%, OMA 22%, RHR 11%, HRV 8% (pending), Sleep 9%, Cross-panel 3%. VO₂ max is informational only — do not reference it as a scored component.`
 
 export async function POST() {
   const supabase = await createClient()
@@ -166,7 +166,7 @@ export async function POST() {
   if (snapshot.peaq_age != null) {
     dataContext += `\n== PEAQ AGE V5 ==\n`
     dataContext += `Peaq Age: ${snapshot.peaq_age} yrs | Delta: ${snapshot.peaq_age_delta} | Band: ${snapshot.peaq_age_band}\n`
-    dataContext += `PhenoAge: ${snapshot.pheno_age ?? "pending"} | OMA: ${snapshot.oma_percentile}th pct | VO2: ${snapshot.vo2_percentile ?? "n/a"}th pct\n`
+    dataContext += `PhenoAge: ${snapshot.pheno_age ?? "pending"} | OMA: ${snapshot.oma_percentile}th pct\n`
     dataContext += `I1=${snapshot.cross_panel_i1} I2=${snapshot.cross_panel_i2} I3=${snapshot.cross_panel_i3}\n`
   }
 

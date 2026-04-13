@@ -58,9 +58,9 @@ const GABRIELLA_OMA = {
 }
 
 const GABRIELLA_FITNESS = {
-  vo2max: 36,
-  vo2Source: "manual" as const,
-  activityLevel: "active" as const,
+  vo2max: null,
+  vo2Source: null as "manual" | "estimated" | null,
+  activityLevel: null as "sedentary" | "moderate" | "active" | "very_active" | null,
   rhr: 62,
 }
 
@@ -148,7 +148,7 @@ test("Missing blood panel: pheno weight redistributes, crossW=0", () => {
   })
   assert.equal(result.wP, 0, "PhenoAge weight should be 0 when blood missing")
   assert.equal(result.crossW, 0, "Cross-panel weight should be 0 when blood missing")
-  const totalW = result.wO + result.wV + result.wR + result.wD + result.wG
+  const totalW = result.wO + result.wR + result.wD + result.wG
   approx(totalW, 1.0, 0.01)
 })
 
@@ -162,24 +162,11 @@ test("Missing OMA: oma weight redistributes, crossW=0", () => {
   })
   assert.equal(result.wO, 0, "OMA weight should be 0 when OMA missing")
   assert.equal(result.crossW, 0, "Cross-panel weight should be 0 when OMA missing")
-  const totalW = result.wP + result.wV + result.wR + result.wD + result.wG
+  const totalW = result.wP + result.wR + result.wD + result.wG
   approx(totalW, 1.0, 0.01)
 })
 
-test("Missing fitness: wV=0, wR=0, hasVO2=false always", () => {
-  const result = calcPeaqAge({
-    chronoAge: 32, sex: "female",
-    bloodwork: GABRIELLA_BW_WITH_CRP,
-    oma: GABRIELLA_OMA,
-    fitness: null,
-    sleep: GABRIELLA_SLEEP,
-  })
-  assert.equal(result.wV, 0)
-  assert.equal(result.wR, 0)
-  assert.equal(result.hasVO2, false)
-})
-
-test("All panels present: weights sum to ~1.0 (HRV redistributed, VO2=0)", () => {
+test("VO2 always excluded: wV=0, hasVO2=false, vo2Pct=null", () => {
   const result = calcPeaqAge({
     chronoAge: 32, sex: "female",
     bloodwork: GABRIELLA_BW_WITH_CRP,
@@ -187,12 +174,34 @@ test("All panels present: weights sum to ~1.0 (HRV redistributed, VO2=0)", () =>
     fitness: GABRIELLA_FITNESS,
     sleep: GABRIELLA_SLEEP,
   })
-  // wH=0 (hasHRV=false), wV=0 (VO2 removed) — both redistributed to other components
-  assert.equal(result.wV, 0)
-  assert.equal(result.wH, 0)
-  assert.equal(result.hasVO2, false)
-  assert.equal(result.hasHRV, false)
-  const totalW = result.wP + result.wO + result.wH + result.wV + result.wR + result.wD + result.wG + result.crossW
+  assert.equal(result.wV, 0, "VO2 weight should always be 0")
+  assert.equal(result.hasVO2, false, "hasVO2 should always be false")
+  assert.equal(result.vo2Pct, null, "vo2Pct should always be null")
+  assert.equal(result.vo2Delta, 0, "vo2Delta should always be 0")
+})
+
+test("HRV placeholder: hasHRV=false, wH=0, 8% redistributes to RHR and sleep", () => {
+  const result = calcPeaqAge({
+    chronoAge: 32, sex: "female",
+    bloodwork: GABRIELLA_BW_WITH_CRP,
+    oma: GABRIELLA_OMA,
+    fitness: GABRIELLA_FITNESS,
+    sleep: GABRIELLA_SLEEP,
+  })
+  assert.equal(result.hasHRV, false, "hasHRV should always be false for now")
+  assert.equal(result.wH, 0, "HRV weight should be 0 when hasHRV=false")
+  assert.ok(result.wR > 0.11, `RHR weight should be > 0.11 due to redistribution, got ${result.wR}`)
+})
+
+test("All present panels: weights sum to ~1.0 (without VO2 and HRV)", () => {
+  const result = calcPeaqAge({
+    chronoAge: 32, sex: "female",
+    bloodwork: GABRIELLA_BW_WITH_CRP,
+    oma: GABRIELLA_OMA,
+    fitness: GABRIELLA_FITNESS,
+    sleep: GABRIELLA_SLEEP,
+  })
+  const totalW = result.wP + result.wO + result.wR + result.wD + result.wG + result.crossW
   approx(totalW, 1.0, 0.01)
 })
 
@@ -226,7 +235,7 @@ test("I2 fires: OMA > 70th pct AND RHR < expectedRHR - 5", () => {
     chronoAge: 32, sex: "female",
     bloodwork: GABRIELLA_BW_WITH_CRP,
     oma,
-    fitness: { ...GABRIELLA_FITNESS, rhr: 60 }, // expected=71 for 32F, 60 < 66
+    fitness: { ...GABRIELLA_FITNESS, rhr: 60 },
     sleep: GABRIELLA_SLEEP,
   })
   assert.equal(result.i2, -0.2, `I2 should fire: got ${result.i2}`)
@@ -269,7 +278,7 @@ test("delta > 5 → EXCEPTIONAL", () => {
       hsCrpAvailable: true,
     },
     oma: { protective_pct: 90, pathogen_inv_pct: 90, shannon_pct: 85, neisseria_pct: 10 },
-    fitness: { vo2max: 55, vo2Source: "manual", activityLevel: "very_active", rhr: 52 },
+    fitness: { vo2max: null, vo2Source: null, activityLevel: null, rhr: 52 },
     sleep: { avgDurationHours: 7.5, bedtimeStdDevMinutes: 12 },
   })
   assert.ok(result.delta > 5, `Expected delta > 5 for EXCEPTIONAL, got ${result.delta}`)
@@ -281,7 +290,7 @@ test("delta ~0 → ON PACE", () => {
     chronoAge: 40, sex: "male",
     bloodwork: null,
     oma: { protective_pct: 50, pathogen_inv_pct: 50, shannon_pct: 50, neisseria_pct: 3 },
-    fitness: { vo2max: null, vo2Source: null, activityLevel: "moderate", rhr: 68 },
+    fitness: { vo2max: null, vo2Source: null, activityLevel: null, rhr: 68 },
     sleep: { avgDurationHours: 7.5, bedtimeStdDevMinutes: 25 },
   })
   assert.ok(result.delta >= -2 && result.delta <= 2, `Expected delta ±2, got ${result.delta}`)
@@ -297,49 +306,38 @@ test("delta < -5 → ACCELERATED", () => {
       hsCrpAvailable: true,
     },
     oma: { protective_pct: 10, pathogen_inv_pct: 15, shannon_pct: 12, neisseria_pct: 1 },
-    fitness: { vo2max: null, vo2Source: null, activityLevel: "sedentary", rhr: 85 },
+    fitness: { vo2max: null, vo2Source: null, activityLevel: null, rhr: 85 },
     sleep: { avgDurationHours: 5.5, bedtimeStdDevMinutes: 65 },
   })
   assert.ok(result.delta <= -5, `Expected delta ≤ -5 for ACCELERATED, got ${result.delta}`)
   assert.equal(result.band, "ACCELERATED")
 })
 
-console.log("\n── VO₂ removed / HRV redistribution ──")
+console.log("\n── VO₂ always removed ──")
 
-test("VO₂ always null and hasVO2 always false (removed from formula)", () => {
-  const withVo2 = calcPeaqAge({
+test("VO2 data ignored even if fitness has vo2max set", () => {
+  const result = calcPeaqAge({
     chronoAge: 35, sex: "male",
     bloodwork: null, oma: null,
     fitness: { vo2max: 55, vo2Source: "manual", activityLevel: "very_active", rhr: null },
     sleep: null,
   })
-  assert.equal(withVo2.vo2Pct, null)
-  assert.equal(withVo2.hasVO2, false)
-  assert.equal(withVo2.wV, 0)
-
-  const noVo2 = calcPeaqAge({
-    chronoAge: 35, sex: "male",
-    bloodwork: null, oma: null,
-    fitness: { vo2max: null, vo2Source: null, activityLevel: null, rhr: null },
-    sleep: null,
-  })
-  assert.equal(noVo2.vo2Pct, null)
-  assert.equal(noVo2.hasVO2, false)
-  assert.equal(noVo2.wV, 0)
+  assert.equal(result.vo2Pct, null, "vo2Pct should be null even with data present")
+  assert.equal(result.vo2Delta, 0, "vo2Delta should be 0")
+  assert.equal(result.hasVO2, false)
+  assert.equal(result.wV, 0)
 })
 
-test("hasHRV=false redistributes 8% to remaining components", () => {
-  // With RHR only (no blood, no OMA, no sleep)
+test("No fitness data at all: RHR and VO2 both absent", () => {
   const result = calcPeaqAge({
     chronoAge: 35, sex: "male",
     bloodwork: null, oma: null,
-    fitness: { vo2max: null, vo2Source: null, activityLevel: null, rhr: 65 },
+    fitness: null,
     sleep: null,
   })
-  assert.equal(result.hasHRV, false)
-  assert.equal(result.wH, 0)
-  // HRV's 8% redistributes to RHR — wR should scale up to account for all non-cross weight
-  approx(result.wR, 1.0, 0.01)
+  assert.equal(result.hasVO2, false)
+  assert.equal(result.wV, 0)
+  assert.equal(result.wR, 0)
 })
 
 console.log("\n── Gabriella scenarios ──")
@@ -356,6 +354,7 @@ test("Gabriella 32F no hs-CRP: peaqAge in sane range", () => {
     `Expected peaqAge 25-40, got ${result.peaqAge}`)
   assert.equal(result.phenoAge, null)
   console.log(`    → peaqAge=${result.peaqAge}, delta=${result.delta}, band=${result.band}`)
+  console.log(`    → weights: wP=${result.wP} wO=${result.wO} wR=${result.wR} wD=${result.wD} wG=${result.wG} crossW=${result.crossW}`)
 })
 
 test("Gabriella 32F with hs-CRP 1.5: peaqAge in sane range", () => {
@@ -370,6 +369,7 @@ test("Gabriella 32F with hs-CRP 1.5: peaqAge in sane range", () => {
     `Expected peaqAge 20-40, got ${result.peaqAge}`)
   assert.ok(result.phenoAge != null)
   console.log(`    → peaqAge=${result.peaqAge}, phenoAge=${result.phenoAge}, delta=${result.delta}, band=${result.band}`)
+  console.log(`    → weights: wP=${result.wP} wO=${result.wO} wR=${result.wR} wD=${result.wD} wG=${result.wG} crossW=${result.crossW}`)
 })
 
 // ── Summary ──────────────────────────────────────────────────────────────────

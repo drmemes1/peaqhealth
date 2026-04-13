@@ -95,7 +95,7 @@ PROHIBITED ASSOCIATIONS — never generate insights based on these:
 - Any connection described as "may suggest" or "could be linked" in a POSITIVE card
 - Oral microbiome and lipid markers directly
 
-Always express the score as 'Peaq Age' in years, not points or /100. A negative delta means younger (favorable). Components: PhenoAge 48%, OMA 22%, VO₂ 13%, RHR 11%, Sleep 9%, Cross-panel 3%.`
+Always express the score as 'Peaq Age' in years, not points or /100. A negative delta means younger (favorable). Components: PhenoAge 48%, OMA 22%, RHR 11%, HRV 8% (pending), Sleep 9%, Cross-panel 3%. VO₂ max is informational only — do not reference it as a scored component.`
 
 // burden is now simple sum of fractional abundances (0–1 scale)
 // 0.005 = 0.5%, 0.02 = 2%, 0.05 = 5%, 0.10 = 10%
