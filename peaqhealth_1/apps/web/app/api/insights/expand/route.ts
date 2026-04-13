@@ -39,7 +39,7 @@ export async function POST(req: Request) {
       },
       {
         role: "user",
-        content: `Insight: "${insight_title}" — ${insight_explanation}\nPanels: ${(panels ?? []).join(", ")}\nScore data: PRI ${snapshot?.score}, Sleep ${snapshot?.sleep_sub}/30, Blood ${snapshot?.blood_sub}/40, Oral ${snapshot?.oral_sub}/30, Modifier ${snapshot?.modifier_total}`,
+        content: `Insight: "${insight_title}" — ${insight_explanation}\nPanels: ${(panels ?? []).join(", ")}\nScore data: PRI ${snapshot?.score}, Sleep ${snapshot?.sleep_sub}/30, Blood ${snapshot?.blood_sub}/40, Oral ${snapshot?.oral_sub}/30, Modifier ${snapshot?.modifier_total}${snapshot?.peaq_age != null ? `\nPeaq Age: ${snapshot.peaq_age} yrs (delta ${snapshot.peaq_age_delta}, band ${snapshot.peaq_age_band}) | PhenoAge: ${snapshot.pheno_age ?? "pending"} | OMA: ${snapshot.oma_percentile}th | I1=${snapshot.cross_panel_i1} I2=${snapshot.cross_panel_i2} I3=${snapshot.cross_panel_i3}` : ""}`,
       },
     ],
   })

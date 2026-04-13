@@ -153,6 +153,20 @@ export interface GuidanceInput {
   oralMax: number
   oralMetrics: PanelMetric[]
   crossPanelSignals: CrossPanelSignal[]
+  // V5 Peaq Age context
+  peaqAge?: number
+  peaqAgeDelta?: number
+  peaqAgeBand?: string
+  phenoAge?: number | null
+  missingPhenoMarkers?: string[]
+  omaPct?: number
+  neisseriaPct?: number
+  i1?: number
+  i2?: number
+  i3?: number
+  hsCrpQcPass?: boolean
+  omaQcPass?: boolean
+  mouthwashType?: string
 }
 
 export function buildGuidancePrompt(input: GuidanceInput): string {
@@ -180,6 +194,13 @@ ${input.oralMetrics.map(formatMetric).join("\n")}
 
 ACTIVE CROSS-PANEL SIGNALS
 ${input.crossPanelSignals.length > 0 ? input.crossPanelSignals.map(formatSignal).join("\n") : "None active"}
+${input.peaqAge != null ? `
+PEAQ AGE V5
+Peaq Age: ${input.peaqAge} yrs · Delta: ${input.peaqAgeDelta} · Band: ${input.peaqAgeBand}
+PhenoAge: ${input.phenoAge ?? "pending"} · OMA: ${input.omaPct}th pct · Neisseria: ${input.neisseriaPct ?? "n/a"}%
+Interactions: I1=${input.i1} I2=${input.i2} I3=${input.i3}
+hs-CRP QC: ${input.hsCrpQcPass ? "pass" : "fail"} · OMA QC: ${input.omaQcPass ? "pass" : "fail"}
+Mouthwash: ${input.mouthwashType ?? "unknown"}` : ""}
 
 INSTRUCTIONS
 Generate one card for each metric with status attention or watch,

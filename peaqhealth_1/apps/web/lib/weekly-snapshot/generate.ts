@@ -34,7 +34,7 @@ export async function generateWeeklySnapshot(userId: string): Promise<Record<str
   ] = await Promise.all([
     supabase
       .from("score_snapshots")
-      .select("score, sleep_sub, blood_sub, oral_sub, lifestyle_sub, modifier_total, modifiers_applied, calculated_at")
+      .select("score, sleep_sub, blood_sub, oral_sub, lifestyle_sub, modifier_total, modifiers_applied, calculated_at, peaq_age, peaq_age_delta, peaq_age_band, pheno_age, oma_percentile, vo2_percentile, cross_panel_i1, cross_panel_i2, cross_panel_i3")
       .eq("user_id", userId)
       .order("calculated_at", { ascending: false })
       .limit(1)
@@ -250,6 +250,7 @@ Sleep: ${currentSnapshot?.sleep_sub ?? "no data"}/30
 Blood: ${currentSnapshot?.blood_sub ?? "no data"}/40
 Oral: ${currentSnapshot?.oral_sub ?? "no data"}/30
 Lifestyle: contextual only (not scored — informs insights)
+${currentSnapshot?.peaq_age != null ? `\nPEAQ AGE V5: ${currentSnapshot.peaq_age} yrs (delta ${currentSnapshot.peaq_age_delta}, band ${currentSnapshot.peaq_age_band})\nPhenoAge: ${currentSnapshot.pheno_age ?? "pending"} | OMA: ${currentSnapshot.oma_percentile}th | VO2: ${currentSnapshot.vo2_percentile ?? "n/a"}th\nI1=${currentSnapshot.cross_panel_i1} I2=${currentSnapshot.cross_panel_i2} I3=${currentSnapshot.cross_panel_i3}` : ""}
 
 PREVIOUS WEEK:
 Previous total score: ${prevWeekRow?.total_score ?? "no prior data"}

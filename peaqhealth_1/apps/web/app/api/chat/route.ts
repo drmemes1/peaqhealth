@@ -131,7 +131,7 @@ async function buildUserContext(userId: string): Promise<string> {
 
   const [snapshotRes, labRes, sleepRes, wearableRes, oralRes, lifestyleRes, historyRes] = await Promise.all([
     svc.from("score_snapshots")
-      .select("score, base_score, modifier_total, modifiers_applied, sleep_sub, blood_sub, oral_sub, calculated_at")
+      .select("score, base_score, modifier_total, modifiers_applied, sleep_sub, blood_sub, oral_sub, calculated_at, peaq_age, peaq_age_delta, peaq_age_band, pheno_age, oma_percentile, vo2_percentile, cross_panel_i1, cross_panel_i2, cross_panel_i3")
       .eq("user_id", userId)
       .order("calculated_at", { ascending: false })
       .limit(3),
@@ -182,6 +182,11 @@ async function buildUserContext(userId: string): Promise<string> {
     const trigger = modifiers.length > 0 ? modifiers.map(m => `${m.direction === "penalty" ? "-" : "+"}${m.points} ${m.label}`).join(", ") : "None"
     lines.push(`\nPRI: ${snap.score} (base ${snap.base_score}, cross-panel ${mod > 0 ? "+" : ""}${mod})`)
     lines.push(`Cross-panel triggers: ${trigger}`)
+    if (snap.peaq_age != null) {
+      lines.push(`\nPEAQ AGE V5: ${snap.peaq_age} yrs (delta ${snap.peaq_age_delta}, band ${snap.peaq_age_band})`)
+      lines.push(`PhenoAge: ${snap.pheno_age ?? "pending"} | OMA: ${snap.oma_percentile}th | VO2: ${snap.vo2_percentile ?? "n/a"}th`)
+      lines.push(`I1=${snap.cross_panel_i1} I2=${snap.cross_panel_i2} I3=${snap.cross_panel_i3}`)
+    }
   }
 
   // Sleep

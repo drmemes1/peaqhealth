@@ -161,6 +161,12 @@ export async function POST() {
   dataContext += `Blood: ${snapshot.blood_sub}/40\n`
   dataContext += `Oral: ${snapshot.oral_sub}/30\n`
   dataContext += `Cross-panel modifier: ${snapshot.modifier_total}\n`
+  if (snapshot.peaq_age != null) {
+    dataContext += `\n== PEAQ AGE V5 ==\n`
+    dataContext += `Peaq Age: ${snapshot.peaq_age} yrs | Delta: ${snapshot.peaq_age_delta} | Band: ${snapshot.peaq_age_band}\n`
+    dataContext += `PhenoAge: ${snapshot.pheno_age ?? "pending"} | OMA: ${snapshot.oma_percentile}th pct | VO2: ${snapshot.vo2_percentile ?? "n/a"}th pct\n`
+    dataContext += `I1=${snapshot.cross_panel_i1} I2=${snapshot.cross_panel_i2} I3=${snapshot.cross_panel_i3}\n`
+  }
 
   if (snapshot.modifiers_applied && Array.isArray(snapshot.modifiers_applied)) {
     dataContext += `\nModifiers:\n`
