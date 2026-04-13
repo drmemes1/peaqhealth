@@ -14,11 +14,11 @@ const PEAQ_STEPS   = [28, 30, 32, 35, 37, 36, 34, 33]
 const CHRONO_STEPS = [31, 32, 33, 32, 31, 32]
 
 const BAR_VARIANTS = [
-  { blood: "49%", oral: "15%", vo2: "13%", sleep: "20%", cp: "3%" },
-  { blood: "51%", oral: "14%", vo2: "12%", sleep: "20%", cp: "3%" },
-  { blood: "48%", oral: "16%", vo2: "13%", sleep: "20%", cp: "3%" },
-  { blood: "50%", oral: "15%", vo2: "13%", sleep: "19%", cp: "3%" },
-  { blood: "49%", oral: "15%", vo2: "14%", sleep: "19%", cp: "3%" },
+  { blood: "49%", oral: "15%", sleep: "33%", cp: "3%" },
+  { blood: "51%", oral: "14%", sleep: "32%", cp: "3%" },
+  { blood: "48%", oral: "16%", sleep: "33%", cp: "3%" },
+  { blood: "50%", oral: "15%", sleep: "32%", cp: "3%" },
+  { blood: "49%", oral: "15%", sleep: "33%", cp: "3%" },
 ]
 
 // ── Bar chart row ──────────────────────────────────────────────────────────
@@ -148,40 +148,48 @@ export function LandingPanelStrip({ wearableOff = false, onToggle }: { wearableO
                 </div>
               </div>
 
-              <div className="pf-rule" />
+              {/* Glowing interconnect: Sleep ── Blood ── Oral */}
+              <div className="pf-interconnect">
+                <svg width="100%" height="36" viewBox="0 0 480 36" preserveAspectRatio="xMidYMid meet" overflow="visible">
+                  <defs>
+                    <filter id="gl-s" x="-50%" y="-200%" width="200%" height="500%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                    <filter id="gl-o" x="-50%" y="-200%" width="200%" height="500%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                    <filter id="gl-r" x="-100%" y="-400%" width="300%" height="900%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                    <linearGradient id="gr-sb" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#4A7FB5" stopOpacity="0.8"/><stop offset="100%" stopColor="#C0392B" stopOpacity="0.8"/></linearGradient>
+                    <linearGradient id="gr-ob" x1="100%" y1="0%" x2="0%" y2="0%"><stop offset="0%" stopColor="#2D6A4F" stopOpacity="0.8"/><stop offset="100%" stopColor="#C0392B" stopOpacity="0.8"/></linearGradient>
+                  </defs>
+                  <line x1="40" y1="18" x2="440" y2="18" stroke="rgba(250,250,248,0.06)" strokeWidth="1"/>
+                  <line x1="40" y1="18" x2="240" y2="18" stroke="url(#gr-sb)" strokeWidth="1.5" opacity="0.8" strokeDasharray="4 5"><animate attributeName="stroke-dashoffset" from="0" to="-18" dur="2.2s" repeatCount="indefinite"/></line>
+                  <line x1="440" y1="18" x2="240" y2="18" stroke="url(#gr-ob)" strokeWidth="1.5" opacity="0.8" strokeDasharray="4 5"><animate attributeName="stroke-dashoffset" from="0" to="18" dur="2.6s" repeatCount="indefinite"/></line>
+                  {/* Sleep node */}
+                  <circle cx="40" cy="18" r="5" fill="#4A7FB5" opacity="0.85" filter="url(#gl-s)"><animate attributeName="opacity" values="0.6;1;0.6" dur="2.2s" repeatCount="indefinite"/><animate attributeName="r" values="4;6;4" dur="2.2s" repeatCount="indefinite"/></circle>
+                  <text x="40" y="8" textAnchor="middle" fontFamily="DM Sans,sans-serif" fontSize="7" fill="rgba(74,127,181,0.75)" letterSpacing="0.08em">SLEEP</text>
+                  {/* Blood node */}
+                  <circle cx="240" cy="18" r="7" fill="#C0392B" opacity="0.9" filter="url(#gl-r)"><animate attributeName="opacity" values="0.7;1;0.7" dur="1.8s" repeatCount="indefinite"/><animate attributeName="r" values="6;9;6" dur="1.8s" repeatCount="indefinite"/></circle>
+                  <text x="240" y="8" textAnchor="middle" fontFamily="DM Sans,sans-serif" fontSize="7" fill="rgba(192,57,43,0.9)" letterSpacing="0.08em">BLOOD</text>
+                  {/* Oral node */}
+                  <circle cx="440" cy="18" r="5" fill="#2D6A4F" opacity="0.85" filter="url(#gl-o)"><animate attributeName="opacity" values="0.6;1;0.6" dur="2.6s" repeatCount="indefinite"/><animate attributeName="r" values="4;6;4" dur="2.6s" repeatCount="indefinite"/></circle>
+                  <text x="440" y="8" textAnchor="middle" fontFamily="DM Sans,sans-serif" fontSize="7" fill="rgba(45,106,79,0.75)" letterSpacing="0.08em">ORAL</text>
+                  {/* Travelling particles */}
+                  <circle r="2.5" fill="#4A7FB5" opacity="0.9" filter="url(#gl-s)"><animateMotion dur="2.2s" repeatCount="indefinite" path="M40,18 L240,18"/></circle>
+                  <circle r="2.5" fill="#2D6A4F" opacity="0.9" filter="url(#gl-o)"><animateMotion dur="2.6s" repeatCount="indefinite" path="M440,18 L240,18"/></circle>
+                </svg>
+              </div>
 
-              {/* Composition bar */}
+              {/* Score composition bar */}
               <div className="pf-sources">
                 <span className="pf-src-label">Score composition</span>
                 <div className="pf-src-bar">
                   <div ref={el => { segRefs.current.blood = el }} className="pf-seg pf-seg-blood" style={{ width: "49%" }} />
                   <div ref={el => { segRefs.current.oral  = el }} className="pf-seg pf-seg-oral"  style={{ width: "15%" }} />
-                  <div ref={el => { segRefs.current.vo2   = el }} className="pf-seg pf-seg-vo2"   style={{ width: "13%" }} />
-                  <div ref={el => { segRefs.current.sleep = el }} className="pf-seg pf-seg-sleep" style={{ width: "20%" }} />
+                  <div ref={el => { segRefs.current.sleep = el }} className="pf-seg pf-seg-sleep" style={{ width: "33%" }} />
                   <div ref={el => { segRefs.current.cp    = el }} className="pf-seg pf-seg-cp"    style={{ width: "3%" }} />
                 </div>
                 <div className="pf-legend">
                   <span className="pf-leg"><span className="pf-leg-dot" style={{ background: "#C0392B" }} />Blood 49%</span>
                   <span className="pf-leg"><span className="pf-leg-dot" style={{ background: "#2D6A4F" }} />Oral 15%</span>
                   <span className="pf-leg"><span className="pf-leg-dot" style={{ background: "#4A7FB5" }} />Sleep + VO&#x2082; 33%</span>
-                  <span className="pf-leg"><span className="pf-leg-dot" style={{ background: "#B8860B" }} />Cross-panel 3%</span>
-                </div>
-              </div>
-
-              <div className="pf-rule" />
-
-              {/* Cross-panel insights */}
-              <span className="pf-insights-lbl">Cross-panel signals detected</span>
-              <div className="pf-insights">
-                <div className="pf-insight">
-                  <span className="pf-ins-dot" style={{ background: "#C0392B" }} />
-                  <span className="pf-ins-text">Oral bacteria linked to elevated heart markers</span>
-                  <span className="pf-ins-tag" style={{ color: "#E07B72", borderColor: "rgba(192,57,43,0.3)" }}>Oral &times; Blood</span>
-                </div>
-                <div className="pf-insight">
-                  <span className="pf-ins-dot" style={{ background: "#4A7FB5" }} />
-                  <span className="pf-ins-text">HRV below expected for fitness level</span>
-                  <span className="pf-ins-tag" style={{ color: "#7BAADB", borderColor: "rgba(74,127,181,0.3)" }}>Oral &times; Sleep</span>
+                  <span className="pf-leg"><span className="pf-leg-dot" style={{ background: "#D4A017" }} />Cross-panel 3%</span>
                 </div>
               </div>
             </div>
@@ -275,24 +283,17 @@ export function LandingPanelStrip({ wearableOff = false, onToggle }: { wearableO
         .pf-src-label{font-family:${sans};font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:rgba(250,250,248,.28);margin-bottom:5px;display:block;}
         .pf-src-bar{display:flex;width:100%;height:5px;border-radius:3px;overflow:hidden;gap:1px;margin-bottom:5px;}
         .pf-seg{height:100%;transition:width 1.2s ease-in-out;}
-        .pf-seg-blood{background:#C0392B;opacity:.8;}
+        .pf-interconnect{width:100%;margin:4px 0 2px;}
+        .pf-seg-blood{background:#C0392B;opacity:.85;}
         .pf-seg-oral{background:#2D6A4F;opacity:.85;}
-        .pf-seg-vo2{background:#4A7FB5;opacity:.65;}
-        .pf-seg-sleep{background:#4A7FB5;opacity:.4;}
-        .pf-seg-cp{background:#B8860B;opacity:.85;}
+        .pf-seg-sleep{background:#4A7FB5;opacity:.5;}
+        .pf-seg-cp{background:#D4A017;opacity:1;}
 
         .pf-legend{display:flex;gap:10px;flex-wrap:wrap;}
         .pf-leg{display:flex;align-items:center;gap:4px;font-family:${sans};font-size:9px;color:rgba(250,250,248,.36);}
         .pf-leg-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
         @media(max-width:680px){.pf-legend{gap:6px;}.pf-leg{font-size:7px;}}
 
-        .pf-insights-lbl{font-family:${sans};font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:rgba(250,250,248,.28);margin-bottom:5px;width:100%;}
-        .pf-insights{display:flex;flex-direction:column;gap:5px;width:100%;}
-        .pf-insight{display:flex;align-items:center;gap:7px;background:rgba(250,250,248,.04);border:.5px solid rgba(250,250,248,.08);border-radius:8px;padding:7px 10px;}
-        .pf-ins-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;opacity:.85;}
-        .pf-ins-text{font-family:${sans};font-size:11px;font-weight:300;color:rgba(250,250,248,.7);flex:1;line-height:1.3;}
-        .pf-ins-tag{font-family:${sans};font-size:9px;letter-spacing:.06em;padding:2px 8px;border-radius:10px;border:.5px solid;white-space:nowrap;flex-shrink:0;}
-        @media(max-width:680px){.pf-ins-text{font-size:9px;}.pf-ins-tag{font-size:7px;padding:2px 6px;}}
 
         .hp-toggle{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:3px 8px;border-radius:999px;border:none;background:rgba(250,250,248,.1);cursor:pointer;}
         .hp-track{width:22px;height:12px;border-radius:6px;background:rgba(250,250,248,.18);position:relative;flex-shrink:0;}
@@ -351,7 +352,6 @@ function startBarPulse(
 function applyBarVariant(segs: Record<string, HTMLDivElement | null>, v: typeof BAR_VARIANTS[number]) {
   if (segs.blood) segs.blood.style.width = v.blood
   if (segs.oral)  segs.oral.style.width  = v.oral
-  if (segs.vo2)   segs.vo2.style.width   = v.vo2
   if (segs.sleep) segs.sleep.style.width = v.sleep
   if (segs.cp)    segs.cp.style.width    = v.cp
 }
