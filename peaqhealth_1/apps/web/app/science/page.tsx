@@ -396,7 +396,7 @@ export default function SciencePage() {
 
         <FadeUp delay={60}>
           <p style={{ ...bodyTextStyle, marginBottom: 32 }}>
-            Peaq Age is a biological age in years, not a score out of 100. It combines six measured components: PhenoAge from blood biomarkers (49%), oral microbiome assessment (15%), VO&#x2082; max (13%), resting heart rate (11%), sleep duration (5%), and sleep regularity (4%). Cross-panel interaction terms contribute 3% when both blood and oral panels are available. When a component is missing, its weight redistributes proportionally to the remaining components.
+            Peaq Age is a biological age in years, not a score out of 100. It combines six measured components: PhenoAge from blood biomarkers (48%), oral microbiome assessment (22%), VO&#x2082; max (13%), resting heart rate (11%), sleep duration (5%), and sleep regularity (4%). Cross-panel interaction terms contribute 3% when both blood and oral panels are available. When a component is missing, its weight redistributes proportionally to the remaining components.
           </p>
         </FadeUp>
 
@@ -404,8 +404,8 @@ export default function SciencePage() {
         <FadeUp delay={120}>
           <div style={{ marginBottom: 12 }}>
             {([
-              { label: "PhenoAge (blood)", pct: 49, color: "#C0392B", source: "Quest/LabCorp mandatory panel", evidence: "Levine 2018, n=11,432" },
-              { label: "OMA (oral microbiome)", pct: 15, color: "#2D6A4F", source: "Zymo 16S species-level", evidence: "Shen 2024, Mondal 2025" },
+              { label: "PhenoAge (blood)", pct: 48, color: "#C0392B", source: "Quest/LabCorp mandatory panel", evidence: "Levine 2018, n=11,432" },
+              { label: "OMA (oral microbiome)", pct: 22, color: "#2D6A4F", source: "Zymo 16S species-level", evidence: "Shen 2024, Mondal 2025" },
               { label: "VO₂ max", pct: 13, color: "#4A7FB5", source: "Wearable / walking test", evidence: "Ross 2016, n=122,007" },
               { label: "Resting HR", pct: 11, color: "#4A7FB5", source: "Wearable 30-night avg", evidence: "Aune 2017, n=1.2M" },
               { label: "Sleep duration", pct: 5, color: "#4A7FB5", source: "Wearable 30-night avg", evidence: "Cappuccio 2010, n=1.3M" },
@@ -429,7 +429,7 @@ export default function SciencePage() {
 
         <FadeUp delay={140}>
           <p style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", lineHeight: 1.5, marginBottom: 16 }}>
-            PhenoAge (Levine 2018) uses 9 blood biomarkers: albumin, creatinine, glucose, hs-CRP, lymphocyte %, MCV, RDW, ALP, and WBC. Standard CRP cannot substitute for hs-CRP. When hs-CRP is missing, PhenoAge returns null and its 49% weight redistributes to the other components.
+            PhenoAge (Levine 2018) uses 9 blood biomarkers: albumin, creatinine, glucose, hs-CRP, lymphocyte %, MCV, RDW, ALP, and WBC. Standard CRP cannot substitute for hs-CRP. When hs-CRP is missing, PhenoAge returns null and its 48% weight redistributes to the other components.
           </p>
           <p style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", lineHeight: 1.5, marginBottom: 16 }}>
             OMA (Oral Microbiome Assessment) is a composite percentile: 45% protective bacteria, 35% pathogen-inverted, 20% Shannon diversity, anchored against the NHANES 2009-2012 oral microbiome reference (n=9,660).
@@ -579,7 +579,7 @@ export default function SciencePage() {
         {/* ═══ BLOOD PANEL ═══ */}
         <FadeUp>
           <h2 style={{ ...sectionTitleStyle, borderLeft: "3px solid var(--blood-c)", paddingLeft: 16 }}>
-            Blood &middot; PhenoAge (49%)
+            Blood &middot; PhenoAge (48%)
           </h2>
         </FadeUp>
 
@@ -678,7 +678,7 @@ export default function SciencePage() {
         {/* ═══ ORAL MICROBIOME PANEL ═══ */}
         <FadeUp>
           <h2 style={{ ...sectionTitleStyle, borderLeft: "3px solid var(--oral-c)", paddingLeft: 16 }}>
-            Oral microbiome &middot; OMA (15%)
+            Oral microbiome &middot; OMA (22%)
           </h2>
         </FadeUp>
 

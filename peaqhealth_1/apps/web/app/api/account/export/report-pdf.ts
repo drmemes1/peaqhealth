@@ -1,3 +1,10 @@
+// TODO Phase 5d: Update PDF layout for Peaq Age V5
+// - Replace score circle with peaq_age + band display
+// - Panel summary table: status chip + year contribution
+// - Remove /100, /40 pts, /30 pts references
+// - Data available: snapshot.peaq_age_breakdown JSONB
+// - Schedule separate visual QA session before next release
+
 import PDFDocument from "pdfkit"
 import type { ReportData } from "./report-data"
 

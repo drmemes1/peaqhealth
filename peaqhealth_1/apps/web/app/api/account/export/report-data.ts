@@ -38,7 +38,7 @@ export interface ReportData {
   // Patient
   fullName: string
   email: string
-  // Score
+  // Score (legacy)
   score: number
   baseScore: number
   sleepSub: number
@@ -48,6 +48,11 @@ export interface ReportData {
   modifiersApplied: ReportModifier[]
   engineVersion: string
   calculatedAt: string
+  // Peaq Age V5
+  peaqAge: number | null
+  peaqAgeDelta: number | null
+  peaqAgeBand: string | null
+  peaqAgeBreakdown: Record<string, unknown> | null
   // Blood
   labs: Record<string, unknown> | null
   labName: string | null
@@ -160,7 +165,7 @@ export async function fetchReportData(userId: string, supabase: SupabaseClient):
 
     supabase
       .from("score_snapshots")
-      .select("score, base_score, sleep_sub, blood_sub, oral_sub, modifier_total, modifiers_applied, engine_version, calculated_at")
+      .select("score, base_score, sleep_sub, blood_sub, oral_sub, modifier_total, modifiers_applied, engine_version, calculated_at, peaq_age, peaq_age_delta, peaq_age_band, peaq_age_breakdown")
       .eq("user_id", userId)
       .order("calculated_at", { ascending: false })
       .limit(1)
@@ -216,6 +221,10 @@ export async function fetchReportData(userId: string, supabase: SupabaseClient):
     modifiersApplied: (snapshot?.modifiers_applied as ReportModifier[] | null) ?? [],
     engineVersion: (snapshot?.engine_version as string | null) ?? "",
     calculatedAt: (snapshot?.calculated_at as string | null) ?? "",
+    peaqAge: snapshot?.peaq_age as number | null ?? null,
+    peaqAgeDelta: snapshot?.peaq_age_delta as number | null ?? null,
+    peaqAgeBand: snapshot?.peaq_age_band as string | null ?? null,
+    peaqAgeBreakdown: snapshot?.peaq_age_breakdown as Record<string, unknown> | null ?? null,
 
     labs: labs as Record<string, unknown> | null,
     labName: (labs?.lab_name as string | null) ?? null,
