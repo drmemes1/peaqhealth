@@ -396,7 +396,7 @@ function PanelNode({ name, status, href, icon, label, indicators, bgImage }: {
       {bgImage && (
         <img src={bgImage} alt="" style={{
           position: "absolute", inset: 0, width: "100%", height: "100%",
-          objectFit: "cover", opacity: 0.08, pointerEvents: "none",
+          objectFit: "cover", opacity: 0.15, pointerEvents: "none",
         }} />
       )}
       <span className="panel-card-name" style={{
