@@ -249,12 +249,20 @@ function Section({
 
 // ─── Marker row with spectrum bar ───────────────────────────────────────────
 
+const DB_KEY_TO_MARKER_ID: Record<string, string> = {
+  hs_crp_mgl: "hs_crp", ldl_mgdl: "ldl", vitamin_d_ngml: "vitamin_d",
+  hba1c_pct: "hba1c", glucose_mgdl: "glucose", lpa_mgdl: "lpa",
+}
+
 function MarkerRow({ val, def, isHsCRP }: { val: number | null; def: MarkerDef; isHsCRP?: boolean }) {
   const status = getStatus(val, def, isHsCRP)
   const s = STATUS_STYLES[status]
   const notTested = status === "not_tested"
+  const markerId = DB_KEY_TO_MARKER_ID[def.key]
+  const Wrapper = markerId ? Link : "div" as unknown as typeof Link
 
   return (
+    <Wrapper href={markerId ? `/dashboard/blood/${markerId}` : "#"} style={{ display: "block", textDecoration: "none", color: "inherit", cursor: markerId ? "pointer" : "default" }}>
     <div style={{ padding: "12px 0", borderBottom: "0.5px solid var(--ink-06)" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -307,6 +315,7 @@ function MarkerRow({ val, def, isHsCRP }: { val: number | null; def: MarkerDef; 
         </>
       )}
     </div>
+    </Wrapper>
   )
 }
 
