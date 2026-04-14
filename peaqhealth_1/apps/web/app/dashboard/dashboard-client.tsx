@@ -771,7 +771,7 @@ export function DashboardClient(props: ScoreWheelProps & {
                   boxShadow: "0 1px 3px rgba(20,20,16,0.06)",
                   border: `0.5px solid ${DS.cardBorder}`,
                 }}>
-                  <img src="/bacteria.png" alt="" style={{
+                  <video src="/bac_moving.mp4" autoPlay loop muted playsInline style={{
                     position: "absolute", inset: 0, width: "100%", height: "100%",
                     objectFit: "cover", filter: "blur(2px) brightness(0.35)",
                   }} />
