@@ -965,86 +965,148 @@ export function DashboardClient(props: ScoreWheelProps & {
               display: "flex", flexDirection: "column", gap: 28,
             }}>
 
-              {/* ZONE 1 — YOUR PLAN */}
+              {/* TABBED RIGHT RAIL CARD */}
               <div style={{
                 background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
-                borderRadius: 12, padding: 20,
+                borderRadius: 12, overflow: "hidden",
                 boxShadow: "0 1px 3px rgba(20,20,16,0.06)",
               }}>
-                <span style={{
-                  fontFamily: sans, fontSize: 10, letterSpacing: "0.12em",
-                  textTransform: "uppercase", color: DS.inkMuted,
-                  display: "block", marginBottom: 14,
-                }}>
-                  YOUR PLAN
-                </span>
-                {(() => {
-                  const items = cachedGuidance ?? actionItems
-                  if (items.length === 0)
-                    return <p style={{ fontFamily: sans, fontSize: 13, color: DS.inkMuted, margin: 0 }}>All markers in range. Keep going.</p>
-                  return (
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                      {items.map((a, i) => (
-                        <div key={i} style={{
-                          padding: "10px 0",
-                          borderBottom: i < items.length - 1 ? `0.5px solid ${DS.cardBorder}` : "none",
+                <div style={{ display: "flex", borderBottom: "0.5px solid #EDE9E0", background: "#FFFFFF" }}>
+                  {(["plan", "from_peaq", "dentist"] as const).map((tab) => {
+                    const labels: Record<string, string> = { plan: "Your Plan", from_peaq: "From Peaq", dentist: "Find a Dentist" }
+                    const active = railTab === tab
+                    return (
+                      <button
+                        key={tab}
+                        onClick={() => setRailTab(tab)}
+                        style={{
+                          flex: 1, border: "none", background: "none", cursor: "pointer",
+                          padding: "12px 0",
+                          fontFamily: sans, fontSize: 11, fontWeight: active ? 500 : 400,
+                          letterSpacing: "0.08em", textTransform: "uppercase",
+                          color: active ? "#141410" : "#7A7A6E",
+                          borderBottom: active ? "2px solid #B8860B" : "2px solid transparent",
+                          marginBottom: -1,
+                          transition: "color 120ms ease, border-color 120ms ease",
+                        }}
+                      >
+                        {labels[tab]}
+                      </button>
+                    )
+                  })}
+                </div>
+                <div style={{ padding: 20 }}>
+                  {railTab === "plan" && (
+                    <>
+                      {(() => {
+                        const items = cachedGuidance ?? actionItems
+                        if (items.length === 0)
+                          return <p style={{ fontFamily: sans, fontSize: 13, color: DS.inkMuted, margin: 0 }}>All markers in range. Keep going.</p>
+                        return (
+                          <div style={{ display: "flex", flexDirection: "column" }}>
+                            {items.map((a, i) => (
+                              <div key={i} style={{
+                                padding: "10px 0",
+                                borderBottom: i < items.length - 1 ? `0.5px solid ${DS.cardBorder}` : "none",
+                              }}>
+                                <p style={{ fontFamily: sans, fontSize: 14, color: DS.ink, margin: 0, lineHeight: 1.4 }}>
+                                  {"title" in a ? a.title : (a as unknown as { label: string }).label}
+                                </p>
+                                <p style={{ fontFamily: sans, fontSize: 12, color: DS.inkMuted, margin: "2px 0 0" }}>
+                                  {a.timing}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        )
+                      })()}
+                      <Link href="/dashboard/guidance" style={{
+                        fontFamily: sans, fontSize: 12, color: DS.gold,
+                        textDecoration: "none", display: "block", marginTop: 14,
+                      }}>
+                        View full plan →
+                      </Link>
+                    </>
+                  )}
+                  {railTab === "from_peaq" && (
+                    <>
+                      {[
+                        { title: "How your oral health affects your heart", sub: "5 min read", href: "/science" },
+                        { title: "Why sleep timing matters more than duration", sub: "4 min read", href: "/science" },
+                      ].map((post, i) => (
+                        <Link key={i} href={post.href} className="from-peaq-row" style={{
+                          display: "flex", alignItems: "center", justifyContent: "space-between",
+                          gap: 8, padding: "14px 0", textDecoration: "none",
+                          borderBottom: i === 0 ? `0.5px solid ${DS.cardBorder}` : "none",
                         }}>
-                          <p style={{ fontFamily: sans, fontSize: 14, color: DS.ink, margin: 0, lineHeight: 1.4 }}>
-                            {"title" in a ? a.title : (a as unknown as { label: string }).label}
-                          </p>
-                          <p style={{ fontFamily: sans, fontSize: 12, color: DS.inkMuted, margin: "2px 0 0" }}>
-                            {a.timing}
+                          <div>
+                            <p style={{ fontFamily: sans, fontSize: 13, color: DS.ink, margin: 0, lineHeight: 1.4 }}>
+                              {post.title}
+                            </p>
+                            <p style={{ fontFamily: sans, fontSize: 11, color: DS.inkMuted, margin: "2px 0 0" }}>
+                              {post.sub}
+                            </p>
+                          </div>
+                          <span className="from-peaq-arrow" style={{
+                            color: DS.inkMuted, fontSize: 14, flexShrink: 0,
+                            transition: "transform 150ms ease",
+                          }}>→</span>
+                        </Link>
+                      ))}
+                    </>
+                  )}
+                  {railTab === "dentist" && (
+                    <>
+                      {oralIndicators.some(ind => ind.color === "red" || ind.color === "amber") && (
+                        <div style={{
+                          background: "#FAEEDA",
+                          border: "0.5px solid rgba(184,134,11,0.35)",
+                          borderRadius: 8, padding: "12px 14px", marginBottom: 16,
+                        }}>
+                          <p style={{ fontFamily: sans, fontSize: 13, color: "#854F0B", margin: 0, lineHeight: 1.45 }}>
+                            Based on your oral results, a check-up is worth scheduling.
                           </p>
                         </div>
-                      ))}
-                    </div>
-                  )
-                })()}
-                <Link href="/dashboard/guidance" style={{
-                  fontFamily: sans, fontSize: 12, color: DS.gold,
-                  textDecoration: "none", display: "block", marginTop: 14,
-                }}>
-                  View full plan →
-                </Link>
-              </div>
-
-              {/* ZONE 2 — FROM PEAQ */}
-              {/* TODO: replace with dynamic blog posts when peaqhealth.me/learn launches */}
-              <div style={{
-                background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
-                borderRadius: 12, padding: 20,
-                boxShadow: "0 1px 3px rgba(20,20,16,0.06)",
-              }}>
-                <span style={{
-                  fontFamily: sans, fontSize: 10, letterSpacing: "0.12em",
-                  textTransform: "uppercase", color: DS.inkMuted,
-                  display: "block", marginBottom: 14,
-                }}>
-                  FROM PEAQ
-                </span>
-                {[
-                  { title: "How your oral health affects your heart", sub: "5 min read", href: "/science" },
-                  { title: "Why sleep timing matters more than duration", sub: "4 min read", href: "/science" },
-                ].map((post, i) => (
-                  <Link key={i} href={post.href} className="from-peaq-row" style={{
-                    display: "flex", alignItems: "center", justifyContent: "space-between",
-                    gap: 8, padding: "14px 0", textDecoration: "none",
-                    borderBottom: i === 0 ? `0.5px solid ${DS.cardBorder}` : "none",
-                  }}>
-                    <div>
-                      <p style={{ fontFamily: sans, fontSize: 13, color: DS.ink, margin: 0, lineHeight: 1.4 }}>
-                        {post.title}
-                      </p>
-                      <p style={{ fontFamily: sans, fontSize: 11, color: DS.inkMuted, margin: "2px 0 0" }}>
-                        {post.sub}
-                      </p>
-                    </div>
-                    <span className="from-peaq-arrow" style={{
-                      color: DS.inkMuted, fontSize: 14, flexShrink: 0,
-                      transition: "transform 150ms ease",
-                    }}>→</span>
-                  </Link>
-                ))}
+                      )}
+                      <label style={{
+                        fontFamily: sans, fontSize: 12, color: "#7A7A6E",
+                        display: "block", marginBottom: 8,
+                      }}>
+                        Find a dentist near you
+                      </label>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]{5}"
+                          maxLength={5}
+                          placeholder="ZIP code"
+                          value={dentistZip}
+                          onChange={e => setDentistZip(e.target.value.replace(/\D/g, "").slice(0, 5))}
+                          style={{
+                            flex: 1, fontFamily: sans, fontSize: 13, color: DS.ink,
+                            background: "#FAFAF8", border: `0.5px solid ${DS.cardBorder}`,
+                            borderRadius: 6, padding: "9px 12px", outline: "none",
+                          }}
+                        />
+                        <button
+                          onClick={() => {
+                            if (dentistZip.length === 5)
+                              window.open(`https://www.google.com/search?q=dentist+near+${dentistZip}`, "_blank", "noopener")
+                          }}
+                          style={{
+                            fontFamily: sans, fontSize: 12, fontWeight: 500,
+                            color: "#FFFFFF", background: "#B8860B",
+                            border: "none", borderRadius: 6, padding: "9px 14px",
+                            cursor: "pointer", whiteSpace: "nowrap",
+                          }}
+                        >
+                          Search
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
 
               {/* ZONE 3 — GET MORE FROM PEAQ (only if panels missing) */}
