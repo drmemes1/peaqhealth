@@ -518,7 +518,7 @@ export function DashboardClient(props: ScoreWheelProps & {
   trendDeltas?: { sleep: number | null; blood: number | null; oral: number | null };
   peaqAgeBreakdown?: Record<string, unknown> | null;
   cachedInsight?: { headline: string; body: string };
-  cachedGuidance?: Array<{ title: string; timing: string }>;
+  cachedGuidance?: Array<{ title: string; timing: string; why?: string }>;
   articles?: Array<{ slug: string; title: string; readTime: number }>;
 }) {
   const { wearableNeedsReconnect = false, firstName, peaqAgeBreakdown, cachedInsight, cachedGuidance } = props
@@ -549,6 +549,7 @@ export function DashboardClient(props: ScoreWheelProps & {
     return localStorage.getItem("peaq-sleep-panel-hidden") === "true"
   })
 
+  const [expandedWhyIdx, setExpandedWhyIdx] = useState<number | null>(null)
 
   const hasSleep = !sleepHidden && props.sleepConnected && props.breakdown.sleepSub > 0
   const hasBlood = !!props.bloodData
@@ -627,7 +628,7 @@ export function DashboardClient(props: ScoreWheelProps & {
   }
 
   // ── Action plan items ─────────────────────────────────────────────────────
-  function getActionItems(): { label: string; timing: string }[] {
+  function getActionItems(): { label: string; timing: string; why?: string }[] {
     if (!peaqAgeBreakdown) return []
     const b = peaqAgeBreakdown
     const mwType = props.lifestyleData?.mouthwashType
@@ -635,13 +636,13 @@ export function DashboardClient(props: ScoreWheelProps & {
     const noHsCrp = !(b.hasBW && (b.missingPhenoMarkers as string[] ?? []).length === 0)
     const omaQcFail = typeof b.omaPct === "number" && (b.omaPct as number) < 40
 
-    const actions: { label: string; timing: string }[] = []
-    if (usesAntiseptic) actions.push({ label: "Switch from antiseptic mouthwash", timing: "Today" })
-    if (omaQcFail) actions.push({ label: "More leafy greens and beetroot", timing: "Week 1" })
-    if (noHsCrp) actions.push({ label: "Add hs-CRP to next blood draw", timing: "Next draw" })
-    if (typeof b.rhrDelta === "number" && (b.rhrDelta as number) > 1) actions.push({ label: "Increase aerobic exercise", timing: "This month" })
-    if (!hasSleep) actions.push({ label: "Connect a wearable for sleep data", timing: "Today" })
-    if (!hasOral) actions.push({ label: "Order oral microbiome kit", timing: "This week" })
+    const actions: { label: string; timing: string; why?: string }[] = []
+    if (usesAntiseptic) actions.push({ label: "Switch from antiseptic mouthwash", timing: "Today", why: "Antiseptic rinses kill the bacteria that produce nitric oxide, raising blood pressure and inflammation." })
+    if (omaQcFail) actions.push({ label: "More leafy greens and beetroot", timing: "Week 1", why: "Nitrate in these foods feeds the bacteria that produce nitric oxide, which lowers blood pressure." })
+    if (noHsCrp) actions.push({ label: "Add hs-CRP to next blood draw", timing: "Next draw", why: "hs-CRP completes your Peaq Age calculation and unlocks three cross-panel connections." })
+    if (typeof b.rhrDelta === "number" && (b.rhrDelta as number) > 1) actions.push({ label: "Increase aerobic exercise", timing: "This month", why: "Resting heart rate is elevated, which adds years to your Peaq Age. Cardio lowers it within weeks." })
+    if (!hasSleep) actions.push({ label: "Connect a wearable for sleep data", timing: "Today", why: "Sleep data contributes 19% of your Peaq Age formula and unlocks HRV tracking." })
+    if (!hasOral) actions.push({ label: "Order oral microbiome kit", timing: "This week", why: "Your oral microbiome is 22% of your Peaq Age and drives three cross-panel connections." })
     return actions.slice(0, 3)
   }
 
@@ -1046,24 +1047,73 @@ export function DashboardClient(props: ScoreWheelProps & {
                   YOUR PLAN
                 </span>
                 {(() => {
-                  const items = cachedGuidance ?? actionItems
+                  const items = (cachedGuidance ?? actionItems).slice(0, 3)
                   if (items.length === 0)
                     return <p style={{ fontFamily: sans, fontSize: 13, color: DS.inkMuted, margin: 0 }}>All markers in range. Keep going.</p>
                   return (
                     <div style={{ display: "flex", flexDirection: "column" }}>
-                      {items.map((a, i) => (
-                        <div key={i} style={{
-                          padding: "10px 0",
-                          borderBottom: i < items.length - 1 ? `0.5px solid ${DS.cardBorder}` : "none",
-                        }}>
-                          <p style={{ fontFamily: sans, fontSize: 14, color: DS.ink, margin: 0, lineHeight: 1.4 }}>
-                            {"title" in a ? a.title : (a as unknown as { label: string }).label}
-                          </p>
-                          <p style={{ fontFamily: sans, fontSize: 12, color: DS.inkMuted, margin: "2px 0 0" }}>
-                            {a.timing}
-                          </p>
-                        </div>
-                      ))}
+                      {items.map((a, i) => {
+                        const title = "title" in a ? a.title : (a as unknown as { label: string }).label
+                        const why = (a as { why?: string }).why
+                        const isOpen = expandedWhyIdx === i
+                        return (
+                          <div key={i} className="plan-row" style={{
+                            padding: "10px 0",
+                            borderBottom: i < items.length - 1 ? `0.5px solid ${DS.cardBorder}` : "none",
+                            borderRadius: 4,
+                            transition: "background 150ms ease",
+                          }}>
+                            <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                              <span style={{
+                                width: 18, height: 18, borderRadius: "50%",
+                                background: DS.gold, color: "#FFFFFF",
+                                fontFamily: sans, fontSize: 10, fontWeight: 600,
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                flexShrink: 0, marginTop: 1,
+                              }}>
+                                {i + 1}
+                              </span>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                                  <p style={{ fontFamily: sans, fontSize: 14, color: DS.ink, margin: 0, lineHeight: 1.4 }}>
+                                    {title}
+                                  </p>
+                                  <span style={{ fontFamily: sans, fontSize: 11, color: DS.inkMuted, flexShrink: 0 }}>
+                                    {a.timing}
+                                  </span>
+                                </div>
+                                {why && (
+                                  <>
+                                    <button
+                                      onClick={() => setExpandedWhyIdx(isOpen ? null : i)}
+                                      style={{
+                                        fontFamily: sans, fontSize: 11, color: "#7A7A6E",
+                                        background: "none", border: "none", cursor: "pointer",
+                                        padding: 0, marginTop: 4,
+                                      }}
+                                    >
+                                      {isOpen ? "Less ↑" : "Why →"}
+                                    </button>
+                                    <div style={{
+                                      maxHeight: isOpen ? 60 : 0,
+                                      overflow: "hidden",
+                                      transition: "max-height 200ms ease",
+                                    }}>
+                                      <p style={{
+                                        fontFamily: sans, fontSize: 12, fontStyle: "italic",
+                                        color: "#7A7A6E", lineHeight: 1.5,
+                                        margin: "4px 0 0",
+                                      }}>
+                                        {why}
+                                      </p>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
                     </div>
                   )
                 })()}
@@ -1242,6 +1292,9 @@ export function DashboardClient(props: ScoreWheelProps & {
             10%  { opacity: 0.7; }
             90%  { opacity: 0.7; }
             100% { left: calc(66.66% - 3px); opacity: 0; }
+          }
+          .plan-row:hover {
+            background: #F7F5F0;
           }
           .from-peaq-row:hover .from-peaq-arrow {
             transform: translateX(3px);

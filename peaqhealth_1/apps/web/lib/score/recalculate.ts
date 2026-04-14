@@ -561,19 +561,19 @@ async function cacheInsightAndGuidance(
   },
 ) {
   // ── Deterministic guidance items (no OpenAI needed) ──────────────────────
-  const guidance: { title: string; timing: string }[] = []
+  const guidance: { title: string; timing: string; why?: string }[] = []
   const mwType = ctx.lifestyleRow?.mouthwash_type as string | null
   if (mwType === "antiseptic" || mwType === "alcohol")
-    guidance.push({ title: "Stop antiseptic mouthwash", timing: "Today" })
+    guidance.push({ title: "Stop antiseptic mouthwash", timing: "Today", why: "Antiseptic rinses kill the bacteria that produce nitric oxide, raising blood pressure and inflammation." })
   if (ctx.peaqAgeResult.omaPct < 40)
-    guidance.push({ title: "More leafy greens and beetroot", timing: "Week 1" })
+    guidance.push({ title: "More leafy greens and beetroot", timing: "Week 1", why: "Nitrate in these foods feeds the bacteria that produce nitric oxide, which lowers blood pressure." })
   if (ctx.peaqAgeResult.missingPhenoMarkers.length > 0)
-    guidance.push({ title: "Add hs-CRP to next blood draw", timing: "Next draw" })
+    guidance.push({ title: "Add hs-CRP to next blood draw", timing: "Next draw", why: "hs-CRP completes your Peaq Age calculation and unlocks three cross-panel connections." })
   const ldl = ctx.labRow?.ldl_mgdl as number | null
   if (ldl && ldl > 130)
-    guidance.push({ title: "Discuss LDL with your doctor", timing: "This month" })
+    guidance.push({ title: "Discuss LDL with your doctor", timing: "This month", why: "LDL above 130 increases plaque risk, especially when oral nitric oxide production is low." })
   if (ctx.peaqAgeResult.rhrDelta > 1)
-    guidance.push({ title: "Increase aerobic exercise", timing: "This month" })
+    guidance.push({ title: "Increase aerobic exercise", timing: "This month", why: "Resting heart rate is elevated, which adds years to your Peaq Age. Cardio lowers it within weeks." })
 
   // ── AI insight via OpenAI ───────────────────────────────────────────────
   let headline: string | null = null

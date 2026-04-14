@@ -308,7 +308,7 @@ export default async function DashboardPage() {
       headline: snapshot.ai_insight_headline as string,
       body: (snapshot.ai_insight_body as string | null) ?? "",
     } : undefined}
-    cachedGuidance={(snapshot?.ai_guidance_items as Array<{ title: string; timing: string }>) ?? undefined}
+    cachedGuidance={(snapshot?.ai_guidance_items as Array<{ title: string; timing: string; why?: string }>) ?? undefined}
     articles={(articlesData ?? []).map(a => ({ slug: a.slug as string, title: a.title as string, readTime: a.read_time_min as number }))}
   />
 }
