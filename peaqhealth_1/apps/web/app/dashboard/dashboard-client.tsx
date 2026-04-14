@@ -380,7 +380,7 @@ function PanelNode({ name, status, href, icon, label, indicators }: {
 }) {
   const statusColor = status === "Active" ? DS.oral : status === "Review" ? DS.gold : DS.inkMuted
   return (
-    <Link href={href} style={{
+    <Link href={href} className="panel-card" style={{
       background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
       borderRadius: 12, padding: "28px 24px", textDecoration: "none",
       display: "flex", flexDirection: "column", alignItems: "center",
@@ -392,14 +392,14 @@ function PanelNode({ name, status, href, icon, label, indicators }: {
     onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(20,20,16,0.08)" }}
     onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 1px 3px rgba(20,20,16,0.06)" }}
     >
-      <span style={{
+      <span className="panel-card-name" style={{
         fontFamily: sans, fontSize: 10, letterSpacing: "0.14em",
         textTransform: "uppercase", color: DS.inkMuted,
       }}>
         {name}
       </span>
       <div style={{ marginTop: 12 }}>{icon}</div>
-      <IndicatorGrid indicators={indicators} />
+      <div className="indicator-grid"><IndicatorGrid indicators={indicators} /></div>
       <span style={{
         fontFamily: sans, fontSize: 10, fontWeight: 500,
         letterSpacing: "0.06em", textTransform: "uppercase",
@@ -662,7 +662,7 @@ export function DashboardClient(props: ScoreWheelProps & {
         <Nav />
         <PushNotificationPrompt />
 
-        <main style={{ maxWidth: 1060, margin: "0 auto", padding: "40px 40px 80px" }}>
+        <main className="dashboard-main" style={{ maxWidth: 1060, margin: "0 auto", padding: "40px 40px 80px" }}>
 
           {/* Reconnect banner */}
           {wearableNeedsReconnect && (
@@ -690,11 +690,11 @@ export function DashboardClient(props: ScoreWheelProps & {
           }}>
 
             {/* ── LEFT COLUMN (main) ─────────────────────────────────────── */}
-            <div style={{ flex: "1 1 0", minWidth: 0, maxWidth: 700 }}>
+            <div className="dashboard-left" style={{ flex: "1 1 0", minWidth: 0, maxWidth: 700 }}>
 
               {/* 1. GREETING — italic gold name */}
               <div style={{ marginBottom: 36 }}>
-                <h1 style={{
+                <h1 className="dashboard-greeting" style={{
                   fontFamily: serif, fontSize: 42, fontWeight: 300,
                   color: DS.ink, margin: 0, lineHeight: 1.2,
                 }}>
@@ -761,7 +761,7 @@ export function DashboardClient(props: ScoreWheelProps & {
               </div>
 
               {/* 3. PEAQ+ AGE CARD — warm gold background */}
-              <div style={{
+              <div className="peaq-age-card" style={{
                 background: DS.goldBg, border: `0.5px solid rgba(184,134,11,0.25)`,
                 borderRadius: 16, padding: "48px 40px", textAlign: "center",
                 marginBottom: 36,
@@ -781,7 +781,7 @@ export function DashboardClient(props: ScoreWheelProps & {
                   {peaqAge.toFixed(1)}
                 </div>
 
-                <p style={{
+                <p className="peaq-age-delta" style={{
                   fontFamily: serif, fontSize: 22, fontStyle: "italic",
                   color: delta < 0 ? DS.greenDark : delta > 0 ? DS.redDark : DS.inkMuted,
                   margin: "0 0 16px",
@@ -824,7 +824,7 @@ export function DashboardClient(props: ScoreWheelProps & {
               </div>
 
               {/* 4. AI INSIGHT CARD — cached from snapshot, no spinner */}
-              <div style={{
+              <div className="insight-card" style={{
                 background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
                 borderLeft: cachedInsight ? `3px solid ${DS.gold}` : `3px solid ${DS.cardBorder}`,
                 borderRadius: 12, padding: "24px 28px", marginBottom: 36,
@@ -939,7 +939,7 @@ export function DashboardClient(props: ScoreWheelProps & {
                     borderLeft: signals[0].positive ? `3px solid ${signals[0].color}` : `3px solid ${DS.cardBorder}`,
                     borderRadius: 12, padding: 24, marginBottom: 36,
                     boxShadow: "0 1px 3px rgba(20,20,16,0.06)",
-                  }}>
+                  }} className="cross-panel-card">
                     <span style={{ fontFamily: sans, fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: DS.inkMuted, display: "block", marginBottom: 12 }}>
                       Cross-Panel Signals
                     </span>
@@ -1138,20 +1138,58 @@ export function DashboardClient(props: ScoreWheelProps & {
             transform: translateX(3px);
           }
           @media (max-width: 768px) {
+            .dashboard-main {
+              padding: 20px 16px 60px !important;
+            }
             .dashboard-two-col {
               flex-direction: column !important;
+              gap: 24px !important;
+            }
+            .dashboard-left {
+              max-width: 100% !important;
             }
             .dashboard-rail {
               width: 100% !important;
             }
-            .peaq-age-number {
-              font-size: 72px !important;
+            .dashboard-greeting {
+              font-size: 32px !important;
             }
             .panel-cards-row {
-              flex-direction: column !important;
+              flex-direction: row !important;
+              gap: 10px !important;
+            }
+            .panel-card {
+              padding: 16px 12px !important;
+              min-height: 120px !important;
+            }
+            .panel-card-name {
+              font-size: 9px !important;
+            }
+            .panel-card-label {
+              font-size: 11px !important;
+            }
+            .indicator-grid {
+              display: none !important;
             }
             .connection-lines-wrapper {
               display: none !important;
+            }
+            .peaq-age-card {
+              padding: 32px 20px !important;
+              border-radius: 12px !important;
+            }
+            .peaq-age-number {
+              font-size: 72px !important;
+              letter-spacing: -2px !important;
+            }
+            .peaq-age-delta {
+              font-size: 18px !important;
+            }
+            .insight-card {
+              padding: 20px !important;
+            }
+            .cross-panel-card {
+              padding: 20px !important;
             }
           }
         `}</style>
