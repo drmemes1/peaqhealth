@@ -826,10 +826,15 @@ export function DashboardClient(props: ScoreWheelProps & {
                   flex: 1, background: DS.goldBg, border: `0.5px solid rgba(184,134,11,0.25)`,
                   borderRadius: 16, padding: "32px 28px", textAlign: "center",
                   display: "flex", flexDirection: "column", justifyContent: "center",
+                  position: "relative", overflow: "hidden",
                 }}>
+                  <img src="/images/snowcapped.jpg" alt="" style={{
+                    position: "absolute", inset: 0, width: "100%", height: "100%",
+                    objectFit: "cover", opacity: 0.09, pointerEvents: "none",
+                  }} />
                   <span style={{
                     fontFamily: sans, fontSize: 10, letterSpacing: "0.16em",
-                    textTransform: "uppercase", color: DS.goldDark,
+                    textTransform: "uppercase", color: DS.goldDark, position: "relative",
                   }}>
                     PEAQ+ AGE
                   </span>
@@ -837,7 +842,7 @@ export function DashboardClient(props: ScoreWheelProps & {
                   <div className="peaq-age-number" style={{
                     fontFamily: serif, fontSize: 72, fontWeight: 300,
                     color: DS.ink, letterSpacing: -2, lineHeight: 1,
-                    margin: "8px 0 8px",
+                    margin: "8px 0 8px", position: "relative",
                   }}>
                     {peaqAge.toFixed(1)}
                   </div>
