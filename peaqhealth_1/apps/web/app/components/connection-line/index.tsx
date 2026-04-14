@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import type { ConnectionResult } from "@peaq/score-engine"
+import type { ConnectionLine } from "@peaq/score-engine"
 
 const serif = "'Cormorant Garamond', Georgia, serif"
 const sans  = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
@@ -12,11 +12,8 @@ const DIRECTION_STYLES = {
   exploratory: { border: "#B8860B", bg: "rgba(184,134,11,0.04)", headline: "#854F0B" },
 } as const
 
-export function ConnectionLineCard({ connection }: { connection: ConnectionResult }) {
+function SingleConnectionLine({ connection }: { connection: ConnectionLine }) {
   const [expanded, setExpanded] = useState(false)
-
-  if (!connection.fires) return null
-
   const style = DIRECTION_STYLES[connection.direction]
 
   return (
@@ -25,7 +22,6 @@ export function ConnectionLineCard({ connection }: { connection: ConnectionResul
       background: style.bg,
       borderRadius: "0 8px 8px 0",
       padding: "14px 16px",
-      margin: "16px 0",
     }}>
       <span style={{
         fontFamily: sans, fontSize: 9, letterSpacing: "0.12em",
@@ -76,6 +72,18 @@ export function ConnectionLineCard({ connection }: { connection: ConnectionResul
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+export function ConnectionLineCard({ connection }: { connection: ConnectionLine[] }) {
+  if (!connection || connection.length === 0) return null
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8, margin: "16px 0" }}>
+      {connection.map(c => (
+        <SingleConnectionLine key={c.rule_id} connection={c} />
+      ))}
     </div>
   )
 }

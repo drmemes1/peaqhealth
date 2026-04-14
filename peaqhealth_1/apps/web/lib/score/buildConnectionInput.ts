@@ -96,5 +96,7 @@ export function buildConnectionInput(opts: {
     hs_crp_prev: null,
     rhr_avg_prev: null,
     sleep_duration_prev: null,
+    testosterone: (lab?.testosterone_ngdl as number | null) ?? null,
+    creatinine: (lab?.creatinine_mgdl as number | null) ?? null,
   }
 }

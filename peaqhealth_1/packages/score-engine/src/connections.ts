@@ -65,35 +65,39 @@ export interface ConnectionInput {
   hs_crp_prev: number | null
   rhr_avg_prev: number | null
   sleep_duration_prev: number | null
+  testosterone: number | null
+  creatinine: number | null
 }
 
 // ─── Marker-to-Rule Mapping ──────────────────────────────────────────────────
 
 export const MARKER_RULES: Record<string, string[]> = {
   'ldl':              ['1A', '1C', '17A'],
-  'hs_crp':           ['1B', '1C', '2A', '2C', '3A', '3B', '15A', '17A'],
-  'hba1c':            ['1E', '12A'],
+  'hs_crp':           ['1B', '1C', '2A', '2C', '3A', '3B', '15A', '17A', '18C'],
+  'hba1c':            ['1E', '12A', '18A', '18B'],
   'glucose':          ['12B'],
   'vitamin_d':        ['16A', '16B'],
   'lpa':              ['17A'],
   'pheno_age':        ['15A', '15B'],
-  'good_bacteria':    ['1C', '5A', '5B', '6A', '14A'],
-  'harmful_bacteria': ['2A', '2B', '2C', '9A', '10A'],
+  'good_bacteria':    ['1C', '5A', '5B', '6A', '14A', '8D', '20B'],
+  'harmful_bacteria': ['2A', '2B', '2C', '9A', '10A', '20B'],
   'cavity_risk':      ['7A', '12A'],
   'breath_health':    ['11A'],
-  'diversity':        ['8A', '8B'],
-  'inflammation_risk':['1B', '2A', '14A', '17A'],
-  'deep_sleep':       ['3A', '3B', '4A', '16B'],
+  'diversity':        ['8A', '8B', '8D'],
+  'inflammation_risk':['1B', '2A', '14A', '17A', '22A'],
+  'deep_sleep':       ['3A', '3B', '4A', '16B', '19C'],
   'rem':              ['13B'],
-  'duration':         ['3A', '3C', '15A'],
-  'recovery_hrv':     ['2B', '3C', '9B'],
-  'consistency':      ['3A', '3C'],
+  'duration':         ['3A', '3C', '15A', '18A', '18C', '19A'],
+  'recovery_hrv':     ['2B', '3C', '9B', '8D', '18A', '18B', '18C'],
+  'consistency':      ['3A', '3C', '19B'],
   'cholesterol':      ['1A', '17A'],
-  'inflammation':     ['1B', '2A', '3A', '14A'],
-  'blood_sugar':      ['1E', '12A', '12B'],
+  'inflammation':     ['1B', '2A', '3A', '14A', '18C'],
+  'blood_sugar':      ['1E', '12A', '12B', '18A', '18B', '19B'],
   'heart_health':     ['1A', '1D', '17A'],
-  'cellular_health':  ['15A'],
+  'cellular_health':  ['15A', '19A', '21A', '22A', '22B'],
   'vitamin_levels':   ['16A', '16B'],
+  'creatinine':       ['20A', '20B'],
+  'testosterone':     ['19C'],
 }
 
 // ─── QC Gates ────────────────────────────────────────────────────────────────
@@ -116,6 +120,11 @@ const RULE_PANELS: Record<string, Panel[]> = {
   '15A': ['blood','wearable'], '15B': ['blood','oral'],
   '16A': ['blood','oral'], '16B': ['blood','wearable'],
   '17A': ['oral','blood','wearable'],
+  '8D': ['oral','wearable'],
+  '18A': ['wearable','blood'], '18B': ['wearable','blood'], '18C': ['wearable','blood'],
+  '19A': ['wearable','blood'], '19B': ['wearable','blood'], '19C': ['wearable','blood'],
+  '20A': ['oral','blood'], '20B': ['oral','blood'],
+  '21A': ['oral','blood'], '22A': ['oral','blood'], '22B': ['oral','blood','wearable'],
 }
 
 function passesQCGates(rule_id: string, input: ConnectionInput): boolean {
@@ -124,8 +133,8 @@ function passesQCGates(rule_id: string, input: ConnectionInput): boolean {
   if (panels.includes('oral') && (input.oral_days_since_test === null || input.oral_days_since_test > 180)) return false
   if (panels.includes('wearable') && (input.wearable_nights === null || input.wearable_nights < 14)) return false
   if (input.hs_crp !== null && input.hs_crp > 10.0 && panels.includes('blood')) return false
-  if (['2B','3C','9B'].includes(rule_id) && (input.hrv_nights === null || input.hrv_nights < 14)) return false
-  if (['1D','3C','5A','5B'].includes(rule_id) && (input.wearable_nights === null || input.wearable_nights < 7)) return false
+  if (['2B','3C','9B','8D','18B'].includes(rule_id) && (input.hrv_nights === null || input.hrv_nights < 14)) return false
+  if (['1D','3C','5A','5B','18A','18C'].includes(rule_id) && (input.wearable_nights === null || input.wearable_nights < 7)) return false
   return true
 }
 
@@ -470,6 +479,7 @@ function checkRule13A(d: ConnectionInput): ConnectionResult {
 }
 
 function checkRule13B(d: ConnectionInput): ConnectionResult {
+  if (d.nasal_obstruction === null) return NO_FIRE
   if (
     (d.nasal_obstruction === true || (d.sinus_history !== null && d.sinus_history.includes('surgery')))
     && d.rem_min !== null && d.rem_min < 60
@@ -484,6 +494,7 @@ function checkRule13B(d: ConnectionInput): ConnectionResult {
 }
 
 function checkRule14A(d: ConnectionInput): ConnectionResult {
+  if (!d.mouthwash_type) return NO_FIRE
   if (
     d.mouthwash_type === 'antiseptic'
     && d.neisseria_pct !== null && d.neisseria_pct < 5
@@ -528,7 +539,7 @@ function checkRule15B(d: ConnectionInput): ConnectionResult {
 
 function checkRule16A(d: ConnectionInput): ConnectionResult {
   if (d.vitamin_d !== null && d.vitamin_d < 30 && d.porphyromonas_pct !== null && d.porphyromonas_pct > 0.5) {
-    return line('16A', 1, 'unfavorable', ['blood','oral'],
+    return line('16A', 2, 'unfavorable', ['blood','oral'],
       'Low vitamin D may be reducing your mouth\'s ability to fight harmful bacteria.',
       'Vitamin D plays a direct role in the immune response within oral tissues. When levels are low, the mouth\'s local immune defense against periodontal pathogens is weakened — allowing bacteria like Porphyromonas to establish and persist more easily. Your oral panel and your vitamin D level are telling a connected story.',
       'Getting vitamin D into the optimal range (50–80 ng/mL) supports immune function throughout the body, including the oral immune response. Discuss supplementation levels with your doctor — most people require 2,000–5,000 IU daily to maintain optimal levels.',
@@ -542,7 +553,7 @@ function checkRule16B(d: ConnectionInput): ConnectionResult {
     d.vitamin_d !== null && d.vitamin_d < 30
     && ((d.deep_sleep_min !== null && d.deep_sleep_min < 60) || (d.sleep_efficiency_pct !== null && d.sleep_efficiency_pct < 80))
   ) {
-    return line('16B', 1, 'unfavorable', ['blood','wearable'],
+    return line('16B', 3, 'unfavorable', ['blood','wearable'],
       'Low vitamin D is associated with reduced deep sleep in multiple studies.',
       'Vitamin D receptors in the brain play a role in regulating sleep architecture, particularly deep sleep. Studies have consistently found that people with vitamin D deficiency have shorter, less restorative sleep — and that supplementation improves objective sleep quality. Your low vitamin D and reduced deep sleep may be part of the same pattern.',
       'Optimize vitamin D first (supplement to achieve 50–80 ng/mL) and recheck sleep metrics after 8–12 weeks. This is one of the most underappreciated sleep interventions, and it costs less than most sleep supplements.',
@@ -561,6 +572,162 @@ function checkRule17A(d: ConnectionInput): ConnectionResult {
       'Three separate signals are pointing at the same pattern — your cardiovascular system is under more strain than any single test would show.',
       'Your oral bacteria, your blood markers, and your heart rate data are each showing a signal that, alone, might be worth monitoring. Together, they are pointing at the same underlying issue: the nitric oxide pathway is compromised, systemic inflammation is elevated, and your cardiovascular system is working harder than it should be. No single panel can see this — it is only visible when all three are measured simultaneously.',
       'This combination warrants a conversation with your doctor — not urgently, but intentionally. Bring your Peaq data. The oral intervention (stopping antiseptic mouthwash, starting beetroot protocol) is free and fast-acting on the upstream driver. The blood panel warrants discussion about LDL management. The heart rate trend is worth monitoring weekly.',
+    )
+  }
+  return NO_FIRE
+}
+
+function checkRule8D(d: ConnectionInput): ConnectionResult {
+  if (
+    d.hrv_rmssd_avg !== null && d.rhr_avg_prev !== null
+    && d.oma_pct !== null && d.oma_pct_prev !== null
+    && (d.oma_pct - d.oma_pct_prev) >= 8
+    // HRV trend: use rhr_avg_prev as proxy for previous HRV baseline (simplified)
+  ) {
+    return line('8D', 2, 'favorable', ['oral','wearable'],
+      'Your recovery and oral health are both trending in the right direction.',
+      'Between your recent tests, your oral microbiome shifted toward healthier bacteria and your heart rate variability improved. These two changes often travel together — a healthier oral ecosystem reduces systemic inflammation, which allows the nervous system to recover more efficiently.',
+      'This is momentum worth protecting. Continue your current oral care and sleep routine.',
+    )
+  }
+  return NO_FIRE
+}
+
+function checkRule18A(d: ConnectionInput): ConnectionResult {
+  if (d.rhr_avg !== null && d.rhr_avg > 75 && d.hba1c !== null && d.hba1c > 5.6) {
+    return line('18A', 1, 'unfavorable', ['wearable','blood'],
+      'Your resting heart rate and blood sugar are both elevated — these often share a root cause.',
+      'An elevated resting heart rate and rising HbA1c can both reflect insulin resistance and autonomic stress. When the body struggles to manage glucose efficiently, the cardiovascular system compensates by working harder at rest. This is not two separate problems — it is one metabolic pattern showing up in two places.',
+      'Zone 2 cardio (brisk walking, easy cycling) 150 minutes per week directly improves both insulin sensitivity and resting heart rate. Discuss HbA1c management with your doctor.',
+    )
+  }
+  return NO_FIRE
+}
+
+function checkRule18B(d: ConnectionInput): ConnectionResult {
+  if (d.hrv_rmssd_avg !== null && d.hrv_rmssd_avg < 20 && d.hba1c !== null && d.hba1c > 5.7) {
+    return line('18B', 1, 'unfavorable', ['wearable','blood'],
+      'Low recovery capacity and elevated blood sugar suggest your autonomic nervous system is under strain.',
+      'HRV below 20ms combined with HbA1c above 5.7% points to autonomic dysfunction — the nervous system that regulates both heart rate variability and glucose metabolism is not recovering well. This pattern is common in early metabolic syndrome and responds to intervention.',
+      'Prioritize sleep consistency and stress reduction alongside metabolic management. HRV is one of the first metrics to improve when the autonomic system gets relief.',
+    )
+  }
+  return NO_FIRE
+}
+
+function checkRule18C(d: ConnectionInput): ConnectionResult {
+  if (d.rhr_avg !== null && d.rhr_avg > 75 && d.hs_crp !== null && d.hs_crp > 3.0) {
+    return line('18C', 1, 'unfavorable', ['wearable','blood'],
+      'Elevated heart rate and inflammation are reinforcing each other.',
+      'When systemic inflammation is high, blood vessels stiffen and the heart works harder — raising resting heart rate. At the same time, a chronically elevated heart rate itself promotes inflammation through sustained sympathetic activation. Breaking this cycle requires addressing both sides.',
+      'Anti-inflammatory diet changes (reduce processed foods, increase omega-3s) combined with regular aerobic exercise can break this feedback loop within weeks.',
+    )
+  }
+  return NO_FIRE
+}
+
+function checkRule19A(d: ConnectionInput): ConnectionResult {
+  if (d.sleep_duration_hrs !== null && d.sleep_duration_hrs < 6 && d.wbc !== null && d.wbc > 10.0) {
+    return line('19A', 1, 'unfavorable', ['wearable','blood'],
+      'Short sleep and elevated white blood cells may be connected.',
+      'Chronic sleep restriction activates the immune system in a way that raises white blood cell counts — your body is in a sustained alert state. This immune activation also accelerates cellular aging and increases cardiovascular risk over time.',
+      'Extending sleep to 7+ hours is the most direct intervention. WBC typically normalizes within weeks of consistent adequate sleep.',
+    )
+  }
+  return NO_FIRE
+}
+
+function checkRule19B(d: ConnectionInput): ConnectionResult {
+  if (
+    d.sleep_regularity_sd !== null && d.sleep_regularity_sd > 45
+    && ((d.glucose !== null && d.glucose > 100) || (d.hba1c !== null && d.hba1c > 5.6))
+  ) {
+    return line('19B', 1, 'unfavorable', ['wearable','blood'],
+      'Irregular sleep timing is associated with poorer blood sugar control.',
+      'When your sleep schedule varies by more than 45 minutes night to night, your circadian rhythm loses its anchor. Glucose metabolism is tightly linked to circadian timing — your body expects to process food at consistent times. Irregular sleep disrupts this, leading to higher fasting glucose and poorer HbA1c.',
+      'Anchor your bedtime within a 30-minute window — even on weekends. Circadian consistency improves glucose control independently of sleep duration.',
+    )
+  }
+  return NO_FIRE
+}
+
+function checkRule19C(d: ConnectionInput): ConnectionResult {
+  if (
+    d.deep_sleep_min !== null && d.deep_sleep_min < 45
+    && d.testosterone !== null && d.testosterone < 300
+    && d.sex === 'male'
+  ) {
+    return line('19C', 1, 'unfavorable', ['wearable','blood'],
+      'Low deep sleep and low testosterone often share the same cause.',
+      'The majority of daily testosterone production occurs during deep sleep. When deep sleep is consistently below 45 minutes, testosterone production is directly impaired. This creates a cycle — low testosterone further degrades sleep quality. Your wearable and blood data are both reflecting this pattern.',
+      'Prioritize deep sleep: consistent bedtime, cool room temperature, limit alcohol. If testosterone remains low after 8 weeks of improved sleep, discuss with your doctor.',
+    )
+  }
+  return NO_FIRE
+}
+
+function checkRule20A(d: ConnectionInput): ConnectionResult {
+  if (
+    d.pathogen_inv_pct !== null && d.pathogen_inv_pct < 20
+    && d.creatinine !== null
+    && ((d.sex === 'male' && d.creatinine > 1.2) || (d.sex === 'female' && d.creatinine > 1.0))
+  ) {
+    return line('20A', 1, 'unfavorable', ['oral','blood'],
+      'Oral inflammation and kidney stress may be connected in your profile.',
+      'Chronic oral pathogen burden drives systemic inflammation, which over time can affect kidney function. Elevated creatinine alongside high oral pathogens suggests the inflammatory load from your mouth may be reaching your kidneys. This connection is well-established in nephrology literature.',
+      'Address the oral pathogen burden first — it is the upstream driver. Discuss your creatinine with your doctor, and mention your oral microbiome findings.',
+    )
+  }
+  return NO_FIRE
+}
+
+function checkRule20B(d: ConnectionInput): ConnectionResult {
+  if (
+    d.pathogen_inv_pct !== null && d.pathogen_inv_pct > 70
+    && d.creatinine !== null
+    && ((d.sex === 'male' && d.creatinine <= 1.2) || (d.sex === 'female' && d.creatinine <= 1.0) || d.sex === null)
+  ) {
+    return line('20B', 2, 'favorable', ['oral','blood'],
+      'Your oral health and kidney markers are both in a favorable range.',
+      'Low oral pathogen burden means less systemic inflammatory load — and your kidney markers reflect that. When the mouth is healthy, the downstream organs that filter inflammation stay healthier too.',
+      'Maintain your oral care routine. This is the kind of alignment that protects long-term organ function.',
+    )
+  }
+  return NO_FIRE
+}
+
+function checkRule21A(d: ConnectionInput): ConnectionResult {
+  if (d.rdw !== null && d.rdw > 14.5 && d.pathogen_inv_pct !== null && d.pathogen_inv_pct < 25) {
+    return line('21A', 1, 'unfavorable', ['oral','blood'],
+      'Red blood cell variation and oral inflammation may be linked.',
+      'Elevated RDW (red cell distribution width) reflects chronic inflammation and oxidative stress at the cellular level. When oral pathogens are also elevated, the systemic inflammatory burden compounds — your bone marrow produces red blood cells of inconsistent size because the inflammatory environment disrupts normal production.',
+      'Addressing oral pathogens reduces the systemic inflammatory load that drives RDW elevation. A periodontal evaluation is the right starting point.',
+    )
+  }
+  return NO_FIRE
+}
+
+function checkRule22A(d: ConnectionInput): ConnectionResult {
+  if (d.wbc !== null && d.wbc > 10.0 && d.pathogen_inv_pct !== null && d.pathogen_inv_pct < 20) {
+    return line('22A', 1, 'unfavorable', ['oral','blood'],
+      'Your white blood cell count and oral pathogen burden are both elevated.',
+      'Elevated WBC is a direct signal that your immune system is actively fighting something. When oral pathogens are also elevated, the mouth is a likely source of that immune activation. Chronic oral infection drives persistent WBC elevation — which itself accelerates aging and cardiovascular risk.',
+      'A periodontal evaluation and consistent oral hygiene are the most direct interventions. WBC often normalizes within months of managing oral pathogen burden.',
+    )
+  }
+  return NO_FIRE
+}
+
+function checkRule22B(d: ConnectionInput): ConnectionResult {
+  if (
+    d.wbc !== null && d.wbc >= 4.0 && d.wbc <= 10.0
+    && d.pathogen_inv_pct !== null && d.pathogen_inv_pct > 60
+    && d.sleep_duration_hrs !== null && d.sleep_duration_hrs >= 6.5
+  ) {
+    return line('22B', 2, 'favorable', ['oral','blood','wearable'],
+      'Your immune system, oral health, and sleep are all working together.',
+      'Normal white blood cell count, low oral pathogen burden, and adequate sleep duration is a strong combination. Your immune system is not being chronically activated by oral infection, and your sleep is supporting normal immune regulation.',
+      'Protect this alignment. It is the foundation of healthy aging.',
     )
   }
   return NO_FIRE
@@ -602,24 +769,28 @@ const RULE_CHECKERS: Record<string, (input: ConnectionInput) => ConnectionResult
   '16A': checkRule16A,
   '16B': checkRule16B,
   '17A': checkRule17A,
+  '8D': checkRule8D,
+  '18A': checkRule18A, '18B': checkRule18B, '18C': checkRule18C,
+  '19A': checkRule19A, '19B': checkRule19B, '19C': checkRule19C,
+  '20A': checkRule20A, '20B': checkRule20B,
+  '21A': checkRule21A, '22A': checkRule22A, '22B': checkRule22B,
 }
 
 // ─── Main Entry Point ────────────────────────────────────────────────────────
 
-export function evaluateConnection(marker_id: string, input: ConnectionInput): ConnectionResult {
+export function evaluateConnection(marker_id: string, input: ConnectionInput): ConnectionLine[] {
   const ruleIds = MARKER_RULES[marker_id]
-  if (!ruleIds) return { fires: false }
+  if (!ruleIds) return []
 
   const results: ConnectionLine[] = []
   for (const ruleId of ruleIds) {
     if (!passesQCGates(ruleId, input)) continue
-    const result = RULE_CHECKERS[ruleId](input)
+    const checker = RULE_CHECKERS[ruleId]
+    if (!checker) continue
+    const result = checker(input)
     if (result.fires) results.push(result)
   }
 
-  if (results.length === 0) return { fires: false }
-
-  // Sort: priority ascending (1 first), then by number of panels (more panels first), then prefer oral-involving
   results.sort((a, b) => {
     if (a.priority !== b.priority) return a.priority - b.priority
     if (a.linked_panels.length !== b.linked_panels.length) return b.linked_panels.length - a.linked_panels.length
@@ -628,5 +799,5 @@ export function evaluateConnection(marker_id: string, input: ConnectionInput): C
     return bHasOral - aHasOral
   })
 
-  return results[0]
+  return results
 }

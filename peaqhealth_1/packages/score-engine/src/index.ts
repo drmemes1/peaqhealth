@@ -33,7 +33,7 @@ export { calcPeaqAge, calcOMA } from './peaqAge'
 
 export { evaluateConnection } from './connections'
 export type {
-  ConnectionInput, ConnectionResult, ConnectionLine, NoConnection,
+  ConnectionInput, ConnectionLine, NoConnection,
   ConnectionPriority, ConnectionDirection, Panel as ConnectionPanel,
 } from './connections'
 export type {

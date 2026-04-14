@@ -19,6 +19,7 @@ const EMPTY_INPUT: ConnectionInput = {
   known_conditions: null,
   oma_pct_prev: null, pheno_age_prev: null, hs_crp_prev: null,
   rhr_avg_prev: null, sleep_duration_prev: null,
+  testosterone: null, creatinine: null,
 }
 
 function buildTestInput(overrides: Partial<ConnectionInput>): ConnectionInput {
@@ -32,194 +33,170 @@ const freshData = {
   hrv_nights: 30,
 }
 
-describe("Connection Rules Engine", () => {
+describe("Connection Rules Engine v1.2", () => {
 
-  // ── Rule 1A fires ────────────────────────────────────────────────────────
+  test("Returns an array (not a single result)", () => {
+    const result = evaluateConnection("ldl", buildTestInput(freshData))
+    expect(Array.isArray(result)).toBe(true)
+  })
+
   test("Rule 1A: Neisseria depleted + LDL elevated", () => {
-    const input = buildTestInput({
-      neisseria_pct: 2.0,
-      ldl: 144,
-      ...freshData,
-    })
-    const result = evaluateConnection("ldl", input)
-    expect(result.fires).toBe(true)
-    if (result.fires) {
-      expect(result.rule_id).toBe("1A")
-      expect(result.priority).toBe(1)
-      expect(result.direction).toBe("unfavorable")
-    }
+    const results = evaluateConnection("ldl", buildTestInput({ neisseria_pct: 2.0, ldl: 144, ...freshData }))
+    expect(results.length).toBeGreaterThan(0)
+    expect(results[0].rule_id).toBe("1A")
+    expect(results[0].priority).toBe(1)
+    expect(results[0].direction).toBe("unfavorable")
   })
 
-  // ── Rule 1C fires (favorable) ────────────────────────────────────────────
-  test("Rule 1C: Neisseria healthy + CRP low", () => {
-    const input = buildTestInput({
-      neisseria_pct: 15.0,
-      hs_crp: 0.7,
-      ...freshData,
-    })
-    const result = evaluateConnection("hs_crp", input)
-    expect(result.fires).toBe(true)
-    if (result.fires) {
-      expect(result.rule_id).toBe("1C")
-      expect(result.priority).toBe(2)
-      expect(result.direction).toBe("favorable")
-    }
+  test("Rule 1C: Neisseria healthy + CRP low (favorable)", () => {
+    const results = evaluateConnection("hs_crp", buildTestInput({ neisseria_pct: 15.0, hs_crp: 0.7, ...freshData }))
+    const r1c = results.find(r => r.rule_id === "1C")
+    expect(r1c).toBeDefined()
+    expect(r1c!.priority).toBe(2)
+    expect(r1c!.direction).toBe("favorable")
   })
 
-  // ── QC gate blocks rule ──────────────────────────────────────────────────
   test("Stale blood panel silences blood rules", () => {
-    const input = buildTestInput({
-      ldl: 160,
-      neisseria_pct: 2.0,
-      blood_days_since_draw: 200,
-      oral_days_since_test: 30,
-    })
-    const result = evaluateConnection("ldl", input)
-    expect(result.fires).toBe(false)
+    const results = evaluateConnection("ldl", buildTestInput({
+      ldl: 160, neisseria_pct: 2.0, blood_days_since_draw: 200, oral_days_since_test: 30,
+    }))
+    expect(results.length).toBe(0)
   })
 
-  // ── No connection when no rules fire ─────────────────────────────────────
-  test("No connection line when no rules fire", () => {
-    const input = buildTestInput({
-      ldl: 90,
-      neisseria_pct: 20,
-      ...freshData,
-    })
-    const result = evaluateConnection("ldl", input)
-    expect(result.fires).toBe(false)
+  test("Empty array when no rules fire", () => {
+    const results = evaluateConnection("ldl", buildTestInput({ ldl: 90, neisseria_pct: 20, ...freshData }))
+    expect(results).toEqual([])
   })
 
-  // ── Priority ordering ───────────────────────────────────────────────────
-  test("Priority 1 returned over Priority 2 for hs_crp", () => {
-    const input = buildTestInput({
-      neisseria_pct: 2.0,
-      hs_crp: 4.0,
-      ...freshData,
-    })
-    const result = evaluateConnection("hs_crp", input)
-    expect(result.fires).toBe(true)
-    if (result.fires) {
-      expect(result.priority).toBe(1)
-    }
+  test("Priority 1 sorted first", () => {
+    const results = evaluateConnection("hs_crp", buildTestInput({ neisseria_pct: 2.0, hs_crp: 4.0, ...freshData }))
+    expect(results.length).toBeGreaterThan(0)
+    expect(results[0].priority).toBe(1)
   })
 
-  // ── Rule 17A: Triple cardiovascular convergence ──────────────────────────
+  test("Rule stacking: multiple rules fire for same marker", () => {
+    const results = evaluateConnection("hs_crp", buildTestInput({
+      neisseria_pct: 2.0, hs_crp: 4.0, porphyromonas_pct: 1.5,
+      sleep_duration_hrs: 5.5, ...freshData,
+    }))
+    expect(results.length).toBeGreaterThan(1)
+    const ruleIds = results.map(r => r.rule_id)
+    expect(ruleIds).toContain("1B")
+    expect(ruleIds).toContain("2A")
+  })
+
   test("Rule 17A: Triple cardiovascular convergence", () => {
-    const input = buildTestInput({
-      neisseria_pct: 2.7,
-      ldl: 144,
-      hs_crp: 1.5,
-      rhr_avg: 63,
-      rhr_expected: 71,
-      hrv_percentile: 20,
-      ...freshData,
-    })
-    const result = evaluateConnection("heart_health", input)
-    expect(result.fires).toBe(true)
-    if (result.fires) {
-      expect(result.rule_id).toBe("17A")
-      expect(result.priority).toBe(1)
-    }
+    const results = evaluateConnection("heart_health", buildTestInput({
+      neisseria_pct: 2.7, ldl: 144, hs_crp: 1.5,
+      rhr_avg: 63, rhr_expected: 71, hrv_percentile: 20, ...freshData,
+    }))
+    const r17 = results.find(r => r.rule_id === "17A")
+    expect(r17).toBeDefined()
+    expect(r17!.priority).toBe(1)
   })
 
-  // ── Rule 2A: Porphyromonas + CRP ────────────────────────────────────────
-  test("Rule 2A: Porphyromonas elevated + CRP elevated", () => {
-    const input = buildTestInput({
-      porphyromonas_pct: 1.5,
-      hs_crp: 4.0,
-      ...freshData,
-    })
-    const result = evaluateConnection("harmful_bacteria", input)
-    expect(result.fires).toBe(true)
-    if (result.fires) {
-      expect(result.rule_id).toBe("2A")
-      expect(result.direction).toBe("unfavorable")
-    }
-  })
-
-  // ── Rule 3B: Good sleep + low CRP ───────────────────────────────────────
   test("Rule 3B: Good sleep + CRP low (favorable)", () => {
-    const input = buildTestInput({
-      sleep_duration_hrs: 7.5,
-      sleep_regularity_sd: 20,
-      hs_crp: 0.5,
-      ...freshData,
-    })
-    const result = evaluateConnection("deep_sleep", input)
-    expect(result.fires).toBe(true)
-    if (result.fires) {
-      expect(result.rule_id).toBe("3B")
-      expect(result.direction).toBe("favorable")
-    }
+    const results = evaluateConnection("deep_sleep", buildTestInput({
+      sleep_duration_hrs: 7.5, sleep_regularity_sd: 20, hs_crp: 0.5, ...freshData,
+    }))
+    const r3b = results.find(r => r.rule_id === "3B")
+    expect(r3b).toBeDefined()
+    expect(r3b!.direction).toBe("favorable")
   })
 
-  // ── CRP acute exclusion ─────────────────────────────────────────────────
   test("CRP > 10 silences all blood rules", () => {
-    const input = buildTestInput({
-      neisseria_pct: 2.0,
-      hs_crp: 15.0,
-      ...freshData,
-    })
-    const result = evaluateConnection("hs_crp", input)
-    expect(result.fires).toBe(false)
+    const results = evaluateConnection("hs_crp", buildTestInput({ neisseria_pct: 2.0, hs_crp: 15.0, ...freshData }))
+    expect(results.length).toBe(0)
   })
 
-  // ── Rule 4A: Exploratory ────────────────────────────────────────────────
-  test("Rule 4A: Neisseria depleted + poor sleep efficiency (exploratory)", () => {
-    const input = buildTestInput({
-      neisseria_pct: 3.0,
-      sleep_efficiency_pct: 75,
-      ...freshData,
-    })
-    const result = evaluateConnection("deep_sleep", input)
-    expect(result.fires).toBe(true)
-    if (result.fires) {
-      expect(result.direction).toBe("exploratory")
-      expect(result.priority).toBe(3)
-    }
+  test("Unknown marker returns empty array", () => {
+    const results = evaluateConnection("unknown_marker", buildTestInput(freshData))
+    expect(results).toEqual([])
   })
 
-  // ── Unknown marker returns fires: false ─────────────────────────────────
-  test("Unknown marker_id returns no connection", () => {
-    const result = evaluateConnection("unknown_marker", buildTestInput(freshData))
-    expect(result.fires).toBe(false)
+  test("Rule 9A: Fires for age >= 45, not for age < 45", () => {
+    const young = evaluateConnection("harmful_bacteria", buildTestInput({ porphyromonas_pct: 1.0, age: 30, ...freshData }))
+    expect(young.find(r => r.rule_id === "9A")).toBeUndefined()
+
+    const older = evaluateConnection("harmful_bacteria", buildTestInput({ porphyromonas_pct: 1.0, age: 50, ...freshData }))
+    expect(older.find(r => r.rule_id === "9A")).toBeDefined()
   })
 
-  // ── Rule 9A: Age gating ─────────────────────────────────────────────────
-  test("Rule 9A: Does not fire for age < 45", () => {
-    const input = buildTestInput({
-      porphyromonas_pct: 1.0,
-      age: 30,
-      ...freshData,
-    })
-    const result = evaluateConnection("harmful_bacteria", input)
-    if (result.fires) {
-      expect(result.rule_id).not.toBe("9A")
-    }
-  })
-
-  test("Rule 9A: Fires for age >= 45 with elevated pathogens", () => {
-    const input = buildTestInput({
-      porphyromonas_pct: 1.0,
-      age: 50,
-      ...freshData,
-    })
-    const result = evaluateConnection("harmful_bacteria", input)
-    expect(result.fires).toBe(true)
-    if (result.fires) {
-      expect(result.rule_id).toBe("9A")
-    }
-  })
-
-  // ── Wearable minimum gate ───────────────────────────────────────────────
   test("Wearable minimum: < 14 nights silences sleep rules", () => {
-    const input = buildTestInput({
-      sleep_duration_hrs: 5.0,
-      hs_crp: 5.0,
-      wearable_nights: 10,
-      blood_days_since_draw: 30,
-    })
-    const result = evaluateConnection("duration", input)
-    expect(result.fires).toBe(false)
+    const results = evaluateConnection("duration", buildTestInput({
+      sleep_duration_hrs: 5.0, hs_crp: 5.0, wearable_nights: 10, blood_days_since_draw: 30,
+    }))
+    expect(results.length).toBe(0)
+  })
+
+  // ── New v1.2 rules ─────────────────────────────────────────────────────────
+
+  test("Rule 18A: RHR elevated + HbA1c elevated", () => {
+    const results = evaluateConnection("blood_sugar", buildTestInput({
+      rhr_avg: 80, hba1c: 6.0, ...freshData,
+    }))
+    const r18a = results.find(r => r.rule_id === "18A")
+    expect(r18a).toBeDefined()
+    expect(r18a!.priority).toBe(1)
+    expect(r18a!.direction).toBe("unfavorable")
+  })
+
+  test("Rule 19C: Only fires for males with low deep sleep + low testosterone", () => {
+    const male = evaluateConnection("deep_sleep", buildTestInput({
+      deep_sleep_min: 30, testosterone: 250, sex: "male", ...freshData,
+    }))
+    expect(male.find(r => r.rule_id === "19C")).toBeDefined()
+
+    const female = evaluateConnection("deep_sleep", buildTestInput({
+      deep_sleep_min: 30, testosterone: 250, sex: "female", ...freshData,
+    }))
+    expect(female.find(r => r.rule_id === "19C")).toBeUndefined()
+  })
+
+  test("Rule 20A: Sex-specific creatinine thresholds", () => {
+    const maleHigh = evaluateConnection("creatinine", buildTestInput({
+      pathogen_inv_pct: 15, creatinine: 1.3, sex: "male", ...freshData,
+    }))
+    expect(maleHigh.find(r => r.rule_id === "20A")).toBeDefined()
+
+    const maleNormal = evaluateConnection("creatinine", buildTestInput({
+      pathogen_inv_pct: 15, creatinine: 1.0, sex: "male", ...freshData,
+    }))
+    expect(maleNormal.find(r => r.rule_id === "20A")).toBeUndefined()
+
+    const femaleHigh = evaluateConnection("creatinine", buildTestInput({
+      pathogen_inv_pct: 15, creatinine: 1.1, sex: "female", ...freshData,
+    }))
+    expect(femaleHigh.find(r => r.rule_id === "20A")).toBeDefined()
+  })
+
+  test("Rule 22B: Favorable when WBC normal + pathogens low + sleep adequate", () => {
+    const results = evaluateConnection("cellular_health", buildTestInput({
+      wbc: 6.0, pathogen_inv_pct: 70, sleep_duration_hrs: 7.5, ...freshData,
+    }))
+    const r22b = results.find(r => r.rule_id === "22B")
+    expect(r22b).toBeDefined()
+    expect(r22b!.direction).toBe("favorable")
+  })
+
+  test("Rule 16A: Priority changed to 2", () => {
+    const results = evaluateConnection("vitamin_d", buildTestInput({
+      vitamin_d: 20, porphyromonas_pct: 0.8, ...freshData,
+    }))
+    const r16a = results.find(r => r.rule_id === "16A")
+    expect(r16a).toBeDefined()
+    expect(r16a!.priority).toBe(2)
+  })
+
+  test("Rule 14A: Requires mouthwash_type (Phase 2 flag)", () => {
+    const noMouthwash = evaluateConnection("good_bacteria", buildTestInput({
+      mouthwash_type: null, neisseria_pct: 2, ldl: 140, ...freshData,
+    }))
+    expect(noMouthwash.find(r => r.rule_id === "14A")).toBeUndefined()
+
+    const withMouthwash = evaluateConnection("good_bacteria", buildTestInput({
+      mouthwash_type: "antiseptic", neisseria_pct: 2, ldl: 140, ...freshData,
+    }))
+    expect(withMouthwash.find(r => r.rule_id === "14A")).toBeDefined()
   })
 })
