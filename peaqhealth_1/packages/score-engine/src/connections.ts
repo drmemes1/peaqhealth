@@ -98,6 +98,8 @@ export const MARKER_RULES: Record<string, string[]> = {
   'vitamin_levels':   ['16A', '16B'],
   'creatinine':       ['20A', '20B'],
   'testosterone':     ['19C'],
+  'hdl':              ['5A', '5B'],
+  'triglycerides':    ['1A', '17A'],
 }
 
 // ─── QC Gates ────────────────────────────────────────────────────────────────

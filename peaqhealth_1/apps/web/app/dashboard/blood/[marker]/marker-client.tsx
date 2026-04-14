@@ -74,8 +74,11 @@ function getTrend(hist: HistoryPoint[], higherIsBetter?: boolean): { direction: 
 
 export function MarkerDetailClient({ def, value, connectionInput, history, articles, backHref, backLabel, panelColor, panelLabel }: Props) {
   const [tab, setTab] = useState<Tab>("why")
-  const connection = evaluateConnection(def.dot_id, connectionInput)
+  const rawConnection = evaluateConnection(def.id, connectionInput)
   const status = value !== null ? getStatus(value, def) : null
+  const connection = status?.color === "green"
+    ? rawConnection.filter(c => c.direction !== "unfavorable")
+    : rawConnection
   const rulesCount = MARKER_RULES_COUNT[def.id] ?? 0
   const trend = getTrend(history, def.higher_is_better)
 
@@ -220,6 +223,11 @@ export function MarkerDetailClient({ def, value, connectionInput, history, artic
                   Target: {def.thresholds.find(t => t.color === "green")?.label ?? "Optimal"} range
                 </p>
               </div>
+            )}
+            {history.length > 0 && history.length < 2 && (
+              <p style={{ fontFamily: sans, fontSize: 11, color: "#7A7A6E", textAlign: "center", margin: "24px 0 0" }}>
+                Trend will appear after your next blood draw.
+              </p>
             )}
           </>
         ) : (
@@ -390,6 +398,20 @@ export function MarkerDetailClient({ def, value, connectionInput, history, artic
         {/* ── TAB: Learn more ─────────────────────────────────────────── */}
         {tab === "learn" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {status?.color === "green" && (
+              <div style={{
+                background: "rgba(26,140,78,0.04)", border: "0.5px solid rgba(26,140,78,0.15)",
+                borderLeft: "3px solid #1A8C4E", borderRadius: "0 8px 8px 0",
+                padding: "14px 16px", marginBottom: 4,
+              }}>
+                <p style={{ fontFamily: serif, fontSize: 16, fontStyle: "italic", color: "#0F6E56", margin: "0 0 4px" }}>
+                  Your {def.label} is in the optimal range.
+                </p>
+                <p style={{ fontFamily: sans, fontSize: 13, color: "#7A7A6E", margin: 0, lineHeight: 1.5 }}>
+                  Keep doing what you are doing. Retest in 6 months to confirm stability.
+                </p>
+              </div>
+            )}
             {articles.length > 0 ? articles.map(a => (
               <Link key={a.slug} href={`/learn/${a.slug}`} style={{
                 textDecoration: "none", display: "block",

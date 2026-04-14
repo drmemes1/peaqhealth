@@ -198,7 +198,7 @@ export const MARKER_DEFINITIONS: Record<string, MarkerDef> = {
       { min: 60, label: 'Optimal', color: 'green' },
     ],
     db_column: 'hdl_mgdl',
-    related_articles: ['mouthwash-and-your-microbiome'],
+    related_articles: ['beetroot-juice-and-your-heart'],
     foods: [
       { name: 'Extra virgin olive oil', why: 'Raises HDL' },
       { name: 'Fatty fish', why: 'Raises HDL and reduces triglycerides' },
