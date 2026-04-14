@@ -396,7 +396,7 @@ function PanelNode({ name, status, href, icon, label, indicators, bgImage }: {
       {bgImage && (
         <img src={bgImage} alt="" style={{
           position: "absolute", inset: 0, width: "100%", height: "100%",
-          objectFit: "cover", opacity: 0.06, pointerEvents: "none",
+          objectFit: "cover", opacity: 0.08, pointerEvents: "none",
         }} />
       )}
       <span className="panel-card-name" style={{
@@ -756,7 +756,7 @@ export function DashboardClient(props: ScoreWheelProps & {
                     icon={hasSleep ? <SleepIcon sleepData={props.sleepData} /> : <ConnectIcon />}
                     label={sleepLabel()}
                     indicators={sleepIndicators}
-                    bgImage={!hasSleep ? "/peaq_mask.png" : undefined}
+                    bgImage={"/peaq_mask.png"}
                   />
                   <PanelNode
                     name="Blood" status={bloodStatus} href="/dashboard/blood"
