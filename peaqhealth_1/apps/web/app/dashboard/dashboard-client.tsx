@@ -823,14 +823,14 @@ export function DashboardClient(props: ScoreWheelProps & {
 
                 {/* PEAQ+ AGE CARD — shrunk */}
                 <div className="peaq-age-card" style={{
-                  flex: 1, background: DS.goldBg, border: `0.5px solid rgba(184,134,11,0.25)`,
+                  flex: 1, background: "#FAF7EE", border: `0.5px solid rgba(184,134,11,0.2)`,
                   borderRadius: 16, padding: "32px 28px", textAlign: "center",
                   display: "flex", flexDirection: "column", justifyContent: "center",
                   position: "relative", overflow: "hidden",
                 }}>
                   <img src="/images/snowcapped.jpg" alt="" style={{
                     position: "absolute", inset: 0, width: "100%", height: "100%",
-                    objectFit: "cover", opacity: 0.09, pointerEvents: "none",
+                    objectFit: "cover", opacity: 0.18, pointerEvents: "none",
                   }} />
                   <span style={{
                     fontFamily: sans, fontSize: 10, letterSpacing: "0.16em",
