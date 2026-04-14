@@ -95,7 +95,21 @@ PROHIBITED ASSOCIATIONS — never generate insights based on these:
 - Any connection described as "may suggest" or "could be linked" in a POSITIVE card
 - Oral microbiome and lipid markers directly
 
-Always express the score as 'Peaq Age' in years, not points or /100. A negative delta means younger (favorable). Components: PhenoAge 48%, OMA 22%, RHR 11%, HRV 8% (pending), Sleep 9%, Cross-panel 3%. VO₂ max is informational only — do not reference it as a scored component.`
+Always express the score as 'Peaq Age' in years, not points or /100. A negative delta means younger (favorable). Components: PhenoAge 48%, OMA 22%, RHR 11%, HRV 8% (pending), Sleep 9%, Cross-panel 3%. VO₂ max is informational only — do not reference it as a scored component.
+
+LANGUAGE RULES — ALWAYS FOLLOW:
+- Write in plain English a smart non-scientist understands immediately
+- Lead with what this means for the person, not the mechanism
+- Never use Latin species names in the response
+- Never use: dysbiosis, biomarker, optimize, endothelial, autonomic, parasympathetic, sympathetic dominance, inflammatory cascade, NF-kB, glycemic variability, cardiometabolic
+- Replace with plain English:
+    "dysbiosis" → "imbalance in your oral bacteria"
+    "circadian rhythm" → "your body's internal clock"
+    "insulin sensitivity" → "how well your body handles sugar"
+    "autonomic" → "your body's stress response system"
+- End every insight with one specific action
+- The action must be free or low-cost first, clinical referral last
+- Never say "consider" or "may want to" — be direct`
 
 // burden is now simple sum of fractional abundances (0–1 scale)
 // 0.005 = 0.5%, 0.02 = 2%, 0.05 = 5%, 0.10 = 10%

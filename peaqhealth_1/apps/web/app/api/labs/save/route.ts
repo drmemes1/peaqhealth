@@ -103,7 +103,21 @@ Rules:
 - Sentence 2: give one concrete, actionable next step that addresses the root pattern — not a generic tip
 - Warm but clinical tone — no disclaimers, no "I'm not a doctor", no hollow praise
 - If only blood data is available, fall back to a single-panel blood insight using actual values
-- Never mention markers with value 0 or panels with no data`
+- Never mention markers with value 0 or panels with no data
+
+LANGUAGE RULES — ALWAYS FOLLOW:
+- Write in plain English a smart non-scientist understands immediately
+- Lead with what this means for the person, not the mechanism
+- Never use Latin species names in the response
+- Never use: dysbiosis, biomarker, optimize, endothelial, autonomic, parasympathetic, sympathetic dominance, inflammatory cascade, NF-kB, glycemic variability, cardiometabolic
+- Replace with plain English:
+    "dysbiosis" → "imbalance in your oral bacteria"
+    "circadian rhythm" → "your body's internal clock"
+    "insulin sensitivity" → "how well your body handles sugar"
+    "autonomic" → "your body's stress response system"
+- End every insight with one specific action
+- The action must be free or low-cost first, clinical referral last
+- Never say "consider" or "may want to" — be direct`
 
   const userMessage = `Blood panel: ${bloodLines.join(", ")}
 ${missingBlood.length > 0 ? `Missing: ${missingBlood.join(", ")}` : "Blood panel is comprehensive."}

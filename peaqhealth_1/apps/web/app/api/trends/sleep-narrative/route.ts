@@ -146,7 +146,21 @@ RULES:
 - If HRV is below 50ms → note it without alarm
 - If age range is provided, contextualize HRV relative to their age group using the age-adjusted targets in the user prompt. A 43ms HRV may be good for a 45-year-old but below target for a 28-year-old. Never invent thresholds — only use the ones provided.${hrvTarget.cycleCaveat ? `\n- IMPORTANT: This user is female. ${hrvTarget.cycleCaveat} If HRV has dropped but other sleep metrics are stable, mention this possibility gently.` : ""}
 - Return ONLY valid JSON. No markdown. No backticks.
-- Always express the score as 'Peaq Age' in years, not points or /100. A negative delta means younger (favorable). Components: PhenoAge 48%, OMA 22%, RHR 11%, HRV 8% (pending), Sleep 9%, Cross-panel 3%. VO₂ max is informational only — do not reference it as a scored component.`
+- Always express the score as 'Peaq Age' in years, not points or /100. A negative delta means younger (favorable). Components: PhenoAge 48%, OMA 22%, RHR 11%, HRV 8% (pending), Sleep 9%, Cross-panel 3%. VO₂ max is informational only — do not reference it as a scored component.
+
+LANGUAGE RULES — ALWAYS FOLLOW:
+- Write in plain English a smart non-scientist understands immediately
+- Lead with what this means for the person, not the mechanism
+- Never use Latin species names in the response
+- Never use: dysbiosis, biomarker, optimize, endothelial, autonomic, parasympathetic, sympathetic dominance, inflammatory cascade, NF-kB, glycemic variability, cardiometabolic
+- Replace with plain English:
+    "dysbiosis" → "imbalance in your oral bacteria"
+    "circadian rhythm" → "your body's internal clock"
+    "insulin sensitivity" → "how well your body handles sugar"
+    "autonomic" → "your body's stress response system"
+- End every insight with one specific action
+- The action must be free or low-cost first, clinical referral last
+- Never say "consider" or "may want to" — be direct`
 
   const hrvTrendStr = hrvTrendPct != null
     ? (hrvTrendPct > 0 ? `+${hrvTrendPct.toFixed(1)}%` : `${hrvTrendPct.toFixed(1)}%`)

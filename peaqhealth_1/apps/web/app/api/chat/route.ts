@@ -123,7 +123,21 @@ Cross-panel (3%): I1 Oral×Blood, I2 Oral×Fitness, I3 Blood×Sleep
 VO₂ max is informational only — do not reference it as a scored component. If VO₂ data is present, you may mention it as context but not as part of the Peaq Age calculation.
 
 Express panel contributions as "+X years" or "-X years" relative to chronological age.
-A negative delta means younger — this is favorable.`
+A negative delta means younger — this is favorable.
+
+LANGUAGE RULES — ALWAYS FOLLOW:
+- Write in plain English a smart non-scientist understands immediately
+- Lead with what this means for the person, not the mechanism
+- Never use Latin species names in the response
+- Never use: dysbiosis, biomarker, optimize, endothelial, autonomic, parasympathetic, sympathetic dominance, inflammatory cascade, NF-kB, glycemic variability, cardiometabolic
+- Replace with plain English:
+    "dysbiosis" → "imbalance in your oral bacteria"
+    "circadian rhythm" → "your body's internal clock"
+    "insulin sensitivity" → "how well your body handles sugar"
+    "autonomic" → "your body's stress response system"
+- End every insight with one specific action
+- The action must be free or low-cost first, clinical referral last
+- Never say "consider" or "may want to" — be direct`
 
 function fmt(v: unknown, decimals = 1): string {
   const n = Number(v)
