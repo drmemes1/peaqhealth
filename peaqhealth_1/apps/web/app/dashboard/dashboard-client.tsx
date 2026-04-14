@@ -1101,36 +1101,40 @@ export function DashboardClient(props: ScoreWheelProps & {
 
               {/* ZONE 3 — FIND A DENTIST */}
               <div style={{
-                background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
                 borderRadius: 12, overflow: "hidden",
                 boxShadow: "0 1px 3px rgba(20,20,16,0.06)",
+                border: `0.5px solid ${DS.cardBorder}`,
+                position: "relative", minHeight: 180,
+                display: "flex", flexDirection: "column", justifyContent: "flex-end",
               }}>
+                <img
+                  src="/peaqdentist1.png"
+                  alt="Peaq Dentist"
+                  style={{
+                    position: "absolute", inset: 0, width: "100%", height: "100%",
+                    objectFit: "cover", objectPosition: "top center",
+                  }}
+                />
                 <div style={{
-                  background: "#C8A84E", display: "flex", alignItems: "center", justifyContent: "center",
-                  padding: "16px 20px",
+                  position: "relative", zIndex: 1,
+                  background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.35) 60%, transparent 100%)",
+                  padding: "40px 20px 20px",
                 }}>
-                  <img
-                    src="/loupes.png"
-                    alt="Dental loupes"
-                    style={{ height: 48, objectFit: "contain", filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.15))" }}
-                  />
-                </div>
-                <div style={{ padding: 20 }}>
                   <span style={{
-                    fontFamily: sans, fontSize: 10, letterSpacing: "0.12em",
-                    textTransform: "uppercase", color: DS.inkMuted,
-                    display: "block", marginBottom: 10,
+                    fontFamily: sans, fontSize: 9, letterSpacing: "0.12em",
+                    textTransform: "uppercase", color: "rgba(255,255,255,0.6)",
+                    display: "block", marginBottom: 6,
                   }}>
                     FIND A DENTIST
                   </span>
                   <p style={{
                     fontFamily: serif, fontSize: 18, fontWeight: 400,
-                    color: DS.ink, margin: "0 0 6px", lineHeight: 1.3,
+                    color: "#FFFFFF", margin: "0 0 4px", lineHeight: 1.3,
                   }}>
                     Peaq Dentists
                   </p>
                   <p style={{
-                    fontFamily: sans, fontSize: 13, color: DS.gold,
+                    fontFamily: sans, fontSize: 12, color: DS.gold,
                     margin: 0, fontWeight: 500,
                   }}>
                     Coming soon
