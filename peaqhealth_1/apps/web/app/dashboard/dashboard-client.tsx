@@ -653,6 +653,7 @@ export function DashboardClient(props: ScoreWheelProps & {
     const anyMissing = !hasSleep || !hasBlood || !hasOral
 
     const targetLow = Math.max(18, peaqAge - 2).toFixed(0)
+    const speciesCount = props.oralData?.species?.["Species richness"] as number | undefined
     const targetHigh = Math.max(18, peaqAge - 0.5).toFixed(0)
 
     return (
@@ -758,67 +759,120 @@ export function DashboardClient(props: ScoreWheelProps & {
                 </div>
               </div>
 
-              {/* 3. PEAQ+ AGE CARD — warm gold background */}
-              <div className="peaq-age-card" style={{
-                background: DS.goldBg, border: `0.5px solid rgba(184,134,11,0.25)`,
-                borderRadius: 16, padding: "48px 40px", textAlign: "center",
-                marginBottom: 36,
-              }}>
-                <span style={{
-                  fontFamily: sans, fontSize: 10, letterSpacing: "0.16em",
-                  textTransform: "uppercase", color: DS.goldDark,
+              {/* 3. BACTERIA COUNT + PEAQ+ AGE — side by side */}
+              <div className="score-row" style={{ display: "flex", gap: 16, marginBottom: 36 }}>
+
+                {/* BACTERIA COUNT CARD */}
+                <Link href="/dashboard/oral" style={{
+                  flex: "0 0 200px", borderRadius: 16, overflow: "hidden",
+                  position: "relative", textDecoration: "none", display: "flex",
+                  flexDirection: "column", alignItems: "center", justifyContent: "center",
+                  minHeight: 240,
+                  boxShadow: "0 1px 3px rgba(20,20,16,0.06)",
+                  border: `0.5px solid ${DS.cardBorder}`,
                 }}>
-                  PEAQ+ AGE
-                </span>
+                  <img src="/bacteria.png" alt="" style={{
+                    position: "absolute", inset: 0, width: "100%", height: "100%",
+                    objectFit: "cover", filter: "blur(2px) brightness(0.35)",
+                  }} />
+                  <div style={{ position: "relative", zIndex: 1, textAlign: "center", padding: 24 }}>
+                    <span style={{
+                      fontFamily: sans, fontSize: 9, letterSpacing: "0.14em",
+                      textTransform: "uppercase", color: "rgba(255,255,255,0.6)",
+                      display: "block", marginBottom: 12,
+                    }}>
+                      SPECIES FOUND
+                    </span>
+                    {/* Green ring counter */}
+                    <div style={{ position: "relative", width: 96, height: 96, margin: "0 auto 12px" }}>
+                      <svg viewBox="0 0 96 96" style={{ width: 96, height: 96, transform: "rotate(-90deg)" }}>
+                        <circle cx="48" cy="48" r="40" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="5" />
+                        <circle cx="48" cy="48" r="40" fill="none" stroke={DS.oral} strokeWidth="5"
+                          strokeLinecap="round"
+                          strokeDasharray={`${2 * Math.PI * 40}`}
+                          strokeDashoffset={`${2 * Math.PI * 40 * (1 - Math.min(1, (speciesCount ?? 0) / 200))}`}
+                          style={{ filter: `drop-shadow(0 0 6px ${DS.oral})`, transition: "stroke-dashoffset 1s ease" }}
+                        />
+                      </svg>
+                      <span style={{
+                        position: "absolute", inset: 0,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontFamily: serif, fontSize: 36, fontWeight: 300, color: "#FFFFFF",
+                        letterSpacing: -1,
+                      }}>
+                        {speciesCount ?? "—"}
+                      </span>
+                    </div>
+                    <span style={{
+                      fontFamily: sans, fontSize: 11, color: "rgba(255,255,255,0.5)",
+                    }}>
+                      {speciesCount ? "unique bacteria detected" : "Order kit to discover"}
+                    </span>
+                  </div>
+                </Link>
 
-                <div className="peaq-age-number" style={{
-                  fontFamily: serif, fontSize: 96, fontWeight: 300,
-                  color: DS.ink, letterSpacing: -3, lineHeight: 1,
-                  margin: "12px 0 10px",
+                {/* PEAQ+ AGE CARD — shrunk */}
+                <div className="peaq-age-card" style={{
+                  flex: 1, background: DS.goldBg, border: `0.5px solid rgba(184,134,11,0.25)`,
+                  borderRadius: 16, padding: "32px 28px", textAlign: "center",
+                  display: "flex", flexDirection: "column", justifyContent: "center",
                 }}>
-                  {peaqAge.toFixed(1)}
-                </div>
+                  <span style={{
+                    fontFamily: sans, fontSize: 10, letterSpacing: "0.16em",
+                    textTransform: "uppercase", color: DS.goldDark,
+                  }}>
+                    PEAQ+ AGE
+                  </span>
 
-                <p className="peaq-age-delta" style={{
-                  fontFamily: serif, fontSize: 22, fontStyle: "italic",
-                  color: delta < 0 ? DS.greenDark : delta > 0 ? DS.redDark : DS.inkMuted,
-                  margin: "0 0 16px",
-                }}>
-                  {delta < 0
-                    ? `${Math.abs(delta).toFixed(1)} years younger than your calendar age`
-                    : delta > 0
-                    ? `${delta.toFixed(1)} years older than your calendar age`
-                    : "Exactly your calendar age"
-                  }
-                </p>
+                  <div className="peaq-age-number" style={{
+                    fontFamily: serif, fontSize: 72, fontWeight: 300,
+                    color: DS.ink, letterSpacing: -2, lineHeight: 1,
+                    margin: "8px 0 8px",
+                  }}>
+                    {peaqAge.toFixed(1)}
+                  </div>
 
-                <BandChip band={band} onGold />
+                  <p className="peaq-age-delta" style={{
+                    fontFamily: serif, fontSize: 18, fontStyle: "italic",
+                    color: delta < 0 ? DS.greenDark : delta > 0 ? DS.redDark : DS.inkMuted,
+                    margin: "0 0 12px",
+                  }}>
+                    {delta < 0
+                      ? `${Math.abs(delta).toFixed(1)} yrs younger`
+                      : delta > 0
+                      ? `${delta.toFixed(1)} yrs older`
+                      : "Right at your calendar age"
+                    }
+                  </p>
 
-                <p style={{
-                  fontFamily: sans, fontSize: 12, color: DS.goldDark,
-                  margin: "16px 0 0",
-                }}>
-                  6-month target: {targetLow}–{targetHigh}
-                </p>
+                  <BandChip band={band} onGold />
 
-                {hasDob === false && (
                   <p style={{
                     fontFamily: sans, fontSize: 11, color: DS.goldDark,
-                    margin: "8px 0 0", opacity: 0.7,
+                    margin: "12px 0 0",
                   }}>
-                    <Link href="/settings" style={{ color: DS.gold, textDecoration: "underline" }}>
-                      Add your date of birth
-                    </Link>{" "}in Settings for exact calculation
+                    6-mo target: {targetLow}–{targetHigh}
                   </p>
-                )}
 
-                <Link href="/science" style={{
-                  fontFamily: sans, fontSize: 11, color: DS.gold,
-                  textDecoration: "none", display: "inline-block",
-                  marginTop: 12,
-                }}>
-                  How is this calculated? →
-                </Link>
+                  {hasDob === false && (
+                    <p style={{
+                      fontFamily: sans, fontSize: 10, color: DS.goldDark,
+                      margin: "6px 0 0", opacity: 0.7,
+                    }}>
+                      <Link href="/settings" style={{ color: DS.gold, textDecoration: "underline" }}>
+                        Add DOB
+                      </Link>{" "}for exact age
+                    </p>
+                  )}
+
+                  <Link href="/science" style={{
+                    fontFamily: sans, fontSize: 11, color: DS.gold,
+                    textDecoration: "none", display: "inline-block",
+                    marginTop: 8,
+                  }}>
+                    How is this calculated? →
+                  </Link>
+                </div>
               </div>
 
               {/* 4. AI INSIGHT CARD — cached from snapshot, no spinner */}
@@ -1211,8 +1265,16 @@ export function DashboardClient(props: ScoreWheelProps & {
             .connection-lines-wrapper {
               display: none !important;
             }
+            .score-row {
+              flex-direction: column !important;
+              gap: 12px !important;
+            }
+            .score-row a {
+              flex: 1 1 auto !important;
+              min-height: 180px !important;
+            }
             .peaq-age-card {
-              padding: 32px 20px !important;
+              padding: 24px 20px !important;
               border-radius: 12px !important;
             }
             .peaq-age-number {
