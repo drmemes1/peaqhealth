@@ -243,6 +243,7 @@ async function _recalculateScore(
   const userAge = dobStr
     ? Math.floor((Date.now() - new Date(dobStr).getTime()) / (365.25 * 86400000))
     : ageRangeToMidpoint(lifestyleRes.data?.age_range as string | null)
+  console.log(`[recalc] user=${userId.slice(0,8)} age=${userAge} source=${dobStr ? "dob" : "age_range"}`)
   const rawSex = lifestyleRes.data?.biological_sex as string | null
   const userSex: 'male' | 'female' = rawSex === 'female' ? 'female' : 'male'
 
@@ -526,7 +527,7 @@ async function _recalculateScore(
     peaq_age_delta:         peaqAgeResult.delta,
     peaq_age_band:          peaqAgeResult.band,
     score_version:          "v5",
-    peaq_age_breakdown:     peaqAgeResult,
+    peaq_age_breakdown:     { ...peaqAgeResult, hasDob: !!dobStr },
   })
   if (insertError) {
     console.error("[recalculate] snapshot insert failed for user:", userId, insertError)

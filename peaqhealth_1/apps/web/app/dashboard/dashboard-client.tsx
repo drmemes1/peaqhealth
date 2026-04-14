@@ -12,7 +12,7 @@ import { RefreshCw } from "lucide-react"
 const serif = "'Cormorant Garamond', Georgia, serif"
 const sans  = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 
-// ─── Design System Colors ───────────────────────────────────────────────────
+// ─── Design System Colors ──────────────��────────────────────────────────────
 const DS = {
   pageBg:    "#FAFAF8",
   sectionBg: "#F7F5F0",
@@ -21,12 +21,17 @@ const DS = {
   ink:       "#141410",
   inkMuted:  "#7A7A6E",
   gold:      "#B8860B",
+  goldDark:  "#854F0B",
+  goldBg:    "#F5EDD4",
   sleep:     "#4A7FB5",
   blood:     "#C0392B",
   oral:      "#2D6A4F",
+  oralLight: "#5A9E7A",
+  greenDark: "#0F6E56",
+  redDark:   "#A32D2D",
 }
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+// ─── Types ──────��──────────────────────────────────────────��────────────────
 
 interface InsightItem {
   panels: string[]
@@ -63,6 +68,18 @@ interface LabHistoryPoint {
   vitamin_d_ngml: number | null
 }
 
+// ─── Helpers ──────────────��─────────────────────────────────────────────────
+
+function truncateInsightBody(text: string, max = 120): string {
+  let cleaned = text
+    .replace(/Peaq\s*Age\s*of\s*[\d.]+\s*(?:years?)?/gi, "")
+    .replace(/delta\s*of\s*[+-]?[\d.]+/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .trim()
+  if (cleaned.length > max) cleaned = cleaned.slice(0, max).replace(/\s+\S*$/, "") + "..."
+  return cleaned
+}
+
 // ─── Skeleton Loaders ───────────────────────────────────────────────────────
 
 function ShimmerBar({ width, height, delay = 0, radius = 3 }: {
@@ -77,20 +94,7 @@ function ShimmerBar({ width, height, delay = 0, radius = 3 }: {
   )
 }
 
-function SkeletonCard() {
-  return (
-    <div style={{
-      background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
-      borderRadius: 12, padding: 20,
-    }}>
-      <ShimmerBar width={80} height={10} />
-      <div style={{ marginTop: 12 }}><ShimmerBar width="70%" height={14} delay={200} /></div>
-      <div style={{ marginTop: 8 }}><ShimmerBar width="50%" height={12} delay={400} /></div>
-    </div>
-  )
-}
-
-// ─── "See why" Expandable ───────────────────────────────────────────────────
+// ─── "See why" Expandable ────────────────���──────────────────────���───────────
 
 function SeeWhy({ title, explanation, panels }: { title: string; explanation: string; panels: string[] }) {
   const [open, setOpen] = useState(false)
@@ -164,7 +168,7 @@ function SeeWhy({ title, explanation, panels }: { title: string; explanation: st
   )
 }
 
-// ─── Cross-Panel Signal Row ─────────────────────────────────────────────────
+// ─── Cross-Panel Signal Row ────��────────────────────────────────────────────
 
 function PanelPill({ panel }: { panel: string }) {
   const color = ({ sleep: DS.sleep, blood: DS.blood, oral: DS.oral } as Record<string,string>)[panel] ?? DS.inkMuted
@@ -201,20 +205,93 @@ function SignalRow({ signal }: { signal: CrossPanelSignal }) {
   )
 }
 
-// ─── Panel Node (Sleep / Blood / Oral) ──────────────────────────────────────
+// ─── Panel Visual Icons ───────────────────────────────���─────────────────────
 
 type PanelStatus = "Active" | "Review" | "Connect"
 
-function PanelNode({ name, color, status, href }: {
-  name: string; color: string; status: PanelStatus; href: string
+function OralIcon() {
+  return (
+    <svg width="40" height="40" viewBox="0 0 40 40" style={{ filter: `drop-shadow(0 0 8px rgba(45,106,79,0.3))` }}>
+      <circle cx="12" cy="14" r="3.5" fill={DS.oral} />
+      <circle cx="26" cy="11" r="3.5" fill={DS.oralLight} />
+      <circle cx="19" cy="22" r="3.5" fill={DS.oral} />
+      <circle cx="30" cy="24" r="3.5" fill={DS.oralLight} />
+      <circle cx="10" cy="28" r="3.5" fill={DS.gold} />
+    </svg>
+  )
+}
+
+function SleepIcon({ sleepData }: { sleepData?: { hrv: number; [k: string]: unknown } }) {
+  const label = sleepData ? `${sleepData.hrv?.toFixed(0) ?? "—"} ms HRV` : ""
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+      <svg width="48" height="24" viewBox="0 0 48 24">
+        {[0.4, 0.65, 1.0].map((op, i) => (
+          <path
+            key={i}
+            d={`M 0 ${18 - i * 6} Q 12 ${12 - i * 6} 24 ${18 - i * 6} T 48 ${18 - i * 6}`}
+            fill="none" stroke={DS.sleep} strokeWidth={1.5} opacity={op}
+          />
+        ))}
+      </svg>
+      {label && (
+        <span style={{ fontFamily: sans, fontSize: 10, color: DS.inkMuted }}>{label}</span>
+      )}
+    </div>
+  )
+}
+
+function BloodIcon({ bloodData }: { bloodData?: { hsCRP: number; ldl: number; hba1c: number } }) {
+  if (!bloodData) return null
+  const markers = [
+    { label: "LDL", ok: bloodData.ldl < 130 },
+    { label: "hs-CRP", ok: bloodData.hsCRP > 0 && bloodData.hsCRP < 2 },
+    { label: "HbA1c", ok: bloodData.hba1c < 5.7 },
+  ]
+  const optimal = markers.filter(m => m.ok).length
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 3, width: 48 }}>
+      {markers.map(m => (
+        <div key={m.label} style={{
+          height: 4, borderRadius: 2, width: "100%",
+          background: m.ok ? DS.oral : DS.gold, opacity: 0.7,
+        }} />
+      ))}
+      <span style={{ fontFamily: sans, fontSize: 10, color: DS.inkMuted, textAlign: "center", marginTop: 2 }}>
+        {optimal}/{markers.length} optimal
+      </span>
+    </div>
+  )
+}
+
+function ConnectIcon() {
+  return (
+    <div style={{
+      width: 40, height: 40, borderRadius: "50%",
+      border: `2px dashed ${DS.inkMuted}`,
+      display: "flex", alignItems: "center", justifyContent: "center",
+    }}>
+      <svg width="14" height="14" viewBox="0 0 14 14" stroke={DS.inkMuted} strokeWidth={1.5} fill="none">
+        <line x1="7" y1="2" x2="7" y2="12" />
+        <line x1="2" y1="7" x2="12" y2="7" />
+      </svg>
+    </div>
+  )
+}
+
+// ─── Panel Node Card ────────────────────────────────────────────────────────
+
+function PanelNode({ name, status, href, icon, label }: {
+  name: string; status: PanelStatus; href: string
+  icon: React.ReactNode; label: string
 }) {
-  const dotColor = status === "Active" ? DS.oral : status === "Review" ? DS.gold : DS.inkMuted
+  const statusColor = status === "Active" ? DS.oral : status === "Review" ? DS.gold : DS.inkMuted
   return (
     <Link href={href} style={{
       background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
-      borderRadius: 12, padding: 20, textDecoration: "none",
+      borderRadius: 12, padding: "28px 24px", textDecoration: "none",
       display: "flex", flexDirection: "column", alignItems: "center",
-      gap: 10, flex: "1 1 0", minWidth: 0,
+      gap: 12, flex: "1 1 0", minWidth: 0, minHeight: 140,
       boxShadow: "0 1px 3px rgba(20,20,16,0.06)",
       transition: "transform 150ms ease, box-shadow 150ms ease",
     }}
@@ -222,18 +299,26 @@ function PanelNode({ name, color, status, href }: {
     onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 1px 3px rgba(20,20,16,0.06)" }}
     >
       <span style={{
-        fontFamily: sans, fontSize: 11, letterSpacing: "0.08em",
-        textTransform: "uppercase", color: DS.inkMuted, fontWeight: 500,
+        fontFamily: sans, fontSize: 10, letterSpacing: "0.14em",
+        textTransform: "uppercase", color: DS.inkMuted,
       }}>
         {name}
       </span>
+      {icon}
       <span style={{
-        width: 8, height: 8, borderRadius: "50%", background: dotColor,
-        ...(status === "Active" ? { animation: "panelDotPulse 3s ease-in-out infinite" } : {}),
-      }} />
+        fontFamily: sans, fontSize: 13, color: DS.ink, textAlign: "center",
+        lineHeight: 1.3,
+      }}>
+        {label}
+      </span>
       <span style={{
-        fontFamily: sans, fontSize: 12, color: status === "Connect" ? DS.inkMuted : DS.ink,
-        fontWeight: 500,
+        fontFamily: sans, fontSize: 10, fontWeight: 500,
+        letterSpacing: "0.06em", textTransform: "uppercase",
+        padding: "3px 10px", borderRadius: 20,
+        ...(status === "Review"
+          ? { background: "#FAEEDA", color: DS.goldDark }
+          : { background: `${statusColor}14`, color: statusColor, border: `0.5px solid ${statusColor}40` }
+        ),
       }}>
         {status}
       </span>
@@ -251,61 +336,71 @@ function ConnectionLines({ statuses }: { statuses: [PanelStatus, PanelStatus, Pa
   return (
     <svg
       style={{
-        position: "absolute", top: "50%", left: 0, width: "100%", height: 2,
+        position: "absolute", top: "50%", left: 0, width: "100%", height: 20,
         transform: "translateY(-50%)", pointerEvents: "none", overflow: "visible",
       }}
       preserveAspectRatio="none"
     >
       <defs>
         <filter id="glow">
-          <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor={DS.gold} floodOpacity="0.35" />
+          <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor={DS.gold} floodOpacity="0.4" />
         </filter>
       </defs>
-      {/* Line between card 1 and 2 — ~33% to ~66% */}
+      {/* Line 1: card 1 → card 2 */}
       <line
-        x1="33%" y1="0" x2="66%" y2="0"
-        stroke={DS.gold}
+        x1="33%" y1="10" x2="66%" y2="10"
+        stroke={line1Active ? DS.gold : DS.cardBorder}
         strokeWidth={1.5}
-        opacity={line1Active ? 0.4 : 0.12}
+        opacity={line1Active ? 0.5 : 0.6}
         filter={line1Active && allActive ? "url(#glow)" : undefined}
         style={line1Active && allActive ? { animation: "glowPulse 3s ease-in-out infinite" } : undefined}
       />
-      {/* Line between card 2 and 3 — ~33% to ~66% from center */}
+      {line1Active && allActive && (
+        <circle r="2" fill={DS.gold} opacity={0.7}>
+          <animateMotion dur="3s" repeatCount="indefinite" path="M 33 10 L 66 10" />
+        </circle>
+      )}
+      {/* Line 2: card 2 → card 3 */}
       <line
-        x1="66%" y1="0" x2="100%" y2="0"
-        stroke={DS.gold}
+        x1="66%" y1="10" x2="100%" y2="10"
+        stroke={line2Active ? DS.gold : DS.cardBorder}
         strokeWidth={1.5}
-        opacity={line2Active ? 0.4 : 0.12}
+        opacity={line2Active ? 0.5 : 0.6}
         filter={line2Active && allActive ? "url(#glow)" : undefined}
         style={line2Active && allActive ? { animation: "glowPulse 3s ease-in-out infinite" } : undefined}
       />
+      {line2Active && allActive && (
+        <circle r="2" fill={DS.gold} opacity={0.7}>
+          <animateMotion dur="3s" repeatCount="indefinite" path="M 66 10 L 100 10" />
+        </circle>
+      )}
     </svg>
   )
 }
 
-// ─── Band Chip ──────────────────────────────────────────────────────────────
+// ─── Band Chip ───────��──────────────────────────────────────────────────────
 
-function BandChip({ band }: { band: string }) {
+function BandChip({ band, onGold = false }: { band: string; onGold?: boolean }) {
   const upper = band.toUpperCase()
   const isGood = upper === "EXCEPTIONAL" || upper === "OPTIMIZED"
   const isMid = upper === "ON PACE"
   const bg = isGood ? "#E1F5EE" : isMid ? "#FAEEDA" : "#FCEBEB"
-  const color = isGood ? "#0F6E56" : isMid ? "#854F0B" : "#A32D2D"
-  const border = color
+  const color = isGood ? DS.greenDark : isMid ? DS.goldDark : DS.redDark
+  const borderColor = onGold ? `${color}80` : color
 
   return (
     <span style={{
       display: "inline-block", fontFamily: sans, fontSize: 11,
       textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 500,
       padding: "4px 14px", borderRadius: 20,
-      background: bg, color, border: `1px solid ${border}`,
+      background: bg, color, border: `1px solid ${borderColor}`,
     }}>
       {band}
     </span>
   )
 }
 
-// ─── Main Component ─────────────────────────────────────────────────────────
+// ─── Main Component ─────────────────────────────────────��───────────────────
 
 export function DashboardClient(props: ScoreWheelProps & {
   labHistory?: LabHistoryPoint[];
@@ -317,7 +412,7 @@ export function DashboardClient(props: ScoreWheelProps & {
 }) {
   const { wearableNeedsReconnect = false, firstName, latestSleepDate, peaqAgeBreakdown } = props
 
-  // ── Insight data ──────────────────────────────────────────────────────────
+  // ── Insight data ──────────────────────────────────��───────────────────────
   const [insights, setInsights] = useState<InsightData | null>(null)
   const [insightsLoading, setInsightsLoading] = useState(true)
 
@@ -337,7 +432,7 @@ export function DashboardClient(props: ScoreWheelProps & {
     return () => { cancelled = true }
   }, [])
 
-  // ── Sync logic ────────────────────────────────────────────────────────────
+  // ─��� Sync logic ───────────��────────────────────────────────────��───────────
   const [syncingNow, setSyncingNow] = useState(false)
   const [syncResult, setSyncResult] = useState<string | null>(null)
 
@@ -356,7 +451,7 @@ export function DashboardClient(props: ScoreWheelProps & {
     finally { setSyncingNow(false) }
   }
 
-  // ── Sleep toggle ──────────────────────────────────────────────────────────
+  // ── Sleep toggle ────��────────────────────────────────────���────────────────
   const [sleepHidden, setSleepHidden] = useState(() => {
     if (typeof window === "undefined") return false
     return localStorage.getItem("peaq-sleep-panel-hidden") === "true"
@@ -371,7 +466,7 @@ export function DashboardClient(props: ScoreWheelProps & {
   const hasCrossPanel = (insights?.cross_panel_signals ?? []).length > 0
   const panelCount = [hasSleep, hasBlood, hasOral].filter(Boolean).length
 
-  // ── Panel statuses ────────────────────────────────────────────────────────
+  // ── Panel statuses ──��──────────────────────��──────────────────────────────
   const sleepStatus: PanelStatus = hasSleep ? "Active" : "Connect"
   const bloodStatus: PanelStatus = hasBlood
     ? (peaqAgeBreakdown && peaqAgeBreakdown.phenoAge == null && peaqAgeBreakdown.hasBW ? "Review" : "Active")
@@ -380,7 +475,7 @@ export function DashboardClient(props: ScoreWheelProps & {
     ? (typeof peaqAgeBreakdown?.omaPct === "number" && (peaqAgeBreakdown.omaPct as number) < 40 ? "Review" : "Active")
     : "Connect"
 
-  // ── Panel summary sentences ───────────────────────────────────────────────
+  // ── Panel summary sentences ─────────────���─────────────────────────────────
   function panelSummary(panel: "sleep" | "blood" | "oral"): string {
     if (panel === "sleep") {
       if (!hasSleep) return "Not connected yet"
@@ -419,7 +514,31 @@ export function DashboardClient(props: ScoreWheelProps & {
     return ""
   }
 
-  // ── Action plan items ─────────────────────────────────────────────────────
+  // ── Panel card labels ──���──────────────────────────────────────────────────
+  function oralLabel(): string {
+    if (!hasOral) return "Connect"
+    if (oralStatus === "Review") return "Needs attention"
+    return "Microbiome active"
+  }
+  function sleepLabel(): string {
+    if (!hasSleep) return "Connect"
+    if (!props.sleepData) return "Processing"
+    return `${props.sleepData.hrv?.toFixed(0) ?? "—"} ms HRV`
+  }
+  function bloodLabel(): string {
+    if (!hasBlood) return "Connect"
+    if (!props.bloodData) return "Processing"
+    if (bloodStatus === "Review") return "Review needed"
+    const markers = [
+      props.bloodData.ldl < 130,
+      props.bloodData.hsCRP > 0 && props.bloodData.hsCRP < 2,
+      props.bloodData.hba1c < 5.7,
+    ]
+    const optimal = markers.filter(Boolean).length
+    return `${optimal}/${markers.length} markers optimal`
+  }
+
+  // ── Action plan items ──────��──────────────────────────────────────────────
   function getActionItems(): { label: string; timing: string }[] {
     if (!peaqAgeBreakdown) return []
     const b = peaqAgeBreakdown
@@ -430,25 +549,25 @@ export function DashboardClient(props: ScoreWheelProps & {
 
     const actions: { label: string; timing: string }[] = []
     if (usesAntiseptic) actions.push({ label: "Switch from antiseptic mouthwash", timing: "Today" })
-    if (omaQcFail) actions.push({ label: "Leafy greens or beetroot a few times a week", timing: "Week 1" })
+    if (omaQcFail) actions.push({ label: "More leafy greens and beetroot", timing: "Week 1" })
     if (noHsCrp) actions.push({ label: "Add hs-CRP to next blood draw", timing: "Next draw" })
-    if (typeof b.rhrDelta === "number" && (b.rhrDelta as number) > 1) actions.push({ label: "Increase aerobic exercise frequency", timing: "This month" })
+    if (typeof b.rhrDelta === "number" && (b.rhrDelta as number) > 1) actions.push({ label: "Increase aerobic exercise", timing: "This month" })
     if (!hasSleep) actions.push({ label: "Connect a wearable for sleep data", timing: "Today" })
     if (!hasOral) actions.push({ label: "Order oral microbiome kit", timing: "This week" })
     return actions.slice(0, 3)
   }
 
-  // ── V5 Dashboard (Peaq Age breakdown exists) ──────────────────────────────
+  // ── V5 Dashboard (Peaq Age breakdown exists) ────────────────���─────────────
   if (peaqAgeBreakdown && typeof peaqAgeBreakdown.peaqAge === "number") {
     const peaqAge = peaqAgeBreakdown.peaqAge as number
-    const chronoAge = peaqAgeBreakdown.chronoAge as number
     const delta = peaqAgeBreakdown.delta as number
     const band = (peaqAgeBreakdown.band as string) ?? "ON PACE"
+    const hasDob = peaqAgeBreakdown.hasDob as boolean | undefined
     const actionItems = getActionItems()
-    const statuses: [PanelStatus, PanelStatus, PanelStatus] = [sleepStatus, bloodStatus, oralStatus]
+    // Reorder: Oral · Sleep · Blood
+    const statuses: [PanelStatus, PanelStatus, PanelStatus] = [oralStatus, sleepStatus, bloodStatus]
     const anyMissing = !hasSleep || !hasBlood || !hasOral
 
-    // Target range for 6-month goal
     const targetLow = Math.max(18, peaqAge - 2).toFixed(0)
     const targetHigh = Math.max(18, peaqAge - 0.5).toFixed(0)
 
@@ -484,31 +603,32 @@ export function DashboardClient(props: ScoreWheelProps & {
             display: "flex", gap: 32, alignItems: "flex-start",
           }}>
 
-            {/* ── LEFT COLUMN (main) ──────────────────────────────────────── */}
+            {/* ── LEFT COLUMN (main) ────���─────────────────────────────────���─ */}
             <div style={{ flex: "1 1 0", minWidth: 0, maxWidth: 700 }}>
 
-              {/* 1. GREETING */}
-              <div style={{ marginBottom: 32 }}>
+              {/* 1. GREETING — italic gold name */}
+              <div style={{ marginBottom: 36 }}>
                 <h1 style={{
-                  fontFamily: serif, fontSize: 36, fontWeight: 300,
+                  fontFamily: serif, fontSize: 42, fontWeight: 300,
                   color: DS.ink, margin: 0, lineHeight: 1.2,
                 }}>
                   {(() => {
                     const h = new Date().getHours()
-                    const name = firstName ?? ""
                     const greeting = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening"
-                    return name ? `${greeting}, ${name}.` : `${greeting}.`
+                    const name = firstName ?? ""
+                    return name ? (
+                      <>{greeting}, <em style={{ fontStyle: "italic", color: DS.gold }}>{name}.</em></>
+                    ) : `${greeting}.`
                   })()}
                 </h1>
                 <p style={{
                   fontFamily: sans, fontSize: 11, letterSpacing: "0.12em",
                   textTransform: "uppercase", color: DS.inkMuted,
-                  margin: "6px 0 0", fontVariantNumeric: "tabular-nums",
+                  margin: "8px 0 0", fontVariantNumeric: "tabular-nums",
                 }}>
                   {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
                 </p>
 
-                {/* Sync button */}
                 {props.sleepConnected && !wearableNeedsReconnect && (
                   <button
                     onClick={handleSyncNow}
@@ -529,22 +649,97 @@ export function DashboardClient(props: ScoreWheelProps & {
                 )}
               </div>
 
-              {/* 2. THREE PANEL NODES */}
-              <div style={{ position: "relative", marginBottom: 32 }}>
+              {/* 2. THREE PANEL NODES — Oral · Sleep · Blood */}
+              <div style={{ position: "relative", marginBottom: 36 }}>
                 <ConnectionLines statuses={statuses} />
                 <div style={{ display: "flex", gap: 16, position: "relative", zIndex: 1 }}>
-                  <PanelNode name="Sleep" color={DS.sleep} status={sleepStatus} href="/dashboard/sleep" />
-                  <PanelNode name="Blood" color={DS.blood} status={bloodStatus} href="/dashboard/blood" />
-                  <PanelNode name="Oral"  color={DS.oral}  status={oralStatus}  href="/dashboard/oral" />
+                  <PanelNode
+                    name="Oral" status={oralStatus} href="/dashboard/oral"
+                    icon={hasOral ? <OralIcon /> : <ConnectIcon />}
+                    label={oralLabel()}
+                  />
+                  <PanelNode
+                    name="Sleep" status={sleepStatus} href="/dashboard/sleep"
+                    icon={hasSleep ? <SleepIcon sleepData={props.sleepData} /> : <ConnectIcon />}
+                    label={sleepLabel()}
+                  />
+                  <PanelNode
+                    name="Blood" status={bloodStatus} href="/dashboard/blood"
+                    icon={hasBlood ? <BloodIcon bloodData={props.bloodData} /> : <ConnectIcon />}
+                    label={bloodLabel()}
+                  />
                 </div>
               </div>
 
-              {/* 3. AI INSIGHT CARD */}
+              {/* 3. PEAQ+ AGE CARD — warm gold background, second position */}
+              <div style={{
+                background: DS.goldBg, border: `0.5px solid rgba(184,134,11,0.25)`,
+                borderRadius: 16, padding: "48px 40px", textAlign: "center",
+                marginBottom: 36,
+              }}>
+                <span style={{
+                  fontFamily: sans, fontSize: 10, letterSpacing: "0.16em",
+                  textTransform: "uppercase", color: DS.goldDark,
+                }}>
+                  PEAQ+ AGE
+                </span>
+
+                <div className="peaq-age-number" style={{
+                  fontFamily: serif, fontSize: 96, fontWeight: 300,
+                  color: DS.ink, letterSpacing: -3, lineHeight: 1,
+                  margin: "12px 0 10px",
+                }}>
+                  {peaqAge.toFixed(1)}
+                </div>
+
+                <p style={{
+                  fontFamily: serif, fontSize: 22, fontStyle: "italic",
+                  color: delta < 0 ? DS.greenDark : delta > 0 ? DS.redDark : DS.inkMuted,
+                  margin: "0 0 16px",
+                }}>
+                  {delta < 0
+                    ? `${Math.abs(delta).toFixed(1)} years younger than your calendar age`
+                    : delta > 0
+                    ? `${delta.toFixed(1)} years older than your calendar age`
+                    : "Exactly your calendar age"
+                  }
+                </p>
+
+                <BandChip band={band} onGold />
+
+                <p style={{
+                  fontFamily: sans, fontSize: 12, color: DS.goldDark,
+                  margin: "16px 0 0",
+                }}>
+                  6-month target: {targetLow}–{targetHigh}
+                </p>
+
+                {hasDob === false && (
+                  <p style={{
+                    fontFamily: sans, fontSize: 11, color: DS.goldDark,
+                    margin: "8px 0 0", opacity: 0.7,
+                  }}>
+                    <Link href="/settings" style={{ color: DS.gold, textDecoration: "underline" }}>
+                      Add your date of birth
+                    </Link>{" "}in Settings for exact calculation
+                  </p>
+                )}
+
+                <Link href="/science" style={{
+                  fontFamily: sans, fontSize: 11, color: DS.gold,
+                  textDecoration: "none", display: "inline-block",
+                  marginTop: 12,
+                }}>
+                  How is this calculated? →
+                </Link>
+              </div>
+
+              {/* 4. AI INSIGHT CARD */}
               {insightsLoading ? (
                 <div style={{
                   background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
                   borderLeft: `3px solid ${DS.gold}`, borderRadius: 12,
-                  padding: "24px 28px", marginBottom: 32,
+                  padding: "24px 28px", marginBottom: 36,
                   boxShadow: "0 1px 3px rgba(20,20,16,0.06)",
                 }}>
                   <ShimmerBar width={100} height={10} />
@@ -555,7 +750,7 @@ export function DashboardClient(props: ScoreWheelProps & {
                 <div style={{
                   background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
                   borderLeft: `3px solid ${DS.gold}`, borderRadius: 12,
-                  padding: "24px 28px", marginBottom: 32,
+                  padding: "24px 28px", marginBottom: 36,
                   boxShadow: "0 1px 3px rgba(20,20,16,0.06)",
                 }}>
                   <span style={{
@@ -575,7 +770,7 @@ export function DashboardClient(props: ScoreWheelProps & {
                     fontFamily: sans, fontSize: 15, fontWeight: 300,
                     color: DS.inkMuted, lineHeight: 1.6, margin: "0 0 12px",
                   }}>
-                    {insights.headline_sub}
+                    {truncateInsightBody(insights.headline_sub)}
                   </p>
                   <Link href="/dashboard/insights" style={{
                     fontFamily: sans, fontSize: 12, color: DS.gold,
@@ -586,10 +781,10 @@ export function DashboardClient(props: ScoreWheelProps & {
                 </div>
               ) : null}
 
-              {/* 4. PANEL SUMMARY — THREE ROWS */}
+              {/* 5. PANEL SUMMARY — THREE ROWS */}
               <div style={{
                 background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
-                borderRadius: 12, marginBottom: 32, overflow: "hidden",
+                borderRadius: 12, marginBottom: 36, overflow: "hidden",
                 boxShadow: "0 1px 3px rgba(20,20,16,0.06)",
               }}>
                 {(["sleep", "blood", "oral"] as const).map((panel, i) => {
@@ -597,7 +792,7 @@ export function DashboardClient(props: ScoreWheelProps & {
                   const status = ({ sleep: sleepStatus, blood: bloodStatus, oral: oralStatus })[panel]
                   const href = `/dashboard/${panel}`
                   const summary = panelSummary(panel)
-                  const statusColor = status === "Active" ? DS.oral : status === "Review" ? DS.gold : DS.inkMuted
+                  const showBadge = status !== "Active" || panel !== "sleep" || !hasSleep
 
                   return (
                     <Link key={panel} href={href} style={{ textDecoration: "none", display: "block" }}>
@@ -625,26 +820,32 @@ export function DashboardClient(props: ScoreWheelProps & {
                         }}>
                           {summary}
                         </span>
-                        <span style={{
-                          fontFamily: sans, fontSize: 10, fontWeight: 500,
-                          letterSpacing: "0.06em", textTransform: "uppercase",
-                          padding: "3px 10px", borderRadius: 20, flexShrink: 0,
-                          background: `${statusColor}14`, color: statusColor,
-                          border: `0.5px solid ${statusColor}40`,
-                        }}>
-                          {status}
-                        </span>
+                        {showBadge && (
+                          <span style={{
+                            fontFamily: sans, fontSize: 10, fontWeight: 500,
+                            letterSpacing: "0.06em", textTransform: "uppercase",
+                            padding: "3px 10px", borderRadius: 20, flexShrink: 0,
+                            ...(status === "Review"
+                              ? { background: "#FAEEDA", color: DS.goldDark }
+                              : status === "Active"
+                              ? { background: `${DS.oral}14`, color: DS.oral, border: `0.5px solid ${DS.oral}40` }
+                              : { background: `${DS.inkMuted}14`, color: DS.inkMuted, border: `0.5px solid ${DS.inkMuted}40` }
+                            ),
+                          }}>
+                            {status}
+                          </span>
+                        )}
                       </div>
                     </Link>
                   )
                 })}
               </div>
 
-              {/* CROSS-PANEL SIGNALS (kept, repositioned) */}
+              {/* CROSS-PANEL SIGNALS */}
               {insightsLoading && panelCount >= 2 && (
                 <div style={{
                   background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
-                  borderRadius: 12, padding: 24, marginBottom: 32,
+                  borderRadius: 12, padding: 24, marginBottom: 36,
                   boxShadow: "0 1px 3px rgba(20,20,16,0.06)",
                 }}>
                   <ShimmerBar width={120} height={10} />
@@ -656,7 +857,7 @@ export function DashboardClient(props: ScoreWheelProps & {
                 <div style={{
                   background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
                   borderLeft: `3px solid rgba(192,57,43,0.3)`,
-                  borderRadius: 12, padding: 24, marginBottom: 32,
+                  borderRadius: 12, padding: 24, marginBottom: 36,
                   boxShadow: "0 1px 3px rgba(20,20,16,0.06)",
                 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
@@ -681,63 +882,12 @@ export function DashboardClient(props: ScoreWheelProps & {
                 </div>
               )}
 
-              {/* 5. PEAQ+ AGE CARD */}
-              <div style={{
-                background: DS.sectionBg, border: `0.5px solid ${DS.cardBorder}`,
-                borderRadius: 12, padding: 40, textAlign: "center",
-                marginBottom: 32,
-              }}>
-                <span style={{
-                  fontFamily: sans, fontSize: 10, letterSpacing: "0.12em",
-                  textTransform: "uppercase", color: DS.inkMuted,
-                }}>
-                  YOUR PEAQ+ AGE
-                </span>
-
-                <div className="peaq-age-number" style={{
-                  fontFamily: serif, fontSize: 88, fontWeight: 300,
-                  color: DS.ink, letterSpacing: -2, lineHeight: 1,
-                  margin: "12px 0 8px",
-                }}>
-                  {peaqAge.toFixed(1)}
-                </div>
-
-                <p style={{
-                  fontFamily: serif, fontSize: 20, fontStyle: "italic",
-                  color: DS.inkMuted, margin: "0 0 16px",
-                }}>
-                  {delta < 0
-                    ? `${Math.abs(delta).toFixed(1)} years younger than your calendar age`
-                    : delta > 0
-                    ? `${delta.toFixed(1)} years older than your calendar age`
-                    : "Exactly your calendar age"
-                  }
-                </p>
-
-                <BandChip band={band} />
-
-                <p style={{
-                  fontFamily: sans, fontSize: 12, color: DS.inkMuted,
-                  margin: "16px 0 0",
-                }}>
-                  6-month target: {targetLow}–{targetHigh}
-                </p>
-
-                <Link href="/science" style={{
-                  fontFamily: sans, fontSize: 11, color: DS.inkMuted,
-                  textDecoration: "none", display: "inline-block",
-                  marginTop: 12,
-                }}>
-                  How is this calculated? →
-                </Link>
-              </div>
-
             </div>
 
             {/* ── RIGHT RAIL ──────────────────────────────────────────────── */}
             <div className="dashboard-rail" style={{
               width: 280, flexShrink: 0,
-              display: "flex", flexDirection: "column", gap: 24,
+              display: "flex", flexDirection: "column", gap: 28,
             }}>
 
               {/* ZONE 1 — YOUR PLAN */}
@@ -811,11 +961,10 @@ export function DashboardClient(props: ScoreWheelProps & {
                   { title: "How your oral health affects your heart", sub: "5 min read", href: "/science" },
                   { title: "Why sleep timing matters more than duration", sub: "4 min read", href: "/science" },
                 ].map((post, i) => (
-                  <Link key={i} href={post.href} style={{
+                  <Link key={i} href={post.href} className="from-peaq-row" style={{
                     display: "flex", alignItems: "center", justifyContent: "space-between",
                     gap: 8, padding: "14px 0", textDecoration: "none",
                     borderBottom: i === 0 ? `0.5px solid ${DS.cardBorder}` : "none",
-                    transition: "background 150ms ease",
                   }}>
                     <div>
                       <p style={{
@@ -831,7 +980,10 @@ export function DashboardClient(props: ScoreWheelProps & {
                         {post.sub}
                       </p>
                     </div>
-                    <span style={{ color: DS.inkMuted, fontSize: 14, flexShrink: 0 }}>→</span>
+                    <span className="from-peaq-arrow" style={{
+                      color: DS.inkMuted, fontSize: 14, flexShrink: 0,
+                      transition: "transform 150ms ease",
+                    }}>→</span>
                   </Link>
                 ))}
               </div>
@@ -896,7 +1048,6 @@ export function DashboardClient(props: ScoreWheelProps & {
 
         <IOSInstallBanner />
 
-        {/* ── Animations ────────────────────────────────────────────────── */}
         <style>{`
           @keyframes glowPulse {
             0%, 100% { opacity: 0.35; }
@@ -922,8 +1073,9 @@ export function DashboardClient(props: ScoreWheelProps & {
             from { opacity: 0; transform: translateY(4px); }
             to   { opacity: 1; transform: translateY(0); }
           }
-
-          /* Mobile: single column */
+          .from-peaq-row:hover .from-peaq-arrow {
+            transform: translateX(3px);
+          }
           @media (max-width: 768px) {
             .dashboard-two-col {
               flex-direction: column !important;
