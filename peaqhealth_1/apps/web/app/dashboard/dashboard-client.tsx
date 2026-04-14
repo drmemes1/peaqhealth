@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { Nav } from "../components/nav"
 import { type ScoreWheelProps } from "../components/score-wheel"
@@ -32,30 +32,6 @@ const DS = {
 }
 
 // ─── Types ──────────────────────────────────────────────────────────────────
-
-interface InsightItem {
-  panels: string[]
-  title: string
-  explanation: string
-  actions?: string[]
-}
-
-interface CrossPanelSignal {
-  panels: string[]
-  title: string
-  description: string
-  positive: boolean
-  actions?: string[]
-}
-
-interface InsightData {
-  headline: string
-  headline_sub: string
-  insights_positive: InsightItem[]
-  insights_watch: InsightItem[]
-  cross_panel_signals: CrossPanelSignal[]
-  panels_available: string[]
-}
 
 interface LabHistoryPoint {
   locked_at: string
@@ -322,129 +298,6 @@ function IndicatorGrid({ indicators }: { indicators: Indicator[] }) {
 
 // ─── Skeleton Loaders ───────────────────────────────────────────────────────
 
-function ShimmerBar({ width, height, delay = 0, radius = 3 }: {
-  width: string | number; height: number; delay?: number; radius?: number
-}) {
-  return (
-    <div style={{
-      width, height, background: "rgba(20,20,16,0.06)", borderRadius: radius,
-      animation: "shimmer 1.8s ease-in-out infinite",
-      animationDelay: `${delay}ms`,
-    }} />
-  )
-}
-
-// ─── "See why" Expandable ───────────────────────────────────────────────────
-
-function SeeWhy({ title, explanation, panels }: { title: string; explanation: string; panels: string[] }) {
-  const [open, setOpen] = useState(false)
-  const [content, setContent] = useState("")
-  const [loading, setLoading] = useState(false)
-
-  const expand = useCallback(async () => {
-    if (open) { setOpen(false); return }
-    setOpen(true)
-    if (content) return
-    setLoading(true)
-    try {
-      const res = await fetch("/api/insights/expand", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ insight_title: title, insight_explanation: explanation, panels }),
-      })
-      if (!res.ok || !res.body) { setContent("Unable to load explanation."); setLoading(false); return }
-      const reader = res.body.getReader()
-      const decoder = new TextDecoder()
-      let text = ""
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        text += decoder.decode(value, { stream: true })
-        setContent(text)
-      }
-    } catch { setContent("Unable to load explanation.") }
-    finally { setLoading(false) }
-  }, [open, content, title, explanation, panels])
-
-  return (
-    <div>
-      <button onClick={expand} style={{
-        fontFamily: sans, fontSize: 11, color: DS.gold,
-        textTransform: "uppercase", letterSpacing: "1px",
-        background: "none", border: "none", cursor: "pointer", padding: 0,
-        marginTop: 8, display: "block",
-      }}>
-        {open ? "Close" : "See why →"}
-      </button>
-      {open && (
-        <div style={{
-          marginTop: 10, padding: "12px 14px",
-          background: DS.sectionBg, borderRadius: 8,
-          borderLeft: `2px solid rgba(184,134,11,0.3)`,
-        }}>
-          {loading && !content ? (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "8px 0" }}>
-              <span style={{
-                display: "inline-block", width: 8, height: 8,
-                borderRadius: "50%", background: DS.gold,
-                animation: "seeWhyPulse 1.2s ease-in-out infinite",
-              }} />
-              <span style={{
-                fontFamily: sans, fontSize: 9, color: DS.inkMuted,
-                letterSpacing: "1px", marginTop: 10,
-                animation: "seeWhyFadeIn 300ms ease 600ms both",
-              }}>
-                Analyzing your data...
-              </span>
-            </div>
-          ) : (
-            <p style={{ fontFamily: sans, fontSize: 12, color: DS.inkMuted, lineHeight: 1.65, margin: 0 }}>
-              {content}
-            </p>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ─── Cross-Panel Signal Row ─────────────────────────────────────────────────
-
-function PanelPill({ panel }: { panel: string }) {
-  const color = ({ sleep: DS.sleep, blood: DS.blood, oral: DS.oral } as Record<string,string>)[panel] ?? DS.inkMuted
-  return (
-    <span style={{
-      fontFamily: sans, fontSize: 8, letterSpacing: "1px",
-      textTransform: "uppercase", fontWeight: 600,
-      color, background: `${color}14`, border: `0.5px solid ${color}30`,
-      borderRadius: 20, padding: "2px 8px", whiteSpace: "nowrap",
-    }}>
-      {panel}
-    </span>
-  )
-}
-
-function SignalRow({ signal }: { signal: CrossPanelSignal }) {
-  return (
-    <div style={{ padding: "14px 0", borderBottom: `0.5px solid ${DS.cardBorder}` }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-        <span style={{
-          width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
-          background: signal.positive ? DS.oral : DS.gold,
-        }} />
-        {signal.panels.map(p => <PanelPill key={p} panel={p} />)}
-      </div>
-      <div style={{ fontFamily: serif, fontSize: 18, fontWeight: 400, color: DS.ink, marginBottom: 4 }}>
-        {signal.title}
-      </div>
-      <div style={{ fontFamily: sans, fontSize: 11, color: DS.inkMuted, lineHeight: 1.5 }}>
-        {signal.description}
-      </div>
-      <SeeWhy title={signal.title} explanation={signal.description} panels={signal.panels} />
-    </div>
-  )
-}
-
 // ─── Panel Visual Icons ─────────────────────────────────────────────────────
 
 type PanelStatus = "Active" | "Review" | "Connect"
@@ -657,28 +510,10 @@ export function DashboardClient(props: ScoreWheelProps & {
   latestSleepDate?: string | null;
   trendDeltas?: { sleep: number | null; blood: number | null; oral: number | null };
   peaqAgeBreakdown?: Record<string, unknown> | null;
+  cachedInsight?: { headline: string; body: string };
+  cachedGuidance?: Array<{ title: string; timing: string }>;
 }) {
-  const { wearableNeedsReconnect = false, firstName, latestSleepDate, peaqAgeBreakdown } = props
-
-  // ── Insight data ──────────────────────────────────────────────────────────
-  const [insights, setInsights] = useState<InsightData | null>(null)
-  const [insightsLoading, setInsightsLoading] = useState(true)
-
-  useEffect(() => {
-    let cancelled = false
-    async function load() {
-      try {
-        const res = await fetch("/api/insights/generate", { method: "POST" })
-        if (res.ok) {
-          const data = await res.json()
-          if (!cancelled) setInsights(data)
-        }
-      } catch (e) { console.error("[insights] load error:", e) }
-      finally { if (!cancelled) setInsightsLoading(false) }
-    }
-    load()
-    return () => { cancelled = true }
-  }, [])
+  const { wearableNeedsReconnect = false, firstName, peaqAgeBreakdown, cachedInsight, cachedGuidance } = props
 
   // ── Sync logic ────────────────────────────────────────────────────────────
   const [syncingNow, setSyncingNow] = useState(false)
@@ -705,13 +540,13 @@ export function DashboardClient(props: ScoreWheelProps & {
     return localStorage.getItem("peaq-sleep-panel-hidden") === "true"
   })
 
+  const [railTab, setRailTab] = useState<"plan" | "from_peaq" | "dentist">("plan")
+  const [dentistZip, setDentistZip] = useState("")
+
   const hasSleep = !sleepHidden && props.sleepConnected && props.breakdown.sleepSub > 0
   const hasBlood = !!props.bloodData
   const hasOral  = props.oralActive
 
-  const crossPanelNeg = (insights?.cross_panel_signals ?? []).filter(s => !s.positive)
-  const crossPanelPos = (insights?.cross_panel_signals ?? []).filter(s => s.positive)
-  const hasCrossPanel = (insights?.cross_panel_signals ?? []).length > 0
   const panelCount = [hasSleep, hasBlood, hasOral].filter(Boolean).length
 
   // ── Panel statuses ────────────────────────────────────────────────────────
@@ -740,10 +575,10 @@ export function DashboardClient(props: ScoreWheelProps & {
     if (panel === "blood") {
       if (!hasBlood) return "Not connected yet"
       if (props.bloodData) {
-        const watch = insights?.insights_watch?.find(i => i.panels.includes("blood"))
-        if (watch) return watch.title
-        const pos = insights?.insights_positive?.find(i => i.panels.includes("blood"))
-        if (pos) return pos.title
+        if (bloodStatus === "Review") return "One or more markers need attention"
+        const ldl = props.bloodData.ldl
+        const hsCrp = props.bloodData.hsCRP
+        if (ldl > 130 || (hsCrp > 0 && hsCrp > 3)) return "Some markers outside optimal range"
         return "Blood panel active, markers in range"
       }
       return "Processing lab results"
@@ -751,10 +586,8 @@ export function DashboardClient(props: ScoreWheelProps & {
     if (panel === "oral") {
       if (!hasOral) return "Not connected yet"
       if (props.oralData) {
-        const watch = insights?.insights_watch?.find(i => i.panels.includes("oral"))
-        if (watch) return watch.title
-        const pos = insights?.insights_positive?.find(i => i.panels.includes("oral"))
-        if (pos) return pos.title
+        if (oralStatus === "Review") return "Microbiome needs attention"
+        if (props.oralData.shannonDiversity >= 3.5) return "Diverse microbiome, protective species strong"
         return "Microbiome active, protective species present"
       }
       return "Awaiting oral results"
@@ -990,52 +823,41 @@ export function DashboardClient(props: ScoreWheelProps & {
                 </Link>
               </div>
 
-              {/* 4. AI INSIGHT CARD */}
-              {insightsLoading ? (
-                <div style={{
-                  background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
-                  borderLeft: `3px solid ${DS.gold}`, borderRadius: 12,
-                  padding: "24px 28px", marginBottom: 36,
-                  boxShadow: "0 1px 3px rgba(20,20,16,0.06)",
+              {/* 4. AI INSIGHT CARD — cached from snapshot, no spinner */}
+              <div style={{
+                background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
+                borderLeft: cachedInsight ? `3px solid ${DS.gold}` : `3px solid ${DS.cardBorder}`,
+                borderRadius: 12, padding: "24px 28px", marginBottom: 36,
+                boxShadow: "0 1px 3px rgba(20,20,16,0.06)",
+              }}>
+                <span style={{
+                  fontFamily: sans, fontSize: 10, letterSpacing: "0.12em",
+                  textTransform: "uppercase", color: DS.inkMuted,
                 }}>
-                  <ShimmerBar width={100} height={10} />
-                  <div style={{ marginTop: 14 }}><ShimmerBar width="85%" height={18} delay={200} /></div>
-                  <div style={{ marginTop: 10 }}><ShimmerBar width="60%" height={14} delay={400} /></div>
-                </div>
-              ) : insights ? (
-                <div style={{
-                  background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
-                  borderLeft: `3px solid ${DS.gold}`, borderRadius: 12,
-                  padding: "24px 28px", marginBottom: 36,
-                  boxShadow: "0 1px 3px rgba(20,20,16,0.06)",
+                  PEAQ INSIGHT
+                </span>
+                <h2 style={{
+                  fontFamily: serif, fontSize: 22, fontStyle: "italic",
+                  fontWeight: 400, color: DS.ink, margin: "10px 0 8px",
+                  lineHeight: 1.3,
                 }}>
-                  <span style={{
-                    fontFamily: sans, fontSize: 10, letterSpacing: "0.12em",
-                    textTransform: "uppercase", color: DS.inkMuted,
-                  }}>
-                    PEAQ INSIGHT
-                  </span>
-                  <h2 style={{
-                    fontFamily: serif, fontSize: 22, fontStyle: "italic",
-                    fontWeight: 400, color: DS.ink, margin: "10px 0 8px",
-                    lineHeight: 1.3,
-                  }}>
-                    {insights.headline}
-                  </h2>
-                  <p style={{
-                    fontFamily: sans, fontSize: 15, fontWeight: 300,
-                    color: DS.inkMuted, lineHeight: 1.6, margin: "0 0 12px",
-                  }}>
-                    {truncateInsightBody(insights.headline_sub)}
-                  </p>
+                  {cachedInsight?.headline ?? "Your health picture is coming together."}
+                </h2>
+                <p style={{
+                  fontFamily: sans, fontSize: 15, fontWeight: 300,
+                  color: DS.inkMuted, lineHeight: 1.6, margin: "0 0 12px",
+                }}>
+                  {cachedInsight ? truncateInsightBody(cachedInsight.body) : "Check back after your next sync for personalized insights."}
+                </p>
+                {cachedInsight && (
                   <Link href="/dashboard/insights" style={{
                     fontFamily: sans, fontSize: 12, color: DS.gold,
                     textDecoration: "none",
                   }}>
                     Read why →
                   </Link>
-                </div>
-              ) : null}
+                )}
+              </div>
 
               {/* 5. PANEL SUMMARY — THREE ROWS */}
               <div style={{
@@ -1097,46 +919,43 @@ export function DashboardClient(props: ScoreWheelProps & {
                 })}
               </div>
 
-              {/* 6. CROSS-PANEL SIGNALS */}
-              {insightsLoading && panelCount >= 2 && (
-                <div style={{
-                  background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
-                  borderRadius: 12, padding: 24, marginBottom: 36,
-                  boxShadow: "0 1px 3px rgba(20,20,16,0.06)",
-                }}>
-                  <ShimmerBar width={120} height={10} />
-                  <div style={{ marginTop: 16 }}><ShimmerBar width="80%" height={14} delay={200} /></div>
-                  <div style={{ marginTop: 8 }}><ShimmerBar width="60%" height={12} delay={400} /></div>
-                </div>
-              )}
-              {!insightsLoading && hasCrossPanel && panelCount >= 2 && (
-                <div style={{
-                  background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
-                  borderLeft: `3px solid rgba(192,57,43,0.3)`,
-                  borderRadius: 12, padding: 24, marginBottom: 36,
-                  boxShadow: "0 1px 3px rgba(20,20,16,0.06)",
-                }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                    <span style={{ fontFamily: sans, fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: DS.inkMuted }}>
+              {/* 6. CROSS-PANEL SIGNALS — template-based, no API call */}
+              {(() => {
+                const b = peaqAgeBreakdown
+                const signals: { title: string; body: string; tag: string | null; color: string; positive: boolean }[] = []
+                if (b && b.i1 === -0.3)
+                  signals.push({ title: "Your oral health is supporting your heart", body: "Protective bacteria are strong and inflammation is low — a favorable signal connecting your mouth and cardiovascular system.", tag: "Oral × Blood", color: DS.oral, positive: true })
+                if (b && b.i2 === -0.2)
+                  signals.push({ title: "Oral health and recovery are aligned", body: "Strong protective species combined with a healthy resting heart rate suggest your nitric oxide pathway is working well.", tag: "Oral × Fitness", color: DS.sleep, positive: true })
+                if (b && b.i3 === -0.2)
+                  signals.push({ title: "Low inflammation with great sleep", body: "Consistent sleep timing and low hs-CRP together are one of the strongest combinations in the formula.", tag: "Blood × Sleep", color: DS.gold, positive: true })
+                if (signals.length === 0 && panelCount >= 1)
+                  signals.push({ title: "Cross-panel signals unlock as you connect panels", body: "When your oral, blood, and sleep data combine, Peaq surfaces connections no single test can see.", tag: null, color: DS.inkMuted, positive: false })
+                if (signals.length === 0) return null
+
+                return (
+                  <div style={{
+                    background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
+                    borderLeft: signals[0].positive ? `3px solid ${signals[0].color}` : `3px solid ${DS.cardBorder}`,
+                    borderRadius: 12, padding: 24, marginBottom: 36,
+                    boxShadow: "0 1px 3px rgba(20,20,16,0.06)",
+                  }}>
+                    <span style={{ fontFamily: sans, fontSize: 9, letterSpacing: "2px", textTransform: "uppercase", color: DS.inkMuted, display: "block", marginBottom: 12 }}>
                       Cross-Panel Signals
                     </span>
-                    <span style={{ fontFamily: sans, fontSize: 9, color: DS.inkMuted }}>
-                      {(insights?.cross_panel_signals ?? []).length} pattern{(insights?.cross_panel_signals ?? []).length !== 1 ? "s" : ""} detected
-                    </span>
-                  </div>
-                  {crossPanelNeg.map((s, i) => <SignalRow key={`neg-${i}`} signal={s} />)}
-                  {crossPanelPos.length > 0 && (
-                    <>
-                      <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "8px 0" }}>
-                        <div style={{ flex: 1, height: "0.5px", background: DS.cardBorder }} />
-                        <span style={{ fontFamily: sans, fontSize: 9, color: DS.inkMuted, whiteSpace: "nowrap" }}>Also working together</span>
-                        <div style={{ flex: 1, height: "0.5px", background: DS.cardBorder }} />
+                    {signals.map((s, i) => (
+                      <div key={i} style={{ padding: "12px 0", borderBottom: i < signals.length - 1 ? `0.5px solid ${DS.cardBorder}` : "none" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                          <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.color, flexShrink: 0 }} />
+                          {s.tag && <span style={{ fontFamily: sans, fontSize: 8, letterSpacing: "1px", textTransform: "uppercase", fontWeight: 600, color: s.color, background: `${s.color}14`, border: `0.5px solid ${s.color}30`, borderRadius: 20, padding: "2px 8px" }}>{s.tag}</span>}
+                        </div>
+                        <div style={{ fontFamily: serif, fontSize: 18, fontWeight: 400, color: DS.ink, marginBottom: 4 }}>{s.title}</div>
+                        <div style={{ fontFamily: sans, fontSize: 11, color: DS.inkMuted, lineHeight: 1.5 }}>{s.body}</div>
                       </div>
-                      {crossPanelPos.map((s, i) => <SignalRow key={`pos-${i}`} signal={s} />)}
-                    </>
-                  )}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )
+              })()}
 
             </div>
 
@@ -1159,38 +978,28 @@ export function DashboardClient(props: ScoreWheelProps & {
                 }}>
                   YOUR PLAN
                 </span>
-                {actionItems.length > 0 ? (
-                  <div style={{ display: "flex", flexDirection: "column" }}>
-                    {actionItems.map((a, i) => (
-                      <div key={i} style={{
-                        padding: "10px 0",
-                        borderBottom: i < actionItems.length - 1 ? `0.5px solid ${DS.cardBorder}` : "none",
-                      }}>
-                        <p style={{
-                          fontFamily: sans, fontSize: 14, color: DS.ink,
-                          margin: 0, lineHeight: 1.4,
+                {(() => {
+                  const items = cachedGuidance ?? actionItems
+                  if (items.length === 0)
+                    return <p style={{ fontFamily: sans, fontSize: 13, color: DS.inkMuted, margin: 0 }}>All markers in range. Keep going.</p>
+                  return (
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                      {items.map((a, i) => (
+                        <div key={i} style={{
+                          padding: "10px 0",
+                          borderBottom: i < items.length - 1 ? `0.5px solid ${DS.cardBorder}` : "none",
                         }}>
-                          {a.label}
-                        </p>
-                        <p style={{
-                          fontFamily: sans, fontSize: 12, color: DS.inkMuted,
-                          margin: "2px 0 0",
-                        }}>
-                          {a.timing}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                ) : insightsLoading ? (
-                  <div>
-                    <ShimmerBar width="80%" height={14} />
-                    <div style={{ marginTop: 8 }}><ShimmerBar width="60%" height={12} delay={200} /></div>
-                  </div>
-                ) : (
-                  <p style={{ fontFamily: sans, fontSize: 13, color: DS.inkMuted, margin: 0 }}>
-                    All markers in range. Keep going.
-                  </p>
-                )}
+                          <p style={{ fontFamily: sans, fontSize: 14, color: DS.ink, margin: 0, lineHeight: 1.4 }}>
+                            {"title" in a ? a.title : (a as unknown as { label: string }).label}
+                          </p>
+                          <p style={{ fontFamily: sans, fontSize: 12, color: DS.inkMuted, margin: "2px 0 0" }}>
+                            {a.timing}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )
+                })()}
                 <Link href="/dashboard/guidance" style={{
                   fontFamily: sans, fontSize: 12, color: DS.gold,
                   textDecoration: "none", display: "block", marginTop: 14,
@@ -1200,6 +1009,7 @@ export function DashboardClient(props: ScoreWheelProps & {
               </div>
 
               {/* ZONE 2 — FROM PEAQ */}
+              {/* TODO: replace with dynamic blog posts when peaqhealth.me/learn launches */}
               <div style={{
                 background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
                 borderRadius: 12, padding: 20,
@@ -1222,16 +1032,10 @@ export function DashboardClient(props: ScoreWheelProps & {
                     borderBottom: i === 0 ? `0.5px solid ${DS.cardBorder}` : "none",
                   }}>
                     <div>
-                      <p style={{
-                        fontFamily: sans, fontSize: 13, color: DS.ink,
-                        margin: 0, lineHeight: 1.4,
-                      }}>
+                      <p style={{ fontFamily: sans, fontSize: 13, color: DS.ink, margin: 0, lineHeight: 1.4 }}>
                         {post.title}
                       </p>
-                      <p style={{
-                        fontFamily: sans, fontSize: 11, color: DS.inkMuted,
-                        margin: "2px 0 0",
-                      }}>
+                      <p style={{ fontFamily: sans, fontSize: 11, color: DS.inkMuted, margin: "2px 0 0" }}>
                         {post.sub}
                       </p>
                     </div>

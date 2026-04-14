@@ -486,7 +486,7 @@ async function _recalculateScore(
   console.log(`[peaq-age-v5] user=${userId.slice(0, 8)} peaqAge=${peaqAgeResult.peaqAge} pheno=${peaqAgeResult.phenoAge ?? "null"} oma=${peaqAgeResult.omaPct.toFixed(0)} delta=${peaqAgeResult.delta} band=${peaqAgeResult.band} missing=[${peaqAgeResult.missingPhenoMarkers.join(",")}]`)
 
   // ── Save snapshot (dual-write: legacy v4 score + Peaq Age v5) ──────────────
-  const { error: insertError } = await supabase.from("score_snapshots").insert({
+  const { data: insertedRow, error: insertError } = await supabase.from("score_snapshots").insert({
     user_id:                userId,
     calculated_at:          new Date().toISOString(),
     engine_version:         "v5",
@@ -528,13 +528,104 @@ async function _recalculateScore(
     peaq_age_band:          peaqAgeResult.band,
     score_version:          "v5",
     peaq_age_breakdown:     { ...peaqAgeResult, hasDob: !!dobStr },
-  })
+  }).select("id").single()
   if (insertError) {
     console.error("[recalculate] snapshot insert failed for user:", userId, insertError)
     throw new Error(`snapshot insert failed: ${insertError.message}`)
   }
 
+  // ── Fire-and-forget: cache AI insight + deterministic guidance ────────────
+  const snapshotId = insertedRow?.id as string | undefined
+  if (snapshotId) {
+    cacheInsightAndGuidance(userId, snapshotId, supabase, {
+      peaqAgeResult, labRow: labsRes.data, oralRow: oralRes.data,
+      lifestyleRow: lifestyleRes.data, sleepNightsRes: sleepNightsRes.data,
+    }).catch(err => console.error("[insight cache] failed:", err))
+  }
+
   return finalScore
+}
+
+// ── Cache AI insight + deterministic guidance onto snapshot ──────────────────
+
+async function cacheInsightAndGuidance(
+  userId: string,
+  snapshotId: string,
+  supabase: SupabaseClient,
+  ctx: {
+    peaqAgeResult: PeaqAgeResult
+    labRow: Record<string, unknown> | null
+    oralRow: Record<string, unknown> | null
+    lifestyleRow: Record<string, unknown> | null
+    sleepNightsRes: unknown[] | null
+  },
+) {
+  // ── Deterministic guidance items (no OpenAI needed) ──────────────────────
+  const guidance: { title: string; timing: string }[] = []
+  const mwType = ctx.lifestyleRow?.mouthwash_type as string | null
+  if (mwType === "antiseptic" || mwType === "alcohol")
+    guidance.push({ title: "Stop antiseptic mouthwash", timing: "Today" })
+  if (ctx.peaqAgeResult.omaPct < 40)
+    guidance.push({ title: "More leafy greens and beetroot", timing: "Week 1" })
+  if (ctx.peaqAgeResult.missingPhenoMarkers.length > 0)
+    guidance.push({ title: "Add hs-CRP to next blood draw", timing: "Next draw" })
+  const ldl = ctx.labRow?.ldl_mgdl as number | null
+  if (ldl && ldl > 130)
+    guidance.push({ title: "Discuss LDL with your doctor", timing: "This month" })
+  if (ctx.peaqAgeResult.rhrDelta > 1)
+    guidance.push({ title: "Increase aerobic exercise", timing: "This month" })
+
+  // ── AI insight via OpenAI ───────────────────────────────────────────────
+  let headline: string | null = null
+  let body: string | null = null
+  try {
+    const OpenAI = (await import("openai")).default
+    const openai = new OpenAI()
+
+    const pa = ctx.peaqAgeResult
+    const lab = ctx.labRow
+    const oral = ctx.oralRow
+    const nights = (ctx.sleepNightsRes ?? []) as Array<Record<string, unknown>>
+
+    let dataContext = ""
+    if (lab) {
+      dataContext += `Blood: hs-CRP ${lab.hs_crp_mgl ?? "?"}, LDL ${lab.ldl_mgdl ?? "?"}, HDL ${lab.hdl_mgdl ?? "?"}, TG ${lab.triglycerides_mgdl ?? "?"}, HbA1c ${lab.hba1c_pct ?? "?"}, Glucose ${lab.glucose_mgdl ?? "?"}, VitD ${lab.vitamin_d_ngml ?? "?"}\n`
+    }
+    if (oral) {
+      dataContext += `Oral: Shannon ${oral.shannon_diversity}, Nitrate ${((oral.nitrate_reducers_pct as number) * 100).toFixed(1)}%, Pathogens ${((oral.periodontopathogen_pct as number) * 100).toFixed(1)}%\n`
+    }
+    if (nights.length > 0) {
+      const avg = (k: string) => { const v = nights.map(n => Number(n[k])).filter(x => x > 0); return v.length ? v.reduce((a,b) => a+b,0)/v.length : 0 }
+      dataContext += `Sleep (${nights.length}n): Deep ${avg("deep_sleep_minutes").toFixed(0)}min, HRV ${avg("hrv_rmssd").toFixed(0)}ms, Eff ${avg("sleep_efficiency").toFixed(0)}%\n`
+    }
+    dataContext += `Peaq Age: ${pa.peaqAge.toFixed(1)} (delta ${pa.delta.toFixed(1)}, band ${pa.band}). PhenoAge: ${pa.phenoAge ?? "pending"}. OMA: ${pa.omaPct.toFixed(0)}th. I1=${pa.i1} I2=${pa.i2} I3=${pa.i3}\n`
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      temperature: 0.7,
+      max_tokens: 300,
+      messages: [
+        { role: "system", content: "You are Peaq's clinical intelligence layer. Return JSON: {\"headline\":\"One bold statement about overall health picture\",\"body\":\"ONE plain-English sentence under 100 characters. Explain WHY it matters. No Peaq Age, no deltas, no lab values with units.\"}. Be specific but human. No hedging." },
+        { role: "user", content: `Generate a dashboard insight:\n${dataContext}` },
+      ],
+      response_format: { type: "json_object" },
+    })
+    const parsed = JSON.parse(completion.choices[0]?.message?.content ?? "{}")
+    headline = parsed.headline ?? null
+    body = parsed.body ?? parsed.headline_sub ?? null
+  } catch (err) {
+    console.error("[insight cache] OpenAI call failed:", err)
+  }
+
+  // ── Write both to snapshot ────────────────────────────────────────────────
+  await supabase.from("score_snapshots").update({
+    ai_insight_headline: headline,
+    ai_insight_body: body,
+    ai_insight_generated_at: headline ? new Date().toISOString() : null,
+    ai_guidance_items: guidance.slice(0, 3),
+  }).eq("id", snapshotId)
+
+  console.log(`[insight cache] user=${userId.slice(0,8)} headline=${headline ? "yes" : "no"} guidance=${guidance.length}`)
 }
 
 // ── Peaq Age V5 context builder ─────────────────────────────────────────────

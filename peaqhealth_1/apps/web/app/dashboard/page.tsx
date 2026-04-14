@@ -302,5 +302,10 @@ export default async function DashboardPage() {
     latestSleepDate={latestSleepDate}
     trendDeltas={trendDeltas}
     peaqAgeBreakdown={peaqAgeBreakdown}
+    cachedInsight={snapshot?.ai_insight_headline ? {
+      headline: snapshot.ai_insight_headline as string,
+      body: (snapshot.ai_insight_body as string | null) ?? "",
+    } : undefined}
+    cachedGuidance={(snapshot?.ai_guidance_items as Array<{ title: string; timing: string }>) ?? undefined}
   />
 }
