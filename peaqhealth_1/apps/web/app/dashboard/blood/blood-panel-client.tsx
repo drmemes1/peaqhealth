@@ -252,6 +252,8 @@ function Section({
 const DB_KEY_TO_MARKER_ID: Record<string, string> = {
   hs_crp_mgl: "hs_crp", ldl_mgdl: "ldl", vitamin_d_ngml: "vitamin_d",
   hba1c_pct: "hba1c", glucose_mgdl: "glucose", lpa_mgdl: "lpa",
+  hdl_mgdl: "hdl", triglycerides_mgdl: "triglycerides",
+  wbc_kul: "wbc", rdw_pct: "rdw", mpv_fl: "mpv",
 }
 
 function MarkerRow({ val, def, isHsCRP }: { val: number | null; def: MarkerDef; isHsCRP?: boolean }) {

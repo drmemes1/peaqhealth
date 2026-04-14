@@ -37,6 +37,10 @@ interface Props {
   connectionInput: ConnectionInput
   history: HistoryPoint[]
   articles: Array<{ slug: string; title: string; summary: string; readTime: number }>
+  backHref?: string
+  backLabel?: string
+  panelColor?: string
+  panelLabel?: string
 }
 
 type Tab = "why" | "foods" | "supplements" | "learn"
@@ -68,7 +72,7 @@ function getTrend(hist: HistoryPoint[], higherIsBetter?: boolean): { direction: 
   }
 }
 
-export function MarkerDetailClient({ def, value, connectionInput, history, articles }: Props) {
+export function MarkerDetailClient({ def, value, connectionInput, history, articles, backHref, backLabel, panelColor, panelLabel }: Props) {
   const [tab, setTab] = useState<Tab>("why")
   const connection = evaluateConnection(def.dot_id, connectionInput)
   const status = value !== null ? getStatus(value, def) : null
@@ -94,22 +98,22 @@ export function MarkerDetailClient({ def, value, connectionInput, history, artic
       <Nav />
       <main style={{ maxWidth: 680, margin: "0 auto", padding: "40px 24px 80px" }}>
 
-        <Link href="/dashboard/blood" style={{
+        <Link href={backHref ?? "/dashboard/blood"} style={{
           fontFamily: sans, fontSize: 12, color: "#B8860B",
           textDecoration: "none", display: "inline-block", marginBottom: 24,
         }}>
-          ← Back to Blood Panel
+          ← {backLabel ?? "Back to Blood Panel"}
         </Link>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
           <span style={{
             fontFamily: sans, fontSize: 9, letterSpacing: "0.1em",
             textTransform: "uppercase", fontWeight: 600,
-            color: "#C0392B", background: "rgba(192,57,43,0.08)",
-            border: "0.5px solid rgba(192,57,43,0.2)",
+            color: panelColor ?? "#C0392B", background: `${panelColor ?? "#C0392B"}14`,
+            border: `0.5px solid ${panelColor ?? "#C0392B"}30`,
             borderRadius: 20, padding: "2px 10px",
           }}>
-            Blood
+            {panelLabel ?? "Blood"}
           </span>
         </div>
 
