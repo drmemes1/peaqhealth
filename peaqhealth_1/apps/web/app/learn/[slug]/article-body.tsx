@@ -141,6 +141,10 @@ function renderInline(text: string): React.ReactNode {
   return parts.length === 1 ? parts[0] : <>{parts}</>
 }
 
-export function ArticleBody({ markdown }: { markdown: string }) {
-  return <div>{renderMarkdown(markdown)}</div>
+export function ArticleBody({ markdown, stripFirstImage }: { markdown: string; stripFirstImage?: boolean }) {
+  let md = markdown
+  if (stripFirstImage) {
+    md = md.replace(/^!\[[^\]]*\]\([^)]+\)\s*\n?/, "")
+  }
+  return <div>{renderMarkdown(md)}</div>
 }

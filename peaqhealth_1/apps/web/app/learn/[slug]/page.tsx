@@ -60,7 +60,20 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
           )}
         </div>
 
-        <ArticleBody markdown={article.body_md as string} />
+        {(article.image_url as string | null) && (
+          <img
+            src={article.image_url as string}
+            alt={article.title as string}
+            style={{
+              width: "100%", maxHeight: 420, objectFit: "cover",
+              borderRadius: 8, marginBottom: 32, display: "block",
+            }}
+          />
+        )}
+        <ArticleBody
+          markdown={article.body_md as string}
+          stripFirstImage={!!(article.image_url as string | null)}
+        />
       </main>
     </div>
   )
