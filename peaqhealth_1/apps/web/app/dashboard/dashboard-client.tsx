@@ -374,9 +374,10 @@ function ConnectIcon() {
 
 // ─── Panel Node Card ────────────────────────────────────────────────────────
 
-function PanelNode({ name, status, href, icon, label, indicators }: {
+function PanelNode({ name, status, href, icon, label, indicators, bgImage }: {
   name: string; status: PanelStatus; href: string
   icon: React.ReactNode; label: string; indicators: Indicator[]
+  bgImage?: string
 }) {
   const statusColor = status === "Active" ? DS.oral : status === "Review" ? DS.gold : DS.inkMuted
   return (
@@ -387,14 +388,20 @@ function PanelNode({ name, status, href, icon, label, indicators }: {
       flex: "1 1 0", minWidth: 0, minHeight: 140,
       boxShadow: "0 1px 3px rgba(20,20,16,0.06)",
       transition: "transform 150ms ease, box-shadow 150ms ease",
-      position: "relative", zIndex: 1,
+      position: "relative", zIndex: 1, overflow: "hidden",
     }}
     onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(20,20,16,0.08)" }}
     onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 1px 3px rgba(20,20,16,0.06)" }}
     >
+      {bgImage && (
+        <img src={bgImage} alt="" style={{
+          position: "absolute", inset: 0, width: "100%", height: "100%",
+          objectFit: "cover", opacity: 0.06, pointerEvents: "none",
+        }} />
+      )}
       <span className="panel-card-name" style={{
         fontFamily: sans, fontSize: 10, letterSpacing: "0.14em",
-        textTransform: "uppercase", color: DS.inkMuted,
+        textTransform: "uppercase", color: DS.inkMuted, position: "relative",
       }}>
         {name}
       </span>
@@ -749,6 +756,7 @@ export function DashboardClient(props: ScoreWheelProps & {
                     icon={hasSleep ? <SleepIcon sleepData={props.sleepData} /> : <ConnectIcon />}
                     label={sleepLabel()}
                     indicators={sleepIndicators}
+                    bgImage={!hasSleep ? "/peaq_mask.png" : undefined}
                   />
                   <PanelNode
                     name="Blood" status={bloodStatus} href="/dashboard/blood"
