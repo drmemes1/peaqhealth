@@ -1,8 +1,12 @@
+// PATTERN: Every marker section in this file uses evaluateConnection() + <ConnectionLineCard />.
+// See docs/CONNECTION_LINE_PATTERN.md for the standard.
 "use client"
 
 import { useState } from "react"
 import Link from "next/link"
 import { Nav } from "../../components/nav"
+import { evaluateConnection } from "@peaq/score-engine"
+import { ConnectionLineCard } from "../../components/connection-line"
 
 // ─── Marker definitions ─────────────────────────────────────────────────────
 
@@ -315,6 +319,7 @@ interface Props {
   ageRange?: string
   stressLevel?: string
   periodontPathPct?: number
+  connectionInput?: import("@peaq/score-engine").ConnectionInput
 }
 
 function ageAtLeast(ageRange: string | undefined, minAge: number): boolean {
@@ -324,7 +329,7 @@ function ageAtLeast(ageRange: string | undefined, minAge: number): boolean {
 
 type MissingMarker = { key: string; name: string; pts: number; reason: string }
 
-export function BloodPanelClient({ lab, snapshot, history, ageRange, stressLevel, periodontPathPct }: Props) {
+export function BloodPanelClient({ lab, snapshot, history, ageRange, stressLevel, periodontPathPct, connectionInput }: Props) {
   const bloodScore = snapshot?.blood_sub as number | undefined
   const lpaFlag = snapshot?.lpa_flag as string | undefined
   const hsCRPRetestFlag = snapshot?.hscrp_retest_flag as boolean | undefined
@@ -454,12 +459,16 @@ export function BloodPanelClient({ lab, snapshot, history, ageRange, stressLevel
           </div>
         )}
 
-        {/* Sub-panels */}
+        {/* Sub-panels with connection lines */}
         {renderSection("Cardiovascular Lipids", CARDIOVASCULAR, true)}
+        {connectionInput && <ConnectionLineCard connection={evaluateConnection("cholesterol", connectionInput)} />}
         {renderSection("Inflammation & Resilience", INFLAMMATION, true)}
+        {connectionInput && <ConnectionLineCard connection={evaluateConnection("inflammation", connectionInput)} />}
         {renderSection("Metabolic", METABOLIC, true)}
+        {connectionInput && <ConnectionLineCard connection={evaluateConnection("blood_sugar", connectionInput)} />}
         {renderSection("Organ Function", ORGAN, true)}
         {renderSection("Micronutrients", MICRONUTRIENTS, true)}
+        {connectionInput && <ConnectionLineCard connection={evaluateConnection("vitamin_levels", connectionInput)} />}
         {renderSection("Hormones", HORMONES, true)}
 
         {/* Additional markers */}

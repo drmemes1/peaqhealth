@@ -1,8 +1,12 @@
+// PATTERN: Every marker section in this file uses evaluateConnection() + <ConnectionLineCard />.
+// See docs/CONNECTION_LINE_PATTERN.md for the standard.
 "use client"
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Nav } from "../../components/nav"
+import { evaluateConnection } from "@peaq/score-engine"
+import { ConnectionLineCard } from "../../components/connection-line"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -52,6 +56,7 @@ interface OralSnapshot {
 interface Props {
   oral: Record<string, unknown> | null
   snapshot: Record<string, unknown> | null
+  connectionInput?: import("@peaq/score-engine").ConnectionInput
 }
 
 // ─── Finding priority colors ─────────────────────────────────────────────────
@@ -487,7 +492,7 @@ function NHANESComparison({ shannon, nitratePct, periodontalPct }: {
   )
 }
 
-export function OralPanelClient({ oral, snapshot }: Props) {
+export function OralPanelClient({ oral, snapshot, connectionInput }: Props) {
   const oralSub = snapshot?.oral_sub as number | undefined
 
   const [aiNarrative, setAiNarrative] = useState<OralNarrative | null>(null)
@@ -686,6 +691,18 @@ export function OralPanelClient({ oral, snapshot }: Props) {
             numericValue={osaPct}
           />
         </div>
+
+        {/* Connection lines for key oral markers */}
+        {connectionInput && (
+          <div style={{ marginBottom: 16 }}>
+            <ConnectionLineCard connection={evaluateConnection("good_bacteria", connectionInput)} />
+            <ConnectionLineCard connection={evaluateConnection("harmful_bacteria", connectionInput)} />
+            <ConnectionLineCard connection={evaluateConnection("diversity", connectionInput)} />
+            <ConnectionLineCard connection={evaluateConnection("inflammation_risk", connectionInput)} />
+            <ConnectionLineCard connection={evaluateConnection("cavity_risk", connectionInput)} />
+            <ConnectionLineCard connection={evaluateConnection("breath_health", connectionInput)} />
+          </div>
+        )}
 
         {/* NHANES Comparison */}
         <NHANESComparison shannon={shannon} nitratePct={nitratePct} periodontalPct={periodontalPct} />

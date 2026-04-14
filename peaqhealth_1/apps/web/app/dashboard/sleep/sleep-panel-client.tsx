@@ -1,8 +1,12 @@
+// PATTERN: Every marker section in this file uses evaluateConnection() + <ConnectionLineCard />.
+// See docs/CONNECTION_LINE_PATTERN.md for the standard.
 "use client"
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Nav } from "../../components/nav"
+import { evaluateConnection } from "@peaq/score-engine"
+import { ConnectionLineCard } from "../../components/connection-line"
 import {
   ResponsiveContainer, AreaChart, Area,
   XAxis, YAxis, Tooltip, ReferenceLine,
@@ -15,6 +19,7 @@ interface Props {
   nights: Array<Record<string, unknown>>
   snapshot: Record<string, unknown> | null
   wearable: Record<string, unknown> | null
+  connectionInput?: import("@peaq/score-engine").ConnectionInput
 }
 
 // ─── Provider priority for dedup ─────────────────────────────────────────────
@@ -375,7 +380,7 @@ function MetricRow({
 
 // ─── Main component ──────────────────────────────────────────────────────────
 
-export function SleepPanelClient({ nights, snapshot, wearable }: Props) {
+export function SleepPanelClient({ nights, snapshot, wearable, connectionInput }: Props) {
   const sleepSub = snapshot?.sleep_sub as number | undefined
 
   const [narrative, setNarrative] = useState<{
@@ -617,6 +622,7 @@ export function SleepPanelClient({ nights, snapshot, wearable }: Props) {
             numericValue={avgDeep}
             infoContent={markerInfo["deep-sleep"]}
           />
+          {connectionInput && <ConnectionLineCard connection={evaluateConnection("deep_sleep", connectionInput)} />}
           <MetricRow
             name="HRV"
             sublabel="RMSSD · age-adjusted target"
@@ -627,6 +633,7 @@ export function SleepPanelClient({ nights, snapshot, wearable }: Props) {
             numericValue={avgHrv}
             infoContent={markerInfo["hrv"]}
           />
+          {connectionInput && <ConnectionLineCard connection={evaluateConnection("recovery_hrv", connectionInput)} />}
           <MetricRow
             name="SpO₂"
             sublabel="Avg saturation · target ≥96%"
@@ -647,6 +654,7 @@ export function SleepPanelClient({ nights, snapshot, wearable }: Props) {
             numericValue={avgRem}
             infoContent={markerInfo["rem"]}
           />
+          {connectionInput && <ConnectionLineCard connection={evaluateConnection("rem", connectionInput)} />}
           <MetricRow
             name="Sleep Efficiency"
             sublabel="Target ≥85%"
@@ -657,6 +665,7 @@ export function SleepPanelClient({ nights, snapshot, wearable }: Props) {
             numericValue={avgEff}
             infoContent={markerInfo["sleep-efficiency"]}
           />
+          {connectionInput && <ConnectionLineCard connection={evaluateConnection("duration", connectionInput)} />}
         </Section>
 
         {/* Last 7 Nights section */}
