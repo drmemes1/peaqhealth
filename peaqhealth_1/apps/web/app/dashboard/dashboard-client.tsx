@@ -12,7 +12,7 @@ import { RefreshCw } from "lucide-react"
 const serif = "'Cormorant Garamond', Georgia, serif"
 const sans  = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 
-// ─── Design System Colors ──────────────��────────────────────────────────────
+// ─── Design System Colors ───────────────────────────────────────────────────
 const DS = {
   pageBg:    "#FAFAF8",
   sectionBg: "#F7F5F0",
@@ -31,7 +31,7 @@ const DS = {
   redDark:   "#A32D2D",
 }
 
-// ─── Types ──────��──────────────────────────────────────────��────────────────
+// ─── Types ──────────────────────────────────────────────────────────────────
 
 interface InsightItem {
   panels: string[]
@@ -68,16 +68,256 @@ interface LabHistoryPoint {
   vitamin_d_ngml: number | null
 }
 
-// ─── Helpers ──────────────��─────────────────────────────────────────────────
+type DotColor = "green" | "amber" | "red" | "gray"
 
-function truncateInsightBody(text: string, max = 120): string {
+const DOT_COLORS: Record<DotColor, string> = {
+  green: "#2D6A4F",
+  amber: "#B8860B",
+  red:   "#C0392B",
+  gray:  "#D1CFC7",
+}
+
+interface Indicator {
+  label: string
+  color: DotColor
+  tooltip: string
+}
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+function truncateInsightBody(text: string, max = 100): string {
   let cleaned = text
     .replace(/Peaq\s*Age\s*of\s*[\d.]+\s*(?:years?)?/gi, "")
     .replace(/delta\s*of\s*[+-]?[\d.]+/gi, "")
-    .replace(/\s{2,}/g, " ")
-    .trim()
+    .replace(/eGFR\s*(?:at\s*)?\d+\s*mL\/min/gi, "")
+    .replace(/\d+\.?\d*\s*(?:mL|mg|mmol)(?:\/[a-zA-Z]+)?/gi, "")
+    .replace(/\s{2,}/g, " ").trim()
   if (cleaned.length > max) cleaned = cleaned.slice(0, max).replace(/\s+\S*$/, "") + "..."
   return cleaned
+}
+
+function worstDot(...colors: DotColor[]): DotColor {
+  if (colors.includes("red")) return "red"
+  if (colors.includes("amber")) return "amber"
+  if (colors.includes("green")) return "green"
+  return "gray"
+}
+
+// ─── Indicator Builders ─────────────────────────────────────────────────────
+
+function buildOralIndicators(
+  oralData?: ScoreWheelProps["oralData"],
+): Indicator[] {
+  if (!oralData) {
+    return [
+      { label: "Good bacteria", color: "gray", tooltip: "Connect oral panel" },
+      { label: "Harmful bacteria", color: "gray", tooltip: "Connect oral panel" },
+      { label: "Cavity risk", color: "gray", tooltip: "Connect oral panel" },
+      { label: "Breath health", color: "gray", tooltip: "Connect oral panel" },
+      { label: "Diversity", color: "gray", tooltip: "Connect oral panel" },
+      { label: "Inflammation risk", color: "gray", tooltip: "Connect oral panel" },
+    ]
+  }
+
+  const nitrate = oralData.nitrateReducersPct ?? 0
+  const patho = oralData.periodontPathPct ?? 0
+  const species = oralData.species ?? {}
+  const shannon = oralData.shannonDiversity ?? 0
+
+  // 1. Good bacteria
+  const goodColor: DotColor = nitrate >= 15 ? "green" : nitrate >= 5 ? "amber" : "red"
+  const goodTip = `Nitrate-reducing bacteria at ${nitrate.toFixed(1)}%`
+
+  // 2. Harmful bacteria
+  const harmColor: DotColor = patho < 1 ? "green" : patho <= 5 ? "amber" : "red"
+  const harmTip = `Periodontal pathogens at ${patho.toFixed(1)}%`
+
+  // 3. Cavity risk
+  const mutans = species["Streptococcus mutans"] ?? 0
+  const sobrinus = species["Streptococcus sobrinus"] ?? 0
+  const cavityWorst = Math.max(mutans, sobrinus)
+  let cavityColor: DotColor = "gray"
+  let cavityTip = "No species data available"
+  if (Object.keys(species).length > 0) {
+    cavityColor = cavityWorst <= 0.1 ? "green" : cavityWorst <= 0.5 ? "amber" : "red"
+    cavityTip = `S. mutans ${mutans.toFixed(2)}%, S. sobrinus ${sobrinus.toFixed(2)}%`
+  }
+
+  // 4. Breath health
+  const fuso = species["Fusobacterium nucleatum"] ?? 0
+  const solo = species["Solobacterium moorei"] ?? 0
+  const pepto = species["Peptostreptococcus spp."] ?? 0
+  const breathWorst = Math.max(fuso, solo, pepto)
+  let breathColor: DotColor = "gray"
+  let breathTip = "No species data available"
+  if (Object.keys(species).length > 0) {
+    breathColor = breathWorst < 1 ? "green" : breathWorst <= 3 ? "amber" : "red"
+    breathTip = `Volatile sulfur producers at ${breathWorst.toFixed(1)}%`
+  }
+
+  // 5. Diversity
+  const divColor: DotColor = shannon >= 3.5 ? "green" : shannon >= 2.5 ? "amber" : "red"
+  const divTip = `Shannon diversity index: ${shannon.toFixed(2)}`
+
+  // 6. Inflammation risk
+  let infColor: DotColor = "green"
+  if (patho > 5 && nitrate < 5) infColor = "red"
+  else if (patho > 2 || nitrate < 10) infColor = "amber"
+  const infTip = infColor === "red"
+    ? "High pathogens with low protective bacteria"
+    : infColor === "amber"
+    ? "Moderate imbalance detected"
+    : "Balanced oral inflammation markers"
+
+  return [
+    { label: "Good bacteria", color: goodColor, tooltip: goodTip },
+    { label: "Harmful bacteria", color: harmColor, tooltip: harmTip },
+    { label: "Cavity risk", color: cavityColor, tooltip: cavityTip },
+    { label: "Breath health", color: breathColor, tooltip: breathTip },
+    { label: "Diversity", color: divColor, tooltip: divTip },
+    { label: "Inflammation risk", color: infColor, tooltip: infTip },
+  ]
+}
+
+function buildBloodIndicators(
+  bloodData?: ScoreWheelProps["bloodData"],
+): Indicator[] {
+  if (!bloodData) {
+    return [
+      { label: "Cholesterol", color: "gray", tooltip: "Upload blood panel" },
+      { label: "Inflammation", color: "gray", tooltip: "Upload blood panel" },
+      { label: "Blood sugar", color: "gray", tooltip: "Upload blood panel" },
+      { label: "Heart health", color: "gray", tooltip: "Upload blood panel" },
+      { label: "Vitamin levels", color: "gray", tooltip: "Upload blood panel" },
+      { label: "Cellular health", color: "gray", tooltip: "Available in next update" },
+    ]
+  }
+
+  const { ldl, hdl, triglycerides, hsCRP, hba1c, glucose, lpa, vitaminD } = bloodData
+
+  // 1. Cholesterol — worst of ldl, hdl (inverted), triglycerides
+  const ldlDot: DotColor = ldl === 0 ? "gray" : ldl < 100 ? "green" : ldl <= 130 ? "amber" : "red"
+  const hdlDot: DotColor = hdl === 0 ? "gray" : hdl > 60 ? "green" : hdl >= 40 ? "amber" : "red"
+  const triDot: DotColor = triglycerides === 0 ? "gray" : triglycerides < 100 ? "green" : triglycerides <= 150 ? "amber" : "red"
+  const cholDots = [ldlDot, hdlDot, triDot].filter(d => d !== "gray")
+  const cholColor = cholDots.length > 0 ? worstDot(...cholDots) : "gray" as DotColor
+  const cholTip = cholColor === "gray" ? "No cholesterol data" : `LDL ${ldl}, HDL ${hdl}, Triglycerides ${triglycerides}`
+
+  // 2. Inflammation — hsCRP
+  let crpColor: DotColor = "gray"
+  let crpTip = "Add hs-CRP to next blood draw"
+  if (hsCRP > 0) {
+    crpColor = hsCRP < 1.0 ? "green" : hsCRP <= 3.0 ? "amber" : "red"
+    crpTip = `hs-CRP at ${hsCRP.toFixed(1)} mg/L`
+  }
+
+  // 3. Blood sugar — worst of hba1c, glucose
+  const a1cDot: DotColor = hba1c === 0 ? "gray" : hba1c < 5.7 ? "green" : hba1c < 6.5 ? "amber" : "red"
+  const gluDot: DotColor = glucose === 0 ? "gray" : glucose < 100 ? "green" : glucose < 126 ? "amber" : "red"
+  const sugarDots = [a1cDot, gluDot].filter(d => d !== "gray")
+  const sugarColor = sugarDots.length > 0 ? worstDot(...sugarDots) : "gray" as DotColor
+  const sugarTip = sugarColor === "gray" ? "No blood sugar data" : `HbA1c ${hba1c}%, Glucose ${glucose}`
+
+  // 4. Heart health — lpa
+  let heartColor: DotColor = "gray"
+  let heartTip = "Lp(a) not tested"
+  if (lpa > 0) {
+    heartColor = lpa < 30 ? "green" : lpa <= 50 ? "amber" : "red"
+    heartTip = `Lp(a) at ${lpa} nmol/L`
+  }
+
+  // 5. Vitamin levels — vitaminD
+  let vitColor: DotColor = "gray"
+  let vitTip = "Vitamin D not tested"
+  if (vitaminD > 0) {
+    vitColor = vitaminD > 50 ? "green" : vitaminD >= 30 ? "amber" : "red"
+    vitTip = `Vitamin D at ${vitaminD} ng/mL`
+  }
+
+  return [
+    { label: "Cholesterol", color: cholColor, tooltip: cholTip },
+    { label: "Inflammation", color: crpColor, tooltip: crpTip },
+    { label: "Blood sugar", color: sugarColor, tooltip: sugarTip },
+    { label: "Heart health", color: heartColor, tooltip: heartTip },
+    { label: "Vitamin levels", color: vitColor, tooltip: vitTip },
+    { label: "Cellular health", color: "gray", tooltip: "Available in next update" },
+  ]
+}
+
+function buildSleepIndicators(
+  sleepData?: ScoreWheelProps["sleepData"],
+  connected?: boolean,
+): Indicator[] {
+  if (!connected || !sleepData) {
+    return [
+      { label: "Deep sleep", color: "gray", tooltip: "Connect wearable" },
+      { label: "REM", color: "gray", tooltip: "Connect wearable" },
+      { label: "Duration", color: "gray", tooltip: "Connect wearable" },
+      { label: "Recovery", color: "gray", tooltip: "Connect wearable" },
+      { label: "Consistency", color: "gray", tooltip: "Coming soon — bedtime tracking updating" },
+    ]
+  }
+
+  const { deepPct, remPct, efficiency, hrv } = sleepData
+
+  const deepColor: DotColor = deepPct >= 20 ? "green" : deepPct >= 15 ? "amber" : "red"
+  const remColor: DotColor = remPct >= 20 ? "green" : remPct >= 15 ? "amber" : "red"
+  const durColor: DotColor = efficiency >= 90 ? "green" : efficiency >= 80 ? "amber" : "red"
+  const recColor: DotColor = hrv >= 40 ? "green" : hrv >= 25 ? "amber" : "red"
+
+  return [
+    { label: "Deep sleep", color: deepColor, tooltip: `Deep sleep at ${deepPct.toFixed(0)}%` },
+    { label: "REM", color: remColor, tooltip: `REM sleep at ${remPct.toFixed(0)}%` },
+    { label: "Duration", color: durColor, tooltip: `Sleep efficiency at ${efficiency.toFixed(0)}%` },
+    { label: "Recovery", color: recColor, tooltip: `HRV at ${hrv.toFixed(0)} ms` },
+    { label: "Consistency", color: "gray", tooltip: "Coming soon — bedtime tracking updating" },
+  ]
+}
+
+// ─── Indicator Dot Grid ─────────────────────────────────────────────────────
+
+function IndicatorGrid({ indicators }: { indicators: Indicator[] }) {
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
+
+  return (
+    <div style={{ marginTop: 16, marginBottom: 16, position: "relative" }}>
+      {indicators.map((ind, i) => (
+        <div
+          key={i}
+          style={{
+            display: "flex", alignItems: "center", gap: 6,
+            height: 22, position: "relative", cursor: "default",
+          }}
+          onMouseEnter={() => setHoveredIdx(i)}
+          onMouseLeave={() => setHoveredIdx(null)}
+        >
+          <span style={{
+            width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
+            background: DOT_COLORS[ind.color],
+          }} />
+          <span style={{
+            fontFamily: sans, fontSize: 11, color: DS.ink,
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+          }}>
+            {ind.label}
+          </span>
+          {hoveredIdx === i && (
+            <div style={{
+              position: "absolute", bottom: "100%", left: 0,
+              marginBottom: 4, zIndex: 10,
+              background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
+              borderRadius: 6, padding: "6px 10px",
+              fontFamily: sans, fontSize: 11, color: DS.ink,
+              maxWidth: 220, whiteSpace: "normal", lineHeight: 1.4,
+              boxShadow: "0 2px 8px rgba(20,20,16,0.1)",
+            }}>
+              {ind.tooltip}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
 }
 
 // ─── Skeleton Loaders ───────────────────────────────────────────────────────
@@ -94,7 +334,7 @@ function ShimmerBar({ width, height, delay = 0, radius = 3 }: {
   )
 }
 
-// ─── "See why" Expandable ────────────────���──────────────────────���───────────
+// ─── "See why" Expandable ───────────────────────────────────────────────────
 
 function SeeWhy({ title, explanation, panels }: { title: string; explanation: string; panels: string[] }) {
   const [open, setOpen] = useState(false)
@@ -168,7 +408,7 @@ function SeeWhy({ title, explanation, panels }: { title: string; explanation: st
   )
 }
 
-// ─── Cross-Panel Signal Row ────��────────────────────────────────────────────
+// ─── Cross-Panel Signal Row ─────────────────────────────────────────────────
 
 function PanelPill({ panel }: { panel: string }) {
   const color = ({ sleep: DS.sleep, blood: DS.blood, oral: DS.oral } as Record<string,string>)[panel] ?? DS.inkMuted
@@ -205,7 +445,7 @@ function SignalRow({ signal }: { signal: CrossPanelSignal }) {
   )
 }
 
-// ─── Panel Visual Icons ───────────────────────────────���─────────────────────
+// ─── Panel Visual Icons ─────────────────────────────────────────────────────
 
 type PanelStatus = "Active" | "Review" | "Connect"
 
@@ -281,9 +521,9 @@ function ConnectIcon() {
 
 // ─── Panel Node Card ────────────────────────────────────────────────────────
 
-function PanelNode({ name, status, href, icon, label }: {
+function PanelNode({ name, status, href, icon, label, indicators }: {
   name: string; status: PanelStatus; href: string
-  icon: React.ReactNode; label: string
+  icon: React.ReactNode; label: string; indicators: Indicator[]
 }) {
   const statusColor = status === "Active" ? DS.oral : status === "Review" ? DS.gold : DS.inkMuted
   return (
@@ -291,9 +531,10 @@ function PanelNode({ name, status, href, icon, label }: {
       background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
       borderRadius: 12, padding: "28px 24px", textDecoration: "none",
       display: "flex", flexDirection: "column", alignItems: "center",
-      gap: 12, flex: "1 1 0", minWidth: 0, minHeight: 140,
+      flex: "1 1 0", minWidth: 0, minHeight: 140,
       boxShadow: "0 1px 3px rgba(20,20,16,0.06)",
       transition: "transform 150ms ease, box-shadow 150ms ease",
+      position: "relative", zIndex: 1,
     }}
     onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(20,20,16,0.08)" }}
     onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 1px 3px rgba(20,20,16,0.06)" }}
@@ -304,13 +545,8 @@ function PanelNode({ name, status, href, icon, label }: {
       }}>
         {name}
       </span>
-      {icon}
-      <span style={{
-        fontFamily: sans, fontSize: 13, color: DS.ink, textAlign: "center",
-        lineHeight: 1.3,
-      }}>
-        {label}
-      </span>
+      <div style={{ marginTop: 12 }}>{icon}</div>
+      <IndicatorGrid indicators={indicators} />
       <span style={{
         fontFamily: sans, fontSize: 10, fontWeight: 500,
         letterSpacing: "0.06em", textTransform: "uppercase",
@@ -326,7 +562,7 @@ function PanelNode({ name, status, href, icon, label }: {
   )
 }
 
-// ─── Connection Lines SVG ───────────────────────────────────────────────────
+// ─── Connection Lines SVG + Travelling Dots ─────────────────────────────────
 
 function ConnectionLines({ statuses }: { statuses: [PanelStatus, PanelStatus, PanelStatus] }) {
   const allActive = statuses.every(s => s !== "Connect")
@@ -334,51 +570,63 @@ function ConnectionLines({ statuses }: { statuses: [PanelStatus, PanelStatus, Pa
   const line2Active = statuses[1] !== "Connect" && statuses[2] !== "Connect"
 
   return (
-    <svg
-      style={{
-        position: "absolute", top: "50%", left: 0, width: "100%", height: 20,
-        transform: "translateY(-50%)", pointerEvents: "none", overflow: "visible",
-      }}
-      preserveAspectRatio="none"
-    >
-      <defs>
-        <filter id="glow">
-          <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor={DS.gold} floodOpacity="0.4" />
-        </filter>
-      </defs>
-      {/* Line 1: card 1 → card 2 */}
-      <line
-        x1="33%" y1="10" x2="66%" y2="10"
-        stroke={line1Active ? DS.gold : DS.cardBorder}
-        strokeWidth={1.5}
-        opacity={line1Active ? 0.5 : 0.6}
-        filter={line1Active && allActive ? "url(#glow)" : undefined}
-        style={line1Active && allActive ? { animation: "glowPulse 3s ease-in-out infinite" } : undefined}
-      />
+    <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", pointerEvents: "none" }}>
+      <svg
+        style={{
+          position: "absolute", top: "50%", left: 0, width: "100%", height: 20,
+          transform: "translateY(-50%)", pointerEvents: "none", overflow: "visible",
+        }}
+        preserveAspectRatio="none"
+      >
+        <defs>
+          <filter id="glow">
+            <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor={DS.gold} floodOpacity="0.4" />
+          </filter>
+        </defs>
+        {/* Line 1: card 1 → card 2 */}
+        <line
+          x1="33%" y1="10" x2="66%" y2="10"
+          stroke={line1Active ? DS.gold : DS.cardBorder}
+          strokeWidth={1.5}
+          opacity={line1Active ? 0.5 : 0.6}
+          filter={line1Active && allActive ? "url(#glow)" : undefined}
+          style={line1Active && allActive ? { animation: "glowPulse 3s ease-in-out infinite" } : undefined}
+        />
+        {/* Line 2: card 2 → card 3 */}
+        <line
+          x1="66%" y1="10" x2="100%" y2="10"
+          stroke={line2Active ? DS.gold : DS.cardBorder}
+          strokeWidth={1.5}
+          opacity={line2Active ? 0.5 : 0.6}
+          filter={line2Active && allActive ? "url(#glow)" : undefined}
+          style={line2Active && allActive ? { animation: "glowPulse 3s ease-in-out infinite" } : undefined}
+        />
+      </svg>
+      {/* Travelling dots as CSS-animated spans in the gaps */}
       {line1Active && allActive && (
-        <circle r="2" fill={DS.gold} opacity={0.7}>
-          <animateMotion dur="3s" repeatCount="indefinite" path="M 33 10 L 66 10" />
-        </circle>
+        <span style={{
+          position: "absolute", top: "50%", left: "calc(33.33% - 3px)",
+          width: 6, height: 6, borderRadius: "50%",
+          background: DS.gold, opacity: 0.7,
+          transform: "translateY(-50%)",
+          animation: "travelDot 2s linear infinite",
+        }} />
       )}
-      {/* Line 2: card 2 → card 3 */}
-      <line
-        x1="66%" y1="10" x2="100%" y2="10"
-        stroke={line2Active ? DS.gold : DS.cardBorder}
-        strokeWidth={1.5}
-        opacity={line2Active ? 0.5 : 0.6}
-        filter={line2Active && allActive ? "url(#glow)" : undefined}
-        style={line2Active && allActive ? { animation: "glowPulse 3s ease-in-out infinite" } : undefined}
-      />
       {line2Active && allActive && (
-        <circle r="2" fill={DS.gold} opacity={0.7}>
-          <animateMotion dur="3s" repeatCount="indefinite" path="M 66 10 L 100 10" />
-        </circle>
+        <span style={{
+          position: "absolute", top: "50%", left: "calc(66.66% - 3px)",
+          width: 6, height: 6, borderRadius: "50%",
+          background: DS.gold, opacity: 0.7,
+          transform: "translateY(-50%)",
+          animation: "travelDot 2s linear infinite",
+          animationDelay: "1s",
+        }} />
       )}
-    </svg>
+    </div>
   )
 }
 
-// ─── Band Chip ───────��──────────────────────────────────────────────────────
+// ─── Band Chip ──────────────────────────────────────────────────────────────
 
 function BandChip({ band, onGold = false }: { band: string; onGold?: boolean }) {
   const upper = band.toUpperCase()
@@ -400,7 +648,7 @@ function BandChip({ band, onGold = false }: { band: string; onGold?: boolean }) 
   )
 }
 
-// ─── Main Component ─────────────────────────────────────��───────────────────
+// ─── Main Component ─────────────────────────────────────────────────────────
 
 export function DashboardClient(props: ScoreWheelProps & {
   labHistory?: LabHistoryPoint[];
@@ -412,7 +660,7 @@ export function DashboardClient(props: ScoreWheelProps & {
 }) {
   const { wearableNeedsReconnect = false, firstName, latestSleepDate, peaqAgeBreakdown } = props
 
-  // ── Insight data ──────────────────────────────────��───────────────────────
+  // ── Insight data ──────────────────────────────────────────────────────────
   const [insights, setInsights] = useState<InsightData | null>(null)
   const [insightsLoading, setInsightsLoading] = useState(true)
 
@@ -432,7 +680,7 @@ export function DashboardClient(props: ScoreWheelProps & {
     return () => { cancelled = true }
   }, [])
 
-  // ─��� Sync logic ───────────��────────────────────────────────────��───────────
+  // ── Sync logic ────────────────────────────────────────────────────────────
   const [syncingNow, setSyncingNow] = useState(false)
   const [syncResult, setSyncResult] = useState<string | null>(null)
 
@@ -451,7 +699,7 @@ export function DashboardClient(props: ScoreWheelProps & {
     finally { setSyncingNow(false) }
   }
 
-  // ── Sleep toggle ────��────────────────────────────────────���────────────────
+  // ── Sleep toggle ──────────────────────────────────────────────────────────
   const [sleepHidden, setSleepHidden] = useState(() => {
     if (typeof window === "undefined") return false
     return localStorage.getItem("peaq-sleep-panel-hidden") === "true"
@@ -466,7 +714,7 @@ export function DashboardClient(props: ScoreWheelProps & {
   const hasCrossPanel = (insights?.cross_panel_signals ?? []).length > 0
   const panelCount = [hasSleep, hasBlood, hasOral].filter(Boolean).length
 
-  // ── Panel statuses ──��──────────────────────��──────────────────────────────
+  // ── Panel statuses ────────────────────────────────────────────────────────
   const sleepStatus: PanelStatus = hasSleep ? "Active" : "Connect"
   const bloodStatus: PanelStatus = hasBlood
     ? (peaqAgeBreakdown && peaqAgeBreakdown.phenoAge == null && peaqAgeBreakdown.hasBW ? "Review" : "Active")
@@ -475,7 +723,7 @@ export function DashboardClient(props: ScoreWheelProps & {
     ? (typeof peaqAgeBreakdown?.omaPct === "number" && (peaqAgeBreakdown.omaPct as number) < 40 ? "Review" : "Active")
     : "Connect"
 
-  // ── Panel summary sentences ─────────────���─────────────────────────────────
+  // ── Panel summary sentences ───────────────────────────────────────────────
   function panelSummary(panel: "sleep" | "blood" | "oral"): string {
     if (panel === "sleep") {
       if (!hasSleep) return "Not connected yet"
@@ -514,7 +762,7 @@ export function DashboardClient(props: ScoreWheelProps & {
     return ""
   }
 
-  // ── Panel card labels ──���──────────────────────────────────────────────────
+  // ── Panel card labels ─────────────────────────────────────────────────────
   function oralLabel(): string {
     if (!hasOral) return "Connect"
     if (oralStatus === "Review") return "Needs attention"
@@ -538,7 +786,7 @@ export function DashboardClient(props: ScoreWheelProps & {
     return `${optimal}/${markers.length} markers optimal`
   }
 
-  // ── Action plan items ──────��──────────────────────────────────────────────
+  // ── Action plan items ─────────────────────────────────────────────────────
   function getActionItems(): { label: string; timing: string }[] {
     if (!peaqAgeBreakdown) return []
     const b = peaqAgeBreakdown
@@ -557,7 +805,12 @@ export function DashboardClient(props: ScoreWheelProps & {
     return actions.slice(0, 3)
   }
 
-  // ── V5 Dashboard (Peaq Age breakdown exists) ────────────────���─────────────
+  // ── Build indicators ──────────────────────────────────────────────────────
+  const oralIndicators = buildOralIndicators(hasOral ? props.oralData : undefined)
+  const bloodIndicators = buildBloodIndicators(hasBlood ? props.bloodData : undefined)
+  const sleepIndicators = buildSleepIndicators(hasSleep ? props.sleepData : undefined, hasSleep)
+
+  // ── V5 Dashboard (Peaq Age breakdown exists) ──────────────────────────────
   if (peaqAgeBreakdown && typeof peaqAgeBreakdown.peaqAge === "number") {
     const peaqAge = peaqAgeBreakdown.peaqAge as number
     const delta = peaqAgeBreakdown.delta as number
@@ -603,7 +856,7 @@ export function DashboardClient(props: ScoreWheelProps & {
             display: "flex", gap: 32, alignItems: "flex-start",
           }}>
 
-            {/* ── LEFT COLUMN (main) ────���─────────────────────────────────���─ */}
+            {/* ── LEFT COLUMN (main) ─────────────────────────────────────── */}
             <div style={{ flex: "1 1 0", minWidth: 0, maxWidth: 700 }}>
 
               {/* 1. GREETING — italic gold name */}
@@ -650,28 +903,31 @@ export function DashboardClient(props: ScoreWheelProps & {
               </div>
 
               {/* 2. THREE PANEL NODES — Oral · Sleep · Blood */}
-              <div style={{ position: "relative", marginBottom: 36 }}>
+              <div className="panel-cards-row-wrapper" style={{ position: "relative", marginBottom: 36 }}>
                 <ConnectionLines statuses={statuses} />
-                <div style={{ display: "flex", gap: 16, position: "relative", zIndex: 1 }}>
+                <div className="panel-cards-row" style={{ display: "flex", gap: 16, position: "relative" }}>
                   <PanelNode
                     name="Oral" status={oralStatus} href="/dashboard/oral"
                     icon={hasOral ? <OralIcon /> : <ConnectIcon />}
                     label={oralLabel()}
+                    indicators={oralIndicators}
                   />
                   <PanelNode
                     name="Sleep" status={sleepStatus} href="/dashboard/sleep"
                     icon={hasSleep ? <SleepIcon sleepData={props.sleepData} /> : <ConnectIcon />}
                     label={sleepLabel()}
+                    indicators={sleepIndicators}
                   />
                   <PanelNode
                     name="Blood" status={bloodStatus} href="/dashboard/blood"
                     icon={hasBlood ? <BloodIcon bloodData={props.bloodData} /> : <ConnectIcon />}
                     label={bloodLabel()}
+                    indicators={bloodIndicators}
                   />
                 </div>
               </div>
 
-              {/* 3. PEAQ+ AGE CARD — warm gold background, second position */}
+              {/* 3. PEAQ+ AGE CARD — warm gold background */}
               <div style={{
                 background: DS.goldBg, border: `0.5px solid rgba(184,134,11,0.25)`,
                 borderRadius: 16, padding: "48px 40px", textAlign: "center",
@@ -841,7 +1097,7 @@ export function DashboardClient(props: ScoreWheelProps & {
                 })}
               </div>
 
-              {/* CROSS-PANEL SIGNALS */}
+              {/* 6. CROSS-PANEL SIGNALS */}
               {insightsLoading && panelCount >= 2 && (
                 <div style={{
                   background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
@@ -944,7 +1200,6 @@ export function DashboardClient(props: ScoreWheelProps & {
               </div>
 
               {/* ZONE 2 — FROM PEAQ */}
-              {/* TODO: replace with dynamic blog posts when peaqhealth.me/learn launches */}
               <div style={{
                 background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
                 borderRadius: 12, padding: 20,
@@ -1053,10 +1308,6 @@ export function DashboardClient(props: ScoreWheelProps & {
             0%, 100% { opacity: 0.35; }
             50%      { opacity: 0.55; }
           }
-          @keyframes panelDotPulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50%      { opacity: 0.6; transform: scale(0.85); }
-          }
           @keyframes shimmer {
             0%, 100% { opacity: 0.5; }
             50%      { opacity: 1; }
@@ -1073,6 +1324,12 @@ export function DashboardClient(props: ScoreWheelProps & {
             from { opacity: 0; transform: translateY(4px); }
             to   { opacity: 1; transform: translateY(0); }
           }
+          @keyframes travelDot {
+            0%   { left: calc(33.33% - 3px); opacity: 0; }
+            10%  { opacity: 0.7; }
+            90%  { opacity: 0.7; }
+            100% { left: calc(66.66% - 3px); opacity: 0; }
+          }
           .from-peaq-row:hover .from-peaq-arrow {
             transform: translateX(3px);
           }
@@ -1084,7 +1341,13 @@ export function DashboardClient(props: ScoreWheelProps & {
               width: 100% !important;
             }
             .peaq-age-number {
-              font-size: 64px !important;
+              font-size: 72px !important;
+            }
+            .panel-cards-row {
+              flex-direction: column !important;
+            }
+            .connection-lines-wrapper {
+              display: none !important;
             }
           }
         `}</style>

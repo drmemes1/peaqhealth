@@ -243,7 +243,7 @@ async function _recalculateScore(
   const userAge = dobStr
     ? Math.floor((Date.now() - new Date(dobStr).getTime()) / (365.25 * 86400000))
     : ageRangeToMidpoint(lifestyleRes.data?.age_range as string | null)
-  console.log(`[recalc] user=${userId.slice(0,8)} age=${userAge} source=${dobStr ? "dob" : "age_range"}`)
+  console.log(`[peaqAge] chronoAge source: ${dobStr ? "DOB exact" : "age_range fallback"}, chronoAge: ${userAge}`)
   const rawSex = lifestyleRes.data?.biological_sex as string | null
   const userSex: 'male' | 'female' = rawSex === 'female' ? 'female' : 'male'
 

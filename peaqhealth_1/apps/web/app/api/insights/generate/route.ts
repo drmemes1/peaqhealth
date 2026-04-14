@@ -33,7 +33,7 @@ NEVER USE these words/phrases in actions or explanations:
 Return valid JSON only:
 {
   "headline": "One bold clinical statement about overall picture",
-  "headline_sub": "One plain-English sentence a non-medical person understands immediately. Do NOT mention Peaq Age, deltas, or specific lab values here — save those for expanded view. Good: 'Your sleep and oral health are reinforcing each other in a way most panels miss.' Bad: 'A Peaq Age of 39.6 with eGFR 103.'",
+  "headline_sub": "ONE plain-English sentence UNDER 100 CHARACTERS that a non-medical person understands immediately. Explain WHY it matters, not WHAT the number is. Do NOT mention Peaq Age, deltas, eGFR, or any lab values with units (mg/dL, mL/min, etc). Good: 'Your sleep and oral health are reinforcing each other.' Bad: 'A Peaq Age of 39.6 with eGFR 103 mL/min.'",
   "insights_positive": [
     {
       "panels": ["sleep", "blood"],
