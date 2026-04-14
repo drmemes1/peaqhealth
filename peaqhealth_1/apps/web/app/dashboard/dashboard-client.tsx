@@ -519,8 +519,10 @@ export function DashboardClient(props: ScoreWheelProps & {
   peaqAgeBreakdown?: Record<string, unknown> | null;
   cachedInsight?: { headline: string; body: string };
   cachedGuidance?: Array<{ title: string; timing: string }>;
+  articles?: Array<{ slug: string; title: string; readTime: number }>;
 }) {
   const { wearableNeedsReconnect = false, firstName, peaqAgeBreakdown, cachedInsight, cachedGuidance } = props
+  const articles = props.articles && props.articles.length > 0 ? props.articles : null
 
   // ── Sync logic ────────────────────────────────────────────────────────────
   const [syncingNow, setSyncingNow] = useState(false)
@@ -1068,8 +1070,7 @@ export function DashboardClient(props: ScoreWheelProps & {
                 </Link>
               </div>
 
-              {/* ZONE 2 — FROM PEAQ */}
-              {/* TODO: replace with dynamic blog posts when peaqhealth.me/learn launches */}
+              {/* ZONE 2 — FROM PEAQ (dynamic from articles table) */}
               <div style={{
                 background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
                 borderRadius: 12, padding: 20,
@@ -1082,21 +1083,21 @@ export function DashboardClient(props: ScoreWheelProps & {
                 }}>
                   FROM PEAQ
                 </span>
-                {[
-                  { title: "How your oral health affects your heart", sub: "5 min read", href: "/science" },
-                  { title: "Why sleep timing matters more than duration", sub: "4 min read", href: "/science" },
-                ].map((post, i) => (
-                  <Link key={i} href={post.href} className="from-peaq-row" style={{
+                {(articles ?? [
+                  { slug: "", title: "How your oral health affects your heart", readTime: 5 },
+                  { slug: "", title: "Why sleep timing matters more than duration", readTime: 4 },
+                ]).map((post, i, arr) => (
+                  <Link key={post.slug || i} href={post.slug ? `/learn/${post.slug}` : "/science"} className="from-peaq-row" style={{
                     display: "flex", alignItems: "center", justifyContent: "space-between",
                     gap: 8, padding: "14px 0", textDecoration: "none",
-                    borderBottom: i === 0 ? `0.5px solid ${DS.cardBorder}` : "none",
+                    borderBottom: i < arr.length - 1 ? `0.5px solid ${DS.cardBorder}` : "none",
                   }}>
                     <div>
                       <p style={{ fontFamily: sans, fontSize: 13, color: DS.ink, margin: 0, lineHeight: 1.4 }}>
                         {post.title}
                       </p>
                       <p style={{ fontFamily: sans, fontSize: 11, color: DS.inkMuted, margin: "2px 0 0" }}>
-                        {post.sub}
+                        {post.readTime} min read
                       </p>
                     </div>
                     <span className="from-peaq-arrow" style={{

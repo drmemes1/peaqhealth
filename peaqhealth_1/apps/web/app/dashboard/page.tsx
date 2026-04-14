@@ -22,6 +22,7 @@ export default async function DashboardPage() {
     { data: sleepNights },
     { data: profile },
     { data: prevSnapshot },
+    { data: articlesData },
   ] = await Promise.all([
     supabase.from("score_snapshots").select("*").eq("user_id", user.id).order("calculated_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("wearable_connections_v2").select("provider,last_synced_at,needs_reconnect").eq("user_id", user.id).order("connected_at", { ascending: false }).limit(1).maybeSingle(),
@@ -32,6 +33,7 @@ export default async function DashboardPage() {
     supabase.from("sleep_data").select("date,source,total_sleep_minutes,deep_sleep_minutes,rem_sleep_minutes,sleep_efficiency,hrv_rmssd,spo2").eq("user_id", user.id).order("date", { ascending: false }).limit(30),
     supabase.from("profiles").select("first_name").eq("id", user.id).single(),
     supabase.from("score_snapshots").select("sleep_sub,blood_sub,oral_sub,calculated_at").eq("user_id", user.id).order("calculated_at", { ascending: false }).range(1, 1).maybeSingle(),
+    supabase.from("articles").select("slug, title, read_time_min").eq("published", true).order("published_at", { ascending: false }).limit(3),
   ])
 
   const wearableRaw = wearableConn  // unified connection (replaces old wearable_connections + whoop_connections)
@@ -307,5 +309,6 @@ export default async function DashboardPage() {
       body: (snapshot.ai_insight_body as string | null) ?? "",
     } : undefined}
     cachedGuidance={(snapshot?.ai_guidance_items as Array<{ title: string; timing: string }>) ?? undefined}
+    articles={(articlesData ?? []).map(a => ({ slug: a.slug as string, title: a.title as string, readTime: a.read_time_min as number }))}
   />
 }
