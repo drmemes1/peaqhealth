@@ -30,6 +30,12 @@ export { scoreOralAgainstNHANES } from './oral-nhanes-scorer'
 export type { OralNHANESInput, OralNHANESScore, MetricResult, SequencingSource } from './oral-nhanes-scorer'
 
 export { calcPeaqAge, calcOMA } from './peaqAge'
+
+export { evaluateConnection } from './connections'
+export type {
+  ConnectionInput, ConnectionResult, ConnectionLine, NoConnection,
+  ConnectionPriority, ConnectionDirection, Panel as ConnectionPanel,
+} from './connections'
 export type {
   PeaqAgeInputs, PeaqAgeResult, PeaqAgeBand,
   BloodworkInputs as PeaqBloodworkInputs,
