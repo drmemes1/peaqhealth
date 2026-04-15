@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import { scoreOralV2, type OralDimensionInputs } from "../oral/dimensions-v2"
 import { calculateModifiers, type PanelInputs } from "./modifiers"
 import { scoreHrv } from "../hrv-scoring"
+import { calculateHRV } from "@peaq/score-engine"
 
 // Provider priority for best-per-date selection (lower = preferred)
 const PROVIDER_PRIORITY: Record<string, number> = { whoop: 0, oura: 1, garmin: 2 }
@@ -485,6 +486,26 @@ async function _recalculateScore(
   console.log(`[recalculate] user=${userId} blood=${bloodSub} sleep=${sleepSub} oral=${oralSub} base=${baseScore} modifiers=${modifierTotal} (${modifiers.map(m => m.id).join(", ")}) final=${finalScore}`)
   console.log(`[peaq-age-v5] user=${userId.slice(0, 8)} peaqAge=${peaqAgeResult.peaqAge} pheno=${peaqAgeResult.phenoAge ?? "null"} oma=${peaqAgeResult.omaPct.toFixed(0)} delta=${peaqAgeResult.delta} band=${peaqAgeResult.band} missing=[${peaqAgeResult.missingPhenoMarkers.join(",")}]`)
 
+  // ── Recovery HRV: Pinheiro 2023 norm + 14-night gate ──────────────────────
+  // hasHRV = false — weight held pending product decision. Dot is live, formula weight is not.
+  // Accepts rmssd from WHOOP, Oura, Garmin, Apple Watch — field normalized to hrv_rmssd on sleep_data ingestion.
+  const { data: prevHrvSnap } = await supabase.from("score_snapshots")
+    .select("hrv_rmssd_median")
+    .eq("user_id", userId)
+    .order("calculated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  const previousMedian = (prevHrvSnap?.hrv_rmssd_median as number | null) ?? undefined
+  const hrvResult = calculateHRV(
+    allNights
+      .filter(n => n.hrv_rmssd != null && Number(n.hrv_rmssd) > 0)
+      .map(n => ({ date: n.date, rmssd: Number(n.hrv_rmssd) })),
+    userAge,
+    userSex,
+    previousMedian,
+  )
+  console.log(`[recovery-hrv] user=${userId.slice(0,8)} median=${hrvResult.rmssd_median}ms nights=${hrvResult.nights_count} pct=${hrvResult.percentile} status=${hrvResult.status} min14=${hrvResult.has_minimum_nights}`)
+
   // ── Save snapshot (dual-write: legacy v4 score + Peaq Age v5) ──────────────
   const { data: insertedRow, error: insertError } = await supabase.from("score_snapshots").insert({
     user_id:                userId,
@@ -528,6 +549,12 @@ async function _recalculateScore(
     peaq_age_band:          peaqAgeResult.band,
     score_version:          "v5",
     peaq_age_breakdown:     { ...peaqAgeResult, hasDob: !!dobStr },
+    // ── Recovery HRV (Pinheiro 2023 normalization — dot live, weight not active) ──
+    hrv_rmssd_median:       hrvResult.has_minimum_nights ? hrvResult.rmssd_median : null,
+    hrv_percentile:         hrvResult.has_minimum_nights ? hrvResult.percentile : null,
+    hrv_delta:              hrvResult.delta,
+    hrv_nights_count:       hrvResult.nights_count,
+    hrv_status:             hrvResult.has_minimum_nights ? hrvResult.status : null,
   }).select("id").single()
   if (insertError) {
     console.error("[recalculate] snapshot insert failed for user:", userId, insertError)
