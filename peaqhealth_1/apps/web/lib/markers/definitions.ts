@@ -69,10 +69,10 @@ export const MARKER_DEFINITIONS: Record<string, MarkerDef> = {
       { name: 'Curcumin (500mg, phospholipid form)', why: 'Standard curcumin has poor absorption. Theracurmin or Meriva forms have RCT evidence for CRP reduction.', strength: 'strong' },
       { name: 'Vitamin D (if deficient)', why: 'Correcting deficiency reduces CRP — but only beneficial if below 30 ng/mL. Check your vitamin D first.', strength: 'moderate' },
     ],
-    why_it_matters: `hs-CRP is your body's real-time readout of systemic inflammation. Your liver produces it whenever your immune system is on alert — from an injury, an infection, or something more chronic like gum disease or disrupted sleep.\n\nThe high-sensitivity version detects levels as low as 0.1 mg/L. That precision matters because the range linked to cardiovascular disease and accelerated biological aging — 1 to 3 mg/L — is well below what a standard CRP test would even report.\n\nhs-CRP is one of the nine markers in the PhenoAge biological age formula. When elevated, it directly adds years to your Peaq Age. It is also one of the most responsive markers to lifestyle change — most people can move it meaningfully within 4 to 8 weeks.`,
+    why_it_matters: `hs-CRP is your body's real-time readout of systemic inflammation. Your liver produces it whenever your immune system is on alert — from an injury, an infection, or something more chronic like gum disease or disrupted sleep.\n\nThe high-sensitivity version detects levels as low as 0.1 mg/L. That precision matters because the range linked to cardiovascular disease and accelerated cellular aging — 1 to 3 mg/L — is well below what a standard CRP test would even report.\n\nhs-CRP is one of the most responsive markers to lifestyle change — most people can move it meaningfully within 4 to 8 weeks.`,
     missing_state: {
       headline: 'hs-CRP is not on your current panel',
-      body: 'Standard CRP misses the range that matters most for cardiovascular risk and biological age — it only catches large inflammatory events. hs-CRP measures 10x more precisely and captures the chronic low-grade inflammation that drives aging. Without it, your PhenoAge calculation is incomplete and three Peaq cross-panel connections cannot fire.',
+      body: 'Standard CRP misses the range that matters most for cardiovascular risk — it only catches large inflammatory events. hs-CRP measures 10x more precisely and captures the chronic low-grade inflammation that drives aging. Without it, several Peaq cross-panel connections cannot fire.',
       cta: 'Request hs-CRP at your next blood draw',
       cta_sub: '~$15 add-on at Quest Diagnostics or LabCorp. Ask specifically for "high-sensitivity CRP" — standard CRP cannot substitute.',
       urgency: 'high',
@@ -337,7 +337,7 @@ export const MARKER_DEFINITIONS: Record<string, MarkerDef> = {
     supplements: [
       { name: 'Omega-3 2g', why: 'Reduces chronic immune activation', strength: 'moderate' },
     ],
-    why_it_matters: `WBC reflects how hard your immune system is working. Chronically elevated levels indicate a persistent low-grade alert state.\n\nWBC is one of the nine PhenoAge markers. Connection lines show which panels may be driving it.`,
+    why_it_matters: `WBC reflects how hard your immune system is working. Chronically elevated levels indicate a persistent low-grade alert state.\n\nConnection lines on this page show which panels may be driving it.`,
     missing_state: {
       headline: 'WBC not found on your panel',
       body: 'WBC is included in a standard CBC panel.',
@@ -400,7 +400,7 @@ export const MARKER_DEFINITIONS: Record<string, MarkerDef> = {
     supplements: [
       { name: 'Omega-3 2g', why: 'Reduces platelet reactivity', strength: 'moderate' },
     ],
-    why_it_matters: `MPV measures average platelet size. Larger platelets are more reactive and more likely to form clots.\n\nMPV is an independent predictor of heart attack and stroke, and one of the PhenoAge inputs.`,
+    why_it_matters: `MPV measures average platelet size. Larger platelets are more reactive and more likely to form clots.\n\nMPV is an independent predictor of heart attack and stroke.`,
     missing_state: {
       headline: 'MPV not found on your panel',
       body: 'MPV is included in a standard CBC panel.',
