@@ -583,6 +583,44 @@ export default function Home() {
               </div>
             </div>
           </div>
+
+          {/* Link to full story article */}
+          <div style={{
+            marginTop: 48,
+            padding: "24px 28px",
+            background: "#FFFFFF",
+            border: `1px solid ${BORDER_LIGHT}`,
+            borderRadius: 12,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 16,
+            flexWrap: "wrap",
+          }}>
+            <div style={{ flex: 1, minWidth: 240 }}>
+              <p style={{
+                fontFamily: sans, fontSize: 11, letterSpacing: "0.12em",
+                textTransform: "uppercase", color: MUTED, margin: "0 0 6px",
+              }}>
+                The full story
+              </p>
+              <p style={{
+                fontFamily: serif, fontSize: 20, fontWeight: 400,
+                color: INK, margin: 0, lineHeight: 1.3,
+              }}>
+                Three signals, one story — how Peaq connects your mouth, blood, and sleep.
+              </p>
+            </div>
+            <a href="/learn/how-peaq-works" style={{
+              fontFamily: sans, fontSize: 12, fontWeight: 500,
+              letterSpacing: "0.08em", textTransform: "uppercase",
+              color: "#FFFFFF", background: INK,
+              padding: "12px 22px", borderRadius: 6,
+              textDecoration: "none", whiteSpace: "nowrap",
+            }}>
+              Read article →
+            </a>
+          </div>
         </div>
       </section>
 
