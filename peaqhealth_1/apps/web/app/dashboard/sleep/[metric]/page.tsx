@@ -63,7 +63,11 @@ export default async function SleepMetricPage({ params }: { params: Promise<{ me
   if (metric === "deep_sleep") value = avg("deep_sleep_minutes")
   else if (metric === "rem") value = avg("rem_sleep_minutes")
   else if (metric === "duration") { const m = avg("total_sleep_minutes"); value = m !== null ? m / 60 : null }
-  else if (metric === "recovery_hrv") value = avg("hrv_rmssd")
+  else if (metric === "recovery_hrv") {
+    // Prefer the 14-night gated Pinheiro median from the snapshot; fall back to raw avg.
+    const snapMedian = (snapshot as Record<string, unknown> | null)?.hrv_rmssd_median as number | null
+    value = snapMedian ?? avg("hrv_rmssd")
+  }
   else if (metric === "consistency") value = null
 
   return (

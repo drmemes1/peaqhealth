@@ -31,6 +31,12 @@ export type { OralNHANESInput, OralNHANESScore, MetricResult, SequencingSource }
 
 export { calcPeaqAge, calcOMA } from './peaqAge'
 
+export {
+  calculateHRV, calculateHRVPercentile, getHRVStatus, getAgeBracket,
+  applyIQRClipping, rollingMedian, PINHEIRO_NORMS,
+} from './hrv'
+export type { HRVResult, HRVStatus } from './hrv'
+
 export { evaluateConnection } from './connections'
 export type {
   ConnectionInput, ConnectionLine, NoConnection,
