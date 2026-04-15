@@ -520,9 +520,11 @@ export function DashboardClient(props: ScoreWheelProps & {
   cachedInsight?: { headline: string; body: string };
   cachedGuidance?: Array<{ title: string; timing: string; why?: string }>;
   articles?: Array<{ slug: string; title: string; readTime: number }>;
+  positiveSignals?: string[];
 }) {
   const { wearableNeedsReconnect = false, firstName, peaqAgeBreakdown, cachedInsight, cachedGuidance } = props
   const articles = props.articles && props.articles.length > 0 ? props.articles : null
+  const positiveSignals = props.positiveSignals ?? []
 
   // ── Sync logic ────────────────────────────────────────────────────────────
   const [syncingNow, setSyncingNow] = useState(false)
@@ -1033,6 +1035,39 @@ export function DashboardClient(props: ScoreWheelProps & {
               display: "flex", flexDirection: "column", gap: 28,
             }}>
 
+              {/* ZONE 0 — WHAT'S WORKING (positive signals) */}
+              {positiveSignals.length > 0 && (
+                <div style={{
+                  background: "#FAFAF8", border: "1px solid #E8E6E0",
+                  borderRadius: 12, padding: "20px 24px",
+                }}>
+                  <p style={{
+                    fontFamily: sans, fontSize: 11, letterSpacing: "0.08em",
+                    textTransform: "uppercase", color: "#9B9891",
+                    margin: "0 0 14px",
+                  }}>
+                    WHAT&rsquo;S WORKING
+                  </p>
+                  {positiveSignals.map((signal, i) => (
+                    <div key={i} style={{
+                      display: "flex", alignItems: "flex-start", gap: 10,
+                      marginBottom: i < positiveSignals.length - 1 ? 10 : 0,
+                    }}>
+                      <span style={{
+                        color: "#1A8C4E", fontSize: 15, lineHeight: 1.4,
+                        flexShrink: 0, marginTop: 1,
+                      }}>✓</span>
+                      <p style={{
+                        fontFamily: sans, fontSize: 14, color: "#3D3B35",
+                        lineHeight: 1.5, margin: 0,
+                      }}>
+                        {signal}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* ZONE 1 — YOUR PLAN */}
               <div style={{
                 background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
@@ -1047,7 +1082,10 @@ export function DashboardClient(props: ScoreWheelProps & {
                   YOUR PLAN
                 </span>
                 {(() => {
-                  const items = (cachedGuidance ?? actionItems).slice(0, 3)
+                  const allItems = cachedGuidance ?? actionItems
+                  const items = allItems.slice(0, 2)
+                  const remaining = Math.max(0, allItems.length - 2)
+                  void remaining // used below
                   if (items.length === 0)
                     return <p style={{ fontFamily: sans, fontSize: 13, color: DS.inkMuted, margin: 0 }}>All markers in range. Keep going.</p>
                   return (
@@ -1117,12 +1155,18 @@ export function DashboardClient(props: ScoreWheelProps & {
                     </div>
                   )
                 })()}
-                <Link href="/dashboard/guidance" style={{
-                  fontFamily: sans, fontSize: 12, color: DS.gold,
-                  textDecoration: "none", display: "block", marginTop: 14,
-                }}>
-                  View full plan →
-                </Link>
+                {(() => {
+                  const allItems = cachedGuidance ?? actionItems
+                  const remaining = Math.max(0, allItems.length - 2)
+                  return (
+                    <Link href="/dashboard/plan" style={{
+                      fontFamily: sans, fontSize: 12, color: DS.gold,
+                      textDecoration: "none", display: "block", marginTop: 14,
+                    }}>
+                      {remaining > 0 ? `+ ${remaining} more in your full plan →` : "View full plan →"}
+                    </Link>
+                  )
+                })()}
               </div>
 
               {/* ZONE 2 — FROM PEAQ (dynamic from articles table) */}
