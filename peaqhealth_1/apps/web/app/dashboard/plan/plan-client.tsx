@@ -43,9 +43,22 @@ const NON_STANDARD_TEST_COPY: Record<string, { name: string; ask_for: string; wh
 interface Props {
   firstName?: string
   updatedAt: string | null
-  positiveSignals: string[]
-  planItems: Array<{ title: string; timing: string; why?: string }>
+  positiveSignals: Array<{ key: string; text: string }>
+  planItems: Array<{ id?: string; title: string; timing: string; why?: string; marker_link?: string; marker_label?: string }>
   missingTests: string[]
+}
+
+const SIGNAL_LINKS: Record<string, string> = {
+  good_bacteria: "/dashboard/oral/good_bacteria",
+  diversity: "/dashboard/oral/diversity",
+  deep_sleep: "/dashboard/sleep/deep_sleep",
+  rem: "/dashboard/sleep/rem",
+  duration: "/dashboard/sleep/duration",
+  hrv: "/dashboard/sleep/recovery_hrv",
+  phenoage: "/dashboard/blood",
+  vitamin_d: "/dashboard/blood/vitamin_d",
+  ldl: "/dashboard/blood/ldl",
+  low_crp: "/dashboard/blood/hs_crp",
 }
 
 export function PlanClient({ updatedAt, positiveSignals, planItems, missingTests }: Props) {
@@ -90,20 +103,29 @@ export function PlanClient({ updatedAt, positiveSignals, planItems, missingTests
               What&rsquo;s working
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {positiveSignals.map((signal, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                  <span style={{
-                    color: "#1A8C4E", fontSize: 18, lineHeight: 1.4,
-                    flexShrink: 0, marginTop: 1,
-                  }}>✓</span>
-                  <p style={{
-                    fontFamily: sans, fontSize: 15, color: "#3D3B35",
-                    lineHeight: 1.6, margin: 0,
-                  }}>
-                    {signal}
-                  </p>
-                </div>
-              ))}
+              {positiveSignals.map((signal, i) => {
+                const href = SIGNAL_LINKS[signal.key]
+                const inner = (
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                    <span style={{
+                      color: "#1A8C4E", fontSize: 18, lineHeight: 1.4,
+                      flexShrink: 0, marginTop: 1,
+                    }}>✓</span>
+                    <p style={{
+                      fontFamily: sans, fontSize: 15, color: "#3D3B35",
+                      lineHeight: 1.6, margin: 0, flex: 1,
+                    }}>
+                      {signal.text}
+                    </p>
+                    {href && <span style={{ color: "#9B9891", fontSize: 14, flexShrink: 0 }}>→</span>}
+                  </div>
+                )
+                return href ? (
+                  <Link key={i} href={href} style={{ textDecoration: "none", color: "inherit" }}>
+                    {inner}
+                  </Link>
+                ) : <div key={i}>{inner}</div>
+              })}
             </div>
           </section>
         )}
@@ -170,10 +192,18 @@ export function PlanClient({ updatedAt, positiveSignals, planItems, missingTests
                       }}>
                         <p style={{
                           fontFamily: sans, fontSize: 14, color: "#5C5A54",
-                          lineHeight: 1.65, margin: "14px 0 0",
+                          lineHeight: 1.65, margin: "14px 0 10px",
                         }}>
                           {item.why}
                         </p>
+                        {item.marker_link && item.marker_label && (
+                          <Link href={item.marker_link} style={{
+                            fontFamily: sans, fontSize: 13, color: "#B8860B",
+                            textDecoration: "none",
+                          }}>
+                            See your {item.marker_label} results →
+                          </Link>
+                        )}
                       </div>
                     )}
                   </div>

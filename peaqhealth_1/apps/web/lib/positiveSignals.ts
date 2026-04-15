@@ -30,7 +30,18 @@ export interface PositiveSignalInput {
 
 type Signal = { key: string; text: string; priority: number }
 
+export interface PositiveSignal { key: string; text: string }
+
+export function derivePositiveSignalsKeyed(input: PositiveSignalInput): PositiveSignal[] {
+  const raw = derivePositiveSignalsInternal(input)
+  return raw.map(s => ({ key: s.key, text: s.text }))
+}
+
 export function derivePositiveSignals(input: PositiveSignalInput): string[] {
+  return derivePositiveSignalsInternal(input).map(s => s.text)
+}
+
+function derivePositiveSignalsInternal(input: PositiveSignalInput): Signal[] {
   const signals: Signal[] = []
   const { oral, blood, sleep, snapshot, chronoAge, peaqAgeBreakdown } = input
   const breakdown = peaqAgeBreakdown as Record<string, number | undefined> | null | undefined
@@ -135,11 +146,11 @@ export function derivePositiveSignals(input: PositiveSignalInput): string[] {
   // Sort by priority then dedupe by key, max 5
   signals.sort((a, b) => a.priority - b.priority)
   const seen = new Set<string>()
-  const deduped: string[] = []
+  const deduped: Signal[] = []
   for (const s of signals) {
     if (seen.has(s.key)) continue
     seen.add(s.key)
-    deduped.push(s.text)
+    deduped.push(s)
     if (deduped.length >= 5) break
   }
   return deduped

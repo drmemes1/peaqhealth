@@ -520,11 +520,26 @@ export function DashboardClient(props: ScoreWheelProps & {
   cachedInsight?: { headline: string; body: string };
   cachedGuidance?: Array<{ title: string; timing: string; why?: string }>;
   articles?: Array<{ slug: string; title: string; readTime: number }>;
-  positiveSignals?: string[];
+  positiveSignals?: Array<{ key: string; text: string }>;
+  generatedPlanItems?: Array<{ id: string; title: string; why: string; timing: string; priority: number; marker_link?: string; marker_label?: string; reframed?: boolean }>;
 }) {
   const { wearableNeedsReconnect = false, firstName, peaqAgeBreakdown, cachedInsight, cachedGuidance } = props
   const articles = props.articles && props.articles.length > 0 ? props.articles : null
   const positiveSignals = props.positiveSignals ?? []
+  const generatedPlanItems = props.generatedPlanItems ?? []
+
+  const SIGNAL_LINKS: Record<string, string> = {
+    good_bacteria: "/dashboard/oral/good_bacteria",
+    diversity: "/dashboard/oral/diversity",
+    deep_sleep: "/dashboard/sleep/deep_sleep",
+    rem: "/dashboard/sleep/rem",
+    duration: "/dashboard/sleep/duration",
+    hrv: "/dashboard/sleep/recovery_hrv",
+    phenoage: "/dashboard/blood",
+    vitamin_d: "/dashboard/blood/vitamin_d",
+    ldl: "/dashboard/blood/ldl",
+    low_crp: "/dashboard/blood/hs_crp",
+  }
 
   // ── Sync logic ────────────────────────────────────────────────────────────
   const [syncingNow, setSyncingNow] = useState(false)
@@ -1035,7 +1050,7 @@ export function DashboardClient(props: ScoreWheelProps & {
               display: "flex", flexDirection: "column", gap: 28,
             }}>
 
-              {/* ZONE 0 — WHAT'S WORKING (positive signals) */}
+              {/* ZONE 0 — WHAT'S WORKING (positive signals, clickable) */}
               {positiveSignals.length > 0 && (
                 <div style={{
                   background: "#FAFAF8", border: "1px solid #E8E6E0",
@@ -1048,23 +1063,39 @@ export function DashboardClient(props: ScoreWheelProps & {
                   }}>
                     WHAT&rsquo;S WORKING
                   </p>
-                  {positiveSignals.map((signal, i) => (
-                    <div key={i} style={{
-                      display: "flex", alignItems: "flex-start", gap: 10,
-                      marginBottom: i < positiveSignals.length - 1 ? 10 : 0,
-                    }}>
-                      <span style={{
-                        color: "#1A8C4E", fontSize: 15, lineHeight: 1.4,
-                        flexShrink: 0, marginTop: 1,
-                      }}>✓</span>
-                      <p style={{
-                        fontFamily: sans, fontSize: 14, color: "#3D3B35",
-                        lineHeight: 1.5, margin: 0,
+                  {positiveSignals.map((signal, i) => {
+                    const href = SIGNAL_LINKS[signal.key]
+                    const inner = (
+                      <div style={{
+                        display: "flex", alignItems: "flex-start", gap: 10,
+                        marginBottom: i < positiveSignals.length - 1 ? 10 : 0,
                       }}>
-                        {signal}
-                      </p>
-                    </div>
-                  ))}
+                        <span style={{
+                          color: "#1A8C4E", fontSize: 15, lineHeight: 1.4,
+                          flexShrink: 0, marginTop: 1,
+                        }}>✓</span>
+                        <p style={{
+                          fontFamily: sans, fontSize: 14, color: "#3D3B35",
+                          lineHeight: 1.5, margin: 0, flex: 1,
+                        }}>
+                          {signal.text}
+                        </p>
+                        {href && (
+                          <span className="whats-working-arrow" style={{
+                            color: "#9B9891", fontSize: 14, flexShrink: 0,
+                            transition: "color 150ms ease, transform 150ms ease",
+                          }}>→</span>
+                        )}
+                      </div>
+                    )
+                    return href ? (
+                      <Link key={i} href={href} className="whats-working-row" style={{
+                        display: "block", textDecoration: "none", color: "inherit",
+                      }}>
+                        {inner}
+                      </Link>
+                    ) : <div key={i}>{inner}</div>
+                  })}
                 </div>
               )}
 
@@ -1082,7 +1113,10 @@ export function DashboardClient(props: ScoreWheelProps & {
                   YOUR PLAN
                 </span>
                 {(() => {
-                  const allItems = cachedGuidance ?? actionItems
+                  // Prefer deterministic generated items; fall back to cached guidance; else local actionItems
+                  const allItems = generatedPlanItems.length > 0
+                    ? generatedPlanItems.map(p => ({ title: p.title, timing: p.timing, why: p.why }))
+                    : (cachedGuidance ?? actionItems)
                   const items = allItems.slice(0, 2)
                   const remaining = Math.max(0, allItems.length - 2)
                   void remaining // used below
@@ -1156,7 +1190,9 @@ export function DashboardClient(props: ScoreWheelProps & {
                   )
                 })()}
                 {(() => {
-                  const allItems = cachedGuidance ?? actionItems
+                  const allItems = generatedPlanItems.length > 0
+                    ? generatedPlanItems
+                    : (cachedGuidance ?? actionItems)
                   const remaining = Math.max(0, allItems.length - 2)
                   return (
                     <Link href="/dashboard/plan" style={{
@@ -1339,6 +1375,10 @@ export function DashboardClient(props: ScoreWheelProps & {
           }
           .plan-row:hover {
             background: #F7F5F0;
+          }
+          .whats-working-row:hover .whats-working-arrow {
+            color: #B8860B;
+            transform: translateX(3px);
           }
           .from-peaq-row:hover .from-peaq-arrow {
             transform: translateX(3px);
