@@ -26,7 +26,7 @@ const NON_STANDARD_TEST_COPY: Record<string, { name: string; ask_for: string; wh
   rdw: {
     name: "RDW",
     ask_for: "Usually included in a standard CBC — ask if it was reported",
-    why_short: "One of the nine markers in biological age calculations. Reflects cellular stress and nutritional status beyond anemia screening.",
+    why_short: "A sensitive marker of cellular stress and nutritional status — reflects inflammation and iron/B12/folate balance beyond anemia screening.",
   },
   mpv: {
     name: "MPV",
