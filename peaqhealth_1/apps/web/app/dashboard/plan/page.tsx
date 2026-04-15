@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import { createClient } from "../../../lib/supabase/server"
-import { derivePositiveSignals } from "../../../lib/positiveSignals"
+import { derivePositiveSignalsKeyed } from "../../../lib/positiveSignals"
+import { generatePlanItems, deriveMarkerStatuses } from "../../../lib/planItems"
 import { PlanClient } from "./plan-client"
 
 export default async function PlanPage() {
@@ -14,6 +15,7 @@ export default async function PlanPage() {
     { data: oral },
     { data: sleepNights },
     { data: profile },
+    { data: lifestyle },
   ] = await Promise.all([
     supabase.from("score_snapshots").select("*")
       .eq("user_id", user.id).order("calculated_at", { ascending: false }).limit(1).maybeSingle(),
@@ -27,6 +29,7 @@ export default async function PlanPage() {
       .select("total_sleep_minutes, deep_sleep_minutes, rem_sleep_minutes, sleep_efficiency, hrv_rmssd, resting_heart_rate")
       .eq("user_id", user.id).order("date", { ascending: false }).limit(30),
     supabase.from("profiles").select("first_name, date_of_birth").eq("id", user.id).single(),
+    supabase.from("lifestyle_records").select("mouthwash_type, flossing_freq").eq("user_id", user.id).limit(1).maybeSingle(),
   ])
 
   const nights = (sleepNights ?? []) as Array<Record<string, unknown>>
@@ -47,7 +50,7 @@ export default async function PlanPage() {
   const breakdown = (snapshot?.peaq_age_breakdown ?? {}) as Record<string, unknown>
   const chronoAge = (breakdown.chronoAge as number | undefined) ?? null
 
-  const positiveSignals = derivePositiveSignals({
+  const positiveSignals = derivePositiveSignalsKeyed({
     oral: oral ? {
       shannonDiversity: (oral.shannon_diversity as number | null) ?? undefined,
       nitrateReducersPct: oral.nitrate_reducers_pct ? (oral.nitrate_reducers_pct as number) * 100 : undefined,
@@ -63,8 +66,15 @@ export default async function PlanPage() {
     peaqAgeBreakdown: breakdown,
   })
 
-  // Plan items: prefer cached, else derive
-  const cachedGuidance = (snapshot?.ai_guidance_items as Array<{ title: string; timing: string; why?: string }> | null) ?? []
+  // Generated plan items — deterministic, global
+  const markerStatuses = deriveMarkerStatuses({
+    lab: lab as Record<string, unknown> | null,
+    oral: oral as Record<string, unknown> | null,
+    snapshot: snapshot as Record<string, unknown> | null,
+    sleepNights: (sleepNights ?? []) as Array<Record<string, unknown>>,
+    lifestyle: lifestyle as Record<string, unknown> | null,
+  })
+  const generatedItems = generatePlanItems(markerStatuses).slice(0, 6)
 
   // Missing/amber blood markers for "Tests to discuss"
   const hasLab = !!lab
@@ -86,7 +96,7 @@ export default async function PlanPage() {
       firstName={(profile?.first_name as string | null) ?? undefined}
       updatedAt={(snapshot?.calculated_at as string | null) ?? null}
       positiveSignals={positiveSignals}
-      planItems={cachedGuidance}
+      planItems={generatedItems}
       missingTests={missingTests}
     />
   )

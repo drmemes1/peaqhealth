@@ -297,8 +297,8 @@ export default async function DashboardPage() {
   const peaqAgeBreakdown = snapshot?.peaq_age_breakdown as Record<string, unknown> | null
 
   // Derive positive signals ("what's working") for the right rail
-  const { derivePositiveSignals } = await import("../../lib/positiveSignals")
-  const positiveSignals = derivePositiveSignals({
+  const { derivePositiveSignalsKeyed } = await import("../../lib/positiveSignals")
+  const positiveSignals = derivePositiveSignalsKeyed({
     oral: props.oralData ? { shannonDiversity: props.oralData.shannonDiversity, nitrateReducersPct: props.oralData.nitrateReducersPct, species: props.oralData.species } : null,
     blood: props.bloodData ? { hsCRP: props.bloodData.hsCRP, ldl: props.bloodData.ldl, vitaminD: props.bloodData.vitaminD } : null,
     sleep: props.sleepData ? { deepPct: props.sleepData.deepPct, remPct: props.sleepData.remPct, hrv: props.sleepData.hrv } : null,
@@ -306,6 +306,17 @@ export default async function DashboardPage() {
     chronoAge: (peaqAgeBreakdown?.chronoAge as number | undefined) ?? null,
     peaqAgeBreakdown,
   })
+
+  // Derive plan items from marker statuses (deterministic, global)
+  const { generatePlanItems, deriveMarkerStatuses } = await import("../../lib/planItems")
+  const markerStatuses = deriveMarkerStatuses({
+    lab: lab as Record<string, unknown> | null,
+    oral: oral as Record<string, unknown> | null,
+    snapshot: snapshot as Record<string, unknown> | null,
+    sleepNights: (sleepNights ?? []) as Array<Record<string, unknown>>,
+    lifestyle: lifestyle as Record<string, unknown> | null,
+  })
+  const generatedPlanItems = generatePlanItems(markerStatuses)
 
   return <DashboardClient
     {...props}
@@ -322,5 +333,6 @@ export default async function DashboardPage() {
     cachedGuidance={(snapshot?.ai_guidance_items as Array<{ title: string; timing: string; why?: string }>) ?? undefined}
     articles={(articlesData ?? []).map(a => ({ slug: a.slug as string, title: a.title as string, readTime: a.read_time_min as number }))}
     positiveSignals={positiveSignals}
+    generatedPlanItems={generatedPlanItems}
   />
 }
