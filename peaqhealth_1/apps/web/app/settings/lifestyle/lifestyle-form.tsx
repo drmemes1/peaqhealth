@@ -10,9 +10,14 @@ interface QuestionDef {
   dbKey: string;
   label: string;
   context?: string;
+  helper?: string;
   introBefore?: string;
   options: { value: string; label: string; sub?: string }[];
-  type: "choice" | "boolean";
+  type: "choice" | "boolean" | "number";
+  numberUnit?: string;
+  numberMin?: number;
+  numberMax?: number;
+  showIf?: (answers: Record<string, string>) => boolean;
 }
 
 // ── Section groupings ──────────────────────────────────────────────────────────
@@ -50,6 +55,13 @@ const SECTIONS: {
     ptsLabel: "sleep estimate",
     color: "#185FA5",
     keys: ["sleepDuration", "sleepLatency", "nightWakings", "daytimeFatigue", "nasalObstruction", "sinusHistory", "snoringReported", "mouthBreathing"],
+  },
+  {
+    title: "Daily habits",
+    subtitle: "Small daily inputs that help us read your oral and sleep data more accurately",
+    ptsLabel: "context",
+    color: "#6B4D8A",
+    keys: ["whiteningFrequency", "dietaryNitrateFrequency", "nightGuardWorn", "nightGuardTypeLifestyle", "morningHeadaches", "jawFatigueMorning", "daytimeCognitiveFog", "tonguePositionAwareness", "heightCm", "weightKg"],
   },
   {
     title: "Diet & Nutrition",
@@ -284,6 +296,115 @@ const QUESTIONS: QuestionDef[] = [
       { value: "often",     label: "Often" },
       { value: "confirmed", label: "Yes, I know I do" },
     ],
+  },
+  // ── Daily habits ──────────────────────────────────────────────────────────
+  {
+    key: "whiteningFrequency", dbKey: "whitening_frequency",
+    label: "How often do you use whitening products (toothpaste, strips, trays)?",
+    type: "choice",
+    options: [
+      { value: "never",                 label: "Never" },
+      { value: "occasionally",          label: "Occasionally" },
+      { value: "monthly_course",        label: "Monthly course" },
+      { value: "daily_toothpaste",      label: "Daily whitening toothpaste" },
+      { value: "nightly_trays",         label: "Nightly trays" },
+    ],
+  },
+  {
+    key: "dietaryNitrateFrequency", dbKey: "dietary_nitrate_frequency",
+    label: "How often do you eat leafy greens, beets, or other nitrate-rich foods?",
+    helper: "This helps us read certain bacteria accurately — not a health judgment.",
+    type: "choice",
+    options: [
+      { value: "rarely",           label: "Rarely or never" },
+      { value: "several_weekly",   label: "A few times a week" },
+      { value: "daily",            label: "Daily" },
+      { value: "multiple_daily",   label: "Multiple times a day" },
+    ],
+  },
+  {
+    key: "nightGuardWorn", dbKey: "night_guard_worn",
+    label: "Do you wear a night guard or dental splint?",
+    type: "choice",
+    options: [
+      { value: "never",   label: "Never" },
+      { value: "past",    label: "In the past" },
+      { value: "current", label: "Currently wearing one" },
+    ],
+  },
+  {
+    key: "nightGuardTypeLifestyle", dbKey: "night_guard_type_lifestyle",
+    label: "What type of night guard do you use?",
+    type: "choice",
+    showIf: (a) => a["nightGuardWorn"] === "current",
+    options: [
+      { value: "flat_plane_splint", label: "Flat-plane splint" },
+      { value: "mad",               label: "Mandibular advancement device (MAD)" },
+      { value: "nti",               label: "NTI" },
+      { value: "other",             label: "Other" },
+    ],
+  },
+  {
+    key: "morningHeadaches", dbKey: "morning_headaches",
+    label: "Do you wake up with headaches?",
+    type: "choice",
+    options: [
+      { value: "never",         label: "Never" },
+      { value: "occasionally",  label: "Occasionally" },
+      { value: "often",         label: "Often" },
+      { value: "most_mornings", label: "Most mornings" },
+    ],
+  },
+  {
+    key: "jawFatigueMorning", dbKey: "jaw_fatigue_morning",
+    label: "Do you wake up with jaw fatigue or tightness?",
+    type: "choice",
+    options: [
+      { value: "never",         label: "Never" },
+      { value: "occasionally",  label: "Occasionally" },
+      { value: "often",         label: "Often" },
+      { value: "most_mornings", label: "Most mornings" },
+    ],
+  },
+  {
+    key: "daytimeCognitiveFog", dbKey: "daytime_cognitive_fog",
+    label: "Do you experience cognitive fog or trouble focusing during the day?",
+    type: "choice",
+    options: [
+      { value: "rarely",        label: "Rarely or never" },
+      { value: "occasionally",  label: "Occasionally" },
+      { value: "often",         label: "Often" },
+      { value: "most_mornings", label: "Most days" },
+    ],
+  },
+  {
+    key: "tonguePositionAwareness", dbKey: "tongue_position_awareness",
+    label: "Where does your tongue typically rest?",
+    helper: "Tongue posture affects airway space during sleep.",
+    type: "choice",
+    options: [
+      { value: "tongue_roof",  label: "Against the roof of my mouth" },
+      { value: "tongue_low",   label: "On the floor of my mouth" },
+      { value: "unsure",       label: "I've never noticed" },
+    ],
+  },
+  {
+    key: "heightCm", dbKey: "height_cm",
+    label: "Your height",
+    type: "number",
+    numberUnit: "cm",
+    numberMin: 100,
+    numberMax: 230,
+    options: [],
+  },
+  {
+    key: "weightKg", dbKey: "weight_kg",
+    label: "Your weight",
+    type: "number",
+    numberUnit: "kg",
+    numberMin: 30,
+    numberMax: 250,
+    options: [],
   },
   // ── Diet & Nutrition ──────────────────────────────────────────────────────
   {
@@ -562,11 +683,24 @@ export function LifestyleForm({ existing }: Props) {
     for (const q of QUESTIONS) {
       if (q.type === "boolean") {
         row[q.dbKey] = answers[q.key] === "true";
+      } else if (q.type === "number") {
+        const n = answers[q.key] ? parseFloat(answers[q.key]) : NaN;
+        row[q.dbKey] = Number.isFinite(n) ? n : null;
       } else if (intKeys.has(q.dbKey)) {
         row[q.dbKey] = answers[q.key] ? parseInt(answers[q.key], 10) : null;
       } else {
         row[q.dbKey] = answers[q.key] || null;
       }
+    }
+
+    // Compute BMI from height + weight (never shown to user)
+    const h = row["height_cm"] as number | null;
+    const w = row["weight_kg"] as number | null;
+    if (h && w && h > 0) {
+      const m = h / 100;
+      row["bmi_calculated"] = Math.round((w / (m * m)) * 100) / 100;
+    } else {
+      row["bmi_calculated"] = null;
     }
 
     // Derived fields required by schema
@@ -799,7 +933,10 @@ export function LifestyleForm({ existing }: Props) {
                     </>
                   )}
 
-                  {sectionQs.map((q) => (
+                  {sectionQs.map((q) => {
+                    // Conditional rendering — hide if showIf returns false
+                    if (q.showIf && !q.showIf(answers)) return null
+                    return (
                     <div key={q.key}>
                       {/* Optional group intro — appears above the first question of a subgroup */}
                       {q.introBefore && (
@@ -817,7 +954,42 @@ export function LifestyleForm({ existing }: Props) {
                           {q.context}
                         </p>
                       )}
+                      {/* Helper text */}
+                      {q.helper && (
+                        <p className="font-body text-[11px] text-ink/45 leading-relaxed mb-3">
+                          {q.helper}
+                        </p>
+                      )}
+                      {/* Number input */}
+                      {q.type === "number" && (
+                        <div className="flex items-center gap-2 mt-3">
+                          <input
+                            type="number"
+                            inputMode="decimal"
+                            value={answers[q.key] ?? ""}
+                            onChange={(e) => setAnswer(q.key, e.target.value)}
+                            min={q.numberMin}
+                            max={q.numberMax}
+                            step="0.1"
+                            className="font-body text-sm"
+                            style={{
+                              width: 120,
+                              padding: "9px 14px",
+                              border: answers[q.key] ? "1px solid var(--gold)" : "1px solid rgba(20,20,16,0.1)",
+                              background: answers[q.key] ? "rgba(184,134,11,0.07)" : "transparent",
+                              color: "var(--ink)",
+                              outline: "none",
+                            }}
+                          />
+                          {q.numberUnit && (
+                            <span className="font-body text-xs" style={{ color: "rgba(20,20,16,0.5)" }}>
+                              {q.numberUnit}
+                            </span>
+                          )}
+                        </div>
+                      )}
                       {/* Options */}
+                      {q.type !== "number" && (
                       <div className="flex flex-wrap gap-2 mt-3">
                         {q.options.map((opt) => {
                           const isSelected = answers[q.key] === opt.value;
@@ -854,6 +1026,7 @@ export function LifestyleForm({ existing }: Props) {
                           );
                         })}
                       </div>
+                      )}
                       {/* Mouthwash antiseptic callout */}
                       {q.key === "mouthwashType" && answers["mouthwashType"] === "antiseptic" && (
                         <div className="mt-3 flex items-start gap-2 p-3 rounded" style={{ background: "rgba(192,57,43,0.06)", border: "0.5px solid rgba(192,57,43,0.2)" }}>
@@ -864,7 +1037,8 @@ export function LifestyleForm({ existing }: Props) {
                         </div>
                       )}
                     </div>
-                  ))}
+                    )
+                  })}
 
                   {/* Conditional preventive screening questions — Medical History only */}
                   {section.title === "Medical History" && (
