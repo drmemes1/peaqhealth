@@ -230,7 +230,7 @@ async function _recalculateScore(
     supabase.from("lifestyle_records").select("*").eq("user_id", userId).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("manual_sleep_entries").select("duration_seconds,quality").eq("user_id", userId).order("date", { ascending: false }).limit(14),
     supabase.from("sleep_data")
-      .select("date,source,total_sleep_minutes,deep_sleep_minutes,rem_sleep_minutes,sleep_efficiency,hrv_rmssd,spo2,resting_heart_rate")
+      .select("date,source,total_sleep_minutes,deep_sleep_minutes,rem_sleep_minutes,sleep_efficiency,hrv_rmssd,spo2,resting_heart_rate,respiratory_rate")
       .eq("user_id", userId)
       .gt("sleep_efficiency", 0)
       .gte("date", (() => { const d = new Date(); d.setDate(d.getDate() - 30); return d.toISOString().slice(0, 10) })())
@@ -256,7 +256,7 @@ async function _recalculateScore(
     date: string; source: string
     total_sleep_minutes: number; deep_sleep_minutes: number; rem_sleep_minutes: number
     sleep_efficiency: number; hrv_rmssd: number | null; spo2: number | null
-    resting_heart_rate: number | null
+    resting_heart_rate: number | null; respiratory_rate: number | null
   }
   const allNights = (sleepNightsRes.data ?? []) as unknown as SleepNight[]
   let bestNights: SleepNight[] = []
@@ -428,6 +428,16 @@ async function _recalculateScore(
       metabolic_signal_pct: oralDimInputs.prevotellaTotalPct,
       proliferative_signal_pct: oralDimInputs.fusobacteriumTotalPct,
     }).eq("id", oralRes.data.id)
+
+    // ── Oral environment index + differential pattern scores ───────────────
+    // Gated by interpretability tier — 'deferred' short-circuits before scoring.
+    // Internal only; feeds the narrative engine, never shown directly to users.
+    await runOralSynergyScoring(
+      supabase,
+      oralRes.data as OralKitRow & { id: string },
+      (lifestyleRes.data ?? null) as LifestyleRow | null,
+      bestNights,
+    )
   }
 
   // ── LIFESTYLE: compute but store as context only ──────────────────────────
@@ -761,4 +771,518 @@ function simpleNhanesPercentile(shannon: number): number {
   }
   if (shannon < NHANES_SHANNON_PCTLS[0][1]) return Math.max(1, Math.round(5 * (shannon / NHANES_SHANNON_PCTLS[0][1])))
   return Math.min(99, 95 + Math.round((shannon - 5.64) * 10))
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ORAL ENVIRONMENT INDEX + DIFFERENTIAL PATTERN SCORES
+// Add to: apps/web/lib/score/recalculate.ts
+// Run AFTER L7 species abundances are stored in oral_kit_orders
+// Run computeInterpretabilityTier() FIRST — if 'deferred', skip everything
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── Types ────────────────────────────────────────────────────────────────────
+
+interface OralKitRow {
+  // L7 species abundances (all nullable — may not be present)
+  shannon_diversity?: number | null
+  s_mutans_pct?: number | null
+  s_sobrinus_pct?: number | null
+  lactobacillus_pct?: number | null
+  veillonella_pct?: number | null
+  s_sanguinis_pct?: number | null
+  s_gordonii_pct?: number | null
+  actinomyces_pct?: number | null
+  rothia_pct?: number | null
+  neisseria_pct?: number | null
+  haemophilus_pct?: number | null
+  porphyromonas_pct?: number | null
+  fusobacterium_pct?: number | null
+  treponema_pct?: number | null
+  peptostreptococcus_pct?: number | null
+  scardovia_pct?: number | null
+  aggregatibacter_pct?: number | null
+  // Collection metadata
+  whitening_tray_last_48h?: boolean | null
+  whitening_strips_last_48h?: boolean | null
+  professional_whitening_last_7d?: boolean | null
+  // Eligibility fields
+  illness_upper_respiratory?: boolean | null
+  illness_fever_7d?: boolean | null
+  illness_gi_3d?: boolean | null
+  antibiotics_last_4w?: boolean | null
+  dental_cleaning_last_2w?: boolean | null
+  dental_procedure_last_4w?: boolean | null
+  minutes_since_waking?: number | null
+  mouthwash_type?: string | null
+  alcohol_prior_24h?: boolean | null
+  pre_hygiene_confirmed?: boolean | null
+}
+
+interface LifestyleRow {
+  whitening_frequency?: string | null
+  dietary_nitrate_frequency?: string | null
+  night_guard_worn?: string | null
+  night_guard_type_lifestyle?: string | null
+  morning_headaches?: string | null
+  jaw_fatigue_morning?: string | null
+  daytime_cognitive_fog?: string | null
+  non_restorative_sleep?: string | null
+  mouth_breathing?: string | null
+  mouth_breathing_when?: string | null
+  nasal_obstruction?: string | null
+  nasal_obstruction_severity?: string | null
+  sinus_history?: string | null
+  tongue_position_awareness?: string | null
+  bruxism_night?: string | null
+  flossing_freq?: string | null
+  last_dental_visit?: string | null
+  gerd?: string | null
+  gerd_nocturnal?: boolean | null
+  bmi_calculated?: number | null
+}
+
+interface WearableRow {
+  avg_spo2?: number | null
+  spo2_nights_below_94?: number | null
+  avg_respiratory_rate?: number | null
+  rr_nightly_cv?: number | null
+  hrv_nightly_cv?: number | null
+  sleep_efficiency?: number | null
+  avg_deep_sleep_minutes?: number | null
+  breathing_disturbance_index?: number | null
+}
+
+interface EnvironmentIndexResult {
+  env_acid_ratio: number
+  env_acid_total_pct: number
+  env_base_total_pct: number
+  env_aerobic_score_pct: number
+  env_anaerobic_load_pct: number
+  env_aerobic_anaerobic_ratio: number
+  env_pattern: string
+  env_pattern_confidence: string
+  env_peroxide_flag: boolean
+  env_dietary_nitrate_flag: boolean
+}
+
+interface DifferentialScoresResult {
+  score_osa: number
+  score_uars: number
+  score_mouth_breathing: number
+  score_periodontal_activity: number
+  score_bruxism: number
+  score_caries_risk: number
+  primary_pattern: string
+  secondary_pattern: string
+  no_wearable_caveat: boolean
+  oral_wearable_convergence: boolean
+  uars_pattern_score: number
+  mouth_breathing_pattern_score: number
+  bruxism_pattern_score: number
+}
+
+// ── Task 6: Interpretability Tier ────────────────────────────────────────────
+// Run this FIRST. If result is 'deferred', skip all scoring.
+
+export function computeInterpretabilityTier(kit: OralKitRow): {
+  tier: string
+  flags: string[]
+  protocol_compliant: boolean
+} {
+  const flags: string[] = []
+
+  // Hard deferred — do not report results
+  if (kit.illness_upper_respiratory) flags.push('urt_illness')
+  if (kit.illness_fever_7d) flags.push('fever_7d')
+  if (kit.illness_gi_3d) flags.push('gi_illness')
+  if (kit.antibiotics_last_4w) flags.push('antibiotics_4w')
+  if (kit.professional_whitening_last_7d) flags.push('professional_whitening_7d')
+  if (flags.length > 0) {
+    return { tier: 'deferred', flags, protocol_compliant: false }
+  }
+
+  // Limited — significant confounders, trend only
+  if (kit.dental_cleaning_last_2w) flags.push('recent_cleaning')
+  if (kit.dental_procedure_last_4w) flags.push('recent_procedure')
+  if ((kit.minutes_since_waking ?? 0) > 60) flags.push('late_collection')
+  if (flags.length > 0) {
+    return { tier: 'limited', flags, protocol_compliant: false }
+  }
+
+  // Partial — minor deviations, most signals valid
+  if (kit.whitening_tray_last_48h) flags.push('whitening_tray_48h')
+  if (kit.whitening_strips_last_48h) flags.push('whitening_strips_48h')
+  if (kit.alcohol_prior_24h) flags.push('alcohol_24h')
+  if ((kit.minutes_since_waking ?? 0) > 30) flags.push('collection_31_60min')
+  if (kit.mouthwash_type?.includes('non_antiseptic')) flags.push('non_antiseptic_mouthwash')
+  if (kit.pre_hygiene_confirmed === false) flags.push('post_hygiene_collection')
+  if (flags.length > 0) {
+    return { tier: 'partial', flags, protocol_compliant: false }
+  }
+
+  return { tier: 'full', flags: [], protocol_compliant: true }
+}
+
+// ── Task 5a: Environment Index ────────────────────────────────────────────────
+
+export function computeOralEnvironmentIndex(
+  kit: OralKitRow,
+  lifestyle: LifestyleRow | null
+): EnvironmentIndexResult {
+
+  // COMPONENT 1: Acid/base ratio
+  // Acidogenic: ferment sugars → lactic acid → pH drop
+  const acidTotal =
+    (kit.s_mutans_pct ?? 0) +
+    (kit.s_sobrinus_pct ?? 0) +
+    (kit.lactobacillus_pct ?? 0) +
+    (kit.veillonella_pct ?? 0)
+
+  // Alkaligenic: arginine deiminase / urease → ammonia → pH rise
+  const baseTotal =
+    (kit.s_sanguinis_pct ?? 0) +
+    (kit.s_gordonii_pct ?? 0) +
+    (kit.actinomyces_pct ?? 0)
+
+  const acidRatio = acidTotal / (baseTotal + 0.001)
+
+  // COMPONENT 2: Aerobic shift score
+  // Obligate and facultative aerobes enriched by dry mouth / altered airway
+  const aerobicScore =
+    (kit.rothia_pct ?? 0) +
+    (kit.neisseria_pct ?? 0) +
+    (kit.actinomyces_pct ?? 0)
+
+  const aerobicHigh = aerobicScore > 18
+
+  // COMPONENT 3: Strict anaerobic load
+  // Near-zero in OSA/UARS pattern due to ROS from hypoxia-reoxygenation cycles
+  const anaerobicLoad =
+    (kit.porphyromonas_pct ?? 0) +
+    (kit.fusobacterium_pct ?? 0) +
+    (kit.treponema_pct ?? 0) +
+    (kit.peptostreptococcus_pct ?? 0)
+
+  const aerobicAnaerobicRatio = aerobicScore / (anaerobicLoad + 0.001)
+
+  // Paradoxical suppression: high aerobic + near-zero strict anaerobes
+  // OSA/UARS signal — not present in simple mouth breathing
+  const paradoxFires = aerobicAnaerobicRatio > 4.0 && aerobicScore > 20
+
+  // COMPONENT 4: Diversity
+  const diversityReduced = (kit.shannon_diversity ?? 6) < 5.5
+
+  // CONFOUNDERS
+  const peroxideFlag =
+    !!(kit.whitening_tray_last_48h) ||
+    !!(kit.whitening_strips_last_48h) ||
+    !!(kit.professional_whitening_last_7d) ||
+    lifestyle?.whitening_frequency === 'nightly_trays'
+
+  const dietaryNitrateFlag =
+    lifestyle?.dietary_nitrate_frequency === 'daily' ||
+    lifestyle?.dietary_nitrate_frequency === 'multiple_daily'
+
+  // PATTERN CLASSIFICATION
+  // Peroxide flag reduces confidence — produces identical ROS-mediated
+  // anaerobic suppression to OSA/UARS, cannot distinguish from bacteria alone
+  const anaerobicSuppressed = paradoxFires && anaerobicLoad < 1.5
+
+  let pattern: string
+  let patternConfidence: string
+
+  if (aerobicHigh && anaerobicSuppressed && diversityReduced) {
+    pattern = peroxideFlag ? 'osa_consistent_possible_peroxide' : 'osa_consistent'
+    patternConfidence = peroxideFlag ? 'low' : 'high'
+  } else if (aerobicHigh && anaerobicSuppressed && !diversityReduced) {
+    // Missing diversity signal — partial
+    pattern = peroxideFlag ? 'mixed_possible_peroxide' : 'mixed'
+    patternConfidence = 'low'
+  } else if (aerobicHigh && !anaerobicSuppressed && anaerobicLoad > 1.5) {
+    // Aerobic shift + active periopathogens = mouth breathing pattern
+    pattern = 'mouth_breathing'
+    patternConfidence = aerobicScore > 28 ? 'moderate' : 'low'
+  } else if (!aerobicHigh && anaerobicLoad > 5) {
+    // High anaerobic without aerobic shift = subgingival disease independent of breathing
+    pattern = 'anaerobic_dominant'
+    patternConfidence = 'moderate'
+  } else {
+    pattern = 'balanced'
+    patternConfidence = 'moderate'
+  }
+
+  return {
+    env_acid_ratio: parseFloat(acidRatio.toFixed(4)),
+    env_acid_total_pct: parseFloat(acidTotal.toFixed(3)),
+    env_base_total_pct: parseFloat(baseTotal.toFixed(3)),
+    env_aerobic_score_pct: parseFloat(aerobicScore.toFixed(3)),
+    env_anaerobic_load_pct: parseFloat(anaerobicLoad.toFixed(3)),
+    env_aerobic_anaerobic_ratio: parseFloat(aerobicAnaerobicRatio.toFixed(2)),
+    env_pattern: pattern,
+    env_pattern_confidence: patternConfidence,
+    env_peroxide_flag: peroxideFlag,
+    env_dietary_nitrate_flag: dietaryNitrateFlag,
+  }
+}
+
+// ── Task 5b: Differential Pattern Scores ─────────────────────────────────────
+
+export function computeDifferentialScores(
+  kit: OralKitRow,
+  env: EnvironmentIndexResult,
+  lifestyle: LifestyleRow | null,
+  wearable: WearableRow | null
+): DifferentialScoresResult {
+
+  const noWearableCaveat = !wearable
+
+  // ── OSA score
+  // Requires SpO2 signals to score high — capped at 50 without wearable
+  let osaScore = 0
+  if (env.env_pattern === 'osa_consistent') osaScore += 35
+  if (env.env_aerobic_anaerobic_ratio > 10) osaScore += 10
+  if (env.env_aerobic_anaerobic_ratio > 20) osaScore += 10
+  if (wearable) {
+    if ((wearable.avg_spo2 ?? 100) < 95) osaScore += 15
+    if ((wearable.spo2_nights_below_94 ?? 0) > 2) osaScore += 15
+    if ((wearable.avg_respiratory_rate ?? 14) > 18) osaScore += 10
+    if ((wearable.hrv_nightly_cv ?? 0) > 0.35) osaScore += 5
+    if ((wearable.breathing_disturbance_index ?? 0) > 15) osaScore += 5
+  }
+  if (env.env_peroxide_flag) osaScore = Math.max(0, osaScore - 25)
+  if (!wearable) osaScore = Math.min(osaScore, 50)
+
+  // ── UARS score
+  // Key signal: rr_nightly_cv (not SpO2) — UARS produces RR variability
+  // without frank desaturation. Less aggressive wearable cap than OSA.
+  let uarsScore = 0
+  if (
+    env.env_pattern === 'osa_consistent' ||
+    env.env_pattern === 'mixed' ||
+    env.env_pattern === 'osa_consistent_possible_peroxide'
+  ) uarsScore += 25
+  if (env.env_aerobic_anaerobic_ratio > 4 && env.env_aerobic_anaerobic_ratio <= 15) uarsScore += 15
+  // Questionnaire — UARS symptom triad
+  if (
+    lifestyle?.morning_headaches === 'often' ||
+    lifestyle?.morning_headaches === 'almost_always'
+  ) uarsScore += 10
+  if (
+    lifestyle?.daytime_cognitive_fog === 'often' ||
+    lifestyle?.daytime_cognitive_fog === 'almost_always'
+  ) uarsScore += 10
+  if (
+    lifestyle?.non_restorative_sleep === 'often' ||
+    lifestyle?.non_restorative_sleep === 'almost_always'
+  ) uarsScore += 10
+  if (lifestyle?.jaw_fatigue_morning === 'often') uarsScore += 5
+  if (wearable) {
+    if ((wearable.rr_nightly_cv ?? 0) > 0.25) uarsScore += 15  // KEY UARS signal
+    if ((wearable.sleep_efficiency ?? 100) < 85) uarsScore += 10
+    if ((wearable.avg_deep_sleep_minutes ?? 60) < 45) uarsScore += 5
+  }
+  if (env.env_peroxide_flag) uarsScore = Math.max(0, uarsScore - 15)
+  if (!wearable) uarsScore = Math.min(uarsScore, 55)
+
+  // ── Mouth breathing score
+  // Aerobic shift + active periopathogens + nasal/questionnaire signals
+  // Distinguished from OSA: anaerobes NOT suppressed
+  let mbScore = 0
+  if (env.env_pattern === 'mouth_breathing') mbScore += 25
+  if (env.env_aerobic_score_pct > 18) mbScore += 15
+  if (env.env_anaerobic_load_pct > 1.5 && env.env_aerobic_anaerobic_ratio < 4) mbScore += 15
+  if (
+    lifestyle?.mouth_breathing === 'confirmed' ||
+    lifestyle?.mouth_breathing_when === 'sleep_only' ||
+    lifestyle?.mouth_breathing_when === 'daytime_and_sleep'
+  ) mbScore += 20
+  if (
+    lifestyle?.nasal_obstruction === 'chronic' ||
+    lifestyle?.nasal_obstruction_severity === 'moderate' ||
+    lifestyle?.nasal_obstruction_severity === 'severe'
+  ) mbScore += 15
+  if (lifestyle?.sinus_history?.includes('surgery')) mbScore += 10
+  if (lifestyle?.tongue_position_awareness === 'tongue_low') mbScore += 10
+  // Normal wearable + oral aerobic shift = mouth breathing more likely than OSA
+  if (
+    wearable &&
+    (wearable.avg_respiratory_rate ?? 14) < 17 &&
+    (wearable.avg_spo2 ?? 97) > 95
+  ) mbScore += 10
+
+  // ── Bruxism score
+  // Night guard = confirmed clinical evidence of parafunctional activity
+  let bruxismScore = 0
+  if (lifestyle?.night_guard_worn === 'current') bruxismScore += 30
+  if (lifestyle?.bruxism_night === 'confirmed') bruxismScore += 20
+  if (
+    lifestyle?.jaw_fatigue_morning === 'often' ||
+    lifestyle?.jaw_fatigue_morning === 'almost_always'
+  ) bruxismScore += 15
+  if (lifestyle?.morning_headaches === 'often') bruxismScore += 10
+  if (lifestyle?.gerd === 'yes' || lifestyle?.gerd_nocturnal) bruxismScore += 5
+  if (wearable && (wearable.sleep_efficiency ?? 100) < 85) bruxismScore += 10
+
+  // ── Periodontal activity score
+  const redComplex =
+    (kit.porphyromonas_pct ?? 0) +
+    (kit.treponema_pct ?? 0)
+  const orangeComplex =
+    (kit.fusobacterium_pct ?? 0) +
+    (kit.aggregatibacter_pct ?? 0)
+
+  let perioScore = 0
+  if (redComplex > 0.5) perioScore += 20
+  if (redComplex > 2.0) perioScore += 15
+  if (orangeComplex > 1.0) perioScore += 20
+  if ((kit.aggregatibacter_pct ?? 0) > 0.5) perioScore += 15  // aggressive perio signal
+  if (
+    lifestyle?.flossing_freq === 'never' ||
+    lifestyle?.flossing_freq === 'rarely'
+  ) perioScore += 10
+  if (lifestyle?.last_dental_visit === 'over_2_years') perioScore += 10
+
+  // ── Caries risk score
+  const cariesRisk = (kit.s_mutans_pct ?? 0) + (kit.s_sobrinus_pct ?? 0)
+  const cariesProtective = (kit.s_sanguinis_pct ?? 0) + (kit.s_gordonii_pct ?? 0)
+  let cariesScore = 0
+  if (cariesRisk > 0.5) cariesScore += 30
+  if (cariesRisk > 1.0) cariesScore += 20
+  if ((kit.scardovia_pct ?? 0) > 0.2) cariesScore += 10
+  if ((kit.lactobacillus_pct ?? 0) > 0.1) cariesScore += 20  // active caries signal
+  if (env.env_acid_ratio > 0.6) cariesScore += 15
+  if (cariesProtective < 1.5) cariesScore += 10
+
+  // ── Pattern labels
+  const scores = {
+    osa: Math.min(osaScore, 100),
+    uars: Math.min(uarsScore, 100),
+    mouth_breathing: Math.min(mbScore, 100),
+    periodontal_activity: Math.min(perioScore, 100),
+    bruxism: Math.min(bruxismScore, 100),
+    caries_risk: Math.min(cariesScore, 100),
+  }
+
+  const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1])
+  const primaryPattern = sorted[0][1] >= 20 ? sorted[0][0] : 'none'
+  const secondaryPattern = sorted[1][1] >= 15 ? sorted[1][0] : 'none'
+
+  return {
+    score_osa: scores.osa,
+    score_uars: scores.uars,
+    score_mouth_breathing: scores.mouth_breathing,
+    score_periodontal_activity: scores.periodontal_activity,
+    score_bruxism: scores.bruxism,
+    score_caries_risk: scores.caries_risk,
+    primary_pattern: primaryPattern,
+    secondary_pattern: secondaryPattern,
+    no_wearable_caveat: noWearableCaveat,
+    oral_wearable_convergence: !noWearableCaveat && osaScore > 60,
+    uars_pattern_score: scores.uars,
+    mouth_breathing_pattern_score: scores.mouth_breathing,
+    bruxism_pattern_score: scores.bruxism,
+  }
+}
+
+// ── Pipeline wiring ──────────────────────────────────────────────────────────
+// Called from _recalculateScore after L7 species are stored in oral_kit_orders.
+// Persists only the column set approved for this table.
+
+type SynergyNight = {
+  spo2: number | null
+  hrv_rmssd: number | null
+  sleep_efficiency: number
+  deep_sleep_minutes: number
+  respiratory_rate: number | null
+}
+
+function buildWearableFromNights(nights: SynergyNight[]): WearableRow | null {
+  if (!nights || nights.length === 0) return null
+
+  const mean = (vals: number[]) =>
+    vals.length === 0 ? null : vals.reduce((a, b) => a + b, 0) / vals.length
+  const cv = (vals: number[]) => {
+    if (vals.length < 2) return null
+    const m = vals.reduce((a, b) => a + b, 0) / vals.length
+    if (m === 0) return null
+    const variance = vals.reduce((a, b) => a + (b - m) ** 2, 0) / vals.length
+    return Math.sqrt(variance) / m
+  }
+
+  const spo2Vals = nights.map(n => Number(n.spo2)).filter(v => Number.isFinite(v) && v > 0)
+  const hrvVals = nights.map(n => Number(n.hrv_rmssd)).filter(v => Number.isFinite(v) && v > 0)
+  const rrVals = nights.map(n => Number(n.respiratory_rate)).filter(v => Number.isFinite(v) && v > 0)
+  const effVals = nights.map(n => Number(n.sleep_efficiency)).filter(v => Number.isFinite(v) && v > 0)
+  const deepVals = nights.map(n => Number(n.deep_sleep_minutes)).filter(v => Number.isFinite(v) && v > 0)
+
+  const spo2Below94 = spo2Vals.filter(v => v < 94).length
+
+  return {
+    avg_spo2: mean(spo2Vals),
+    spo2_nights_below_94: spo2Below94,
+    avg_respiratory_rate: mean(rrVals),
+    rr_nightly_cv: cv(rrVals),
+    hrv_nightly_cv: cv(hrvVals),
+    sleep_efficiency: mean(effVals),
+    avg_deep_sleep_minutes: mean(deepVals),
+    breathing_disturbance_index: null,
+  }
+}
+
+async function runOralSynergyScoring(
+  supabase: SupabaseClient,
+  kit: OralKitRow & { id: string },
+  lifestyle: LifestyleRow | null,
+  nights: SynergyNight[],
+): Promise<void> {
+  const kitId = kit.id
+
+  // Step 1: interpretability tier — gate everything else
+  const { tier, flags, protocol_compliant } = computeInterpretabilityTier(kit)
+  await supabase
+    .from("oral_kit_orders")
+    .update({
+      interpretability_tier: tier,
+      compliance_flags: flags,
+      protocol_compliant,
+    })
+    .eq("id", kitId)
+
+  if (tier === 'deferred') {
+    console.log(`[oral-synergy] kit=${kitId.slice(0, 8)} deferred — skipping scoring (flags: ${flags.join(",")})`)
+    return
+  }
+
+  // Step 2: environment index + differential scores
+  const wearable = buildWearableFromNights(nights)
+  const envIndex = computeOralEnvironmentIndex(kit, lifestyle)
+  const diffScores = computeDifferentialScores(kit, envIndex, lifestyle, wearable)
+
+  // Step 3: persist — only the column set already in the database
+  await supabase
+    .from("oral_kit_orders")
+    .update({
+      env_acid_ratio: envIndex.env_acid_ratio,
+      env_acid_total_pct: envIndex.env_acid_total_pct,
+      env_base_total_pct: envIndex.env_base_total_pct,
+      env_aerobic_score_pct: envIndex.env_aerobic_score_pct,
+      env_anaerobic_load_pct: envIndex.env_anaerobic_load_pct,
+      env_aerobic_anaerobic_ratio: envIndex.env_aerobic_anaerobic_ratio,
+      env_pattern: envIndex.env_pattern,
+      env_pattern_confidence: envIndex.env_pattern_confidence,
+      env_peroxide_flag: envIndex.env_peroxide_flag,
+      env_dietary_nitrate_flag: envIndex.env_dietary_nitrate_flag,
+      score_osa: diffScores.score_osa,
+      score_uars: diffScores.score_uars,
+      score_mouth_breathing: diffScores.score_mouth_breathing,
+      score_periodontal_activity: diffScores.score_periodontal_activity,
+      score_bruxism: diffScores.score_bruxism,
+      score_caries_risk: diffScores.score_caries_risk,
+      primary_pattern: diffScores.primary_pattern,
+      secondary_pattern: diffScores.secondary_pattern,
+      no_wearable_caveat: diffScores.no_wearable_caveat,
+    })
+    .eq("id", kitId)
+
+  console.log(`[oral-synergy] kit=${kitId.slice(0, 8)} tier=${tier} pattern=${diffScores.primary_pattern}/${diffScores.secondary_pattern} osa=${diffScores.score_osa} uars=${diffScores.score_uars} mb=${diffScores.score_mouth_breathing}`)
 }
