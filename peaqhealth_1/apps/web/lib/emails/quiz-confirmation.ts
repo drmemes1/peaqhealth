@@ -384,7 +384,7 @@ export function renderQuizConfirmationEmail(props: QuizEmailProps): string {
     <div style="font-family:Arial,sans-serif;font-size:9px;color:#aaaaaa;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:8px;">In the meantime</div>
     <p style="font-family:Georgia,serif;font-size:17px;color:#16150F;margin:0 0 8px;">Read the science behind <em style="font-style:italic;color:#C49A3C;">your score.</em></p>
     <p style="font-family:Arial,sans-serif;font-size:12px;color:#888888;line-height:1.6;margin:0 0 16px;">${closingCta}</p>
-    <a href="https://peaqhealth.me/science" style="display:inline-block;font-family:Arial,sans-serif;font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;background-color:#C49A3C;color:#16150F;padding:12px 32px;border-radius:3px;text-decoration:none;">VIEW THE EVIDENCE BASE &rarr;</a>
+    <a href="https://peaqhealth.vercel.app/science" style="display:inline-block;font-family:Arial,sans-serif;font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;background-color:#C49A3C;color:#16150F;padding:12px 32px;border-radius:3px;text-decoration:none;">VIEW THE EVIDENCE BASE &rarr;</a>
   </div>
 </td></tr>
 
@@ -400,8 +400,8 @@ export function renderQuizConfirmationEmail(props: QuizEmailProps): string {
   <div style="font-family:Georgia,serif;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#bbbbbb;margin-bottom:12px;">peaq health</div>
   <p style="font-family:Arial,sans-serif;font-size:10px;color:#cccccc;line-height:1.6;margin:0 0 10px;">For informational purposes only. Not a medical device. Not intended to diagnose, treat, cure, or prevent any disease. Built by Dr. Igor Khabensky (General Dentist) and Dr. Paul Leis (Cardiologist).</p>
   <p style="font-family:Arial,sans-serif;font-size:10px;color:#bbbbbb;margin:0;">
-    <a href="https://peaqhealth.me/science" style="color:#bbbbbb;text-decoration:none;border-bottom:1px solid #dddddd;">Science</a> &nbsp;&middot;&nbsp;
-    <a href="https://peaqhealth.me" style="color:#bbbbbb;text-decoration:none;border-bottom:1px solid #dddddd;">peaqhealth.me</a>
+    <a href="https://peaqhealth.vercel.app/science" style="color:#bbbbbb;text-decoration:none;border-bottom:1px solid #dddddd;">Science</a> &nbsp;&middot;&nbsp;
+    <a href="https://peaqhealth.vercel.app" style="color:#bbbbbb;text-decoration:none;border-bottom:1px solid #dddddd;">peaqhealth.vercel.app</a>
   </p>
 </td></tr>
 
