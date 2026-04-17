@@ -9,7 +9,7 @@ import { GlobalChat } from "./components/global-chat";
 const FB_APP_ID = process.env.NEXT_PUBLIC_FB_APP_ID ?? "000000000000000"
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://peaqhealth.me"),
+  metadataBase: new URL("https://peaqhealth.vercel.app"),
   title: "Peaq Health — Reach for the peaq.",
   description:
     "The first platform connecting your oral microbiome, blood biomarkers, and sleep data into a single longevity score.",
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     title: "Peaq Health",
     description:
       "The first platform connecting your oral microbiome, blood biomarkers, and sleep data into a single longevity score.",
-    url: "https://peaqhealth.me",
+    url: "https://peaqhealth.vercel.app",
     siteName: "Peaq Health",
     images: [
       {
