@@ -79,8 +79,8 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
 
   // Pattern card state
   let patternHeadline: string, patternSubhead: string, patternColor: Status
-  if (hasOral) {
-    const p = kit.env_pattern!
+  if (kit.env_pattern != null) {
+    const p = kit.env_pattern
     patternHeadline = p === "balanced" ? "Settled pattern" : p.replace(/_/g, " ")
     patternColor = p === "balanced" ? "good" : p === "osa_consistent" || p.includes("peroxide") ? "watch" : "info"
     patternSubhead = p === "balanced" ? "Your mouth looks like it's breathing easy overnight."
@@ -89,6 +89,8 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
       : p.includes("peroxide") ? "Some of this pattern could be from recent whitening products."
       : p === "anaerobic_dominant" ? "More gum-area bacteria active than breathing-related ones."
       : p === "mixed" ? "Mixed picture — some drier overnight conditions alongside active gum bacteria." : ""
+  } else if (hasSpeciesData) {
+    patternHeadline = "Species data available"; patternSubhead = "Your bacterial community is mapped. Pattern analysis is being computed."; patternColor = "info"
   } else if (hasQ && hasWearable && mbSignals) {
     patternHeadline = "Mouth breathing pattern detected"; patternSubhead = "Your questionnaire and wearable both point toward mouth breathing. Your oral microbiome will add the next layer of detail."; patternColor = "watch"
   } else if (hasQ && mbSignals) {
