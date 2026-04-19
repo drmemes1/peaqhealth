@@ -65,19 +65,29 @@ interface ParseResult {
   rawOtu: Record<string, number>
 }
 
-function extractGenusSpecies(name: string): { genus: string; species: string | null; fullSpecies: string } {
-  const cleaned = name
-    .replace(/^[dkpcofgs]__/g, "")
-    .replace(/;/g, " ")
-    .replace(/_/g, " ")
-    .trim()
+function extractGenusSpecies(taxon: string): { genus: string; species: string | null; fullSpecies: string; skip: boolean } {
+  const levels = taxon.split(";").map(l => l.trim())
+  let genus = ""
+  let species: string | null = null
 
-  const parts = cleaned.split(/\s+/)
-  const genus = parts[0] || ""
-  const speciesEpithet = parts.length >= 2 ? parts[1] : null
-  const fullSpecies = speciesEpithet ? `${genus} ${speciesEpithet}` : genus
+  for (const level of levels) {
+    if (level.startsWith("g__")) genus = level.slice(3).replace(/_/g, " ").trim()
+    if (level.startsWith("s__")) species = level.slice(3).replace(/_/g, " ").trim()
+  }
 
-  return { genus, species: speciesEpithet, fullSpecies }
+  if (!genus && !species) {
+    const cleaned = taxon.replace(/[dkpcofgs]__/g, "").replace(/;/g, " ").replace(/_/g, " ").trim()
+    const parts = cleaned.split(/\s+/)
+    genus = parts[0] || ""
+    species = parts.length >= 2 ? parts[1] : null
+  }
+
+  if (!species || species === "" || species.toLowerCase() === "na" || /^sp\d/i.test(species)) {
+    return { genus, species: null, fullSpecies: genus, skip: true }
+  }
+
+  const fullSpecies = `${genus} ${species}`
+  return { genus, species, fullSpecies, skip: false }
 }
 
 function parseL7Input(raw: string): ParseResult {
@@ -86,6 +96,27 @@ function parseL7Input(raw: string): ParseResult {
   const delimiter = lines[0]?.includes("\t") ? "\t" : ","
   const hasHeader = lines[0]?.toLowerCase().includes("otu") || lines[0]?.toLowerCase().includes("taxonomy")
   const dataLines = hasHeader ? lines.slice(1) : lines
+
+  // First pass: collect all raw values to detect fractional vs percentage
+  const rawValues: { genus: string; species: string | null; fullSpecies: string; val: number; skip: boolean }[] = []
+  let valSum = 0
+
+  for (const line of dataLines) {
+    const cols = line.split(delimiter).map(c => c.trim())
+    if (cols.length < 2) continue
+
+    const taxon = cols[0]
+    const firstNumCol = cols.slice(1).find(c => { const v = parseFloat(c); return Number.isFinite(v) })
+    const val = firstNumCol != null ? parseFloat(firstNumCol) : NaN
+    if (!Number.isFinite(val) || val <= 0) continue
+
+    const parsed = extractGenusSpecies(taxon)
+    valSum += val
+    rawValues.push({ ...parsed, val })
+  }
+
+  const isFractional = valSum > 0 && valSum <= 2
+  const multiplier = isFractional ? 100 : 1
 
   const rawOtu: Record<string, number> = {}
   const entries: ParsedEntry[] = []
@@ -96,20 +127,15 @@ function parseL7Input(raw: string): ParseResult {
   let prevotellaTotal = 0
   let prevotellaIntermedia = 0
 
-  for (const line of dataLines) {
-    const cols = line.split(delimiter).map(c => c.trim())
-    if (cols.length < 2) continue
-
-    const taxon = cols[0]
-    const abundance = parseFloat(cols[cols.length - 1])
-    if (!Number.isFinite(abundance) || abundance <= 0) continue
-
-    const { genus, fullSpecies } = extractGenusSpecies(taxon)
-    const genusLower = genus.toLowerCase()
-    const speciesLower = fullSpecies.toLowerCase()
-    const pct = abundance <= 1 ? abundance * 100 : abundance
+  for (const { genus, species, fullSpecies, val, skip } of rawValues) {
+    const pct = val * multiplier
 
     rawOtu[fullSpecies] = (rawOtu[fullSpecies] ?? 0) + pct / 100
+
+    if (skip) continue
+
+    const genusLower = genus.toLowerCase()
+    const speciesLower = fullSpecies.toLowerCase()
 
     let mappedColumn: string | null = null
     let mappingType: ParsedEntry["mappingType"] = "unmatched"
