@@ -9,7 +9,9 @@ export default async function OralPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/login")
 
-  const [{ data: oral }, { data: narrativeRow }] = await Promise.all([
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10)
+
+  const [{ data: oral }, { data: narrativeRow }, { data: lifestyle }, { data: sleepNights }] = await Promise.all([
     supabase.from("oral_kit_orders")
       .select("*")
       .eq("user_id", user.id)
@@ -23,6 +25,18 @@ export default async function OralPage() {
       .order("generated_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
+    supabase.from("lifestyle_records")
+      .select("mouth_breathing, mouth_breathing_when, snoring_reported, nasal_obstruction, nasal_obstruction_severity, osa_witnessed, non_restorative_sleep, morning_headaches, bruxism_night, daytime_cognitive_fog")
+      .eq("user_id", user.id)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase.from("sleep_data")
+      .select("spo2, respiratory_rate, resting_heart_rate")
+      .eq("user_id", user.id)
+      .gt("sleep_efficiency", 0)
+      .gte("date", thirtyDaysAgo)
+      .order("date", { ascending: false }),
   ])
 
   if (!oral) {
@@ -44,10 +58,28 @@ export default async function OralPage() {
     ? parseNarrativeSections(narrativeRow.narrative as string)
     : null
 
+  const nights = (sleepNights ?? []) as Array<Record<string, unknown>>
+  const spo2Vals = nights.map(n => Number(n.spo2)).filter(v => Number.isFinite(v) && v > 0)
+  const rrVals = nights.map(n => Number(n.respiratory_rate)).filter(v => Number.isFinite(v) && v > 0)
+  const rhrVals = nights.map(n => Number(n.resting_heart_rate)).filter(v => Number.isFinite(v) && v > 0)
+  const avg = (a: number[]) => a.length ? a.reduce((s, v) => s + v, 0) / a.length : null
+
+  const wearable = nights.length > 0 ? {
+    nights_available: nights.length,
+    avg_spo2: avg(spo2Vals),
+    avg_respiratory_rate: avg(rrVals),
+    avg_rhr: avg(rhrVals),
+  } : null
+
   return (
     <div className="min-h-svh bg-off-white">
       <Nav />
-      <OralPanelClient kit={oral as Parameters<typeof OralPanelClient>[0]["kit"]} narrative={narrative} />
+      <OralPanelClient
+        kit={oral as Parameters<typeof OralPanelClient>[0]["kit"]}
+        narrative={narrative}
+        questionnaire={lifestyle as Parameters<typeof OralPanelClient>[0]["questionnaire"]}
+        wearable={wearable}
+      />
     </div>
   )
 }
