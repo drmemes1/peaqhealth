@@ -81,6 +81,22 @@ export default function OralUploadPage() {
     }
   }
 
+  async function handleReprocess() {
+    if (!selectedKit || !selectedUser) return
+    setSaving(true)
+    setError("")
+    setResult(null)
+    const data = await api({ action: "reprocess", kit_id: selectedKit.id, user_id: selectedUser.id })
+    setSaving(false)
+    if (data.success) {
+      setResult({ success: true, steps: data.steps as string[], summary: data.summary as SaveSummary })
+      const refreshed = await api({ action: "list_kits", user_id: selectedUser.id })
+      setKits(refreshed.kits as Kit[])
+    } else {
+      setResult({ success: false, steps: data.steps as string[] ?? [], error: data.error as string })
+    }
+  }
+
   const statusColor = (s: string) =>
     s === "results_ready" ? "#3B6D11" : s === "failed" ? "#991B1B" : "#92400E"
 
@@ -148,6 +164,22 @@ export default function OralUploadPage() {
                 ))}
               </div>
             )}
+          </section>
+        )}
+
+        {/* Reprocess existing data */}
+        {selectedKit && selectedKit.neisseria_pct != null && (
+          <section style={{ marginBottom: 24 }}>
+            <button
+              onClick={handleReprocess}
+              disabled={saving}
+              style={{ ...btnStyle, background: "#6B4D8A", color: "#FAFAF8" }}
+            >
+              {saving ? "Reprocessing…" : "Re-run pipeline on existing data"}
+            </button>
+            <p style={{ fontFamily: sans, fontSize: 10, color: "#9B9891", marginTop: 6 }}>
+              Re-computes interpretability tier, environment index, differential scores, and total score from the species data already in the database.
+            </p>
           </section>
         )}
 
