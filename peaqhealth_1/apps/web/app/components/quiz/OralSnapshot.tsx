@@ -196,7 +196,7 @@ export function OralSnapshot() {
           <div style={{ animation: "quizFadeIn 600ms ease both" }}>
             {[
               { label: "Your primary signal", text: result.primaryInsight },
-              { label: "What Peaq would measure", text: result.secondaryInsight },
+              { label: "What Cnvrg would measure", text: result.secondaryInsight },
               { label: "The full picture", text: result.tertiaryInsight },
             ].map((insight, i) => (
               <div key={i} style={{ marginBottom: 24, animation: `quizFadeIn 500ms ease ${200 + i * 200}ms both` }}>

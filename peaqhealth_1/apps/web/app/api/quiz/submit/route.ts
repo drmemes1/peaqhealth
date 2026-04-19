@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
 
     // 1. Internal notification (unchanged)
     await resend.emails.send({
-      from: "Peaq Health <hello@peaqhealth.me>",
+      from: "Cnvrg Health <hello@peaqhealth.me>",
       to: "info@peaqhealth.me",
       subject: `Quiz: ${result.tier} risk \u2014 ${email}`,
       html: `
@@ -78,9 +78,9 @@ export async function POST(req: NextRequest) {
 
     const tierLabel = result.tier === "high" ? "High" : result.tier === "moderate" ? "Moderate" : "Low"
     await resend.emails.send({
-      from: "Peaq Health <hello@peaqhealth.me>",
+      from: "Cnvrg Health <hello@peaqhealth.me>",
       to: email.toLowerCase().trim(),
-      subject: `Your Peaq signal profile \u2014 ${tierLabel} signal density`,
+      subject: `Your Cnvrg signal profile \u2014 ${tierLabel} signal density`,
       html: confirmationHtml,
     }).catch(err => console.error("[quiz/submit] confirmation email error:", err))
   }

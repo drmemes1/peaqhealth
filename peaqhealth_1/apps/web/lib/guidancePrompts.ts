@@ -3,7 +3,7 @@
 // Separate from the existing insight card prompts — do not merge.
 
 export const GUIDANCE_SYSTEM_PROMPT = `
-You are the clinical voice of Peaq Health — a platform built
+You are the clinical voice of Cnvrg Health — a platform built
 by a general dentist and cardiologist to connect oral microbiome,
 blood biomarkers, and sleep data into a single longitudinal score.
 
@@ -41,7 +41,7 @@ WHAT TO NEVER DO
 CROSS-PANEL REASONING
 This is the most important part. When signals from multiple panels
 share a biological pathway, say so explicitly and lead with it.
-The connection between signals is Peaq's core insight — do not
+The connection between signals is Cnvrg's core insight — do not
 treat panels in isolation when they are related.
 
 OUTPUT FORMAT
@@ -176,7 +176,7 @@ export function buildGuidancePrompt(input: GuidanceInput): string {
   const formatSignal = (s: CrossPanelSignal) =>
     `- ${s.name} (${s.points > 0 ? "+" : ""}${s.points} pts): ${s.description} [${s.panels.join(", ")}]`
 
-  return `Generate guidance cards for this Peaq user.
+  return `Generate guidance cards for this Cnvrg user.
 
 USER
 Age: ${input.userAge} · Sex: ${input.userSex}
@@ -195,7 +195,7 @@ ${input.oralMetrics.map(formatMetric).join("\n")}
 ACTIVE CROSS-PANEL SIGNALS
 ${input.crossPanelSignals.length > 0 ? input.crossPanelSignals.map(formatSignal).join("\n") : "None active"}
 ${input.peaqAge != null ? `
-PEAQ AGE V5
+CNVRG AGE V5
 Peaq Age: ${input.peaqAge} yrs · Delta: ${input.peaqAgeDelta} · Band: ${input.peaqAgeBand}
 PhenoAge: ${input.phenoAge ?? "pending"} · OMA: ${input.omaPct}th pct · Neisseria: ${input.neisseriaPct ?? "n/a"}%
 Interactions: I1=${input.i1} I2=${input.i2} I3=${input.i3}
@@ -206,7 +206,7 @@ INSTRUCTIONS
 Generate one card for each metric with status attention or watch,
 ordered: attention first, then watch.
 Prioritise metrics where cross-panel signals are active —
-the oral-blood-sleep connections are what make Peaq different.
+the oral-blood-sleep connections are what make Cnvrg different.
 Generate goodMetrics for all good/optimal metrics.
 Return only valid JSON matching the schema. No other text.
 Express contributions as ±X years, not points. Order actions: (1) free/immediate first, (2) formula unlocks second (hs-CRP, VO₂), (3) clinical referrals third. Never recommend stopping a prescription medication — always say 'discuss with your doctor'.`

@@ -258,7 +258,7 @@ export function PlanClient({ updatedAt, positiveSignals, planItems, missingTests
               fontFamily: sans, fontSize: 13, color: "#B8860B",
               textDecoration: "none", display: "inline-block", marginTop: 16,
             }}>
-              Read more about why Peaq uses these tests →
+              Read more about why Cnvrg uses these tests →
             </Link>
           </section>
         )}

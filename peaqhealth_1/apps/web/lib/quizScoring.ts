@@ -100,7 +100,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   {
     id: "sleep",
     question: "Do you snore, wake up unrefreshed, or have you been told you stop breathing in your sleep?",
-    subtext: "People with obstructive sleep apnea are nearly 2.5 times more likely to have periodontal disease \u2014 confirmed across meta-analyses of 88,000+ patients. OSA-related intermittent hypoxia accelerates periodontal tissue breakdown, while periodontal inflammation elevates the CRP that disrupts sleep architecture. Peaq tracks OSA-associated oral taxa as a signal that this shared inflammatory pathway may be active.",
+    subtext: "People with obstructive sleep apnea are nearly 2.5 times more likely to have periodontal disease \u2014 confirmed across meta-analyses of 88,000+ patients. OSA-related intermittent hypoxia accelerates periodontal tissue breakdown, while periodontal inflammation elevates the CRP that disrupts sleep architecture. Cnvrg tracks OSA-associated oral taxa as a signal that this shared inflammatory pathway may be active.",
     options: [
       { label: "All of the above", value: "sleep-all", points: 3, tags: ["airway", "osa"] },
       { label: "Snoring or unrefreshed sleep", value: "sleep-some", points: 2, tags: ["airway"] },
@@ -131,7 +131,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   {
     id: "fatigue",
     question: "Do you feel exhausted or unrefreshed even after what seems like a full night of sleep?",
-    subtext: "Chronic exhaustion despite adequate sleep duration is a primary screening signal for sleep-disordered breathing. Obstructive sleep apnea is massively underdiagnosed \u2014 an estimated 936 million adults globally have it. The oral microbiome carries signatures of sleep-disordered breathing that Peaq tracks.",
+    subtext: "Chronic exhaustion despite adequate sleep duration is a primary screening signal for sleep-disordered breathing. Obstructive sleep apnea is massively underdiagnosed \u2014 an estimated 936 million adults globally have it. The oral microbiome carries signatures of sleep-disordered breathing that Cnvrg tracks.",
     options: [
       { label: "Yes \u2014 most mornings", value: "fatigue-most", points: 2, tags: ["fatigue", "airway"] },
       { label: "Sometimes", value: "fatigue-some", points: 1, tags: ["fatigue"] },
@@ -212,15 +212,15 @@ function buildInsights(tags: string[]): Pick<QuizResult, "primaryInsight" | "sec
   if (isFemale && hasPregnant && hasPerio) {
     primaryInsight = "Your oral health is directly connected to your pregnancy outcomes. Women with periodontitis are 5.56\u00d7 more likely to develop preeclampsia, and 2-3\u00d7 more likely to experience preterm delivery. The good news: periodontal treatment in the second trimester is safe and recommended. Your oral panel measures the specific bacterial burden driving this risk."
   } else if (isFemale && hasPregnant) {
-    primaryInsight = "Pregnancy changes your oral microbiome in ways that matter beyond your mouth. Hormonal shifts increase gingival inflammation and create conditions that favor periodontal pathogens. Women with periodontitis face 5.56\u00d7 higher preeclampsia risk. Peaq would measure your periodontal pathogen load alongside your inflammatory markers to give you a complete picture."
+    primaryInsight = "Pregnancy changes your oral microbiome in ways that matter beyond your mouth. Hormonal shifts increase gingival inflammation and create conditions that favor periodontal pathogens. Women with periodontitis face 5.56\u00d7 higher preeclampsia risk. Cnvrg would measure your periodontal pathogen load alongside your inflammatory markers to give you a complete picture."
   } else if (isFemale && hasAutoimmune && hasPerio) {
     primaryInsight = "Your immune system and your oral microbiome are speaking the same inflammatory language. RA, lupus, and other autoimmune conditions are 3-9\u00d7 more common in women. P. gingivalis \u2014 the primary periodontal pathogen \u2014 produces an enzyme called PAD that citrullinates host proteins, potentially triggering the autoimmune cascades underlying RA. Nonsurgical periodontal treatment has been shown to reduce disease activity markers in RA patients."
   } else if (isFemale && hasAutoimmune) {
     primaryInsight = "Autoimmune conditions and periodontal disease share overlapping inflammatory pathways. RA patients are 4.68\u00d7 more likely to have periodontitis. P. gingivalis possesses an enzyme that citrullinates host proteins, potentially triggering the autoimmune cascades underlying RA. The oral microbiome is a modifiable factor in autoimmune disease activity."
   } else if (isFemale && hasHormonal && (hasPerio || hasNitrate)) {
-    primaryInsight = "Hormonal shifts directly alter your oral microbiome. Estrogen fluctuations affect periodontal tissue inflammation throughout the cycle, during pregnancy, and at menopause. Thyroid dysfunction is associated with salivary gland changes that deplete nitrate-reducing bacteria \u2014 the same bacteria your blood vessels depend on for blood pressure regulation. Peaq tracks both signals."
+    primaryInsight = "Hormonal shifts directly alter your oral microbiome. Estrogen fluctuations affect periodontal tissue inflammation throughout the cycle, during pregnancy, and at menopause. Thyroid dysfunction is associated with salivary gland changes that deplete nitrate-reducing bacteria \u2014 the same bacteria your blood vessels depend on for blood pressure regulation. Cnvrg tracks both signals."
   } else if (isFemale && hasPostMeno && (hasAirway || hasCv)) {
-    primaryInsight = "After menopause, cardiovascular and sleep apnea risk converge. Risk of sleep apnea increases significantly after menopause due to loss of progesterone\u2019s protective effect on upper airway tone. OSA patients are 2.46\u00d7 more likely to have periodontitis. Meanwhile estrogen loss accelerates periodontal attachment loss and cardiovascular risk simultaneously. Peaq tracks the intersection of all three."
+    primaryInsight = "After menopause, cardiovascular and sleep apnea risk converge. Risk of sleep apnea increases significantly after menopause due to loss of progesterone\u2019s protective effect on upper airway tone. OSA patients are 2.46\u00d7 more likely to have periodontitis. Meanwhile estrogen loss accelerates periodontal attachment loss and cardiovascular risk simultaneously. Cnvrg tracks the intersection of all three."
 
   // ── Male-specific paths ────────────────────────────────────────────────
   } else if (isMale && hasCv && hasPerio) {
@@ -228,7 +228,7 @@ function buildInsights(tags: string[]): Pick<QuizResult, "primaryInsight" | "sec
   } else if (isMale && hasHtn && hasNitrate) {
     primaryInsight = "The bacteria in your mouth may be influencing your blood pressure. Nitrate-reducing oral bacteria \u2014 Neisseria, Rothia, Veillonella \u2014 convert dietary nitrate to nitric oxide, the molecule your blood vessels use to regulate pressure. Men using antiseptic mouthwash show measurable blood pressure increases within 7 days as these bacteria are depleted. Two out of three hypertensive patients on medication don\u2019t have their blood pressure adequately controlled \u2014 this pathway may explain part of why."
   } else if (isMale && hasOsa && hasPerio) {
-    primaryInsight = "Sleep apnea and gum disease share a biological pathway \u2014 and you may have both. OSA patients are 2.46\u00d7 more likely to have periodontitis across meta-analyses of 88,000+ people. Intermittent hypoxia from OSA drives oxidative stress that accelerates periodontal tissue breakdown, while periodontal inflammation elevates the systemic CRP that disrupts sleep architecture. Peaq tracks both panels because treating one affects the other."
+    primaryInsight = "Sleep apnea and gum disease share a biological pathway \u2014 and you may have both. OSA patients are 2.46\u00d7 more likely to have periodontitis across meta-analyses of 88,000+ people. Intermittent hypoxia from OSA drives oxidative stress that accelerates periodontal tissue breakdown, while periodontal inflammation elevates the systemic CRP that disrupts sleep architecture. Cnvrg tracks both panels because treating one affects the other."
   } else if (isMale && hasCv && !hasPerio) {
     primaryInsight = "Family history of heart disease changes how we interpret your oral panel. Periodontal disease is an independent cardiovascular risk factor \u2014 one your cardiologist is unlikely to have mentioned. Men with a family history of early heart disease and elevated periodontal pathogen burden face compounding risk. The bacteremia from inflamed gum tissue is continuous and systemic, not limited to dental appointments."
 
@@ -260,14 +260,14 @@ function buildInsights(tags: string[]): Pick<QuizResult, "primaryInsight" | "sec
 
   let secondaryInsight: string
   if (hasNitrate || tags.includes("mouthwash")) {
-    secondaryInsight = "Peaq measures your nitrate-reducing bacteria specifically \u2014 Neisseria, Rothia, and Veillonella \u2014 and connects their abundance to your HRV and blood pressure data. This is a signal no standard dental exam or blood panel has ever shown you."
+    secondaryInsight = "Cnvrg measures your nitrate-reducing bacteria specifically \u2014 Neisseria, Rothia, and Veillonella \u2014 and connects their abundance to your HRV and blood pressure data. This is a signal no standard dental exam or blood panel has ever shown you."
   } else if (hasAirway) {
-    secondaryInsight = "Peaq tracks OSA-associated taxa \u2014 Prevotella and Fusobacterium \u2014 and cross-references them with your sleep wearable data. If your oral microbiome is flagging airway risk and your HRV confirms it, that\u2019s a cross-panel signal no single test could generate."
+    secondaryInsight = "Cnvrg tracks OSA-associated taxa \u2014 Prevotella and Fusobacterium \u2014 and cross-references them with your sleep wearable data. If your oral microbiome is flagging airway risk and your HRV confirms it, that\u2019s a cross-panel signal no single test could generate."
   } else {
-    secondaryInsight = "Peaq sequences your oral microbiome at species level \u2014 not just diversity, but which specific bacteria are present and at what levels \u2014 and connects that data to your blood markers and nightly sleep physiology."
+    secondaryInsight = "Cnvrg sequences your oral microbiome at species level \u2014 not just diversity, but which specific bacteria are present and at what levels \u2014 and connects that data to your blood markers and nightly sleep physiology."
   }
 
-  const tertiaryInsight = "What you\u2019ve never seen is how all of this connects in one picture. Your oral microbiome, your hs-CRP, your HRV \u2014 they\u2019re part of the same system. Peaq is the first platform that shows you all three together."
+  const tertiaryInsight = "What you\u2019ve never seen is how all of this connects in one picture. Your oral microbiome, your hs-CRP, your HRV \u2014 they\u2019re part of the same system. Cnvrg is the first platform that shows you all three together."
 
   return { primaryInsight, secondaryInsight, tertiaryInsight }
 }

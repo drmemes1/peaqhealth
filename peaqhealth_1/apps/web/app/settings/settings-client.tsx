@@ -438,7 +438,7 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
 
           <RowItem
             label="Sign out"
-            description="Sign out of your Peaq Health account on this device"
+            description="Sign out of your Cnvrg Health account on this device"
             right={
               <button
                 onClick={signOut}

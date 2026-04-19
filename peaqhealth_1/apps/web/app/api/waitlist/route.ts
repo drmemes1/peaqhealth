@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   }
 
   const resend = new Resend(resendKey)
-  const from = "Peaq Health <hello@peaqhealth.me>"
+  const from = "Cnvrg Health <hello@peaqhealth.me>"
   const { error } = await resend.emails.send({
     from,
     to: "info@peaqhealth.me",

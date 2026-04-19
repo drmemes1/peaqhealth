@@ -10,7 +10,7 @@ const MERGE_HOLD  = 3800
 const CYCLE_MS    = SHOW_PANELS + MERGE_HOLD + 900 + 500
 
 // ── Number-stepping sequences (slow drift, feels like computation) ──────────
-const PEAQ_STEPS   = [28, 30, 32, 35, 37, 36, 34, 33]
+const CNVRG_STEPS   = [28, 30, 32, 35, 37, 36, 34, 33]
 const CHRONO_STEPS = [31, 32, 33, 32, 31, 32]
 
 const BAR_VARIANTS = [
@@ -68,7 +68,7 @@ export function LandingPanelStrip({ wearableOff = false, onToggle }: { wearableO
   useEffect(() => {
     if (merged) {
       const t = setTimeout(() => {
-        startStepper(peaqRef.current, PEAQ_STEPS, 580, timers)
+        startStepper(peaqRef.current, CNVRG_STEPS, 580, timers)
         startStepper(chronoRef.current, CHRONO_STEPS, 820, timers)
         startBarPulse(segRefs.current, timers)
       }, 550)
@@ -136,7 +136,7 @@ export function LandingPanelStrip({ wearableOff = false, onToggle }: { wearableO
                 <div className="pf-col">
                   <span className="pf-stat-lbl">Chronological</span>
                   <div className="pf-chrono" style={{ fontFamily: serif }}><span ref={chronoRef}>32</span> yrs</div>
-                  <span className="pf-stat-lbl" style={{ marginTop: 8 }}>Peaq vs chrono</span>
+                  <span className="pf-stat-lbl" style={{ marginTop: 8 }}>Cnvrg vs chrono</span>
                   <span className="pf-delta" style={{ fontFamily: serif }}>+1.4 yrs</span>
                 </div>
                 <div className="pf-vr" />
@@ -256,7 +256,7 @@ export function LandingPanelStrip({ wearableOff = false, onToggle }: { wearableO
         .hp-chip-att{background:rgba(192,57,43,.15);color:#E07B72;border:.5px solid rgba(192,57,43,.3);}
         .hp-chip-watch{background:rgba(184,134,11,.13);color:#D4A835;border:.5px solid rgba(184,134,11,.3);}
 
-        /* ── Peaq+ face internals ──────────────────────────────── */
+        /* ── Cnvrg+ face internals ──────────────────────────────── */
         .pf-top{display:flex;align-items:stretch;width:100%;gap:0;margin-bottom:10px;}
         .pf-col{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:4px 12px;text-align:center;}
         @media(max-width:420px){.pf-col{padding:4px 6px;}}

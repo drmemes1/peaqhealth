@@ -25,7 +25,7 @@ async function sendSleepPush(userId: string, supabase: SupabaseClient) {
   webpush.setVapidDetails("mailto:igor@peaqhealth.me", process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY)
   const subscription = JSON.parse(sub.subscription as string)
   await webpush.sendNotification(subscription, JSON.stringify({
-    title: "Your morning Peaq signal",
+    title: "Your morning Cnvrg signal",
     body: parts,
     url: "/dashboard/sleep",
     icon: "/icons/icon-192.png",

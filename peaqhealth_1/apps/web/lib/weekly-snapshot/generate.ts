@@ -187,7 +187,7 @@ export async function generateWeeklySnapshot(userId: string): Promise<Record<str
     : "No recent check-in"
 
   // ── Prompts ───────────────────────────────────────────────────────────────
-  const systemPrompt = `You are the weekly insight engine for Peaq Health, a longevity platform built by a cardiologist and periodontist.
+  const systemPrompt = `You are the weekly insight engine for Cnvrg Health, a longevity platform built by a cardiologist and periodontist.
 
 Generate a warm, motivating weekly snapshot based on this user's health data.
 
@@ -252,7 +252,7 @@ Sleep: ${currentSnapshot?.sleep_sub ?? "no data"}/30
 Blood: ${currentSnapshot?.blood_sub ?? "no data"}/40
 Oral: ${currentSnapshot?.oral_sub ?? "no data"}/30
 Lifestyle: contextual only (not scored — informs insights)
-${currentSnapshot?.peaq_age != null ? `\nPEAQ AGE V5: ${currentSnapshot.peaq_age} yrs (delta ${currentSnapshot.peaq_age_delta}, band ${currentSnapshot.peaq_age_band})\nPhenoAge: ${currentSnapshot.pheno_age ?? "pending"} | OMA: ${currentSnapshot.oma_percentile}th | VO2: ${currentSnapshot.vo2_percentile ?? "n/a"}th\nI1=${currentSnapshot.cross_panel_i1} I2=${currentSnapshot.cross_panel_i2} I3=${currentSnapshot.cross_panel_i3}` : ""}
+${currentSnapshot?.peaq_age != null ? `\nCNVRG AGE V5: ${currentSnapshot.peaq_age} yrs (delta ${currentSnapshot.peaq_age_delta}, band ${currentSnapshot.peaq_age_band})\nPhenoAge: ${currentSnapshot.pheno_age ?? "pending"} | OMA: ${currentSnapshot.oma_percentile}th | VO2: ${currentSnapshot.vo2_percentile ?? "n/a"}th\nI1=${currentSnapshot.cross_panel_i1} I2=${currentSnapshot.cross_panel_i2} I3=${currentSnapshot.cross_panel_i3}` : ""}
 
 PREVIOUS WEEK:
 Previous total score: ${prevWeekRow?.total_score ?? "no prior data"}

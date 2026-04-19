@@ -9,6 +9,7 @@ import { IOSInstallBanner } from "../components/ios-install-banner"
 import { PanelConvergence } from "../components/panel-convergence"
 import { RefreshCw } from "lucide-react"
 import { CrossPanelCard } from "./components/CrossPanelCard"
+import CnvrgLogo from "../components/CnvrgLogo"
 
 const serif = "'Cormorant Garamond', Georgia, serif"
 const sans  = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
@@ -64,7 +65,7 @@ interface Indicator {
 
 function truncateInsightBody(text: string, max = 100): string {
   let cleaned = text
-    .replace(/Peaq\s*Age\s*of\s*[\d.]+\s*(?:years?)?/gi, "")
+    .replace(/Cnvrg\s*Age\s*of\s*[\d.]+\s*(?:years?)?/gi, "")
     .replace(/delta\s*of\s*[+-]?[\d.]+/gi, "")
     .replace(/eGFR\s*(?:at\s*)?\d+\s*mL\/min/gi, "")
     .replace(/\d+\.?\d*\s*(?:mL|mg|mmol)(?:\/[a-zA-Z]+)?/gi, "")
@@ -528,7 +529,7 @@ export function DashboardClient(props: ScoreWheelProps & {
   panelsActive?: { oral: boolean; blood: boolean; sleep: boolean };
 }) {
   const { wearableNeedsReconnect = false, firstName, peaqAgeBreakdown, cachedGuidance } = props
-  // cachedInsight intentionally unused — Peaq Insight card has been removed from the dashboard surface.
+  // cachedInsight intentionally unused — Cnvrg Insight card has been removed from the dashboard surface.
   const crossPanelSignals = props.crossPanelSignals ?? []
   const snapshotUpdatedAt = props.snapshotUpdatedAt ?? null
   const panelsActive = props.panelsActive ?? { oral: false, blood: false, sleep: false }
@@ -726,6 +727,11 @@ export function DashboardClient(props: ScoreWheelProps & {
             {/* ── LEFT COLUMN (main) ─────────────────────────────────────── */}
             <div className="dashboard-left" style={{ flex: "1 1 0", minWidth: 0, maxWidth: 700 }}>
 
+              {/* 0. CNVRG LOGO */}
+              <div style={{ marginBottom: 32 }}>
+                <CnvrgLogo size="md" showTagline={true} />
+              </div>
+
               {/* 1. GREETING — italic gold name */}
               <div style={{ marginBottom: 36 }}>
                 <h1 className="dashboard-greeting" style={{
@@ -795,7 +801,7 @@ export function DashboardClient(props: ScoreWheelProps & {
                 </div>
               </div>
 
-              {/* 3. BACTERIA COUNT + PEAQ+ AGE — side by side */}
+              {/* 3. BACTERIA COUNT + CNVRG+ AGE — side by side */}
               <div className="score-row" style={{ display: "flex", gap: 16, marginBottom: 36 }}>
 
                 {/* BACTERIA COUNT CARD */}
@@ -930,7 +936,7 @@ export function DashboardClient(props: ScoreWheelProps & {
                 if (b && b.i3 === -0.2)
                   signals.push({ title: "Low inflammation with great sleep", body: "Consistent sleep timing and low hs-CRP together are one of the strongest combinations in the formula.", tag: "Blood × Sleep", color: DS.gold, positive: true })
                 if (signals.length === 0 && panelCount >= 1)
-                  signals.push({ title: "Cross-panel signals unlock as you connect panels", body: "When your oral, blood, and sleep data combine, Peaq surfaces connections no single test can see.", tag: null, color: DS.inkMuted, positive: false })
+                  signals.push({ title: "Cross-panel signals unlock as you connect panels", body: "When your oral, blood, and sleep data combine, Cnvrg surfaces connections no single test can see.", tag: null, color: DS.inkMuted, positive: false })
                 if (signals.length === 0) return null
 
                 return (
@@ -1120,7 +1126,7 @@ export function DashboardClient(props: ScoreWheelProps & {
                 })()}
               </div>
 
-              {/* ZONE 2 — FROM PEAQ (dynamic from articles table) */}
+              {/* ZONE 2 — FROM CNVRG (dynamic from articles table) */}
               <div style={{
                 background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
                 borderRadius: 12, padding: 20,
@@ -1131,7 +1137,7 @@ export function DashboardClient(props: ScoreWheelProps & {
                   textTransform: "uppercase", color: DS.inkMuted,
                   display: "block", marginBottom: 14,
                 }}>
-                  FROM PEAQ
+                  FROM CNVRG
                 </span>
                 {(articles ?? [
                   { slug: "", title: "How your oral health affects your heart", readTime: 5 },
@@ -1168,7 +1174,7 @@ export function DashboardClient(props: ScoreWheelProps & {
               }}>
                 <img
                   src="/peaqdentist1.png"
-                  alt="Peaq Dentist"
+                  alt="Cnvrg Dentist"
                   style={{
                     position: "absolute", inset: 0, width: "100%", height: "100%",
                     objectFit: "cover", objectPosition: "top center",
@@ -1190,7 +1196,7 @@ export function DashboardClient(props: ScoreWheelProps & {
                     fontFamily: serif, fontSize: 18, fontWeight: 400,
                     color: "#FFFFFF", margin: "0 0 4px", lineHeight: 1.3,
                   }}>
-                    Peaq Dentists
+                    Cnvrg Dentists
                   </p>
                   <p style={{
                     fontFamily: sans, fontSize: 12, color: DS.gold,
@@ -1201,7 +1207,7 @@ export function DashboardClient(props: ScoreWheelProps & {
                 </div>
               </div>
 
-              {/* ZONE 3 — GET MORE FROM PEAQ (only if panels missing) */}
+              {/* ZONE 3 — GET MORE FROM CNVRG (only if panels missing) */}
               {anyMissing && (
                 <div style={{
                   background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
@@ -1213,7 +1219,7 @@ export function DashboardClient(props: ScoreWheelProps & {
                     textTransform: "uppercase", color: DS.inkMuted,
                     display: "block", marginBottom: 14,
                   }}>
-                    GET MORE FROM PEAQ
+                    GET MORE FROM CNVRG
                   </span>
                   <div style={{ display: "flex", flexDirection: "column" }}>
                     {!hasSleep && (

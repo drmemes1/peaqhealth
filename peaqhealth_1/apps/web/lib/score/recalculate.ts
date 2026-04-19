@@ -481,7 +481,7 @@ async function _recalculateScore(
     note: "Lifestyle stored as context only — does not contribute to total score as of v2",
   }
 
-  // ── PEAQ AGE V5 (dual-write alongside legacy score) ────────────────────────
+  // ── CNVRG AGE V5 (dual-write alongside legacy score) ────────────────────────
   const peaqAgeResult = computePeaqAgeFromContext({
     userAge, userSex,
     labRow: labsRes.data as Record<string, unknown> | null,
@@ -642,7 +642,7 @@ async function cacheInsightAndGuidance(
       temperature: 0.7,
       max_tokens: 300,
       messages: [
-        { role: "system", content: "You are Peaq's clinical intelligence layer. Return JSON: {\"headline\":\"One bold statement about overall health picture\",\"body\":\"ONE plain-English sentence under 100 characters. Explain WHY it matters. No Peaq Age, no deltas, no lab values with units.\"}. Be specific but human. No hedging.\n\nLANGUAGE RULES — ALWAYS FOLLOW:\n- Write in plain English a smart non-scientist understands immediately\n- Lead with what this means for the person, not the mechanism\n- Never use Latin species names in the response\n- Never use: dysbiosis, biomarker, optimize, endothelial, autonomic, parasympathetic, sympathetic dominance, inflammatory cascade, NF-kB, glycemic variability, cardiometabolic\n- Replace with plain English:\n    \"dysbiosis\" → \"imbalance in your oral bacteria\"\n    \"circadian rhythm\" → \"your body's internal clock\"\n    \"insulin sensitivity\" → \"how well your body handles sugar\"\n    \"autonomic\" → \"your body's stress response system\"\n- End every insight with one specific action\n- The action must be free or low-cost first, clinical referral last\n- Never say \"consider\" or \"may want to\" — be direct" },
+        { role: "system", content: "You are Cnvrg's clinical intelligence layer. Return JSON: {\"headline\":\"One bold statement about overall health picture\",\"body\":\"ONE plain-English sentence under 100 characters. Explain WHY it matters. No Peaq Age, no deltas, no lab values with units.\"}. Be specific but human. No hedging.\n\nLANGUAGE RULES — ALWAYS FOLLOW:\n- Write in plain English a smart non-scientist understands immediately\n- Lead with what this means for the person, not the mechanism\n- Never use Latin species names in the response\n- Never use: dysbiosis, biomarker, optimize, endothelial, autonomic, parasympathetic, sympathetic dominance, inflammatory cascade, NF-kB, glycemic variability, cardiometabolic\n- Replace with plain English:\n    \"dysbiosis\" → \"imbalance in your oral bacteria\"\n    \"circadian rhythm\" → \"your body's internal clock\"\n    \"insulin sensitivity\" → \"how well your body handles sugar\"\n    \"autonomic\" → \"your body's stress response system\"\n- End every insight with one specific action\n- The action must be free or low-cost first, clinical referral last\n- Never say \"consider\" or \"may want to\" — be direct" },
         { role: "user", content: `Generate a dashboard insight:\n${dataContext}` },
       ],
       response_format: { type: "json_object" },

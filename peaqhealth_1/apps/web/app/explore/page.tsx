@@ -417,7 +417,7 @@ export default function ExplorePage() {
             marginTop: 32, paddingTop: 20,
             borderTop: "0.5px solid rgba(20,20,16,0.06)",
           }}>
-            Analysis: Peaq Health, April 2026 &middot; Dataset: NHANES 2009&ndash;2012 &middot;
+            Analysis: Cnvrg Health, April 2026 &middot; Dataset: NHANES 2009&ndash;2012 &middot;
             Spearman rank correlations on log-transformed genus relative abundances
           </p>
         </div>

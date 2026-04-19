@@ -23,7 +23,7 @@ export function LogoSvg({
   return (
     <Image
       src="/images/peaq_logo_transparent.png"
-      alt="Peaq Health"
+      alt="Cnvrg Health"
       width={width}
       height={size}
       className={className}

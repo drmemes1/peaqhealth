@@ -63,7 +63,7 @@ export function LandingPanelsAndScience() {
           fontWeight: 400, lineHeight: 1.3, margin: "0 0 48px", maxWidth: 560,
         }}>
           Most health platforms measure one thing.
-          Peaq measures three — and finds the connections between them.
+          Cnvrg measures three — and finds the connections between them.
         </p>
 
         <div style={{

@@ -1413,7 +1413,7 @@ export function LifestyleForm({ existing }: Props) {
                           Do you have any of the following?
                         </p>
                         <p className="font-body text-[11px] text-ink/35 leading-relaxed mb-3 italic">
-                          Select all that apply. Helps Peaq avoid flagging expected patterns.
+                          Select all that apply. Helps Cnvrg avoid flagging expected patterns.
                         </p>
                         <div className="flex flex-col gap-2 mt-3">
                           {([
@@ -1447,7 +1447,7 @@ export function LifestyleForm({ existing }: Props) {
                           Current medications (optional)
                         </p>
                         <p className="font-body text-[11px] text-ink/35 leading-relaxed mb-3 italic">
-                          Helps Peaq avoid flagging expected lab patterns as anomalies.
+                          Helps Cnvrg avoid flagging expected lab patterns as anomalies.
                         </p>
                         <input
                           type="text"

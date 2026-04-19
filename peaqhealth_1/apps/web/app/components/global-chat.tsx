@@ -1,7 +1,7 @@
 "use client"
 
-import { PeaqChat } from "./peaq-chat"
+import { CnvrgChat } from "./peaq-chat"
 
 export function GlobalChat() {
-  return <PeaqChat />
+  return <CnvrgChat />
 }

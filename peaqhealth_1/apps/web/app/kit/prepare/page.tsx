@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Logo } from "../../components/logo"
+import CnvrgLogo from "../../components/CnvrgLogo"
 
 const serif = "'Cormorant Garamond', Georgia, serif"
 const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
@@ -101,7 +101,7 @@ export default function KitPreparePage() {
         padding: "20px 32px",
         borderBottom: `0.5px solid ${BORDER}`,
       }}>
-        <Logo height={26} />
+        <CnvrgLogo size="sm" showTagline={false} />
         <Link
           href="/dashboard"
           style={{ fontFamily: sans, fontSize: 14, color: INK, textDecoration: "none", opacity: 0.6 }}

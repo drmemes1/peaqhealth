@@ -2,7 +2,7 @@
   "name": "peaq",
   "private": true,
   "version": "0.0.1",
-  "description": "Peaq Health — sleep, blood, oral microbiome scoring platform",
+  "description": "Cnvrg Health — sleep, blood, oral microbiome scoring platform",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -10,7 +10,7 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
-    "dev:web": "turbo dev --filter=@peaq/web",
+    "dev:web": "turbo dev --filter=@cnvrg/web",
     "dev:mobile": "turbo dev --filter=@peaq/mobile",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",

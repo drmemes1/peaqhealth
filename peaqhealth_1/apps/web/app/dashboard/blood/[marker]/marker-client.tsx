@@ -290,7 +290,7 @@ export function MarkerDetailClient({ def, value, connectionInput, history, artic
 
             {rulesCount > 0 && (
               <p style={{ fontFamily: sans, fontSize: 12, color: "#B8860B", margin: 0 }}>
-                Unlocks up to {rulesCount} Peaq connections
+                Unlocks up to {rulesCount} Cnvrg connections
               </p>
             )}
           </div>

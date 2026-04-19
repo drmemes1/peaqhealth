@@ -21,7 +21,7 @@ function timestamp() {
   return new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
 }
 
-export function PeaqChat() {
+export function CnvrgChat() {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>(() => {
     if (typeof window === "undefined") return []
@@ -177,7 +177,7 @@ export function PeaqChat() {
                   flexShrink: 0,
                 }} />
                 <span style={{ fontFamily: serif, fontSize: 20, fontWeight: 300, color: "#1a1a18" }}>
-                  Ask Peaq
+                  Ask Cnvrg
                 </span>
               </div>
               <div style={{

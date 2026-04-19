@@ -10,34 +10,34 @@ const FB_APP_ID = process.env.NEXT_PUBLIC_FB_APP_ID ?? "000000000000000"
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://peaqhealth.vercel.app"),
-  title: "Peaq Health — Reach for the peaq.",
+  title: "Cnvrg Health — We fill in the gaps.",
   description:
     "The first platform connecting your oral microbiome, blood biomarkers, and sleep data into a single longevity score.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Peaq",
+    title: "Cnvrg",
   },
   openGraph: {
-    title: "Peaq Health",
+    title: "Cnvrg Health",
     description:
       "The first platform connecting your oral microbiome, blood biomarkers, and sleep data into a single longevity score.",
     url: "https://peaqhealth.vercel.app",
-    siteName: "Peaq Health",
+    siteName: "Cnvrg Health",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Peaq — Three signals. One measure of resilience.",
+        alt: "Cnvrg — Three signals. One measure of resilience.",
       },
     ],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Peaq Health",
+    title: "Cnvrg Health",
     description:
       "The first platform connecting your oral microbiome, blood biomarkers, and sleep data into a single longevity score.",
     images: ["/og-image.png"],
