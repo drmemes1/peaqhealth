@@ -16,7 +16,7 @@ import { StepWelcome } from "./step-welcome";
 import { StepWearable } from "./step-wearable";
 import { StepBlood } from "./step-blood";
 import { StepOral } from "./step-oral";
-import { StepLifestyle } from "./step-lifestyle";
+import LifestyleWizard from "../components/LifestyleWizard";
 import { StepScore } from "./step-score";
 import { StepDone } from "./step-done";
 
@@ -144,7 +144,7 @@ export default function OnboardingClient() {
       case "welcome":
         return <StepWelcome onNext={() => setStep("lifestyle")} />;
       case "lifestyle":
-        return <StepLifestyle onComplete={handleLifestyleComplete} />;
+        return <LifestyleWizard mode="onboarding" onComplete={() => handleLifestyleComplete({} as LifestyleAnswers)} />;
       case "wearable":
         return <StepWearable onConnect={handleWearableConnect} onSkip={handleWearableSkip} />;
       case "blood":
