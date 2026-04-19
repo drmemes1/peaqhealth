@@ -179,39 +179,132 @@ function CardioSection({ kit }: { kit: OralKitRow }) {
   )
 }
 
-function BreathingSection({ kit }: { kit: OralKitRow }) {
-  const patternLabel = kit.env_pattern ? kit.env_pattern.replace(/_/g, " ") : "pending"
-  const patternColor: TileStatus = kit.env_pattern === "balanced" ? "optimal" : kit.env_pattern == null ? "pending" : kit.env_pattern === "osa_consistent" || kit.env_pattern.includes("possible_peroxide") ? "watch" : "neutral"
-  const patternExplain = (() => {
-    if (!kit.env_pattern) return "Waiting on your data."
-    if (kit.env_pattern === "balanced") return "Your mouth looks like it's breathing easy overnight — saliva flowing, bacteria in balance."
-    if (kit.env_pattern === "mouth_breathing") return "Signs point to mouth breathing during sleep — your mouth is drier overnight and the bacteria reflect it."
-    if (kit.env_pattern === "osa_consistent") return "The pattern in your mouth matches what we often see when overnight breathing is disrupted. Worth a closer look."
-    if (kit.env_pattern.includes("peroxide")) return "Some of your pattern could be explained by recent whitening products — they affect bacteria the same way breathing changes do."
-    if (kit.env_pattern === "anaerobic_dominant") return "Your mouth has more gum-area bacteria active than breathing-related ones."
-    if (kit.env_pattern === "mixed") return "A mixed picture — some signs of drier overnight conditions alongside active gum bacteria."
-    return ""
-  })()
+type QuestionnaireData = {
+  mouth_breathing?: string | null
+  mouth_breathing_when?: string | null
+  snoring_reported?: string | null
+  nasal_obstruction?: string | null
+  nasal_obstruction_severity?: string | null
+  osa_witnessed?: string | null
+  non_restorative_sleep?: string | null
+  morning_headaches?: string | null
+  bruxism_night?: string | null
+  daytime_cognitive_fog?: string | null
+} | null
+
+type WearableData = {
+  nights_available: number
+  avg_spo2: number | null
+  avg_respiratory_rate: number | null
+  avg_rhr: number | null
+} | null
+
+function BreathingSection({ kit, questionnaire, wearable }: { kit: OralKitRow; questionnaire?: QuestionnaireData; wearable?: WearableData }) {
+  const hasOral = kit.env_pattern != null
+  const hasWearable = wearable != null && wearable.nights_available > 0
+  const hasQ = questionnaire != null && (questionnaire.mouth_breathing != null || questionnaire.snoring_reported != null || questionnaire.mouth_breathing_when != null)
+
+  const mbConfirmed = questionnaire?.mouth_breathing === "confirmed" || questionnaire?.mouth_breathing === "often" ||
+    questionnaire?.mouth_breathing_when === "sleep_only" || questionnaire?.mouth_breathing_when === "daytime_and_sleep"
+
+  // Overnight pattern header — staged
+  let patternHeadline: string
+  let patternSubhead: string
+  let patternBadge: string
+  let patternColor: TileStatus
+
+  if (hasOral) {
+    const p = kit.env_pattern!
+    patternHeadline = p.replace(/_/g, " ")
+    patternColor = p === "balanced" ? "optimal" : p === "osa_consistent" || p.includes("peroxide") ? "watch" : "neutral"
+    patternSubhead = p === "balanced" ? "Your mouth looks like it's breathing easy overnight — saliva flowing, bacteria in balance."
+      : p === "mouth_breathing" ? "Signs point to mouth breathing during sleep — your mouth is drier overnight and the bacteria reflect it."
+      : p === "osa_consistent" ? "The pattern in your mouth matches what we often see when overnight breathing is disrupted. Worth a closer look."
+      : p.includes("peroxide") ? "Some of your pattern could be explained by recent whitening products — they affect bacteria the same way breathing changes do."
+      : p === "anaerobic_dominant" ? "Your mouth has more gum-area bacteria active than breathing-related ones."
+      : p === "mixed" ? "A mixed picture — some signs of drier overnight conditions alongside active gum bacteria."
+      : ""
+    patternBadge = "oral microbiome"
+  } else if (hasQ && hasWearable) {
+    patternHeadline = mbConfirmed ? "Mouth breathing confirmed" : "Breathing data available"
+    patternSubhead = mbConfirmed
+      ? "Your questionnaire and wearable agree on mouth breathing. Your oral microbiome sample will add the next layer of detail."
+      : "Your wearable and questionnaire data are in. Once your oral sample is processed, we can see the full picture."
+    patternColor = mbConfirmed ? "watch" : "neutral"
+    patternBadge = "questionnaire + wearable"
+  } else if (hasQ) {
+    patternHeadline = mbConfirmed ? "Mouth breathing reported" : "Questionnaire complete"
+    patternSubhead = mbConfirmed
+      ? "Once your oral sample and wearable data are in, we can see what that means for your bacteria and your sleep quality."
+      : "Your questionnaire responses are recorded. Oral and wearable data will complete the picture."
+    patternColor = mbConfirmed ? "watch" : "neutral"
+    patternBadge = "questionnaire"
+  } else if (hasWearable) {
+    patternHeadline = "Breathing data available"
+    patternSubhead = "Your oral and questionnaire responses will complete the picture."
+    patternColor = "neutral"
+    patternBadge = "wearable"
+  } else {
+    patternHeadline = "Pending"
+    patternSubhead = "Waiting on your data."
+    patternColor = "pending"
+    patternBadge = "pending"
+  }
+
+  // Card values — staged
+  const acidValue = hasOral ? formatNum(kit.env_acid_ratio, 2) : mbConfirmed ? "Higher likely" : "—"
+  const acidStatus: TileStatus = hasOral ? (kit.env_acid_ratio! >= 0.3 && kit.env_acid_ratio! <= 0.5 ? "optimal" : "watch") : mbConfirmed ? "watch" : "pending"
+  const acidNote = hasOral ? "How acidic your mouth runs. Higher numbers mean more acid-producing bacteria, which can be tougher on enamel."
+    : mbConfirmed ? "Mouth breathing at night tends to raise acid-producing bacteria. We'll measure the exact level once your oral sample is processed."
+    : "How acidic your mouth runs. Waiting on your oral sample."
+
+  const aerobicValue = hasOral ? formatPct(kit.env_aerobic_score_pct, 1) : mbConfirmed ? "Elevated likely" : "—"
+  const aerobicStatus: TileStatus = hasOral ? (kit.env_aerobic_score_pct! > 35 ? "watch" : "optimal") : mbConfirmed ? "watch" : "pending"
+  const aerobicNote = hasOral ? "These thrive when your mouth gets more air than usual — often from mouth breathing at night."
+    : mbConfirmed ? "Based on your questionnaire, we'd expect these to be higher than typical. Your oral panel will confirm."
+    : "These thrive when your mouth gets more air than usual. Waiting on your oral sample."
+
+  const anaerobicValue = hasOral ? formatPct(kit.env_anaerobic_load_pct, 1) : "—"
+  const anaerobicStatus: TileStatus = hasOral ? (kit.env_anaerobic_load_pct! > 5 ? "watch" : kit.env_anaerobic_load_pct! < 0.5 ? "low" : "optimal") : "pending"
+  const anaerobicNote = hasOral ? "These prefer oxygen-free spots like under the gumline. Very low levels alongside high oxygen-lovers can hint at overnight breathing changes."
+    : "These prefer oxygen-free spots like under the gumline. Waiting on your oral sample."
+
+  const ratioValue = hasOral ? formatNum(kit.env_aerobic_anaerobic_ratio, 1) + "×" : mbConfirmed ? "Wider likely" : "—"
+  const ratioStatus: TileStatus = hasOral ? (kit.env_aerobic_anaerobic_ratio! <= 4 ? "optimal" : kit.env_aerobic_anaerobic_ratio! > 10 ? "watch" : "neutral") : mbConfirmed ? "watch" : "pending"
+  const ratioNote = hasOral ? "How many times more oxygen-lovers there are than no-oxygen types. Big differences can point to disrupted sleep breathing."
+    : mbConfirmed ? "Mouth breathing tends to create a larger gap between these bacterial groups. Your sample will show exactly how wide."
+    : "How many times more oxygen-lovers there are than no-oxygen types. Waiting on your oral sample."
+
   return (
     <section>
       <h2 className="text-[15px] font-medium text-neutral-900 mb-1">Sleep & breathing</h2>
       <p className="text-[12px] text-neutral-500 mb-4">Your mouth changes overnight — saliva slows, oxygen levels shift, bacteria rearrange. The patterns here reflect what's happening while you sleep.</p>
+
       <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-5 mb-3">
         <div className="flex items-center justify-between mb-1">
           <div className="text-[11px] font-medium uppercase tracking-wider text-neutral-500">Your overnight pattern</div>
-          <div className="flex items-center gap-1.5 text-[11px] text-neutral-600"><span className={`w-1.5 h-1.5 rounded-full ${dotColor(patternColor)}`} /><span className="capitalize">{patternLabel}</span></div>
+          <div className="flex items-center gap-1.5 text-[11px] text-neutral-600">
+            <span className={`w-1.5 h-1.5 rounded-full ${dotColor(patternColor)}`} />
+            <span className="capitalize">{patternBadge}</span>
+          </div>
         </div>
-        <div className="text-[20px] font-light text-neutral-900 capitalize mb-1.5">{patternLabel}</div>
-        <p className="text-[12px] text-neutral-600 leading-relaxed">{patternExplain}</p>
+        <div className="text-[20px] font-light text-neutral-900 capitalize mb-1.5">{patternHeadline}</div>
+        <p className="text-[12px] text-neutral-600 leading-relaxed">{patternSubhead}</p>
+        {hasWearable && !hasOral && (
+          <div className="mt-3 text-[11px] text-neutral-600 bg-white rounded-md px-2.5 py-1.5 border border-neutral-100">
+            Wearable: {wearable!.nights_available} nights tracked · SpO₂ {wearable!.avg_spo2?.toFixed(1) ?? "—"}% · Breathing rate {wearable!.avg_respiratory_rate?.toFixed(1) ?? "—"} bpm · RHR {wearable!.avg_rhr?.toFixed(0) ?? "—"} bpm
+          </div>
+        )}
         {kit.env_peroxide_flag && (
           <div className="mt-3 text-[11px] text-amber-800 bg-amber-50 rounded-md px-2.5 py-1.5 border border-amber-100">Heads up: you're using whitening products. They can look similar to breathing-related changes in this data, so some of the pattern could be coming from that.</div>
         )}
       </div>
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Tile title="Acid balance" value={formatNum(kit.env_acid_ratio, 2)} target="0.3 – 0.5" status={kit.env_acid_ratio == null ? "pending" : kit.env_acid_ratio >= 0.3 && kit.env_acid_ratio <= 0.5 ? "optimal" : "watch"} note="How acidic your mouth runs. Higher numbers mean more acid-producing bacteria, which can be tougher on enamel." />
-        <Tile title="Oxygen-loving bacteria" value={formatPct(kit.env_aerobic_score_pct, 1)} target="20 – 35%" status={kit.env_aerobic_score_pct == null ? "pending" : kit.env_aerobic_score_pct > 35 ? "watch" : "optimal"} note="These thrive when your mouth gets more air than usual — often from mouth breathing at night." />
-        <Tile title="No-oxygen bacteria" value={formatPct(kit.env_anaerobic_load_pct, 1)} target="1 – 5%" status={kit.env_anaerobic_load_pct == null ? "pending" : kit.env_anaerobic_load_pct > 5 ? "watch" : kit.env_anaerobic_load_pct < 0.5 ? "low" : "optimal"} note="These prefer oxygen-free spots like under the gumline. Very low levels alongside high oxygen-lovers can hint at overnight breathing changes." />
-        <Tile title="Balance between them" value={formatNum(kit.env_aerobic_anaerobic_ratio, 1) + "×"} target="1 – 4×" status={kit.env_aerobic_anaerobic_ratio == null ? "pending" : kit.env_aerobic_anaerobic_ratio <= 4 ? "optimal" : kit.env_aerobic_anaerobic_ratio > 10 ? "watch" : "neutral"} note="How many times more oxygen-lovers there are than no-oxygen types. Big differences can point to disrupted sleep breathing." />
+        <Tile title="Acid balance" value={acidValue} target="0.3 – 0.5" status={acidStatus} note={acidNote} />
+        <Tile title="Oxygen-loving bacteria" value={aerobicValue} target="20 – 35%" status={aerobicStatus} note={aerobicNote} />
+        <Tile title="No-oxygen bacteria" value={anaerobicValue} target="1 – 5%" status={anaerobicStatus} note={anaerobicNote} />
+        <Tile title="Balance between them" value={ratioValue} target="1 – 4×" status={ratioStatus} note={ratioNote} />
       </div>
     </section>
   )
@@ -296,9 +389,11 @@ function GumSection({ kit }: { kit: OralKitRow }) {
   )
 }
 
-export default function OralPanelClient({ kit, narrative }: {
+export default function OralPanelClient({ kit, narrative, questionnaire, wearable }: {
   kit: OralKitRow
   narrative?: { section_opening?: string; section_cardiometabolic?: string; section_gum_caries?: string; section_breathing?: string; section_disclaimer?: string } | null
+  questionnaire?: QuestionnaireData
+  wearable?: WearableData
 }) {
   const hasAnyData = useMemo(() => kit.shannon_diversity != null || kit.neisseria_pct != null || kit.porphyromonas_pct != null, [kit])
   return (
@@ -315,7 +410,7 @@ export default function OralPanelClient({ kit, narrative }: {
       <CommunitySection kit={kit} />
       <CardioSection kit={kit} />
       {narrative?.section_cardiometabolic && <div className="rounded-xl bg-white border border-neutral-200 p-5"><p className="text-[14px] leading-relaxed text-neutral-700">{narrative.section_cardiometabolic}</p></div>}
-      <BreathingSection kit={kit} />
+      <BreathingSection kit={kit} questionnaire={questionnaire} wearable={wearable} />
       {narrative?.section_breathing && <div className="rounded-xl bg-white border border-neutral-200 p-5"><p className="text-[14px] leading-relaxed text-neutral-700">{narrative.section_breathing}</p></div>}
       <CariesSection kit={kit} />
       <GumSection kit={kit} />
