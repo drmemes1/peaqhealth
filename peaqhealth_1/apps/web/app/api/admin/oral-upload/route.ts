@@ -91,7 +91,7 @@ interface ParseResult {
   speciesCount: number
   totalTracked: number
   totalUntracked: number
-  rawOtu: Record<string, number>
+  rawOtu: Record<string, unknown>
 }
 
 interface TaxonomyParsed {
