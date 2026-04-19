@@ -204,108 +204,273 @@ function BreathingSection({ kit, questionnaire, wearable }: { kit: OralKitRow; q
   const hasWearable = wearable != null && wearable.nights_available > 0
   const hasQ = questionnaire != null && (questionnaire.mouth_breathing != null || questionnaire.snoring_reported != null || questionnaire.mouth_breathing_when != null)
 
-  const mbConfirmed = questionnaire?.mouth_breathing === "confirmed" || questionnaire?.mouth_breathing === "often" ||
+  const mbSignals = questionnaire?.mouth_breathing === "confirmed" || questionnaire?.mouth_breathing === "often" ||
     questionnaire?.mouth_breathing_when === "sleep_only" || questionnaire?.mouth_breathing_when === "daytime_and_sleep"
 
-  // Overnight pattern header — staged
-  let patternHeadline: string
-  let patternSubhead: string
-  let patternBadge: string
-  let patternColor: TileStatus
+  const oralAerobicShift = hasOral && kit.env_aerobic_score_pct != null && kit.env_aerobic_score_pct > 35
 
-  if (hasOral) {
+  // Pattern card — staged, non-diagnostic
+  let headline: string
+  let body: string
+  let badge: string
+  let badgeColor: string
+
+  if (hasOral && hasQ && hasWearable) {
+    if (mbSignals && oralAerobicShift) {
+      headline = "Mouth breathing pattern across all three panels"
+      body = "Your questionnaire, wearable, and oral microbiome are all consistent with mouth breathing at night. Detailed results below."
+      badge = "questionnaire + wearable + oral"
+      badgeColor = "#B8860B"
+    } else if (mbSignals && !oralAerobicShift) {
+      headline = "Mixed signals — worth watching"
+      body = "Your questionnaire and wearable point toward mouth breathing, but your oral community has not shown the aerobic shift usually associated with this pattern. This can happen — your microbiome may be compensating well."
+      badge = "mixed signal"
+      badgeColor = "#9B9891"
+    } else {
+      const p = kit.env_pattern!
+      headline = p === "balanced" ? "Settled pattern" : p.replace(/_/g, " ")
+      body = p === "balanced" ? "Your mouth looks like it's breathing easy overnight — saliva flowing, bacteria in balance."
+        : p === "osa_consistent" ? "The pattern in your mouth matches what population research associates with disrupted nighttime breathing. Worth a closer look."
+        : p.includes("peroxide") ? "Some of your pattern could be explained by recent whitening products — they affect bacteria the same way breathing changes do."
+        : p === "anaerobic_dominant" ? "Your mouth has more gum-area bacteria active than breathing-related ones."
+        : p === "mixed" ? "A mixed picture — some signs of drier overnight conditions alongside active gum bacteria."
+        : "Signs point to mouth breathing during sleep — your mouth is drier overnight and the bacteria reflect it."
+      badge = "oral microbiome"
+      badgeColor = "#3B6D11"
+    }
+  } else if (hasOral) {
     const p = kit.env_pattern!
-    patternHeadline = p.replace(/_/g, " ")
-    patternColor = p === "balanced" ? "optimal" : p === "osa_consistent" || p.includes("peroxide") ? "watch" : "neutral"
-    patternSubhead = p === "balanced" ? "Your mouth looks like it's breathing easy overnight — saliva flowing, bacteria in balance."
+    headline = p === "balanced" ? "Settled pattern" : p.replace(/_/g, " ")
+    body = p === "balanced" ? "Your mouth looks like it's breathing easy overnight — saliva flowing, bacteria in balance."
       : p === "mouth_breathing" ? "Signs point to mouth breathing during sleep — your mouth is drier overnight and the bacteria reflect it."
-      : p === "osa_consistent" ? "The pattern in your mouth matches what we often see when overnight breathing is disrupted. Worth a closer look."
-      : p.includes("peroxide") ? "Some of your pattern could be explained by recent whitening products — they affect bacteria the same way breathing changes do."
-      : p === "anaerobic_dominant" ? "Your mouth has more gum-area bacteria active than breathing-related ones."
+      : p === "osa_consistent" ? "The pattern in your mouth matches what population research associates with disrupted nighttime breathing. Worth a closer look."
+      : p.includes("peroxide") ? "Some of your pattern could be explained by recent whitening products."
       : p === "mixed" ? "A mixed picture — some signs of drier overnight conditions alongside active gum bacteria."
+      : p === "anaerobic_dominant" ? "Your mouth has more gum-area bacteria active than breathing-related ones."
       : ""
-    patternBadge = "oral microbiome"
+    badge = "oral microbiome"
+    badgeColor = "#3B6D11"
   } else if (hasQ && hasWearable) {
-    patternHeadline = mbConfirmed ? "Mouth breathing confirmed" : "Breathing data available"
-    patternSubhead = mbConfirmed
-      ? "Your questionnaire and wearable agree on mouth breathing. Your oral microbiome sample will add the next layer of detail."
+    headline = mbSignals ? "Mouth breathing pattern detected" : "Breathing data gathered"
+    body = mbSignals
+      ? "Your questionnaire and wearable both point toward mouth breathing. Your oral microbiome will add the next layer of detail."
       : "Your wearable and questionnaire data are in. Once your oral sample is processed, we can see the full picture."
-    patternColor = mbConfirmed ? "watch" : "neutral"
-    patternBadge = "questionnaire + wearable"
+    badge = "questionnaire + wearable"
+    badgeColor = "#B8860B"
   } else if (hasQ) {
-    patternHeadline = mbConfirmed ? "Mouth breathing reported" : "Questionnaire complete"
-    patternSubhead = mbConfirmed
-      ? "Once your oral sample and wearable data are in, we can see what that means for your bacteria and your sleep quality."
+    headline = mbSignals ? "Mouth breathing signals in your sleep questionnaire" : "Questionnaire complete"
+    body = mbSignals
+      ? "Your questionnaire responses suggest you may breathe through your mouth at night. Connecting a wearable would let us cross-reference this with objective overnight data."
       : "Your questionnaire responses are recorded. Oral and wearable data will complete the picture."
-    patternColor = mbConfirmed ? "watch" : "neutral"
-    patternBadge = "questionnaire"
+    badge = "questionnaire"
+    badgeColor = "#B8860B"
   } else if (hasWearable) {
-    patternHeadline = "Breathing data available"
-    patternSubhead = "Your oral and questionnaire responses will complete the picture."
-    patternColor = "neutral"
-    patternBadge = "wearable"
+    headline = "Breathing data gathered"
+    body = "Your overnight breathing metrics are in. Your questionnaire and oral sample will complete the picture."
+    badge = "wearable"
+    badgeColor = "#185FA5"
   } else {
-    patternHeadline = "Pending"
-    patternSubhead = "Waiting on your data."
-    patternColor = "pending"
-    patternBadge = "pending"
+    headline = "Still gathering your data"
+    body = "Your questionnaire, wearable, and oral sample will each add a layer to your overnight pattern."
+    badge = "pending"
+    badgeColor = "#9B9891"
   }
 
-  // Card values — staged
-  const acidValue = hasOral ? formatNum(kit.env_acid_ratio, 2) : mbConfirmed ? "Higher likely" : "—"
-  const acidStatus: TileStatus = hasOral ? (kit.env_acid_ratio! >= 0.3 && kit.env_acid_ratio! <= 0.5 ? "optimal" : "watch") : mbConfirmed ? "watch" : "pending"
-  const acidNote = hasOral ? "How acidic your mouth runs. Higher numbers mean more acid-producing bacteria, which can be tougher on enamel."
-    : mbConfirmed ? "Mouth breathing at night tends to raise acid-producing bacteria. We'll measure the exact level once your oral sample is processed."
-    : "How acidic your mouth runs. Waiting on your oral sample."
+  // Card 1 — Acid balance
+  const acidValue = hasOral ? formatNum(kit.env_acid_ratio, 2) : mbSignals ? "Higher likely" : "—"
+  const acidStatus: TileStatus = hasOral ? (kit.env_acid_ratio! >= 0.3 && kit.env_acid_ratio! <= 0.5 ? "optimal" : "watch") : mbSignals ? "watch" : "pending"
+  const acidNote = "The ratio of acid-making bacteria to acid-buffering ones. When saliva dries up overnight, acid producers expand and enamel loses its overnight protection."
+  const acidExpand = mbSignals && !hasOral
+    ? { why: `Your wearable tracked ${wearable?.nights_available ?? "several"} nights of breathing consistent with mouth breathing. Without saliva flowing, S. mutans and Lactobacillus species tend to expand — they produce lactic acid that gradually affects enamel.`, action: "Treat the root — nasal strips or myofunctional therapy to restore nasal breathing. Xylitol mints before bed starve S. mutans specifically. Hydroxyapatite toothpaste supports enamel remineralisation." }
+    : undefined
 
-  const aerobicValue = hasOral ? formatPct(kit.env_aerobic_score_pct, 1) : mbConfirmed ? "Elevated likely" : "—"
-  const aerobicStatus: TileStatus = hasOral ? (kit.env_aerobic_score_pct! > 35 ? "watch" : "optimal") : mbConfirmed ? "watch" : "pending"
-  const aerobicNote = hasOral ? "These thrive when your mouth gets more air than usual — often from mouth breathing at night."
-    : mbConfirmed ? "Based on your questionnaire, we'd expect these to be higher than typical. Your oral panel will confirm."
-    : "These thrive when your mouth gets more air than usual. Waiting on your oral sample."
+  // Card 2 — Aerobic shift
+  const aerobicValue = hasOral ? formatPct(kit.env_aerobic_score_pct, 1) : mbSignals ? "Higher than typical likely" : "—"
+  const aerobicStatus: TileStatus = hasOral ? (kit.env_aerobic_score_pct! > 35 ? "watch" : "optimal") : mbSignals ? "watch" : "pending"
+  const aerobicNote = "Oxygen-loving bacteria that expand when your mouth is open all night. Not inherently harmful, but the shift itself is a signature of altered nighttime breathing."
+  const aerobicExpand = mbSignals && !hasOral
+    ? { why: "An open mouth exposes your tongue to air all night. Rothia and Actinomyces thrive in that environment. A 2025 study (Li et al.) found Rothia specifically elevated in people with both altered breathing and gum changes.", action: "Restoring nasal breathing tends to reverse this shift within 4 to 6 weeks. Species balance follows environment — change the input, the output changes." }
+    : undefined
 
-  const anaerobicValue = hasOral ? formatPct(kit.env_anaerobic_load_pct, 1) : "—"
-  const anaerobicStatus: TileStatus = hasOral ? (kit.env_anaerobic_load_pct! > 5 ? "watch" : kit.env_anaerobic_load_pct! < 0.5 ? "low" : "optimal") : "pending"
-  const anaerobicNote = hasOral ? "These prefer oxygen-free spots like under the gumline. Very low levels alongside high oxygen-lovers can hint at overnight breathing changes."
-    : "These prefer oxygen-free spots like under the gumline. Waiting on your oral sample."
-
-  const ratioValue = hasOral ? formatNum(kit.env_aerobic_anaerobic_ratio, 1) + "×" : mbConfirmed ? "Wider likely" : "—"
-  const ratioStatus: TileStatus = hasOral ? (kit.env_aerobic_anaerobic_ratio! <= 4 ? "optimal" : kit.env_aerobic_anaerobic_ratio! > 10 ? "watch" : "neutral") : mbConfirmed ? "watch" : "pending"
-  const ratioNote = hasOral ? "How many times more oxygen-lovers there are than no-oxygen types. Big differences can point to disrupted sleep breathing."
-    : mbConfirmed ? "Mouth breathing tends to create a larger gap between these bacterial groups. Your sample will show exactly how wide."
-    : "How many times more oxygen-lovers there are than no-oxygen types. Waiting on your oral sample."
+  // Card 3 — SpO2 or breathing rate (conditional)
+  const hasSpo2 = hasWearable && wearable!.avg_spo2 != null
+  const hasRR = hasWearable && wearable!.avg_respiratory_rate != null
 
   return (
     <section>
       <h2 className="text-[15px] font-medium text-neutral-900 mb-1">Sleep & breathing</h2>
       <p className="text-[12px] text-neutral-500 mb-4">Your mouth changes overnight — saliva slows, oxygen levels shift, bacteria rearrange. The patterns here reflect what's happening while you sleep.</p>
 
-      <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-5 mb-3">
-        <div className="flex items-center justify-between mb-1">
-          <div className="text-[11px] font-medium uppercase tracking-wider text-neutral-500">Your overnight pattern</div>
-          <div className="flex items-center gap-1.5 text-[11px] text-neutral-600">
-            <span className={`w-1.5 h-1.5 rounded-full ${dotColor(patternColor)}`} />
-            <span className="capitalize">{patternBadge}</span>
+      {/* Pattern card */}
+      <div className="rounded-2xl overflow-hidden mb-4" style={{ borderLeft: `3px solid ${badgeColor}`, background: "linear-gradient(135deg, #FDFAF2, #FAFAF8)" }}>
+        <div className="p-5">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-[11px] font-medium uppercase tracking-wider" style={{ color: "#9B9891" }}>Your overnight pattern</div>
+            <div className="flex items-center gap-1.5 text-[11px]" style={{ color: badgeColor }}>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: badgeColor }} />
+              <span className="capitalize">{badge}</span>
+            </div>
           </div>
+          <h3 className="mb-1.5" style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 400, color: "#141410", lineHeight: 1.3 }}>
+            {headline}
+          </h3>
+          <p style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: 13, color: "#5C5A54", lineHeight: 1.6 }}>
+            {body}
+          </p>
+          {hasWearable && (
+            <div className="mt-3 text-[11px] rounded-md px-3 py-2 border" style={{ color: "#5C5A54", background: "#fff", borderColor: "rgba(20,20,16,0.08)" }}>
+              {wearable!.nights_available} nights tracked
+              {wearable!.avg_spo2 != null && <> · SpO₂ {wearable!.avg_spo2.toFixed(1)}%</>}
+              {wearable!.avg_respiratory_rate != null && <> · Breathing rate {wearable!.avg_respiratory_rate.toFixed(1)} bpm</>}
+              {wearable!.avg_rhr != null && <> · RHR {wearable!.avg_rhr.toFixed(0)} bpm</>}
+            </div>
+          )}
+          {kit.env_peroxide_flag && (
+            <div className="mt-3 text-[11px] text-amber-800 bg-amber-50 rounded-md px-2.5 py-1.5 border border-amber-100">Heads up: you're using whitening products. They can look similar to breathing-related changes in this data.</div>
+          )}
         </div>
-        <div className="text-[20px] font-light text-neutral-900 capitalize mb-1.5">{patternHeadline}</div>
-        <p className="text-[12px] text-neutral-600 leading-relaxed">{patternSubhead}</p>
-        {hasWearable && !hasOral && (
-          <div className="mt-3 text-[11px] text-neutral-600 bg-white rounded-md px-2.5 py-1.5 border border-neutral-100">
-            Wearable: {wearable!.nights_available} nights tracked · SpO₂ {wearable!.avg_spo2?.toFixed(1) ?? "—"}% · Breathing rate {wearable!.avg_respiratory_rate?.toFixed(1) ?? "—"} bpm · RHR {wearable!.avg_rhr?.toFixed(0) ?? "—"} bpm
-          </div>
-        )}
-        {kit.env_peroxide_flag && (
-          <div className="mt-3 text-[11px] text-amber-800 bg-amber-50 rounded-md px-2.5 py-1.5 border border-amber-100">Heads up: you're using whitening products. They can look similar to breathing-related changes in this data, so some of the pattern could be coming from that.</div>
-        )}
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Tile title="Acid balance" value={acidValue} target="0.3 – 0.5" status={acidStatus} note={acidNote} />
-        <Tile title="Oxygen-loving bacteria" value={aerobicValue} target="20 – 35%" status={aerobicStatus} note={aerobicNote} />
-        <Tile title="No-oxygen bacteria" value={anaerobicValue} target="1 – 5%" status={anaerobicStatus} note={anaerobicNote} />
-        <Tile title="Balance between them" value={ratioValue} target="1 – 4×" status={ratioStatus} note={ratioNote} />
+      {/* Three metric cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {/* Acid balance */}
+        <div className="rounded-2xl border border-neutral-200 bg-white p-5 flex flex-col gap-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="text-[13px] font-medium text-neutral-900">Acid balance</div>
+            <div className="flex items-center gap-1.5 text-[11px] text-neutral-500 shrink-0">
+              <span className={`w-1.5 h-1.5 rounded-full ${dotColor(acidStatus)}`} /><span>{statusLabel(acidStatus)}</span>
+            </div>
+          </div>
+          <p className="text-[11px] italic" style={{ color: "#888780" }}>Streptococcus mutans · S. sobrinus · Lactobacillus</p>
+          <div className="text-[11px]" style={{ color: "#B8860B" }}>Target: <span className="font-medium">0.3 – 0.5</span></div>
+          <div className="text-[26px] font-light text-neutral-900 leading-none tracking-tight" style={{ color: !hasOral && mbSignals ? "#B8860B" : undefined, fontStyle: !hasOral && mbSignals ? "italic" : undefined }}>
+            {acidValue}
+          </div>
+          <p className="text-[12px] text-neutral-500 leading-relaxed">{acidNote}</p>
+          {acidExpand && (
+            <details className="text-[11px] text-neutral-500 mt-1">
+              <summary className="cursor-pointer hover:text-neutral-700 select-none">What this means for you ↓</summary>
+              <div className="mt-2 space-y-2 pl-2 border-l border-neutral-100">
+                <div><span className="font-medium text-neutral-700">Why you're likely running higher:</span> <span className="text-neutral-600">{acidExpand.why}</span></div>
+                <div><span className="font-medium text-neutral-700">What you can do:</span> <span className="text-neutral-600">{acidExpand.action}</span></div>
+              </div>
+            </details>
+          )}
+        </div>
+
+        {/* Aerobic shift */}
+        <div className="rounded-2xl border border-neutral-200 bg-white p-5 flex flex-col gap-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="text-[13px] font-medium text-neutral-900">Aerobic shift</div>
+            <div className="flex items-center gap-1.5 text-[11px] text-neutral-500 shrink-0">
+              <span className={`w-1.5 h-1.5 rounded-full ${dotColor(aerobicStatus)}`} /><span>{statusLabel(aerobicStatus)}</span>
+            </div>
+          </div>
+          <p className="text-[11px] italic" style={{ color: "#888780" }}>Rothia · Actinomyces · Haemophilus · Neisseria</p>
+          <div className="text-[11px]" style={{ color: "#B8860B" }}>Target: <span className="font-medium">20 – 35%</span></div>
+          <div className="text-[26px] font-light text-neutral-900 leading-none tracking-tight" style={{ color: !hasOral && mbSignals ? "#B8860B" : undefined, fontStyle: !hasOral && mbSignals ? "italic" : undefined }}>
+            {aerobicValue}
+          </div>
+          <p className="text-[12px] text-neutral-500 leading-relaxed">{aerobicNote}</p>
+          {aerobicExpand && (
+            <details className="text-[11px] text-neutral-500 mt-1">
+              <summary className="cursor-pointer hover:text-neutral-700 select-none">What this means for you ↓</summary>
+              <div className="mt-2 space-y-2 pl-2 border-l border-neutral-100">
+                <div><span className="font-medium text-neutral-700">The biology:</span> <span className="text-neutral-600">{aerobicExpand.why}</span></div>
+                <div><span className="font-medium text-neutral-700">What you can do:</span> <span className="text-neutral-600">{aerobicExpand.action}</span></div>
+              </div>
+            </details>
+          )}
+        </div>
+
+        {/* Card 3 — SpO2 / Breathing rate / Placeholder */}
+        <div className="rounded-2xl border border-neutral-200 bg-white p-5 flex flex-col gap-3">
+          {hasSpo2 ? (
+            <>
+              <div className="flex items-start justify-between gap-2">
+                <div className="text-[13px] font-medium text-neutral-900">Oxygen saturation</div>
+                <div className="flex items-center gap-1.5 text-[11px] text-neutral-500 shrink-0">
+                  <span className={`w-1.5 h-1.5 rounded-full ${wearable!.avg_spo2! >= 95 ? "bg-emerald-500" : "bg-amber-500"}`} />
+                  <span>{wearable!.avg_spo2! >= 95 ? "Good" : "Watch"}</span>
+                </div>
+              </div>
+              <p className="text-[11px] italic" style={{ color: "#888780" }}>Overnight SpO₂ from your wearable</p>
+              <div className="text-[11px]" style={{ color: "#B8860B" }}>Target: <span className="font-medium">≥ 95%</span></div>
+              <div className="text-[26px] font-light text-neutral-900 leading-none tracking-tight">
+                {wearable!.avg_spo2!.toFixed(1)}%
+              </div>
+              <p className="text-[12px] text-neutral-500 leading-relaxed">
+                Average overnight oxygen saturation across {wearable!.nights_available} nights. Stable SpO₂ with no dips below 94% makes significant breathing disruption less likely.
+              </p>
+              {mbSignals && wearable!.avg_spo2! >= 95 && (
+                <details className="text-[11px] text-neutral-500 mt-1">
+                  <summary className="cursor-pointer hover:text-neutral-700 select-none">What this means for you ↓</summary>
+                  <div className="mt-2 pl-2 border-l border-neutral-100">
+                    <span className="text-neutral-600">Your breathing pattern suggests mouth breathing, and your oxygen picture looks stable. This combination tends to point toward habitual mouth breathing rather than deeper breathing disruption — two different patterns with different next steps.</span>
+                  </div>
+                </details>
+              )}
+            </>
+          ) : hasRR ? (
+            <>
+              <div className="flex items-start justify-between gap-2">
+                <div className="text-[13px] font-medium text-neutral-900">Breathing rate</div>
+                <div className="flex items-center gap-1.5 text-[11px] text-neutral-500 shrink-0">
+                  <span className={`w-1.5 h-1.5 rounded-full ${wearable!.avg_respiratory_rate! <= 18 ? "bg-emerald-500" : "bg-amber-500"}`} />
+                  <span>{wearable!.avg_respiratory_rate! <= 18 ? "Good" : "Watch"}</span>
+                </div>
+              </div>
+              <p className="text-[11px] italic" style={{ color: "#888780" }}>Overnight breathing rate from your wearable</p>
+              <div className="text-[11px]" style={{ color: "#B8860B" }}>Target: <span className="font-medium">12 – 18 bpm</span></div>
+              <div className="text-[26px] font-light text-neutral-900 leading-none tracking-tight">
+                {wearable!.avg_respiratory_rate!.toFixed(1)} bpm
+              </div>
+              <p className="text-[12px] text-neutral-500 leading-relaxed">
+                Average overnight breathing rate across {wearable!.nights_available} nights.
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="flex items-start justify-between gap-2">
+                <div className="text-[13px] font-medium text-neutral-900">Overnight oxygen</div>
+                <div className="flex items-center gap-1.5 text-[11px] text-neutral-400 shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-neutral-300" /><span>Wearable needed</span>
+                </div>
+              </div>
+              <p className="text-[11px] italic" style={{ color: "#888780" }}>SpO₂ tracking from your wearable</p>
+              <div className="text-[26px] font-light text-neutral-300 leading-none tracking-tight">—</div>
+              <p className="text-[12px] text-neutral-500 leading-relaxed">
+                Connecting a wearable would let us see whether your mouth breathing is affecting overnight oxygen levels.
+              </p>
+            </>
+          )}
+        </div>
       </div>
+
+      {/* Narrative paragraph — contextual bottom card */}
+      {(hasQ || hasWearable) && !hasOral && (
+        <div className="mt-4 rounded-xl overflow-hidden" style={{ borderLeft: "3px solid #B8860B", background: "#FDFAF2" }}>
+          <div className="p-5">
+            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 15, fontStyle: "italic", color: "#3D3B35", lineHeight: 1.65 }}>
+              {(() => {
+                const snoring = questionnaire?.snoring_reported === "occasional" || questionnaire?.snoring_reported === "frequent"
+                const parts: string[] = []
+                if (snoring) parts.push("Your sleep questionnaire mentions occasional snoring")
+                if (mbSignals) parts.push(snoring ? "and mouth breathing" : "Your questionnaire indicates mouth breathing")
+                if (hasWearable) {
+                  parts.push(`. Your wearable backs that up: ${wearable!.nights_available} nights tracked`)
+                  if (wearable!.avg_respiratory_rate != null) parts.push(`, breathing rate at ${wearable!.avg_respiratory_rate.toFixed(1)} bpm`)
+                  if (wearable!.avg_spo2 != null && wearable!.avg_spo2 >= 95) parts.push(`, oxygen levels stable with no dips below 94%`)
+                  if (wearable!.avg_spo2 != null && wearable!.avg_spo2 >= 95) parts.push(". This combination tells us breathing pattern is the signal, not significant oxygen disruption")
+                  if (wearable!.avg_rhr != null && wearable!.avg_rhr > 65) parts.push(`. Your resting heart rate at ${wearable!.avg_rhr.toFixed(0)} bpm is worth watching as you address the breathing`)
+                }
+                parts.push(". Your oral sample will add another layer to this picture.")
+                return parts.join("")
+              })()}
+            </p>
+          </div>
+        </div>
+      )}
     </section>
   )
 }
