@@ -119,7 +119,7 @@ export default function Home() {
                 textDecoration: "none",
               }}
             >
-              Let&rsquo;s take a Cnvrg
+              Fill in your gaps
             </a>
             <a
               href="#cta"
@@ -647,7 +647,7 @@ export default function Home() {
             color: ACCENT_RAW,
             margin: "0 0 16px",
           }}>
-            Let&rsquo;s take a Cnvrg
+            Fill in your gaps
           </p>
           <h2 style={{
             fontFamily: serif,
