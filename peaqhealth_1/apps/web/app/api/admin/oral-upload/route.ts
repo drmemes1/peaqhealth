@@ -259,12 +259,12 @@ function parseL7Input(raw: string): ParseResult {
         mapped_column = SPECIES_COLUMNS[speciesLower]
         mapping_type = "species_exact"
         speciesSums[mapped_column] = (speciesSums[mapped_column] ?? 0) + pct
-      } else if (S_SALIVARIUS_SPECIES.includes(speciesLower)) {
+      } else if (genusLower === "streptococcus" && taxo.species && (taxo.species.toLowerCase().includes("salivarius") || taxo.species.toLowerCase().includes("vestibularis"))) {
         mapped_column = "s_salivarius_pct"
         mapping_type = "special"
         sSalivariusTotal += pct
       } else if (genusLower === "prevotella") {
-        if (taxo.species?.toLowerCase() === "intermedia") {
+        if (taxo.species && taxo.species.toLowerCase().includes("intermedia")) {
           mapped_column = "prevotella_intermedia_pct"
           mapping_type = "species_exact"
           speciesSums[mapped_column] = (speciesSums[mapped_column] ?? 0) + pct
@@ -299,11 +299,18 @@ function parseL7Input(raw: string): ParseResult {
     })
   }
 
-  // Column values for dedicated DB columns
+  // Column values for dedicated DB columns — every tracked column gets a value
+  // (0.0 if absent from sample, never null — null means parser hasn't run)
+  const ALL_TRACKED_COLUMNS = [
+    ...Object.values(GENUS_COLUMNS),
+    ...Object.values(SPECIES_COLUMNS),
+    "s_salivarius_pct", "streptococcus_total_pct", "prevotella_commensal_pct",
+  ]
   const columnValues: Record<string, number> = {}
+  for (const col of ALL_TRACKED_COLUMNS) columnValues[col] = 0
   for (const [col, val] of Object.entries(genusSums)) columnValues[col] = parseFloat(val.toFixed(4))
   for (const [col, val] of Object.entries(speciesSums)) columnValues[col] = parseFloat(val.toFixed(4))
-  if (sSalivariusTotal > 0) columnValues["s_salivarius_pct"] = parseFloat(sSalivariusTotal.toFixed(4))
+  columnValues["s_salivarius_pct"] = parseFloat(sSalivariusTotal.toFixed(4))
   columnValues["streptococcus_total_pct"] = parseFloat(strepTotal.toFixed(4))
   columnValues["prevotella_commensal_pct"] = parseFloat(prevotellaCommensalTotal.toFixed(4))
 
@@ -556,6 +563,84 @@ export async function POST(request: NextRequest) {
         .from("oral_kit_orders")
         .update({ status: "failed" })
         .eq("id", kitId)
+      return NextResponse.json({ success: false, error: msg, steps }, { status: 500 })
+    }
+  }
+
+  if (action === "reprocess") {
+    const kitId = body.kit_id as string
+    const targetUserId = body.user_id as string
+    if (!kitId || !targetUserId) return NextResponse.json({ error: "Missing kit_id or user_id" }, { status: 400 })
+
+    const supabase = svc()
+    const steps: string[] = []
+
+    try {
+      const { data: kitRow, error: readErr } = await supabase
+        .from("oral_kit_orders")
+        .select("*")
+        .eq("id", kitId)
+        .single()
+      if (readErr || !kitRow) throw new Error(`Load kit failed: ${readErr?.message}`)
+      steps.push("Loaded kit row")
+
+      const { data: lifestyle } = await supabase
+        .from("lifestyle_records")
+        .select("*")
+        .eq("user_id", targetUserId)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      const tierResult = computeInterpretabilityTier(kitRow)
+      const { error: tierErr } = await supabase
+        .from("oral_kit_orders")
+        .update({ interpretability_tier: tierResult.tier, compliance_flags: tierResult.flags, protocol_compliant: tierResult.protocol_compliant })
+        .eq("id", kitId)
+      if (tierErr) throw new Error(`Tier write failed: ${tierErr.message}`)
+      steps.push(`Tier: ${tierResult.tier} (flags: ${tierResult.flags.join(", ") || "none"})`)
+
+      let envPattern: string | null = null
+      let primaryPattern: string | null = null
+
+      if (tierResult.tier !== "deferred") {
+        const envIndex = computeOralEnvironmentIndex(kitRow, lifestyle)
+        const diffScores = computeDifferentialScores(kitRow, envIndex, lifestyle, null)
+        envPattern = envIndex.env_pattern
+        primaryPattern = diffScores.primary_pattern
+
+        const { error: envErr } = await supabase
+          .from("oral_kit_orders")
+          .update({
+            env_acid_ratio: envIndex.env_acid_ratio, env_acid_total_pct: envIndex.env_acid_total_pct,
+            env_base_total_pct: envIndex.env_base_total_pct, env_aerobic_score_pct: envIndex.env_aerobic_score_pct,
+            env_anaerobic_load_pct: envIndex.env_anaerobic_load_pct, env_aerobic_anaerobic_ratio: envIndex.env_aerobic_anaerobic_ratio,
+            env_pattern: envIndex.env_pattern, env_pattern_confidence: envIndex.env_pattern_confidence,
+            env_peroxide_flag: envIndex.env_peroxide_flag, env_dietary_nitrate_flag: envIndex.env_dietary_nitrate_flag,
+            score_osa: diffScores.score_osa, score_uars: diffScores.score_uars,
+            score_mouth_breathing: diffScores.score_mouth_breathing, score_periodontal_activity: diffScores.score_periodontal_activity,
+            score_bruxism: diffScores.score_bruxism, score_caries_risk: diffScores.score_caries_risk,
+            primary_pattern: diffScores.primary_pattern, secondary_pattern: diffScores.secondary_pattern,
+            no_wearable_caveat: diffScores.no_wearable_caveat,
+          })
+          .eq("id", kitId)
+        if (envErr) throw new Error(`Env/scores write failed: ${envErr.message}`)
+        steps.push(`Env: ${envIndex.env_pattern} (${envIndex.env_pattern_confidence}). Primary: ${primaryPattern}`)
+      }
+
+      const newScore = await recalculateScore(targetUserId, supabase)
+      steps.push(`Recalculated score: ${newScore}`)
+
+      await supabase.from("oral_kit_orders").update({ status: "results_ready" }).eq("id", kitId)
+      steps.push("Status → results_ready")
+
+      return NextResponse.json({
+        success: true, steps,
+        summary: { interpretabilityTier: tierResult.tier, envPattern, primaryPattern, totalScore: newScore },
+      })
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      console.error("[oral-upload] reprocess failed:", msg)
       return NextResponse.json({ success: false, error: msg, steps }, { status: 500 })
     }
   }
