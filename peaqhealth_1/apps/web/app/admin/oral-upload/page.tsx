@@ -8,7 +8,7 @@ const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 type User = { id: string; email: string; first_name: string | null; last_name: string | null }
 type Kit = { id: string; kit_code: string | null; status: string; ordered_at: string; collection_date: string | null; shannon_diversity: number | null; neisseria_pct: number | null; primary_pattern: string | null; interpretability_tier: string | null }
 type ParsedEntry = { rawName: string; genus: string; species: string | null; pct: number; mappedColumn: string | null; mappingType: string }
-type ParseResult = { entries: ParsedEntry[]; columnValues: Record<string, number>; shannonDiversity: number | null; shannonSource: string | null; speciesCount: number }
+type ParseResult = { entries: ParsedEntry[]; columnValues: Record<string, number>; shannonDiversity: number | null; shannonSource: string | null; speciesCount: number; totalTracked: number; totalUntracked: number }
 type ShannonInfo = { shannon: number; sampleName: string; maxDepth: number; iterations: number; allSamples: string[] }
 type SaveSummary = { speciesCount: number; shannonDiversity: number | null; interpretabilityTier: string; envPattern: string | null; primaryPattern: string | null; secondaryPattern: string | null; totalScore: number }
 
@@ -228,8 +228,9 @@ export default function OralUploadPage() {
           <section style={{ marginBottom: 32 }}>
             <Label>4. Parse preview — {parsed.speciesCount} species, Shannon {parsed.shannonDiversity?.toFixed(4) ?? "N/A"} ({parsed.shannonSource === "zymo_rarefaction" ? `Zymo rarefaction${shannonInfo ? `, depth ${shannonInfo.maxDepth}, ${shannonInfo.iterations} iter, sample: ${shannonInfo.sampleName}` : ""}` : "computed from L7 — less accurate"})</Label>
             <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
-              <Chip label={`${Object.keys(parsed.columnValues).length} columns mapped`} color="#3B6D11" />
-              <Chip label={`${parsed.entries.filter(e => e.mappingType === "unmatched").length} unmatched`} color="#92400E" />
+              <Chip label={`${parsed.speciesCount} total species`} color="#141410" />
+              <Chip label={`${parsed.totalTracked} tracked → ${Object.keys(parsed.columnValues).length} columns`} color="#3B6D11" />
+              <Chip label={`${parsed.totalUntracked} untracked (preserved in raw_otu_table)`} color="#92400E" />
             </div>
             <div style={{ maxHeight: 400, overflowY: "auto", border: "0.5px solid rgba(20,20,16,0.12)", borderRadius: 3 }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: sans, fontSize: 11 }}>

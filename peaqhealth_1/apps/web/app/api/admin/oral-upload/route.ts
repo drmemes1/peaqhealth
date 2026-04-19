@@ -50,6 +50,7 @@ const S_SALIVARIUS_SPECIES = ["streptococcus salivarius", "streptococcus vestibu
 
 interface ParsedEntry {
   rawName: string
+  taxonomy: string
   genus: string
   species: string | null
   pct: number
@@ -66,12 +67,21 @@ interface ShannonResult {
   allSamples: string[]
 }
 
+interface RawOtuEntry {
+  taxonomy: string
+  genus: string
+  species: string | null
+  pct: number
+}
+
 interface ParseResult {
   entries: ParsedEntry[]
   columnValues: Record<string, number>
   shannonDiversity: number | null
   shannonSource: "zymo_rarefaction" | "computed_l7" | null
   speciesCount: number
+  totalTracked: number
+  totalUntracked: number
   rawOtu: Record<string, number>
 }
 
@@ -155,8 +165,9 @@ function parseL7Input(raw: string): ParseResult {
   const hasHeader = lines[0]?.toLowerCase().includes("otu") || lines[0]?.toLowerCase().includes("taxonomy")
   const dataLines = hasHeader ? lines.slice(1) : lines
 
-  // First pass: collect all raw values to detect fractional vs percentage
-  const rawValues: { genus: string; species: string | null; fullSpecies: string; val: number; skip: boolean }[] = []
+  // First pass: collect all raw values with taxonomy, detect fractional vs percentage
+  type RawRow = { taxonomy: string; genus: string; species: string | null; fullSpecies: string; val: number; skip: boolean }
+  const rawValues: RawRow[] = []
   let valSum = 0
 
   for (const line of dataLines) {
@@ -170,25 +181,24 @@ function parseL7Input(raw: string): ParseResult {
 
     const parsed = extractGenusSpecies(taxon)
     valSum += val
-    rawValues.push({ ...parsed, val })
+    rawValues.push({ taxonomy: taxon, ...parsed, val })
   }
 
   const isFractional = valSum > 0 && valSum <= 2
   const multiplier = isFractional ? 100 : 1
 
-  const rawOtu: Record<string, number> = {}
+  const allOtuEntries: RawOtuEntry[] = []
   const entries: ParsedEntry[] = []
   const genusSums: Record<string, number> = {}
   const speciesSums: Record<string, number> = {}
-  const sSalivariusSum: { total: number } = { total: 0 }
+  let sSalivariusTotal = 0
   let strepTotal = 0
-  let prevotellaTotal = 0
-  let prevotellaIntermedia = 0
+  let prevotellaCommensalTotal = 0
 
-  for (const { genus, species, fullSpecies, val, skip } of rawValues) {
-    const pct = val * multiplier
+  for (const { taxonomy, genus, species, fullSpecies, val, skip } of rawValues) {
+    const pct = parseFloat((val * multiplier).toFixed(4))
 
-    rawOtu[fullSpecies] = (rawOtu[fullSpecies] ?? 0) + pct / 100
+    allOtuEntries.push({ taxonomy, genus, species, pct })
 
     if (skip) continue
 
@@ -198,87 +208,93 @@ function parseL7Input(raw: string): ParseResult {
     let mappedColumn: string | null = null
     let mappingType: ParsedEntry["mappingType"] = "unmatched"
 
+    // 1. Species-exact matches (highest priority)
     if (SPECIES_COLUMNS[speciesLower]) {
       mappedColumn = SPECIES_COLUMNS[speciesLower]
       mappingType = "species_exact"
       speciesSums[mappedColumn] = (speciesSums[mappedColumn] ?? 0) + pct
-    } else if (S_SALIVARIUS_SPECIES.includes(speciesLower)) {
+    }
+    // 2. Salivarius + vestibularis → s_salivarius_pct
+    else if (S_SALIVARIUS_SPECIES.includes(speciesLower)) {
       mappedColumn = "s_salivarius_pct"
       mappingType = "special"
-      sSalivariusSum.total += pct
-    } else if (speciesLower.includes("salivarius") || speciesLower.includes("vestibularis")) {
-      mappedColumn = "s_salivarius_pct"
-      mappingType = "special"
-      sSalivariusSum.total += pct
-    } else if (speciesLower.includes("mutans")) {
-      mappedColumn = "s_mutans_pct"
-      mappingType = "species_exact"
-      speciesSums[mappedColumn] = (speciesSums[mappedColumn] ?? 0) + pct
-    } else if (speciesLower.includes("sobrinus")) {
-      mappedColumn = "s_sobrinus_pct"
-      mappingType = "species_exact"
-      speciesSums[mappedColumn] = (speciesSums[mappedColumn] ?? 0) + pct
-    } else if (genusLower === "streptococcus" && speciesLower.includes("sanguinis") && !speciesLower.includes("parasanguinis")) {
-      mappedColumn = "s_sanguinis_pct"
-      mappingType = "species_exact"
-      speciesSums[mappedColumn] = (speciesSums[mappedColumn] ?? 0) + pct
-    } else if (speciesLower.includes("gordonii")) {
-      mappedColumn = "s_gordonii_pct"
-      mappingType = "species_exact"
-      speciesSums[mappedColumn] = (speciesSums[mappedColumn] ?? 0) + pct
-    } else if (genusLower === "tannerella" && speciesLower.includes("forsythia")) {
-      mappedColumn = "tannerella_pct"
-      mappingType = "species_exact"
-      speciesSums[mappedColumn] = (speciesSums[mappedColumn] ?? 0) + pct
-    } else if (genusLower === "prevotella" && speciesLower.includes("intermedia")) {
-      mappedColumn = "prevotella_intermedia_pct"
-      mappingType = "species_exact"
-      speciesSums[mappedColumn] = (speciesSums[mappedColumn] ?? 0) + pct
-    } else if (speciesLower.includes("wiggsiae")) {
-      mappedColumn = "scardovia_pct"
-      mappingType = "species_exact"
-      speciesSums[mappedColumn] = (speciesSums[mappedColumn] ?? 0) + pct
-    } else if (GENUS_COLUMNS[genusLower]) {
+      sSalivariusTotal += pct
+    }
+    // 3. Prevotella: intermedia → species column, everything else → commensal
+    else if (genusLower === "prevotella") {
+      if (species?.toLowerCase() === "intermedia") {
+        mappedColumn = "prevotella_intermedia_pct"
+        mappingType = "species_exact"
+        speciesSums[mappedColumn] = (speciesSums[mappedColumn] ?? 0) + pct
+      } else {
+        mappedColumn = "prevotella_commensal_pct"
+        mappingType = "special"
+        prevotellaCommensalTotal += pct
+      }
+    }
+    // 4. Genus-level sums
+    else if (GENUS_COLUMNS[genusLower]) {
       mappedColumn = GENUS_COLUMNS[genusLower]
       mappingType = "genus_sum"
       genusSums[mappedColumn] = (genusSums[mappedColumn] ?? 0) + pct
     }
 
     if (genusLower === "streptococcus") strepTotal += pct
-    if (genusLower === "prevotella") {
-      prevotellaTotal += pct
-      if (speciesLower === "prevotella intermedia") prevotellaIntermedia += pct
-    }
 
-    entries.push({ rawName: fullSpecies, genus, species: fullSpecies.includes(" ") ? fullSpecies.split(" ").slice(1).join(" ") : null, pct, mappedColumn, mappingType })
+    entries.push({ rawName: fullSpecies, taxonomy, genus, species, pct, mappedColumn, mappingType })
   }
 
   const columnValues: Record<string, number> = {}
 
   for (const [col, val] of Object.entries(genusSums)) columnValues[col] = parseFloat(val.toFixed(4))
   for (const [col, val] of Object.entries(speciesSums)) columnValues[col] = parseFloat(val.toFixed(4))
-  if (sSalivariusSum.total > 0) columnValues["s_salivarius_pct"] = parseFloat(sSalivariusSum.total.toFixed(4))
+  if (sSalivariusTotal > 0) columnValues["s_salivarius_pct"] = parseFloat(sSalivariusTotal.toFixed(4))
   columnValues["streptococcus_total_pct"] = parseFloat(strepTotal.toFixed(4))
-  columnValues["prevotella_commensal_pct"] = parseFloat((prevotellaTotal - prevotellaIntermedia).toFixed(4))
+  columnValues["prevotella_commensal_pct"] = parseFloat(prevotellaCommensalTotal.toFixed(4))
 
-  // Fallback Shannon from L7 (natural log, no rarefaction — inaccurate but better than nothing)
-  const vals = Object.values(rawOtu).filter(v => v > 0)
-  const total = vals.reduce((a, b) => a + b, 0)
+  // Fallback Shannon from L7 (natural log, no rarefaction — inaccurate, warns user)
+  const pctVals = allOtuEntries.map(e => e.pct).filter(v => v > 0)
+  const pctTotal = pctVals.reduce((a, b) => a + b, 0)
   let shannonDiversity: number | null = null
-  if (total > 0) {
-    shannonDiversity = -vals.reduce((h, v) => {
-      const p = v / total
+  if (pctTotal > 0) {
+    shannonDiversity = -pctVals.reduce((h, v) => {
+      const p = v / pctTotal
       return p > 0 ? h + p * Math.log(p) : h
     }, 0)
     shannonDiversity = parseFloat(shannonDiversity.toFixed(3))
   }
+
+  const trackedCount = entries.filter(e => e.mappingType !== "unmatched").length
+  const untrackedCount = entries.filter(e => e.mappingType === "unmatched").length
+
+  // Build raw_otu_table — flat species→fraction at top level (backward-compatible
+  // with oral panel + narrative route), plus __meta for full structured data
+  const flatOtu: Record<string, unknown> = {}
+  const taxonomyMap: Record<string, string> = {}
+  for (const entry of allOtuEntries) {
+    const key = entry.species ? `${entry.genus} ${entry.species}` : entry.genus
+    flatOtu[key] = ((flatOtu[key] as number) ?? 0) + entry.pct / 100
+    taxonomyMap[key] = entry.taxonomy
+  }
+  flatOtu["__meta"] = {
+    species: allOtuEntries,
+    taxonomy: taxonomyMap,
+    total_species: allOtuEntries.length,
+    total_tracked: trackedCount,
+    total_untracked: untrackedCount,
+    parsed_at: new Date().toISOString(),
+    parser_version: "v2",
+  }
+  const rawOtu = flatOtu
 
   return {
     entries: entries.sort((a, b) => b.pct - a.pct),
     columnValues,
     shannonDiversity,
     shannonSource: shannonDiversity != null ? "computed_l7" : null,
-    speciesCount: vals.length,
+    speciesCount: allOtuEntries.length,
+    totalTracked: trackedCount,
+    totalUntracked: untrackedCount,
     rawOtu,
   }
 }
@@ -358,9 +374,13 @@ export async function POST(request: NextRequest) {
 
     try {
       // Step 1: write species + raw OTU to oral_kit_orders
+      const rawOtuWithMeta = {
+        ...parsed.rawOtu,
+        ...(shannonResult ? { sample_column: shannonResult.sampleName } : {}),
+      }
       const updateData: Record<string, unknown> = {
         ...parsed.columnValues,
-        raw_otu_table: parsed.rawOtu,
+        raw_otu_table: rawOtuWithMeta,
         shannon_diversity: parsed.shannonDiversity,
         species_count: parsed.speciesCount,
         status: "results_uploaded",
