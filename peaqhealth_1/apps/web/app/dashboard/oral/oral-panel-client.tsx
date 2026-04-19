@@ -58,11 +58,24 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
   const summary = kit.raw_otu_table?.__meta?.community_summary
   const hasAnyData = useMemo(() => kit.shannon_diversity != null || kit.neisseria_pct != null || kit.porphyromonas_pct != null, [kit])
 
-  const hasOral = kit.env_pattern != null
   const hasWearable = wearable != null && wearable.nights_available > 0
   const hasQ = questionnaire != null && (questionnaire.mouth_breathing != null || questionnaire.snoring_reported != null)
   const mbSignals = questionnaire?.mouth_breathing === "confirmed" || questionnaire?.mouth_breathing === "often" ||
     questionnaire?.mouth_breathing_when === "sleep_only" || questionnaire?.mouth_breathing_when === "daytime_and_sleep"
+
+  // Compute breathing metrics inline from species data (not env_* columns which may lag)
+  const hasSpeciesData = kit.s_mutans_pct != null && kit.s_sanguinis_pct != null && kit.rothia_pct != null && kit.neisseria_pct != null
+  const hasOral = kit.env_pattern != null || hasSpeciesData
+
+  const acidBalance = hasSpeciesData
+    ? ((kit.s_mutans_pct ?? 0) + (kit.s_sobrinus_pct ?? 0) + (kit.lactobacillus_pct ?? 0)) / ((kit.s_sanguinis_pct ?? 0) + (kit.s_gordonii_pct ?? 0) + 0.001)
+    : kit.env_acid_ratio
+  const aerobicShift = hasSpeciesData
+    ? (kit.rothia_pct ?? 0) + (kit.actinomyces_pct ?? 0) + (kit.haemophilus_pct ?? 0) + (kit.neisseria_pct ?? 0)
+    : kit.env_aerobic_score_pct
+
+  const acidStatus: Status = acidBalance == null ? "pending" : acidBalance <= 0.5 ? "good" : acidBalance <= 0.8 ? "watch" : "concern"
+  const aerobicStatus: Status = aerobicShift == null ? "pending" : aerobicShift >= 20 && aerobicShift <= 35 ? "good" : aerobicShift > 35 && aerobicShift <= 45 ? "watch" : aerobicShift > 45 ? "concern" : "watch"
 
   // Pattern card state
   let patternHeadline: string, patternSubhead: string, patternColor: Status
@@ -128,8 +141,8 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
 
         {/* 3 breathing cards */}
         <div className="panel-grid-3" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
-          <Card label="Acid balance" subtitle="Streptococcus mutans · S. sobrinus" value={hasOral ? kit.env_acid_ratio : null} status={hasOral ? (kit.env_acid_ratio! >= 0.3 && kit.env_acid_ratio! <= 0.5 ? "good" : "watch") : "pending"} target="0.3 – 0.5" rangeMin={0} rangeMax={1} targetMin={0.3} targetMax={0.5} pendingNote="Mouth breathing tends to raise acid producers overnight. Your oral sample will show whether that's happened." statusLabel={hasOral ? undefined : "Waiting on sample"} expandContent={hasOral ? { why: "The ratio of acid-making bacteria to acid-buffering ones. When saliva dries up overnight, acid producers expand and enamel loses its overnight protection." } : undefined} />
-          <Card label="Aerobic shift" subtitle="Rothia · Actinomyces · Haemophilus" value={hasOral ? kit.env_aerobic_score_pct : null} unit="%" status={hasOral ? (kit.env_aerobic_score_pct! > 35 ? "watch" : "good") : "pending"} target="20 – 35%" rangeMin={0} rangeMax={60} targetMax={35} pendingNote="Open-mouth sleeping favors oxygen-loving species. We'll see how pronounced the shift is in your sample." statusLabel={hasOral ? undefined : "Waiting on sample"} expandContent={hasOral ? { why: "Oxygen-loving bacteria that expand when your mouth is open all night. Not inherently harmful, but the shift itself is a signature of altered nighttime breathing." } : undefined} />
+          <Card label="Acid balance" subtitle="S. mutans + S. sobrinus vs. S. sanguinis + S. gordonii" value={acidBalance != null ? parseFloat(acidBalance.toFixed(2)) : null} status={acidStatus} target="0.3 – 0.5" rangeMin={0} rangeMax={1.5} targetMin={0.3} targetMax={0.5} pendingNote="Mouth breathing tends to raise acid producers overnight. Your oral sample will show whether that's happened." statusLabel={acidBalance == null ? "Waiting on sample" : undefined} expandContent={acidBalance != null ? { why: "The ratio of acid-making bacteria to acid-buffering ones. Lower means your protectors are outcompeting the acid producers — that's a good thing for enamel." + (kit.env_pattern === "mouth_breathing" ? " Your mouth breathing pattern can shift this ratio over time by drying out saliva overnight." : "") } : undefined} />
+          <Card label="Aerobic shift" subtitle="Rothia · Actinomyces · Haemophilus · Neisseria" value={aerobicShift != null ? parseFloat(aerobicShift.toFixed(1)) : null} unit="%" status={aerobicStatus} target="20 – 35%" rangeMin={0} rangeMax={60} targetMin={20} targetMax={35} pendingNote="Open-mouth sleeping favors oxygen-loving species. We'll see how pronounced the shift is in your sample." statusLabel={aerobicShift == null ? "Waiting on sample" : undefined} expandContent={aerobicShift != null ? { why: "Oxygen-loving bacteria that expand when your mouth is open all night. Not inherently harmful, but the shift itself is a signature of altered nighttime breathing." + (kit.env_pattern === "mouth_breathing" && aerobicShift > 30 ? " Your value is at the high end of the typical range, consistent with the mouth breathing pattern your wearable and questionnaire detected." : "") } : undefined} />
           {hasWearable && wearable!.avg_spo2 != null ? (
             <Card label="Oxygen saturation" subtitle={`Overnight SpO₂ · ${wearable!.nights_available} nights tracked`} value={wearable!.avg_spo2} unit="%" status={wearable!.avg_spo2 >= 95 ? "good" : "watch"} target="≥ 95%" rangeMin={90} rangeMax={100} targetMin={95} targetMax={100} expandContent={{ why: `Average overnight oxygen across ${wearable!.nights_available} nights. Stable SpO₂ with no dips below 94% makes significant breathing disruption less likely.` }} />
           ) : hasWearable && wearable!.avg_respiratory_rate != null ? (
