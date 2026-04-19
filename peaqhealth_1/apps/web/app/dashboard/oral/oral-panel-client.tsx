@@ -85,12 +85,14 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
       : p.includes("peroxide") ? "Some of this pattern could be from recent whitening products."
       : p === "anaerobic_dominant" ? "More gum-area bacteria active than breathing-related ones."
       : p === "mixed" ? "Mixed picture — some drier overnight conditions alongside active gum bacteria." : ""
+  } else if (hasQ && hasWearable && mbConfirmed) {
+    patternHeadline = "Mouth breathing pattern detected"; patternSubhead = "Your questionnaire and wearable both point toward mouth breathing. Your oral microbiome will add the next layer of detail."; patternColor = "watch"
   } else if (hasQ && mbConfirmed) {
-    patternHeadline = "Mouth breathing reported"; patternSubhead = "Once your oral sample is processed, we can see what that means for your bacteria."; patternColor = "watch"
+    patternHeadline = "Mouth breathing signals in your questionnaire"; patternSubhead = "Connecting a wearable would let us cross-reference this with objective overnight data."; patternColor = "watch"
   } else if (hasWearable) {
-    patternHeadline = "Wearable data available"; patternSubhead = "Your oral sample will complete the picture."; patternColor = "info"
+    patternHeadline = "Breathing data gathered"; patternSubhead = "Your questionnaire and oral sample will complete the picture."; patternColor = "info"
   } else {
-    patternHeadline = "Pending"; patternSubhead = "Waiting on your data."; patternColor = "pending"
+    patternHeadline = "Still gathering your data"; patternSubhead = "Your questionnaire, wearable, and oral sample will each add a layer to your overnight pattern."; patternColor = "pending"
   }
 
   const STATUS_COLORS = { good: "#1A8C4E", watch: "#E07B00", concern: "#D42B2B", info: "#B8860B", pending: "#C8C6BE" } as const
@@ -149,8 +151,8 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
           )}
         </div>
         <div className="panel-grid-3" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
-          <MetricCard label="Acid balance" value={hasOral ? kit.env_acid_ratio! : mbConfirmed ? "Higher likely" : "—"} status={hasOral ? (kit.env_acid_ratio! >= 0.3 && kit.env_acid_ratio! <= 0.5 ? "good" : "watch") : mbConfirmed ? "watch" : "pending"} targetMin={0.3} targetMax={0.5} valueForIndicator={hasOral ? kit.env_acid_ratio! : undefined} rangeMin={0} rangeMax={1} explanation={hasOral ? "The ratio of acid-making bacteria to acid-buffering ones. When saliva dries up overnight, acid producers expand and enamel loses its overnight protection." : mbConfirmed ? "Mouth breathing at night tends to raise acid-producing bacteria. We'll measure the exact level once your oral sample is processed." : "The ratio of acid-making bacteria to acid-buffering ones."} species="Streptococcus mutans · S. sobrinus · Lactobacillus" />
-          <MetricCard label="Aerobic shift" value={hasOral ? fmtPct(kit.env_aerobic_score_pct, 1) : mbConfirmed ? "Higher than typical likely" : "—"} status={hasOral ? (kit.env_aerobic_score_pct! > 35 ? "watch" : "good") : mbConfirmed ? "watch" : "pending"} targetMax={35} valueForIndicator={hasOral ? kit.env_aerobic_score_pct! : undefined} rangeMin={0} rangeMax={60} explanation={hasOral ? "Oxygen-loving bacteria that expand when your mouth is open all night. Not inherently harmful, but the shift itself is a signature of altered nighttime breathing." : mbConfirmed ? "Based on your questionnaire, we'd expect these to be higher than typical. Your oral panel will show the exact level." : "Oxygen-loving bacteria that expand when your mouth gets more air than usual."} species="Rothia · Actinomyces · Haemophilus · Neisseria" />
+          <MetricCard label="Acid balance" value={hasOral ? kit.env_acid_ratio! : "—"} status={hasOral ? (kit.env_acid_ratio! >= 0.3 && kit.env_acid_ratio! <= 0.5 ? "good" : "watch") : "pending"} targetMin={0.3} targetMax={0.5} valueForIndicator={hasOral ? kit.env_acid_ratio! : undefined} rangeMin={0} rangeMax={1} explanation="The ratio of acid-making bacteria to acid-buffering ones. When saliva dries up overnight, acid producers expand and enamel loses its overnight protection." species="Streptococcus mutans · S. sobrinus · Lactobacillus" />
+          <MetricCard label="Aerobic shift" value={hasOral ? fmtPct(kit.env_aerobic_score_pct, 1) : "—"} status={hasOral ? (kit.env_aerobic_score_pct! > 35 ? "watch" : "good") : "pending"} targetMax={35} valueForIndicator={hasOral ? kit.env_aerobic_score_pct! : undefined} rangeMin={0} rangeMax={60} explanation="Oxygen-loving bacteria that expand when your mouth is open all night. Not inherently harmful, but the shift itself is a signature of altered nighttime breathing." species="Rothia · Actinomyces · Haemophilus · Neisseria" />
           {hasWearable && wearable!.avg_spo2 != null ? (
             <MetricCard label="Oxygen saturation" value={`${wearable!.avg_spo2.toFixed(1)}%`} status={wearable!.avg_spo2 >= 95 ? "good" : "watch"} targetMin={95} valueForIndicator={wearable!.avg_spo2} rangeMin={88} rangeMax={100} explanation={`Average overnight oxygen across ${wearable!.nights_available} nights. Stable SpO₂ with no dips below 94% makes significant breathing disruption less likely.`} species="Overnight SpO₂ from your wearable" />
           ) : hasWearable && wearable!.avg_respiratory_rate != null ? (
