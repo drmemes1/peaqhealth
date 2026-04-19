@@ -128,7 +128,7 @@ function computeRelevantMissing(
 
   // HbA1c: only if glucose ≥ 95 or age 40+
   if (!blood.hba1c) {
-    const science = "Reflects average blood glucose over 3 months. Below 5.7% is optimal. Above 5.7% indicates prediabetes risk."
+    const science = "Reflects average blood glucose over 3 months. Below 5.7% is optimal. Above 5.7% is the threshold where researchers start watching metabolic patterns more closely."
     if (blood.glucose >= 95) {
       results.push({ label: "HbA1c", pts: 3, reason: `Your fasting glucose is ${blood.glucose} mg/dL — just above optimal. HbA1c would confirm whether this is a trend or a one-time reading.`, science })
     } else if (ageAtLeast(ageRange, 40)) {
@@ -479,7 +479,7 @@ function StatusDots({ flags }: { flags: Flag[] }) {
 const INSIGHT_COPY: Record<string, { title: string; body: string; panels: string[] }> = {
   sleepInflammation:      { title: "Sleep × Inflammation", body: "Poor sleep elevates CRP. Elevated CRP fragments sleep. The cycle is self-reinforcing.", panels: ["Sleep", "Blood"] },
   spo2Lipid:              { title: "SpO2 × Lipids", body: "Nocturnal hypoxia activates the sympathetic nervous system and promotes LDL oxidation.", panels: ["Sleep", "Blood"] },
-  dualInflammatory:       { title: "Dual Inflammatory", body: "Concurrent hsCRP and ESR elevation indicates systemic, multi-pathway inflammation.", panels: ["Blood"] },
+  dualInflammatory:       { title: "Dual Inflammatory", body: "Concurrent hsCRP and ESR running above typical tends to reflect inflammatory signals showing up across more than one system.", panels: ["Blood"] },
   hrvHomocysteine:        { title: "HRV × Homocysteine", body: "Autonomic dysfunction compounded by endothelial injury — a high-risk cardiovascular phenotype.", panels: ["Sleep", "Blood"] },
   periodontCRP:           { title: "Periodontal × CRP", body: "Periodontal pathogen burden directly elevates systemic CRP via bacteraemia.", panels: ["Oral", "Blood"] },
   osaTaxaSpO2:            { title: "OSA Taxa × SpO2", body: "The microbiome flags OSA risk; the wearable detects its physiological consequence.", panels: ["Oral", "Sleep"] },
@@ -688,12 +688,12 @@ function CrossPanelInteractions({
       computed.push({
         key: "tripleSignal",
         title: "Triple signal — systemic dysbiosis",
-        body: "You have concurrent signals across all three biological systems — oral pathogens, systemic inflammation, and disrupted deep sleep. This triple pattern is associated with accelerated biological aging.",
+        body: "Your oral, blood, and sleep panels are showing patterns that tend to appear together in research on long-term health.",
         panels: ["Oral", "Blood", "Sleep"],
         severity: "high",
         learnMore: {
           science: "Concurrent oral dysbiosis, elevated systemic inflammation, and disrupted sleep architecture represents a convergent biological aging pattern. The ORIGINS study (JAHA 2019, n=300) found this triple combination predicted 10-year cardiovascular events better than any single marker alone.",
-          meaning: `You have active signals in all three biological systems simultaneously — oral pathogens at ${oralData.periodontPathPct.toFixed(1)}%, hsCRP at ${bloodData.hsCRP.toFixed(1)} mg/L, and deep sleep at ${sleepData.deepPct.toFixed(1)}%. Addressing one will likely improve the others — start with oral health as it has the fastest modifiable timeline.`,
+          meaning: `All three of your panels are showing signals worth tracking together — oral bacteria at ${oralData.periodontPathPct.toFixed(1)}%, hsCRP at ${bloodData.hsCRP.toFixed(1)} mg/L, and deep sleep at ${sleepData.deepPct.toFixed(1)}%. Addressing one tends to shift the others — oral health usually has the fastest modifiable timeline.`,
           actions: [
             "Treat oral dysbiosis first — it's the most modifiable and has downstream effects on both inflammation and sleep",
             "Schedule a full cardiovascular risk assessment with your physician",

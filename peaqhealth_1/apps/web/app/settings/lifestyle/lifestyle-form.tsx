@@ -1202,7 +1202,7 @@ export function LifestyleForm({ existing }: Props) {
                             Have you discussed annual lung CT screening with your doctor?
                           </p>
                           <p className="font-body text-[11px] text-ink/35 leading-relaxed mb-3 italic">
-                            Consider asking your doctor about low-dose CT lung screening if you have a significant smoking history (USPSTF).
+                            Worth discussing lung health screening options with your doctor at your next visit if you have a smoking history (USPSTF).
                           </p>
                           <div className="flex flex-wrap gap-2 mt-3">
                             {yesNoOptions.map((opt) => {
@@ -1417,7 +1417,7 @@ export function LifestyleForm({ existing }: Props) {
                         </p>
                         <div className="flex flex-col gap-2 mt-3">
                           {([
-                            { key: "hasOSA",          label: "Obstructive sleep apnea (OSA) — diagnosed" },
+                            { key: "hasOSA",          label: "Sleep apnea — told by a doctor" },
                             { key: "hasHypertension", label: "High blood pressure (hypertension)" },
                             { key: "hasDiabetes",     label: "Type 2 diabetes or pre-diabetes" },
                           ] as const).map((item) => {

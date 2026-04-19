@@ -382,7 +382,7 @@ export function BloodPanelClient({ lab, snapshot, history, ageRange, stressLevel
   }
   if (getVal(lab, "hs_crp_mgl") === null) {
     if (ldl > 120) {
-      missing.push({ key: "hs_crp_mgl", name: "hs-CRP", pts: 3, reason: `Your LDL of ${ldl} mg/dL suggests elevated cardiovascular risk — hs-CRP would quantify the inflammatory component driving that risk.` })
+      missing.push({ key: "hs_crp_mgl", name: "hs-CRP", pts: 3, reason: `Your LDL is running higher than the typical range at ${ldl} mg/dL — hs-CRP would add inflammatory context worth discussing with your doctor.` })
     } else if ((periodontPathPct ?? 0) > 10) {
       missing.push({ key: "hs_crp_mgl", name: "hs-CRP", pts: 3, reason: `Elevated periodontal pathogens in your oral panel are linked to systemic inflammation — hs-CRP would confirm whether this is reaching your bloodstream.` })
     } else if (stressLevel === "high") {

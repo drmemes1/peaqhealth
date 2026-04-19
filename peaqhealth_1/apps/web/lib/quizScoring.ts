@@ -131,7 +131,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   {
     id: "fatigue",
     question: "Do you feel exhausted or unrefreshed even after what seems like a full night of sleep?",
-    subtext: "Chronic exhaustion despite adequate sleep duration is a primary screening signal for sleep-disordered breathing. Obstructive sleep apnea is massively underdiagnosed \u2014 an estimated 936 million adults globally have it. The oral microbiome carries signatures of sleep-disordered breathing that Cnvrg tracks.",
+    subtext: "Chronic exhaustion despite adequate sleep duration is one of the patterns population research associates with disrupted nighttime breathing. The oral microbiome carries signatures of altered breathing that Cnvrg tracks.",
     options: [
       { label: "Yes \u2014 most mornings", value: "fatigue-most", points: 2, tags: ["fatigue", "airway"] },
       { label: "Sometimes", value: "fatigue-some", points: 1, tags: ["fatigue"] },

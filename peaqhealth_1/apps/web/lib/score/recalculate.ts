@@ -608,7 +608,7 @@ async function cacheInsightAndGuidance(
     guidance.push({ title: "Add hs-CRP to next blood draw", timing: "Next draw", why: "hs-CRP completes your Peaq Age calculation and unlocks three cross-panel connections." })
   const ldl = ctx.labRow?.ldl_mgdl as number | null
   if (ldl && ldl > 130)
-    guidance.push({ title: "Discuss LDL with your doctor", timing: "This month", why: "LDL above 130 increases plaque risk, especially when oral nitric oxide production is low." })
+    guidance.push({ title: "Discuss LDL with your doctor", timing: "This month", why: "LDL above 130 tends to coincide with plaque accumulation in research, especially when oral nitric oxide production is running below typical." })
   if (ctx.peaqAgeResult.rhrDelta > 1)
     guidance.push({ title: "Increase aerobic exercise", timing: "This month", why: "Resting heart rate is elevated, which adds years to your Peaq Age. Cardio lowers it within weeks." })
 

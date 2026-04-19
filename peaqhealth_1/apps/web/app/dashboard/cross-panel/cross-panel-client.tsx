@@ -33,7 +33,7 @@ const SIGNAL_DETAILS: Record<string, { why: string; action: string }> = {
     action: "Stop antiseptic mouthwash immediately. Increase dietary nitrate intake (beetroot, spinach, arugula).",
   },
   no_pathway_intact: {
-    why: "Strong nitrate-reducing bacteria combined with good HRV indicates the oral nitric oxide pathway is functioning well — converting dietary nitrate to nitric oxide and supporting cardiovascular recovery.",
+    why: "Strong nitrate-reducing bacteria combined with good HRV — consistent with the oral nitric oxide pathway running smoothly, converting dietary nitrate to nitric oxide and supporting cardiovascular recovery.",
     action: "Maintain current oral care routine and dietary nitrate intake.",
   },
   sleep_antiinflammatory: {
