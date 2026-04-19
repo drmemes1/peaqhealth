@@ -790,7 +790,6 @@ export function DashboardClient(props: ScoreWheelProps & {
                     icon={hasSleep ? <SleepIcon sleepData={props.sleepData} /> : <ConnectIcon />}
                     label={sleepLabel()}
                     indicators={sleepIndicators}
-                    bgImage={"/peaq_mask.png"}
                   />
                   <PanelNode
                     name="Blood" status={bloodStatus} href="/dashboard/blood"
