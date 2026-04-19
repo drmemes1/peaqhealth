@@ -38,7 +38,7 @@ Both images use `mixBlendMode: "multiply"` and the right column has `backgroundC
 ```tsx
 <img
   src="/images/preview-sleep.png"
-  alt="Peaq sleep panel"
+  alt="Cnvrg sleep panel"
   style={{
     position: "absolute",
     height: "78%",
@@ -58,7 +58,7 @@ Both images use `mixBlendMode: "multiply"` and the right column has `backgroundC
 ```tsx
 <img
   src="/images/dashboard-preview.png"
-  alt="Peaq Health dashboard"
+  alt="Cnvrg Health dashboard"
   style={{
     position: "absolute",
     height: "88%",
@@ -138,9 +138,9 @@ Render the stat below the description lines in a small badge style: `fontSize: 1
 
 ---
 
-## Section 4 — Inside the App (new section, replaces "What Peaq reveals")
+## Section 4 — Inside the App (new section, replaces "What Cnvrg reveals")
 
-**Remove** the existing "What Peaq reveals" section (the two quote cards + three stat blocks) from `page.tsx` entirely.
+**Remove** the existing "What Cnvrg reveals" section (the two quote cards + three stat blocks) from `page.tsx` entirely.
 
 **Insert** a new section in its place.
 
@@ -155,7 +155,7 @@ Render the stat below the description lines in a small badge style: `fontSize: 1
 **Left phone — Insights view:**
 - Image: `/images/dashboard-preview.png`
 - `height: 480, width: "auto", mixBlendMode: "multiply", imageRendering: "crisp-edges"`
-- Below image: eyebrow label `"AI Insights"` in oral green, then heading `"Cross-panel signals, updated daily"`, then body copy: `"Peaq's AI reads across your oral, blood, and sleep data to surface connections no single panel can see. Every insight links to the underlying science."`
+- Below image: eyebrow label `"AI Insights"` in oral green, then heading `"Cross-panel signals, updated daily"`, then body copy: `"Cnvrg's AI reads across your oral, blood, and sleep data to surface connections no single panel can see. Every insight links to the underlying science."`
 
 **Right phone — Sleep panel:**
 - Image: `/images/preview-sleep.png`
@@ -180,7 +180,7 @@ In the existing 4-step list in `page.tsx`, add a small image to step 1 and step 
 
 **Step 1 "Order your kit":** Add `<img src="/images/oralkit.png" ... />` to the right of the step content. Style: `height: 64, width: "auto", opacity: 0.85, mixBlendMode: "multiply"`. Wrap the step row in `display: "flex", justifyContent: "space-between", alignItems: "center"`.
 
-**Step 4 "Get your Peaq score":** Add a small inline pill showing `"Peaq score"` in gold — `fontSize: 11, background: "rgba(154,114,0,0.1)", color: GOLD, padding: "4px 10px", borderRadius: 20, fontWeight: 500` — next to the step title. This is text-only, no image.
+**Step 4 "Get your Cnvrg score":** Add a small inline pill showing `"Cnvrg score"` in gold — `fontSize: 11, background: "rgba(154,114,0,0.1)", color: GOLD, padding: "4px 10px", borderRadius: 20, fontWeight: 500` — next to the step title. This is text-only, no image.
 
 Steps 2 and 3 remain text-only.
 
@@ -202,7 +202,7 @@ No changes.
 
 | File | Change |
 |------|--------|
-| `app/page.tsx` | Hero upgrade (staggered phones), new science hook section, new "Inside the app" section, remove "What Peaq reveals", upgrade "How it works" step 1 + 4 |
+| `app/page.tsx` | Hero upgrade (staggered phones), new science hook section, new "Inside the app" section, remove "What Cnvrg reveals", upgrade "How it works" step 1 + 4 |
 | `app/components/landing-panels-science.tsx` | Add `stat` field to panel data + stat chip rendering |
 | `public/images/preview-sleep.png` | Copy from `/Users/igorkhabensky/peaq/previewed (1).png` if not already present |
 | `app/globals.css` | Add responsive rule to stack the "Inside the app" 2-col grid on mobile |

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LogoSvg } from "../components/logo-svg";
+import CnvrgLogo from "../components/CnvrgLogo";
 
 const EFFECTIVE_DATE = "March 26, 2026";
 
@@ -10,7 +10,7 @@ const sections = [
       "Account information — your email address and encrypted password, used solely to authenticate you.",
       "Health data you provide — wearable sleep metrics (deep sleep %, REM %, HRV, resting heart rate), blood biomarker values from lab reports you upload, oral microbiome sequencing results from your at-home oral kit, and lifestyle questionnaire responses (age range, sex, exercise level, smoking status, diet, alcohol, stress).",
       "Device & usage data — browser type, IP address, pages visited, and session timestamps, collected automatically to keep the service running and secure. We do not use this data for advertising.",
-      "Payment data — if you purchase a kit or subscription, payment is processed by Stripe. Peaq Health never sees or stores your full card number.",
+      "Payment data — if you purchase a kit or subscription, payment is processed by Stripe. Cnvrg Health never sees or stores your full card number.",
     ],
   },
   {
@@ -68,7 +68,7 @@ const sections = [
     title: "Contact",
     body: [
       "Questions about this policy or how your data is handled: privacy@peaqhealth.me",
-      "Peaq Health, Inc. · United States",
+      "Cnvrg Health, Inc. · United States",
     ],
   },
 ];
@@ -81,7 +81,7 @@ export default function PrivacyPage() {
         style={{ borderBottomColor: "var(--ink-12)" }}>
         <div className="mx-auto flex h-16 max-w-[820px] items-center justify-between px-6">
           <Link href="/">
-            <LogoSvg size={75} color="var(--ink)" />
+            <CnvrgLogo size="md" showTagline={false} />
           </Link>
           <Link href="/dashboard"
             className="font-body text-[12px] uppercase tracking-[0.08em]"
@@ -112,7 +112,7 @@ export default function PrivacyPage() {
           </p>
           <div style={{ marginTop: 20, paddingTop: 20, borderTop: "0.5px solid var(--ink-12)" }}>
             <p className="font-body" style={{ fontSize: 15, lineHeight: 1.75, color: "var(--ink-60)", margin: 0, maxWidth: 620 }}>
-              Peaq Health is a personal health intelligence platform. We handle sensitive biomarker and
+              Cnvrg Health is a personal health intelligence platform. We handle sensitive biomarker and
               lifestyle data. This policy explains exactly what we collect, how it is stored, and the
               commitments we make to you — in plain language.
             </p>
@@ -186,9 +186,9 @@ export default function PrivacyPage() {
           display: "flex", justifyContent: "space-between", alignItems: "center",
           flexWrap: "wrap", gap: 12,
         }}>
-          <LogoSvg size={36} color="var(--ink-30)" />
+          <CnvrgLogo size="sm" showTagline={false} />
           <p className="font-body" style={{ fontSize: 11, color: "var(--ink-30)", margin: 0 }}>
-            © {new Date().getFullYear()} Peaq Health, Inc. · privacy@peaqhealth.me
+            © {new Date().getFullYear()} Cnvrg Health, Inc. · privacy@peaqhealth.me
           </p>
         </div>
       </main>

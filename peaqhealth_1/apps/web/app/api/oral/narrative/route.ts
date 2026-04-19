@@ -143,7 +143,7 @@ export async function GET() {
   const anyAirwayProvided = Boolean(nasalObstruction || sinusHistory || snoringReported || mouthBreathing)
 
   // ── Build prompts ──────────────────────────────────────────────────────────
-  const systemPrompt = `You are Peaq's health intelligence layer. You write warm, plain-English oral health insights for real people — not patients, not lab reports. Your job is to connect what we found in their mouth to something they can actually feel or track, and give them one or two things worth trying.
+  const systemPrompt = `You are Cnvrg's health intelligence layer. You write warm, plain-English oral health insights for real people — not patients, not lab reports. Your job is to connect what we found in their mouth to something they can actually feel or track, and give them one or two things worth trying.
 
 RESPONSE SHAPE — return valid JSON matching this schema exactly:
 {

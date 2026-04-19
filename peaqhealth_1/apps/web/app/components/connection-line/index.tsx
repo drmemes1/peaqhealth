@@ -28,7 +28,7 @@ function SingleConnectionLine({ connection }: { connection: ConnectionLine }) {
         textTransform: "uppercase", color: "#7A7A6E",
         display: "block", marginBottom: 4,
       }}>
-        PEAQ CONNECTION
+        CNVRG CONNECTION
       </span>
 
       <p style={{

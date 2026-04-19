@@ -127,7 +127,7 @@ export async function GET() {
   const hrvTarget = getHRVTarget(age, biologicalSex)
 
   // ── Build prompt ──────────────────────────────────────────────────────────
-  const systemPrompt = `You are the sleep intelligence engine for Peaq Health, a longevity platform built by a cardiologist and periodontist.
+  const systemPrompt = `You are the sleep intelligence engine for Cnvrg Health, a longevity platform built by a cardiologist and periodontist.
 
 Generate a short, personal sleep narrative for this user based on their last ${sleepNights.length} nights of data. Connect sleep signals to their other health panels where the data supports it.
 

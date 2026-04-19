@@ -1,7 +1,7 @@
 import { WaitlistForm } from "./components/waitlist-form"
 import { LandingHero } from "./components/landing-hero"
 import { OralSnapshot } from "./components/quiz/OralSnapshot"
-import { WhyPeaq } from "./components/why-peaq"
+import { WhyCnvrg } from "./components/why-peaq"
 
 /* ─── Design tokens ───────────────────────────────────────────────────────── */
 
@@ -70,8 +70,8 @@ export default function Home() {
           {/* Logo */}
           <div className="landing-nav-logo">
             <img
-              src="/images/peaq_logo_transparent.png"
-              alt="Peaq Health"
+              src="/cnvrg-logo.png"
+              alt="Cnvrg Health"
               style={{
                 height: 75,
                 width: "auto",
@@ -119,7 +119,7 @@ export default function Home() {
                 textDecoration: "none",
               }}
             >
-              Let&rsquo;s take a Peaq
+              Let&rsquo;s take a Cnvrg
             </a>
             <a
               href="#cta"
@@ -166,7 +166,7 @@ export default function Home() {
                 "Nightly HRV \u00B7 WHOOP \u00B7 Oura",
                 "Hallmarks of aging \u00B7 L\u00F3pez-Ot\u00EDn 2023",
                 "Cross-panel signals \u00B7 What no single test shows",
-                "Peaq Resilience Index \u00B7 Three signals. One number.",
+                "Cnvrg Resilience Index \u00B7 Three signals. One number.",
               ].map(item => (
                 <span key={item} style={{
                   display: "inline-flex",
@@ -434,7 +434,7 @@ export default function Home() {
               </div>
               <img
                 src="/images/oralkit.png"
-                alt="Peaq oral swab kit"
+                alt="Cnvrg oral swab kit"
                 style={{
                   width: 80,
                   height: "auto",
@@ -608,7 +608,7 @@ export default function Home() {
                 fontFamily: serif, fontSize: 20, fontWeight: 400,
                 color: INK, margin: 0, lineHeight: 1.3,
               }}>
-                Three signals, one story — how Peaq connects your mouth, blood, and sleep.
+                Three signals, one story — how Cnvrg connects your mouth, blood, and sleep.
               </p>
             </div>
             <a href="/learn/how-peaq-works" style={{
@@ -625,9 +625,9 @@ export default function Home() {
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════
-          SECTION 4 — WHY PEAQ (dark ink, comparison table)
+          SECTION 4 — WHY CNVRG (dark ink, comparison table)
           ══════════════════════════════════════════════════════════════════ */}
-      <WhyPeaq />
+      <WhyCnvrg />
 
       {/* ══════════════════════════════════════════════════════════════════
           VISUAL CHAPTER BREAK + QUIZ
@@ -647,7 +647,7 @@ export default function Home() {
             color: ACCENT_RAW,
             margin: "0 0 16px",
           }}>
-            Let&rsquo;s take a Peaq
+            Let&rsquo;s take a Cnvrg
           </p>
           <h2 style={{
             fontFamily: serif,
@@ -850,7 +850,7 @@ export default function Home() {
             margin: "0 auto",
           }}>
             &ldquo;If we can&rsquo;t cite it, we don&rsquo;t claim it.
-            Every threshold in Peaq links back to a peer-reviewed source.&rdquo;
+            Every threshold in Cnvrg links back to a peer-reviewed source.&rdquo;
           </p>
         </div>
       </section>
@@ -930,8 +930,8 @@ export default function Home() {
         }}>
           {/* Logo — natural color */}
           <img
-            src="/images/peaq_logo_transparent.png"
-            alt="Peaq Health"
+            src="/cnvrg-logo.png"
+            alt="Cnvrg Health"
             style={{
               height: 24,
               width: "auto",

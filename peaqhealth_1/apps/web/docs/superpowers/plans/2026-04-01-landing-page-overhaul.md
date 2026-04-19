@@ -14,7 +14,7 @@
 
 | File | What changes |
 |------|-------------|
-| `app/page.tsx` | Hero right column (staggered phones), new science hook section, new "Inside the app" section, remove "What Peaq reveals", upgrade "How it works" steps |
+| `app/page.tsx` | Hero right column (staggered phones), new science hook section, new "Inside the app" section, remove "What Cnvrg reveals", upgrade "How it works" steps |
 | `app/components/landing-panels-science.tsx` | Add `stat` field to panels array + render stat chip |
 | `app/globals.css` | Phone mockup dark-mode blend override, mobile stack rule for app showcase grid |
 
@@ -45,7 +45,7 @@ It starts with:
 }}>
   <img
     src="/images/dashboard-preview.png"
-    alt="Peaq Health dashboard"
+    alt="Cnvrg Health dashboard"
     style={{
       height: "95%",
       width: "auto",
@@ -75,7 +75,7 @@ It starts with:
   <img
     className="phone-mockup"
     src="/images/preview-sleep.png"
-    alt="Peaq sleep panel"
+    alt="Cnvrg sleep panel"
     style={{
       position: "absolute",
       height: "78%",
@@ -93,7 +93,7 @@ It starts with:
   <img
     className="phone-mockup"
     src="/images/dashboard-preview.png"
-    alt="Peaq Health dashboard"
+    alt="Cnvrg Health dashboard"
     style={{
       position: "absolute",
       height: "88%",
@@ -351,19 +351,19 @@ git commit -m "feat: panel stat chips — LabCorp/Quest, WHOOP/Oura, species cou
 
 ---
 
-### Task 4: "Inside the app" section — replace "What Peaq reveals"
+### Task 4: "Inside the app" section — replace "What Cnvrg reveals"
 
 **Files:**
-- Modify: `app/page.tsx` — remove lines ~202–290 (the "What Peaq reveals" section), insert new section
+- Modify: `app/page.tsx` — remove lines ~202–290 (the "What Cnvrg reveals" section), insert new section
 
-The "What Peaq reveals" section starts at the comment:
+The "What Cnvrg reveals" section starts at the comment:
 ```tsx
       {/* ══════════════════════════════════════════════════════════════════
           SECTION 3 — CROSS-PANEL INSIGHT
 ```
 and ends at the closing `</section>` before the next `<hr style={rule} />`.
 
-- [ ] **Step 1: Remove the entire "What Peaq reveals" section from `app/page.tsx`**
+- [ ] **Step 1: Remove the entire "What Cnvrg reveals" section from `app/page.tsx`**
 
 Delete from:
 ```tsx
@@ -371,7 +371,7 @@ Delete from:
           SECTION 3 — CROSS-PANEL INSIGHT
           ══════════════════════════════════════════════════════════════════ */}
       <section style={{ ...wrap, paddingTop: 96, paddingBottom: 96 }}>
-        <p style={eyebrow}>What Peaq reveals</p>
+        <p style={eyebrow}>What Cnvrg reveals</p>
         ...
       </section>
 ```
@@ -416,7 +416,7 @@ Paste this immediately where the removed section was (before the `<hr style={rul
               <img
                 className="phone-mockup"
                 src="/images/dashboard-preview.png"
-                alt="Peaq Insights dashboard"
+                alt="Cnvrg Insights dashboard"
                 style={{
                   width: "100%",
                   maxWidth: 320,
@@ -445,7 +445,7 @@ Paste this immediately where the removed section was (before the `<hr style={rul
                 fontFamily: sans, fontSize: 14, color: INK_60,
                 lineHeight: 1.7, maxWidth: 340, margin: 0,
               }}>
-                Peaq&apos;s AI reads across your oral, blood, and sleep data to
+                Cnvrg&apos;s AI reads across your oral, blood, and sleep data to
                 surface connections no single panel can see. Every insight
                 links to the underlying science.
               </p>
@@ -456,7 +456,7 @@ Paste this immediately where the removed section was (before the `<hr style={rul
               <img
                 className="phone-mockup"
                 src="/images/preview-sleep.png"
-                alt="Peaq sleep panel"
+                alt="Cnvrg sleep panel"
                 style={{
                   width: "100%",
                   maxWidth: 320,
@@ -526,7 +526,7 @@ It looks like:
   { num: "1", title: "Order your kit",          text: "Oral microbiome swab \u2014 16S rRNA sequencing at species-level resolution. Results in 2\u20133 weeks." },
   { num: "2", title: "Upload your labs",        text: "LabCorp, Quest, or any standard bloodwork. 40+ biomarkers tracked." },
   { num: "3", title: "Connect your wearable",   text: "WHOOP or Oura. Syncs nightly. Apple Health coming soon." },
-  { num: "4", title: "Get your Peaq score",     text: "A single number \u2014 recalculated as your data updates. With the cross-panel signals that change how you understand your health." },
+  { num: "4", title: "Get your Cnvrg score",     text: "A single number \u2014 recalculated as your data updates. With the cross-panel signals that change how you understand your health." },
 ] as const).map(s => (
 ```
 
@@ -538,7 +538,7 @@ Replace the steps array with:
   { num: "1", title: "Order your kit",        text: "Oral microbiome swab \u2014 16S rRNA sequencing at species-level resolution. Results in 2\u20133 weeks.", img: "/images/oralkit.png" as string | undefined, pill: undefined as string | undefined },
   { num: "2", title: "Upload your labs",      text: "LabCorp, Quest, or any standard bloodwork. 40+ biomarkers tracked.", img: undefined, pill: undefined },
   { num: "3", title: "Connect your wearable", text: "WHOOP or Oura. Syncs nightly. Apple Health coming soon.", img: undefined, pill: undefined },
-  { num: "4", title: "Get your Peaq score",   text: "A single number \u2014 recalculated as your data updates. With the cross-panel signals that change how you understand your health.", img: undefined, pill: "Peaq score" as string | undefined },
+  { num: "4", title: "Get your Cnvrg score",   text: "A single number \u2014 recalculated as your data updates. With the cross-panel signals that change how you understand your health.", img: undefined, pill: "Cnvrg score" as string | undefined },
 ]).map(s => (
 ```
 
@@ -696,7 +696,7 @@ Open http://localhost:3000. Check:
 - Science hook: big "100%" in gold, SVG pathway with 4 nodes
 - Three panels: stat chips visible under each panel description
 - Inside the app: two phones side by side, large, with labels below
-- How it works: oral kit image on step 1 row; "Peaq score" gold pill on step 4
+- How it works: oral kit image on step 1 row; "Cnvrg score" gold pill on step 4
 
 - [ ] **Step 4: Commit**
 

@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogoSvg } from "./logo-svg";
+import CnvrgLogo from "./CnvrgLogo";
 
 interface NavProps {
   cartCount?: number;
@@ -49,8 +49,8 @@ export function Nav({ cartCount = 0, onCartOpen }: NavProps) {
          style={{ borderBottomColor: "var(--ink-12)", top: "env(safe-area-inset-top, 0px)" }}>
       <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-6">
         {/* Logo */}
-        <Link href="/dashboard">
-          <LogoSvg size={75} color="var(--ink)" />
+        <Link href="/dashboard" style={{ textDecoration: "none" }}>
+          <CnvrgLogo size="sm" showTagline={false} />
         </Link>
 
         {/* Center nav links */}

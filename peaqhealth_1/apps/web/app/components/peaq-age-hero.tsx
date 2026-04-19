@@ -20,7 +20,7 @@ const BAND_LABELS: Record<string, string> = {
   ACCELERATED: "Accelerated",
 }
 
-export interface PeaqAgeHeroProps {
+export interface CnvrgAgeHeroProps {
   peaqAge: number
   chronoAge: number
   delta: number
@@ -92,7 +92,7 @@ function Gauge({ peaqAge, chronoAge, band }: { peaqAge: number; chronoAge: numbe
         <animate attributeName="opacity" from="0" to="1" dur="0.6s" begin="0.8s" fill="freeze" />
       </text>
       <text x={cx} y={cy + 5} textAnchor="middle" fontFamily={sans} fontSize="10" fill="rgba(250,250,248,0.4)" letterSpacing="0.12em" style={{ textTransform: "uppercase" }}>
-        PEAQ AGE
+        CNVRG AGE
       </text>
       {/* Min/max labels */}
       <text x={startPos.x - 6} y={startPos.y + 4} textAnchor="end" fontFamily={sans} fontSize="9" fill="rgba(250,250,248,0.2)">18</text>
@@ -101,7 +101,7 @@ function Gauge({ peaqAge, chronoAge, band }: { peaqAge: number; chronoAge: numbe
   )
 }
 
-export function PeaqAgeHero({ peaqAge, chronoAge, delta, band, phenoAge, firstName, headline }: PeaqAgeHeroProps) {
+export function CnvrgAgeHero({ peaqAge, chronoAge, delta, band, phenoAge, firstName, headline }: CnvrgAgeHeroProps) {
   const color = BAND_COLORS[band] ?? "#fbbf24"
   const bandLabel = BAND_LABELS[band] ?? band
 

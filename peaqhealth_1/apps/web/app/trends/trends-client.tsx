@@ -705,7 +705,7 @@ function SleepPausedCard() {
         Your sleep panel is currently paused
       </div>
       <p style={{ fontFamily: font, fontSize: '13px', color: 'var(--ink-40)', lineHeight: 1.65, marginBottom: '16px' }}>
-        Sleep is the only panel that updates every night — it gives Peaq the longitudinal signal that makes your score meaningful over time. HRV, deep sleep, and sleep efficiency directly connect to your blood and oral microbiome signals.
+        Sleep is the only panel that updates every night — it gives Cnvrg the longitudinal signal that makes your score meaningful over time. HRV, deep sleep, and sleep efficiency directly connect to your blood and oral microbiome signals.
       </p>
       {[
         { connection: 'Sleep → Blood', text: 'Poor sleep architecture elevates cortisol and drives insulin resistance — measurable in your blood panel.' },

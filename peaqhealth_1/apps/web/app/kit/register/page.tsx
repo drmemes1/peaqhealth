@@ -2,7 +2,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Logo } from "../../components/logo"
+import CnvrgLogo from "../../components/CnvrgLogo"
 import { validateKitCode } from "../../../lib/kit-code"
 
 type RegistrationStatus = "idle" | "loading" | "success" | "error"
@@ -100,7 +100,7 @@ export default function KitRegisterPage() {
         padding: "20px 32px",
         borderBottom: "1px solid rgba(0,0,0,0.08)",
       }}>
-        <Logo height={26} />
+        <CnvrgLogo size="sm" showTagline={false} />
         <Link
           href="/dashboard"
           style={{

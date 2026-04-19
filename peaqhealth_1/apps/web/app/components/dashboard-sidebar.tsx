@@ -86,7 +86,7 @@ export function DashboardSidebar({ initials }: { initials: string }) {
       {/* Logo */}
       <img
         src="/images/peaq_logo_transparent.png"
-        alt="Peaq"
+        alt="Cnvrg"
         style={{
           width: 36,
           height: "auto",

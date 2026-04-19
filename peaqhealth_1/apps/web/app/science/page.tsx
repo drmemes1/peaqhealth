@@ -360,7 +360,7 @@ export default function SciencePage() {
               Apple Watch readiness scores, Oura Ring recovery indices, WHOOP strain and recovery, InsideTracker&rsquo;s InnerAge. None of these have been validated in a prospective clinical trial showing their composite score predicts hard outcomes like mortality, hospitalisation, or disease onset. They are proprietary algorithms with no published methodology.
             </p>
             <p style={{ marginBottom: 16 }}>
-              Peaq shows its work.
+              Cnvrg shows its work.
             </p>
             <p style={{ marginBottom: 16 }}>
               Every component of the Peaq Age maps directly to peer-reviewed research. We cite the study, the sample size, and the effect size. When we say hsCRP below 0.5 mg/L is associated with lower cardiovascular risk, we link to the study that shows it. When we say periodontal pathogens are found in coronary plaques, we cite <em>Frontiers in Immunology</em> 2023, n=1,791.
@@ -389,7 +389,7 @@ export default function SciencePage() {
 
         <SectionDivider />
 
-        {/* ═══ PEAQ AGE ARCHITECTURE ═══ */}
+        {/* ═══ CNVRG AGE ARCHITECTURE ═══ */}
         <FadeUp>
           <h2 style={sectionTitleStyle}>Peaq Age architecture</h2>
         </FadeUp>
@@ -410,7 +410,7 @@ export default function SciencePage() {
               { label: "Resting HR", pct: 11, color: "#4A7FB5", source: "Wearable 30-night avg", evidence: "Aune 2017, n=1.2M" },
               { label: "Sleep duration", pct: 5, color: "#4A7FB5", source: "Wearable 30-night avg", evidence: "Cappuccio 2010, n=1.3M" },
               { label: "Sleep regularity", pct: 4, color: "#4A7FB5", source: "Wearable 30-night avg", evidence: "Cribb 2023, n=88,975" },
-              { label: "Cross-panel", pct: 3, color: "#B8860B", source: "Peaq proprietary", evidence: "I1/I2/I3 interaction terms" },
+              { label: "Cross-panel", pct: 3, color: "#B8860B", source: "Cnvrg proprietary", evidence: "I1/I2/I3 interaction terms" },
             ] as const).map((b) => (
               <div key={b.label} style={{ display: "flex", alignItems: "center", marginBottom: 8, gap: 8 }}>
                 <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "var(--ink-60)", width: 160, flexShrink: 0 }}>
@@ -528,7 +528,7 @@ export default function SciencePage() {
           <div style={{ marginBottom: 32, borderRadius: 4, overflow: "hidden" }}>
             <Image
               src="/images/peaqsleep.png"
-              alt="Peaq Sleep tracking"
+              alt="Cnvrg Sleep tracking"
               width={680}
               height={400}
               style={{ width: "100%", height: "auto", display: "block" }}
@@ -549,7 +549,7 @@ export default function SciencePage() {
           title="HRV (RMSSD), age &amp; sex adjusted"
           target="Age and sex adjusted (50th percentile, male): Age 20–29: ~42–48 ms · Age 30–39: ~33–37 ms · Age 40–49: ~24–29 ms · Age 50–59: ~21–24 ms · Age 60+: ~18–19 ms. Women: ~5 ms higher in most bands below 60. Personal baseline: a sustained drop ≥20% below your 30-day average flags Watch."
           color="var(--sleep-c)"
-          body={<>Heart rate variability is not just a sleep metric. It is one of the most accessible non-invasive windows into a core hallmark of aging.<br /><br />As we age, the balance of the autonomic nervous system shifts. Sympathetic activity (fight-or-flight) increases. Parasympathetic activity (rest and digest) declines. That decline matters beyond sleep. The parasympathetic system actively suppresses systemic inflammation via the cholinergic anti-inflammatory pathway. When parasympathetic tone weakens, that brake is removed, and chronic low-grade inflammation (inflammaging) accelerates.<Cite n={31} /><br /><br />A 2024 review in Ageing Research Reviews formally proposed HRV as a biomarker of aging and inflammaging, affordable and non-invasive enough to monitor in asymptomatic individuals. This is why Peaq connects your HRV to your hsCRP. When both are abnormal, you are not seeing two separate problems. You are seeing the same hallmark measured twice.<Cite n={34} /><br /><br />Peaq scores HRV on two axes:<br /><br /><strong>Population percentile:</strong> where you stand relative to healthy peers of your age and sex, anchored in the Lifelines Cohort study (n=84,772, the largest published single-cohort RMSSD normative dataset), which generated age- and sex-specific centile curves from ECG recordings.<Cite n={32} /><br /><br /><strong>Personal trend:</strong> whether your HRV is rising or falling relative to your own 30-day rolling baseline. A sustained drop of ≥20% below your personal average flags Watch regardless of your population percentile, because acute autonomic stress shows up in personal trend before it shifts your population percentile.<Cite n={33} /><br /><br />Your final HRV status is the more conservative of the two.</>}
+          body={<>Heart rate variability is not just a sleep metric. It is one of the most accessible non-invasive windows into a core hallmark of aging.<br /><br />As we age, the balance of the autonomic nervous system shifts. Sympathetic activity (fight-or-flight) increases. Parasympathetic activity (rest and digest) declines. That decline matters beyond sleep. The parasympathetic system actively suppresses systemic inflammation via the cholinergic anti-inflammatory pathway. When parasympathetic tone weakens, that brake is removed, and chronic low-grade inflammation (inflammaging) accelerates.<Cite n={31} /><br /><br />A 2024 review in Ageing Research Reviews formally proposed HRV as a biomarker of aging and inflammaging, affordable and non-invasive enough to monitor in asymptomatic individuals. This is why Cnvrg connects your HRV to your hsCRP. When both are abnormal, you are not seeing two separate problems. You are seeing the same hallmark measured twice.<Cite n={34} /><br /><br />Cnvrg scores HRV on two axes:<br /><br /><strong>Population percentile:</strong> where you stand relative to healthy peers of your age and sex, anchored in the Lifelines Cohort study (n=84,772, the largest published single-cohort RMSSD normative dataset), which generated age- and sex-specific centile curves from ECG recordings.<Cite n={32} /><br /><br /><strong>Personal trend:</strong> whether your HRV is rising or falling relative to your own 30-day rolling baseline. A sustained drop of ≥20% below your personal average flags Watch regardless of your population percentile, because acute autonomic stress shows up in personal trend before it shifts your population percentile.<Cite n={33} /><br /><br />Your final HRV status is the more conservative of the two.</>}
           evidence="Olivieri F et al., Ageing Res Rev 2024. Tegegne BS et al., Eur J Prev Cardiol 2020 (n=84,772). Brozat et al., J Cardiovasc Dev Dis 2025. López-Otín C et al., Cell 2023."
         />
         <Marker
@@ -702,7 +702,7 @@ export default function SciencePage() {
           <div style={{ marginBottom: 32, borderRadius: 4, overflow: "hidden" }}>
             <Image
               src="/images/oralkit.png"
-              alt="Peaq oral microbiome kit"
+              alt="Cnvrg oral microbiome kit"
               width={680}
               height={400}
               style={{ width: "100%", height: "auto", display: "block" }}
@@ -788,7 +788,7 @@ export default function SciencePage() {
           title="OSA-associated taxa"
           target="<1% of reads"
           color="var(--oral-c)"
-          body={<>Prevotella and Fusobacterium species are enriched in patients with obstructive sleep apnea. OSA patients are 2.46&times; more likely to have periodontitis across meta-analyses covering 88,000+ patients. The mechanism: intermittent hypoxia from OSA drives oxidative stress that accelerates periodontal tissue breakdown, while periodontal inflammation elevates systemic CRP, disrupting sleep architecture. Peaq tracks these taxa as a signal that the oral-inflammatory-sleep pathway may be active.<Cite n={18} /><Cite n={19} /></>}
+          body={<>Prevotella and Fusobacterium species are enriched in patients with obstructive sleep apnea. OSA patients are 2.46&times; more likely to have periodontitis across meta-analyses covering 88,000+ patients. The mechanism: intermittent hypoxia from OSA drives oxidative stress that accelerates periodontal tissue breakdown, while periodontal inflammation elevates systemic CRP, disrupting sleep architecture. Cnvrg tracks these taxa as a signal that the oral-inflammatory-sleep pathway may be active.<Cite n={18} /><Cite n={19} /></>}
           evidence="Portelli et al., Dentistry Journal 2024, n=88,040. Zhu et al., Sleep and Breathing 2023, n=31,800. Mi et al., BMC Oral Health 2023 (Mendelian randomization)."
         />
 
@@ -998,7 +998,7 @@ export default function SciencePage() {
 
         {/* ═══ WHAT WE DON'T CLAIM ═══ */}
         <FadeUp>
-          <h2 style={sectionTitleStyle}>What Peaq does not claim</h2>
+          <h2 style={sectionTitleStyle}>What Cnvrg does not claim</h2>
         </FadeUp>
 
         <FadeUp delay={60}>
@@ -1029,7 +1029,7 @@ export default function SciencePage() {
         <FadeUp delay={120}>
           <div style={bodyTextStyle}>
             <p style={{ marginBottom: 16 }}>
-              Peaq is a tracking tool for people who want to understand their health beyond what standard annual checkups show. It uses the same evidence base your doctor uses, made readable for daily life.
+              Cnvrg is a tracking tool for people who want to understand their health beyond what standard annual checkups show. It uses the same evidence base your doctor uses, made readable for daily life.
             </p>
             <p>
               We do not claim more than the evidence supports. Sources are always visible. The score engine updates as the science does.
@@ -1085,7 +1085,7 @@ export default function SciencePage() {
               margin: "0 auto",
             }}
           >
-            Peaq Health is not a medical device. The Peaq Age is for informational purposes only and does not constitute medical advice, diagnosis, or treatment. Always consult a licensed healthcare provider regarding your health. Score engine version 8.1 &middot; Last updated March 2026.
+            Cnvrg Health is not a medical device. The Peaq Age is for informational purposes only and does not constitute medical advice, diagnosis, or treatment. Always consult a licensed healthcare provider regarding your health. Score engine version 8.1 &middot; Last updated March 2026.
           </p>
         </FadeUp>
       </main>

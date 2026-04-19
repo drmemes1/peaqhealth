@@ -27,7 +27,7 @@ const ROWS: Row[] = [
 ]
 
 const COLUMNS: { full: string; short: string; sub: string }[] = [
-  { full: "Peaq",          short: "Peaq",     sub: "All three, connected" },
+  { full: "Cnvrg",          short: "Cnvrg",     sub: "All three, connected" },
   { full: "Blood testing", short: "Blood",    sub: "Labs & biomarkers"    },
   { full: "Wearables",     short: "Wearable", sub: "Oura, WHOOP, Apple"   },
   { full: "Oral tests",    short: "Oral",     sub: "Microbiome kits"      },
@@ -81,13 +81,13 @@ function useInView<T extends HTMLElement>() {
   return { ref, inView }
 }
 
-// ── Peaq column shared styles ───────────────────────────────────────────────
-const PEAQ_COL_BG    = "rgba(45,106,79,0.15)"
-const PEAQ_BORDER_L  = "1px solid rgba(184,134,11,0.25)"
-const PEAQ_BORDER_R  = "1px solid rgba(184,134,11,0.25)"
+// ── Cnvrg column shared styles ───────────────────────────────────────────────
+const CNVRG_COL_BG    = "rgba(45,106,79,0.15)"
+const CNVRG_BORDER_L  = "1px solid rgba(184,134,11,0.25)"
+const CNVRG_BORDER_R  = "1px solid rgba(184,134,11,0.25)"
 
 // ── Main component ──────────────────────────────────────────────────────────
-export function WhyPeaq() {
+export function WhyCnvrg() {
   const { ref, inView } = useInView<HTMLDivElement>()
   const [hoveredRow, setHoveredRow] = useState<number | null>(null)
 
@@ -146,7 +146,7 @@ export function WhyPeaq() {
               transition: "opacity 700ms ease",
             }}
           >
-            Why Peaq
+            Why Cnvrg
           </p>
           <h2
             className="wp-headline"
@@ -176,7 +176,7 @@ export function WhyPeaq() {
               transition: "opacity 900ms ease 180ms",
             }}
           >
-            Most platforms give you one signal. Peaq connects three.
+            Most platforms give you one signal. Cnvrg connects three.
           </p>
         </div>
 
@@ -201,7 +201,7 @@ export function WhyPeaq() {
                 {/* Col 1: empty */}
                 <th style={{ padding: "20px 12px", ...rowAnim(0) }} />
 
-                {/* Col 2: Peaq pill header */}
+                {/* Col 2: Cnvrg pill header */}
                 <th style={{
                   padding: "20px 12px 18px",
                   textAlign: "center",
@@ -209,16 +209,16 @@ export function WhyPeaq() {
                   background: ORAL_GREEN,
                   borderTopLeftRadius: 6,
                   borderTopRightRadius: 6,
-                  borderLeft: PEAQ_BORDER_L,
-                  borderRight: PEAQ_BORDER_R,
+                  borderLeft: CNVRG_BORDER_L,
+                  borderRight: CNVRG_BORDER_R,
                   borderTop: `1px solid rgba(184,134,11,0.25)`,
                   ...rowAnim(0),
                 }}>
                   <span className="wp-full" style={{ fontFamily: FONT_BODY, fontSize: 12, fontWeight: 500, letterSpacing: "0.16em", textTransform: "uppercase", color: OFF_WHITE }}>
-                    Peaq
+                    Cnvrg
                   </span>
                   <span className="wp-short" style={{ fontFamily: FONT_BODY, fontSize: 11, fontWeight: 500, letterSpacing: "0.14em", textTransform: "uppercase", color: OFF_WHITE }}>
-                    Peaq
+                    Cnvrg
                   </span>
                   <p className="wp-sub" style={{ fontFamily: FONT_BODY, fontSize: 10, color: "rgba(250,250,248,0.78)", margin: "5px 0 0", fontStyle: "italic", letterSpacing: "0.01em" }}>
                     All three, connected
@@ -286,7 +286,7 @@ export function WhyPeaq() {
 
                     {/* Data cells */}
                     {row.cells.map((cell, cIdx) => {
-                      const isPeaq = cIdx === 0
+                      const isCnvrg = cIdx === 0
                       return (
                         <td
                           key={cIdx}
@@ -294,9 +294,9 @@ export function WhyPeaq() {
                             padding: "20px 12px",
                             textAlign: "center",
                             verticalAlign: "middle",
-                            background: isPeaq ? PEAQ_COL_BG : (hovered ? bg : "transparent"),
-                            borderLeft: isPeaq ? PEAQ_BORDER_L : "none",
-                            borderRight: isPeaq ? PEAQ_BORDER_R : "none",
+                            background: isCnvrg ? CNVRG_COL_BG : (hovered ? bg : "transparent"),
+                            borderLeft: isCnvrg ? CNVRG_BORDER_L : "none",
+                            borderRight: isCnvrg ? CNVRG_BORDER_R : "none",
                             ...rowAnim(rowIdx),
                           }}
                         >
@@ -374,7 +374,7 @@ export function WhyPeaq() {
               e.currentTarget.style.borderBottomColor = "rgba(184,134,11,0)"
             }}
           >
-            See your full Peaqture →
+            See your full Cnvrgture →
           </Link>
         </div>
       </div>

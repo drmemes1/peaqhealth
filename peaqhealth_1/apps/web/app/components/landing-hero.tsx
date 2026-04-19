@@ -117,7 +117,7 @@ export function LandingHero() {
 
         {/* Secondary */}
         <p className="fade-up hero-secondary" style={{ animationDelay: "200ms" }}>
-          Most platforms hear one signal. Peaq listens to three.
+          Most platforms hear one signal. Cnvrg listens to three.
         </p>
 
         {/* Body */}
@@ -130,7 +130,7 @@ export function LandingHero() {
         {/* CTAs */}
         <div className="fade-up hero-ctas" style={{ animationDelay: "400ms" }}>
           <a href="#quiz" className="hero-cta-primary">
-            Let&rsquo;s take a Peaq
+            Let&rsquo;s take a Cnvrg
           </a>
           <a href="#cta" className="hero-cta-secondary">
             Join waitlist &rarr;
@@ -144,7 +144,7 @@ export function LandingHero() {
 
         {/* No-wearable explainer — only visible in off state */}
         <p className="hero-no-wearable-note">
-          Peaq works with or without a wearable. Sleep and HRV data adds a powerful
+          Cnvrg works with or without a wearable. Sleep and HRV data adds a powerful
           third signal, but your oral and blood panels tell a complete story on their own.
         </p>
       </div>

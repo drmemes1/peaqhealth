@@ -27,7 +27,7 @@ export function IOSInstallBanner() {
       boxShadow: "0 4px 24px rgba(0,0,0,0.2)",
     }}>
       <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 4 }}>
-        Add Peaq to your home screen
+        Add Cnvrg to your home screen
       </div>
       <div style={{ fontSize: 12, opacity: 0.7, lineHeight: 1.6 }}>
         Tap the share icon below, then &quot;Add to Home Screen&quot; for the full app experience.
