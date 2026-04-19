@@ -645,5 +645,135 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  if (action === "reparse") {
+    const kitId = body.kit_id as string
+    const targetUserId = body.user_id as string
+    if (!kitId || !targetUserId) return NextResponse.json({ error: "Missing kit_id or user_id" }, { status: 400 })
+
+    const supabase = svc()
+    const steps: string[] = []
+
+    try {
+      const { data: kitRow, error: readErr } = await supabase
+        .from("oral_kit_orders")
+        .select("raw_otu_table, shannon_diversity, rarefaction_curve")
+        .eq("id", kitId)
+        .single()
+      if (readErr || !kitRow) throw new Error(`Load kit failed: ${readErr?.message}`)
+
+      const rawOtu = kitRow.raw_otu_table as Record<string, unknown> | null
+      const meta = (rawOtu as Record<string, unknown>)?.__meta as Record<string, unknown> | undefined
+      const entries = (meta?.entries ?? []) as Array<{ genus: string; species: string | null; pct: number; is_named: boolean; is_placeholder: boolean }>
+      if (entries.length === 0) throw new Error("No __meta.entries in raw_otu_table — needs full re-upload")
+      steps.push(`Found ${entries.length} entries in raw_otu_table.__meta.entries`)
+
+      // Re-run column mapping with current (fixed) parser rules
+      const genusSums: Record<string, number> = {}
+      const speciesSums: Record<string, number> = {}
+      let sSalivariusTotal = 0
+      let strepTotal = 0
+      let prevotellaCommensalTotal = 0
+
+      for (const entry of entries) {
+        if (!entry.is_named) continue
+        const genusLower = entry.genus.toLowerCase()
+        const speciesLower = entry.species?.toLowerCase() ?? ""
+
+        if (SPECIES_COLUMNS[`${entry.genus.toLowerCase()} ${speciesLower}`]) {
+          const col = SPECIES_COLUMNS[`${entry.genus.toLowerCase()} ${speciesLower}`]
+          speciesSums[col] = (speciesSums[col] ?? 0) + entry.pct
+        } else if (genusLower === "streptococcus" && (speciesLower.includes("salivarius") || speciesLower.includes("vestibularis"))) {
+          sSalivariusTotal += entry.pct
+        } else if (genusLower === "prevotella") {
+          if (speciesLower.includes("intermedia")) {
+            speciesSums["prevotella_intermedia_pct"] = (speciesSums["prevotella_intermedia_pct"] ?? 0) + entry.pct
+          } else {
+            prevotellaCommensalTotal += entry.pct
+          }
+        } else if (GENUS_COLUMNS[genusLower]) {
+          const col = GENUS_COLUMNS[genusLower]
+          genusSums[col] = (genusSums[col] ?? 0) + entry.pct
+        }
+
+        if (genusLower === "streptococcus") strepTotal += entry.pct
+      }
+
+      const ALL_TRACKED = [
+        ...Object.values(GENUS_COLUMNS), ...Object.values(SPECIES_COLUMNS),
+        "s_salivarius_pct", "streptococcus_total_pct", "prevotella_commensal_pct",
+      ]
+      const columnValues: Record<string, number> = {}
+      for (const col of ALL_TRACKED) columnValues[col] = 0
+      for (const [col, val] of Object.entries(genusSums)) columnValues[col] = parseFloat(val.toFixed(4))
+      for (const [col, val] of Object.entries(speciesSums)) columnValues[col] = parseFloat(val.toFixed(4))
+      columnValues["s_salivarius_pct"] = parseFloat(sSalivariusTotal.toFixed(4))
+      columnValues["streptococcus_total_pct"] = parseFloat(strepTotal.toFixed(4))
+      columnValues["prevotella_commensal_pct"] = parseFloat(prevotellaCommensalTotal.toFixed(4))
+
+      const { error: writeErr } = await supabase
+        .from("oral_kit_orders")
+        .update(columnValues)
+        .eq("id", kitId)
+      if (writeErr) throw new Error(`Write columns failed: ${writeErr.message}`)
+      steps.push(`Wrote ${Object.keys(columnValues).length} columns (s_salivarius=${sSalivariusTotal.toFixed(2)}, lactobacillus=${columnValues["lactobacillus_pct"]})`)
+
+      // Re-read and run full pipeline (tier + env + scores)
+      const { data: updated } = await supabase.from("oral_kit_orders").select("*").eq("id", kitId).single()
+      if (!updated) throw new Error("Failed to reload after column write")
+
+      const { data: lifestyle } = await supabase
+        .from("lifestyle_records").select("*")
+        .eq("user_id", targetUserId).order("updated_at", { ascending: false }).limit(1).maybeSingle()
+
+      const tierResult = computeInterpretabilityTier(updated)
+      await supabase.from("oral_kit_orders").update({
+        interpretability_tier: tierResult.tier, compliance_flags: tierResult.flags, protocol_compliant: tierResult.protocol_compliant,
+      }).eq("id", kitId)
+      steps.push(`Tier: ${tierResult.tier} (flags: ${tierResult.flags.join(", ") || "none"})`)
+
+      let envPattern: string | null = null
+      let primaryPattern: string | null = null
+
+      if (tierResult.tier !== "deferred") {
+        const envIndex = computeOralEnvironmentIndex(updated, lifestyle)
+        const diffScores = computeDifferentialScores(updated, envIndex, lifestyle, null)
+        envPattern = envIndex.env_pattern
+        primaryPattern = diffScores.primary_pattern
+
+        const { error: envErr } = await supabase.from("oral_kit_orders").update({
+          env_acid_ratio: envIndex.env_acid_ratio, env_acid_total_pct: envIndex.env_acid_total_pct,
+          env_base_total_pct: envIndex.env_base_total_pct, env_aerobic_score_pct: envIndex.env_aerobic_score_pct,
+          env_anaerobic_load_pct: envIndex.env_anaerobic_load_pct, env_aerobic_anaerobic_ratio: envIndex.env_aerobic_anaerobic_ratio,
+          env_pattern: envIndex.env_pattern, env_pattern_confidence: envIndex.env_pattern_confidence,
+          env_peroxide_flag: envIndex.env_peroxide_flag, env_dietary_nitrate_flag: envIndex.env_dietary_nitrate_flag,
+          score_osa: diffScores.score_osa, score_uars: diffScores.score_uars,
+          score_mouth_breathing: diffScores.score_mouth_breathing, score_periodontal_activity: diffScores.score_periodontal_activity,
+          score_bruxism: diffScores.score_bruxism, score_caries_risk: diffScores.score_caries_risk,
+          primary_pattern: diffScores.primary_pattern, secondary_pattern: diffScores.secondary_pattern,
+          no_wearable_caveat: diffScores.no_wearable_caveat,
+        }).eq("id", kitId)
+        if (envErr) throw new Error(`Env write failed: ${envErr.message}`)
+        steps.push(`Env: ${envPattern} (${envIndex.env_pattern_confidence}). Primary: ${primaryPattern}, Secondary: ${diffScores.secondary_pattern}`)
+        steps.push(`Scores — perio: ${diffScores.score_periodontal_activity}, mb: ${diffScores.score_mouth_breathing}, osa: ${diffScores.score_osa}, caries: ${diffScores.score_caries_risk}`)
+      }
+
+      const newScore = await recalculateScore(targetUserId, supabase)
+      steps.push(`Total score: ${newScore}`)
+
+      await supabase.from("oral_kit_orders").update({ status: "results_ready" }).eq("id", kitId)
+
+      return NextResponse.json({
+        success: true, steps,
+        summary: { interpretabilityTier: tierResult.tier, envPattern, primaryPattern, totalScore: newScore,
+          s_salivarius: sSalivariusTotal.toFixed(4), lactobacillus: columnValues["lactobacillus_pct"].toFixed(4),
+          prevotella_commensal: prevotellaCommensalTotal.toFixed(4) },
+      })
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      console.error("[oral-upload] reparse failed:", msg)
+      return NextResponse.json({ success: false, error: msg, steps }, { status: 500 })
+    }
+  }
+
   return NextResponse.json({ error: "Unknown action" }, { status: 400 })
 }
