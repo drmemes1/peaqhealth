@@ -430,6 +430,26 @@ Before any copy ships that touches health data:
 
 ---
 
+## Intake Questions Exception
+
+When asking users about their medical history in questionnaires, clinical
+vocabulary is acceptable. "Have you been told by a doctor you have X?" or
+"Has a doctor diagnosed you with X?" is fine — we are capturing their
+reported history, not making a claim. This differs from surfacing "X" in
+results copy, which remains banned.
+
+---
+
+## Programmatic Enforcement
+
+As of April 2026, `apps/web/lib/tone-guard.ts` checks surface files for
+forbidden phrases at test time. Adding a banned phrase to user-facing
+copy will fail CI. To add a new banned phrase, update
+`FORBIDDEN_SURFACE_PHRASES` and add any affected files to the
+`SURFACE_FILES` array in the test.
+
+---
+
 ## Changelog
 
 | Version | Date | Change |

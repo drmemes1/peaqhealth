@@ -271,7 +271,7 @@ Language: "Population research has consistently found associations between short
 2. HRV ↔ sleep architecture (tier 1 only)
 HRV reflects parasympathetic tone, restored during slow-wave sleep. Fragmented sleep, short deep sleep, and high WASO suppress HRV.
 Fire when: HRV below age reference AND deep_sleep <45min OR sleep_efficiency <85%
-Attribute to TSH first if TSH is abnormal — thyroid takes precedence.
+Attribute to TSH first if TSH is outside the typical range — thyroid takes precedence.
 
 3. TSH / thyroid ↔ HRV (priority attribution)
 Suppressed TSH with elevated FT4 directly suppresses HRV through adrenergic tone.
