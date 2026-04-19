@@ -283,33 +283,6 @@ function flag(good: boolean, ok: boolean): Flag {
 }
 
 // ─── Descriptor helpers for emerging-research dimensions ────────────────────
-// ─── Wellness-framed narrative (no disease language) ─────────────────────────
-
-function generateOralNarrative(periodontalBurden: number, nitrateReducerPct: number, shannonDiversity: number): string {
-  const issues: string[] = []
-  const positives: string[] = []
-
-  // periodontalBurden and nitrateReducerPct are in OTU scale (percentage for mock data)
-  if (periodontalBurden > 2)     issues.push("elevated periodontal bacteria")
-  if (nitrateReducerPct < 10)    issues.push("low nitrate-reducing bacteria")
-  if (shannonDiversity < 2.5)    issues.push("reduced microbiome diversity")
-  if (nitrateReducerPct >= 15)   positives.push("good nitrate-reducing bacteria")
-  if (shannonDiversity >= 3.0)   positives.push("healthy microbiome diversity")
-
-  if (issues.length === 0) {
-    const positiveText = positives.length > 0
-      ? ` Notably, your ${positives.join(" and ")} are supporting systemic health.`
-      : ""
-    return `Your oral microbiome is in good balance.${positiveText}`
-  }
-
-  const issueText = issues.join(" and ")
-  const positiveText = positives.length > 0
-    ? ` Your ${positives.join(" and ")} ${positives.length > 1 ? "are" : "is"} a positive sign.`
-    : ""
-  return `Your oral microbiome shows ${issueText} — worth keeping an eye on and discussing with your dentist at your next visit.${positiveText}`
-}
-
 // ─── Metric card ─────────────────────────────────────────────────────────────
 
 function MetricCard({ label, sub, value, unit, color, status, statusLabel, zoneKey, numericValue }: {
@@ -637,10 +610,10 @@ export function OralPanelClient({ oral, snapshot, connectionInput }: Props) {
           </div>
         ) : (
           <p style={{
-            fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: 17,
-            color: "var(--ink-65)", lineHeight: 1.55, margin: "0 0 24px",
+            fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: 15,
+            color: "var(--ink-30)", lineHeight: 1.55, margin: "0 0 24px",
           }}>
-            {generateOralNarrative(periodontalPct, nitratePct, shannon)}
+            Your personalised narrative is being prepared.
           </p>
         )}
 
