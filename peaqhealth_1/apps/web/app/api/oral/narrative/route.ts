@@ -491,7 +491,9 @@ This reflects patterns in your oral microbiome data alongside any connected pane
 
 // ── Route handler ───────────────────────────────────────────────────────────
 
-export async function GET() {
+export async function GET(request: Request) {
+  const refreshForced = new URL(request.url).searchParams.get("refresh") === "true"
+
   const sessionClient = await createClient()
   const { data: { user } } = await sessionClient.auth.getUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -515,7 +517,8 @@ export async function GET() {
       env_acid_ratio, env_aerobic_score_pct, env_anaerobic_load_pct, env_aerobic_anaerobic_ratio,
       env_pattern, env_pattern_confidence,
       score_osa, score_uars, score_mouth_breathing, score_periodontal_activity,
-      score_bruxism, score_caries_risk, primary_pattern, secondary_pattern
+      score_bruxism, score_caries_risk, primary_pattern, secondary_pattern,
+      raw_otu_table, oral_score_snapshot
     `)
     .eq("user_id", userId)
     .not("shannon_diversity", "is", null)
@@ -541,7 +544,7 @@ export async function GET() {
     ? (Date.now() - new Date(cached.generated_at as string).getTime()) / 86400000
     : Infinity
 
-  if (cached && cacheAgeDays < 7) {
+  if (cached && cacheAgeDays < 7 && !refreshForced) {
     console.log(`[oral-narrative] cache hit user=${userId.slice(0, 8)} v=${PROMPT_VERSION} age=${cacheAgeDays.toFixed(1)}d`)
     return NextResponse.json({ narrative: cached, cached: true })
   }
@@ -625,17 +628,31 @@ export async function GET() {
 
   // ── Build sleep questionnaire from lifestyle ──────────────────────────────
   const ls = lifestyleRes.data as Record<string, unknown> | null
-  const hasQuestionnaire = ls != null && (ls.non_restorative_sleep != null || ls.snoring_reported != null || ls.daytime_fatigue != null)
+  const hasQuestionnaire = ls != null && (ls.non_restorative_sleep != null || ls.snoring_reported != null || ls.daytime_fatigue != null || ls.sleep_duration != null)
 
   let questionnaireBlock: Record<string, unknown> | null = null
   if (hasQuestionnaire && ls) {
     const sleepDur = ls.sleep_duration as string | null
     const weekdayHrs = sleepDur === "lt6" ? 5.5 : sleepDur === "6to7" ? 6.5 : sleepDur === "7to8" ? 7.5 : sleepDur === "gt8" ? 8.5 : null
 
+    // Derive social jet lag from wearable timing if available (weekend vs weekday midpoint shift)
+    let socialJetLag: number | null = null
+    if (nights.length >= 7) {
+      const dayOfWeek = (d: string) => new Date(d + "T12:00:00").getDay()
+      const weekdayNights = nights.filter(x => { const dow = dayOfWeek((x as unknown as { date: string }).date); return dow >= 1 && dow <= 5 })
+      const weekendNights = nights.filter(x => { const dow = dayOfWeek((x as unknown as { date: string }).date); return dow === 0 || dow === 6 })
+      const avgMin = (arr: Night[]) => arr.length ? arr.reduce((s, x) => s + x.total_sleep_minutes, 0) / arr.length : null
+      const wdMin = avgMin(weekdayNights)
+      const weMin = avgMin(weekendNights)
+      if (wdMin != null && weMin != null) {
+        socialJetLag = parseFloat((Math.abs(weMin - wdMin) / 60).toFixed(1))
+      }
+    }
+
     questionnaireBlock = {
       weekday_sleep_hours: weekdayHrs,
       weekend_sleep_hours: null,
-      social_jet_lag_hours: null,
+      social_jet_lag_hours: socialJetLag,
       sleep_latency_band: ls.sleep_latency ?? null,
       night_waking_freq: ls.night_wakings ?? null,
       non_restorative_sleep_freq: ls.non_restorative_sleep ?? null,
@@ -655,24 +672,39 @@ export async function GET() {
     : "tier_3"
 
   // ── Build oral data JSON ──────────────────────────────────────────────────
-  const neisseria = n(kit.neisseria_pct)
-  const haemophilus = n(kit.haemophilus_pct)
-  const rothia = n(kit.rothia_pct)
-  const actinomyces = n(kit.actinomyces_pct)
-  const veillonella = n(kit.veillonella_pct)
-  const porphyromonas = n(kit.porphyromonas_pct)
-  const tannerella = n(kit.tannerella_pct)
-  const treponema = n(kit.treponema_pct)
-  const fusobacterium = n(kit.fusobacterium_pct)
-  const aggregatibacter = n(kit.aggregatibacter_pct)
-  const campylobacter = n(kit.campylobacter_pct)
-  const prev_intermedia = n(kit.prevotella_intermedia_pct)
-  const s_mutans = n(kit.s_mutans_pct)
-  const s_sobrinus = n(kit.s_sobrinus_pct)
-  const scardovia = n(kit.scardovia_pct)
-  const lactobacillus = n(kit.lactobacillus_pct)
-  const s_sanguinis = n(kit.s_sanguinis_pct)
-  const s_gordonii = n(kit.s_gordonii_pct)
+  // Fall back to raw_otu_table (genus-level sums) when L7 species columns are NULL
+  const otu = (kit.raw_otu_table ?? {}) as Record<string, number>
+  const snap = (kit.oral_score_snapshot ?? {}) as Record<string, unknown>
+
+  const genusPct = (genus: string): number | null => {
+    const total = Object.entries(otu)
+      .filter(([k]) => k.startsWith(genus))
+      .reduce((sum, [, v]) => sum + (Number(v) || 0), 0)
+    return total > 0 ? parseFloat((total * 100).toFixed(3)) : null
+  }
+  const speciesPct = (name: string): number | null => {
+    const v = otu[name]
+    return v != null && v > 0 ? parseFloat((Number(v) * 100).toFixed(3)) : null
+  }
+
+  const neisseria = n(kit.neisseria_pct) ?? genusPct("Neisseria")
+  const haemophilus = n(kit.haemophilus_pct) ?? genusPct("Haemophilus")
+  const rothia = n(kit.rothia_pct) ?? genusPct("Rothia")
+  const actinomyces = n(kit.actinomyces_pct) ?? genusPct("Actinomyces")
+  const veillonella = n(kit.veillonella_pct) ?? genusPct("Veillonella")
+  const porphyromonas = n(kit.porphyromonas_pct) ?? speciesPct("Porphyromonas gingivalis") ?? genusPct("Porphyromonas")
+  const tannerella = n(kit.tannerella_pct) ?? speciesPct("Tannerella forsythia") ?? genusPct("Tannerella")
+  const treponema = n(kit.treponema_pct) ?? speciesPct("Treponema denticola") ?? genusPct("Treponema")
+  const fusobacterium = n(kit.fusobacterium_pct) ?? genusPct("Fusobacterium")
+  const aggregatibacter = n(kit.aggregatibacter_pct) ?? genusPct("Aggregatibacter")
+  const campylobacter = n(kit.campylobacter_pct) ?? genusPct("Campylobacter")
+  const prev_intermedia = n(kit.prevotella_intermedia_pct) ?? speciesPct("Prevotella intermedia")
+  const s_mutans = n(kit.s_mutans_pct) ?? speciesPct("Streptococcus mutans")
+  const s_sobrinus = n(kit.s_sobrinus_pct) ?? speciesPct("Streptococcus sobrinus")
+  const scardovia = n(kit.scardovia_pct) ?? genusPct("Scardovia")
+  const lactobacillus = n(kit.lactobacillus_pct) ?? genusPct("Lactobacillus")
+  const s_sanguinis = n(kit.s_sanguinis_pct) ?? speciesPct("Streptococcus sanguinis")
+  const s_gordonii = n(kit.s_gordonii_pct) ?? speciesPct("Streptococcus gordonii")
 
   const acidRatioVal = n(kit.env_acid_ratio)
   const aerobicScore = n(kit.env_aerobic_score_pct)
@@ -708,9 +740,13 @@ export async function GET() {
       gum_orange_complex: { fusobacterium_pct: fusobacterium, aggregatibacter_pct: aggregatibacter, campylobacter_pct: campylobacter, prevotella_intermedia_pct: prev_intermedia, combined_pct: (fusobacterium ?? 0) + (aggregatibacter ?? 0) + (campylobacter ?? 0) + (prev_intermedia ?? 0) },
       caries_risk: { s_mutans_pct: s_mutans, s_sobrinus_pct: s_sobrinus, scardovia_pct: scardovia, lactobacillus_pct: lactobacillus, combined_pct: (s_mutans ?? 0) + (s_sobrinus ?? 0) + (scardovia ?? 0) + (lactobacillus ?? 0) },
       caries_protective: { s_sanguinis_pct: s_sanguinis, s_gordonii_pct: s_gordonii, combined_pct: (s_sanguinis ?? 0) + (s_gordonii ?? 0) },
-      streptococcus_genus_pct: n(kit.streptococcus_total_pct),
-      s_salivarius_pct: n(kit.s_salivarius_pct),
-      prevotella_commensal_pct: n(kit.prevotella_commensal_pct),
+      streptococcus_genus_pct: n(kit.streptococcus_total_pct) ?? genusPct("Streptococcus"),
+      s_salivarius_pct: n(kit.s_salivarius_pct) ?? speciesPct("Streptococcus salivarius"),
+      prevotella_commensal_pct: n(kit.prevotella_commensal_pct) ?? (() => {
+        const total = genusPct("Prevotella")
+        const intermedia = speciesPct("Prevotella intermedia")
+        return total != null ? parseFloat(((total ?? 0) - (intermedia ?? 0)).toFixed(3)) : null
+      })(),
       environment_index: {
         acid_ratio: acidRatioVal,
         acid_label: acidLabel,
@@ -790,6 +826,17 @@ Return ONLY valid JSON (no markdown, no backticks, no preamble) with this exact 
   "positive_signal": "One sentence: the single strongest positive finding across all panels",
   "watch_signal": "One sentence: the single most important thing worth watching"
 }`
+
+  console.log(`[oral-narrative] v5 payload user=${userId.slice(0, 8)} tier=${sleepTier}`, JSON.stringify({
+    oral_species_source: neisseria != null ? "L7_columns_or_otu" : "all_null",
+    sleep_tier: sleepTier,
+    has_wearable: hasWearable,
+    has_questionnaire: hasQuestionnaire,
+    social_jet_lag: questionnaireBlock?.social_jet_lag_hours ?? null,
+    blood_present: !!labRes.data,
+    env_pattern: kit.env_pattern,
+    primary_pattern: kit.primary_pattern,
+  }))
 
   // ── Call OpenAI ────────────────────────────────────────────────────────────
   const openaiKey = process.env.OPENAI_API_KEY
