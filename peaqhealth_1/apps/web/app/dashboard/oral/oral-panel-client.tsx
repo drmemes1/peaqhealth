@@ -218,7 +218,7 @@ type Flag = "optimal" | "watch" | "attention" | "pending"
 function SpeciesRow({ name, role, val, target, isPathogen, note, learnWhat, learnWhy, learnCitation, flagFn }: {
   name: string
   role: string
-  val: number
+  val: number | null
   target: string
   isPathogen: boolean
   note: string
@@ -228,8 +228,8 @@ function SpeciesRow({ name, role, val, target, isPathogen, note, learnWhat, lear
   flagFn: (v: number) => Flag
 }) {
   const [expanded, setExpanded] = useState(false)
-  const flag = flagFn(val)
-  const pct = val.toFixed(2)
+  const flag = val != null ? flagFn(val) : "pending" as Flag
+  const pct = val != null ? val.toFixed(2) : "—"
 
   const flagStyle: Record<Flag, { bg: string; color: string; label: string }> = {
     optimal:   { bg: "#EAF3DE", color: "#3B6D11", label: isPathogen ? "Low — Good" : "Optimal" },
@@ -251,7 +251,7 @@ function SpeciesRow({ name, role, val, target, isPathogen, note, learnWhat, lear
           <p style={{ margin: "1px 0 0 14px", fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-60)" }}>{role}</p>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-          <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink)" }}>{pct}%</span>
+          <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: val != null ? "var(--ink)" : "var(--ink-30)" }}>{val != null ? `${pct}%` : "—"}</span>
           <span style={{ fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "2px 7px", background: fs.bg, color: fs.color }}>
             {fs.label}
           </span>
@@ -291,13 +291,13 @@ function MetricCard({ label, sub, value, unit, color, status, statusLabel, zoneK
   value: string | number
   unit: string
   color: string
-  status: "optimal" | "watch" | "attention"
+  status: "optimal" | "watch" | "attention" | "pending"
   statusLabel: string
   zoneKey?: string
   numericValue?: number
 }) {
-  const statusBg = status === "optimal" ? "#EAF3DE" : status === "watch" ? "#FEF3C7" : "#FEE2E2"
-  const statusTxt = status === "optimal" ? "#3B6D11" : status === "watch" ? "#92400E" : "#991B1B"
+  const statusBg = status === "pending" ? "#F7F5F0" : status === "optimal" ? "#EAF3DE" : status === "watch" ? "#FEF3C7" : "#FEE2E2"
+  const statusTxt = status === "pending" ? "var(--ink-35)" : status === "optimal" ? "#3B6D11" : status === "watch" ? "#92400E" : "#991B1B"
   return (
     <div style={{ flex: "1 1 calc(50% - 6px)", border: "0.5px solid var(--ink-12)", padding: "12px 14px", minWidth: 0 }}>
       <p style={{ margin: "0 0 2px", fontFamily: "var(--font-body)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em", color }}>
@@ -390,8 +390,9 @@ function NHANESBar({ label, value, formatVal, metricKey }: {
 }
 
 function NHANESComparison({ shannon, nitratePct, periodontalPct }: {
-  shannon: number; nitratePct: number; periodontalPct: number
+  shannon: number | null; nitratePct: number | null; periodontalPct: number | null
 }) {
+  if (shannon == null) return null
   const [open, setOpen] = useState(true)
   const shannonPct = nhanesPercentile(shannon, NHANES_PCTLS.shannon)
   const median = NHANES_PCTLS.shannon.p50
@@ -501,20 +502,28 @@ export function OralPanelClient({ oral, snapshot, connectionInput }: Props) {
   const reportDate = oral.report_date as string | null
 
   // raw_otu_table stores values already as percentages (0.22 = 0.22% of reads)
-  // — the scoring engine converts fractions→% before storage, so no *100 here
-  const sp = (key: string) => (rawOtu ? (rawOtu[key] ?? 0) : 0)
-  const genus = (prefix: string) =>
-    rawOtu
-      ? Object.entries(rawOtu)
-          .filter(([k]) => k.toLowerCase().startsWith(prefix.toLowerCase()))
-          .reduce((sum, [, v]) => sum + v, 0)
-      : 0
+  // Returns null when species is absent — distinct from 0 (measured zero).
+  const sp = (key: string): number | null => {
+    if (!rawOtu) return null
+    const v = rawOtu[key]
+    return v != null ? v : null
+  }
+  const genus = (prefix: string): number | null => {
+    if (!rawOtu) return null
+    const entries = Object.entries(rawOtu).filter(([k]) => k.toLowerCase().startsWith(prefix.toLowerCase()))
+    if (entries.length === 0) return null
+    return entries.reduce((sum, [, v]) => sum + v, 0)
+  }
+  const sumOrNull = (...vals: (number | null)[]): number | null => {
+    const present = vals.filter((v): v is number => v != null)
+    return present.length > 0 ? present.reduce((a, b) => a + b, 0) : null
+  }
 
-  const shannon = (oral.shannon_diversity as number | null) ?? 0
+  const shannon: number | null = oral.shannon_diversity as number | null
   // Summary cards computed directly from raw_otu_table — same source as the full species panel
-  const nitratePct  = sp("Neisseria subflava") + sp("Rothia mucilaginosa") + sp("Veillonella parvula") + sp("Neisseria flavescens")
-  const periodontalPct = sp("Porphyromonas gingivalis") + sp("Treponema denticola") + sp("Tannerella forsythia")
-  const osaPct = sp("Prevotella melaninogenica") + sp("Fusobacterium nucleatum")
+  const nitratePct  = sumOrNull(sp("Neisseria subflava"), sp("Rothia mucilaginosa"), sp("Veillonella parvula"), sp("Neisseria flavescens"))
+  const periodontalPct = sumOrNull(sp("Porphyromonas gingivalis"), sp("Treponema denticola"), sp("Tannerella forsythia"))
+  const osaPct = sumOrNull(sp("Prevotella melaninogenica"), sp("Fusobacterium nucleatum"))
 
   // D5–D7 emerging-research dimension values (stored as fractions 0–1, display as %)
   const _neuroSignalRaw = (oral.neuro_signal_pct as number | null) ?? null
@@ -622,46 +631,46 @@ export function OralPanelClient({ oral, snapshot, connectionInput }: Props) {
           <MetricCard
             label="Shannon Diversity"
             sub="Species richness & evenness — target ≥3.0"
-            value={shannon.toFixed(2)}
-            unit="index"
+            value={shannon != null ? shannon.toFixed(2) : "—"}
+            unit={shannon != null ? "index" : ""}
             color="#3B6D11"
-            status={shannon >= 3 ? "optimal" : shannon >= 2 ? "watch" : "attention"}
-            statusLabel={shannon >= 3 ? "Optimal" : shannon >= 2 ? "Watch" : "Low"}
-            zoneKey="shannon"
-            numericValue={shannon}
+            status={shannon == null ? "pending" : shannon >= 3 ? "optimal" : shannon >= 2 ? "watch" : "attention"}
+            statusLabel={shannon == null ? "—" : shannon >= 3 ? "Optimal" : shannon >= 2 ? "Watch" : "Low"}
+            zoneKey={shannon != null ? "shannon" : undefined}
+            numericValue={shannon ?? undefined}
           />
           <MetricCard
             label="Nitrate-Reducing"
             sub="Neisseria · Rothia · Veillonella — target ≥5%"
-            value={nitratePct.toFixed(1)}
-            unit="% reads"
+            value={nitratePct != null ? nitratePct.toFixed(1) : "—"}
+            unit={nitratePct != null ? "% reads" : ""}
             color="#185FA5"
-            status={nitratePct >= 5 ? "optimal" : nitratePct >= 2 ? "watch" : "attention"}
-            statusLabel={nitratePct >= 5 ? "Optimal" : nitratePct >= 2 ? "Watch" : "Low"}
-            zoneKey="nitrate"
-            numericValue={nitratePct}
+            status={nitratePct == null ? "pending" : nitratePct >= 5 ? "optimal" : nitratePct >= 2 ? "watch" : "attention"}
+            statusLabel={nitratePct == null ? "—" : nitratePct >= 5 ? "Optimal" : nitratePct >= 2 ? "Watch" : "Low"}
+            zoneKey={nitratePct != null ? "nitrate" : undefined}
+            numericValue={nitratePct ?? undefined}
           />
           <MetricCard
             label="Periodontal Burden"
             sub="P. gingivalis · T. denticola — target <0.5%"
-            value={periodontalPct.toFixed(2)}
-            unit="% reads"
+            value={periodontalPct != null ? periodontalPct.toFixed(2) : "—"}
+            unit={periodontalPct != null ? "% reads" : ""}
             color="#A32D2D"
-            status={periodontalPct < 0.5 ? "optimal" : periodontalPct < 1.5 ? "watch" : "attention"}
-            statusLabel={periodontalPct < 0.5 ? "Optimal" : periodontalPct < 1.5 ? "Watch" : "Elevated"}
-            zoneKey="periodontal"
-            numericValue={periodontalPct}
+            status={periodontalPct == null ? "pending" : periodontalPct < 0.5 ? "optimal" : periodontalPct < 1.5 ? "watch" : "attention"}
+            statusLabel={periodontalPct == null ? "—" : periodontalPct < 0.5 ? "Optimal" : periodontalPct < 1.5 ? "Watch" : "Elevated"}
+            zoneKey={periodontalPct != null ? "periodontal" : undefined}
+            numericValue={periodontalPct ?? undefined}
           />
           <MetricCard
             label="OSA-Associated Taxa"
             sub="Prevotella · Fusobacterium — target <1%"
-            value={osaPct.toFixed(2)}
-            unit="% reads"
+            value={osaPct != null ? osaPct.toFixed(2) : "—"}
+            unit={osaPct != null ? "% reads" : ""}
             color="#C49A3C"
-            status={osaPct < 1 ? "optimal" : osaPct < 3 ? "watch" : "attention"}
-            statusLabel={osaPct < 1 ? "Optimal" : osaPct < 3 ? "Watch" : "Elevated"}
-            zoneKey="osa"
-            numericValue={osaPct}
+            status={osaPct == null ? "pending" : osaPct < 1 ? "optimal" : osaPct < 3 ? "watch" : "attention"}
+            statusLabel={osaPct == null ? "—" : osaPct < 1 ? "Optimal" : osaPct < 3 ? "Watch" : "Elevated"}
+            zoneKey={osaPct != null ? "osa" : undefined}
+            numericValue={osaPct ?? undefined}
           />
         </div>
 
@@ -781,7 +790,7 @@ export function OralPanelClient({ oral, snapshot, connectionInput }: Props) {
               <SpeciesRow name="Haemophilus parainfluenzae" role="Commensal — early biofilm colonizer" val={sp("Haemophilus parainfluenzae")} target="1–3% reads" isPathogen={false} note="Provides growth factors for other commensals; its abundance indicates a mature, diverse microbiome" flagFn={v => flag(v >= 1 && v <= 3, v >= 0.3 && v <= 5)} learnWhat="An early and abundant colonizer of the oral and upper respiratory mucosa. Provides hemin and NAD growth factors to fastidious commensals that cannot synthesize them." learnWhy="Consistently found at high abundance in healthy individuals. Loss may destabilize the commensal community and create openings for pathogens." learnCitation="Bik et al., PLOS Biology, 2010. Core oral microbiome across 120 individuals." />
             </Section>
 
-            <Section title="OSA & Sleep-Associated" defaultOpen={osaPct >= 1}>
+            <Section title="OSA & Sleep-Associated" defaultOpen={(osaPct ?? 0) >= 1}>
               <SpeciesRow name="Prevotella melaninogenica" role="OSA-enriched — airway inflammation" val={sp("Prevotella melaninogenica")} target="<1% reads" isPathogen={true} note="Consistently elevated in OSA patients across multiple cohort studies" flagFn={v => flag(v < 1, v < 2)} learnWhat="An anaerobe enriched in the upper airway microbiome of OSA patients. Produces lipopolysaccharide that promotes upper airway inflammation and may contribute to airway tissue remodeling." learnWhy="OSA patients are 2.46\u00d7 more likely to have periodontitis across meta-analyses of 88,000+ patients. P. melaninogenica abundance is elevated in OSA-associated dysbiosis profiles." learnCitation="Portelli et al., Dentistry Journal 2024 (meta-analysis, n=88,040). Mi et al., BMC Oral Health 2023 (Mendelian randomization)." />
               <SpeciesRow name="Fusobacterium nucleatum" role="OSA-associated systemic bridge organism" val={sp("Fusobacterium nucleatum")} target="<0.5% reads" isPathogen={true} note="Elevated in OSA cohorts alongside P. melaninogenica; contributes to upper airway dysbiosis" flagFn={v => flag(v < 0.5, v < 1.5)} learnWhat="Found at elevated levels in both the oral and pharyngeal microbiome of OSA patients. Its invasive properties may allow penetration of upper airway epithelium." learnWhy="Contributes to the oral-OSA inflammatory pathway. Its concurrent elevation with other OSA-associated taxa is consistent with the bidirectional periodontitis-OSA relationship confirmed across meta-analyses." learnCitation="Zhu et al., Sleep and Breathing 2023 (meta-analysis, n=31,800). Incerti-Parenti et al., Applied Sciences 2025." />
               <SpeciesRow name="Fusobacterium periodonticum" role="Periodontal + sleep pathway — bridging species" val={sp("Fusobacterium periodonticum")} target="<0.5% reads" isPathogen={true} note="Closely related to F. nucleatum; shares OSA-enrichment and periodontal risk associations" flagFn={v => flag(v < 0.5, v < 1.5)} learnWhat="A Fusobacterium species closely related to F. nucleatum with similar invasive and co-aggregating properties. Bridges periodontal and systemic compartments." learnWhy="Elevated in OSA-associated dysbiosis profiles. Its co-occurrence with F. nucleatum amplifies periodontal-systemic risk." learnCitation="Almeida-Santos et al., mBio, 2021. Fusobacterium species in oral-systemic disease." />
@@ -803,12 +812,18 @@ export function OralPanelClient({ oral, snapshot, connectionInput }: Props) {
                     <p style={{ margin: "2px 0 0", fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-60)" }}>Species richness and evenness — target ≥3.0</p>
                   </div>
                   <div style={{ textAlign: "right" }}>
-                    <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 16, color: shannon >= 3 ? "#3B6D11" : shannon >= 2 ? "#92400E" : "#991B1B" }}>
-                      {shannon.toFixed(2)}
-                    </p>
-                    <span style={{ fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "2px 6px", background: shannon >= 3 ? "#EAF3DE" : shannon >= 2 ? "#FEF3C7" : "#FEE2E2", color: shannon >= 3 ? "#3B6D11" : shannon >= 2 ? "#92400E" : "#991B1B" }}>
-                      {shannon >= 3 ? "Optimal" : shannon >= 2 ? "Watch" : "Attention"}
-                    </span>
+                    {shannon != null ? (
+                      <>
+                        <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 16, color: shannon >= 3 ? "#3B6D11" : shannon >= 2 ? "#92400E" : "#991B1B" }}>
+                          {shannon.toFixed(2)}
+                        </p>
+                        <span style={{ fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "2px 6px", background: shannon >= 3 ? "#EAF3DE" : shannon >= 2 ? "#FEF3C7" : "#FEE2E2", color: shannon >= 3 ? "#3B6D11" : shannon >= 2 ? "#92400E" : "#991B1B" }}>
+                          {shannon >= 3 ? "Optimal" : shannon >= 2 ? "Watch" : "Attention"}
+                        </span>
+                      </>
+                    ) : (
+                      <p style={{ margin: 0, fontFamily: "var(--font-body)", fontSize: 16, color: "var(--ink-30)" }}>—</p>
+                    )}
                   </div>
                 </div>
                 {speciesCount > 0 && (
