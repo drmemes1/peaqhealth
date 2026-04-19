@@ -153,7 +153,12 @@ function parseShannonFile(raw: string, sampleIndex?: number): ShannonResult {
   if (lines.length < 2) throw new Error("Shannon file too short")
 
   const headerCols = lines[0].split("\t")
-  const sampleNames = headerCols.slice(3)
+  const META_HEADERS = ["", "sequences per sample", "iteration"]
+  const sampleStartIdx = headerCols.findIndex(
+    (col, i) => i > 0 && !META_HEADERS.includes(col.trim().toLowerCase())
+  )
+  if (sampleStartIdx < 0) throw new Error("No sample columns found in Shannon header")
+  const sampleNames = headerCols.slice(sampleStartIdx)
   if (sampleNames.length === 0) throw new Error("No sample columns found in Shannon header")
 
   const colIdx = sampleIndex ?? 0
@@ -163,11 +168,11 @@ function parseShannonFile(raw: string, sampleIndex?: number): ShannonResult {
 
   for (let i = 1; i < lines.length; i++) {
     const cols = lines[i].split("\t")
-    if (cols.length < 4 + colIdx) continue
+    if (cols.length < sampleStartIdx + 1 + colIdx) continue
     const depthStr = cols[1]?.trim()
     const depth = parseInt(depthStr, 10)
     if (!Number.isFinite(depth)) continue
-    const val = parseFloat(cols[3 + colIdx])
+    const val = parseFloat(cols[sampleStartIdx + colIdx])
     if (!Number.isFinite(val)) continue
     if (!depthRows[depth]) depthRows[depth] = []
     depthRows[depth].push(val)
