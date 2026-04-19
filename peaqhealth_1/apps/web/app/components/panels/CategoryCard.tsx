@@ -33,22 +33,20 @@ interface CategoryCardProps {
   species?: SpeciesItem[]
 }
 
-function renderPullquotes(text: string, pullquotes?: string[]) {
+function renderPullquotes(text: string, pullquotes?: string[]): ReactNode {
   if (!pullquotes || pullquotes.length === 0) return text
-  let result: ReactNode[] = [text]
+  const parts: ReactNode[] = []
+  let remaining = text
+  let key = 0
   for (const pq of pullquotes) {
-    result = result.flatMap((part, i) => {
-      if (typeof part !== "string") return [part]
-      const idx = part.indexOf(pq)
-      if (idx === -1) return [part]
-      return [
-        part.slice(0, idx),
-        <span key={`${i}-${pq}`} style={{ color: "#B8860B", fontWeight: 500 }}>{pq}</span>,
-        part.slice(idx + pq.length),
-      ]
-    })
+    const idx = remaining.indexOf(pq)
+    if (idx === -1) continue
+    if (idx > 0) parts.push(remaining.slice(0, idx))
+    parts.push(<span key={key++} style={{ color: "#B8860B", fontWeight: 500 }}>{pq}</span>)
+    remaining = remaining.slice(idx + pq.length)
   }
-  return result
+  if (remaining) parts.push(remaining)
+  return <>{parts}</>
 }
 
 export function CategoryCard({ icon, name, description, value, unit, status, statusLabel, narrative, species }: CategoryCardProps) {
