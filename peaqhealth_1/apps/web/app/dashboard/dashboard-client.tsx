@@ -1373,7 +1373,7 @@ export function DashboardClient(props: ScoreWheelProps & {
 
   // ── LEGACY DASHBOARD (no Peaq Age breakdown — pre-V5) ───────────────────
   return (
-    <div className="min-h-svh" style={{ background: "#F6F4EF" }}>
+    <div className="min-h-svh" style={{ background: "#FAFAF8" }}>
       <Nav />
       <main className="mx-auto" style={{ maxWidth: 760, padding: "28px 24px 60px" }}>
         {wearableNeedsReconnect && (

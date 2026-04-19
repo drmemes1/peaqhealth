@@ -144,7 +144,7 @@ export function GuidanceClient(props: GuidanceClientProps) {
   const watchCards = guidance?.cards.filter(c => c.status === "watch") ?? []
 
   return (
-    <div style={{ background: "#F6F4EF", minHeight: "100vh" }}>
+    <div style={{ background: "#FAFAF8", minHeight: "100vh" }}>
       <Nav />
       <main style={{ maxWidth: 480, margin: "0 auto", padding: "28px 24px 80px" }}>
 
