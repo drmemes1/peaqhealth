@@ -8,7 +8,8 @@ const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 type User = { id: string; email: string; first_name: string | null; last_name: string | null }
 type Kit = { id: string; kit_code: string | null; status: string; ordered_at: string; collection_date: string | null; shannon_diversity: number | null; neisseria_pct: number | null; primary_pattern: string | null; interpretability_tier: string | null }
 type ParsedEntry = { rawName: string; genus: string; species: string | null; pct: number; mappedColumn: string | null; mappingType: string }
-type ParseResult = { entries: ParsedEntry[]; columnValues: Record<string, number>; shannonDiversity: number | null; speciesCount: number }
+type ParseResult = { entries: ParsedEntry[]; columnValues: Record<string, number>; shannonDiversity: number | null; shannonSource: string | null; speciesCount: number }
+type ShannonInfo = { shannon: number; sampleName: string; maxDepth: number; iterations: number; allSamples: string[] }
 type SaveSummary = { speciesCount: number; shannonDiversity: number | null; interpretabilityTier: string; envPattern: string | null; primaryPattern: string | null; secondaryPattern: string | null; totalScore: number }
 
 async function api(body: Record<string, unknown>) {
@@ -26,6 +27,9 @@ export default function OralUploadPage() {
   const [kits, setKits] = useState<Kit[]>([])
   const [selectedKit, setSelectedKit] = useState<Kit | null>(null)
   const [rawInput, setRawInput] = useState("")
+  const [shannonInput, setShannonInput] = useState("")
+  const [sampleIndex, setSampleIndex] = useState(0)
+  const [shannonInfo, setShannonInfo] = useState<ShannonInfo | null>(null)
   const [parsed, setParsed] = useState<ParseResult | null>(null)
   const [saving, setSaving] = useState(false)
   const [result, setResult] = useState<{ success: boolean; steps: string[]; summary?: SaveSummary; error?: string } | null>(null)
@@ -52,10 +56,12 @@ export default function OralUploadPage() {
   async function handleParse() {
     setError("")
     setParsed(null)
+    setShannonInfo(null)
     setResult(null)
-    const data = await api({ action: "parse", raw_input: rawInput })
+    const data = await api({ action: "parse", raw_input: rawInput, shannon_input: shannonInput || undefined, sample_index: sampleIndex })
     if (data.error) { setError(data.error as string); return }
     setParsed(data.parsed as ParseResult)
+    if (data.shannon) setShannonInfo(data.shannon as ShannonInfo)
   }
 
   async function handleSave() {
@@ -63,7 +69,7 @@ export default function OralUploadPage() {
     setSaving(true)
     setError("")
     setResult(null)
-    const data = await api({ action: "save", kit_id: selectedKit.id, user_id: selectedUser.id, raw_input: rawInput })
+    const data = await api({ action: "save", kit_id: selectedKit.id, user_id: selectedUser.id, raw_input: rawInput, shannon_input: shannonInput || undefined, sample_index: sampleIndex })
     setSaving(false)
     if (data.success) {
       setResult({ success: true, steps: data.steps as string[], summary: data.summary as SaveSummary })
@@ -147,12 +153,12 @@ export default function OralUploadPage() {
         {/* Step 3: Paste L7 data */}
         {selectedKit && (
           <section style={{ marginBottom: 32 }}>
-            <Label>3. Paste L7 data (Zymo TSV or CSV)</Label>
+            <Label>3a. Paste L7 data (Zymo TSV or CSV)</Label>
             <textarea
               value={rawInput}
               onChange={e => { setRawInput(e.target.value); setParsed(null); setResult(null) }}
-              placeholder={"#OTU ID\tSample\nBacteria;...;Streptococcus_mutans\t0.00271\n..."}
-              rows={12}
+              placeholder={"k__Bacteria;p__...;g__Streptococcus;s__mutans\t0.271\t0.0\t0.0"}
+              rows={10}
               style={{
                 width: "100%", fontFamily: "monospace", fontSize: 12, padding: 12,
                 border: "0.5px solid rgba(20,20,16,0.12)", borderRadius: 3,
@@ -160,10 +166,44 @@ export default function OralUploadPage() {
                 boxSizing: "border-box",
               }}
             />
+
+            <div style={{ marginTop: 16, marginBottom: 10 }}>
+              <Label>3b. Paste Zymo Shannon text (optional — recommended)</Label>
+              <p style={{ fontFamily: sans, fontSize: 11, color: "#9B9891", margin: "0 0 8px", lineHeight: 1.5 }}>
+                Zymo rarefaction file. If provided, uses the average Shannon at max read depth. Without this, Shannon is estimated from L7 abundances (less accurate).
+              </p>
+              <textarea
+                value={shannonInput}
+                onChange={e => { setShannonInput(e.target.value); setParsed(null); setResult(null); setShannonInfo(null) }}
+                placeholder={"sequences per sample\titeration\tPilot.Peaq.1\tPilot.Peaq.2\t..."}
+                rows={4}
+                style={{
+                  width: "100%", fontFamily: "monospace", fontSize: 11, padding: 12,
+                  border: "0.5px solid rgba(20,20,16,0.12)", borderRadius: 3,
+                  background: "#fff", color: "#141410", resize: "vertical",
+                  boxSizing: "border-box",
+                }}
+              />
+              {shannonInfo && shannonInfo.allSamples.length > 1 && (
+                <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontFamily: sans, fontSize: 11, color: "#5C5A54" }}>Sample:</span>
+                  <select
+                    value={sampleIndex}
+                    onChange={e => { setSampleIndex(Number(e.target.value)); setParsed(null); setShannonInfo(null) }}
+                    style={{ fontFamily: sans, fontSize: 12, padding: "4px 8px", border: "0.5px solid rgba(20,20,16,0.12)", borderRadius: 3, background: "#fff" }}
+                  >
+                    {shannonInfo.allSamples.map((name, i) => (
+                      <option key={i} value={i}>{name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+
             <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
               <button onClick={handleParse} disabled={!rawInput.trim()} style={btnStyle}>Parse preview</button>
               <label style={{ ...btnStyle, cursor: "pointer", display: "inline-flex", alignItems: "center" }}>
-                Upload file
+                Upload L7 file
                 <input
                   type="file"
                   accept=".csv,.tsv,.txt"
@@ -186,7 +226,7 @@ export default function OralUploadPage() {
         {/* Step 4: Parse preview */}
         {parsed && (
           <section style={{ marginBottom: 32 }}>
-            <Label>4. Parse preview — {parsed.speciesCount} species, Shannon {parsed.shannonDiversity?.toFixed(3) ?? "N/A"}</Label>
+            <Label>4. Parse preview — {parsed.speciesCount} species, Shannon {parsed.shannonDiversity?.toFixed(4) ?? "N/A"} ({parsed.shannonSource === "zymo_rarefaction" ? `Zymo rarefaction${shannonInfo ? `, depth ${shannonInfo.maxDepth}, ${shannonInfo.iterations} iter, sample: ${shannonInfo.sampleName}` : ""}` : "computed from L7 — less accurate"})</Label>
             <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
               <Chip label={`${Object.keys(parsed.columnValues).length} columns mapped`} color="#3B6D11" />
               <Chip label={`${parsed.entries.filter(e => e.mappingType === "unmatched").length} unmatched`} color="#92400E" />

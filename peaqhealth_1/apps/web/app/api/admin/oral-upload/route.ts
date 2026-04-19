@@ -57,10 +57,20 @@ interface ParsedEntry {
   mappingType: "genus_sum" | "species_exact" | "special" | "unmatched"
 }
 
+interface ShannonResult {
+  shannon: number
+  sampleName: string
+  maxDepth: number
+  iterations: number
+  rarefactionCurve: Record<string, number>
+  allSamples: string[]
+}
+
 interface ParseResult {
   entries: ParsedEntry[]
   columnValues: Record<string, number>
   shannonDiversity: number | null
+  shannonSource: "zymo_rarefaction" | "computed_l7" | null
   speciesCount: number
   rawOtu: Record<string, number>
 }
@@ -88,6 +98,54 @@ function extractGenusSpecies(taxon: string): { genus: string; species: string | 
 
   const fullSpecies = `${genus} ${species}`
   return { genus, species, fullSpecies, skip: false }
+}
+
+function parseShannonFile(raw: string, sampleIndex?: number): ShannonResult {
+  const lines = raw.trim().split(/\r?\n/).filter(l => l.trim())
+  if (lines.length < 2) throw new Error("Shannon file too short")
+
+  const headerCols = lines[0].split("\t")
+  const sampleNames = headerCols.slice(3)
+  if (sampleNames.length === 0) throw new Error("No sample columns found in Shannon header")
+
+  const colIdx = sampleIndex ?? 0
+  if (colIdx >= sampleNames.length) throw new Error(`Sample index ${colIdx} out of range (${sampleNames.length} samples)`)
+
+  const depthRows: Record<number, number[]> = {}
+
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split("\t")
+    if (cols.length < 4 + colIdx) continue
+    const depthStr = cols[1]?.trim()
+    const depth = parseInt(depthStr, 10)
+    if (!Number.isFinite(depth)) continue
+    const val = parseFloat(cols[3 + colIdx])
+    if (!Number.isFinite(val)) continue
+    if (!depthRows[depth]) depthRows[depth] = []
+    depthRows[depth].push(val)
+  }
+
+  const depths = Object.keys(depthRows).map(Number).sort((a, b) => a - b)
+  if (depths.length === 0) throw new Error("No valid rarefaction rows found")
+
+  const maxDepth = depths[depths.length - 1]
+  const maxVals = depthRows[maxDepth]
+  const shannon = maxVals.reduce((a, b) => a + b, 0) / maxVals.length
+
+  const rarefactionCurve: Record<string, number> = {}
+  for (const d of depths) {
+    const vals = depthRows[d]
+    rarefactionCurve[String(d)] = parseFloat((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(4))
+  }
+
+  return {
+    shannon: parseFloat(shannon.toFixed(4)),
+    sampleName: sampleNames[colIdx],
+    maxDepth,
+    iterations: maxVals.length,
+    rarefactionCurve,
+    allSamples: sampleNames,
+  }
 }
 
 function parseL7Input(raw: string): ParseResult {
@@ -148,6 +206,38 @@ function parseL7Input(raw: string): ParseResult {
       mappedColumn = "s_salivarius_pct"
       mappingType = "special"
       sSalivariusSum.total += pct
+    } else if (speciesLower.includes("salivarius") || speciesLower.includes("vestibularis")) {
+      mappedColumn = "s_salivarius_pct"
+      mappingType = "special"
+      sSalivariusSum.total += pct
+    } else if (speciesLower.includes("mutans")) {
+      mappedColumn = "s_mutans_pct"
+      mappingType = "species_exact"
+      speciesSums[mappedColumn] = (speciesSums[mappedColumn] ?? 0) + pct
+    } else if (speciesLower.includes("sobrinus")) {
+      mappedColumn = "s_sobrinus_pct"
+      mappingType = "species_exact"
+      speciesSums[mappedColumn] = (speciesSums[mappedColumn] ?? 0) + pct
+    } else if (genusLower === "streptococcus" && speciesLower.includes("sanguinis") && !speciesLower.includes("parasanguinis")) {
+      mappedColumn = "s_sanguinis_pct"
+      mappingType = "species_exact"
+      speciesSums[mappedColumn] = (speciesSums[mappedColumn] ?? 0) + pct
+    } else if (speciesLower.includes("gordonii")) {
+      mappedColumn = "s_gordonii_pct"
+      mappingType = "species_exact"
+      speciesSums[mappedColumn] = (speciesSums[mappedColumn] ?? 0) + pct
+    } else if (genusLower === "tannerella" && speciesLower.includes("forsythia")) {
+      mappedColumn = "tannerella_pct"
+      mappingType = "species_exact"
+      speciesSums[mappedColumn] = (speciesSums[mappedColumn] ?? 0) + pct
+    } else if (genusLower === "prevotella" && speciesLower.includes("intermedia")) {
+      mappedColumn = "prevotella_intermedia_pct"
+      mappingType = "species_exact"
+      speciesSums[mappedColumn] = (speciesSums[mappedColumn] ?? 0) + pct
+    } else if (speciesLower.includes("wiggsiae")) {
+      mappedColumn = "scardovia_pct"
+      mappingType = "species_exact"
+      speciesSums[mappedColumn] = (speciesSums[mappedColumn] ?? 0) + pct
     } else if (GENUS_COLUMNS[genusLower]) {
       mappedColumn = GENUS_COLUMNS[genusLower]
       mappingType = "genus_sum"
@@ -171,6 +261,7 @@ function parseL7Input(raw: string): ParseResult {
   columnValues["streptococcus_total_pct"] = parseFloat(strepTotal.toFixed(4))
   columnValues["prevotella_commensal_pct"] = parseFloat((prevotellaTotal - prevotellaIntermedia).toFixed(4))
 
+  // Fallback Shannon from L7 (natural log, no rarefaction — inaccurate but better than nothing)
   const vals = Object.values(rawOtu).filter(v => v > 0)
   const total = vals.reduce((a, b) => a + b, 0)
   let shannonDiversity: number | null = null
@@ -186,6 +277,7 @@ function parseL7Input(raw: string): ParseResult {
     entries: entries.sort((a, b) => b.pct - a.pct),
     columnValues,
     shannonDiversity,
+    shannonSource: shannonDiversity != null ? "computed_l7" : null,
     speciesCount: vals.length,
     rawOtu,
   }
@@ -225,10 +317,18 @@ export async function POST(request: NextRequest) {
 
   if (action === "parse") {
     const rawInput = body.raw_input as string
+    const shannonInput = body.shannon_input as string | undefined
+    const sampleIndex = typeof body.sample_index === "number" ? body.sample_index : undefined
     if (!rawInput?.trim()) return NextResponse.json({ error: "Empty input" }, { status: 400 })
     try {
       const result = parseL7Input(rawInput)
-      return NextResponse.json({ parsed: result })
+      let shannonResult: ShannonResult | null = null
+      if (shannonInput?.trim()) {
+        shannonResult = parseShannonFile(shannonInput, sampleIndex)
+        result.shannonDiversity = shannonResult.shannon
+        result.shannonSource = "zymo_rarefaction"
+      }
+      return NextResponse.json({ parsed: result, shannon: shannonResult })
     } catch (err) {
       return NextResponse.json({ error: `Parse failed: ${err}` }, { status: 400 })
     }
@@ -238,6 +338,8 @@ export async function POST(request: NextRequest) {
     const kitId = body.kit_id as string
     const targetUserId = body.user_id as string
     const rawInput = body.raw_input as string
+    const shannonInput = body.shannon_input as string | undefined
+    const sampleIndex = typeof body.sample_index === "number" ? body.sample_index : undefined
 
     if (!kitId || !targetUserId || !rawInput) {
       return NextResponse.json({ error: "Missing kit_id, user_id, or raw_input" }, { status: 400 })
@@ -246,6 +348,13 @@ export async function POST(request: NextRequest) {
     const supabase = svc()
     const parsed = parseL7Input(rawInput)
     const steps: string[] = []
+
+    let shannonResult: ShannonResult | null = null
+    if (shannonInput?.trim()) {
+      shannonResult = parseShannonFile(shannonInput, sampleIndex)
+      parsed.shannonDiversity = shannonResult.shannon
+      parsed.shannonSource = "zymo_rarefaction"
+    }
 
     try {
       // Step 1: write species + raw OTU to oral_kit_orders
@@ -256,12 +365,16 @@ export async function POST(request: NextRequest) {
         species_count: parsed.speciesCount,
         status: "results_uploaded",
       }
+      if (shannonResult) {
+        updateData.rarefaction_curve = shannonResult.rarefactionCurve
+      }
       const { error: writeErr } = await supabase
         .from("oral_kit_orders")
         .update(updateData)
         .eq("id", kitId)
       if (writeErr) throw new Error(`Write species failed: ${writeErr.message}`)
       steps.push(`Wrote ${Object.keys(parsed.columnValues).length} columns + raw_otu_table (${parsed.speciesCount} species)`)
+      steps.push(`Shannon: ${parsed.shannonDiversity?.toFixed(4)} (${parsed.shannonSource}${shannonResult ? `, depth ${shannonResult.maxDepth}, ${shannonResult.iterations} iterations` : ""})`)
 
       // Step 2: reload kit row for scoring
       const { data: kitRow, error: readErr } = await supabase
