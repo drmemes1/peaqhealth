@@ -255,7 +255,7 @@ export async function POST(request: NextRequest) {
         .maybeSingle()
 
       // Step 4: interpretability tier
-      const tierResult = computeInterpretabilityTier(kitRow as Parameters<typeof computeInterpretabilityTier>[0])
+      const tierResult = computeInterpretabilityTier(kitRow)
       await supabase
         .from("oral_kit_orders")
         .update({
@@ -272,19 +272,11 @@ export async function POST(request: NextRequest) {
 
       if (tierResult.tier !== "deferred") {
         // Step 5: environment index
-        const envIndex = computeOralEnvironmentIndex(
-          kitRow as Parameters<typeof computeOralEnvironmentIndex>[0],
-          lifestyle as Parameters<typeof computeOralEnvironmentIndex>[1],
-        )
+        const envIndex = computeOralEnvironmentIndex(kitRow, lifestyle)
         envPattern = envIndex.env_pattern
 
         // Step 6: differential scores
-        const diffScores = computeDifferentialScores(
-          kitRow as Parameters<typeof computeDifferentialScores>[0],
-          envIndex,
-          lifestyle as Parameters<typeof computeDifferentialScores>[1],
-          null,
-        )
+        const diffScores = computeDifferentialScores(kitRow, envIndex, lifestyle, null)
         primaryPattern = diffScores.primary_pattern
         secondaryPattern = diffScores.secondary_pattern
 
