@@ -26,11 +26,12 @@ interface Props {
   rangeMax?: number
   explanation: string
   source?: string
+  species?: string
 }
 
 export function MetricCard({
   label, value, valueSuffix, status, targetMin, targetMax, targetLabel,
-  valueForIndicator, rangeMin = 0, rangeMax = 100, explanation, source,
+  valueForIndicator, rangeMin = 0, rangeMax = 100, explanation, source, species,
 }: Props) {
   const [open, setOpen] = useState(false)
   const color = STATUS_COLORS[status]
@@ -73,6 +74,9 @@ export function MetricCard({
         </span>
       </div>
 
+      {species && (
+        <p style={{ fontFamily: sans, fontSize: 11, fontStyle: "italic", color: "#888780", margin: "0 0 6px" }}>{species}</p>
+      )}
       <div style={{ fontFamily: serif, fontSize: 28, fontWeight: 500, lineHeight: 1, color: "#2C2A24", marginBottom: 6 }}>
         {typeof value === "number" ? (value < 10 ? value.toFixed(2) : value < 100 ? value.toFixed(1) : Math.round(value)) : value}
         {valueSuffix && <span style={{ fontSize: 16, fontWeight: 400, color: "#9B9891", marginLeft: 2 }}>{valueSuffix}</span>}

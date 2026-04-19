@@ -4,7 +4,7 @@
 "use client"
 
 import { useMemo } from "react"
-import { MetricCard, FeatureCard, NarrativeCard, SectionHeader } from "../../components/panels"
+import { MetricCard, FeatureCard, NarrativeCard, SectionHeader, PanelInsight } from "../../components/panels"
 
 type OralKitRow = {
   shannon_diversity: number | null
@@ -125,7 +125,6 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
           <MetricCard label="Veillonella" value={kit.veillonella_pct ?? "—"} valueSuffix="%" status={kit.veillonella_pct == null ? "pending" : kit.veillonella_pct >= 1 && kit.veillonella_pct <= 5 ? "good" : "watch"} targetMin={1} targetMax={5} valueForIndicator={kit.veillonella_pct ?? undefined} rangeMin={0} rangeMax={10} explanation="Cleans up lactic acid, which helps protect tooth enamel." />
         </div>
       </div>
-      {narrative?.section_cardiometabolic && <NarrativeCard><span dangerouslySetInnerHTML={{ __html: narrativeHtml(narrative.section_cardiometabolic) }} /></NarrativeCard>}
 
       <SectionHeader title="Sleep & breathing" subtitle="What your mouth looks like when you're asleep." />
       <div style={{ marginBottom: 32 }}>
@@ -149,14 +148,18 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
             </p>
           )}
         </div>
-        <div className="panel-grid-4" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12 }}>
-          <MetricCard label="Acid balance" value={hasOral ? kit.env_acid_ratio! : "—"} status={hasOral ? (kit.env_acid_ratio! >= 0.3 && kit.env_acid_ratio! <= 0.5 ? "good" : "watch") : mbConfirmed ? "watch" : "pending"} targetMin={0.3} targetMax={0.5} valueForIndicator={hasOral ? kit.env_acid_ratio! : undefined} rangeMin={0} rangeMax={1} explanation="How acidic your mouth runs. Higher numbers mean more acid-producing bacteria." />
-          <MetricCard label="O₂-loving bacteria" value={hasOral ? fmtPct(kit.env_aerobic_score_pct, 1) : "—"} status={hasOral ? (kit.env_aerobic_score_pct! > 35 ? "watch" : "good") : mbConfirmed ? "watch" : "pending"} targetMax={35} valueForIndicator={hasOral ? kit.env_aerobic_score_pct! : undefined} rangeMin={0} rangeMax={60} explanation="These thrive when your mouth gets more air than usual, often from mouth breathing at night." />
-          <MetricCard label="No-O₂ bacteria" value={hasOral ? fmtPct(kit.env_anaerobic_load_pct, 1) : "—"} status={hasOral ? (kit.env_anaerobic_load_pct! > 5 ? "watch" : kit.env_anaerobic_load_pct! < 0.5 ? "concern" : "good") : "pending"} targetMin={1} targetMax={5} valueForIndicator={hasOral ? kit.env_anaerobic_load_pct! : undefined} rangeMin={0} rangeMax={10} explanation="These prefer oxygen-free spots like under the gumline." />
-          <MetricCard label="Balance ratio" value={hasOral ? `${fmt(kit.env_aerobic_anaerobic_ratio, 1)}×` : "—"} status={hasOral ? (kit.env_aerobic_anaerobic_ratio! <= 4 ? "good" : kit.env_aerobic_anaerobic_ratio! > 10 ? "watch" : "info") : "pending"} targetMin={1} targetMax={4} valueForIndicator={hasOral ? kit.env_aerobic_anaerobic_ratio! : undefined} rangeMin={0} rangeMax={15} explanation="How many times more oxygen-lovers there are than no-oxygen types." />
+        <div className="panel-grid-3" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+          <MetricCard label="Acid balance" value={hasOral ? kit.env_acid_ratio! : mbConfirmed ? "Higher likely" : "—"} status={hasOral ? (kit.env_acid_ratio! >= 0.3 && kit.env_acid_ratio! <= 0.5 ? "good" : "watch") : mbConfirmed ? "watch" : "pending"} targetMin={0.3} targetMax={0.5} valueForIndicator={hasOral ? kit.env_acid_ratio! : undefined} rangeMin={0} rangeMax={1} explanation={hasOral ? "The ratio of acid-making bacteria to acid-buffering ones. When saliva dries up overnight, acid producers expand and enamel loses its overnight protection." : mbConfirmed ? "Mouth breathing at night tends to raise acid-producing bacteria. We'll measure the exact level once your oral sample is processed." : "The ratio of acid-making bacteria to acid-buffering ones."} species="Streptococcus mutans · S. sobrinus · Lactobacillus" />
+          <MetricCard label="Aerobic shift" value={hasOral ? fmtPct(kit.env_aerobic_score_pct, 1) : mbConfirmed ? "Higher than typical likely" : "—"} status={hasOral ? (kit.env_aerobic_score_pct! > 35 ? "watch" : "good") : mbConfirmed ? "watch" : "pending"} targetMax={35} valueForIndicator={hasOral ? kit.env_aerobic_score_pct! : undefined} rangeMin={0} rangeMax={60} explanation={hasOral ? "Oxygen-loving bacteria that expand when your mouth is open all night. Not inherently harmful, but the shift itself is a signature of altered nighttime breathing." : mbConfirmed ? "Based on your questionnaire, we'd expect these to be higher than typical. Your oral panel will show the exact level." : "Oxygen-loving bacteria that expand when your mouth gets more air than usual."} species="Rothia · Actinomyces · Haemophilus · Neisseria" />
+          {hasWearable && wearable!.avg_spo2 != null ? (
+            <MetricCard label="Oxygen saturation" value={`${wearable!.avg_spo2.toFixed(1)}%`} status={wearable!.avg_spo2 >= 95 ? "good" : "watch"} targetMin={95} valueForIndicator={wearable!.avg_spo2} rangeMin={88} rangeMax={100} explanation={`Average overnight oxygen across ${wearable!.nights_available} nights. Stable SpO₂ with no dips below 94% makes significant breathing disruption less likely.`} species="Overnight SpO₂ from your wearable" />
+          ) : hasWearable && wearable!.avg_respiratory_rate != null ? (
+            <MetricCard label="Breathing rate" value={`${wearable!.avg_respiratory_rate.toFixed(1)} bpm`} status={wearable!.avg_respiratory_rate <= 18 ? "good" : "watch"} targetMin={12} targetMax={18} valueForIndicator={wearable!.avg_respiratory_rate} rangeMin={8} rangeMax={25} explanation={`Average overnight breathing rate across ${wearable!.nights_available} nights.`} species="Overnight breathing rate from your wearable" />
+          ) : (
+            <MetricCard label="Overnight oxygen" value="—" status="pending" explanation="Connecting a wearable would show whether your breathing pattern is affecting overnight oxygen levels." species="SpO₂ tracking from your wearable" />
+          )}
         </div>
       </div>
-      {narrative?.section_breathing && <NarrativeCard><span dangerouslySetInnerHTML={{ __html: narrativeHtml(narrative.section_breathing) }} /></NarrativeCard>}
 
       <SectionHeader title="Cavity risk" subtitle="Bacteria that cause cavities vs. those that protect against them." />
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 32 }}>
@@ -206,7 +209,12 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
           <p style={{ fontFamily: sans, fontSize: 12, color: "#5C5A54", lineHeight: 1.5, margin: 0 }}>You have <strong>{fmtPct(kit.prevotella_commensal_pct)}</strong> of other Prevotella types — the harmless kinds. Only P. intermedia above is the gum-disease one.</p>
         </div>
       )}
-      {narrative?.section_gum_caries && <NarrativeCard><span dangerouslySetInnerHTML={{ __html: narrativeHtml(narrative.section_gum_caries) }} /></NarrativeCard>}
+      <PanelInsight
+        picture={narrative?.section_opening ?? null}
+        converge={narrative?.section_cardiometabolic ?? narrative?.section_breathing ?? null}
+        actions={narrative?.section_gum_caries ?? null}
+      />
+
       {narrative?.section_disclaimer && (
         <div style={{ borderTop: "1px solid #E8E6E0", paddingTop: 24, marginTop: 16 }}>
           <p style={{ fontFamily: sans, fontSize: 12, fontStyle: "italic", color: "#9B9891", lineHeight: 1.5 }}>{narrative.section_disclaimer}</p>
