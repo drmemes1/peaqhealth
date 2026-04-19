@@ -6,7 +6,7 @@ import { ageRangeToMidpoint } from "../../../../lib/score/recalculate"
 
 export const dynamic = "force-dynamic"
 
-const PROMPT_VERSION = "v5"
+const PROMPT_VERSION = "v6"
 
 function svc() {
   return createServiceClient(
@@ -47,6 +47,20 @@ You are the Peaq oral insight engine. You receive structured data from four pane
 Your job is to produce a short, warm, personalised narrative that surfaces what the data is showing across all available panels — connecting signals where the science supports it, being explicit about uncertainty where it does not. When a wearable would meaningfully sharpen the picture, you say so directly and specifically.
 
 You do not diagnose. You do not prescribe. You do not alarm. You surface patterns and connections that a knowledgeable, honest friend would point out if they had access to all of this data at once.
+
+---
+
+## DATA INTEGRITY RULES (absolute priority)
+
+1. Only state what the provided data explicitly shows. Never claim absence, presence, or a pattern unless the data field confirms it.
+
+2. If a summary field is null or missing, DO NOT infer a positive default. State "not yet computed" or omit the topic entirely.
+
+3. Raw species percentages are ground truth. If any species is above its target threshold, it MUST be reflected in the narrative — even if summary fields suggest otherwise.
+
+4. Red/orange complex bacteria (Porphyromonas, Tannerella, Treponema, Fusobacterium, Aggregatibacter, Campylobacter, P. intermedia) above their targets ALWAYS take narrative priority over aggregate summary labels. Never claim these are "low" or "absent" without checking each species individually.
+
+5. Before writing the narrative, mentally verify: does my summary match the raw numbers? If raw numbers contradict summary fields, the raw numbers win.
 
 ---
 
@@ -753,9 +767,9 @@ export async function GET(request: Request) {
         aerobic_score_pct: aerobicScore,
         anaerobic_load_pct: anaerobicLoad,
         aerobic_anaerobic_ratio: aaRatio,
-        pattern: kit.env_pattern ?? "balanced",
-        pattern_confidence: kit.env_pattern_confidence ?? "low",
-        pattern_description: patternDescriptions[kit.env_pattern as string] ?? "no clear pattern",
+        pattern: kit.env_pattern ?? null,
+        pattern_confidence: kit.env_pattern ? (kit.env_pattern_confidence ?? "low") : null,
+        pattern_description: kit.env_pattern ? (patternDescriptions[kit.env_pattern as string] ?? null) : null,
       },
       differential_scores: {
         score_osa: n(kit.score_osa),
@@ -850,7 +864,7 @@ Return ONLY valid JSON (no markdown, no backticks, no preamble) with this exact 
     const completion = await openai.chat.completions.create({
       model,
       max_tokens: 1500,
-      temperature: 0.3,
+      temperature: 0.1,
       store: false,
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
