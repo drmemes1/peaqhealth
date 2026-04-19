@@ -1,3 +1,4 @@
+export { Card } from "./Card"
 export { MetricCard } from "./MetricCard"
 export { FeatureCard } from "./FeatureCard"
 export { NarrativeCard } from "./NarrativeCard"
