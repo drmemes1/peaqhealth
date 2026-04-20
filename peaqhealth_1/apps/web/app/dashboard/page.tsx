@@ -26,12 +26,12 @@ export default async function DashboardPage() {
   ] = await Promise.all([
     supabase.from("score_snapshots").select("*").eq("user_id", user.id).order("calculated_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("wearable_connections_v2").select("provider,last_synced_at,needs_reconnect").eq("user_id", user.id).order("connected_at", { ascending: false }).limit(1).maybeSingle(),
-    supabase.from("lab_results").select("*").eq("user_id", user.id).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).single(),
+    supabase.from("lab_results").select("*").eq("user_id", user.id).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("oral_kit_orders").select("id, shannon_diversity").eq("user_id", user.id).limit(1).maybeSingle(),
-    supabase.from("lifestyle_records").select("*").eq("user_id", user.id).single(),
+    supabase.from("lifestyle_records").select("*").eq("user_id", user.id).maybeSingle(),
     supabase.from("lab_history").select("locked_at, total_score, blood_score, collection_date, ldl_mgdl, hdl_mgdl, hs_crp_mgl, vitamin_d_ngml").eq("user_id", user.id).order("locked_at", { ascending: true }),
     supabase.from("sleep_data").select("date,source,total_sleep_minutes,deep_sleep_minutes,rem_sleep_minutes,sleep_efficiency,hrv_rmssd,spo2").eq("user_id", user.id).order("date", { ascending: false }).limit(30),
-    supabase.from("profiles").select("first_name").eq("id", user.id).single(),
+    supabase.from("profiles").select("first_name").eq("id", user.id).maybeSingle(),
     supabase.from("score_snapshots").select("sleep_sub,blood_sub,oral_sub,calculated_at").eq("user_id", user.id).order("calculated_at", { ascending: false }).range(1, 1).maybeSingle(),
     supabase.from("articles").select("slug, title, read_time_min").eq("published", true).order("published_at", { ascending: false }).limit(3),
   ])
