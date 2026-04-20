@@ -55,6 +55,20 @@ function renderPullquotes(text: string, pullquotes?: string[]): ReactNode {
   return <>{parts}</>
 }
 
+function SpeciesName({ name }: { name: string }) {
+  const isBinomial = name.includes(" ") || name.includes(".")
+  return (
+    <span style={{
+      fontFamily: serif, fontSize: 12,
+      fontStyle: isBinomial ? "italic" : "normal",
+      fontWeight: isBinomial ? 400 : 500,
+      color: isBinomial ? "#5C5A54" : "#3D3B35",
+    }}>
+      {name}
+    </span>
+  )
+}
+
 export function CategoryCard({ icon, name, description, value, unit, status, statusLabel, contextStrip, narrative, species, expandedContent, dataShows, crossPanel, expanded: controlledExpanded, onToggle }: CategoryCardProps) {
   const [internalExpanded, setInternalExpanded] = useState(false)
   const expanded = controlledExpanded ?? internalExpanded
@@ -68,12 +82,12 @@ export function CategoryCard({ icon, name, description, value, unit, status, sta
     <div style={{
       background: "#FAFAF8", border: "1px solid #D6D3C8", borderLeft: `3px solid ${color}`,
       borderRadius: 10, transition: "background 0.25s ease, border-color 0.25s ease",
-      display: "flex", flexDirection: "column",
+      display: "flex", flexDirection: "column", overflow: "hidden",
     }}
-    onMouseEnter={e => { e.currentTarget.style.background = "#FFFEFB"; e.currentTarget.style.borderColor = "#B8AA88"; e.currentTarget.style.borderLeftColor = color }}
+    onMouseEnter={e => { if (!expanded) { e.currentTarget.style.background = "#FFFEFB"; e.currentTarget.style.borderColor = "#B8AA88"; e.currentTarget.style.borderLeftColor = color } }}
     onMouseLeave={e => { e.currentTarget.style.background = "#FAFAF8"; e.currentTarget.style.borderColor = "#D6D3C8"; e.currentTarget.style.borderLeftColor = color }}
     >
-      {/* Layer 1 — Summary row */}
+      {/* Tier 1 — Header/summary */}
       <button
         onClick={toggle}
         style={{
@@ -108,76 +122,76 @@ export function CategoryCard({ icon, name, description, value, unit, status, sta
         </div>
       </button>
 
-      {/* Expanded content */}
+      {/* Expanded tiers */}
       <div style={{ maxHeight: expanded ? 2000 : 0, overflow: "hidden", transition: "max-height 0.4s ease" }}>
-        <div style={{ padding: "0 20px 20px", borderTop: "1px solid #E8E4D8" }}>
 
-          {/* Narrative paragraph */}
-          {narrative && (
-            <div style={{ marginTop: 16 }}>
-              <p style={{ fontFamily: serif, fontSize: 14, fontStyle: "italic", color: "#5C5A54", lineHeight: 1.65, margin: 0 }}>
-                {renderPullquotes(narrative.paragraph, narrative.pullquotes)}
-              </p>
-              {narrative.source && (
-                <p style={{ fontFamily: sans, fontSize: 10, color: "#8C897F", margin: "8px 0 0", fontStyle: "italic" }}>{narrative.source}</p>
-              )}
-              {narrative.meta && (
-                <p style={{ fontFamily: sans, fontSize: 10, color: "#8C897F", margin: "6px 0 0" }}>{narrative.meta.join(" · ")}</p>
-              )}
-            </div>
-          )}
+        {/* Tier 2 — Narrative */}
+        {narrative && (
+          <div style={{ background: "#F5F3EE", padding: "18px 22px", borderTop: "1px solid #E8E4D8", borderBottom: "1px solid #E8E4D8" }}>
+            <p style={{ fontFamily: serif, fontSize: 14, fontStyle: "italic", color: "#5C5A54", lineHeight: 1.65, margin: 0 }}>
+              {renderPullquotes(narrative.paragraph, narrative.pullquotes)}
+            </p>
+            {narrative.source && (
+              <p style={{ fontFamily: sans, fontSize: 10, color: "#8C897F", margin: "8px 0 0", fontStyle: "italic" }}>{narrative.source}</p>
+            )}
+            {narrative.meta && (
+              <p style={{ fontFamily: sans, fontSize: 10, color: "#8C897F", margin: "6px 0 0" }}>{narrative.meta.join(" · ")}</p>
+            )}
+          </div>
+        )}
 
-          {/* Section A — What your data shows */}
-          {dataShows && (
-            <div style={{ marginTop: 16 }}>
-              <div style={{ fontFamily: sans, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.12em", color: "#B8860B", marginBottom: 6 }}>What your data shows</div>
-              <p style={{ fontFamily: sans, fontSize: 13, color: "#5C5A54", lineHeight: 1.6, margin: 0 }}>{dataShows}</p>
-            </div>
-          )}
-
-          {/* Section B — Why this matters for you */}
-          {crossPanel && (
-            <div style={{ marginTop: 16 }}>
-              <div style={{ fontFamily: sans, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.12em", color: "#B8860B", marginBottom: 6 }}>Why this matters for you</div>
-              <p style={{ fontFamily: sans, fontSize: 13, color: "#5C5A54", lineHeight: 1.6, margin: 0 }}>{crossPanel}</p>
-            </div>
-          )}
-
-          {/* Section C — Species breakdown */}
-          {species && species.length > 0 && (
-            <div style={{ marginTop: 16 }}>
-              <div style={{ fontFamily: sans, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.12em", color: "#B8860B", marginBottom: 8 }}>Species breakdown</div>
-              <div className="species-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-                {species.map(sp => {
-                  const spColor = STATUS_COLORS[sp.status]
-                  return (
-                    <div key={sp.name} style={{
-                      padding: "10px 12px", background: "#F5F3EE", borderRadius: 8, border: "1px solid #E8E4D8",
-                    }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 4 }}>
-                        <span style={{ width: 5, height: 5, borderRadius: "50%", background: spColor, flexShrink: 0 }} />
-                        <span style={{ fontFamily: serif, fontSize: 12, fontStyle: "italic", color: "#5C5A54", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sp.name}</span>
-                      </div>
-                      <div style={{ fontFamily: serif, fontSize: 18, fontWeight: 500, color: "#2C2A24", lineHeight: 1 }}>
-                        {sp.value < 1 ? sp.value.toFixed(3) : sp.value.toFixed(2)}{sp.unit ?? "%"}
-                      </div>
-                      {sp.target && (
-                        <div style={{ fontFamily: sans, fontSize: 10, color: "#B8860B", marginTop: 3 }}>Target: {sp.target}</div>
-                      )}
-                    </div>
-                  )
-                })}
+        {/* Tier 3 — Data shows + Cross-panel */}
+        {(dataShows || crossPanel) && (
+          <div style={{ background: "#FAFAF8", padding: "18px 22px", borderBottom: "1px solid #E8E4D8" }}>
+            {dataShows && (
+              <div>
+                <div style={{ fontFamily: sans, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.12em", color: "#B8860B", marginBottom: 6 }}>What your data shows</div>
+                <p style={{ fontFamily: sans, fontSize: 13, color: "#5C5A54", lineHeight: 1.6, margin: 0 }}>{dataShows}</p>
               </div>
-            </div>
-          )}
+            )}
+            {crossPanel && (
+              <div style={{ marginTop: dataShows ? 16 : 0 }}>
+                <div style={{ fontFamily: sans, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.12em", color: "#B8860B", marginBottom: 6 }}>Why this matters for you</div>
+                <p style={{ fontFamily: sans, fontSize: 13, color: "#5C5A54", lineHeight: 1.6, margin: 0 }}>{crossPanel}</p>
+              </div>
+            )}
+          </div>
+        )}
 
-          {/* Section D — Custom expanded content (env index, etc.) */}
-          {expandedContent && (
-            <div style={{ marginTop: 16 }}>
-              {expandedContent}
+        {/* Tier 4 — Custom expanded content (env index grid, pattern card) */}
+        {expandedContent && (
+          <div style={{ borderBottom: species ? "1px solid #E8E4D8" : undefined }}>
+            {expandedContent}
+          </div>
+        )}
+
+        {/* Tier 5 — Species breakdown */}
+        {species && species.length > 0 && (
+          <div style={{ background: "#FAFAF8", padding: "20px 22px", borderTop: expandedContent ? undefined : "1px solid #E8E4D8" }}>
+            <div style={{ fontFamily: sans, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.12em", color: "#B8860B", marginBottom: 10 }}>Species breakdown</div>
+            <div className="species-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+              {species.map(sp => {
+                const spColor = STATUS_COLORS[sp.status]
+                return (
+                  <div key={sp.name} style={{
+                    padding: "10px 12px", background: "#F5F3EE", borderRadius: 8, border: "1px solid #E8E4D8",
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 4 }}>
+                      <span style={{ width: 5, height: 5, borderRadius: "50%", background: spColor, flexShrink: 0 }} />
+                      <SpeciesName name={sp.name} />
+                    </div>
+                    <div style={{ fontFamily: serif, fontSize: 18, fontWeight: 500, color: "#2C2A24", lineHeight: 1 }}>
+                      {sp.value < 1 ? sp.value.toFixed(3) : sp.value.toFixed(2)}{sp.unit ?? "%"}
+                    </div>
+                    {sp.target && (
+                      <div style={{ fontFamily: sans, fontSize: 10, color: "#B8860B", marginTop: 3 }}>Target: {sp.target}</div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   )
