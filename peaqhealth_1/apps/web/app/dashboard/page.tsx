@@ -293,8 +293,7 @@ export default async function DashboardPage() {
     oral:  snapshot && prevSnapshot.oral_sub  != null ? (snapshot.oral_sub  ?? 0) - (prevSnapshot.oral_sub  ?? 0) : null,
   } : undefined
 
-  // Extract Peaq Age V5 breakdown from snapshot (written by dual-write in recalculate.ts)
-  const peaqAgeBreakdown = snapshot?.peaq_age_breakdown as Record<string, unknown> | null
+  const peaqAgeBreakdown: Record<string, unknown> | null = null
 
   // Derive positive signals ("what's working") for the right rail
   const { derivePositiveSignalsKeyed } = await import("../../lib/positiveSignals")
@@ -303,8 +302,8 @@ export default async function DashboardPage() {
     blood: props.bloodData ? { hsCRP: props.bloodData.hsCRP, ldl: props.bloodData.ldl, vitaminD: props.bloodData.vitaminD } : null,
     sleep: props.sleepData ? { deepPct: props.sleepData.deepPct, remPct: props.sleepData.remPct, hrv: props.sleepData.hrv } : null,
     snapshot: snapshot as Record<string, number | null> | null,
-    chronoAge: (peaqAgeBreakdown?.chronoAge as number | undefined) ?? null,
-    peaqAgeBreakdown,
+    chronoAge: null,
+    peaqAgeBreakdown: null,
   })
 
   // Derive plan items from marker statuses (deterministic, global)
