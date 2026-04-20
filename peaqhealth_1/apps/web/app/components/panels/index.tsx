@@ -1,5 +1,6 @@
 export { Card } from "./Card"
 export { CategoryCard } from "./CategoryCard"
+export { FillInTheGapsHeader } from "./FillInTheGapsHeader"
 export { MetricCard } from "./MetricCard"
 export { FeatureCard } from "./FeatureCard"
 export { NarrativeCard } from "./NarrativeCard"

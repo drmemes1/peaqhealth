@@ -13,7 +13,7 @@ const PANEL_ITEMS = [
   { href: "/dashboard/sleep", label: "SLEEP", color: "#185FA5" },
   { href: "/dashboard/blood", label: "BLOOD", color: "#A32D2D" },
   { href: "/dashboard/oral", label: "ORAL", color: "#3B6D11" },
-  { href: "/dashboard/cross-panel", label: "CROSS-PANEL", color: "#C49A3C" },
+  { href: "/dashboard/cross-panel", label: "CONVERGE", color: "#C49A3C" },
 ];
 
 export function Nav({ cartCount = 0, onCartOpen }: NavProps) {

@@ -2,6 +2,8 @@ import { redirect } from "next/navigation"
 import { createClient } from "../../../lib/supabase/server"
 import OralPanelClient from "./oral-panel-client"
 import { Nav } from "../../components/nav"
+import { FillInTheGapsHeader } from "../../components/panels"
+import { computeConvergeStrength } from "../../../lib/converge-strength"
 import Link from "next/link"
 
 export default async function OralPage() {
@@ -11,7 +13,7 @@ export default async function OralPage() {
 
   const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10)
 
-  const [{ data: oral }, { data: narrativeRow }, { data: lifestyle }, { data: sleepNights }] = await Promise.all([
+  const [{ data: oral }, { data: narrativeRow }, { data: lifestyle }, { data: sleepNights }, { count: labCount }, { count: sleepCount }] = await Promise.all([
     supabase.from("oral_kit_orders")
       .select("*")
       .eq("user_id", user.id)
@@ -37,6 +39,10 @@ export default async function OralPage() {
       .gt("sleep_efficiency", 0)
       .gte("date", thirtyDaysAgo)
       .order("date", { ascending: false }),
+    supabase.from("lab_results").select("id", { count: "exact", head: true })
+      .eq("user_id", user.id).eq("parser_status", "complete"),
+    supabase.from("sleep_data").select("id", { count: "exact", head: true })
+      .eq("user_id", user.id).gt("sleep_efficiency", 0),
   ])
 
   if (!oral) {
@@ -71,9 +77,19 @@ export default async function OralPage() {
     avg_rhr: avg(rhrVals),
   } : null
 
+  const panelCoverage = {
+    oral: { percent: oral?.neisseria_pct != null ? 100 : oral?.shannon_diversity != null ? 30 : 0, status: (oral?.neisseria_pct != null ? "complete" : oral ? "partial" : "none") as "complete" | "partial" | "none" },
+    blood: { percent: (labCount ?? 0) > 0 ? 80 : 0, status: ((labCount ?? 0) > 0 ? "complete" : "none") as "complete" | "partial" | "none" },
+    sleep: { percent: (sleepCount ?? 0) > 0 ? 90 : lifestyle ? 30 : 0, status: ((sleepCount ?? 0) > 0 ? "complete" : lifestyle ? "partial" : "none") as "complete" | "partial" | "none" },
+  }
+  const convergeStrength = computeConvergeStrength(panelCoverage)
+
   return (
-    <div className="min-h-svh bg-off-white">
+    <div className="min-h-svh" style={{ background: "#F5F3EE" }}>
       <Nav />
+      <div style={{ maxWidth: 960, margin: "0 auto", padding: "24px 24px 0" }}>
+        <FillInTheGapsHeader panelCoverage={panelCoverage} convergeStrength={convergeStrength} currentPanel="oral" />
+      </div>
       <OralPanelClient
         kit={oral as Parameters<typeof OralPanelClient>[0]["kit"]}
         narrative={narrative}
