@@ -677,20 +677,14 @@ export function DashboardClient(props: ScoreWheelProps & {
   const bloodIndicators = buildBloodIndicators(hasBlood ? props.bloodData : undefined)
   const sleepIndicators = buildSleepIndicators(hasSleep ? props.sleepData : undefined, hasSleep)
 
-  // ── V5 Dashboard (Peaq Age breakdown exists) ──────────────────────────────
-  if (peaqAgeBreakdown && typeof peaqAgeBreakdown.peaqAge === "number") {
-    const peaqAge = peaqAgeBreakdown.peaqAge as number
-    const delta = peaqAgeBreakdown.delta as number
-    const band = (peaqAgeBreakdown.band as string) ?? "ON PACE"
-    const hasDob = peaqAgeBreakdown.hasDob as boolean | undefined
+  // ── Main Dashboard ────────────────────────────────────────────────────────
+  {
     const actionItems = getActionItems()
     // Reorder: Oral · Sleep · Blood
     const statuses: [PanelStatus, PanelStatus, PanelStatus] = [oralStatus, sleepStatus, bloodStatus]
     const anyMissing = !hasSleep || !hasBlood || !hasOral
 
-    const targetLow = Math.max(18, peaqAge - 2).toFixed(0)
     const speciesCount = props.oralData?.species?.["Species richness"] as number | undefined
-    const targetHigh = Math.max(18, peaqAge - 0.5).toFixed(0)
 
     return (
       <div className="min-h-svh" style={{ background: DS.pageBg }}>
@@ -1370,47 +1364,4 @@ export function DashboardClient(props: ScoreWheelProps & {
       </div>
     )
   }
-
-  // ── LEGACY DASHBOARD (no Peaq Age breakdown — pre-V5) ───────────────────
-  return (
-    <div className="min-h-svh" style={{ background: "#FAFAF8" }}>
-      <Nav />
-      <main className="mx-auto" style={{ maxWidth: 760, padding: "28px 24px 60px" }}>
-        {wearableNeedsReconnect && (
-          <div style={{
-            background: "rgba(154,114,0,0.08)", border: "0.5px solid rgba(154,114,0,0.25)",
-            borderRadius: 8, padding: "14px 18px", marginBottom: 20,
-            display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
-          }}>
-            <p style={{ fontFamily: sans, fontSize: 13, color: "#9A7200", margin: 0, lineHeight: 1.5 }}>
-              Your {({ whoop: "WHOOP", oura: "Oura Ring", garmin: "Garmin", fitbit: "Fitbit" } as Record<string,string>)[props.wearableProvider ?? ""] ?? "wearable"} connection expired.
-            </p>
-            <Link href="/settings" style={{
-              fontFamily: sans, fontSize: 12, fontWeight: 500,
-              letterSpacing: "0.06em", textTransform: "uppercase",
-              color: "#9A7200", textDecoration: "none", whiteSpace: "nowrap",
-            }}>
-              Reconnect →
-            </Link>
-          </div>
-        )}
-        <PushNotificationPrompt />
-        <div style={{ marginBottom: 12 }}>
-          <PanelConvergence
-            score={sleepHidden ? props.score - props.breakdown.sleepSub : props.score}
-            breakdown={props.breakdown}
-            sleepConnected={props.sleepConnected}
-            oralActive={props.oralActive}
-            hasBlood={hasBlood}
-            wearableProvider={props.wearableProvider}
-            bloodLabName={props.bloodData?.labName}
-            oralKitStatus={props.oralKitStatus}
-            sleepHidden={sleepHidden}
-            trendDeltas={props.trendDeltas}
-          />
-        </div>
-      </main>
-      <IOSInstallBanner />
-    </div>
-  )
 }
