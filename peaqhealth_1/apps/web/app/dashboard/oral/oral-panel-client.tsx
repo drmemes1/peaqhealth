@@ -237,9 +237,12 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
       {/* Panel insight tabs */}
       <SectionHeader title="Converge" subtitle="How your oral data connects to blood and sleep." />
       <PanelInsight
-        picture={narrative?.section_opening ?? null}
-        converge={narrative?.section_cardiometabolic ?? narrative?.section_breathing ?? null}
-        actions={narrative?.section_gum_caries ?? null}
+        panel="oral"
+        fallback={{
+          picture: narrative?.section_opening,
+          converge: narrative?.section_cardiometabolic ?? narrative?.section_breathing,
+          actions: narrative?.section_gum_caries,
+        }}
       />
 
       {narrative?.section_disclaimer && (
