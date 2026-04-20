@@ -37,14 +37,21 @@ function spStatus(v: number | null, goodBelow: number): "good" | "watch" | "conc
 function spStatusAbove(v: number | null, goodAbove: number): "good" | "watch" | "concern" { return v == null ? "good" : v >= goodAbove ? "good" : v >= goodAbove * 0.5 ? "watch" : "concern" }
 function f(v: number | null, d = 1): string { return v == null ? "—" : v.toFixed(d) }
 
-function EnvStatCell({ label, value, statusLabel, statusColor, breakdown }: { label: string; value: string; statusLabel: string; statusColor: string; breakdown: string[] }) {
+function EnvStatCell({ label, value, unit, statusLabel, statusColor, breakdown, position }: { label: string; value: string; unit?: string; statusLabel: string; statusColor: string; breakdown: { name: string; val: string }[]; position: "tl" | "tr" | "bl" | "br" }) {
+  const borderLeft = position === "tr" || position === "br" ? "1px solid #E8E4D8" : undefined
+  const borderTop = position === "bl" || position === "br" ? "1px solid #E8E4D8" : undefined
   return (
-    <div style={{ padding: "12px 14px", background: "#F5F3EE", borderRadius: 8, border: "1px solid #E8E4D8" }}>
-      <div style={{ fontFamily: sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: "#B8860B", marginBottom: 4 }}>{label}</div>
-      <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 500, color: "#2C2A24", lineHeight: 1, marginBottom: 4 }}>{value}</div>
-      <div style={{ fontFamily: sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", color: statusColor, fontWeight: 500, marginBottom: 6 }}>{statusLabel}</div>
-      {breakdown.map((line, i) => (
-        <div key={i} style={{ fontFamily: sans, fontSize: 11, color: "#7A7870", lineHeight: 1.5 }}>{line}</div>
+    <div style={{ padding: "16px 18px", borderLeft, borderTop }}>
+      <div style={{ fontFamily: sans, fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.16em", color: "#8C897F", marginBottom: 6 }}>{label}</div>
+      <div style={{ fontFamily: serif, fontSize: 38, fontWeight: 500, color: "#2C2A24", lineHeight: 1, letterSpacing: "-0.02em", marginBottom: 4 }}>
+        {value}{unit && <span style={{ fontSize: 18, color: "#8C897F", fontWeight: 400, marginLeft: 1 }}>{unit}</span>}
+      </div>
+      <div style={{ fontFamily: sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: statusColor, fontWeight: 500, marginBottom: 8 }}>{statusLabel}</div>
+      {breakdown.map((item, i) => (
+        <div key={i} style={{ fontFamily: sans, fontSize: 10.5, color: "#7A7870", lineHeight: 1.5 }}>
+          <span style={{ fontFamily: serif, fontWeight: 500, fontStyle: "normal", color: "#3D3B35" }}>{item.name}</span>{" "}
+          <span style={{ color: "#2C2A24", fontWeight: 500 }}>{item.val}</span>
+        </div>
       ))}
     </div>
   )
@@ -221,26 +228,38 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
           dataShows={env ? `Aerobic shift at ${env.aerobicShift.toFixed(1)}% with anaerobic load at ${env.anaerobicLoad.toFixed(1)}%. Acidity ratio ${env.acidityRatio?.toFixed(2) ?? "—"} (${env.acidityLabel}). Pattern classification: ${env.pattern === "mixed" ? "mixed — aerobic shift with active periopathogens" : env.pattern}.` : undefined}
           expandedContent={env ? (
             <div>
-              <div style={{ fontFamily: sans, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.12em", color: "#B8860B", marginBottom: 8 }}>Environment index</div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
-                <EnvStatCell label="Acidity ratio" value={env.acidityRatio != null ? env.acidityRatio.toFixed(2) : "—"} statusLabel={env.acidityLabel} statusColor={env.acidityLabel === "base-dominant" || env.acidityLabel === "balanced" ? "#1A8C4E" : env.acidityLabel === "acid-leaning" ? "#B8860B" : "#A84D4D"} breakdown={[`acidogenic ${env.acidogenic.toFixed(2)}%`, `alkaligenic ${env.alkaligenic.toFixed(2)}%`]} />
-                <EnvStatCell label="Aerobic shift" value={`${env.aerobicShift.toFixed(1)}%`} statusLabel={env.aerobicShift > 18 ? "Elevated" : "Normal"} statusColor={env.aerobicShift > 18 ? "#B8860B" : "#1A8C4E"} breakdown={[`Rothia ${f(kit.rothia_pct)}%`, `Neisseria ${f(kit.neisseria_pct)}%`, `Actinomyces ${f(kit.actinomyces_pct)}%`]} />
-                <EnvStatCell label="Anaerobic load" value={`${env.anaerobicLoad.toFixed(2)}%`} statusLabel={env.anaerobicLoad > 5 ? "Elevated" : env.anaerobicLoad < 0.5 ? "Suppressed" : "Normal"} statusColor={env.anaerobicLoad > 5 || env.anaerobicLoad < 0.5 ? "#B8860B" : "#1A8C4E"} breakdown={[`Porphyro ${f(kit.porphyromonas_pct, 2)}%`, `Fuso ${f(kit.fusobacterium_pct)}%`, `Trep ${f(kit.treponema_pct, 2)}%`, `Pepto ${f(kit.peptostreptococcus_pct, 2)}%`]} />
-                <EnvStatCell label="Aerobic/anaerobic" value={env.aerobicAnaerobicRatio != null ? `${env.aerobicAnaerobicRatio.toFixed(1)}×` : "—"} statusLabel={env.aerobicAnaerobicRatio != null && env.aerobicAnaerobicRatio > 4 ? "Partial paradox" : "Normal range"} statusColor={env.aerobicAnaerobicRatio != null && env.aerobicAnaerobicRatio > 4 ? "#B8860B" : "#1A8C4E"} breakdown={env.aerobicAnaerobicRatio != null && env.aerobicAnaerobicRatio > 4 ? ["ratio > 4 suggests shift", "but anaerobes remain active"] : ["within expected range"]} />
-              </div>
-              <div style={{ background: "#FAFAF8", border: "1px solid #E8E4D8", borderRadius: 8, padding: "12px 14px" }}>
-                <div style={{ fontFamily: sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: "#B8860B", fontWeight: 600, marginBottom: 6 }}>
-                  Pattern: {({ mouth_breathing: "Mouth breathing", osa_paradox: "OSA-consistent paradox", balanced: "Balanced", mixed: "Mixed" })[env.pattern] ?? env.pattern}
+              {/* Env index — table-style 2x2 grid */}
+              <div style={{ padding: "18px 22px", background: "#FAFAF8" }}>
+                <div style={{ fontFamily: sans, fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.16em", color: "#8C897F", marginBottom: 10 }}>Environment index</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", border: "1px solid #E8E4D8", borderRadius: 10, overflow: "hidden", background: "#FFFEFB" }}>
+                  <EnvStatCell position="tl" label="Acidity ratio" value={env.acidityRatio != null ? env.acidityRatio.toFixed(2) : "—"} statusLabel={env.acidityLabel} statusColor={env.acidityLabel === "base-dominant" || env.acidityLabel === "balanced" ? "#1A8C4E" : env.acidityLabel === "acid-leaning" ? "#B8860B" : "#A84D4D"} breakdown={[{ name: "acidogenic", val: `${env.acidogenic.toFixed(2)}%` }, { name: "alkaligenic", val: `${env.alkaligenic.toFixed(2)}%` }]} />
+                  <EnvStatCell position="tr" label="Aerobic shift" value={env.aerobicShift.toFixed(1)} unit="%" statusLabel={env.aerobicShift > 18 ? "Elevated" : "Normal"} statusColor={env.aerobicShift > 18 ? "#B8860B" : "#1A8C4E"} breakdown={[{ name: "Rothia", val: `${f(kit.rothia_pct)}%` }, { name: "Neisseria", val: `${f(kit.neisseria_pct)}%` }, { name: "Actinomyces", val: `${f(kit.actinomyces_pct)}%` }]} />
+                  <EnvStatCell position="bl" label="Anaerobic load" value={env.anaerobicLoad.toFixed(2)} unit="%" statusLabel={env.anaerobicLoad > 5 ? "Elevated" : env.anaerobicLoad < 0.5 ? "Suppressed" : "Normal"} statusColor={env.anaerobicLoad > 5 || env.anaerobicLoad < 0.5 ? "#B8860B" : "#1A8C4E"} breakdown={[{ name: "Porphyromonas", val: `${f(kit.porphyromonas_pct, 2)}%` }, { name: "Fusobacterium", val: `${f(kit.fusobacterium_pct)}%` }, { name: "Treponema", val: `${f(kit.treponema_pct, 2)}%` }, { name: "Peptostreptococcus", val: `${f(kit.peptostreptococcus_pct, 2)}%` }]} />
+                  <EnvStatCell position="br" label="Aerobic / anaerobic" value={env.aerobicAnaerobicRatio != null ? env.aerobicAnaerobicRatio.toFixed(1) : "—"} unit="×" statusLabel={env.aerobicAnaerobicRatio != null && env.aerobicAnaerobicRatio > 4 ? "Partial paradox" : "Normal range"} statusColor={env.aerobicAnaerobicRatio != null && env.aerobicAnaerobicRatio > 4 ? "#B8860B" : "#1A8C4E"} breakdown={env.aerobicAnaerobicRatio != null && env.aerobicAnaerobicRatio > 4 ? [{ name: "ratio > 4", val: "shift pattern" }, { name: "anaerobes", val: "remain active" }] : [{ name: "within", val: "expected range" }]} />
                 </div>
-                <p style={{ fontFamily: serif, fontSize: 14, fontStyle: "italic", color: "#5C5A54", lineHeight: 1.6, margin: 0 }}>
-                  {env.pattern === "mixed"
-                    ? `Your data shows an aerobic community shift (${env.aerobicShift.toFixed(1)}%) alongside elevated anaerobic bacteria (${env.anaerobicLoad.toFixed(1)}%). This is often seen when mouth breathing combines with active periodontal bacteria.`
-                    : env.pattern === "mouth_breathing"
-                    ? `High aerobic enrichment (${env.aerobicShift.toFixed(1)}%) with elevated anaerobes (${env.anaerobicLoad.toFixed(1)}%) points to overnight mouth breathing drying the oral environment.`
-                    : env.pattern === "osa_paradox"
-                    ? `High aerobic shift (${env.aerobicShift.toFixed(1)}%) with suppressed anaerobes and a ratio above 4 is the signature OSA-associated paradox pattern.`
-                    : "Aerobic and anaerobic bacteria are within normal ranges, suggesting stable overnight breathing."}
-                </p>
+              </div>
+              {/* Pattern card — dark espresso hero moment */}
+              <div style={{ background: "#2C2A24", position: "relative", overflow: "hidden" }}>
+                <div style={{ position: "absolute", top: -40, right: -40, width: 180, height: 180, background: "radial-gradient(circle, rgba(184,134,11,0.15) 0%, transparent 70%)", pointerEvents: "none" }} />
+                <div style={{ padding: "24px 22px", position: "relative" }}>
+                  <div style={{ fontFamily: sans, fontSize: 10, fontWeight: 500, letterSpacing: "0.16em", textTransform: "uppercase", color: "rgba(184,134,11,0.9)", marginBottom: 6 }}>Pattern classification</div>
+                  <h4 style={{ fontFamily: serif, fontSize: 28, fontWeight: 500, letterSpacing: "-0.01em", color: "#F5F3EE", margin: "0 0 12px" }}>
+                    {({ mouth_breathing: "Mouth breathing", osa_paradox: "OSA-consistent paradox", balanced: "Balanced", mixed: "Mixed" })[env.pattern] ?? env.pattern}
+                    <span style={{ color: "#D4A934", fontStyle: "italic" }}>
+                      {env.pattern === "mixed" ? " — aerobic shift with active periopathogens" : env.pattern === "mouth_breathing" ? " — nocturnal oral drying" : env.pattern === "osa_paradox" ? " — paradoxical anaerobic suppression" : ""}
+                    </span>
+                  </h4>
+                  <p style={{ fontFamily: serif, fontSize: 15, fontStyle: "italic", lineHeight: 1.7, color: "rgba(245,243,238,0.85)", margin: "0 0 12px" }}>
+                    {env.pattern === "mixed"
+                      ? <>Your data shows an aerobic community shift of <span style={{ color: "#D4A934", fontStyle: "normal", fontWeight: 500 }}>{env.aerobicShift.toFixed(1)}%</span> alongside elevated anaerobic bacteria at <span style={{ color: "#D4A934", fontStyle: "normal", fontWeight: 500 }}>{env.anaerobicLoad.toFixed(1)}%</span>. This is often seen when mouth breathing combines with active periodontal bacteria — distinct from the paradoxical anaerobic suppression seen in OSA microbiome profiles.</>
+                      : env.pattern === "mouth_breathing"
+                      ? <>High aerobic enrichment (<span style={{ color: "#D4A934", fontStyle: "normal", fontWeight: 500 }}>{env.aerobicShift.toFixed(1)}%</span>) with elevated anaerobes (<span style={{ color: "#D4A934", fontStyle: "normal", fontWeight: 500 }}>{env.anaerobicLoad.toFixed(1)}%</span>) points to overnight mouth breathing drying the oral environment.</>
+                      : env.pattern === "osa_paradox"
+                      ? <>High aerobic shift (<span style={{ color: "#D4A934", fontStyle: "normal", fontWeight: 500 }}>{env.aerobicShift.toFixed(1)}%</span>) with suppressed anaerobes and a ratio above 4 is the signature OSA-associated paradox pattern.</>
+                      : "Aerobic and anaerobic bacteria are within normal ranges, suggesting stable overnight breathing."}
+                  </p>
+                  <p style={{ fontFamily: serif, fontSize: 11, fontStyle: "italic", color: "rgba(245,243,238,0.5)", letterSpacing: "0.02em", margin: 0 }}>Chen et al. 2022 · Nighttime breathing & oral ecology</p>
+                </div>
               </div>
             </div>
           ) : undefined}
