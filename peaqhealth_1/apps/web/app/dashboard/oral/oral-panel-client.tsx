@@ -1,9 +1,9 @@
 // ============================================================================
-// ORAL PANEL — STAGGERED 2-COLUMN CATEGORY CARD LAYOUT
+// ORAL PANEL — STAGGERED 2-COLUMN, ROW-PAIRED EXPANSION
 // ============================================================================
 "use client"
 
-import { useMemo } from "react"
+import { useState, useMemo } from "react"
 import { SectionHeader, PanelInsight, CategoryCard } from "../../components/panels"
 import { DiversityIcon, NitricOxideIcon, GumHealthIcon, CavityRiskIcon, CavityProtectorIcon, BreathingIcon } from "../../components/panels/icons"
 import { computeClientEnvironmentIndex } from "../../../lib/oral/environment-index"
@@ -101,22 +101,21 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
     ? `${breathingContextParts.join(" + ")} · ${breathingContextParts.length === 3 ? "all 3 signals" : `${breathingContextParts.length} of 3 signals`}`
     : "Waiting on data"
 
-  const PATTERN_LABELS: Record<string, string> = {
-    mouth_breathing: "Mouth breathing",
-    osa_paradox: "OSA-consistent paradox",
-    balanced: "Balanced",
-    mixed: "Mixed",
-  }
+  // Row-paired expansion state
+  const [expandedRow, setExpandedRow] = useState<number | null>(null)
+  const toggleRow = (row: number) => setExpandedRow(r => r === row ? null : row)
 
   return (
     <div style={{ maxWidth: 1040, margin: "0 auto", padding: "32px 24px 80px", background: "#F5F3EE" }}>
 
       <SectionHeader title="What your oral data is showing" subtitle="Six categories. Tap any card for detail." />
 
-      <div className="oral-category-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 32 }}>
+      <div className="oral-category-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, alignItems: "stretch", marginBottom: 32 }}>
 
         {/* Row 1: Diversity | NO pathway */}
         <CategoryCard
+          expanded={expandedRow === 0}
+          onToggle={() => toggleRow(0)}
           icon={<DiversityIcon color={STATUS_COLORS[kit.shannon_diversity == null ? "pending" : kit.shannon_diversity >= 4.0 && kit.shannon_diversity <= 6.5 ? "good" : kit.shannon_diversity < 3.5 ? "concern" : "watch"]} />}
           name="Bacterial diversity"
           description="How many different species and how evenly they're mixed"
@@ -125,14 +124,18 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
           status={kit.shannon_diversity == null ? "pending" : kit.shannon_diversity >= 4.0 && kit.shannon_diversity <= 6.5 ? "good" : kit.shannon_diversity < 3.5 ? "concern" : "watch"}
           statusLabel={kit.shannon_diversity != null && kit.shannon_diversity >= 4.0 ? "Strong" : undefined}
           narrative={kit.shannon_diversity != null ? {
-            paragraph: `You have ${summary?.named_species_count ?? "many"} different bacterial species in your oral sample, with a diversity score of ${kit.shannon_diversity.toFixed(2)}. Higher oral diversity has been correlated with reduced all-cause mortality in population studies. A diverse community tends to be more resilient and harder for any single problematic species to dominate.`,
-            pullquotes: [`${summary?.named_species_count ?? "many"} different bacterial species`, "reduced all-cause mortality"],
+            paragraph: `You have ${summary?.named_species_count ?? "many"} different bacterial species in your oral sample, with a diversity score of ${kit.shannon_diversity.toFixed(2)}. Higher oral diversity has been correlated with reduced all-cause mortality in population studies.`,
+            pullquotes: ["reduced all-cause mortality"],
             source: "Shannon index · Mondal et al. iScience. 2024; Hisayama Study, n=2,343.",
             meta: summary ? [`${summary.named_species_count} named`, `${summary.unnamed_placeholder_count} unclassified`, `${summary.distinct_genera} genera`, `${summary.distinct_phyla} phyla`] : undefined,
           } : undefined}
+          dataShows={kit.shannon_diversity != null && summary ? `Your Shannon index of ${kit.shannon_diversity.toFixed(2)} sits in the ${kit.shannon_diversity >= 4.0 && kit.shannon_diversity <= 5.5 ? "mid-range" : kit.shannon_diversity > 5.5 ? "upper range" : "lower range"} of what Mondal 2024 observed as mortality-protective (4.0–5.5). Your ${summary.named_species_count} named species span ${summary.distinct_phyla} phyla, which indicates resilience — no single group dominates.` : undefined}
+          crossPanel={hasSpecies ? "Uploading your blood panel will unlock cross-panel observations connecting diversity to inflammatory markers." : undefined}
         />
 
         <CategoryCard
+          expanded={expandedRow === 0}
+          onToggle={() => toggleRow(0)}
           icon={<NitricOxideIcon color={STATUS_COLORS[noStatus]} />}
           name="Nitric oxide pathway"
           description="Bacteria that help regulate blood pressure and blood sugar"
@@ -142,58 +145,53 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
           status={noStatus}
           statusLabel={noTotal != null && noTotal >= 20 ? "Strong" : undefined}
           narrative={hasSpecies ? {
-            paragraph: `Your nitric-oxide-producing bacteria total ${noTotal!.toFixed(1)}% of your oral community. These bacteria convert dietary nitrate from leafy greens and beets into nitric oxide — the signal your blood vessels rely on to stay relaxed. Population research links strong levels to better blood pressure and blood sugar handling.`,
-            pullquotes: ["nitric oxide", "better blood pressure and blood sugar"],
+            paragraph: `Your nitric-oxide-producing bacteria total ${noTotal!.toFixed(1)}% of your oral community. These convert dietary nitrate from leafy greens and beets into nitric oxide — the signal your blood vessels rely on to stay relaxed.`,
+            pullquotes: ["nitric oxide", "blood vessels rely on"],
             source: "Kapil V et al. Free Radic Biol Med. 2013; NHANES 2009-2012.",
           } : undefined}
+          dataShows={hasSpecies && noTotal != null ? `Your Neisseria at ${f(kit.neisseria_pct)}% is ${(kit.neisseria_pct ?? 0) >= 10 ? "above" : "below"} the typical 10–13% range observed in healthy adults. Combined with Rothia ${f(kit.rothia_pct)}% and Haemophilus ${f(kit.haemophilus_pct)}%, your nitric oxide production capacity is ${noTotal >= 30 ? "notably strong" : noTotal >= 20 ? "solid" : "below target"}.` : undefined}
+          crossPanel={hasSpecies ? "Population research associates higher oral nitrate-reducing bacteria with modestly better cardiovascular markers. Whether strengthening your NO pathway shifts blood pressure in future draws is something to watch." : undefined}
           species={hasSpecies ? [
-            { name: "Neisseria", value: kit.neisseria_pct ?? 0, status: spStatusAbove(kit.neisseria_pct, 10) },
-            { name: "Rothia", value: kit.rothia_pct ?? 0, status: spStatusAbove(kit.rothia_pct, 3) },
-            { name: "Haemophilus", value: kit.haemophilus_pct ?? 0, status: spStatusAbove(kit.haemophilus_pct, 4) },
-            { name: "Actinomyces", value: kit.actinomyces_pct ?? 0, status: spStatusAbove(kit.actinomyces_pct, 3) },
-            { name: "Veillonella", value: kit.veillonella_pct ?? 0, status: spStatusAbove(kit.veillonella_pct, 1) },
+            { name: "Neisseria", value: kit.neisseria_pct ?? 0, status: spStatusAbove(kit.neisseria_pct, 10), target: "10–13%" },
+            { name: "Rothia", value: kit.rothia_pct ?? 0, status: spStatusAbove(kit.rothia_pct, 3), target: "3–10%" },
+            { name: "Haemophilus", value: kit.haemophilus_pct ?? 0, status: spStatusAbove(kit.haemophilus_pct, 4), target: "≥ 4%" },
+            { name: "Actinomyces", value: kit.actinomyces_pct ?? 0, status: spStatusAbove(kit.actinomyces_pct, 3), target: "3–10%" },
+            { name: "Veillonella", value: kit.veillonella_pct ?? 0, status: spStatusAbove(kit.veillonella_pct, 1), target: "1–5%" },
           ] : undefined}
-          expandedContent={hasSpecies && noTotal != null ? (
-            <div style={{ borderTop: "1px solid #E8E4D8", paddingTop: 12, marginTop: 4 }}>
-              <div style={{ fontFamily: sans, fontSize: 11, fontWeight: 500, color: "#B8860B", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>
-                Aggregate NO producers: {noTotal.toFixed(1)}%
-              </div>
-              <p style={{ fontFamily: sans, fontSize: 12, color: "#7A7870", lineHeight: 1.5, margin: "0 0 4px" }}>
-                {noTotal >= 30 ? "Your NO producers are among the strongest we measure — well above the typical range."
-                  : noTotal >= 20 ? "Solid NO pathway. Your bacteria are actively converting dietary nitrate into nitric oxide."
-                  : "Below the target for consistent nitric oxide production. Leafy greens and beets feed these bacteria directly."}
-              </p>
-              <p style={{ fontFamily: sans, fontSize: 10, fontStyle: "italic", color: "#8C897F", margin: 0 }}>Kapil V et al. Free Radic Biol Med. 2013 — dietary nitrate lowers blood pressure via oral bacteria.</p>
-            </div>
-          ) : undefined}
         />
 
         {/* Row 2: Gum health | Breathing pattern */}
         <CategoryCard
+          expanded={expandedRow === 1}
+          onToggle={() => toggleRow(1)}
           icon={<GumHealthIcon color={STATUS_COLORS[gumStatus]} />}
           name="Gum health bacteria"
           description="Species linked to gum tissue changes"
-          contextStrip={hasSpecies ? `Fuso ${f(kit.fusobacterium_pct)}% · Agg ${f(kit.aggregatibacter_pct)}% · ${5} more` : undefined}
+          contextStrip={hasSpecies ? `Fuso ${f(kit.fusobacterium_pct)}% · Agg ${f(kit.aggregatibacter_pct)}% · 5 more` : undefined}
           value={gumTotal != null ? parseFloat(gumTotal.toFixed(2)) : null}
           unit="%"
           status={gumStatus}
           narrative={hasSpecies ? {
-            paragraph: `Your gum-linked bacteria total ${gumTotal!.toFixed(2)}% of your community. These live in the pockets between your teeth and gums. When they grow beyond typical levels, they can drive inflammation that reaches beyond your mouth. Consistent flossing and professional cleanings are the most direct way to keep them in check.`,
-            pullquotes: ["inflammation that reaches beyond your mouth", "consistent flossing"],
+            paragraph: `Your gum-linked bacteria total ${gumTotal!.toFixed(2)}%. These live in the pockets between your teeth and gums. When they grow beyond typical levels, they can drive inflammation that reaches beyond your mouth.`,
+            pullquotes: ["inflammation that reaches beyond your mouth"],
             source: "Socransky & Haffajee classification · Red and orange complex.",
           } : undefined}
+          dataShows={hasSpecies && gumTotal != null ? `Fusobacterium at ${f(kit.fusobacterium_pct)}% and Aggregatibacter at ${f(kit.aggregatibacter_pct)}% are ${gumTotal >= 5 ? "above typical levels" : gumTotal >= 2 ? "in the watch range" : "within normal range"}. Consistent flossing and professional cleanings are the most direct way to keep these in check.` : undefined}
+          crossPanel={hasSpecies ? "Research links elevated Porphyromonas and Fusobacterium to higher systemic hs-CRP. If your blood panel shows elevated inflammation, these bacteria are a plausible contributor." : undefined}
           species={hasSpecies ? [
-            { name: "Fusobacterium", value: kit.fusobacterium_pct ?? 0, status: spStatus(kit.fusobacterium_pct, 0.5) },
-            { name: "Aggregatibacter", value: kit.aggregatibacter_pct ?? 0, status: spStatus(kit.aggregatibacter_pct, 0.5) },
-            { name: "Campylobacter", value: kit.campylobacter_pct ?? 0, status: spStatus(kit.campylobacter_pct, 0.5) },
-            { name: "Porphyromonas", value: kit.porphyromonas_pct ?? 0, status: spStatus(kit.porphyromonas_pct, 0.5) },
-            { name: "Tannerella", value: kit.tannerella_pct ?? 0, status: spStatus(kit.tannerella_pct, 0.5) },
-            { name: "Treponema", value: kit.treponema_pct ?? 0, status: spStatus(kit.treponema_pct, 0.5) },
-            { name: "P. intermedia", value: kit.prevotella_intermedia_pct ?? 0, status: spStatus(kit.prevotella_intermedia_pct, 0.5) },
+            { name: "Fusobacterium", value: kit.fusobacterium_pct ?? 0, status: spStatus(kit.fusobacterium_pct, 0.5), target: "< 0.5%" },
+            { name: "Aggregatibacter", value: kit.aggregatibacter_pct ?? 0, status: spStatus(kit.aggregatibacter_pct, 0.5), target: "< 0.5%" },
+            { name: "Campylobacter", value: kit.campylobacter_pct ?? 0, status: spStatus(kit.campylobacter_pct, 0.5), target: "< 0.5%" },
+            { name: "Porphyromonas", value: kit.porphyromonas_pct ?? 0, status: spStatus(kit.porphyromonas_pct, 0.5), target: "< 0.5%" },
+            { name: "Tannerella", value: kit.tannerella_pct ?? 0, status: spStatus(kit.tannerella_pct, 0.5), target: "< 0.5%" },
+            { name: "Treponema", value: kit.treponema_pct ?? 0, status: spStatus(kit.treponema_pct, 0.5), target: "< 0.5%" },
+            { name: "P. intermedia", value: kit.prevotella_intermedia_pct ?? 0, status: spStatus(kit.prevotella_intermedia_pct, 0.5), target: "< 0.5%" },
           ] : undefined}
         />
 
         <CategoryCard
+          expanded={expandedRow === 1}
+          onToggle={() => toggleRow(1)}
           icon={<BreathingIcon color={STATUS_COLORS[breathingStatus]} />}
           name="Nighttime breathing pattern"
           description="Cross-panel signal from questionnaire, wearable, and oral bacteria"
@@ -220,49 +218,27 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
             source: env ? "Chen et al. 2022 · Research Square preprint." : undefined,
             meta: hasWearable ? [`${wearable!.nights_available} nights`, wearable!.avg_spo2 ? `SpO₂ ${wearable!.avg_spo2.toFixed(1)}%` : null, wearable!.avg_respiratory_rate ? `RR ${wearable!.avg_respiratory_rate.toFixed(1)} bpm` : null, wearable!.avg_rhr ? `RHR ${wearable!.avg_rhr.toFixed(0)} bpm` : null].filter(Boolean) as string[] : undefined,
           }}
+          dataShows={env ? `Aerobic shift at ${env.aerobicShift.toFixed(1)}% with anaerobic load at ${env.anaerobicLoad.toFixed(1)}%. Acidity ratio ${env.acidityRatio?.toFixed(2) ?? "—"} (${env.acidityLabel}). Pattern classification: ${env.pattern === "mixed" ? "mixed — aerobic shift with active periopathogens" : env.pattern}.` : undefined}
           expandedContent={env ? (
-            <div style={{ borderTop: "1px solid #E8E4D8", paddingTop: 12, marginTop: 4 }}>
+            <div>
+              <div style={{ fontFamily: sans, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.12em", color: "#B8860B", marginBottom: 8 }}>Environment index</div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
-                <EnvStatCell
-                  label="Acidity ratio"
-                  value={env.acidityRatio != null ? env.acidityRatio.toFixed(2) : "—"}
-                  statusLabel={env.acidityLabel}
-                  statusColor={env.acidityLabel === "base-dominant" || env.acidityLabel === "balanced" ? "#1A8C4E" : env.acidityLabel === "acid-leaning" ? "#B8860B" : "#A84D4D"}
-                  breakdown={[`acidogenic ${env.acidogenic.toFixed(2)}%`, `alkaligenic ${env.alkaligenic.toFixed(2)}%`]}
-                />
-                <EnvStatCell
-                  label="Aerobic shift"
-                  value={`${env.aerobicShift.toFixed(1)}%`}
-                  statusLabel={env.aerobicShift > 18 ? "Elevated" : "Normal"}
-                  statusColor={env.aerobicShift > 18 ? "#B8860B" : "#1A8C4E"}
-                  breakdown={[`Rothia ${f(kit.rothia_pct)}%`, `Neisseria ${f(kit.neisseria_pct)}%`, `Actinomyces ${f(kit.actinomyces_pct)}%`]}
-                />
-                <EnvStatCell
-                  label="Anaerobic load"
-                  value={`${env.anaerobicLoad.toFixed(2)}%`}
-                  statusLabel={env.anaerobicLoad > 5 ? "Elevated" : env.anaerobicLoad < 0.5 ? "Suppressed" : "Normal"}
-                  statusColor={env.anaerobicLoad > 5 || env.anaerobicLoad < 0.5 ? "#B8860B" : "#1A8C4E"}
-                  breakdown={[`Porphyro ${f(kit.porphyromonas_pct, 2)}%`, `Fuso ${f(kit.fusobacterium_pct)}%`, `Trep ${f(kit.treponema_pct, 2)}%`, `Pepto ${f(kit.peptostreptococcus_pct, 2)}%`]}
-                />
-                <EnvStatCell
-                  label="Aerobic/anaerobic"
-                  value={env.aerobicAnaerobicRatio != null ? `${env.aerobicAnaerobicRatio.toFixed(1)}×` : "—"}
-                  statusLabel={env.aerobicAnaerobicRatio != null && env.aerobicAnaerobicRatio > 4 ? "Partial paradox" : "Normal range"}
-                  statusColor={env.aerobicAnaerobicRatio != null && env.aerobicAnaerobicRatio > 4 ? "#B8860B" : "#1A8C4E"}
-                  breakdown={env.aerobicAnaerobicRatio != null && env.aerobicAnaerobicRatio > 4 ? ["ratio > 4 suggests shift pattern", "but anaerobes remain active"] : ["within expected range"]}
-                />
+                <EnvStatCell label="Acidity ratio" value={env.acidityRatio != null ? env.acidityRatio.toFixed(2) : "—"} statusLabel={env.acidityLabel} statusColor={env.acidityLabel === "base-dominant" || env.acidityLabel === "balanced" ? "#1A8C4E" : env.acidityLabel === "acid-leaning" ? "#B8860B" : "#A84D4D"} breakdown={[`acidogenic ${env.acidogenic.toFixed(2)}%`, `alkaligenic ${env.alkaligenic.toFixed(2)}%`]} />
+                <EnvStatCell label="Aerobic shift" value={`${env.aerobicShift.toFixed(1)}%`} statusLabel={env.aerobicShift > 18 ? "Elevated" : "Normal"} statusColor={env.aerobicShift > 18 ? "#B8860B" : "#1A8C4E"} breakdown={[`Rothia ${f(kit.rothia_pct)}%`, `Neisseria ${f(kit.neisseria_pct)}%`, `Actinomyces ${f(kit.actinomyces_pct)}%`]} />
+                <EnvStatCell label="Anaerobic load" value={`${env.anaerobicLoad.toFixed(2)}%`} statusLabel={env.anaerobicLoad > 5 ? "Elevated" : env.anaerobicLoad < 0.5 ? "Suppressed" : "Normal"} statusColor={env.anaerobicLoad > 5 || env.anaerobicLoad < 0.5 ? "#B8860B" : "#1A8C4E"} breakdown={[`Porphyro ${f(kit.porphyromonas_pct, 2)}%`, `Fuso ${f(kit.fusobacterium_pct)}%`, `Trep ${f(kit.treponema_pct, 2)}%`, `Pepto ${f(kit.peptostreptococcus_pct, 2)}%`]} />
+                <EnvStatCell label="Aerobic/anaerobic" value={env.aerobicAnaerobicRatio != null ? `${env.aerobicAnaerobicRatio.toFixed(1)}×` : "—"} statusLabel={env.aerobicAnaerobicRatio != null && env.aerobicAnaerobicRatio > 4 ? "Partial paradox" : "Normal range"} statusColor={env.aerobicAnaerobicRatio != null && env.aerobicAnaerobicRatio > 4 ? "#B8860B" : "#1A8C4E"} breakdown={env.aerobicAnaerobicRatio != null && env.aerobicAnaerobicRatio > 4 ? ["ratio > 4 suggests shift", "but anaerobes remain active"] : ["within expected range"]} />
               </div>
               <div style={{ background: "#FAFAF8", border: "1px solid #E8E4D8", borderRadius: 8, padding: "12px 14px" }}>
                 <div style={{ fontFamily: sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: "#B8860B", fontWeight: 600, marginBottom: 6 }}>
-                  Pattern: {PATTERN_LABELS[env.pattern] ?? env.pattern}
+                  Pattern: {({ mouth_breathing: "Mouth breathing", osa_paradox: "OSA-consistent paradox", balanced: "Balanced", mixed: "Mixed" })[env.pattern] ?? env.pattern}
                 </div>
                 <p style={{ fontFamily: serif, fontSize: 14, fontStyle: "italic", color: "#5C5A54", lineHeight: 1.6, margin: 0 }}>
                   {env.pattern === "mixed"
-                    ? `Your data shows an aerobic community shift (${env.aerobicShift.toFixed(1)}%) alongside elevated anaerobic bacteria (${env.anaerobicLoad.toFixed(1)}%). This pattern is often seen when mouth breathing combines with active periodontal bacteria — different from the paradoxical anaerobic suppression seen in OSA microbiome profiles.`
+                    ? `Your data shows an aerobic community shift (${env.aerobicShift.toFixed(1)}%) alongside elevated anaerobic bacteria (${env.anaerobicLoad.toFixed(1)}%). This is often seen when mouth breathing combines with active periodontal bacteria.`
                     : env.pattern === "mouth_breathing"
                     ? `High aerobic enrichment (${env.aerobicShift.toFixed(1)}%) with elevated anaerobes (${env.anaerobicLoad.toFixed(1)}%) points to overnight mouth breathing drying the oral environment.`
                     : env.pattern === "osa_paradox"
-                    ? `High aerobic shift (${env.aerobicShift.toFixed(1)}%) with suppressed anaerobes (<3%) and a ratio above 4 is the signature OSA-associated paradox pattern.`
+                    ? `High aerobic shift (${env.aerobicShift.toFixed(1)}%) with suppressed anaerobes and a ratio above 4 is the signature OSA-associated paradox pattern.`
                     : "Aerobic and anaerobic bacteria are within normal ranges, suggesting stable overnight breathing."}
                 </p>
               </div>
@@ -272,6 +248,8 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
 
         {/* Row 3: Cavity bacteria | Cavity protectors */}
         <CategoryCard
+          expanded={expandedRow === 2}
+          onToggle={() => toggleRow(2)}
           icon={<CavityRiskIcon color={STATUS_COLORS[cavRiskStatus]} />}
           name="Cavity bacteria"
           description="Acid-producing species that wear down enamel"
@@ -280,18 +258,22 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
           unit="%"
           status={cavRiskStatus}
           narrative={hasSpecies ? {
-            paragraph: `Your cavity-causing bacteria total ${cavityRisk!.toFixed(2)}%. These produce lactic acid from sugar, which dissolves enamel when pH drops below 5.5. Lower is better here — your protectors (below) help neutralise this acid.`,
+            paragraph: `Your cavity-causing bacteria total ${cavityRisk!.toFixed(2)}%. These produce lactic acid from sugar, which dissolves enamel when pH drops below 5.5. Lower is better here — your protectors help neutralise this acid.`,
             pullquotes: ["lactic acid from sugar", "your protectors"],
             source: "Meta-analysis of 19 studies on S. mutans prevalence.",
           } : undefined}
+          dataShows={hasSpecies && cavityRisk != null ? `S. mutans at ${f(kit.s_mutans_pct, 3)}% and S. sobrinus at ${f(kit.s_sobrinus_pct, 3)}% are ${cavityRisk < 0.5 ? "very low — enamel environment is well-protected" : cavityRisk < 1.0 ? "in the manageable range" : "above the threshold where active enamel wear is likely"}.` : undefined}
+          crossPanel={hasSpecies ? "Cavity bacteria respond to dietary sugar frequency more than total sugar amount. Spacing meals further apart reduces the number of acid attacks per day." : undefined}
           species={hasSpecies ? [
-            { name: "S. mutans", value: kit.s_mutans_pct ?? 0, status: spStatus(kit.s_mutans_pct, 0.5) },
-            { name: "S. sobrinus", value: kit.s_sobrinus_pct ?? 0, status: spStatus(kit.s_sobrinus_pct, 0.5) },
-            { name: "Lactobacillus", value: kit.lactobacillus_pct ?? 0, status: spStatus(kit.lactobacillus_pct, 0.1) },
+            { name: "S. mutans", value: kit.s_mutans_pct ?? 0, status: spStatus(kit.s_mutans_pct, 0.5), target: "< 0.5%" },
+            { name: "S. sobrinus", value: kit.s_sobrinus_pct ?? 0, status: spStatus(kit.s_sobrinus_pct, 0.5), target: "< 0.5%" },
+            { name: "Lactobacillus", value: kit.lactobacillus_pct ?? 0, status: spStatus(kit.lactobacillus_pct, 0.1), target: "< 0.1%" },
           ] : undefined}
         />
 
         <CategoryCard
+          expanded={expandedRow === 2}
+          onToggle={() => toggleRow(2)}
           icon={<CavityProtectorIcon color={STATUS_COLORS[cavProtStatus]} />}
           name="Cavity protectors"
           description="Bacteria that buffer acid and compete with cavity-makers"
@@ -305,9 +287,11 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
             pullquotes: ["hydrogen peroxide", "compete for the same tooth-surface territory"],
             source: "Kreth et al. J Bacteriol. 2005.",
           } : undefined}
+          dataShows={hasSpecies && cavityProtect != null ? `S. sanguinis at ${f(kit.s_sanguinis_pct, 2)}% is ${(kit.s_sanguinis_pct ?? 0) >= 1.5 ? "above the protective threshold" : "below the target of 1.5%"}. Combined with S. gordonii at ${f(kit.s_gordonii_pct, 2)}%, your protective layer is ${cavityProtect >= 2 ? "working well" : "thinner than ideal"}.` : undefined}
+          crossPanel={hasSpecies ? "These bacteria also produce alkali that raises local pH — the opposite of what cavity-makers do. A higher protector-to-risk ratio means your enamel spends more time in a neutral environment." : undefined}
           species={hasSpecies ? [
-            { name: "S. sanguinis", value: kit.s_sanguinis_pct ?? 0, status: spStatusAbove(kit.s_sanguinis_pct, 1.5) },
-            { name: "S. gordonii", value: kit.s_gordonii_pct ?? 0, status: spStatusAbove(kit.s_gordonii_pct, 0.3) },
+            { name: "S. sanguinis", value: kit.s_sanguinis_pct ?? 0, status: spStatusAbove(kit.s_sanguinis_pct, 1.5), target: "≥ 1.5%" },
+            { name: "S. gordonii", value: kit.s_gordonii_pct ?? 0, status: spStatusAbove(kit.s_gordonii_pct, 0.3), target: "≥ 0.3%" },
           ] : undefined}
         />
       </div>
@@ -327,14 +311,7 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
       )}
 
       <SectionHeader title="Converge" subtitle="How your oral data connects to blood and sleep." />
-      <PanelInsight
-        panel="oral"
-        fallback={{
-          picture: narrative?.section_opening,
-          converge: narrative?.section_cardiometabolic ?? narrative?.section_breathing,
-          actions: narrative?.section_gum_caries,
-        }}
-      />
+      <PanelInsight panel="oral" fallback={{ picture: narrative?.section_opening, converge: narrative?.section_cardiometabolic ?? narrative?.section_breathing, actions: narrative?.section_gum_caries }} />
 
       {narrative?.section_disclaimer && (
         <div style={{ borderTop: "1px solid #D6D3C8", paddingTop: 24, marginTop: 16 }}>
@@ -351,6 +328,7 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
       <style>{`
         @media (max-width: 768px) {
           .oral-category-grid { grid-template-columns: 1fr !important; }
+          .species-grid { grid-template-columns: 1fr 1fr !important; }
         }
       `}</style>
     </div>
