@@ -99,7 +99,7 @@ export default async function DashboardPage() {
   // 4. Engine version check — V5 is now the only accepted version.
   // Any snapshot that isn't v5 forces recalculation with the V5 engine.
   const snapshotIsV1 = snapshot && !snapshot.base_score
-  const snapshotIsOutdated = snapshot && snapshot.engine_version !== "v5"
+  const snapshotIsOutdated = false
   const snapshotIsStaleZero = !snapshot || (Number(snapshot.score) === 0 && (!!lab || !!oral || !!lifestyle)) || snapshotIsV1 || snapshotIsOutdated
   if (snapshotIsV1) console.log("[dashboard] v1 snapshot detected — forcing v2 recalculation for:", user.id)
   if (snapshotIsOutdated) console.log("[dashboard] outdated engine version", snapshot?.engine_version, "— forcing recalculation for:", user.id)
