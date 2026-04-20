@@ -235,7 +235,7 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
       )}
 
       {/* Panel insight tabs */}
-      <SectionHeader title="Connections across your panels" subtitle="How your oral data connects to blood and sleep." />
+      <SectionHeader title="Converge" subtitle="How your oral data connects to blood and sleep." />
       <PanelInsight
         picture={narrative?.section_opening ?? null}
         converge={narrative?.section_cardiometabolic ?? narrative?.section_breathing ?? null}
