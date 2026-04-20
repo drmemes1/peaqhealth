@@ -1,11 +1,12 @@
 // ============================================================================
-// ORAL PANEL — CATEGORY CARD LAYOUT
+// ORAL PANEL — STAGGERED 2-COLUMN CATEGORY CARD LAYOUT
 // ============================================================================
 "use client"
 
 import { useMemo } from "react"
 import { SectionHeader, PanelInsight, CategoryCard } from "../../components/panels"
 import { DiversityIcon, NitricOxideIcon, GumHealthIcon, CavityRiskIcon, CavityProtectorIcon, BreathingIcon } from "../../components/panels/icons"
+import { computeClientEnvironmentIndex } from "../../../lib/oral/environment-index"
 
 type OralKitRow = {
   shannon_diversity: number | null
@@ -29,10 +30,25 @@ type QuestionnaireData = { mouth_breathing?: string | null; mouth_breathing_when
 type WearableData = { nights_available: number; avg_spo2: number | null; avg_respiratory_rate: number | null; avg_rhr: number | null } | null
 
 const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
+const serif = "'Cormorant Garamond', Georgia, serif"
 const STATUS_COLORS = { good: "#1A8C4E", watch: "#B8860B", concern: "#A84D4D", info: "rgba(184,134,11,0.6)", mixed: "#B8860B", pending: "#C8C6BE" } as const
 
 function spStatus(v: number | null, goodBelow: number): "good" | "watch" | "concern" { return v == null ? "good" : v < goodBelow ? "good" : v < goodBelow * 3 ? "watch" : "concern" }
 function spStatusAbove(v: number | null, goodAbove: number): "good" | "watch" | "concern" { return v == null ? "good" : v >= goodAbove ? "good" : v >= goodAbove * 0.5 ? "watch" : "concern" }
+function f(v: number | null, d = 1): string { return v == null ? "—" : v.toFixed(d) }
+
+function EnvStatCell({ label, value, statusLabel, statusColor, breakdown }: { label: string; value: string; statusLabel: string; statusColor: string; breakdown: string[] }) {
+  return (
+    <div style={{ padding: "12px 14px", background: "#F5F3EE", borderRadius: 8, border: "1px solid #E8E4D8" }}>
+      <div style={{ fontFamily: sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: "#B8860B", marginBottom: 4 }}>{label}</div>
+      <div style={{ fontFamily: serif, fontSize: 22, fontWeight: 500, color: "#2C2A24", lineHeight: 1, marginBottom: 4 }}>{value}</div>
+      <div style={{ fontFamily: sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", color: statusColor, fontWeight: 500, marginBottom: 6 }}>{statusLabel}</div>
+      {breakdown.map((line, i) => (
+        <div key={i} style={{ fontFamily: sans, fontSize: 11, color: "#7A7870", lineHeight: 1.5 }}>{line}</div>
+      ))}
+    </div>
+  )
+}
 
 export default function OralPanelClient({ kit, narrative, questionnaire, wearable }: {
   kit: OralKitRow
@@ -49,7 +65,6 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
   const mbSignals = questionnaire?.mouth_breathing === "confirmed" || questionnaire?.mouth_breathing === "often" ||
     questionnaire?.mouth_breathing_when === "sleep_only" || questionnaire?.mouth_breathing_when === "daytime_and_sleep"
 
-  // Category aggregates
   const noTotal = hasSpecies ? (kit.neisseria_pct ?? 0) + (kit.rothia_pct ?? 0) + (kit.haemophilus_pct ?? 0) + (kit.actinomyces_pct ?? 0) + (kit.veillonella_pct ?? 0) : null
   const gumTotal = hasSpecies ? (kit.fusobacterium_pct ?? 0) + (kit.aggregatibacter_pct ?? 0) + (kit.campylobacter_pct ?? 0) + (kit.porphyromonas_pct ?? 0) + (kit.tannerella_pct ?? 0) + (kit.treponema_pct ?? 0) + (kit.prevotella_intermedia_pct ?? 0) : null
   const cavityRisk = hasSpecies ? (kit.s_mutans_pct ?? 0) + (kit.s_sobrinus_pct ?? 0) + (kit.lactobacillus_pct ?? 0) : null
@@ -60,55 +75,68 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
   const cavRiskStatus: Status = cavityRisk == null ? "pending" : cavityRisk < 1 ? "good" : cavityRisk < 2 ? "watch" : "concern"
   const cavProtStatus: Status = cavityProtect == null ? "pending" : cavityProtect >= 2 ? "good" : cavityProtect >= 1 ? "watch" : "concern"
 
-  // Breathing pattern
+  const env = useMemo(() => hasSpecies ? computeClientEnvironmentIndex(kit) : null, [kit, hasSpecies])
+
   let breathingValue: string
   let breathingStatus: Status
-  if (kit.env_pattern != null) {
-    const p = kit.env_pattern
-    breathingValue = p === "balanced" ? "Settled" : p === "mouth_breathing" ? "Mouth breathing pattern" : p === "mixed" ? "Mixed signals" : p.replace(/_/g, " ")
-    breathingStatus = p === "balanced" ? "good" : p === "mouth_breathing" || p === "mixed" ? "mixed" : p === "osa_consistent" ? "watch" : "info"
+  if (env) {
+    const p = env.pattern
+    breathingValue = p === "balanced" ? "Settled" : p === "mouth_breathing" ? "Mouth breathing pattern" : p === "osa_paradox" ? "OSA-consistent pattern" : "Mixed signals"
+    breathingStatus = p === "balanced" ? "good" : p === "mouth_breathing" || p === "mixed" ? "mixed" : "watch"
   } else if (hasQ && mbSignals && hasWearable) {
-    breathingValue = "Mouth breathing pattern detected"
-    breathingStatus = "mixed"
+    breathingValue = "Mouth breathing pattern detected"; breathingStatus = "mixed"
   } else if (hasQ && mbSignals) {
-    breathingValue = "Mouth breathing signals"
-    breathingStatus = "mixed"
+    breathingValue = "Mouth breathing signals"; breathingStatus = "mixed"
   } else if (hasWearable) {
-    breathingValue = "Wearable data gathered"
-    breathingStatus = "info"
+    breathingValue = "Wearable data gathered"; breathingStatus = "info"
   } else {
-    breathingValue = "Not yet measured"
-    breathingStatus = "pending"
+    breathingValue = "Not yet measured"; breathingStatus = "pending"
+  }
+
+  const breathingContextParts: string[] = []
+  if (hasQ) breathingContextParts.push("Q")
+  if (hasWearable) breathingContextParts.push("wearable")
+  if (hasSpecies) breathingContextParts.push("oral")
+  const breathingContext = breathingContextParts.length > 0
+    ? `${breathingContextParts.join(" + ")} · ${breathingContextParts.length === 3 ? "all 3 signals" : `${breathingContextParts.length} of 3 signals`}`
+    : "Waiting on data"
+
+  const PATTERN_LABELS: Record<string, string> = {
+    mouth_breathing: "Mouth breathing",
+    osa_paradox: "OSA-consistent paradox",
+    balanced: "Balanced",
+    mixed: "Mixed",
   }
 
   return (
-    <div style={{ maxWidth: 960, margin: "0 auto", padding: "32px 24px 80px", background: "#F5F3EE" }}>
+    <div style={{ maxWidth: 1040, margin: "0 auto", padding: "32px 24px 80px", background: "#F5F3EE" }}>
 
-      <SectionHeader title="What your oral data is showing" subtitle="Six categories, each expandable for detail." />
+      <SectionHeader title="What your oral data is showing" subtitle="Six categories. Tap any card for detail." />
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 32 }}>
+      <div className="oral-category-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 32 }}>
 
-        {/* 1. Bacterial diversity */}
+        {/* Row 1: Diversity | NO pathway */}
         <CategoryCard
           icon={<DiversityIcon color={STATUS_COLORS[kit.shannon_diversity == null ? "pending" : kit.shannon_diversity >= 4.0 && kit.shannon_diversity <= 6.5 ? "good" : kit.shannon_diversity < 3.5 ? "concern" : "watch"]} />}
           name="Bacterial diversity"
           description="How many different species and how evenly they're mixed"
+          contextStrip={summary ? `${summary.named_species_count} species · ${summary.distinct_genera} genera · ${summary.distinct_phyla} phyla` : undefined}
           value={kit.shannon_diversity != null ? parseFloat(kit.shannon_diversity.toFixed(2)) : null}
           status={kit.shannon_diversity == null ? "pending" : kit.shannon_diversity >= 4.0 && kit.shannon_diversity <= 6.5 ? "good" : kit.shannon_diversity < 3.5 ? "concern" : "watch"}
           statusLabel={kit.shannon_diversity != null && kit.shannon_diversity >= 4.0 ? "Strong" : undefined}
           narrative={kit.shannon_diversity != null ? {
-            paragraph: `You have ${summary?.named_species_count ?? "many"} different bacterial species in your oral sample, with a diversity score of ${kit.shannon_diversity.toFixed(2)}. A diverse community tends to be more resilient and harder for any single problematic species to dominate.`,
-            pullquotes: [`${summary?.named_species_count ?? "many"} different bacterial species`, "more resilient"],
-            source: "Shannon index · Reference: Hisayama Study, n=2,343",
+            paragraph: `You have ${summary?.named_species_count ?? "many"} different bacterial species in your oral sample, with a diversity score of ${kit.shannon_diversity.toFixed(2)}. Higher oral diversity has been correlated with reduced all-cause mortality in population studies. A diverse community tends to be more resilient and harder for any single problematic species to dominate.`,
+            pullquotes: [`${summary?.named_species_count ?? "many"} different bacterial species`, "reduced all-cause mortality"],
+            source: "Shannon index · Mondal et al. iScience. 2024; Hisayama Study, n=2,343.",
             meta: summary ? [`${summary.named_species_count} named`, `${summary.unnamed_placeholder_count} unclassified`, `${summary.distinct_genera} genera`, `${summary.distinct_phyla} phyla`] : undefined,
           } : undefined}
         />
 
-        {/* 2. Nitric oxide pathway */}
         <CategoryCard
           icon={<NitricOxideIcon color={STATUS_COLORS[noStatus]} />}
           name="Nitric oxide pathway"
-          description="Bacteria that help your body regulate blood pressure and blood sugar"
+          description="Bacteria that help regulate blood pressure and blood sugar"
+          contextStrip={hasSpecies ? `Neisseria ${f(kit.neisseria_pct)}% · Rothia ${f(kit.rothia_pct)}% · Haemophilus ${f(kit.haemophilus_pct)}%` : undefined}
           value={noTotal != null ? parseFloat(noTotal.toFixed(1)) : null}
           unit="%"
           status={noStatus}
@@ -125,13 +153,27 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
             { name: "Actinomyces", value: kit.actinomyces_pct ?? 0, status: spStatusAbove(kit.actinomyces_pct, 3) },
             { name: "Veillonella", value: kit.veillonella_pct ?? 0, status: spStatusAbove(kit.veillonella_pct, 1) },
           ] : undefined}
+          expandedContent={hasSpecies && noTotal != null ? (
+            <div style={{ borderTop: "1px solid #E8E4D8", paddingTop: 12, marginTop: 4 }}>
+              <div style={{ fontFamily: sans, fontSize: 11, fontWeight: 500, color: "#B8860B", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>
+                Aggregate NO producers: {noTotal.toFixed(1)}%
+              </div>
+              <p style={{ fontFamily: sans, fontSize: 12, color: "#7A7870", lineHeight: 1.5, margin: "0 0 4px" }}>
+                {noTotal >= 30 ? "Your NO producers are among the strongest we measure — well above the typical range."
+                  : noTotal >= 20 ? "Solid NO pathway. Your bacteria are actively converting dietary nitrate into nitric oxide."
+                  : "Below the target for consistent nitric oxide production. Leafy greens and beets feed these bacteria directly."}
+              </p>
+              <p style={{ fontFamily: sans, fontSize: 10, fontStyle: "italic", color: "#8C897F", margin: 0 }}>Kapil V et al. Free Radic Biol Med. 2013 — dietary nitrate lowers blood pressure via oral bacteria.</p>
+            </div>
+          ) : undefined}
         />
 
-        {/* 3. Gum health bacteria */}
+        {/* Row 2: Gum health | Breathing pattern */}
         <CategoryCard
           icon={<GumHealthIcon color={STATUS_COLORS[gumStatus]} />}
           name="Gum health bacteria"
           description="Species linked to gum tissue changes"
+          contextStrip={hasSpecies ? `Fuso ${f(kit.fusobacterium_pct)}% · Agg ${f(kit.aggregatibacter_pct)}% · ${5} more` : undefined}
           value={gumTotal != null ? parseFloat(gumTotal.toFixed(2)) : null}
           unit="%"
           status={gumStatus}
@@ -151,11 +193,89 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
           ] : undefined}
         />
 
-        {/* 4. Cavity bacteria */}
+        <CategoryCard
+          icon={<BreathingIcon color={STATUS_COLORS[breathingStatus]} />}
+          name="Nighttime breathing pattern"
+          description="Cross-panel signal from questionnaire, wearable, and oral bacteria"
+          contextStrip={breathingContext}
+          value={breathingValue}
+          status={breathingStatus}
+          narrative={{
+            paragraph: env?.pattern === "mouth_breathing"
+              ? "Signs point to mouth breathing during sleep. Your mouth is drier overnight and the bacteria reflect it. Restoring nasal breathing tends to reverse this shift within 4 to 6 weeks."
+              : env?.pattern === "balanced"
+              ? "Your mouth looks like it's breathing easy overnight — saliva flowing, bacteria in balance."
+              : env?.pattern === "osa_paradox"
+              ? "The pattern in your mouth matches what population research associates with disrupted nighttime breathing. Worth a closer look with your doctor."
+              : env?.pattern === "mixed"
+              ? "Your data shows an aerobic community shift alongside elevated anaerobic bacteria. This pattern is often seen when mouth breathing combines with active periodontal bacteria."
+              : mbSignals && hasWearable
+              ? `Your questionnaire and wearable both point toward mouth breathing. ${wearable!.nights_available} nights tracked. Your oral sample will add the bacterial layer.`
+              : mbSignals
+              ? "Your questionnaire responses suggest mouth breathing at night. Connecting a wearable would let us cross-reference with objective overnight data."
+              : hasWearable
+              ? `Your wearable has tracked ${wearable!.nights_available} nights. Your questionnaire and oral sample will complete the picture.`
+              : "Your questionnaire, wearable, and oral sample will each add a layer to your overnight pattern.",
+            pullquotes: env?.pattern === "mouth_breathing" ? ["mouth breathing during sleep", "4 to 6 weeks"] : mbSignals ? ["mouth breathing"] : undefined,
+            source: env ? "Chen et al. 2022 · Research Square preprint." : undefined,
+            meta: hasWearable ? [`${wearable!.nights_available} nights`, wearable!.avg_spo2 ? `SpO₂ ${wearable!.avg_spo2.toFixed(1)}%` : null, wearable!.avg_respiratory_rate ? `RR ${wearable!.avg_respiratory_rate.toFixed(1)} bpm` : null, wearable!.avg_rhr ? `RHR ${wearable!.avg_rhr.toFixed(0)} bpm` : null].filter(Boolean) as string[] : undefined,
+          }}
+          expandedContent={env ? (
+            <div style={{ borderTop: "1px solid #E8E4D8", paddingTop: 12, marginTop: 4 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
+                <EnvStatCell
+                  label="Acidity ratio"
+                  value={env.acidityRatio != null ? env.acidityRatio.toFixed(2) : "—"}
+                  statusLabel={env.acidityLabel}
+                  statusColor={env.acidityLabel === "base-dominant" || env.acidityLabel === "balanced" ? "#1A8C4E" : env.acidityLabel === "acid-leaning" ? "#B8860B" : "#A84D4D"}
+                  breakdown={[`acidogenic ${env.acidogenic.toFixed(2)}%`, `alkaligenic ${env.alkaligenic.toFixed(2)}%`]}
+                />
+                <EnvStatCell
+                  label="Aerobic shift"
+                  value={`${env.aerobicShift.toFixed(1)}%`}
+                  statusLabel={env.aerobicShift > 18 ? "Elevated" : "Normal"}
+                  statusColor={env.aerobicShift > 18 ? "#B8860B" : "#1A8C4E"}
+                  breakdown={[`Rothia ${f(kit.rothia_pct)}%`, `Neisseria ${f(kit.neisseria_pct)}%`, `Actinomyces ${f(kit.actinomyces_pct)}%`]}
+                />
+                <EnvStatCell
+                  label="Anaerobic load"
+                  value={`${env.anaerobicLoad.toFixed(2)}%`}
+                  statusLabel={env.anaerobicLoad > 5 ? "Elevated" : env.anaerobicLoad < 0.5 ? "Suppressed" : "Normal"}
+                  statusColor={env.anaerobicLoad > 5 || env.anaerobicLoad < 0.5 ? "#B8860B" : "#1A8C4E"}
+                  breakdown={[`Porphyro ${f(kit.porphyromonas_pct, 2)}%`, `Fuso ${f(kit.fusobacterium_pct)}%`, `Trep ${f(kit.treponema_pct, 2)}%`, `Pepto ${f(kit.peptostreptococcus_pct, 2)}%`]}
+                />
+                <EnvStatCell
+                  label="Aerobic/anaerobic"
+                  value={env.aerobicAnaerobicRatio != null ? `${env.aerobicAnaerobicRatio.toFixed(1)}×` : "—"}
+                  statusLabel={env.aerobicAnaerobicRatio != null && env.aerobicAnaerobicRatio > 4 ? "Partial paradox" : "Normal range"}
+                  statusColor={env.aerobicAnaerobicRatio != null && env.aerobicAnaerobicRatio > 4 ? "#B8860B" : "#1A8C4E"}
+                  breakdown={env.aerobicAnaerobicRatio != null && env.aerobicAnaerobicRatio > 4 ? ["ratio > 4 suggests shift pattern", "but anaerobes remain active"] : ["within expected range"]}
+                />
+              </div>
+              <div style={{ background: "#FAFAF8", border: "1px solid #E8E4D8", borderRadius: 8, padding: "12px 14px" }}>
+                <div style={{ fontFamily: sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: "#B8860B", fontWeight: 600, marginBottom: 6 }}>
+                  Pattern: {PATTERN_LABELS[env.pattern] ?? env.pattern}
+                </div>
+                <p style={{ fontFamily: serif, fontSize: 14, fontStyle: "italic", color: "#5C5A54", lineHeight: 1.6, margin: 0 }}>
+                  {env.pattern === "mixed"
+                    ? `Your data shows an aerobic community shift (${env.aerobicShift.toFixed(1)}%) alongside elevated anaerobic bacteria (${env.anaerobicLoad.toFixed(1)}%). This pattern is often seen when mouth breathing combines with active periodontal bacteria — different from the paradoxical anaerobic suppression seen in OSA microbiome profiles.`
+                    : env.pattern === "mouth_breathing"
+                    ? `High aerobic enrichment (${env.aerobicShift.toFixed(1)}%) with elevated anaerobes (${env.anaerobicLoad.toFixed(1)}%) points to overnight mouth breathing drying the oral environment.`
+                    : env.pattern === "osa_paradox"
+                    ? `High aerobic shift (${env.aerobicShift.toFixed(1)}%) with suppressed anaerobes (<3%) and a ratio above 4 is the signature OSA-associated paradox pattern.`
+                    : "Aerobic and anaerobic bacteria are within normal ranges, suggesting stable overnight breathing."}
+                </p>
+              </div>
+            </div>
+          ) : undefined}
+        />
+
+        {/* Row 3: Cavity bacteria | Cavity protectors */}
         <CategoryCard
           icon={<CavityRiskIcon color={STATUS_COLORS[cavRiskStatus]} />}
           name="Cavity bacteria"
           description="Acid-producing species that wear down enamel"
+          contextStrip={hasSpecies ? `S. mutans ${f(kit.s_mutans_pct, 2)}% · S. sobrinus ${f(kit.s_sobrinus_pct, 2)}% · Lacto ${f(kit.lactobacillus_pct, 2)}%` : undefined}
           value={cavityRisk != null ? parseFloat(cavityRisk.toFixed(2)) : null}
           unit="%"
           status={cavRiskStatus}
@@ -171,11 +291,11 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
           ] : undefined}
         />
 
-        {/* 5. Cavity protectors */}
         <CategoryCard
           icon={<CavityProtectorIcon color={STATUS_COLORS[cavProtStatus]} />}
           name="Cavity protectors"
           description="Bacteria that buffer acid and compete with cavity-makers"
+          contextStrip={hasSpecies ? `S. sanguinis ${f(kit.s_sanguinis_pct, 2)}% · S. gordonii ${f(kit.s_gordonii_pct, 2)}%` : undefined}
           value={cavityProtect != null ? parseFloat(cavityProtect.toFixed(2)) : null}
           unit="%"
           status={cavProtStatus}
@@ -190,35 +310,8 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
             { name: "S. gordonii", value: kit.s_gordonii_pct ?? 0, status: spStatusAbove(kit.s_gordonii_pct, 0.3) },
           ] : undefined}
         />
-
-        {/* 6. Nighttime breathing pattern */}
-        <CategoryCard
-          icon={<BreathingIcon color={STATUS_COLORS[breathingStatus]} />}
-          name="Nighttime breathing pattern"
-          description="Cross-panel signal from your questionnaire, wearable, and oral bacteria"
-          value={breathingValue}
-          status={breathingStatus}
-          narrative={{
-            paragraph: kit.env_pattern === "mouth_breathing"
-              ? "Signs point to mouth breathing during sleep. Your mouth is drier overnight and the bacteria reflect it. Restoring nasal breathing tends to reverse this shift within 4 to 6 weeks."
-              : kit.env_pattern === "balanced"
-              ? "Your mouth looks like it's breathing easy overnight — saliva flowing, bacteria in balance."
-              : kit.env_pattern === "osa_consistent"
-              ? "The pattern in your mouth matches what population research associates with disrupted nighttime breathing. Worth a closer look with your doctor."
-              : mbSignals && hasWearable
-              ? `Your questionnaire and wearable both point toward mouth breathing. ${wearable!.nights_available} nights tracked with SpO₂ at ${wearable!.avg_spo2?.toFixed(1) ?? "—"}% and breathing rate at ${wearable!.avg_respiratory_rate?.toFixed(1) ?? "—"} bpm. Your oral sample will add the bacterial layer to this picture.`
-              : mbSignals
-              ? "Your questionnaire responses suggest mouth breathing at night. Connecting a wearable would let us cross-reference with objective overnight data."
-              : hasWearable
-              ? `Your wearable has tracked ${wearable!.nights_available} nights of breathing data. Your questionnaire and oral sample will complete the picture.`
-              : "Your questionnaire, wearable, and oral sample will each add a layer to your overnight pattern.",
-            pullquotes: kit.env_pattern === "mouth_breathing" ? ["mouth breathing during sleep", "4 to 6 weeks"] : mbSignals ? ["mouth breathing"] : undefined,
-            meta: hasWearable ? [`${wearable!.nights_available} nights`, wearable!.avg_spo2 ? `SpO₂ ${wearable!.avg_spo2.toFixed(1)}%` : null, wearable!.avg_respiratory_rate ? `RR ${wearable!.avg_respiratory_rate.toFixed(1)} bpm` : null, wearable!.avg_rhr ? `RHR ${wearable!.avg_rhr.toFixed(0)} bpm` : null].filter(Boolean) as string[] : undefined,
-          }}
-        />
       </div>
 
-      {/* Streptococcus note */}
       {kit.streptococcus_total_pct != null && kit.s_salivarius_pct != null && (
         <div style={{ background: "#FAFAF8", border: "1px solid #D6D3C8", borderRadius: 10, padding: "14px 18px", marginBottom: 24 }}>
           <p style={{ fontFamily: sans, fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#8C897F", marginBottom: 4 }}>A note on Streptococcus</p>
@@ -226,7 +319,6 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
         </div>
       )}
 
-      {/* Prevotella note */}
       {kit.prevotella_commensal_pct != null && (
         <div style={{ background: "#FAFAF8", border: "1px solid #D6D3C8", borderRadius: 10, padding: "14px 18px", marginBottom: 24 }}>
           <p style={{ fontFamily: sans, fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#8C897F", marginBottom: 4 }}>A note on Prevotella</p>
@@ -234,7 +326,6 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
         </div>
       )}
 
-      {/* Panel insight tabs */}
       <SectionHeader title="Converge" subtitle="How your oral data connects to blood and sleep." />
       <PanelInsight
         panel="oral"
@@ -257,7 +348,11 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
         </div>
       )}
 
-      <style>{`@media (max-width: 768px) { .panel-grid-3 { grid-template-columns: 1fr !important; } }`}</style>
+      <style>{`
+        @media (max-width: 768px) {
+          .oral-category-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
     </div>
   )
 }
