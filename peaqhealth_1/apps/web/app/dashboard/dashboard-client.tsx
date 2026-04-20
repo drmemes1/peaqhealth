@@ -8,8 +8,6 @@ import { PushNotificationPrompt } from "../components/push-notification-prompt"
 import { IOSInstallBanner } from "../components/ios-install-banner"
 import { PanelConvergence } from "../components/panel-convergence"
 import { RefreshCw } from "lucide-react"
-import { CrossPanelCard } from "./components/CrossPanelCard"
-import CnvrgLogo from "../components/CnvrgLogo"
 
 const serif = "'Cormorant Garamond', Georgia, serif"
 const sans  = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
@@ -524,15 +522,8 @@ export function DashboardClient(props: ScoreWheelProps & {
   articles?: Array<{ slug: string; title: string; readTime: number }>;
   positiveSignals?: Array<{ key: string; text: string }>;
   generatedPlanItems?: Array<{ id: string; title: string; why: string; timing: string; priority: number; marker_link?: string; marker_label?: string; reframed?: boolean }>;
-  crossPanelSignals?: Array<{ dot: "red" | "amber" | "green"; title: string; desc: string; link?: string }>;
-  snapshotUpdatedAt?: string | null;
-  panelsActive?: { oral: boolean; blood: boolean; sleep: boolean };
 }) {
-  const { wearableNeedsReconnect = false, firstName, peaqAgeBreakdown, cachedGuidance } = props
-  // cachedInsight intentionally unused — Cnvrg Insight card has been removed from the dashboard surface.
-  const crossPanelSignals = props.crossPanelSignals ?? []
-  const snapshotUpdatedAt = props.snapshotUpdatedAt ?? null
-  const panelsActive = props.panelsActive ?? { oral: false, blood: false, sleep: false }
+  const { wearableNeedsReconnect = false, firstName, peaqAgeBreakdown, cachedInsight, cachedGuidance } = props
   const articles = props.articles && props.articles.length > 0 ? props.articles : null
   const positiveSignals = props.positiveSignals ?? []
   const generatedPlanItems = props.generatedPlanItems ?? []
@@ -586,7 +577,7 @@ export function DashboardClient(props: ScoreWheelProps & {
   // ── Panel statuses ────────────────────────────────────────────────────────
   const sleepStatus: PanelStatus = hasSleep ? "Active" : "Connect"
   const bloodStatus: PanelStatus = hasBlood
-    ? (peaqAgeBreakdown && peaqAgeBreakdown.phenoAge == null && peaqAgeBreakdown.hasBW ? "Review" : "Active")
+    ? ("Active")
     : "Connect"
   const oralStatus: PanelStatus = hasOral
     ? (typeof peaqAgeBreakdown?.omaPct === "number" && (peaqAgeBreakdown.omaPct as number) < 40 ? "Review" : "Active")
@@ -665,10 +656,10 @@ export function DashboardClient(props: ScoreWheelProps & {
     const actions: { label: string; timing: string; why?: string }[] = []
     if (usesAntiseptic) actions.push({ label: "Switch from antiseptic mouthwash", timing: "Today", why: "Antiseptic rinses kill the bacteria that produce nitric oxide, raising blood pressure and inflammation." })
     if (omaQcFail) actions.push({ label: "More leafy greens and beetroot", timing: "Week 1", why: "Nitrate in these foods feeds the bacteria that produce nitric oxide, which lowers blood pressure." })
-    if (noHsCrp) actions.push({ label: "Add hs-CRP to next blood draw", timing: "Next draw", why: "hs-CRP is the inflammation marker most relevant to cardiovascular risk and unlocks three cross-panel connections." })
-    if (typeof b.rhrDelta === "number" && (b.rhrDelta as number) > 1) actions.push({ label: "Increase aerobic exercise", timing: "This month", why: "Resting heart rate is elevated. Cardio lowers it within weeks." })
-    if (!hasSleep) actions.push({ label: "Connect a wearable for sleep data", timing: "Today", why: "Sleep data unlocks HRV tracking and several cross-panel connections." })
-    if (!hasOral) actions.push({ label: "Order oral microbiome kit", timing: "This week", why: "Your oral microbiome drives multiple cross-panel connections — no other platform measures this." })
+    if (noHsCrp) actions.push({ label: "Add hs-CRP to next blood draw", timing: "Next draw", why: "hs-CRP completes your Cnvrg Score calculation and unlocks three cross-panel connections." })
+    if (typeof b.rhrDelta === "number" && (b.rhrDelta as number) > 1) actions.push({ label: "Increase aerobic exercise", timing: "This month", why: "Resting heart rate is elevated, which adds years to your Cnvrg Score. Cardio lowers it within weeks." })
+    if (!hasSleep) actions.push({ label: "Connect a wearable for sleep data", timing: "Today", why: "Sleep data contributes 19% of your Cnvrg Score formula and unlocks HRV tracking." })
+    if (!hasOral) actions.push({ label: "Order oral microbiome kit", timing: "This week", why: "Your oral microbiome is 22% of your Cnvrg Score and drives three cross-panel connections." })
     return actions.slice(0, 3)
   }
 
@@ -677,7 +668,7 @@ export function DashboardClient(props: ScoreWheelProps & {
   const bloodIndicators = buildBloodIndicators(hasBlood ? props.bloodData : undefined)
   const sleepIndicators = buildSleepIndicators(hasSleep ? props.sleepData : undefined, hasSleep)
 
-  // ── V5 Dashboard (Peaq Age breakdown exists) ──────────────────────────────
+  // ── V5 Dashboard (Cnvrg Score breakdown exists) ──────────────────────────────
   if (peaqAgeBreakdown && typeof peaqAgeBreakdown.peaqAge === "number") {
     const peaqAge = peaqAgeBreakdown.peaqAge as number
     const delta = peaqAgeBreakdown.delta as number
@@ -726,11 +717,6 @@ export function DashboardClient(props: ScoreWheelProps & {
 
             {/* ── LEFT COLUMN (main) ─────────────────────────────────────── */}
             <div className="dashboard-left" style={{ flex: "1 1 0", minWidth: 0, maxWidth: 700 }}>
-
-              {/* 0. CNVRG LOGO */}
-              <div style={{ marginBottom: 32 }}>
-                <CnvrgLogo size="md" showTagline={true} />
-              </div>
 
               {/* 1. GREETING — italic gold name */}
               <div style={{ marginBottom: 36 }}>
@@ -790,6 +776,7 @@ export function DashboardClient(props: ScoreWheelProps & {
                     icon={hasSleep ? <SleepIcon sleepData={props.sleepData} /> : <ConnectIcon />}
                     label={sleepLabel()}
                     indicators={sleepIndicators}
+                    bgImage={"/peaq_mask.png"}
                   />
                   <PanelNode
                     name="Blood" status={bloodStatus} href="/dashboard/blood"
@@ -852,17 +839,110 @@ export function DashboardClient(props: ScoreWheelProps & {
                   </div>
                 </Link>
 
-                {/* CROSS-PANEL SIGNALS CARD — replaces Peaq+ Age card */}
-                <div style={{ flex: 1 }}>
-                  <CrossPanelCard
-                    signals={crossPanelSignals}
-                    updatedAt={snapshotUpdatedAt}
-                    panelsActive={panelsActive}
-                  />
+                {/* CNVRG+ AGE CARD — shrunk */}
+                <div className="peaq-age-card" style={{
+                  flex: 1, background: "#FAF7EE", border: `0.5px solid rgba(184,134,11,0.2)`,
+                  borderRadius: 16, padding: "32px 28px", textAlign: "center",
+                  display: "flex", flexDirection: "column", justifyContent: "center",
+                  position: "relative", overflow: "hidden",
+                }}>
+                  <img src="/images/snowcapped.jpg" alt="" style={{
+                    position: "absolute", inset: 0, width: "100%", height: "100%",
+                    objectFit: "cover", opacity: 0.18, pointerEvents: "none",
+                  }} />
+                  <span style={{
+                    fontFamily: sans, fontSize: 10, letterSpacing: "0.16em",
+                    textTransform: "uppercase", color: DS.goldDark, position: "relative",
+                  }}>
+                    CNVRG+ AGE
+                  </span>
+
+                  <div className="peaq-age-number" style={{
+                    fontFamily: serif, fontSize: 72, fontWeight: 300,
+                    color: DS.ink, letterSpacing: -2, lineHeight: 1,
+                    margin: "8px 0 8px", position: "relative",
+                  }}>
+                    {peaqAge.toFixed(1)}
+                  </div>
+
+                  <p className="peaq-age-delta" style={{
+                    fontFamily: serif, fontSize: 18, fontStyle: "italic",
+                    color: delta < 0 ? DS.greenDark : delta > 0 ? DS.redDark : DS.inkMuted,
+                    margin: "0 0 12px",
+                  }}>
+                    {delta < 0
+                      ? `${Math.abs(delta).toFixed(1)} yrs younger`
+                      : delta > 0
+                      ? `${delta.toFixed(1)} yrs older`
+                      : "Right at your calendar age"
+                    }
+                  </p>
+
+                  <BandChip band={band} onGold />
+
+                  <p style={{
+                    fontFamily: sans, fontSize: 11, color: DS.goldDark,
+                    margin: "12px 0 0",
+                  }}>
+                    6-mo target: {targetLow}–{targetHigh}
+                  </p>
+
+                  {hasDob === false && (
+                    <p style={{
+                      fontFamily: sans, fontSize: 10, color: DS.goldDark,
+                      margin: "6px 0 0", opacity: 0.7,
+                    }}>
+                      <Link href="/settings" style={{ color: DS.gold, textDecoration: "underline" }}>
+                        Add DOB
+                      </Link>{" "}for exact age
+                    </p>
+                  )}
+
+                  <Link href="/science" style={{
+                    fontFamily: sans, fontSize: 11, color: DS.gold,
+                    textDecoration: "none", display: "inline-block",
+                    marginTop: 8,
+                  }}>
+                    How is this calculated? →
+                  </Link>
                 </div>
               </div>
 
-              {/* AI INSIGHT CARD removed — replaced by CrossPanelCard above */}
+              {/* 4. AI INSIGHT CARD — cached from snapshot, no spinner */}
+              <div className="insight-card" style={{
+                background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
+                borderLeft: cachedInsight ? `3px solid ${DS.gold}` : `3px solid ${DS.cardBorder}`,
+                borderRadius: 12, padding: "24px 28px", marginBottom: 36,
+                boxShadow: "0 1px 3px rgba(20,20,16,0.06)",
+              }}>
+                <span style={{
+                  fontFamily: sans, fontSize: 10, letterSpacing: "0.12em",
+                  textTransform: "uppercase", color: DS.inkMuted,
+                }}>
+                  CNVRG INSIGHT
+                </span>
+                <h2 style={{
+                  fontFamily: serif, fontSize: 22, fontStyle: "italic",
+                  fontWeight: 400, color: DS.ink, margin: "10px 0 8px",
+                  lineHeight: 1.3,
+                }}>
+                  {cachedInsight?.headline ?? "Your health picture is coming together."}
+                </h2>
+                <p style={{
+                  fontFamily: sans, fontSize: 15, fontWeight: 300,
+                  color: DS.inkMuted, lineHeight: 1.6, margin: "0 0 12px",
+                }}>
+                  {cachedInsight ? truncateInsightBody(cachedInsight.body) : "Check back after your next sync for personalized insights."}
+                </p>
+                {cachedInsight && (
+                  <Link href="/dashboard/insights" style={{
+                    fontFamily: sans, fontSize: 12, color: DS.gold,
+                    textDecoration: "none",
+                  }}>
+                    Read why →
+                  </Link>
+                )}
+              </div>
 
               {/* 5. PANEL SUMMARY — THREE ROWS */}
               <div style={{
@@ -1371,9 +1451,9 @@ export function DashboardClient(props: ScoreWheelProps & {
     )
   }
 
-  // ── LEGACY DASHBOARD (no Peaq Age breakdown — pre-V5) ───────────────────
+  // ── LEGACY DASHBOARD (no Cnvrg Score breakdown — pre-V5) ───────────────────
   return (
-    <div className="min-h-svh" style={{ background: "#FAFAF8" }}>
+    <div className="min-h-svh" style={{ background: "#F6F4EF" }}>
       <Nav />
       <main className="mx-auto" style={{ maxWidth: 760, padding: "28px 24px 60px" }}>
         {wearableNeedsReconnect && (
