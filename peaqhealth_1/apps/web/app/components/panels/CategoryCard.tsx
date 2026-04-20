@@ -29,8 +29,10 @@ interface CategoryCardProps {
   unit?: string
   status: Status
   statusLabel?: string
+  contextStrip?: string
   narrative?: { paragraph: string; pullquotes?: string[]; source?: string; meta?: string[] }
   species?: SpeciesItem[]
+  expandedContent?: ReactNode
 }
 
 function renderPullquotes(text: string, pullquotes?: string[]): ReactNode {
@@ -49,7 +51,7 @@ function renderPullquotes(text: string, pullquotes?: string[]): ReactNode {
   return <>{parts}</>
 }
 
-export function CategoryCard({ icon, name, description, value, unit, status, statusLabel, narrative, species }: CategoryCardProps) {
+export function CategoryCard({ icon, name, description, value, unit, status, statusLabel, contextStrip, narrative, species, expandedContent }: CategoryCardProps) {
   const [expanded, setExpanded] = useState(false)
   const [showSpecies, setShowSpecies] = useState(false)
   const color = STATUS_COLORS[status]
@@ -78,6 +80,9 @@ export function CategoryCard({ icon, name, description, value, unit, status, sta
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontFamily: sans, fontSize: 14, fontWeight: 500, color: "#2C2A24", marginBottom: 2 }}>{name}</div>
           <div style={{ fontFamily: sans, fontSize: 11, color: "#8C897F" }}>{description}</div>
+          {contextStrip && (
+            <div style={{ fontFamily: sans, fontSize: 11, color: "#B8860B", letterSpacing: "0.02em", marginTop: 3 }}>{contextStrip}</div>
+          )}
         </div>
         <div style={{ textAlign: "right", flexShrink: 0 }}>
           {isPending ? (
@@ -148,6 +153,13 @@ export function CategoryCard({ icon, name, description, value, unit, status, sta
             >
               Hide species ↑
             </button>
+          </div>
+        )}
+
+        {/* Layer 4 — Custom expanded content */}
+        {expanded && expandedContent && (
+          <div style={{ padding: "0 20px 18px" }}>
+            {expandedContent}
           </div>
         )}
       </div>
