@@ -293,8 +293,8 @@ export default async function DashboardPage() {
     oral:  snapshot && prevSnapshot.oral_sub  != null ? (snapshot.oral_sub  ?? 0) - (prevSnapshot.oral_sub  ?? 0) : null,
   } : undefined
 
-  // Extract Cnvrg Score V5 breakdown from snapshot (written by dual-write in recalculate.ts)
-  const peaqAgeBreakdown: Record<string, unknown> | null = null
+  // Extract Peaq Age V5 breakdown from snapshot (written by dual-write in recalculate.ts)
+  const peaqAgeBreakdown = snapshot?.peaq_age_breakdown as Record<string, unknown> | null
 
   // Derive positive signals ("what's working") for the right rail
   const { derivePositiveSignalsKeyed } = await import("../../lib/positiveSignals")
@@ -303,8 +303,8 @@ export default async function DashboardPage() {
     blood: props.bloodData ? { hsCRP: props.bloodData.hsCRP, ldl: props.bloodData.ldl, vitaminD: props.bloodData.vitaminD } : null,
     sleep: props.sleepData ? { deepPct: props.sleepData.deepPct, remPct: props.sleepData.remPct, hrv: props.sleepData.hrv } : null,
     snapshot: snapshot as Record<string, number | null> | null,
-    chronoAge: null,
-    peaqAgeBreakdown: null,
+    chronoAge: (peaqAgeBreakdown?.chronoAge as number | undefined) ?? null,
+    peaqAgeBreakdown,
   })
 
   // Derive plan items from marker statuses (deterministic, global)
@@ -317,6 +317,99 @@ export default async function DashboardPage() {
     lifestyle: lifestyle as Record<string, unknown> | null,
   })
   const generatedPlanItems = generatePlanItems(markerStatuses)
+
+  // Derive top 3 cross-panel signals for the CrossPanelCard (replaces Peaq Age + Insight cards)
+  const hrvMedian = snapshot?.hrv_rmssd_median as number | null
+  const hrvPct = snapshot?.hrv_percentile as number | null
+  const hrvStatus = snapshot?.hrv_status as string | null
+  const nitratePct = oral?.nitrate_reducers_pct ? (oral.nitrate_reducers_pct as number) * 100 : null
+  const shannon = oral?.shannon_diversity as number | null
+
+  type Sig = { dot: "red" | "amber" | "green"; title: string; desc: string; link?: string }
+  const reds: Sig[] = []
+  const ambers: Sig[] = []
+  const greens: Sig[] = []
+
+  // Red — LDL + oral convergence
+  if (markerStatuses.ldl_status === "red" && markerStatuses.harmful_bacteria_status !== "optimal" && markerStatuses.harmful_bacteria_status !== "good") {
+    reds.push({
+      dot: "red",
+      title: "LDL and oral bacteria flagging the same pathway",
+      desc: "Your cholesterol and oral panel are pointing at cardiovascular strain from two independent directions.",
+      link: "/dashboard/blood/ldl",
+    })
+  } else if (markerStatuses.ldl_status === "red") {
+    reds.push({
+      dot: "red",
+      title: "LDL cholesterol needs attention",
+      desc: "Your cholesterol is above the optimal range — worth discussing at your next appointment.",
+      link: "/dashboard/blood/ldl",
+    })
+  }
+
+  // Amber — HRV low/moderate
+  if (hrvStatus === "low" || hrvStatus === "moderate") {
+    const ctx = (hrvMedian && hrvPct)
+      ? `${hrvMedian} ms · ${hrvPct}th percentile for your age. Sleep consistency is the most direct lever.`
+      : "Recovery capacity is running lower than expected. Sleep consistency is the most direct lever."
+    ambers.push({
+      dot: "amber",
+      title: "HRV low — recovery under pressure",
+      desc: ctx,
+      link: "/dashboard/sleep/recovery_hrv",
+    })
+  }
+
+  // Amber — hs-CRP missing (blocks full inflammatory picture)
+  if (markerStatuses.hs_crp_status === "missing") {
+    ambers.push({
+      dot: "amber",
+      title: "Inflammation marker not yet measured",
+      desc: "hs-CRP is missing from your blood panel — it's the key input for your full inflammatory picture.",
+      link: "/dashboard/blood/hs_crp",
+    })
+  }
+
+  // Amber — glucose
+  if (markerStatuses.glucose_status === "amber" || markerStatuses.glucose_status === "red") {
+    ambers.push({
+      dot: "amber",
+      title: "Blood sugar in the watch range",
+      desc: "Fasting glucose is above optimal — oral bacteria and sleep are both connected to this signal.",
+      link: "/dashboard/blood/glucose",
+    })
+  }
+
+  // Green — good bacteria (raw abundance matches dashboard dot)
+  if (nitratePct != null && nitratePct >= 15) {
+    greens.push({
+      dot: "green",
+      title: "Nitric oxide pathway active",
+      desc: "Nitrate-reducing bacteria are strong — blood pressure and metabolic support working.",
+      link: "/dashboard/oral/good_bacteria",
+    })
+  }
+  // Green — diversity
+  if (shannon != null && shannon >= 3.5 && greens.length === 0) {
+    greens.push({
+      dot: "green",
+      title: "Oral diversity in healthy range",
+      desc: "A diverse oral microbiome keeps harmful species in check and supports systemic immune balance.",
+      link: "/dashboard/oral/diversity",
+    })
+  }
+
+  const crossPanelSignals = [
+    ...reds.slice(0, 2),
+    ...ambers.slice(0, 1),
+    ...greens.slice(0, 1),
+  ].slice(0, 3)
+
+  const panelsActive = {
+    oral: !!oral,
+    blood: !!lab,
+    sleep: (sleepNights ?? []).length >= 3,
+  }
 
   return <DashboardClient
     {...props}
@@ -334,5 +427,8 @@ export default async function DashboardPage() {
     articles={(articlesData ?? []).map(a => ({ slug: a.slug as string, title: a.title as string, readTime: a.read_time_min as number }))}
     positiveSignals={positiveSignals}
     generatedPlanItems={generatedPlanItems}
+    crossPanelSignals={crossPanelSignals}
+    snapshotUpdatedAt={(snapshot?.calculated_at as string | null) ?? null}
+    panelsActive={panelsActive}
   />
 }
