@@ -87,14 +87,14 @@ const SECTIONS: {
   {
     title: "Lab Data",
     subtitle: "Gates PhenoAge calculation and two cross-panel interactions",
-    ptsLabel: "Peaq Age input",
+    ptsLabel: "panel input",
     color: "#C0392B",
     keys: ["hsCrpAvailable"],
   },
   {
     title: "Cardiorespiratory Fitness",
     subtitle: "VO₂ max is the single strongest predictor of all-cause mortality (Ross 2016, n=122,007)",
-    ptsLabel: "13% of Peaq Age",
+    ptsLabel: "fitness context",
     color: "#4A7FB5",
     keys: ["vo2Source"],
   },
@@ -107,7 +107,7 @@ const SECTIONS: {
   },
   {
     title: "Health Context",
-    subtitle: "Helps Peaq Age avoid false connections and personalize AI insights",
+    subtitle: "Helps avoid false connections and personalize AI insights",
     ptsLabel: "AI accuracy",
     color: "#6B4D8A",
     keys: ["eosinophilHistory"],
@@ -662,7 +662,7 @@ const QUESTIONS: QuestionDef[] = [
   {
     key: "hsCrpAvailable", dbKey: "hs_crp_available",
     label: "Does your most recent blood panel include hs-CRP (high-sensitivity C-reactive protein)?",
-    context: "Standard CRP cannot substitute. hs-CRP unlocks full Peaq Age calculation and two cross-panel interactions. It's a ~$15 add-on at Quest or LabCorp.",
+    context: "Standard CRP cannot substitute. hs-CRP unlocks two cross-panel interactions. It's a ~$15 add-on at Quest or LabCorp.",
     type: "choice",
     options: [
       { value: "yes",      label: "Yes, it's on my results" },
@@ -876,7 +876,7 @@ export function LifestyleForm({ existing }: Props) {
             Health baseline
           </h1>
           <p className="mt-2 font-body text-sm text-ink/50 leading-relaxed">
-            Clinical questionnaire used to calibrate your Peaq Age. Lifestyle contributes up to{" "}
+            Clinical questionnaire used to calibrate your panels. Lifestyle contributes up to{" "}
             <span className="text-ink/70">13 points</span>. Takes about 3 minutes.
           </p>
           <div className="mt-4 flex items-center gap-3">
@@ -1477,7 +1477,7 @@ export function LifestyleForm({ existing }: Props) {
             className="h-12 bg-ink font-body text-sm font-medium uppercase tracking-[0.15em]
                        text-off-white transition-colors hover:bg-gold disabled:opacity-30"
           >
-            {saving ? "Saving…" : saved ? "Peaq Age updated ✓" : "Save & recalculate Peaq Age"}
+            {saving ? "Saving…" : saved ? "Panels updated ✓" : "Save Save & recalculate Peaq Age recalculate"}
           </button>
           {!allAnswered && (
             <p className="font-body text-xs text-ink/30 text-center">

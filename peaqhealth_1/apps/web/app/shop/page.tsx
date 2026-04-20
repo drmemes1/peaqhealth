@@ -15,7 +15,7 @@ const PRODUCTS = [
     badge: "FEATURED",
     icon: "◎",
     shortDesc:
-      "DNA sequencing profiles your oral microbiome across bacterial diversity, gum health bacteria, and heart-healthy bacteria. Unlocks the OMA panel (22% of Peaq Age). Results in 10–14 days.",
+      "DNA sequencing profiles your oral microbiome across bacterial diversity, gum health bacteria, and heart-healthy bacteria. Unlocks the OMA panel. Results in 10–14 days.",
     scoreImpact: "Unlocks OMA",
     scoreColor: "var(--oral-c)",
     ship: "Ships in 2–3 days · Results in 10–14 days",
@@ -88,7 +88,7 @@ const PRODUCTS = [
     category: "Blood",
     icon: "◈",
     shortDesc:
-      "Expanded biomarker panel covering lipids, inflammation, hormones, and metabolic markers. Unlocks PhenoAge (48% of Peaq Age) and longevity insights. At-home or clinic draw.",
+      "Expanded biomarker panel covering lipids, inflammation, hormones, and metabolic markers. Unlocks blood panel and longevity insights. At-home or clinic draw.",
     scoreImpact: "Unlocks PhenoAge",
     scoreColor: "var(--blood-c)",
     ship: "At-home kit or clinic draw",
@@ -478,7 +478,7 @@ export default function ShopPage() {
           className="font-body text-sm mt-2 fade-up"
           style={{ color: "var(--ink-60)", animationDelay: "160ms" }}
         >
-          Every product is selected for its measurable impact on your Peaq Age.
+          Every product is selected for its measurable impact on your health panels.
           All CTAs capture email. Checkout coming soon.
         </p>
         <div

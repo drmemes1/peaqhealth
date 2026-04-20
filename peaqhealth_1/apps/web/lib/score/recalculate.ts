@@ -1,5 +1,6 @@
 import { calculatePeaqScore, type LifestyleInputs, type BloodInputs, type OralInputs, type SleepInputs } from "@peaq/score-engine"
-import { calcPeaqAge, type PeaqAgeResult, type PeaqBloodworkInputs as PeaqBW, type OMAInputs } from "@peaq/score-engine"
+// Peaq Age removed — import kept for type compatibility with score engine
+import type { OMAInputs } from "@peaq/score-engine"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { scoreOralV2, type OralDimensionInputs } from "../oral/dimensions-v2"
 import { calculateModifiers, type PanelInputs } from "./modifiers"
@@ -481,20 +482,8 @@ async function _recalculateScore(
     note: "Lifestyle stored as context only — does not contribute to total score as of v2",
   }
 
-  // ── CNVRG AGE V5 (dual-write alongside legacy score) ────────────────────────
-  const peaqAgeResult = computePeaqAgeFromContext({
-    userAge, userSex,
-    labRow: labsRes.data as Record<string, unknown> | null,
-    bloodInputs,
-    oralSnap: oralRes.data?.oral_score_snapshot as Record<string, unknown> | null,
-    oralKit: oralRes.data as Record<string, unknown> | null,
-    lifestyle: lifestyleRes.data as Record<string, unknown> | null,
-    sleepNights: bestNights,
-  })
-
   // ── Log ────────────────────────────────────────────────────────────────────
   console.log(`[recalculate] user=${userId} blood=${bloodSub} sleep=${sleepSub} oral=${oralSub} base=${baseScore} modifiers=${modifierTotal} (${modifiers.map(m => m.id).join(", ")}) final=${finalScore}`)
-  console.log(`[peaq-age-v5] user=${userId.slice(0, 8)} peaqAge=${peaqAgeResult.peaqAge} pheno=${peaqAgeResult.phenoAge ?? "null"} oma=${peaqAgeResult.omaPct.toFixed(0)} delta=${peaqAgeResult.delta} band=${peaqAgeResult.band} missing=[${peaqAgeResult.missingPhenoMarkers.join(",")}]`)
 
   // ── Recovery HRV: Pinheiro 2023 norm + 14-night gate ──────────────────────
   // hasHRV = false — weight held pending product decision. Dot is live, formula weight is not.
@@ -544,21 +533,7 @@ async function _recalculateScore(
     hscrp_retest_flag:      legacyResult.hsCRPRetestFlag,
     blood_recency_multiplier: legacyResult.bloodRecencyMultiplier,
     interactions_fired:     legacyResult.interactionsFired,
-    // ── Peaq Age V5 fields (requires Phase 2a migration) ──
-    peaq_age:               peaqAgeResult.peaqAge,
-    pheno_age:              peaqAgeResult.phenoAge,
-    oma_percentile:         peaqAgeResult.omaPct,
-    vo2_percentile:         peaqAgeResult.vo2Pct,
-    rhr_delta:              peaqAgeResult.rhrDelta,
-    sleep_dur_delta:        peaqAgeResult.durDelta,
-    sleep_reg_delta:        peaqAgeResult.regDelta,
-    cross_panel_i1:         peaqAgeResult.i1,
-    cross_panel_i2:         peaqAgeResult.i2,
-    cross_panel_i3:         peaqAgeResult.i3,
-    peaq_age_delta:         peaqAgeResult.delta,
-    peaq_age_band:          peaqAgeResult.band,
-    score_version:          "v5",
-    peaq_age_breakdown:     { ...peaqAgeResult, hasDob: !!dobStr },
+    score_version:          "v6",
     // ── Recovery HRV (Pinheiro 2023 normalization — dot live, weight not active) ──
     hrv_rmssd_median:       hrvResult.has_minimum_nights ? hrvResult.rmssd_median : null,
     hrv_percentile:         hrvResult.has_minimum_nights ? hrvResult.percentile : null,
@@ -575,7 +550,7 @@ async function _recalculateScore(
   const snapshotId = insertedRow?.id as string | undefined
   if (snapshotId) {
     cacheInsightAndGuidance(userId, snapshotId, supabase, {
-      peaqAgeResult, labRow: labsRes.data, oralRow: oralRes.data,
+      labRow: labsRes.data, oralRow: oralRes.data,
       lifestyleRow: lifestyleRes.data, sleepNightsRes: sleepNightsRes.data,
     }).catch(err => console.error("[insight cache] failed:", err))
   }
@@ -590,7 +565,6 @@ async function cacheInsightAndGuidance(
   snapshotId: string,
   supabase: SupabaseClient,
   ctx: {
-    peaqAgeResult: PeaqAgeResult
     labRow: Record<string, unknown> | null
     oralRow: Record<string, unknown> | null
     lifestyleRow: Record<string, unknown> | null
@@ -602,15 +576,9 @@ async function cacheInsightAndGuidance(
   const mwType = ctx.lifestyleRow?.mouthwash_type as string | null
   if (mwType === "antiseptic" || mwType === "alcohol")
     guidance.push({ title: "Stop antiseptic mouthwash", timing: "Today", why: "Antiseptic rinses kill the bacteria that produce nitric oxide, raising blood pressure and inflammation." })
-  if (ctx.peaqAgeResult.omaPct < 40)
-    guidance.push({ title: "More leafy greens and beetroot", timing: "Week 1", why: "Nitrate in these foods feeds the bacteria that produce nitric oxide, which lowers blood pressure." })
-  if (ctx.peaqAgeResult.missingPhenoMarkers.length > 0)
-    guidance.push({ title: "Add hs-CRP to next blood draw", timing: "Next draw", why: "hs-CRP completes your Peaq Age calculation and unlocks three cross-panel connections." })
   const ldl = ctx.labRow?.ldl_mgdl as number | null
   if (ldl && ldl > 130)
     guidance.push({ title: "Discuss LDL with your doctor", timing: "This month", why: "LDL above 130 tends to coincide with plaque accumulation in research, especially when oral nitric oxide production is running below typical." })
-  if (ctx.peaqAgeResult.rhrDelta > 1)
-    guidance.push({ title: "Increase aerobic exercise", timing: "This month", why: "Resting heart rate is elevated, which adds years to your Peaq Age. Cardio lowers it within weeks." })
 
   // ── AI insight via OpenAI ───────────────────────────────────────────────
   let headline: string | null = null
@@ -619,7 +587,6 @@ async function cacheInsightAndGuidance(
     const OpenAI = (await import("openai")).default
     const openai = new OpenAI()
 
-    const pa = ctx.peaqAgeResult
     const lab = ctx.labRow
     const oral = ctx.oralRow
     const nights = (ctx.sleepNightsRes ?? []) as Array<Record<string, unknown>>
@@ -635,7 +602,7 @@ async function cacheInsightAndGuidance(
       const avg = (k: string) => { const v = nights.map(n => Number(n[k])).filter(x => x > 0); return v.length ? v.reduce((a,b) => a+b,0)/v.length : 0 }
       dataContext += `Sleep (${nights.length}n): Deep ${avg("deep_sleep_minutes").toFixed(0)}min, HRV ${avg("hrv_rmssd").toFixed(0)}ms, Eff ${avg("sleep_efficiency").toFixed(0)}%\n`
     }
-    dataContext += `Peaq Age: ${pa.peaqAge.toFixed(1)} (delta ${pa.delta.toFixed(1)}, band ${pa.band}). PhenoAge: ${pa.phenoAge ?? "pending"}. OMA: ${pa.omaPct.toFixed(0)}th. I1=${pa.i1} I2=${pa.i2} I3=${pa.i3}\n`
+    dataContext += `Score version: v6\n`
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -666,112 +633,6 @@ async function cacheInsightAndGuidance(
 }
 
 // ── Peaq Age V5 context builder ─────────────────────────────────────────────
-
-interface PeaqAgeContext {
-  userAge: number
-  userSex: "male" | "female"
-  labRow: Record<string, unknown> | null
-  bloodInputs: BloodInputs | undefined
-  oralSnap: Record<string, unknown> | null
-  oralKit: Record<string, unknown> | null
-  lifestyle: Record<string, unknown> | null
-  sleepNights: Array<{ total_sleep_minutes: number; resting_heart_rate: number | null }>
-}
-
-function computePeaqAgeFromContext(ctx: PeaqAgeContext): PeaqAgeResult {
-  const { userAge, userSex, labRow, oralSnap, oralKit, sleepNights } = ctx
-
-  // ── Bloodwork → PeaqBW (read directly from lab_results row for PhenoAge) ──
-  let bw: PeaqBW | null = null
-  if (labRow) {
-    const n = (k: string) => { const v = labRow[k]; return typeof v === "number" && v > 0 ? v : null }
-    const hsCrp = n("hs_crp_mgl")
-    bw = {
-      albumin:     n("albumin_gdl"),
-      creatinine:  n("creatinine_mgdl"),
-      glucose:     n("glucose_mgdl"),
-      crp:         hsCrp,
-      lymph:       n("lymphs_pct"),
-      mcv:         n("mcv_fl"),
-      rdw:         n("rdw_pct"),
-      alp:         n("alk_phos_ul"),
-      wbc:         n("wbc_kul"),
-      hsCrpAvailable: hsCrp != null,
-    }
-  }
-
-  // ── OMA → OMAInputs ────────────────────────────────────────────────────
-  let oma: OMAInputs | null = null
-  if (oralKit && oralSnap) {
-    const shannon = (oralKit as Record<string, unknown>).shannon_diversity as number | null
-    const protRaw = typeof oralSnap.protectivePct === "number" ? oralSnap.protectivePct : null
-    const perioRaw = typeof oralSnap.periodontalBurden === "number" ? oralSnap.periodontalBurden : null
-    const otu = (oralKit as Record<string, unknown>).raw_otu_table as Record<string, number> | null
-
-    const shannonPct = shannon != null ? simpleNhanesPercentile(shannon) : 50
-    const protPct = protRaw != null ? Math.min(100, (protRaw > 1 ? protRaw : protRaw * 100) * 3) : 50
-    const pathInvPct = perioRaw != null ? Math.max(0, 100 - (perioRaw > 1 ? perioRaw : perioRaw * 100) * 15) : 50
-
-    const neisseria = otu
-      ? (otu["Neisseria subflava"] ?? 0) + (otu["Rothia mucilaginosa"] ?? 0) + (otu["Haemophilus parainfluenzae"] ?? 0)
-      : 0
-
-    oma = { protective_pct: protPct, pathogen_inv_pct: pathInvPct, shannon_pct: shannonPct, neisseria_pct: neisseria }
-  }
-
-  // ── Fitness → FitnessInputs (VO₂ removed from scored formula) ──────────
-  const avgRHR = sleepNights.length > 0
-    ? sleepNights.reduce((s, n) => s + (n.resting_heart_rate ?? 0), 0) /
-      sleepNights.filter(n => n.resting_heart_rate != null && n.resting_heart_rate > 0).length || null
-    : null
-
-  const fitness = {
-    vo2max: null,
-    vo2Source: null as "manual" | "estimated" | null,
-    activityLevel: null as "sedentary" | "moderate" | "active" | "very_active" | null,
-    rhr: avgRHR != null && isFinite(avgRHR) ? Math.round(avgRHR) : null,
-  }
-
-  // ── Sleep ────────────────────────────────────────────────────────────────
-  const avgDur = sleepNights.length >= 7
-    ? sleepNights.reduce((s, n) => s + n.total_sleep_minutes, 0) / sleepNights.length / 60
-    : null
-
-  const sleep = {
-    avgDurationHours: avgDur,
-    // TODO: compute bedtime SD once sleep_data has bedtime_start timestamps
-    // from wearable sync. This unlocks the 4% sleep regularity weight (W_REG).
-    // When available: compute stddev of bedtime_start across bestNights.
-    bedtimeStdDevMinutes: null as number | null,
-  }
-
-  // ── Compute ──────────────────────────────────────────────────────────────
-  return calcPeaqAge({
-    chronoAge: userAge,
-    sex: userSex,
-    bloodwork: bw,
-    oma,
-    fitness,
-    sleep,
-  })
-}
-
-// Shannon → NHANES percentile (simplified inline lookup)
-const NHANES_SHANNON_PCTLS: [number, number][] = [
-  [5, 3.41], [10, 3.77], [25, 4.23], [50, 4.66], [75, 5.06], [90, 5.41], [95, 5.64],
-]
-
-function simpleNhanesPercentile(shannon: number): number {
-  for (let i = 0; i < NHANES_SHANNON_PCTLS.length - 1; i++) {
-    const [p0, v0] = NHANES_SHANNON_PCTLS[i]
-    const [p1, v1] = NHANES_SHANNON_PCTLS[i + 1]
-    if (shannon >= v0 && shannon <= v1) {
-      return Math.round(p0 + ((shannon - v0) / (v1 - v0)) * (p1 - p0))
-    }
-  }
-  if (shannon < NHANES_SHANNON_PCTLS[0][1]) return Math.max(1, Math.round(5 * (shannon / NHANES_SHANNON_PCTLS[0][1])))
-  return Math.min(99, 95 + Math.round((shannon - 5.64) * 10))
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ORAL ENVIRONMENT INDEX + DIFFERENTIAL PATTERN SCORES

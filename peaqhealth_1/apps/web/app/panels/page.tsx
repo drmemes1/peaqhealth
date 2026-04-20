@@ -60,7 +60,7 @@ export default function PanelsPage() {
           fontSize: 14, color: "var(--ink-60)", lineHeight: 1.7,
           margin: "0 0 40px", maxWidth: 480,
         }}>
-          Your Peaq Age is built from three biological panels. Each measures a different system. Together, they reveal what no single test can see.
+          Your panels are built from three biological systems. Each measures a different system. Together, they reveal what no single test can see.
         </p>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
