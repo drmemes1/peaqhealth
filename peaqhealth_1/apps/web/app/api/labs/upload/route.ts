@@ -18,7 +18,7 @@ interface FileResult {
   labName?: string
   collectionDate?: string
   notes?: Record<string, string>
-  parserUsed: "azure-hybrid" | "failed"
+  parserUsed: "openai" | "openai-vision" | "azure-hybrid" | "failed"
   error?: string
 }
 
@@ -82,8 +82,55 @@ async function extractTextWithAzure(buffer: Buffer, model = "prebuilt-read"): Pr
   return null
 }
 
+// ─── OpenAI Vision OCR (primary fallback for scanned PDFs) ──────────────────
+// Replaces Azure Document Intelligence for OCR. Sends PDF pages as images to
+// GPT-4o and gets extracted text back. Same BAA, same vendor, one fewer key.
+
+async function extractTextWithOpenAIVision(buffer: Buffer): Promise<string | null> {
+  const openaiKey = process.env.OPENAI_API_KEY
+  if (!openaiKey) return null
+
+  try {
+    const openai = new OpenAI({ apiKey: openaiKey })
+    const base64 = buffer.toString("base64")
+    const dataUrl = `data:application/pdf;base64,${base64}`
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      max_tokens: 8192,
+      temperature: 0,
+      store: false,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "Extract ALL text from this lab report PDF. Preserve the exact layout — test names, values, units, reference ranges, dates, lab name. Return only the extracted text, no commentary.",
+            },
+            {
+              type: "image_url",
+              image_url: { url: dataUrl, detail: "high" },
+            },
+          ],
+        },
+      ],
+    })
+
+    const text = response.choices[0]?.message?.content
+    if (text && text.length > 500) {
+      console.log("[vision-ocr] extracted", text.length, "chars")
+      return text
+    }
+    return null
+  } catch (err) {
+    console.error("[vision-ocr] failed:", (err as Error).message)
+    return null
+  }
+}
+
 // ─── Regex fallback parser ────────────────────────────────────────────────────
-// Used when Azure OpenAI fails or times out. Matches known marker names against
+// Used when OpenAI parsing fails or times out. Matches known marker names against
 // extracted text lines. Handles LabCorp (value on next line) and Quest (value
 // after reference range line).
 
@@ -426,90 +473,93 @@ function extractFromParsedJson(
 }
 
 // ─── File processing ────────────────────────────────────────────────────────
+// Flow: unpdf (fast text) → OpenAI parse → if scanned, OpenAI Vision OCR →
+//       OpenAI parse → Azure OCR (legacy fallback) → regex fallback
 
 async function processFile(file: FileInput, _index: number): Promise<FileResult> {
   const buffer = Buffer.from(file.base64, "base64")
 
+  // Step 1: Try unpdf (instant, no API call)
   const directText = await extractTextDirect(buffer)
   if (directText) {
     const openaiResult = await parseWithAzureOpenAI(directText)
     if (openaiResult) {
       const { markers, labName, collectionDate } = extractFromParsedJson(openaiResult)
       if (Object.keys(markers).length > 0) {
-        return { filename: file.filename, markers, markersFound: Object.keys(markers).length, labName, collectionDate, parserUsed: "azure-hybrid" }
-      }
-    }
-  }
-  let fullText = await extractTextWithAzure(buffer)
-
-  if (fullText && fullText.length < 3000) {
-    console.warn("[parser] low text yield — possible scanned PDF")
-    const ocrText = await extractTextWithAzure(buffer, "prebuilt-read")
-    if (ocrText && ocrText.length > (fullText?.length ?? 0)) {
-      console.log("[parser] OCR retry improved yield:", ocrText.length)
-      fullText = ocrText
-    }
-    if (!fullText || fullText.length < 1000) {
-      return {
-        filename: file.filename,
-        markers: {},
-        markersFound: 0,
-        parserUsed: "failed",
-        error: "We couldn't extract text from this PDF. If it's a scanned document, try downloading a fresh copy from your LabCorp patient portal (labcorplink.com) — portal PDFs are text-based and parse correctly.",
+        return { filename: file.filename, markers, markersFound: Object.keys(markers).length, labName, collectionDate, parserUsed: "openai" }
       }
     }
   }
 
-  if (fullText) {
-    console.log("[parser] total extracted text:", fullText.length, "chars")
+  // Step 2: unpdf failed or got too little text — try OpenAI Vision OCR
+  console.log("[parser] unpdf insufficient, trying OpenAI Vision OCR")
+  let fullText = await extractTextWithOpenAIVision(buffer)
 
-    // normalizeLabText runs inside parseWithAzureOpenAI per-chunk
-    const normalizedText = fullText
-
-    // Split into 12,000-char chunks so long reports don't get truncated
-    const CHUNK_SIZE = 12000
-    const chunks: string[] = []
-    for (let i = 0; i < normalizedText.length; i += CHUNK_SIZE) {
-      chunks.push(normalizedText.slice(i, i + CHUNK_SIZE))
+  if (fullText && fullText.length > 1000) {
+    console.log("[parser] vision OCR extracted:", fullText.length, "chars")
+  } else {
+    // Step 2b: Vision failed — fall back to Azure OCR (legacy, kept for rollback)
+    console.log("[parser] vision OCR insufficient, trying Azure fallback")
+    fullText = await extractTextWithAzure(buffer)
+    if (fullText && fullText.length < 3000) {
+      const ocrRetry = await extractTextWithAzure(buffer, "prebuilt-read")
+      if (ocrRetry && ocrRetry.length > (fullText?.length ?? 0)) fullText = ocrRetry
     }
+  }
 
-    // Call GPT-4o per chunk and merge — later non-null values override earlier nulls
-    let mergedOpenAIResult: Record<string, unknown> | null = null
-    for (let ci = 0; ci < chunks.length; ci++) {
-      const chunkResult = await parseWithAzureOpenAI(chunks[ci])
-      if (!chunkResult) continue
-      if (!mergedOpenAIResult) {
-        mergedOpenAIResult = { ...chunkResult }
-      } else {
-        // Later chunks override nulls; collectionDate and labName from first chunk only
-        for (const [k, v] of Object.entries(chunkResult)) {
-          if (k === "collectionDate" || k === "labName") continue
-          if (v !== null && v !== undefined && mergedOpenAIResult[k] == null) {
-            mergedOpenAIResult[k] = v
-          }
+  if (!fullText || fullText.length < 500) {
+    return {
+      filename: file.filename,
+      markers: {},
+      markersFound: 0,
+      parserUsed: "failed",
+      error: "We couldn't extract text from this PDF. If it's a scanned document, try downloading a fresh copy from your lab's patient portal — portal PDFs are text-based and parse correctly.",
+    }
+  }
+
+  // Step 3: Parse the extracted text with OpenAI
+  console.log("[parser] total extracted text:", fullText.length, "chars")
+  const normalizedText = fullText
+  const CHUNK_SIZE = 12000
+  const chunks: string[] = []
+  for (let i = 0; i < normalizedText.length; i += CHUNK_SIZE) {
+    chunks.push(normalizedText.slice(i, i + CHUNK_SIZE))
+  }
+
+  let mergedOpenAIResult: Record<string, unknown> | null = null
+  for (let ci = 0; ci < chunks.length; ci++) {
+    const chunkResult = await parseWithAzureOpenAI(chunks[ci])
+    if (!chunkResult) continue
+    if (!mergedOpenAIResult) {
+      mergedOpenAIResult = { ...chunkResult }
+    } else {
+      for (const [k, v] of Object.entries(chunkResult)) {
+        if (k === "collectionDate" || k === "labName") continue
+        if (v !== null && v !== undefined && mergedOpenAIResult[k] == null) {
+          mergedOpenAIResult[k] = v
         }
       }
     }
+  }
 
-    if (mergedOpenAIResult) {
-      const { markers, labName, collectionDate } = extractFromParsedJson(mergedOpenAIResult)
-      if (Object.keys(markers).length > 0) {
-        console.log("[parser] used: azure-hybrid — markers:", Object.keys(markers).length)
-        return { filename: file.filename, markers, markersFound: Object.keys(markers).length, labName, collectionDate, parserUsed: "azure-hybrid" }
-      }
-    }
-
-    // Fallback: regex parser
-    console.log("[parser] falling back to regex parser")
-    const regexResult = parseWithRegexFallback(fullText)
-    const { markers, labName, collectionDate } = extractFromParsedJson(regexResult)
+  if (mergedOpenAIResult) {
+    const { markers, labName, collectionDate } = extractFromParsedJson(mergedOpenAIResult)
     if (Object.keys(markers).length > 0) {
-      console.log("[parser] used: regex-fallback — markers:", Object.keys(markers).length)
-      return { filename: file.filename, markers, markersFound: Object.keys(markers).length, labName, collectionDate, parserUsed: "azure-hybrid" }
+      const usedVision = !directText
+      console.log(`[parser] used: ${usedVision ? "openai-vision" : "openai"} — markers:`, Object.keys(markers).length)
+      return { filename: file.filename, markers, markersFound: Object.keys(markers).length, labName, collectionDate, parserUsed: usedVision ? "openai-vision" : "openai" }
     }
   }
 
-  console.log("[parser] used: failed — no markers extracted")
+  // Step 4: Regex fallback
+  console.log("[parser] falling back to regex parser")
+  const regexResult = parseWithRegexFallback(fullText)
+  const { markers, labName, collectionDate } = extractFromParsedJson(regexResult)
+  if (Object.keys(markers).length > 0) {
+    console.log("[parser] used: regex-fallback — markers:", Object.keys(markers).length)
+    return { filename: file.filename, markers, markersFound: Object.keys(markers).length, labName, collectionDate, parserUsed: "openai" }
+  }
+
   return {
     filename: file.filename,
     markers: {},
@@ -526,7 +576,7 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  if (!process.env.OPENAI_API_KEY || !process.env.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT) {
+  if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json({ error: "Lab parser not configured" }, { status: 500 })
   }
 
