@@ -4,10 +4,9 @@
 "use client"
 
 import { useState, type ReactNode } from "react"
-import { SectionHeader, PanelInsight, FillInTheGapsHeader } from "../../components/panels"
+import { SectionHeader } from "../../components/panels"
 import { BLOOD_CATEGORIES, getCategoryStatus } from "../../../lib/blood/categories"
 import { MARKERS } from "../../../lib/blood/marker-content"
-import { computeConvergeStrength } from "../../../lib/converge-strength"
 
 const serif = "'Cormorant Garamond', Georgia, serif"
 const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
@@ -125,16 +124,9 @@ export default function BloodPanelClient({ lab, hasOral, hasSleep }: {
   }
 
   const data = lab as Record<string, number | null>
-  const panelCoverage = {
-    oral: { percent: hasOral ? 100 : 0, status: (hasOral ? "complete" : "none") as "complete" | "partial" | "none" },
-    blood: { percent: 80, status: "complete" as const },
-    sleep: { percent: hasSleep ? 90 : 0, status: (hasSleep ? "complete" : "none") as "complete" | "partial" | "none" },
-  }
 
   return (
     <div style={{ maxWidth: 1040, margin: "0 auto", padding: "32px 24px 80px", background: "#F5F3EE" }}>
-      <FillInTheGapsHeader panelCoverage={panelCoverage} convergeStrength={computeConvergeStrength(panelCoverage)} currentPanel="blood" />
-
       <SectionHeader title="What your blood data is showing" subtitle="Tap any marker to see what it means for you." />
 
       <div className="blood-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 32 }}>
@@ -208,9 +200,6 @@ export default function BloodPanelClient({ lab, hasOral, hasSleep }: {
           )
         })}
       </div>
-
-      <SectionHeader title="Converge" subtitle="How your blood data connects to oral and sleep." />
-      <PanelInsight panel="blood" />
 
       <style>{`
         @media (max-width: 768px) {

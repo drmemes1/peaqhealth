@@ -4,7 +4,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { SectionHeader, PanelInsight, CategoryCard } from "../../components/panels"
+import { SectionHeader, CategoryCard } from "../../components/panels"
 import { DiversityIcon, NitricOxideIcon, GumHealthIcon, CavityRiskIcon, CavityProtectorIcon, BreathingIcon } from "../../components/panels/icons"
 import { computeClientEnvironmentIndex } from "../../../lib/oral/environment-index"
 
@@ -320,9 +320,6 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
           <p style={{ fontFamily: sans, fontSize: 12, color: "#7A7870", lineHeight: 1.5, margin: 0 }}>You have <strong style={{ color: "#2C2A24" }}>{(kit.prevotella_commensal_pct).toFixed(1)}%</strong> of other Prevotella types — the harmless kinds. Only P. intermedia above is the one to watch.</p>
         </div>
       )}
-
-      <SectionHeader title="Converge" subtitle="How your oral data connects to blood and sleep." />
-      <PanelInsight panel="oral" fallback={{ picture: narrative?.section_opening, converge: narrative?.section_cardiometabolic ?? narrative?.section_breathing, actions: narrative?.section_gum_caries }} />
 
       {narrative?.section_disclaimer && (
         <div style={{ borderTop: "1px solid #D6D3C8", paddingTop: 24, marginTop: 16 }}>
