@@ -34,7 +34,30 @@ export const FORBIDDEN_SURFACE_PHRASES = [
   "you have active signals",
   "accelerated biological aging",
   "increases plaque risk",
+
+  // Borderline overreactions (v3.1)
+  "significantly elevated",
+  "concerning pattern",
+  "worth deeper investigation",
+  "metabolic processes that may",
 ]
+
+export const BORDERLINE_THRESHOLDS: Record<string, { cutoff: number; zone: number }> = {
+  glucose_mgdl: { cutoff: 100, zone: 105 },
+  hba1c_pct: { cutoff: 5.7, zone: 5.9 },
+  ldl_mgdl: { cutoff: 100, zone: 105 },
+  triglycerides_mgdl: { cutoff: 150, zone: 158 },
+  hs_crp_mgl: { cutoff: 1.0, zone: 1.05 },
+  alt_ul: { cutoff: 40, zone: 42 },
+  ast_ul: { cutoff: 40, zone: 42 },
+  tsh_uiuml: { cutoff: 4.0, zone: 4.2 },
+}
+
+export function isBorderlineValue(marker: string, value: number): boolean {
+  const t = BORDERLINE_THRESHOLDS[marker]
+  if (!t) return false
+  return value >= t.cutoff && value <= t.zone
+}
 
 export function checkCopyForToneViolations(copy: string): string[] {
   const violations: string[] = []

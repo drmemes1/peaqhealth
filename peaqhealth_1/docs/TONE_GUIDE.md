@@ -1,6 +1,6 @@
 # Peaq Health — Tone & Language Guide
 
-**Version:** 2.0
+**Version:** 3.1
 **Date:** April 2026
 **Applies to:** All user-facing copy — marker pages, connection lines,
 article content, dashboard text, AI-generated narratives, action items,
@@ -450,9 +450,54 @@ copy will fail CI. To add a new banned phrase, update
 
 ---
 
+## Doctor Voice Principles (added v3.1)
+
+Content should read like an experienced primary care doctor talking to a patient, not like a research paper or a marketing pitch.
+
+### DO
+- Acknowledge biological variability: "values vary day to day by 5-10% for normal reasons"
+- Suggest the next practical step: "recheck at your next draw"
+- Use relative framing for small deviations: "one point above the cutoff"
+- Contextualize single readings: "a single snapshot"
+- Be honest about uncertainty: "hard to say from one value"
+
+### DON'T
+- Treat small-magnitude deviations as meaningful findings
+- Invoke cross-panel associations for values within 5% of cutoff
+- Use "research associates..." framing for borderline values
+- Build long narrative paragraphs around 1-point deviations
+
+### The "off day" principle
+Every lab value is a snapshot. A fit, healthy person can have a glucose of 102 after a poor night's sleep. Real doctors hold this reality in mind. The app should too.
+
+### When to use doctor voice vs research voice
+- Within 5% of cutoff: DOCTOR VOICE ("recheck, probably noise")
+- 5-20% outside range: MEASURED VOICE ("worth tracking, here's context")
+- Over 20% outside range: CLINICAL VOICE ("clearly outside range, here's what research says")
+
+### Severity vocabulary matrix
+
+| Deviation from cutoff | Status label  | Voice    |
+|-----------------------|---------------|----------|
+| Within 5% (over)      | RECHECK       | Doctor   |
+| Within 5% (under)     | RECHECK       | Doctor   |
+| 5-15% outside         | WATCH         | Measured |
+| 15-30% outside        | WATCH CLOSELY | Clinical |
+| >30% outside          | ATTENTION     | Clinical |
+
+### Banned overreactions for borderline values
+- "significantly elevated"
+- "concerning pattern"
+- "worth deeper investigation"
+- "interact with" (implying causation from a borderline reading)
+- "metabolic processes that may" (vague hedging around small findings)
+
+---
+
 ## Changelog
 
 | Version | Date | Change |
 |---|---|---|
 | 1.0 | April 2026 | Initial guide |
-| 2.0 | April 2026 | Added Rule 11 (health data safe language framework), Rule 12 (regulatory posture), Second Core Principle (reflect data, do not interpret), updated Rule 4 exception for health data cards, updated Rule 5 extension for health data cards, updated Rule 9 additional friend test, updated Rule 6 additions (OSA/SpO2 terms), updated Red-Flag Words table (risk, elevated, diagnose, sleep apnea, at risk for, concerning, significant), added AI Route Compliance section, added Developer Checklist, updated species translation table |
+| 2.0 | April 2026 | Added Rule 11, Rule 12, Second Core Principle, AI Route Compliance, Developer Checklist |
+| 3.1 | April 2026 | Added Doctor Voice Principles, severity vocabulary matrix, banned overreactions, "off day" principle |

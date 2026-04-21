@@ -243,7 +243,7 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
                       : env.pattern === "osa_paradox" ? "Possible sleep-breathing shift"
                       : "Balanced overnight environment"}
                   </h4>
-                  <p style={{ fontFamily: serif, fontSize: 15, fontStyle: "italic", lineHeight: 1.7, color: "rgba(245,243,238,0.88)", margin: "0 0 12px" }}>
+                  <p style={{ fontFamily: serif, fontSize: 15, lineHeight: 1.7, color: "rgba(245,243,238,0.88)", margin: "0 0 12px" }}>
                     {env.pattern === "mixed" || env.pattern === "mouth_breathing"
                       ? <>Your oxygen-loving bacteria are higher than typical while your gum-area bacteria stay in the normal range. That combination is more consistent with mouth breathing than with sleep apnea patterns. Your questionnaire and wearable both point to mouth breathing too.</>
                       : env.pattern === "osa_paradox"
