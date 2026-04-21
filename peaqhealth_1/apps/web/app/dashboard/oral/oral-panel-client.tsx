@@ -239,13 +239,13 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
                 <div style={{ padding: "24px 22px", position: "relative" }}>
                   <div style={{ fontFamily: sans, fontSize: 10, fontWeight: 500, letterSpacing: "0.16em", textTransform: "uppercase", color: "rgba(212,169,52,0.9)", marginBottom: 8 }}>What this likely means</div>
                   <h4 style={{ fontFamily: serif, fontSize: 26, fontWeight: 500, letterSpacing: "-0.01em", color: "#F5F3EE", margin: "0 0 14px", lineHeight: 1.2 }}>
-                    {env.pattern === "mixed" || env.pattern === "mouth_breathing" ? "Mouth breathing, not sleep apnea"
-                      : env.pattern === "osa_paradox" ? "Possible sleep-breathing shift"
-                      : "Balanced overnight environment"}
+                    {env.pattern === "mixed" || env.pattern === "mouth_breathing" ? "Your mouth breathing is confirmed"
+                      : env.pattern === "osa_paradox" ? "Your overnight breathing pattern needs attention"
+                      : "Your overnight environment is balanced"}
                   </h4>
                   <p style={{ fontFamily: serif, fontSize: 15, lineHeight: 1.7, color: "rgba(245,243,238,0.88)", margin: "0 0 12px" }}>
                     {env.pattern === "mixed" || env.pattern === "mouth_breathing"
-                      ? <>Your oxygen-loving bacteria are higher than typical while your gum-area bacteria stay in the normal range. That combination is more consistent with mouth breathing than with sleep apnea patterns. Your questionnaire and wearable both point to mouth breathing too.</>
+                      ? <>Your oxygen-loving bacteria are higher than typical while your gum-area bacteria stay in the normal range. This is the bacterial pattern that reflects overnight mouth breathing — confirming your questionnaire answer.</>
                       : env.pattern === "osa_paradox"
                       ? <>Your bacteria show a pattern where oxygen-loving species are high and gum-area bacteria are unusually suppressed. In research, this combination is associated with disrupted nighttime breathing. Worth discussing with your doctor.</>
                       : <>Your mouth bacteria are in a balanced state overnight — no signs of drying or breathing disruption in the bacterial community.</>}

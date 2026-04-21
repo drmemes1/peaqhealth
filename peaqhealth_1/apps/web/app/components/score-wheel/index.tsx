@@ -737,7 +737,7 @@ function CrossPanelInteractions({
           science: "Prevotella and Fusobacterium species are enriched in patients with obstructive sleep apnea. OSA patients are 2.46\u00d7 more likely to have periodontitis across meta-analyses of 88,000+ patients. Intermittent hypoxia from OSA drives oxidative stress that accelerates periodontal tissue breakdown, while periodontal inflammation elevates systemic CRP.",
           meaning: `Your OSA-associated taxa are at ${oralData.osaTaxaPct.toFixed(1)}% — above the 1% threshold — alongside deep sleep of ${sleepData.deepPct.toFixed(1)}% and REM of ${sleepData.remPct.toFixed(1)}%.`,
           actions: [
-            "Get a home sleep study (WatchPAT or similar) to rule out subclinical OSA",
+            "Discuss overnight breathing patterns with your doctor at your next visit",
             "Avoid antiseptic mouthwash — it kills nitrate-reducing bacteria and disrupts sleep-related oral microbiome balance",
             "Consider a tongue-position evaluation with a dentist trained in airway health",
           ],
