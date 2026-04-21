@@ -1,3 +1,6 @@
 export { getBreathingSignal, type BreathingSignal } from "./breathing"
 export { getSleepQualitySignal, type SleepQualitySignal } from "./sleep-quality"
 export { getInflammationSignal, type InflammationSignal } from "./inflammation"
+export { getAirwaySignal, type AirwaySignal } from "./airway"
+export { getCognitiveSignal, type CognitiveSignal } from "./cognitive"
+export { getSleepDurationSignal, type SleepDurationSignal } from "./sleep-duration"
