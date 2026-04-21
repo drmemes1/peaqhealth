@@ -108,6 +108,21 @@ export interface QuestionnaireData {
   smokingStatus: string | null
   biologicalSex: string | null
   ageRange: string | null
+  sleepDuration: string | null
+  sleepLatency: string | null
+  sleepQualSelf: string | null
+  nightWakings: string | null
+  morningHeadaches: string | null
+  jawFatigueMorning: string | null
+  daytimeCognitiveFog: string | null
+  bruxismNight: string | null
+  osaWitnessed: string | null
+  sinusHistory: string | null
+  gerdNocturnal: boolean | null
+  stressLevel: string | null
+  caffeineCutoff: string | null
+  bmiCalculated: number | null
+  sleepPositionPrimary: string | null
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -238,6 +253,13 @@ async function buildContext(userId: string): Promise<UserPanelContext> {
     flossingFreq: s(q.flossing_freq), whiteningFrequency: s(q.whitening_frequency),
     dietaryNitrateFrequency: s(q.dietary_nitrate_frequency),
     smokingStatus: s(q.smoking_status), biologicalSex: s(q.biological_sex), ageRange: s(q.age_range),
+    sleepDuration: s(q.sleep_duration), sleepLatency: s(q.sleep_latency), sleepQualSelf: s(q.sleep_qual_self),
+    nightWakings: s(q.night_wakings), morningHeadaches: s(q.morning_headaches),
+    jawFatigueMorning: s(q.jaw_fatigue_morning), daytimeCognitiveFog: s(q.daytime_cognitive_fog),
+    bruxismNight: s(q.bruxism_night), osaWitnessed: s(q.osa_witnessed),
+    sinusHistory: s(q.sinus_history), gerdNocturnal: q.gerd_nocturnal as boolean | null ?? null,
+    stressLevel: s(q.stress_level), caffeineCutoff: s(q.caffeine_cutoff),
+    bmiCalculated: n(q.bmi_calculated), sleepPositionPrimary: s(q.sleep_position_primary),
   } : null
 
   // ── Assembly ──

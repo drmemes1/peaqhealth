@@ -128,11 +128,11 @@ export function CategoryCard({ icon, name, description, value, unit, status, sta
         {/* Tier 2 — Narrative */}
         {narrative && (
           <div style={{ background: "#F5F3EE", padding: "18px 22px", borderTop: "1px solid #E8E4D8", borderBottom: "1px solid #E8E4D8" }}>
-            <p style={{ fontFamily: serif, fontSize: 14, fontStyle: "italic", color: "#5C5A54", lineHeight: 1.65, margin: 0 }}>
+            <p style={{ fontFamily: serif, fontSize: 15, color: "#3D3B35", lineHeight: 1.65, margin: 0 }}>
               {renderPullquotes(narrative.paragraph, narrative.pullquotes)}
             </p>
             {narrative.source && (
-              <p style={{ fontFamily: sans, fontSize: 10, color: "#8C897F", margin: "8px 0 0", fontStyle: "italic" }}>{narrative.source}</p>
+              <p style={{ fontFamily: sans, fontSize: 10, color: "#8C897F", margin: "8px 0 0" }}>{narrative.source}</p>
             )}
             {narrative.meta && (
               <p style={{ fontFamily: sans, fontSize: 10, color: "#8C897F", margin: "6px 0 0" }}>{narrative.meta.join(" · ")}</p>

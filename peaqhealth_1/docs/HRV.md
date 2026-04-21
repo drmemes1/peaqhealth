@@ -197,7 +197,7 @@ Percentile: approximately 20th (RMSSD 32ms vs IQR 34-64ms for 30-39F)
 HRV delta = -(20-50) x 0.12 = +3.6 years  
 Weight: 8% -> contribution = 0.08 x 3.6 = +0.29 years to Peaq Age
 
-*Note: HRV delta is explicitly NOT currently included in the V5 Narod formula as implemented in Phase 1. It will be added in the next formula version. The Gabriella calculation above shows how it would behave.*
+*Note: HRV delta is explicitly NOT currently included in the V5 Peaq Age formula as implemented in Phase 1. It will be added in the next formula version. The Gabriella calculation above shows how it would behave.*
 
 ---
 
@@ -288,7 +288,7 @@ Show trend arrow on HRV metric in dashboard:
 
 ### 7.1 Current Interactions (V5 as Implemented)
 
-The V5 Narod formula cross-panel interactions (I1, I2, I3) currently reference RHR, not HRV:
+The V5 Peaq Age formula cross-panel interactions (I1, I2, I3) currently reference RHR, not HRV:
 
 - **I2:** OMA x Fitness — fires when OMA > 70th pct AND RHR < (expectedRHR - 5) -> -0.2 yrs
 

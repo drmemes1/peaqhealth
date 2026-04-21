@@ -11,6 +11,65 @@
 
 ---
 
+## Borderline Value Framing Rule
+
+When a user's value sits within 5% of the cutoff between two ranges,
+the narrative must acknowledge that:
+
+1. Single lab values vary day-to-day by 5-10% for biological reasons
+   (hydration, recent meal, stress, sleep, time of day).
+2. A value just over a cutoff is not meaningfully different from a
+   value just under it, clinically.
+3. The right framing is "worth rechecking at your next draw to see if
+   the pattern holds" — NOT "this is elevated."
+
+### Borderline thresholds (within 5% of cutoff)
+
+| Marker         | Lower cutoff | Borderline zone                      |
+|----------------|--------------|--------------------------------------|
+| Glucose        | 100 mg/dL    | 100-105 mg/dL                        |
+| HbA1c          | 5.7%         | 5.7-5.9%                             |
+| LDL            | 100 mg/dL    | 100-105 mg/dL                        |
+| LDL (high)     | 160 mg/dL    | 160-168 mg/dL                        |
+| Total Chol     | 200 mg/dL    | 200-210 mg/dL                        |
+| Triglycerides  | 150 mg/dL    | 150-158 mg/dL                        |
+| hs-CRP         | 1.0 mg/L     | 1.0-1.05 mg/L                        |
+| hs-CRP (high)  | 3.0 mg/L     | 3.0-3.15 mg/L                        |
+| Creatinine     | upper range  | within 5% of upper bound             |
+| ALT            | 40 U/L       | 40-42 U/L                            |
+| AST            | 40 U/L       | 40-42 U/L                            |
+| TSH            | 4.0 mIU/L    | 4.0-4.2 mIU/L                        |
+| Vitamin D      | 30 ng/mL     | 28-30 ng/mL (borderline low)         |
+| Ferritin       | normal range | within 5% of either bound            |
+| Fasting Insulin| 10 uIU/mL    | 10-10.5 uIU/mL                       |
+| Vitamin B12    | 300 pg/mL    | 290-300 pg/mL (borderline low)       |
+
+### Narrative pattern for borderline values
+
+CORRECT (for Glucose 101):
+"Your fasting glucose is 101 mg/dL, one point above the common
+reference cutoff of 100. A single value this close to the line can
+easily reflect normal day-to-day variation. Most clinicians would
+suggest rechecking at your next blood draw to see whether the pattern
+holds. Until you have a second reading, the honest interpretation is:
+keep an eye on it."
+
+WRONG:
+"Your glucose level is measured at 101 mg/dL, which is slightly above
+the common reference range. Research associates glucose levels in this
+range with metabolic processes that may interact with lipid metabolism..."
+
+### Status pill for borderline values
+
+Use "RECHECK" or "BORDERLINE" instead of "WATCH" for borderline values.
+
+### When borderline AND frankly-abnormal exist together
+
+Lead with the frankly-abnormal finding. Mention borderline second with
+explicit acknowledgment it is close to the line.
+
+---
+
 LANGUAGE COMPLIANCE — READ BEFORE EDITING ANY RULE
 Version: 2.0 (aligned with TONE_GUIDE.md v2.0)
 Applies to: Every connection line, expanded copy, and action in
