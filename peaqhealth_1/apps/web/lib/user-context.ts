@@ -123,6 +123,9 @@ export interface QuestionnaireData {
   caffeineCutoff: string | null
   bmiCalculated: number | null
   sleepPositionPrimary: string | null
+  sugarIntake: string | null
+  antibioticsWindow: string | null
+  medicationPpiDetail: string | null
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -260,6 +263,8 @@ async function buildContext(userId: string): Promise<UserPanelContext> {
     sinusHistory: s(q.sinus_history), gerdNocturnal: q.gerd_nocturnal as boolean | null ?? null,
     stressLevel: s(q.stress_level), caffeineCutoff: s(q.caffeine_cutoff),
     bmiCalculated: n(q.bmi_calculated), sleepPositionPrimary: s(q.sleep_position_primary),
+    sugarIntake: s(q.sugar_intake), antibioticsWindow: s(q.antibiotics_window),
+    medicationPpiDetail: s(q.medication_ppi_detail),
   } : null
 
   // ── Assembly ──

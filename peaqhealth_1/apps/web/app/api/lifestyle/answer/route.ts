@@ -7,10 +7,13 @@ const ALLOWED_FIELDS = new Set([
   "non_restorative_sleep", "daytime_fatigue", "night_wakings", "daytime_cognitive_fog",
   "snoring_reported", "osa_witnessed", "mouth_breathing_when", "nasal_obstruction_severity",
   "morning_headaches", "bruxism_night",
+  "smoking_status",
   "gerd_nocturnal",
   "flossing_freq", "whitening_frequency", "dietary_nitrate_frequency",
+  "sugar_intake",
   "height_cm", "weight_kg",
-  "antibiotics_last_60d",
+  "antibiotics_window", "antibiotics_last_60d",
+  "medication_ppi", "medication_ppi_detail",
 ])
 
 export async function POST(request: NextRequest) {
@@ -27,6 +30,16 @@ export async function POST(request: NextRequest) {
   }
 
   const update: Record<string, unknown> = { [field]: value, updated_at: new Date().toISOString() }
+
+  // Antibiotics window → also write the boolean flag
+  if (field === "antibiotics_window") {
+    update.antibiotics_last_60d = value === "past_30" || value === "31_to_60"
+  }
+
+  // PPI detail → also write the boolean flag
+  if (field === "medication_ppi_detail") {
+    update.medication_ppi = value === "daily_under_6mo" || value === "daily_over_6mo"
+  }
 
   if (field === "height_cm" || field === "weight_kg") {
     const { data: existing } = await supabase

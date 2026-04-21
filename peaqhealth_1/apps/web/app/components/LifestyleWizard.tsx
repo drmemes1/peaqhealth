@@ -198,6 +198,20 @@ const QUESTIONS: Question[] = [
       { value: "confirmed", label: "Diagnosed by dentist" },
     ],
   },
+  // D2. Smoking/vaping
+  {
+    type: "choice", key: "smoking_status", dbCol: "smoking_status",
+    question: "Do you smoke, vape, or use other tobacco products?",
+    descriptor: "Smoking and vaping directly alter your oral bacteria — specifically reducing some of the protective species we measure. We need to know this to interpret your results accurately.",
+    options: [
+      { value: "never", label: "Never" },
+      { value: "former_6mo", label: "Former (quit 6+ months ago)" },
+      { value: "former_recent", label: "Former (quit in last 6 months)" },
+      { value: "current_smoke", label: "Currently smoke" },
+      { value: "current_vape", label: "Currently vape" },
+      { value: "current_chew", label: "Currently use chewing tobacco" },
+    ],
+  },
   // E. Gut & reflux
   {
     type: "choice", key: "gerd_nocturnal", dbCol: "gerd_nocturnal",
@@ -244,6 +258,17 @@ const QUESTIONS: Question[] = [
       { value: "multiple_daily", label: "Multiple times per day" },
     ],
   },
+  {
+    type: "choice", key: "sugar_intake", dbCol: "sugar_intake",
+    question: "How often do you consume sugary foods or drinks — candy, pastries, soda, juice, sweetened coffee?",
+    descriptor: "Sugar is the primary food source for cavity-causing bacteria. We use this to interpret your cavity bacteria results.",
+    options: [
+      { value: "rarely", label: "Rarely or never" },
+      { value: "few_weekly", label: "Few times per week" },
+      { value: "daily", label: "Daily" },
+      { value: "multiple_daily", label: "Multiple times per day" },
+    ],
+  },
   // G. Body metrics
   {
     type: "number", key: "height_cm", dbCol: "height_cm",
@@ -259,12 +284,28 @@ const QUESTIONS: Question[] = [
   },
   // H. Quality control
   {
-    type: "choice", key: "antibiotics_last_60d", dbCol: "antibiotics_last_60d",
-    question: "Have you taken antibiotics in the last 60 days?",
-    descriptor: "Antibiotics significantly alter the oral microbiome for weeks to months after. This affects how we interpret your oral panel.",
+    type: "choice", key: "antibiotics_window", dbCol: "antibiotics_window",
+    question: "When did you last take antibiotics?",
+    descriptor: "Antibiotics significantly change your oral bacteria for weeks to months. Knowing roughly when you last took them lets us interpret your sample in that context.",
+    options: [
+      { value: "past_30", label: "In past 30 days" },
+      { value: "31_to_60", label: "31–60 days ago" },
+      { value: "61_to_90", label: "61–90 days ago" },
+      { value: "over_90", label: "More than 90 days ago" },
+      { value: "never_year", label: "Never in last year" },
+      { value: "not_sure", label: "Not sure" },
+    ],
+  },
+  // I. Medications
+  {
+    type: "choice", key: "medication_ppi_detail", dbCol: "medication_ppi_detail",
+    question: "Do you take a daily proton pump inhibitor (Omeprazole, Pantoprazole, Nexium, Prilosec, Prevacid)?",
+    descriptor: "PPIs change the acid-base balance throughout your digestive tract, including your mouth. They affect the bacteria we measure for caries and gum health.",
     options: [
       { value: "no", label: "No" },
-      { value: "yes", label: "Yes" },
+      { value: "occasionally", label: "Yes, occasionally" },
+      { value: "daily_under_6mo", label: "Yes, daily for less than 6 months" },
+      { value: "daily_over_6mo", label: "Yes, daily for over 6 months" },
     ],
   },
 ]
