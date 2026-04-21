@@ -40,6 +40,16 @@ export const FORBIDDEN_SURFACE_PHRASES = [
   "concerning pattern",
   "worth deeper investigation",
   "metabolic processes that may",
+
+  // Naming ruled-out conditions (v3.2)
+  "not sleep apnea",
+  "no signs of",
+  "not diabetic",
+  "not concerning for",
+  "differs from",
+  "rule out",
+  "ruled out",
+  "not osa",
 ]
 
 export const BORDERLINE_THRESHOLDS: Record<string, { cutoff: number; zone: number }> = {
