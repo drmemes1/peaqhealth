@@ -4,7 +4,7 @@ import { createClient as createServiceClient } from "@supabase/supabase-js"
 import OpenAI from "openai"
 import { NARRATIVE_SYSTEM_BASE, CONVERGE_INSTRUCTION } from "../../../../lib/panel-narrative-base"
 
-const PROMPT_VERSION = "oral-converge-v1"
+const PROMPT_VERSION = "oral-converge-v2"
 
 export async function GET() {
   const sessionClient = await createClient()
@@ -19,26 +19,20 @@ export async function GET() {
     .maybeSingle()
   if (cached?.content) return NextResponse.json(cached)
 
-  const [{ data: kit }, { data: lab }, { data: sleepNights }] = await Promise.all([
-    supabase.from("oral_kit_orders")
-      .select("shannon_diversity, neisseria_pct, haemophilus_pct, porphyromonas_pct, fusobacterium_pct, env_pattern, primary_pattern")
-      .eq("user_id", user.id).not("shannon_diversity", "is", null)
-      .order("ordered_at", { ascending: false }).limit(1).maybeSingle(),
-    supabase.from("lab_results")
-      .select("ldl_mgdl, hdl_mgdl, triglycerides_mgdl, hba1c_pct, glucose_mgdl, hs_crp_mgl")
-      .eq("user_id", user.id).eq("parser_status", "complete")
-      .order("collection_date", { ascending: false }).limit(1).maybeSingle(),
-    supabase.from("sleep_data")
-      .select("hrv_rmssd, spo2, resting_heart_rate")
-      .eq("user_id", user.id).gt("sleep_efficiency", 0).limit(14),
+  const [{ data: kit }, { data: lab }, { count: sleepCount }, { data: lifestyle }] = await Promise.all([
+    supabase.from("oral_kit_orders").select("shannon_diversity, neisseria_pct, haemophilus_pct, porphyromonas_pct, fusobacterium_pct, env_pattern, primary_pattern").eq("user_id", user.id).not("shannon_diversity", "is", null).order("ordered_at", { ascending: false }).limit(1).maybeSingle(),
+    supabase.from("lab_results").select("ldl_mgdl, hdl_mgdl, triglycerides_mgdl, hba1c_pct, glucose_mgdl, hs_crp_mgl, tsh_uiuml").eq("user_id", user.id).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).maybeSingle(),
+    supabase.from("sleep_data").select("id", { count: "exact", head: true }).eq("user_id", user.id).gt("sleep_efficiency", 0),
+    supabase.from("lifestyle_records").select("mouth_breathing, snoring_reported").eq("user_id", user.id).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
   ])
 
   const panels: string[] = []
   if (kit) panels.push("oral")
   if (lab) panels.push("blood")
-  if ((sleepNights ?? []).length > 0) panels.push("sleep")
+  if ((sleepCount ?? 0) > 0) panels.push("sleep")
+  if (lifestyle) panels.push("questionnaire")
 
-  if (panels.length < 2) {
+  if (panels.filter(p => p !== "questionnaire").length < 2) {
     const missing = ["oral", "blood", "sleep"].filter(p => !panels.includes(p))
     return NextResponse.json({
       content: `Once you've uploaded results from your ${missing.join(" and ")} panel${missing.length > 1 ? "s" : ""}, this view will show how your panels connect.`,
@@ -50,13 +44,14 @@ export async function GET() {
   if (!openaiKey) return NextResponse.json({ error: "No AI key" }, { status: 503 })
 
   try {
-    const dataCtx = { oral: kit, blood: lab, sleep_nights: (sleepNights ?? []).length, panels_available: panels }
+    const dataCtx = { oral: kit, blood: lab, sleep_nights: sleepCount, questionnaire: lifestyle, panels_available: panels }
+    const systemPrompt = NARRATIVE_SYSTEM_BASE + CONVERGE_INSTRUCTION + `\n\nAVAILABLE PANELS: ${panels.join(", ")}.\nOnly reference panels that are AVAILABLE. Never suggest uploading a panel that's already present.`
     const openai = new OpenAI({ apiKey: openaiKey })
     const completion = await openai.chat.completions.create({
       model: process.env.OPENAI_MODEL ?? "gpt-4.1-mini",
       temperature: 0.1, max_tokens: 800, store: false,
       messages: [
-        { role: "system", content: NARRATIVE_SYSTEM_BASE + CONVERGE_INSTRUCTION },
+        { role: "system", content: systemPrompt },
         { role: "user", content: `Cross-panel data:\n${JSON.stringify(dataCtx, null, 2)}` },
       ],
     })
