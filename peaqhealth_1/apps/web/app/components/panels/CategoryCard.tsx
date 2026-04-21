@@ -165,10 +165,10 @@ export function CategoryCard({ icon, name, description, value, unit, status, sta
           </div>
         )}
 
-        {/* Tier 5 — Species breakdown */}
+        {/* Tier 5 — Species/Marker breakdown */}
         {species && species.length > 0 && (
           <div style={{ background: "#FAFAF8", padding: "20px 22px", borderTop: expandedContent ? undefined : "1px solid #E8E4D8" }}>
-            <div style={{ fontFamily: sans, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.12em", color: "#B8860B", marginBottom: 10 }}>Species breakdown</div>
+            <div style={{ fontFamily: sans, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.12em", color: "#B8860B", marginBottom: 10 }}>Detail breakdown</div>
             <div className="species-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
               {species.map(sp => {
                 const spColor = STATUS_COLORS[sp.status]
