@@ -83,18 +83,33 @@ async function extractTextWithAzure(buffer: Buffer, model = "prebuilt-read"): Pr
 }
 
 // ─── OpenAI Vision OCR (primary fallback for scanned PDFs) ──────────────────
-// Replaces Azure Document Intelligence for OCR. Sends PDF pages as images to
-// GPT-4o and gets extracted text back. Same BAA, same vendor, one fewer key.
+// Renders PDF pages to PNG via unpdf, sends as images to GPT-4o vision.
+// Same BAA, same vendor, one fewer key than Azure Document Intelligence.
 
 async function extractTextWithOpenAIVision(buffer: Buffer): Promise<string | null> {
   const openaiKey = process.env.OPENAI_API_KEY
   if (!openaiKey) return null
 
   try {
-    const openai = new OpenAI({ apiKey: openaiKey })
-    const base64 = buffer.toString("base64")
-    const dataUrl = `data:application/pdf;base64,${base64}`
+    const { renderPageAsImage, getDocumentProxy } = await import("unpdf")
+    const doc = await getDocumentProxy(new Uint8Array(buffer))
+    const pageCount = doc.numPages
+    const maxPages = Math.min(pageCount, 8)
 
+    const imageUrls: { type: "image_url"; image_url: { url: string; detail: "high" } }[] = []
+    for (let p = 1; p <= maxPages; p++) {
+      const result = await renderPageAsImage(doc, p, { scale: 2 })
+      const imageData = result instanceof ArrayBuffer ? result : (result as { image: ArrayBuffer }).image ?? result
+      const pngBase64 = Buffer.from(imageData as ArrayBuffer).toString("base64")
+      imageUrls.push({
+        type: "image_url",
+        image_url: { url: `data:image/png;base64,${pngBase64}`, detail: "high" },
+      })
+    }
+
+    if (imageUrls.length === 0) return null
+
+    const openai = new OpenAI({ apiKey: openaiKey })
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       max_tokens: 8192,
@@ -106,12 +121,9 @@ async function extractTextWithOpenAIVision(buffer: Buffer): Promise<string | nul
           content: [
             {
               type: "text",
-              text: "Extract ALL text from this lab report PDF. Preserve the exact layout — test names, values, units, reference ranges, dates, lab name. Return only the extracted text, no commentary.",
+              text: "Extract ALL text from these lab report pages. Preserve the exact layout — test names, values, units, reference ranges, dates, lab name. Return only the extracted text, no commentary.",
             },
-            {
-              type: "image_url",
-              image_url: { url: dataUrl, detail: "high" },
-            },
+            ...imageUrls,
           ],
         },
       ],
@@ -119,9 +131,10 @@ async function extractTextWithOpenAIVision(buffer: Buffer): Promise<string | nul
 
     const text = response.choices[0]?.message?.content
     if (text && text.length > 500) {
-      console.log("[vision-ocr] extracted", text.length, "chars")
+      console.log("[vision-ocr] extracted", text.length, "chars from", imageUrls.length, "pages")
       return text
     }
+    console.log("[vision-ocr] insufficient text:", text?.length ?? 0)
     return null
   } catch (err) {
     console.error("[vision-ocr] failed:", (err as Error).message)
@@ -270,8 +283,13 @@ async function extractTextDirect(buffer: Buffer): Promise<string> {
   try {
     const { extractText } = await import("unpdf")
     const { text } = await extractText(new Uint8Array(buffer), { mergePages: true })
-    if (text && text.length > 3000) return text
-  } catch {
+    if (text && text.length > 500) {
+      console.log("[unpdf] extracted", text.length, "chars")
+      return text
+    }
+    console.log("[unpdf] too short:", text?.length ?? 0, "chars")
+  } catch (err) {
+    console.error("[unpdf] failed:", (err as Error).message)
   }
   return ""
 }
@@ -289,8 +307,8 @@ async function parseWithAzureOpenAI(fullText: string): Promise<Record<string, un
   try {
     const originalLength = fullText.length
     const scrubbedText = stripPII(fullText)
-    console.log("[pii-scrub] completed, text length before:", originalLength, "after:", scrubbedText.length)
     const normalizedText = normalizeLabText(scrubbedText)
+    console.log("[labs-upload] text pipeline: raw=%d scrubbed=%d normalized=%d (first 200: %s)", originalLength, scrubbedText.length, normalizedText.length, normalizedText.slice(0, 200).replace(/\n/g, " | "))
 
     const messages = [
         {
@@ -428,10 +446,12 @@ ${normalizedText}`,
       .trim()
 
     const parsed = JSON.parse(clean) as Record<string, unknown>
+    const nonNull = Object.entries(parsed).filter(([, v]) => v !== null && v !== undefined && v !== "null")
+    console.log("[labs-upload] parsed %d fields, %d non-null: %s", Object.keys(parsed).length, nonNull.length, nonNull.slice(0, 5).map(([k, v]) => `${k}=${v}`).join(", "))
     return parsed
   } catch (err) {
     const e = err as { message?: string; status?: number; code?: string }
-    console.error("[labs-upload] openai error:", e.message)
+    console.error("[labs-upload] openai error:", e.message, e.code, e.status)
     return null
   } finally {
     clearTimeout(timeoutId)
