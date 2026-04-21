@@ -78,6 +78,9 @@ function buildKitFromCtx(ctx: Awaited<ReturnType<typeof getUserPanelContext>>) {
     env_anaerobic_load_pct: o.envAnaerobicLoadPct, env_aerobic_anaerobic_ratio: o.envAerobicAnaerobicRatio,
     env_pattern: o.envPattern, env_peroxide_flag: null,
     raw_otu_table: null,
+    ph_balance_api: o.phBalanceApi, ph_balance_category: o.phBalanceCategory, ph_balance_confidence: o.phBalanceConfidence,
+    cariogenic_load_pct: o.cariogenicLoadPct, cariogenic_load_category: o.cariogenicLoadCategory,
+    protective_ratio: o.protectiveRatio, protective_ratio_category: o.protectiveRatioCategory,
   } as Record<string, unknown>
 }
 

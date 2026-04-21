@@ -7,6 +7,7 @@ import {
   computeOralEnvironmentIndex,
   computeDifferentialScores,
 } from "../../../../lib/score/recalculate"
+import { computeCariesPanel } from "../../../../lib/oral/caries-panel"
 
 const ADMIN_USER_ID = "f08a47b5-4a8f-4b8c-b4d5-8f1de407d686"
 
@@ -468,6 +469,17 @@ export async function POST(request: NextRequest) {
         .single()
       if (readErr || !kitRow) throw new Error(`Reload kit failed: ${readErr?.message}`)
 
+      // Step 2b: compute caries panel
+      const caries = computeCariesPanel(kitRow as Parameters<typeof computeCariesPanel>[0])
+      const { error: cariesErr } = await supabase.from("oral_kit_orders").update({
+        ph_balance_api: caries.phBalanceApi, ph_balance_category: caries.phBalanceCategory,
+        ph_balance_confidence: caries.phBalanceConfidence,
+        cariogenic_load_pct: caries.cariogenicLoadPct, cariogenic_load_category: caries.cariogenicLoadCategory,
+        protective_ratio: caries.protectiveRatio, protective_ratio_category: caries.protectiveRatioCategory,
+      }).eq("id", kitId)
+      if (cariesErr) throw new Error(`Caries write failed: ${cariesErr.message}`)
+      steps.push(`Caries: pH ${caries.phBalanceApi.toFixed(3)} (${caries.phBalanceCategory}), CLI ${caries.cariogenicLoadPct.toFixed(3)} (${caries.cariogenicLoadCategory}), PR ${caries.protectiveRatio?.toFixed(2) ?? "N/A"} (${caries.protectiveRatioCategory})`)
+
       // Step 3: fetch lifestyle for scoring
       const { data: lifestyle } = await supabase
         .from("lifestyle_records")
@@ -716,6 +728,16 @@ export async function POST(request: NextRequest) {
         .eq("id", kitId)
       if (writeErr) throw new Error(`Write columns failed: ${writeErr.message}`)
       steps.push(`Wrote ${Object.keys(columnValues).length} columns (s_salivarius=${sSalivariusTotal.toFixed(2)}, lactobacillus=${columnValues["lactobacillus_pct"]})`)
+
+      // Re-compute caries panel
+      const cariesReparse = computeCariesPanel(columnValues as unknown as Parameters<typeof computeCariesPanel>[0])
+      await supabase.from("oral_kit_orders").update({
+        ph_balance_api: cariesReparse.phBalanceApi, ph_balance_category: cariesReparse.phBalanceCategory,
+        ph_balance_confidence: cariesReparse.phBalanceConfidence,
+        cariogenic_load_pct: cariesReparse.cariogenicLoadPct, cariogenic_load_category: cariesReparse.cariogenicLoadCategory,
+        protective_ratio: cariesReparse.protectiveRatio, protective_ratio_category: cariesReparse.protectiveRatioCategory,
+      }).eq("id", kitId)
+      steps.push(`Caries: pH ${cariesReparse.phBalanceApi.toFixed(3)} (${cariesReparse.phBalanceCategory}), CLI ${cariesReparse.cariogenicLoadPct.toFixed(3)}, PR ${cariesReparse.protectiveRatio?.toFixed(2) ?? "N/A"}`)
 
       // Re-read and run full pipeline (tier + env + scores)
       const { data: updated } = await supabase.from("oral_kit_orders").select("*").eq("id", kitId).single()
