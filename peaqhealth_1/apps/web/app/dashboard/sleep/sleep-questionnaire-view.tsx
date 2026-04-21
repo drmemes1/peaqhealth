@@ -2,9 +2,8 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { SectionHeader, PanelInsight, FillInTheGapsHeader, CategoryCard } from "../../components/panels"
+import { SectionHeader, CategoryCard } from "../../components/panels"
 import { BreathingIcon, DiversityIcon } from "../../components/panels/icons"
-import { computeConvergeStrength } from "../../../lib/converge-strength"
 import type { UserPanelContext } from "../../../lib/user-context"
 import { getBreathingSignal } from "../../../lib/signals/breathing"
 import { getSleepQualitySignal } from "../../../lib/signals/sleep-quality"
@@ -31,16 +30,8 @@ export default function SleepQuestionnaireView({ ctx }: { ctx: UserPanelContext 
   const airway = getAirwaySignal(ctx)
   const cognitive = getCognitiveSignal(ctx)
 
-  const panelCoverage = {
-    oral: { percent: ctx.hasOralKit ? 100 : 0, status: (ctx.hasOralKit ? "complete" : "none") as "complete" | "partial" | "none" },
-    blood: { percent: ctx.hasBloodPanel ? 80 : 0, status: (ctx.hasBloodPanel ? "complete" : "none") as "complete" | "partial" | "none" },
-    sleep: { percent: ctx.hasQuestionnaire ? 40 : 0, status: "partial" as const },
-  }
-
   return (
     <div style={{ maxWidth: 1040, margin: "0 auto", padding: "32px 24px 80px", background: "#F5F3EE" }}>
-      <FillInTheGapsHeader panelCoverage={panelCoverage} convergeStrength={computeConvergeStrength(panelCoverage)} currentPanel="sleep" />
-
       <SectionHeader title="Sleep" subtitle="Based on your questionnaire and oral data. Connect a wearable for objective measurements." />
       <div style={{ marginBottom: 16 }}>
         <Link href="/settings" style={{ fontFamily: sans, fontSize: 12, color: "#B8860B", letterSpacing: "0.06em", textTransform: "uppercase", textDecoration: "none" }}>
@@ -124,9 +115,6 @@ export default function SleepQuestionnaireView({ ctx }: { ctx: UserPanelContext 
           narrative={{ paragraph: cognitive.flags.length > 0 ? `You report: ${cognitive.flags.join(", ")}. These tend to cluster together when sleep architecture is fragmented — even when total hours look adequate. Addressing breathing and consistency often helps these shift.` : "No cognitive or morning signals flagged. Your mornings seem to be starting well." }}
         />
       </div>
-
-      <SectionHeader title="Converge" subtitle="How your sleep data connects to oral and blood." />
-      <PanelInsight panel="sleep" />
 
       <style>{`@media (max-width: 768px) { .sleep-grid { grid-template-columns: 1fr !important; } }`}</style>
     </div>

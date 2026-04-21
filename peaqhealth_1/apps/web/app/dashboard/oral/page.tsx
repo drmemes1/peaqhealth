@@ -2,7 +2,6 @@ import { redirect } from "next/navigation"
 import { createClient } from "../../../lib/supabase/server"
 import OralPanelClient from "./oral-panel-client"
 import { Nav } from "../../components/nav"
-import { FillInTheGapsHeader } from "../../components/panels"
 import { getUserPanelContext } from "../../../lib/user-context"
 import Link from "next/link"
 
@@ -36,12 +35,6 @@ export default async function OralPage() {
     ? parseNarrativeSections(narrativeRow.narrative as string)
     : null
 
-  const panelCoverage = {
-    oral: { percent: ctx.oralKit?.neisseriaPct != null ? 100 : ctx.oralKit?.shannonIndex != null ? 30 : 0, status: (ctx.oralKit?.neisseriaPct != null ? "complete" : ctx.hasOralKit ? "partial" : "none") as "complete" | "partial" | "none" },
-    blood: { percent: ctx.hasBloodPanel ? 80 : 0, status: (ctx.hasBloodPanel ? "complete" : "none") as "complete" | "partial" | "none" },
-    sleep: { percent: ctx.hasWearable ? 90 : ctx.hasQuestionnaire ? 30 : 0, status: (ctx.hasWearable ? "complete" : ctx.hasQuestionnaire ? "partial" : "none") as "complete" | "partial" | "none" },
-  }
-
   const wearable = ctx.sleepData ? {
     nights_available: ctx.sleepData.nightsCount,
     avg_spo2: ctx.sleepData.spo2Avg,
@@ -52,9 +45,6 @@ export default async function OralPage() {
   return (
     <div className="min-h-svh" style={{ background: "#F5F3EE" }}>
       <Nav />
-      <div style={{ maxWidth: 1040, margin: "0 auto", padding: "24px 24px 0" }}>
-        <FillInTheGapsHeader panelCoverage={panelCoverage} convergeStrength={ctx.convergeStrength} currentPanel="oral" />
-      </div>
       <OralPanelClient
         kit={buildKitFromCtx(ctx) as Parameters<typeof OralPanelClient>[0]["kit"]}
         narrative={narrative}
