@@ -65,6 +65,13 @@ export interface OralKitData {
   gumHealthTotal: number
   cavityBacteriaTotal: number
   cavityProtectorsTotal: number
+  phBalanceApi: number | null
+  phBalanceCategory: string | null
+  phBalanceConfidence: string | null
+  cariogenicLoadPct: number | null
+  cariogenicLoadCategory: string | null
+  protectiveRatio: number | null
+  protectiveRatioCategory: string | null
 }
 
 export interface BloodPanelData {
@@ -207,6 +214,13 @@ async function buildContext(userId: string): Promise<UserPanelContext> {
       gumHealthTotal: (fu ?? 0) + (ag ?? 0) + (ca ?? 0) + (po ?? 0) + (ta ?? 0) + (tr ?? 0) + (pi ?? 0),
       cavityBacteriaTotal: (sm ?? 0) + (ss ?? 0) + (la ?? 0),
       cavityProtectorsTotal: (sg ?? 0) + (go ?? 0),
+      phBalanceApi: n(o.ph_balance_api),
+      phBalanceCategory: s(o.ph_balance_category),
+      phBalanceConfidence: s(o.ph_balance_confidence),
+      cariogenicLoadPct: n(o.cariogenic_load_pct),
+      cariogenicLoadCategory: s(o.cariogenic_load_category),
+      protectiveRatio: n(o.protective_ratio),
+      protectiveRatioCategory: s(o.protective_ratio_category),
     }
   }
 
