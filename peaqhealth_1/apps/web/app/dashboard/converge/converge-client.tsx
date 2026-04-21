@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import type { ConvergeObservation } from "../../../lib/converge/observations"
 
@@ -200,6 +200,19 @@ export function ConvergeClient({ observations, availablePanels, panelCount, firs
   const positiveObs = observations.filter(o => o.severity === "positive")
   const otherObs = observations.filter(o => o.severity !== "attention" && o.severity !== "watch" && o.severity !== "positive")
 
+  const [hero, setHero] = useState<{ headline: string; paragraphs: string[] } | null>(null)
+  const [heroLoading, setHeroLoading] = useState(false)
+
+  useEffect(() => {
+    if (panelCount < 2) return
+    setHeroLoading(true)
+    fetch("/api/converge/hero", { method: "POST" })
+      .then(r => r.json())
+      .then(data => setHero({ headline: data.headline, paragraphs: data.paragraphs ?? [] }))
+      .catch(() => {})
+      .finally(() => setHeroLoading(false))
+  }, [panelCount])
+
   return (
     <main style={{ maxWidth: 760, margin: "0 auto", padding: "32px 24px 80px" }}>
       {/* Header */}
@@ -223,7 +236,7 @@ export function ConvergeClient({ observations, availablePanels, panelCount, firs
         {" "}{availablePanels.filter(p => p !== "questionnaire").join(", ") || "No panels yet"}
       </p>
 
-      {/* Hero narrative placeholder — PR B will add AI generation */}
+      {/* Hero narrative — AI generated */}
       {panelCount >= 2 && (
         <div style={{
           background: "linear-gradient(135deg, #2C2A24 0%, #3D3B35 100%)",
@@ -242,25 +255,47 @@ export function ConvergeClient({ observations, availablePanels, panelCount, firs
           }}>
             THE STORY YOUR PANELS TELL TOGETHER
           </span>
-          <p style={{
-            fontFamily: serif, fontSize: 18, color: "rgba(245,243,238,0.9)",
-            lineHeight: 1.7, margin: 0,
-          }}>
-            {firstName ? `${firstName}, y` : "Y"}our {availablePanels.filter(p => p !== "questionnaire").join(" and ")} data
-            are starting to paint a connected picture.
-            {attentionObs.length > 0
-              ? ` ${attentionObs.length} cross-panel finding${attentionObs.length === 1 ? "" : "s"} need${attentionObs.length === 1 ? "s" : ""} attention, and ${positiveObs.length} signal${positiveObs.length === 1 ? "" : "s"} are working in your favor.`
-              : positiveObs.length > 0
-              ? ` ${positiveObs.length} positive signal${positiveObs.length === 1 ? "" : "s"} — your panels are aligned.`
-              : " More data will strengthen the connections."
-            }
-          </p>
-          <p style={{
-            fontFamily: sans, fontSize: 10, color: "rgba(245,243,238,0.4)",
-            fontStyle: "italic", margin: "12px 0 0",
-          }}>
-            Full AI narrative available in next update
-          </p>
+          {heroLoading ? (
+            <p style={{
+              fontFamily: serif, fontSize: 18, color: "rgba(245,243,238,0.5)",
+              lineHeight: 1.7, margin: 0, fontStyle: "italic",
+            }}>
+              Analyzing your cross-panel picture...
+            </p>
+          ) : hero ? (
+            <>
+              <h2 style={{
+                fontFamily: serif, fontSize: 24, fontWeight: 400,
+                color: "#F5F3EE", margin: "0 0 16px", lineHeight: 1.3,
+              }}>
+                {hero.headline}
+              </h2>
+              {hero.paragraphs.map((p, i) => (
+                <p key={i} style={{
+                  fontFamily: serif, fontSize: 17, color: "rgba(245,243,238,0.9)",
+                  lineHeight: 1.75, margin: i < hero.paragraphs.length - 1 ? "0 0 14px" : 0,
+                }}
+                dangerouslySetInnerHTML={{
+                  __html: p.replace(/\*([^*]+)\*/g, '<em style="color: rgba(212,169,52,0.9); font-style: italic;">$1</em>')
+                }}
+                />
+              ))}
+            </>
+          ) : (
+            <p style={{
+              fontFamily: serif, fontSize: 18, color: "rgba(245,243,238,0.9)",
+              lineHeight: 1.7, margin: 0,
+            }}>
+              {firstName ? `${firstName}, y` : "Y"}our {availablePanels.filter(p => p !== "questionnaire").join(" and ")} data
+              are starting to paint a connected picture.
+              {attentionObs.length > 0
+                ? ` ${attentionObs.length} cross-panel finding${attentionObs.length === 1 ? "" : "s"} need${attentionObs.length === 1 ? "s" : ""} attention, and ${positiveObs.length} signal${positiveObs.length === 1 ? "" : "s"} are working in your favor.`
+                : positiveObs.length > 0
+                ? ` ${positiveObs.length} positive signal${positiveObs.length === 1 ? "" : "s"} — your panels are aligned.`
+                : " More data will strengthen the connections."
+              }
+            </p>
+          )}
         </div>
       )}
 
