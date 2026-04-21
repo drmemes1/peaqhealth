@@ -283,7 +283,7 @@ async function extractTextDirect(buffer: Buffer): Promise<string> {
   try {
     const { extractText } = await import("unpdf")
     const { text } = await extractText(new Uint8Array(buffer), { mergePages: true })
-    if (text && text.length > 500) {
+    if (text && text.length > 100) {
       console.log("[unpdf] extracted", text.length, "chars")
       return text
     }
@@ -499,7 +499,7 @@ function extractFromParsedJson(
 async function processFile(file: FileInput, _index: number): Promise<FileResult> {
   const buffer = Buffer.from(file.base64, "base64")
 
-  // Step 1: Try unpdf (instant, no API call)
+  // Step 1: Try unpdf (instant, no API call) — always attempt parse if ANY text extracted
   const directText = await extractTextDirect(buffer)
   if (directText) {
     const openaiResult = await parseWithAzureOpenAI(directText)
@@ -509,13 +509,20 @@ async function processFile(file: FileInput, _index: number): Promise<FileResult>
         return { filename: file.filename, markers, markersFound: Object.keys(markers).length, labName, collectionDate, parserUsed: "openai" }
       }
     }
+    // unpdf extracted text but OpenAI found no markers — try regex on it
+    const regexResult = parseWithRegexFallback(directText)
+    const { markers: regexMarkers, labName: regexLab, collectionDate: regexDate } = extractFromParsedJson(regexResult)
+    if (Object.keys(regexMarkers).length > 0) {
+      console.log("[parser] regex fallback on unpdf text — markers:", Object.keys(regexMarkers).length)
+      return { filename: file.filename, markers: regexMarkers, markersFound: Object.keys(regexMarkers).length, labName: regexLab, collectionDate: regexDate, parserUsed: "openai" }
+    }
   }
 
-  // Step 2: unpdf failed or got too little text — try OpenAI Vision OCR
+  // Step 2: unpdf failed entirely — try OpenAI Vision OCR (renders pages to PNG)
   console.log("[parser] unpdf insufficient, trying OpenAI Vision OCR")
   let fullText = await extractTextWithOpenAIVision(buffer)
 
-  if (fullText && fullText.length > 1000) {
+  if (fullText && fullText.length > 500) {
     console.log("[parser] vision OCR extracted:", fullText.length, "chars")
   } else {
     // Step 2b: Vision failed — fall back to Azure OCR (legacy, kept for rollback)
@@ -527,7 +534,7 @@ async function processFile(file: FileInput, _index: number): Promise<FileResult>
     }
   }
 
-  if (!fullText || fullText.length < 500) {
+  if (!fullText || fullText.length < 100) {
     return {
       filename: file.filename,
       markers: {},
