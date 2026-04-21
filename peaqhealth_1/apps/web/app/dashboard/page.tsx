@@ -4,6 +4,7 @@ import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { DashboardClient } from "./dashboard-client"
 import type { ScoreWheelProps } from "../components/score-wheel"
 import { recalculateScore } from "../../lib/score/recalculate"
+import { getUserPanelContext } from "../../lib/user-context"
 
 export const dynamic = "force-dynamic"
 
