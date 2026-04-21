@@ -776,6 +776,12 @@ export function SleepPanelClient({ nights, snapshot, wearable, connectionInput }
           )}
         </Section>
 
+        <div style={{ textAlign: "center", marginTop: 16, marginBottom: 16 }}>
+          <a href="/dashboard/converge" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "#B8860B", textDecoration: "none", fontWeight: 500 }}>
+            See how this connects to your other panels →
+          </a>
+        </div>
+
       </main>
     </div>
   )

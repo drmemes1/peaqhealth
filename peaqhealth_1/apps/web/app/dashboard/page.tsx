@@ -5,6 +5,7 @@ import { DashboardClient } from "./dashboard-client"
 import type { ScoreWheelProps } from "../components/score-wheel"
 import { recalculateScore } from "../../lib/score/recalculate"
 import { getUserPanelContext } from "../../lib/user-context"
+import { computeConvergeObservations, type ConvergeObservation } from "../../lib/converge/observations"
 
 export const dynamic = "force-dynamic"
 
@@ -412,6 +413,9 @@ export default async function DashboardPage() {
     sleep: (sleepNights ?? []).length >= 3,
   }
 
+  const panelCtx = await getUserPanelContext(user.id)
+  const convergeObservations = computeConvergeObservations(panelCtx)
+
   return <DashboardClient
     {...props}
     labHistory={labHistoryRows ?? []}
@@ -431,5 +435,6 @@ export default async function DashboardPage() {
     crossPanelSignals={crossPanelSignals}
     snapshotUpdatedAt={(snapshot?.calculated_at as string | null) ?? null}
     panelsActive={panelsActive}
+    convergeObservations={convergeObservations}
   />
 }
