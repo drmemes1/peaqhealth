@@ -9,7 +9,9 @@ import { IOSInstallBanner } from "../components/ios-install-banner"
 import { PanelConvergence } from "../components/panel-convergence"
 import { RefreshCw } from "lucide-react"
 import { CrossPanelCard } from "./components/CrossPanelCard"
+import { HealthPictureBlock } from "./components/HealthPictureBlock"
 import CnvrgLogo from "../components/CnvrgLogo"
+import type { ConvergeObservation } from "../../lib/converge/observations"
 
 const serif = "'Cormorant Garamond', Georgia, serif"
 const sans  = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
@@ -527,8 +529,9 @@ export function DashboardClient(props: ScoreWheelProps & {
   crossPanelSignals?: Array<{ dot: "red" | "amber" | "green"; title: string; desc: string; link?: string }>;
   snapshotUpdatedAt?: string | null;
   panelsActive?: { oral: boolean; blood: boolean; sleep: boolean };
+  convergeObservations?: ConvergeObservation[];
 }) {
-  const { wearableNeedsReconnect = false, firstName, peaqAgeBreakdown, cachedGuidance } = props
+  const { wearableNeedsReconnect = false, firstName, peaqAgeBreakdown, cachedGuidance, convergeObservations = [] } = props
   // cachedInsight intentionally unused — Cnvrg Insight card has been removed from the dashboard surface.
   const crossPanelSignals = props.crossPanelSignals ?? []
   const snapshotUpdatedAt = props.snapshotUpdatedAt ?? null
@@ -794,67 +797,13 @@ export function DashboardClient(props: ScoreWheelProps & {
                 </div>
               </div>
 
-              {/* 3. BACTERIA COUNT + CNVRG+ AGE — side by side */}
-              <div className="score-row" style={{ display: "flex", gap: 16, marginBottom: 36 }}>
-
-                {/* BACTERIA COUNT CARD */}
-                <Link href="/dashboard/oral" style={{
-                  flex: "0 0 200px", borderRadius: 16, overflow: "hidden",
-                  position: "relative", textDecoration: "none", display: "flex",
-                  flexDirection: "column", alignItems: "center", justifyContent: "center",
-                  minHeight: 240,
-                  boxShadow: "0 1px 3px rgba(20,20,16,0.06)",
-                  border: `0.5px solid ${DS.cardBorder}`,
-                }}>
-                  <video src="/bac_moving.mp4" autoPlay loop muted playsInline style={{
-                    position: "absolute", inset: 0, width: "100%", height: "100%",
-                    objectFit: "cover", filter: "blur(2px) brightness(0.35)",
-                  }} />
-                  <div style={{ position: "relative", zIndex: 1, textAlign: "center", padding: 24 }}>
-                    <span style={{
-                      fontFamily: sans, fontSize: 9, letterSpacing: "0.14em",
-                      textTransform: "uppercase", color: "rgba(255,255,255,0.6)",
-                      display: "block", marginBottom: 12,
-                    }}>
-                      SPECIES FOUND
-                    </span>
-                    {/* Green ring counter */}
-                    <div style={{ position: "relative", width: 96, height: 96, margin: "0 auto 12px" }}>
-                      <svg viewBox="0 0 96 96" style={{ width: 96, height: 96, transform: "rotate(-90deg)" }}>
-                        <circle cx="48" cy="48" r="40" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="5" />
-                        <circle cx="48" cy="48" r="40" fill="none" stroke={DS.oral} strokeWidth="5"
-                          strokeLinecap="round"
-                          strokeDasharray={`${2 * Math.PI * 40}`}
-                          strokeDashoffset={`${2 * Math.PI * 40 * (1 - Math.min(1, (speciesCount ?? 0) / 200))}`}
-                          style={{ filter: `drop-shadow(0 0 6px ${DS.oral})`, transition: "stroke-dashoffset 1s ease" }}
-                        />
-                      </svg>
-                      <span style={{
-                        position: "absolute", inset: 0,
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontFamily: serif, fontSize: 36, fontWeight: 300, color: "#FFFFFF",
-                        letterSpacing: -1,
-                      }}>
-                        {speciesCount ?? "—"}
-                      </span>
-                    </div>
-                    <span style={{
-                      fontFamily: sans, fontSize: 11, color: "rgba(255,255,255,0.5)",
-                    }}>
-                      {speciesCount ? "unique bacteria detected" : "Order kit to discover"}
-                    </span>
-                  </div>
-                </Link>
-
-                {/* CROSS-PANEL SIGNALS CARD — replaces Peaq+ Age card */}
-                <div style={{ flex: 1 }}>
-                  <CrossPanelCard
-                    signals={crossPanelSignals}
-                    updatedAt={snapshotUpdatedAt}
-                    panelsActive={panelsActive}
-                  />
-                </div>
-              </div>
+              {/* 3. YOUR HEALTH PICTURE — Species found + Converge observations */}
+              <HealthPictureBlock
+                observations={convergeObservations}
+                panelsActive={panelsActive}
+                updatedAt={snapshotUpdatedAt}
+                speciesCount={speciesCount as number | null | undefined}
+              />
 
               {/* AI INSIGHT CARD removed — replaced by CrossPanelCard above */}
 

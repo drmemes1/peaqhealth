@@ -417,6 +417,12 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
         </div>
       )}
 
+      <div style={{ textAlign: "center", marginTop: 16, marginBottom: 16 }}>
+        <a href="/dashboard/converge" style={{ fontFamily: sans, fontSize: 13, color: "#B8860B", textDecoration: "none", fontWeight: 500 }}>
+          See how this connects to your other panels →
+        </a>
+      </div>
+
       {!hasAnyData && (
         <div style={{ background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 10, padding: 16, marginTop: 16 }}>
           <p style={{ fontFamily: sans, fontSize: 13, color: "#92400E", margin: 0 }}>Your oral sample hasn't been processed yet. Once your results come in, this page will populate with your bacterial panel.</p>
