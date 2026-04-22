@@ -7,7 +7,7 @@ import { useState, useMemo } from "react"
 import { SectionHeader, CategoryCard } from "../../components/panels"
 import { DiversityIcon, NitricOxideIcon, GumHealthIcon, CavityRiskIcon, CavityProtectorIcon, BreathingIcon } from "../../components/panels/icons"
 import { computeClientEnvironmentIndex } from "../../../lib/oral/environment-index"
-import { PH_LABELS, CLI_LABELS, PR_LABELS } from "../../../lib/oral/caries-panel"
+import { CavityEnvironmentSection } from "./CavityEnvironmentSection"
 
 type OralKitRow = {
   shannon_diversity: number | null
@@ -52,45 +52,6 @@ function EnvStatCell({ label, value, unit, verdict, verdictColor, explanation, p
       </div>
       <div style={{ fontFamily: sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: verdictColor, fontWeight: 500, marginBottom: 6 }}>{verdict}</div>
       <p style={{ fontFamily: sans, fontSize: 11, color: "#7A7870", lineHeight: 1.5, margin: 0 }}>{explanation}</p>
-    </div>
-  )
-}
-
-function CariesTile({ label, question, value, unit, category, status, barPct, confidence, details }: {
-  label: string; question: string; value: string; unit?: string; category: string
-  status: "good" | "watch" | "concern"; barPct: number; confidence?: string | null
-  details: { label: string; value: string }[]
-}) {
-  const [open, setOpen] = useState(false)
-  const color = STATUS_COLORS[status]
-  const barGradient = status === "good" ? "linear-gradient(90deg, #1A8C4E, #2DB86A)" : status === "watch" ? "linear-gradient(90deg, #B8860B, #D4A934)" : "linear-gradient(90deg, #A84D4D, #C06060)"
-  return (
-    <div
-      onClick={() => setOpen(o => !o)}
-      style={{ background: "#FFFEFB", border: "1px solid #E8E4D8", borderRadius: 10, padding: "16px 18px", cursor: "pointer", transition: "box-shadow 0.15s", position: "relative", overflow: "hidden" }}
-    >
-      <div style={{ fontFamily: sans, fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.16em", color: "#8C897F", marginBottom: 4 }}>{label}</div>
-      <p style={{ fontFamily: sans, fontSize: 11, color: "#7A7870", lineHeight: 1.4, margin: "0 0 10px" }}>{question}</p>
-      <div style={{ fontFamily: serif, fontSize: 36, fontWeight: 500, color: "#2C2A24", lineHeight: 1, letterSpacing: "-0.02em", marginBottom: 4 }}>
-        {value}{unit && <span style={{ fontSize: 16, color: "#8C897F", fontWeight: 400, marginLeft: 2 }}>{unit}</span>}
-      </div>
-      <div style={{ fontFamily: sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color, fontWeight: 500, marginBottom: 10 }}>{category}</div>
-      <div style={{ height: 4, background: "#E8E4D8", borderRadius: 2, overflow: "hidden", marginBottom: confidence ? 8 : 0 }}>
-        <div style={{ height: "100%", width: `${Math.max(barPct, 2)}%`, background: barGradient, borderRadius: 2, transition: "width 0.3s" }} />
-      </div>
-      {confidence && (
-        <div style={{ fontFamily: sans, fontSize: 9, color: "#A8A59C", marginTop: 4 }}>Confidence: {confidence.replace(/_/g, " ")}</div>
-      )}
-      {open && (
-        <div style={{ marginTop: 12, borderTop: "1px solid #E8E4D8", paddingTop: 10 }}>
-          {details.map((d, i) => (
-            <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
-              <span style={{ fontFamily: sans, fontSize: 10, color: "#8C897F", textTransform: "uppercase", letterSpacing: "0.08em" }}>{d.label}</span>
-              <span style={{ fontFamily: sans, fontSize: 11, color: "#2C2A24" }}>{d.value}</span>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   )
 }
@@ -300,52 +261,8 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
           ) : undefined}
         />
 
-        {/* Caries panel overview — 3 tiles spanning full width */}
-        {kit.ph_balance_api != null && (
-          <div className="caries-tile-grid" style={{ gridColumn: "1 / -1", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 2 }}>
-            <CariesTile
-              label="pH balance"
-              question="Is your mouth acidic or well-buffered?"
-              value={kit.ph_balance_api.toFixed(2)}
-              category={PH_LABELS[kit.ph_balance_category ?? ""] ?? kit.ph_balance_category ?? "—"}
-              status={kit.ph_balance_category === "well_buffered" ? "good" : kit.ph_balance_category === "mildly_acidogenic" ? "watch" : "concern"}
-              barPct={kit.ph_balance_api * 100}
-              confidence={kit.ph_balance_confidence}
-              details={[
-                { label: "Acid producers", value: `Lacto ${f(kit.lactobacillus_pct, 2)}% · Scardovia ${f(kit.scardovia_pct, 2)}% · S. mutans ${f(kit.s_mutans_pct, 2)}%` },
-                { label: "Buffers", value: `Veillonella ${f(kit.veillonella_pct, 2)}% · Neisseria ${f(kit.neisseria_pct, 2)}% · S. sanguinis ${f(kit.s_sanguinis_pct, 2)}%` },
-              ]}
-            />
-            <CariesTile
-              label="Cariogenic load"
-              question="How much cavity-causing bacteria do you carry?"
-              value={kit.cariogenic_load_pct != null ? kit.cariogenic_load_pct.toFixed(2) : "—"}
-              unit="%"
-              category={CLI_LABELS[kit.cariogenic_load_category ?? ""] ?? kit.cariogenic_load_category ?? "—"}
-              status={kit.cariogenic_load_category === "minimal" || kit.cariogenic_load_category === "low" ? "good" : kit.cariogenic_load_category === "elevated" ? "watch" : "concern"}
-              barPct={Math.min((kit.cariogenic_load_pct ?? 0) / 3 * 100, 100)}
-              details={[
-                { label: "S. mutans", value: `${f(kit.s_mutans_pct, 3)}%` },
-                { label: "S. sobrinus", value: `${f(kit.s_sobrinus_pct, 3)}%` },
-                { label: "Scardovia", value: `${f(kit.scardovia_pct, 3)}%` },
-                { label: "Lactobacillus", value: `${f(kit.lactobacillus_pct, 3)}%` },
-              ]}
-            />
-            <CariesTile
-              label="Protective ratio"
-              question="Can your good bacteria outcompete the bad?"
-              value={kit.protective_ratio != null ? kit.protective_ratio.toFixed(1) : "—"}
-              unit="×"
-              category={PR_LABELS[kit.protective_ratio_category ?? ""] ?? kit.protective_ratio_category ?? "—"}
-              status={kit.protective_ratio_category === "strong" || kit.protective_ratio_category === "very_strong" || kit.protective_ratio_category === "no_cavity_makers" ? "good" : kit.protective_ratio_category === "moderate" ? "watch" : "concern"}
-              barPct={kit.protective_ratio != null ? Math.min(kit.protective_ratio / 15 * 100, 100) : 0}
-              details={[
-                { label: "Protectors", value: `S. sanguinis ${f(kit.s_sanguinis_pct, 2)}% + S. gordonii ${f(kit.s_gordonii_pct, 2)}%` },
-                { label: "Cavity-makers", value: `S. mutans ${f(kit.s_mutans_pct, 2)}% + S. sobrinus ${f(kit.s_sobrinus_pct, 2)}%` },
-              ]}
-            />
-          </div>
-        )}
+        {/* Cavity environment section — 3 cappuccino cards + synthesis */}
+        <CavityEnvironmentSection kit={kit} />
 
         {/* Row 3: Cavity bacteria | Cavity protectors */}
         <CategoryCard
@@ -432,7 +349,6 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
       <style>{`
         @media (max-width: 768px) {
           .oral-category-grid { grid-template-columns: 1fr !important; }
-          .caries-tile-grid { grid-template-columns: 1fr !important; }
           .species-grid { grid-template-columns: 1fr 1fr !important; }
         }
       `}</style>

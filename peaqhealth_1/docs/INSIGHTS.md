@@ -11,6 +11,46 @@
 
 ---
 
+## Bacterial Context Framing Rule
+
+**Added:** April 2026 (v1.3.1)
+
+A bacterial species count in isolation is a data point, not a finding.
+The finding requires context from the ENVIRONMENT:
+
+1. Is the mouth well-buffered or acidic? (pH balance API)
+2. Are protective species outcompeting the harmful ones? (Protective ratio)
+3. Does the aggregate pattern match risk or match balance? (Cariogenic load)
+
+**Rules for generating cavity/bacteria narratives:**
+
+- ALWAYS reference the environment (pH, protective ratio) when
+  discussing cavity-causing species
+- NEVER flag a bacterial count without context from at least one
+  environmental metric
+- When the environment is strong and the count is slightly elevated,
+  lead with the environment reassurance
+- When the environment AND the count are both concerning, that's
+  when alarm is warranted
+
+**Rules for gum bacteria narratives:**
+
+- ALWAYS distinguish orange-complex (early-stage: Fusobacterium,
+  Aggregatibacter, Campylobacter) from red-complex (active:
+  Porphyromonas, Tannerella, Treponema)
+- If orange-complex is elevated but red-complex is low, frame as
+  "early-stage, manageable with hygiene"
+- If both complexes are elevated, frame as convergent concern
+
+**Example — well-buffered mouth with slightly elevated cavity count:**
+
+WRONG: "Your cavity bacteria are elevated"
+RIGHT: "Your cavity bacteria are slightly elevated, but your mouth's
+buffering and protective bacteria are keeping them in check — the
+environment they live in matters more than their count alone."
+
+---
+
 ## Borderline Value Framing Rule
 
 When a user's value sits within 5% of the cutoff between two ranges,
