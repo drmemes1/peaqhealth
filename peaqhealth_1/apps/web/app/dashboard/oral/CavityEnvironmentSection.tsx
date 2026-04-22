@@ -161,7 +161,8 @@ export function CavityEnvironmentSection({ kit }: {
       </div>
 
       <style>{`
-        @media (max-width: 960px) { .env-cards-row { grid-template-columns: 1fr !important; } }
+        @media (max-width: 960px) { .env-cards-row { grid-template-columns: 1fr 1fr !important; } }
+        @media (max-width: 640px) { .env-cards-row { grid-template-columns: 1fr !important; } }
       `}</style>
     </div>
   )

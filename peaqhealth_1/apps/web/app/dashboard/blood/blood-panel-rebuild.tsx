@@ -417,9 +417,9 @@ export default function BloodPanelClient({ lab }: {
           .blood-empty-grid { grid-template-columns: repeat(3, 1fr) !important; }
         }
         @media (max-width: 640px) {
-          .blood-tile-grid { grid-template-columns: 1fr !important; }
-          .blood-empty-grid { grid-template-columns: repeat(2, 1fr) !important; }
-          .blood-filter-bar { flex-direction: column; align-items: flex-start !important; }
+          .blood-tile-grid { grid-template-columns: 1fr !important; gap: 10px !important; }
+          .blood-empty-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 6px !important; }
+          .blood-filter-bar { flex-direction: column; align-items: flex-start !important; gap: 6px !important; }
         }
       `}</style>
     </div>

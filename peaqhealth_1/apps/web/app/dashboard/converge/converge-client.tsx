@@ -214,7 +214,7 @@ export function ConvergeClient({ observations, availablePanels, panelCount, firs
   }, [panelCount])
 
   return (
-    <main style={{ maxWidth: 760, margin: "0 auto", padding: "32px 24px 80px" }}>
+    <main className="converge-main" style={{ maxWidth: 760, margin: "0 auto", padding: "32px 24px 80px" }}>
       {/* Header */}
       <Link href="/dashboard" style={{
         fontFamily: sans, fontSize: 12, color: "#B8860B",
@@ -337,6 +337,12 @@ export function ConvergeClient({ observations, availablePanels, panelCount, firs
           {otherObs.map(obs => <ObservationCard key={obs.id} obs={obs} />)}
         </>
       )}
+      <style>{`
+        @media (max-width: 640px) {
+          .converge-main { padding: 20px 16px 60px !important; }
+          .converge-datapoints { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+      `}</style>
     </main>
   )
 }

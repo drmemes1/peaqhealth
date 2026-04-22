@@ -136,6 +136,14 @@ export function CappuccinoCard({ status, icon, title, question, value, valueIsTe
       </div>
 
       {/* TIER 4 — Pullquote (optional) */}
+      <style>{`
+        @media (max-width: 640px) {
+          .cappuccino-header { grid-template-columns: 1fr !important; gap: 10px !important; padding: 16px 16px 14px !important; }
+          .cappuccino-value { text-align: left !important; min-width: 0 !important; }
+          .cappuccino-measure { flex-direction: column !important; align-items: flex-start !important; padding: 12px 16px !important; }
+        }
+      `}</style>
+
       {pullquote && (
         <div style={{
           background: "#2C2A24", padding: "18px 28px",
