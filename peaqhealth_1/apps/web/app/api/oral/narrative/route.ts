@@ -6,7 +6,7 @@ import { ageRangeToMidpoint } from "../../../../lib/score/recalculate"
 
 export const dynamic = "force-dynamic"
 
-const PROMPT_VERSION = "v6"
+const PROMPT_VERSION = "v7"
 
 function svc() {
   return createServiceClient(
@@ -134,6 +134,15 @@ You receive a JSON object. Fields marked optional may be null or absent — hand
       "score_periodontal_activity": 71, "score_bruxism": 30, "score_caries_risk": 22,
       "primary_pattern": "periodontal_activity",
       "secondary_pattern": "mouth_breathing"
+    },
+    "caries_panel": {
+      "ph_balance_api": 0.115,
+      "ph_balance_category": "well_buffered",
+      "ph_balance_confidence": "moderate",
+      "cariogenic_load_pct": 0.690,
+      "cariogenic_load_category": "elevated",
+      "protective_ratio": 5.21,
+      "protective_ratio_category": "strong"
     }
   },
   "blood": {
@@ -203,7 +212,11 @@ You receive a JSON object. Fields marked optional may be null or absent — hand
     "gerd": "no",
     "gerd_nocturnal": false,
     "bmi_calculated": 24.2,
-    "known_hypertension": false
+    "known_hypertension": false,
+    "smoking_status": "never",
+    "sugar_intake": "occasional",
+    "antibiotics_window": "none",
+    "medication_ppi_detail": null
   }
 }
 
@@ -448,6 +461,19 @@ Connect oral NO pathway to blood lipids, glucose, and HbA1c. Apply social jet la
 Section 3 — Gum and caries context (2–4 sentences)
 Describe gum picture across both complexes without naming diseases. Name genera by name if elevated. Note Lactobacillus absence as positive. Mention protective caries bacteria if present.
 
+If caries_panel data is present, weave in the three-metric caries picture:
+- pH Balance API: describes the acid-base balance of the oral environment. ≤0.25 is well-buffered (positive), 0.25–0.45 mildly acidogenic (note), 0.45–0.65 moderately acidogenic (watch), >0.65 strongly acidogenic (attention). Name the specific acid producers and buffers contributing.
+- Cariogenic Load Index: total cavity-causing bacteria (S. mutans + S. sobrinus + Scardovia + Lactobacillus). <0.2% minimal, 0.2–0.5% low, 0.5–1.5% elevated (watch), >1.5% high (attention).
+- Protective Ratio: protectors (S. sanguinis + S. gordonii) divided by cavity-makers (S. mutans + S. sobrinus). >5× strong defense (positive), 2–5× moderate, <2× weak defense (watch). If no cavity-makers detected, note as "no cavity-makers" (positive).
+
+When caries_panel is present, use actual computed values. When absent, fall back to raw species percentages.
+
+CONFOUNDER RULES — apply when lifestyle data includes these fields:
+- smoking_status: If "current" or "former_recent", note that smoking shifts the oral microbiome toward anaerobic and inflammatory species. Smoking is the #1 confounder for gum-linked bacteria — if gum bacteria are elevated AND user smokes, attribute to smoking first before other mechanisms.
+- sugar_intake: If "multiple_daily" or "frequent_snacking", note the connection to cariogenic load. Frequency of sugar exposure (not total amount) drives cavity-bacteria growth. If cariogenic load is elevated AND sugar intake is frequent, name the sugar-cavity connection explicitly.
+- antibiotics_window: If "within_3_months" or "within_6_months", note that recent antibiotics disrupt the oral microbiome for weeks to months. Diversity may be temporarily suppressed, and species ratios may not reflect the user's baseline. Frame any unusual findings as "possibly influenced by recent antibiotic use."
+- medication_ppi_detail: If populated (user takes a PPI), note that proton pump inhibitors alter oral pH and can shift the acid-base balance toward more alkaline conditions. If ph_balance_api is unusually low (well-buffered), PPI use may be a contributing factor.
+
 Section 4 — Nighttime breathing context (2–4 sentences + tier 2 upsell if applicable)
 Apply sleep data tier copy rules exactly. Lead with most objective signal. Connect to oral environment index using interaction table. Apply peroxide flag logic if set. Apply existing diagnosis framing if relevant. Apply tier 2 upsell sentence if applicable.
 
@@ -532,7 +558,10 @@ export async function GET(request: Request) {
       env_pattern, env_pattern_confidence,
       score_osa, score_uars, score_mouth_breathing, score_periodontal_activity,
       score_bruxism, score_caries_risk, primary_pattern, secondary_pattern,
-      raw_otu_table, oral_score_snapshot
+      raw_otu_table, oral_score_snapshot,
+      ph_balance_api, ph_balance_category, ph_balance_confidence,
+      cariogenic_load_pct, cariogenic_load_category,
+      protective_ratio, protective_ratio_category
     `)
     .eq("user_id", userId)
     .not("shannon_diversity", "is", null)
@@ -586,7 +615,7 @@ export async function GET(request: Request) {
 
     supabase
       .from("lifestyle_records")
-      .select("age_range, biological_sex, smoking_status, nasal_obstruction, nasal_obstruction_severity, sinus_history, snoring_reported, osa_witnessed, mouth_breathing, mouth_breathing_when, non_restorative_sleep, daytime_fatigue, daytime_cognitive_fog, morning_headaches, jaw_fatigue_morning, night_guard_worn, bruxism_night, gerd, gerd_nocturnal, bmi_calculated, tongue_position_awareness, whitening_frequency, dietary_nitrate_frequency, mouthwash_type, known_hypertension")
+      .select("age_range, biological_sex, smoking_status, nasal_obstruction, nasal_obstruction_severity, sinus_history, snoring_reported, osa_witnessed, mouth_breathing, mouth_breathing_when, non_restorative_sleep, daytime_fatigue, daytime_cognitive_fog, morning_headaches, jaw_fatigue_morning, night_guard_worn, bruxism_night, gerd, gerd_nocturnal, bmi_calculated, tongue_position_awareness, whitening_frequency, dietary_nitrate_frequency, mouthwash_type, known_hypertension, sugar_intake, antibiotics_window, medication_ppi_detail")
       .eq("user_id", userId)
       .order("updated_at", { ascending: false })
       .limit(1)
@@ -781,6 +810,15 @@ export async function GET(request: Request) {
         primary_pattern: kit.primary_pattern ?? "none",
         secondary_pattern: kit.secondary_pattern ?? "none",
       },
+      caries_panel: {
+        ph_balance_api: n(kit.ph_balance_api),
+        ph_balance_category: kit.ph_balance_category ?? null,
+        ph_balance_confidence: kit.ph_balance_confidence ?? null,
+        cariogenic_load_pct: n(kit.cariogenic_load_pct),
+        cariogenic_load_category: kit.cariogenic_load_category ?? null,
+        protective_ratio: n(kit.protective_ratio),
+        protective_ratio_category: kit.protective_ratio_category ?? null,
+      },
     },
     blood: labRes.data ? {
       collection_date: labRes.data.collection_date,
@@ -825,6 +863,10 @@ export async function GET(request: Request) {
       gerd_nocturnal: Boolean(ls.gerd_nocturnal),
       bmi_calculated: n(ls.bmi_calculated),
       known_hypertension: Boolean(ls.known_hypertension),
+      smoking_status: ls.smoking_status ?? null,
+      sugar_intake: ls.sugar_intake ?? null,
+      antibiotics_window: ls.antibiotics_window ?? null,
+      medication_ppi_detail: ls.medication_ppi_detail ?? null,
     } : null,
   }
 
