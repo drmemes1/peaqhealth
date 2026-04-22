@@ -118,8 +118,8 @@ export function TileGrid({ panel, ctx, title, subtitle: subtitleOverride, getSub
       <style>{`
         @media (max-width: 960px) { .panel-tile-grid { grid-template-columns: repeat(2, 1fr) !important; } }
         @media (max-width: 640px) {
-          .panel-tile-grid { grid-template-columns: 1fr !important; }
-          .panel-filter-bar { flex-direction: column; align-items: flex-start !important; }
+          .panel-tile-grid { grid-template-columns: 1fr !important; gap: 8px !important; }
+          .panel-filter-bar { flex-direction: column; align-items: flex-start !important; gap: 6px !important; }
         }
       `}</style>
     </div>

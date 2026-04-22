@@ -46,8 +46,8 @@ export function HealthPictureBlock({ observations, panelsActive, updatedAt, spec
   return (
     <div className="health-picture-block" style={{ display: "flex", gap: 16, marginBottom: 36 }}>
 
-      {/* LEFT — Species Found dark card (preserved) */}
-      <Link href="/dashboard/oral" style={{
+      {/* LEFT — Species Found dark card */}
+      <Link href="/dashboard/oral" className="species-card" style={{
         flex: "0 0 200px", borderRadius: 16, overflow: "hidden",
         position: "relative", textDecoration: "none", display: "flex",
         flexDirection: "column", alignItems: "center", justifyContent: "center",
@@ -213,6 +213,30 @@ export function HealthPictureBlock({ observations, panelsActive, updatedAt, spec
           </Link>
         </div>
       </div>
+      <style>{`
+        @media (max-width: 768px) {
+          .health-picture-block {
+            flex-direction: column !important;
+            gap: 12px !important;
+          }
+          .species-card {
+            flex: 0 0 auto !important;
+            min-height: 100px !important;
+            max-height: 120px !important;
+            flex-direction: row !important;
+            padding: 16px 20px !important;
+          }
+          .species-card > video {
+            border-radius: 16px;
+          }
+          .species-card > div {
+            flex-direction: row !important;
+            align-items: center !important;
+            gap: 16px !important;
+            padding: 12px 16px !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

@@ -351,6 +351,9 @@ export default function OralPanelClient({ kit, narrative, questionnaire, wearabl
           .oral-category-grid { grid-template-columns: 1fr !important; }
           .species-grid { grid-template-columns: 1fr 1fr !important; }
         }
+        @media (max-width: 640px) {
+          .oral-category-grid { gap: 8px !important; }
+        }
       `}</style>
     </div>
   )
