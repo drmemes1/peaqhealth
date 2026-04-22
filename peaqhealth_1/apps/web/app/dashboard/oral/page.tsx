@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import { createClient } from "../../../lib/supabase/server"
 import OralPanelClient from "./oral-panel-client"
+import { OralTileSection } from "./OralTileSection"
 import { Nav } from "../../components/nav"
 import { getUserPanelContext } from "../../../lib/user-context"
 import Link from "next/link"
@@ -56,6 +57,7 @@ export default async function OralPage() {
         } : null}
         wearable={wearable}
       />
+      <OralTileSection ctx={ctx} />
     </div>
   )
 }
