@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { redirect } from "next/navigation"
 import { createClient } from "../../../lib/supabase/server"
 import BloodPanelClient from "./blood-panel-rebuild"
@@ -34,11 +35,13 @@ export default async function BloodPage() {
   return (
     <div className="min-h-svh" style={{ background: "#F5F3EE" }}>
       <Nav />
-      <BloodPanelClient
-        lab={(labRaw ?? ctx.bloodPanel) as Record<string, unknown>}
-        hasOral={ctx.hasOralKit}
-        hasSleep={ctx.hasWearable}
-      />
+      <Suspense>
+        <BloodPanelClient
+          lab={(labRaw ?? ctx.bloodPanel) as Record<string, unknown>}
+          hasOral={ctx.hasOralKit}
+          hasSleep={ctx.hasWearable}
+        />
+      </Suspense>
     </div>
   )
 }
