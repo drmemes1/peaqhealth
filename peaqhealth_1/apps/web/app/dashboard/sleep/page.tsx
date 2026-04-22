@@ -4,6 +4,7 @@ import { getUserPanelContext } from "../../../lib/user-context"
 import { Nav } from "../../components/nav"
 import SleepQuestionnaireView from "./sleep-questionnaire-view"
 import { SleepPanelClient } from "./sleep-panel-client"
+import { SleepTileSection } from "./SleepTileSection"
 import Link from "next/link"
 
 export default async function SleepPage() {
@@ -19,6 +20,7 @@ export default async function SleepPage() {
       <div className="min-h-svh" style={{ background: "#F5F3EE" }}>
         <Nav />
         <SleepQuestionnaireView ctx={ctx} />
+        <SleepTileSection ctx={ctx} />
       </div>
     )
   }
@@ -57,6 +59,7 @@ export default async function SleepPage() {
         snapshot={snapshot as Record<string, unknown> | null}
         wearable={wearableConn as Record<string, unknown> | null}
       />
+      <SleepTileSection ctx={ctx} />
     </div>
   )
 }
