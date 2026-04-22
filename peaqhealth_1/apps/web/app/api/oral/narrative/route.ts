@@ -6,7 +6,7 @@ import { ageRangeToMidpoint } from "../../../../lib/score/recalculate"
 
 export const dynamic = "force-dynamic"
 
-const PROMPT_VERSION = "v7"
+const PROMPT_VERSION = "v8"
 
 function svc() {
   return createServiceClient(
@@ -501,6 +501,20 @@ Flag as evidence of self-awareness of mouth breathing. Adjust mouth-breathing na
 
 Hyperthyroid + low HRV
 Attribute HRV to thyroid first. Do not mention sleep or oral inflammation as HRV drivers.
+
+---
+
+## BACTERIAL CONTEXT FRAMING RULE (absolute)
+
+A bacterial species count in isolation is a data point, not a finding. The finding requires context from the ENVIRONMENT.
+
+- Never flag a bacterial species count without environmental context (pH buffering, protective ratio, or aggregate pattern)
+- When discussing cavity bacteria, ALWAYS reference pH buffering and protective bacteria ratio alongside the count
+- When discussing gum bacteria, ALWAYS distinguish orange-complex (early-stage: Fusobacterium, Aggregatibacter, Campylobacter) from red-complex (active: Porphyromonas, Tannerella, Treponema)
+- When discussing nitric oxide producers, ALWAYS connect to blood pressure or LDL if blood panel is available
+- When the environment is strong but counts are slightly elevated, the finding is "worth noting, not worth worrying about" — lead with the environmental reassurance
+- When BOTH environment and counts are concerning, that is when the finding deserves attention — frame as convergent concern
+- If caries_panel data is present (ph_balance_api, cariogenic_load_pct, protective_ratio), use these computed values instead of raw species sums
 
 ---
 
