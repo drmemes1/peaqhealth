@@ -1,17 +1,22 @@
 import { notFound, redirect } from "next/navigation"
 import { createClient } from "../../../../lib/supabase/server"
 import { MARKER_DEFINITIONS } from "../../../../lib/markers/definitions"
+import { MARKERS } from "../../../../lib/blood/marker-content"
 import { buildConnectionInput } from "../../../../lib/score/buildConnectionInput"
 import { MarkerDetailClient } from "./marker-client"
 
 export default async function MarkerPage({ params }: { params: Promise<{ marker: string }> }) {
   const { marker } = await params
-  const def = MARKER_DEFINITIONS[marker]
-  if (!def) notFound()
+
+  const richDef = MARKER_DEFINITIONS[marker]
+  const basicDef = MARKERS[marker]
+  if (!richDef && !basicDef) notFound()
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/login")
+
+  const dbColumn = richDef?.db_column ?? marker
 
   const [
     { data: lab },
@@ -39,7 +44,7 @@ export default async function MarkerPage({ params }: { params: Promise<{ marker:
       .eq("user_id", user.id).order("date", { ascending: false }).limit(30),
     supabase.from("articles").select("slug, title, summary, read_time_min")
       .eq("published", true)
-      .in("slug", def.related_articles.length > 0 ? def.related_articles : ["__none__"]),
+      .in("slug", richDef?.related_articles?.length ? richDef.related_articles : ["__none__"]),
     supabase.from("lab_results").select("*")
       .eq("user_id", user.id).eq("parser_status", "complete")
       .order("collection_date", { ascending: true }).limit(5),
@@ -58,15 +63,36 @@ export default async function MarkerPage({ params }: { params: Promise<{ marker:
     snapshot: snapshot as Record<string, unknown> | null,
   })
 
-  const value = lab ? (lab[def.db_column] as number | null) ?? null : null
+  const value = lab ? (lab[dbColumn] as number | null) ?? null : null
 
   const history = (labHistory ?? [])
     .map(row => {
       const r = row as Record<string, unknown>
-      const v = r[def.db_column] as number | null
+      const v = r[dbColumn] as number | null
       return v !== null ? { date: r.collection_date as string, value: v } : null
     })
     .filter((h): h is { date: string; value: number } => h !== null)
+
+  // Build a unified def for the client — rich def if available, else synthesize from basic
+  const def = richDef ?? {
+    id: marker,
+    label: basicDef!.displayName,
+    fullName: basicDef!.displayName,
+    unit: basicDef!.unit,
+    panel: "blood" as const,
+    dot_id: basicDef!.category,
+    thresholds: basicDef!.optimal ? [
+      ...(basicDef!.optimal.max != null ? [{ max: basicDef!.optimal.max, label: "Optimal", color: "green" as const }] : []),
+      ...(basicDef!.optimal.min != null && basicDef!.optimal.max != null ? [{ min: basicDef!.optimal.max, label: "Watch", color: "amber" as const }] : []),
+      ...(basicDef!.optimal.min != null && !basicDef!.optimal.max ? [{ min: basicDef!.optimal.min, label: "Optimal", color: "green" as const }] : []),
+    ] : [],
+    db_column: marker,
+    related_articles: [] as string[],
+    foods: [],
+    supplements: [],
+    why_it_matters: basicDef!.role,
+    missing_state: { headline: `${basicDef!.displayName} not on your panel`, body: "This marker wasn't included in your most recent blood draw.", cta: "Add to next draw", urgency: "medium" as const },
+  }
 
   return (
     <MarkerDetailClient
@@ -80,6 +106,10 @@ export default async function MarkerPage({ params }: { params: Promise<{ marker:
         summary: (a.summary as string | null) ?? "",
         readTime: (a.read_time_min as number | null) ?? 5,
       }))}
+      backHref="/dashboard/blood"
+      backLabel="Back to Blood Panel"
+      panelColor="#C0392B"
+      panelLabel="Blood"
     />
   )
 }
