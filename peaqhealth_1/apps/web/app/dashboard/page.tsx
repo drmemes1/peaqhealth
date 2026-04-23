@@ -226,7 +226,11 @@ export default async function DashboardPage() {
           "Prevotella spp.":             genus("Prevotella"),
           "Fusobacterium spp.":          genus("Fusobacterium"),
           // Diversity
-          "Species richness":            Object.values(rawOtu).filter(v => v > 0).length,
+          "Species richness":            (() => {
+            const meta = (rawOtu as Record<string, unknown>).__meta as Record<string, unknown> | undefined
+            const cs = meta?.community_summary as Record<string, number> | undefined
+            return cs?.named_species_count ?? Object.keys(rawOtu).filter(k => k !== "__meta" && (rawOtu[k] as number) > 0).length
+          })(),
         }
       })() : undefined
       return {
