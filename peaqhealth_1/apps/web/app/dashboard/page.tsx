@@ -103,11 +103,7 @@ export default async function DashboardPage() {
   const snapshotIsV1 = snapshot && !snapshot.base_score
   const snapshotIsOutdated = false
   const snapshotIsStaleZero = !snapshot || (Number(snapshot.score) === 0 && (!!lab || !!oral || !!lifestyle)) || snapshotIsV1 || snapshotIsOutdated
-  if (snapshotIsV1) console.log("[dashboard] v1 snapshot detected — forcing v2 recalculation for:", user.id)
-  if (snapshotIsOutdated) console.log("[dashboard] outdated engine version", snapshot?.engine_version, "— forcing recalculation for:", user.id)
-  console.log("[dashboard] snapshotIsStaleZero:", snapshotIsStaleZero, "score:", Number(snapshot?.score ?? 0), "isV1:", !!snapshotIsV1)
   if (snapshotIsStaleZero) {
-    console.log("[dashboard] stale/zero/v1 snapshot — auto-recalculating for:", user.id)
     try {
       const svc = createServiceClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,

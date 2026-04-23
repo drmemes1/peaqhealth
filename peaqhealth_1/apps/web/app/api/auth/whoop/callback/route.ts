@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     userId = state
   }
 
-  console.log("[whoop-callback] userId:", userId, "returnTo:", returnTo)
+  console.log("[whoop-callback] auth flow started")
 
   // 1. Exchange authorization code for tokens
   const tokenRes = await fetch("https://api.prod.whoop.com/oauth/oauth2/token", {
@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
   console.log("[whoop-callback] registering backfill via after()")
   const capturedUserId = userId
   after(async () => {
-    console.log("[whoop-callback] backfill starting for userId:", capturedUserId)
+    console.log("[whoop-callback] backfill starting")
     try {
       const count = await fetchAndStoreWhoopData(capturedUserId, 30)
       console.log("[whoop-callback] backfill complete, records:", count)

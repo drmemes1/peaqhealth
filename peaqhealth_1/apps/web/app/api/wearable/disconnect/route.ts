@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
   }
 
   const userId = user.id
-  console.log(`[wearable-disconnect] starting for provider=${provider} user=${userId}`)
+  console.log(`[wearable-disconnect] starting for provider=${provider}`)
 
   const svc = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

@@ -27,7 +27,7 @@ export async function POST() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  console.log("[link-token] request for user:", user.id, "env:", process.env.JUNCTION_ENV ?? "sandbox")
+  console.log("[link-token] request, env:", process.env.JUNCTION_ENV ?? "sandbox")
 
   // Check if this user already has a Junction user_id stored
   const { data: profile } = await supabase
@@ -45,7 +45,7 @@ export async function POST() {
         ...(user.email ? { email: user.email } : {}),
       })
       junctionUserId = newId
-      console.log("[link-token] created Junction user:", junctionUserId)
+      console.log("[link-token] created Junction user")
     } catch (err) {
       console.error("[link-token] createJunctionUser failed:", err)
       return NextResponse.json(
@@ -68,12 +68,12 @@ export async function POST() {
       )
     }
   } else {
-    console.log("[link-token] reusing existing Junction user:", junctionUserId)
+    console.log("[link-token] reusing existing Junction user")
   }
 
   try {
     const { linkToken } = await createLinkToken(junctionUserId)
-    console.log("[link-token] link token created successfully for user:", user.id)
+    console.log("[link-token] link token created")
     return NextResponse.json({ link_token: linkToken })
   } catch (err) {
     console.error("[link-token] createLinkToken failed:", err)

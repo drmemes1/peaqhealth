@@ -9,7 +9,7 @@ export async function POST() {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   const userId = user.id
-  console.log("[oura-disconnect] starting for:", userId)
+  console.log("[oura-disconnect] starting")
 
   const svc = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

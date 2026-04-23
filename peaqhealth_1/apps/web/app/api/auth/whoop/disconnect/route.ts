@@ -8,7 +8,7 @@ export async function POST() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  console.log("[whoop-disconnect] starting for user:", user.id)
+  console.log("[whoop-disconnect] starting")
 
   // Use service client for all operations to bypass RLS
   const svc = createServiceClient(

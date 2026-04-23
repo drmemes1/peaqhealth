@@ -184,7 +184,7 @@ export async function POST(req: Request) {
 
     const issues = validateConvergeContent(paragraphs.join(" "), ctx, observations)
     if (issues.length > 0) {
-      console.warn(`[converge/hero] validation issues for ${user.id}:`, issues)
+      console.warn(`[converge/hero] validation issues:`, issues.length)
     }
 
     const content = { headline, paragraphs }
