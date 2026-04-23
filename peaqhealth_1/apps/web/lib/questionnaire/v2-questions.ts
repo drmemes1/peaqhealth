@@ -62,7 +62,7 @@ export const V2_QUESTIONS: QuestionDef[] = [
     helper: "We use this with your weight to compute BMI — one of several airway-risk factors.",
     unitToggle: true,
     numberConfig: { min: 100, max: 250, unit: "cm", imperialUnit: "ft / in", metricUnit: "cm", pairFields: { field1: "height_ft", field2: "height_in", suffix1: "ft", suffix2: "in" } },
-    explanation: { label: "Coming back for more", body: "Height plus weight gives us your BMI. We'll use it alongside your neck circumference to flag airway risk — not a diagnosis, just a flag for screening." },
+    explanation: { label: "Coming back for more", body: "Height plus weight gives us your BMI. We'll use it alongside your neck and breathing answers to flag airway risk — not a diagnosis, just a flag for screening." },
   },
   {
     id: "q4", section: "§1 · Basics", sectionLabel: "Basics",
@@ -75,12 +75,16 @@ export const V2_QUESTIONS: QuestionDef[] = [
   },
   {
     id: "q5", section: "§1 · Basics", sectionLabel: "Basics",
-    type: "number", dbCol: "neck_circumference_inches", tag: "new",
-    question: "What's your neck circumference?",
-    helper: "Wrap a tape measure around the middle of your neck. No tape? Estimate with your shirt collar size. Neck size is an independent airway risk factor.",
-    unitToggle: true,
-    numberConfig: { min: 10, max: 25, step: 0.5, unit: "in", imperialUnit: "inches", metricUnit: "cm" },
-    explanation: { label: "Why we ask", body: "Neck circumference > 17\" in men or 16\" in women correlates with airway narrowing during sleep — independent of BMI." },
+    type: "choice", dbCol: "neck_circumference_self", tag: "new",
+    question: "How would you describe your neck?",
+    helper: "Neck size is an independent airway risk factor — a rough self-assessment is useful even without a tape measure.",
+    options: [
+      { value: "thin", label: "Thin / slender" },
+      { value: "normal", label: "Average" },
+      { value: "thicker", label: "Thicker / stocky" },
+      { value: "not_sure", label: "Not sure" },
+    ],
+    explanation: { label: "Why we ask", body: "Thicker necks correlate with airway narrowing during sleep — independent of BMI. We use this alongside your weight and breathing answers to build the airway picture." },
   },
 
   // ═══ §2 SLEEP (7) ═══
