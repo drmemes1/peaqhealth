@@ -324,12 +324,12 @@ export async function POST(request: NextRequest) {
         console.error("[webhook] provider.connection.created — fallback stamp failed:", stampErr.message)
       }
     }
-    console.error("[webhook] No profile found for junction_user_id:", junctionUserId, "— skipping event")
+    console.error("[webhook] No profile found for junction_user_id (lookup failed)", "— skipping event")
     return NextResponse.json({ received: true, skipped: true })
   }
 
   const userId = profileRow.id as string
-  console.log("[webhook] resolved Supabase userId:", userId, "for junction_user_id:", junctionUserId)
+  console.log("[webhook] resolved user:", userId?.slice(0, 8))
 
   // ── provider.connection.created: stamp junction_user_id + upsert connection ─
   if (event_type === "provider.connection.created") {
@@ -353,7 +353,7 @@ export async function POST(request: NextRequest) {
       }, { onConflict: "user_id,provider" })
 
     if (connErr) console.error("[webhook] provider.connection.created — wearable_connections upsert error:", connErr.message)
-    else console.log("[webhook] provider.connection.created — upserted wearable_connections for user:", userId, "provider:", provider)
+    else console.log("[webhook] provider.connection.created — upserted wearable_connections for user:", userId?.slice?.(0, 8) ?? "?", "provider:", provider)
 
     return NextResponse.json({ received: true })
   }
@@ -370,7 +370,7 @@ export async function POST(request: NextRequest) {
       disturbanceCount <= 3   ? 1 :
       disturbanceCount <= 10  ? 3 : 8
 
-    console.log("[webhook] sleep_breathing_disturbance — processed for user:", userId)
+    console.log("[webhook] sleep_breathing_disturbance — processed for user:", userId?.slice?.(0, 8) ?? "?")
 
     const { error: updateErr } = await supabase
       .from("wearable_connections")
@@ -388,7 +388,7 @@ export async function POST(request: NextRequest) {
 
   // ── sleep_apnea_alert: flag high_osa_risk ─────────────────────────────────
   if (event_type === "daily.data.sleep_apnea_alert.created") {
-    console.log("[webhook] sleep_apnea_alert — flagging high_osa_risk for user:", userId)
+    console.log("[webhook] sleep_apnea_alert — flagging high_osa_risk for user:", userId?.slice?.(0, 8) ?? "?")
 
     const { error: updateErr } = await supabase
       .from("wearable_connections")
@@ -402,7 +402,7 @@ export async function POST(request: NextRequest) {
     if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
 
     const newScore = await recalculateScore(userId, supabase)
-    console.log("[webhook] sleep_apnea_alert — recalculated score for user:", userId)
+    console.log("[webhook] sleep_apnea_alert — recalculated score for user:", userId?.slice?.(0, 8) ?? "?")
     return NextResponse.json({ status: "processed", event: "sleep_apnea_alert" })
   }
 
@@ -438,9 +438,9 @@ export async function POST(request: NextRequest) {
 
       console.log("[webhook]", event_type, "— deepPct:", deepPct.toFixed(1),
         "remPct:", remPct.toFixed(1), "efficiency:", efficiency, "hrv:", hrv,
-        "for user:", userId)
+        "for user:", userId?.slice?.(0, 8) ?? "?")
     } else {
-      console.log("[webhook]", event_type, "— no duration in payload, skipping percentages for user:", userId)
+      console.log("[webhook]", event_type, "— no duration in payload, skipping percentages for user:", userId?.slice?.(0, 8) ?? "?")
     }
 
     const { error: updateErr } = await supabase
@@ -451,7 +451,7 @@ export async function POST(request: NextRequest) {
     if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
 
     const newScore = await recalculateScore(userId, supabase)
-    console.log("[webhook]", event_type, "— recalculated score:", newScore, "for user:", userId)
+    console.log("[webhook]", event_type, "— recalculated score:", newScore, "for user:", userId?.slice?.(0, 8) ?? "?")
     return NextResponse.json({ status: "processed", event: event_type })
   }
 
@@ -476,7 +476,7 @@ export async function POST(request: NextRequest) {
     })
     const nightsAvailable = fullSessions.length
 
-    console.log("[sleep] full sessions:", nightsAvailable, "of", sessions.length, "for user:", userId)
+    console.log("[sleep] full sessions:", nightsAvailable, "of", sessions.length, "for user:", userId?.slice?.(0, 8) ?? "?")
 
     if (nightsAvailable < 7) {
       console.log("[sleep] insufficient full sessions (<7) — storing count only, skipping averages")
@@ -515,7 +515,7 @@ export async function POST(request: NextRequest) {
     }
 
     const newScore = await recalculateScore(userId, supabase)
-    console.log("[webhook] historical.data.sleep.created — recalculated score:", newScore, "for user:", userId)
+    console.log("[webhook] historical.data.sleep.created — recalculated score:", newScore, "for user:", userId?.slice?.(0, 8) ?? "?")
     return NextResponse.json({ status: "processed", event: event_type })
   }
 
@@ -530,7 +530,7 @@ export async function POST(request: NextRequest) {
 
     const today = new Date().toISOString().slice(0, 10)
     if (wConn?.last_sync_at && (wConn.last_sync_at as string).slice(0, 10) === today) {
-      console.log("[sleep-cycle] already synced today — skipping for user:", userId)
+      console.log("[sleep-cycle] already synced today — skipping for user:", userId?.slice?.(0, 8) ?? "?")
       return NextResponse.json({ status: "skipped", event: event_type })
     }
 
@@ -551,14 +551,14 @@ export async function POST(request: NextRequest) {
     })
     const session = fullSessions[0] ?? null
     if (!session) {
-      console.log("[sleep-cycle] no full sleep session returned from API for user:", userId)
+      console.log("[sleep-cycle] no full sleep session returned from API for user:", userId?.slice?.(0, 8) ?? "?")
       return NextResponse.json({ received: true })
     }
 
     const updatePayload = buildSleepUpdatePayload(session)
     console.log("[sleep-cycle] historical — saving —", Object.entries(updatePayload)
       .filter(([k]) => k !== "last_sync_at" && k !== "status")
-      .map(([k, v]) => `${k}: ${v}`).join(", "), "for user:", userId)
+      .map(([k, v]) => `${k}: ${v}`).join(", "), "for user:", userId?.slice?.(0, 8) ?? "?")
 
     // Write all full sessions to sleep_data
     const sleepRows = fullSessions
@@ -580,7 +580,7 @@ export async function POST(request: NextRequest) {
     if (updateErr) console.error("[webhook] wearable_connections update error:", updateErr.message)
 
     const newScore = await recalculateScore(userId, supabase)
-    console.log("[webhook]", event_type, "— recalculated score:", newScore, "for user:", userId)
+    console.log("[webhook]", event_type, "— recalculated score:", newScore, "for user:", userId?.slice?.(0, 8) ?? "?")
     return NextResponse.json({ status: "processed", event: event_type })
   }
 
@@ -605,7 +605,7 @@ export async function POST(request: NextRequest) {
     }
 
     const newScore = await recalculateScore(userId, supabase)
-    console.log("[webhook] historical.data — recalculated for user:", userId)
+    console.log("[webhook] historical.data — recalculated for user:", userId?.slice?.(0, 8) ?? "?")
     return NextResponse.json({ status: "processed", event: "historical.data" })
   }
 
@@ -679,11 +679,11 @@ export async function POST(request: NextRequest) {
             ferritin_ngml:           bloodInputs.ferritin_ngmL ?? null,
           })
 
-          console.log("[webhook] lab parser — inserted new lab_results row for user:", userId)
+          console.log("[webhook] lab parser — inserted new lab_results row for user:", userId?.slice?.(0, 8) ?? "?")
         }
 
         const newScore = await recalculateScore(userId, supabase)
-        console.log("[webhook] lab parser — recalculated for user:", userId)
+        console.log("[webhook] lab parser — recalculated for user:", userId?.slice?.(0, 8) ?? "?")
         return NextResponse.json({ status: "processed", event: "lab_report_completed" })
       }
     }
@@ -717,12 +717,12 @@ export async function POST(request: NextRequest) {
       .eq("junction_user_id", junctionUserId)
 
     const newScore = await recalculateScore(userId, supabase)
-    console.log("[webhook]", event_type, "— recalculated score:", newScore, "for user:", userId)
+    console.log("[webhook]", event_type, "— recalculated score:", newScore, "for user:", userId?.slice?.(0, 8) ?? "?")
     return NextResponse.json({ status: "processed", event: event_type })
   }
 
   // ── All other sleep events: update last_sync_at + biometrics + recalculate ─
-  console.log("[webhook] sleep event:", event_type, "— updating last_sync_at and recalculating for user:", userId)
+  console.log("[webhook] sleep event:", event_type, "— updating last_sync_at and recalculating for user:", userId?.slice?.(0, 8) ?? "?")
 
   // Extract resting HR and VO2 max from sleep data when available
   const sleepData = body.data as Record<string, unknown> | undefined
@@ -747,6 +747,6 @@ export async function POST(request: NextRequest) {
   if (updateErr) console.error("[webhook] wearable_connections upsert error:", updateErr.message)
 
   const newScore = await recalculateScore(userId, supabase)
-  console.log("[webhook] recalculated for user:", userId)
+  console.log("[webhook] recalculated for user:", userId?.slice?.(0, 8) ?? "?")
   return NextResponse.json({ status: "processed" })
 }

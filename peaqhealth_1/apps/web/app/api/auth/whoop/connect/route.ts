@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     state,
   })
 
-  console.log("[whoop-connect] userId:", user.id, "returnTo:", returnTo)
+  console.log("[whoop-connect] auth flow started")
   console.log("[whoop-connect] redirect_uri:", process.env.WHOOP_REDIRECT_URI)
 
   return NextResponse.redirect(

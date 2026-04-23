@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     console.error("[wearable] auth failed — no user session")
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
-  console.log("[wearable] auth userId:", user.id)
+  console.log("[wearable] auth OK")
 
   let provider: string
   let junctionUserId: string
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
   }
 
-  console.log("[wearable] step 1 — auth OK, userId:", user.id)
+  console.log("[wearable] step 1 — auth OK")
 
   // Hard guard: WHOOP has its own OAuth callback and must never reach this handler.
   // If it does, something in the frontend routing is broken.
@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
   const capturedUserId = user.id
   const capturedProvider = provider
   after(async () => {
-    console.log("[wearable] backfill starting for userId:", capturedUserId, "provider:", capturedProvider)
+    console.log("[wearable] backfill starting for provider:", capturedProvider)
     try {
       const svc = createServiceClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,

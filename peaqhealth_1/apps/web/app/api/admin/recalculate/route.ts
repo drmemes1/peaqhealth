@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  console.log(`[admin-recalculate] userId=${body.userId}`)
+  console.log('[admin-recalculate] triggered')
 
   const newScore = await recalculateScore(body.userId, serviceClient)
 

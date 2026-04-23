@@ -65,7 +65,7 @@ export function ConnectWearable({ onSuccess, onSkip, mode }: ConnectWearableProp
   const { open: openWidget, ready } = useVitalLink({
     onSuccess: async (metadata: Record<string, unknown>) => {
       setError(null)
-      console.log("[junction] onSuccess raw metadata:", JSON.stringify(metadata))
+      console.log("[junction] onSuccess received")
       const connectedArr = (metadata.connected as Array<Record<string, unknown>> | undefined)
       const providerSlug: string =
         (connectedArr?.[0]?.providerSlug as string | undefined) ??
@@ -77,7 +77,7 @@ export function ConnectWearable({ onSuccess, onSkip, mode }: ConnectWearableProp
         (metadata.userId as string | undefined) ??
         (metadata.user_id as string | undefined) ??
         ""
-      console.log("[junction] extracted provider:", providerSlug, "junctionUserId:", junctionUserId)
+      console.log("[junction] extracted provider:", providerSlug)
       try {
         const res = await fetch("/api/junction/wearable-connected", {
           method: "POST",

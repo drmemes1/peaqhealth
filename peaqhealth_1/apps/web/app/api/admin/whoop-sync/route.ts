@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
 
   const startIso = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
   const endIso   = new Date().toISOString()
-  console.log(`[admin-whoop-sync] userId=${body.userId} start=${startIso} end=${endIso}`)
+  console.log(`[admin-whoop-sync] start=${startIso} end=${endIso}`)
 
   let records
   try {

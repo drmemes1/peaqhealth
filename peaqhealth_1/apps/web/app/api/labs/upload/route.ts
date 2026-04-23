@@ -308,7 +308,7 @@ async function parseWithAzureOpenAI(fullText: string): Promise<Record<string, un
     const originalLength = fullText.length
     const scrubbedText = stripPII(fullText)
     const normalizedText = normalizeLabText(scrubbedText)
-    console.log("[labs-upload] text pipeline: raw=%d scrubbed=%d normalized=%d (first 200: %s)", originalLength, scrubbedText.length, normalizedText.length, normalizedText.slice(0, 200).replace(/\n/g, " | "))
+    console.log("[labs-upload] text pipeline: raw=%d scrubbed=%d normalized=%d", originalLength, scrubbedText.length, normalizedText.length)
 
     const messages = [
         {
@@ -447,7 +447,7 @@ ${normalizedText}`,
 
     const parsed = JSON.parse(clean) as Record<string, unknown>
     const nonNull = Object.entries(parsed).filter(([, v]) => v !== null && v !== undefined && v !== "null")
-    console.log("[labs-upload] parsed %d fields, %d non-null: %s", Object.keys(parsed).length, nonNull.length, nonNull.slice(0, 5).map(([k, v]) => `${k}=${v}`).join(", "))
+    console.log("[labs-upload] parsed %d fields, %d non-null", Object.keys(parsed).length, nonNull.length)
     return parsed
   } catch (err) {
     const e = err as { message?: string; status?: number; code?: string }

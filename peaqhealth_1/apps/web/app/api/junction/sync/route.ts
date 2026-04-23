@@ -115,7 +115,7 @@ export async function POST() {
   }
 
   await recalculateScore(user.id, supabase)
-  console.log("[junction/sync] synced", fullSessions.length, "nights for user:", user.id)
+  console.log("[junction/sync] synced", fullSessions.length, "nights")
 
   return NextResponse.json({ status: "synced", nightsAvailable: fullSessions.length })
 }

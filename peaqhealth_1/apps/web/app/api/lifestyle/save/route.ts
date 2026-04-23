@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
   )
 
   const newScore = await recalculateScore(user.id, serviceClient)
-  console.log("[lifestyle/save] recalculated score:", newScore, "for user:", user.id)
+  console.log("[lifestyle/save] recalculated")
 
   const { data: snap } = await serviceClient
     .from("score_snapshots")

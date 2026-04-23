@@ -63,9 +63,9 @@ export async function POST(_request: NextRequest) {
     whoopUserIds.map(async (userId) => {
       const count = await fetchAndStoreWhoopData(userId, 7) // nightly cron: 7 days
       await recalculateScore(userId, supabase)
-      console.log(`[sync-all] whoop user=${userId} records=${count}`)
+      console.log(`[sync-all] whoop user=${userId.slice(0, 8)} records=${count}`)
       // Send push notification with latest sleep data
-      try { await sendSleepPush(userId, supabase) } catch (e) { console.error(`[sync-all] push failed user=${userId}`, e) }
+      try { await sendSleepPush(userId, supabase) } catch (e) { console.error(`[sync-all] push failed user=${userId.slice(0, 8)}`, e) }
       return { userId, records: count }
     })
   )
@@ -77,7 +77,7 @@ export async function POST(_request: NextRequest) {
     whoopResults.map(async (r, i) => {
       if (r.status === "rejected") {
         const userId = whoopUserIds[i]
-        console.error(`[sync-all] WHOOP failed for user ${userId}:`, r.reason)
+        console.error(`[sync-all] WHOOP failed for user ${userId.slice(0, 8)}:`, r.reason)
         if (r.reason instanceof WhoopReconnectError) {
           await supabase.from("wearable_connections_v2")
             .update({ needs_reconnect: true, last_sync_error: "Reconnect required — token refresh failed" })
@@ -104,8 +104,8 @@ export async function POST(_request: NextRequest) {
     ouraUserIds.map(async (userId) => {
       const count = await fetchAndStoreOuraData(userId, 1)
       await recalculateScore(userId, supabase)
-      console.log(`[sync-all] oura user=${userId} records=${count}`)
-      try { await sendSleepPush(userId, supabase) } catch (e) { console.error(`[sync-all] push failed user=${userId}`, e) }
+      console.log(`[sync-all] oura user=${userId.slice(0, 8)} records=${count}`)
+      try { await sendSleepPush(userId, supabase) } catch (e) { console.error(`[sync-all] push failed user=${userId.slice(0, 8)}`, e) }
       return { userId, records: count }
     })
   )
