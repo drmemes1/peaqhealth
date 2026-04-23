@@ -416,6 +416,9 @@ export default async function DashboardPage() {
   const panelCtx = await getUserPanelContext(user.id)
   const convergeObservations = computeConvergeObservations(panelCtx)
 
+  const questionnaireVersion = (lifestyle as Record<string, unknown> | null)?.questionnaire_version as string | null
+  const showV2CatchUp = !!lifestyle && questionnaireVersion !== "v2"
+
   return <DashboardClient
     {...props}
     labHistory={labHistoryRows ?? []}
@@ -436,5 +439,6 @@ export default async function DashboardPage() {
     snapshotUpdatedAt={(snapshot?.calculated_at as string | null) ?? null}
     panelsActive={panelsActive}
     convergeObservations={convergeObservations}
+    showV2CatchUp={showV2CatchUp}
   />
 }

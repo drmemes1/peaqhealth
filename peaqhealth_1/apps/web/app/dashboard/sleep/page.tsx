@@ -36,7 +36,7 @@ export default async function SleepPage() {
             Complete your sleep questionnaire or connect a wearable to see your sleep data here.
           </p>
           <div style={{ display: "flex", gap: 12 }}>
-            <Link href="/settings/lifestyle" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--gold)" }}>Complete questionnaire →</Link>
+            <Link href="/questionnaire/v2" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--gold)" }}>Complete questionnaire →</Link>
             <Link href="/settings" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink-30)" }}>Connect wearable →</Link>
           </div>
         </main>

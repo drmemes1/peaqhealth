@@ -530,6 +530,7 @@ export function DashboardClient(props: ScoreWheelProps & {
   snapshotUpdatedAt?: string | null;
   panelsActive?: { oral: boolean; blood: boolean; sleep: boolean };
   convergeObservations?: ConvergeObservation[];
+  showV2CatchUp?: boolean;
 }) {
   const { wearableNeedsReconnect = false, firstName, peaqAgeBreakdown, cachedGuidance, convergeObservations = [] } = props
   // cachedInsight intentionally unused — Cnvrg Insight card has been removed from the dashboard surface.
@@ -714,6 +715,28 @@ export function DashboardClient(props: ScoreWheelProps & {
                 Reconnect →
               </Link>
             </div>
+          )}
+
+          {/* V2 questionnaire catch-up banner */}
+          {props.showV2CatchUp && (
+            <Link href="/questionnaire/v2" style={{ textDecoration: "none", display: "block", marginBottom: 20 }}>
+              <div style={{
+                background: "rgba(184,147,90,0.08)", border: "1px solid rgba(184,147,90,0.25)",
+                borderRadius: 8, padding: "14px 18px",
+                display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+              }}>
+                <p style={{ fontFamily: sans, fontSize: 13, color: DS.gold, margin: 0, lineHeight: 1.5 }}>
+                  We&rsquo;ve added new questions to make your insights more precise. <strong>5 minutes to catch up.</strong>
+                </p>
+                <span style={{
+                  fontFamily: sans, fontSize: 12, fontWeight: 500,
+                  letterSpacing: "0.06em", textTransform: "uppercase",
+                  color: DS.gold, whiteSpace: "nowrap",
+                }}>
+                  Update →
+                </span>
+              </div>
+            </Link>
           )}
 
           {/* ── TWO-COLUMN LAYOUT ─────────────────────────────────────────── */}
