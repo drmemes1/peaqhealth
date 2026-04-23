@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import type { ConvergeObservation } from "../../../lib/converge/observations"
+import type { InterventionWithState } from "../../../lib/interventions/engagements"
+import { ActionPlan } from "../../components/interventions/ActionPlan"
 
 const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 const serif = "'Cormorant Garamond', Georgia, serif"
@@ -190,11 +192,12 @@ function ObservationCard({ obs }: { obs: ConvergeObservation }) {
   )
 }
 
-export function ConvergeClient({ observations, availablePanels, panelCount, firstName }: {
+export function ConvergeClient({ observations, availablePanels, panelCount, firstName, interventions = [] }: {
   observations: ConvergeObservation[]
   availablePanels: string[]
   panelCount: number
   firstName: string | null
+  interventions?: InterventionWithState[]
 }) {
   const attentionObs = observations.filter(o => o.severity === "attention" || o.severity === "watch")
   const positiveObs = observations.filter(o => o.severity === "positive")
@@ -296,6 +299,28 @@ export function ConvergeClient({ observations, availablePanels, panelCount, firs
               }
             </p>
           )}
+        </div>
+      )}
+
+      {/* Action plan */}
+      {interventions.length > 0 && (
+        <div style={{ marginBottom: 32 }}>
+          <ActionPlan
+            density="full"
+            interventions={interventions}
+            onEngage={async (id, action, reason) => {
+              if (action === "committed") {
+                const existing = interventions.find(i => i.id === id)
+                if (existing?.state === "committed") {
+                  await fetch("/api/interventions/engagement", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ interventionId: id }) })
+                  window.location.reload()
+                  return
+                }
+              }
+              await fetch("/api/interventions/engagement", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ interventionId: id, action, reason }) })
+              window.location.reload()
+            }}
+          />
         </div>
       )}
 
