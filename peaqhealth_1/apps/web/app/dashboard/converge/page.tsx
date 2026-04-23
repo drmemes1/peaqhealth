@@ -4,6 +4,7 @@ import { getUserPanelContext } from "../../../lib/user-context"
 import { computeConvergeObservations } from "../../../lib/converge/observations"
 import { computeInterventions } from "../../../lib/interventions/registry"
 import { applyEngagements, type Engagement } from "../../../lib/interventions/engagements"
+import { getConvergeHero } from "../../../lib/converge/hero"
 import { Nav } from "../../components/nav"
 import { ConvergeClient } from "./converge-client"
 
@@ -16,10 +17,13 @@ export default async function ConvergePage() {
   const observations = computeConvergeObservations(ctx)
 
   const rawInterventions = computeInterventions(ctx)
-  const { data: engagementRows } = await supabase
-    .from("intervention_engagements")
-    .select("intervention_id, action, created_at, retracted_at")
-    .eq("user_id", user.id)
+  const [{ data: engagementRows }, hero] = await Promise.all([
+    supabase
+      .from("intervention_engagements")
+      .select("intervention_id, action, created_at, retracted_at")
+      .eq("user_id", user.id),
+    getConvergeHero(user.id, ctx, observations),
+  ])
   const interventions = applyEngagements(rawInterventions, (engagementRows ?? []) as Engagement[])
 
   return (
@@ -31,6 +35,7 @@ export default async function ConvergePage() {
         panelCount={ctx.panelCount}
         firstName={ctx.firstName}
         interventions={interventions}
+        heroNarrative={hero}
       />
     </div>
   )

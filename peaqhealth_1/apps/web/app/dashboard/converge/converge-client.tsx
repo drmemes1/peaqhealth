@@ -192,29 +192,27 @@ function ObservationCard({ obs }: { obs: ConvergeObservation }) {
   )
 }
 
-export function ConvergeClient({ observations, availablePanels, panelCount, firstName, interventions = [] }: {
+export function ConvergeClient({ observations, availablePanels, panelCount, firstName, interventions = [], heroNarrative }: {
   observations: ConvergeObservation[]
   availablePanels: string[]
   panelCount: number
   firstName: string | null
   interventions?: InterventionWithState[]
+  heroNarrative?: { headline: string; paragraphs: string[] } | null
 }) {
   const attentionObs = observations.filter(o => o.severity === "attention" || o.severity === "watch")
   const positiveObs = observations.filter(o => o.severity === "positive")
   const otherObs = observations.filter(o => o.severity !== "attention" && o.severity !== "watch" && o.severity !== "positive")
 
-  const [hero, setHero] = useState<{ headline: string; paragraphs: string[] } | null>(null)
-  const [heroLoading, setHeroLoading] = useState(false)
+  const [hero, setHero] = useState<{ headline: string; paragraphs: string[] } | null>(heroNarrative ?? null)
 
   useEffect(() => {
-    if (panelCount < 2) return
-    setHeroLoading(true)
+    if (hero || panelCount < 2) return
     fetch("/api/converge/hero", { method: "POST" })
       .then(r => r.json())
       .then(data => setHero({ headline: data.headline, paragraphs: data.paragraphs ?? [] }))
       .catch(() => {})
-      .finally(() => setHeroLoading(false))
-  }, [panelCount])
+  }, [hero, panelCount])
 
   return (
     <main className="converge-main" style={{ maxWidth: 760, margin: "0 auto", padding: "32px 24px 80px" }}>
@@ -258,14 +256,7 @@ export function ConvergeClient({ observations, availablePanels, panelCount, firs
           }}>
             THE STORY YOUR PANELS TELL TOGETHER
           </span>
-          {heroLoading ? (
-            <p style={{
-              fontFamily: serif, fontSize: 18, color: "rgba(245,243,238,0.5)",
-              lineHeight: 1.7, margin: 0, fontStyle: "italic",
-            }}>
-              Analyzing your cross-panel picture...
-            </p>
-          ) : hero ? (
+          {hero ? (
             <>
               <h2 style={{
                 fontFamily: serif, fontSize: 24, fontWeight: 400,
