@@ -12,6 +12,8 @@ import { CrossPanelCard } from "./components/CrossPanelCard"
 import { HealthPictureBlock } from "./components/HealthPictureBlock"
 import CnvrgLogo from "../components/CnvrgLogo"
 import type { ConvergeObservation } from "../../lib/converge/observations"
+import type { InterventionWithState } from "../../lib/interventions/engagements"
+import { ActionPlan } from "../components/interventions/ActionPlan"
 
 const serif = "'Cormorant Garamond', Georgia, serif"
 const sans  = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
@@ -531,6 +533,7 @@ export function DashboardClient(props: ScoreWheelProps & {
   panelsActive?: { oral: boolean; blood: boolean; sleep: boolean };
   convergeObservations?: ConvergeObservation[];
   showV2CatchUp?: boolean;
+  interventions?: InterventionWithState[];
 }) {
   const { wearableNeedsReconnect = false, firstName, peaqAgeBreakdown, cachedGuidance, convergeObservations = [] } = props
   // cachedInsight intentionally unused — Cnvrg Insight card has been removed from the dashboard surface.
@@ -1090,6 +1093,24 @@ export function DashboardClient(props: ScoreWheelProps & {
                   )
                 })()}
               </div>
+
+              {/* INTERVENTION-BASED ACTION PLAN */}
+              {(props.interventions ?? []).length > 0 && (
+                <div style={{
+                  background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
+                  borderRadius: 12, padding: 20,
+                  boxShadow: "0 1px 3px rgba(20,20,16,0.06)",
+                }}>
+                  <ActionPlan
+                    density="compact"
+                    interventions={props.interventions!}
+                    onEngage={async (id, action, reason) => {
+                      await fetch("/api/interventions/engagement", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ interventionId: id, action, reason }) })
+                      window.location.reload()
+                    }}
+                  />
+                </div>
+              )}
 
               {/* ZONE 2 — FROM CNVRG (dynamic from articles table) */}
               <div style={{

@@ -55,12 +55,10 @@ export default async function DashboardPage() {
   // Mutable reference — may be updated by the stale-zero healer below
   let snapshot = initialSnapshot
 
-  console.log("[dashboard] initialSnapshot:", snapshot
-    ? `score=${snapshot.score} sleep=${snapshot.sleep_sub} blood=${snapshot.blood_sub} lifestyle=${snapshot.lifestyle_sub} calculated_at=${snapshot.calculated_at}`
-    : "null")
-  console.log("[dashboard] wearable:", wearable ? `provider=${wearable.provider}` : "null")
-  console.log("[dashboard] lab:", lab ? `collection_date=${lab.collection_date}` : "null")
-  console.log("[dashboard] lifestyle:", lifestyle ? "present" : "null")
+  // PHI-safe: log presence only, not values
+  if (process.env.NODE_ENV === "development") {
+    console.log("[dashboard:dev] snapshot:", !!snapshot, "wearable:", !!wearable, "lab:", !!lab, "lifestyle:", !!lifestyle)
+  }
 
   // Compute sleep metrics from sleep_data (best provider per date, last 30 nights)
   const PROVIDER_PRIORITY: Record<string, number> = { whoop: 0, oura: 1, garmin: 2 }
@@ -103,11 +101,7 @@ export default async function DashboardPage() {
   const snapshotIsV1 = snapshot && !snapshot.base_score
   const snapshotIsOutdated = false
   const snapshotIsStaleZero = !snapshot || (Number(snapshot.score) === 0 && (!!lab || !!oral || !!lifestyle)) || snapshotIsV1 || snapshotIsOutdated
-  if (snapshotIsV1) console.log("[dashboard] v1 snapshot detected — forcing v2 recalculation for:", user.id)
-  if (snapshotIsOutdated) console.log("[dashboard] outdated engine version", snapshot?.engine_version, "— forcing recalculation for:", user.id)
-  console.log("[dashboard] snapshotIsStaleZero:", snapshotIsStaleZero, "score:", Number(snapshot?.score ?? 0), "isV1:", !!snapshotIsV1)
   if (snapshotIsStaleZero) {
-    console.log("[dashboard] stale/zero/v1 snapshot — auto-recalculating for:", user.id)
     try {
       const svc = createServiceClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -127,7 +121,7 @@ export default async function DashboardPage() {
     }
   }
 
-  console.log(`[dashboard] displaying: score=${snapshot?.score} sleep=${snapshot?.sleep_sub} blood=${snapshot?.blood_sub} oral=${snapshot?.oral_sub} engine=${snapshot?.engine_version} snapshot_at=${snapshot?.calculated_at}`)
+  // Removed: was logging PHI (score values) to Vercel logs
 
   // Compute lab freshness
   type LabFreshness = 'fresh' | 'aging' | 'stale' | 'expired' | 'none'
@@ -149,7 +143,7 @@ export default async function DashboardPage() {
   const rawScore = Number(snapshot?.score ?? 0)
   const storedSleepSub = Number(snapshot?.sleep_sub ?? 0)
   const score = wearable ? rawScore : Math.max(0, rawScore - storedSleepSub)
-  console.log(`[dashboard] computed score=${score} rawScore=${rawScore} storedSleepSub=${storedSleepSub} wearable=${!!wearable}`)
+  // Removed: was logging PHI (computed scores) to Vercel logs
 
   const breakdown = {
     sleepSub:        wearable ? storedSleepSub : 0,
@@ -416,6 +410,15 @@ export default async function DashboardPage() {
   const panelCtx = await getUserPanelContext(user.id)
   const convergeObservations = computeConvergeObservations(panelCtx)
 
+  const { computeInterventions } = await import("../../lib/interventions/registry")
+  const { applyEngagements } = await import("../../lib/interventions/engagements")
+  const rawInterventions = computeInterventions(panelCtx)
+  const { data: engagementRows } = await supabase
+    .from("intervention_engagements")
+    .select("intervention_id, action, created_at, retracted_at")
+    .eq("user_id", user.id)
+  const interventionsWithState = applyEngagements(rawInterventions, (engagementRows ?? []) as Array<{ intervention_id: string; action: "committed" | "already_doing" | "not_relevant"; created_at: string; retracted_at: string | null }>)
+
   const questionnaireVersion = (lifestyle as Record<string, unknown> | null)?.questionnaire_version as string | null
   const showV2CatchUp = !!lifestyle && questionnaireVersion !== "v2"
 
@@ -440,5 +443,6 @@ export default async function DashboardPage() {
     panelsActive={panelsActive}
     convergeObservations={convergeObservations}
     showV2CatchUp={showV2CatchUp}
+    interventions={interventionsWithState}
   />
 }
