@@ -44,24 +44,26 @@
 
 ---
 
-## Collected but NOT Cross-Referenced (13 questions)
+## Wired in Phase A (5 questions — April 2026)
+
+| # | Question | DB field | Wired in | Cross-references with |
+|---|----------|----------|----------|----------------------|
+| 16 | Smoke, vape, tobacco? | `smoking_status` | converge observations, planItems | Fusobacterium, Porphyromonas, Neisseria — dual suppression/elevation pattern |
+| 18 | How often do you floss? | `flossing_freq` | converge observations (escalation), planItems | Gum bacteria (Fuso, Porph, Agg) — daily flosser with elevated bacteria = deeper pockets |
+| 20 | How often leafy greens / beets? | `dietary_nitrate_frequency` | converge observations (escalation), planItems | Neisseria — high intake + low Neisseria = active suppressor |
+| 21 | How often sugary foods/drinks? | `sugar_intake` | converge observations, planItems | S. mutans, S. sobrinus — sugar frequency drives acid attacks |
+| 24 | Last antibiotics? | `antibiotics_window` | converge observations, planItems | Shannon diversity, Neisseria — transient suppression confounder |
+
+---
+
+## Collected but NOT Cross-Referenced (8 questions)
 
 ### Passed to AI narrative prompt only (no deterministic rule fires)
 
 | # | Question | DB field | Passed to AI? | Gap / opportunity |
 |---|----------|----------|---------------|-------------------|
-| 16 | Smoke, vape, tobacco? | `smoking_status` | Yes (v8 confounder) | **Should fire**: smoking × gum bacteria elevation. Smoking is #1 confounder for periodontal bacteria — if gum bacteria elevated AND user smokes, attribute to smoking first |
 | 17 | Acid reflux / heartburn at night? | `gerd_nocturnal` | Yes | **Should fire**: GERD × oral acidity (pH balance). Nocturnal reflux changes oral pH and can shift acid-producing bacteria |
-| 21 | How often sugary foods/drinks? | `sugar_intake` | Yes (v8 confounder) | **Should fire**: sugar frequency × cavity bacteria × HbA1c. The triangle: frequent sugar → cavity bacteria thrive → blood sugar elevated |
-| 24 | Last antibiotics? | `antibiotics_window` | Yes (v8 confounder) | **Should fire**: recent antibiotics × low Shannon diversity. Flag as "your diversity may be temporarily suppressed" |
 | 25 | Take a PPI daily? | `medication_ppi_detail` | Yes (v8 confounder) | **Should fire**: PPI × pH balance API. PPIs shift oral pH — if pH is unusually well-buffered, PPI may be a contributor |
-
-### Used in planItems only (action items, not cross-panel observations)
-
-| # | Question | DB field | Used in | Gap / opportunity |
-|---|----------|----------|---------|-------------------|
-| 18 | How often do you floss? | `flossing_freq` | planItems (start-flossing action) | **Should cross-ref**: flossing frequency × gum bacteria levels. Non-flossers with low gum bacteria = surprising positive; daily flossers with high gum bacteria = worth investigating |
-| 20 | How often leafy greens / beets? | `dietary_nitrate_frequency` | planItems (leafy-greens action) | **Should cross-ref**: nitrate intake × Neisseria levels. Frequent nitrate eaters with low Neisseria = unexpected; rare eaters with high Neisseria = genetic advantage |
 
 ### Not used anywhere
 

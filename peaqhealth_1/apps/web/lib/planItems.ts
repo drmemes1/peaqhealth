@@ -20,6 +20,19 @@ export interface PlanInput {
   // Lifestyle flags — drive suppression rules
   uses_antiseptic_mouthwash?: boolean
   flossing_daily?: boolean
+  // Phase A — new lifestyle fields
+  smoking_status?: string | null
+  sugar_intake?: string | null
+  antibiotics_window?: string | null
+  dietary_nitrate_frequency?: string | null
+  // Oral species for cross-referencing
+  fusobacterium_pct?: number | null
+  porphyromonas_pct?: number | null
+  aggregatibacter_pct?: number | null
+  neisseria_pct?: number | null
+  s_mutans_pct?: number | null
+  s_sobrinus_pct?: number | null
+  shannon_diversity?: number | null
 }
 
 export interface PlanItem {
@@ -198,6 +211,69 @@ function buildLifestyleItems(input: PlanInput): PlanItem[] {
     })
   }
 
+  // ── Phase A: 5 new rules from orphaned questionnaire fields ──
+
+  const isCurrentSmoker = input.smoking_status === "current_daily" || input.smoking_status === "current_social" || input.smoking_status === "vape_daily" || input.smoking_status === "current"
+  const recentAntibiotics = input.antibiotics_window === "within_1_month" || input.antibiotics_window === "within_3_months"
+
+  // RULE 1 — Smoking × gum bacteria
+  if (isCurrentSmoker && ((input.fusobacterium_pct ?? 0) > 1.0 || (input.porphyromonas_pct ?? 0) > 0.5 || (input.neisseria_pct ?? 999) < 5)) {
+    out.push({
+      id: "smoking-oral-impact",
+      title: "Cut back on smoking / vaping",
+      why: "Any reduction helps. Nicotine replacement patches and gum don't have the same microbiome impact. Pair with dietary nitrate support during the transition.",
+      timing: "This month",
+      priority: 1,
+    })
+  }
+
+  // RULE 2 — Sugar frequency × cavity bacteria
+  const highSugar = input.sugar_intake === "often" || input.sugar_intake === "multiple_daily" || input.sugar_intake === "every_meal"
+  const cavityBacteriaElevated = (input.s_mutans_pct ?? 0) > 0.5 || (input.s_sobrinus_pct ?? 0) > 0.3
+  if (highSugar && cavityBacteriaElevated) {
+    out.push({
+      id: "reduce-sugar-frequency",
+      title: "Reduce sugar frequency (not total)",
+      why: "Limit to 3 meals + 1 deliberate snack. No sipping sugary drinks throughout the day. Water between meals. Frequency of sugar exposure matters more than total amount — each exposure creates a 20-minute acid attack.",
+      timing: "This week",
+      priority: 2,
+    })
+  }
+
+  // RULE 3 — Antibiotics × diversity suppression
+  if (recentAntibiotics && ((input.shannon_diversity ?? 999) < 4.0 || (input.neisseria_pct ?? 999) < 5)) {
+    out.push({
+      id: "post-antibiotic-recovery",
+      title: "Support post-antibiotic recovery",
+      why: "Fermented foods daily. 30 different plants per week. Avoid adding antiseptic stressors during recovery. Retest at 3 months, not earlier — your microbiome is still recovering.",
+      timing: "Ongoing",
+      priority: 3,
+    })
+  }
+
+  // RULE 4 — Flossing escalation: daily flosser but gum bacteria still elevated
+  if (input.flossing_daily === true && ((input.fusobacterium_pct ?? 0) > 1.0 || (input.porphyromonas_pct ?? 0) > 0.5 || (input.aggregatibacter_pct ?? 0) > 0.5)) {
+    out.push({
+      id: "flossing-escalation",
+      title: "Flossing alone isn't enough",
+      why: "Book a periodontal exam for pocket depth measurement. Daily flossing has limits when inflammation persists below the gumline. Bring your Cnvrg report — periodontists find bacterial data clinically useful.",
+      timing: "This month",
+      priority: 1,
+    })
+  }
+
+  // RULE 5 — Dietary nitrate escalation: eating greens but Neisseria still low
+  const highNitrate = input.dietary_nitrate_frequency === "daily" || input.dietary_nitrate_frequency === "multiple_daily" || input.dietary_nitrate_frequency === "several_weekly"
+  if (highNitrate && (input.neisseria_pct ?? 999) < 10 && !isCurrentSmoker) {
+    out.push({
+      id: "nitrate-suppressor-check",
+      title: "Check what's suppressing your nitrate-reducing bacteria",
+      why: "Your diet supports these bacteria — but they're still not thriving. Review your mouthwash type, whitening frequency, or any medications that reduce saliva flow. The suppressor is usually one of these.",
+      timing: "This week",
+      priority: 2,
+    })
+  }
+
   return out
 }
 
@@ -298,6 +374,17 @@ export function deriveMarkerStatuses(data: StatusInput): PlanInput {
     consistency_status: null,
     uses_antiseptic_mouthwash: lifestyle?.mouthwash_type === "antiseptic" || lifestyle?.mouthwash_type === "alcohol",
     flossing_daily: lifestyle?.flossing_freq === "daily" || lifestyle?.flossing_freq === "twice_daily",
+    smoking_status: (lifestyle?.smoking_status as string | null) ?? null,
+    sugar_intake: (lifestyle?.sugar_intake as string | null) ?? null,
+    antibiotics_window: (lifestyle?.antibiotics_window as string | null) ?? null,
+    dietary_nitrate_frequency: (lifestyle?.dietary_nitrate_frequency as string | null) ?? null,
+    fusobacterium_pct: oral?.fusobacterium_pct != null ? (oral.fusobacterium_pct as number) * 100 : null,
+    porphyromonas_pct: oral?.porphyromonas_pct != null ? (oral.porphyromonas_pct as number) * 100 : null,
+    aggregatibacter_pct: oral?.aggregatibacter_pct != null ? (oral.aggregatibacter_pct as number) * 100 : null,
+    neisseria_pct: oral?.neisseria_pct != null ? (oral.neisseria_pct as number) * 100 : null,
+    s_mutans_pct: oral?.s_mutans_pct != null ? (oral.s_mutans_pct as number) * 100 : null,
+    s_sobrinus_pct: oral?.s_sobrinus_pct != null ? (oral.s_sobrinus_pct as number) * 100 : null,
+    shannon_diversity: (oral?.shannon_diversity as number | null) ?? null,
   }
 }
 

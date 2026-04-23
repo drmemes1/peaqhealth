@@ -464,6 +464,165 @@ const rule_emptyState_nothing: RuleFn = (ctx) => {
   }
 }
 
+// ── QUESTIONNAIRE × ORAL (Phase A) ─────────────────────────────────────────
+
+const rule_smoking_gumBacteria: RuleFn = (ctx) => {
+  if (!ctx.hasQuestionnaire || !ctx.hasOralKit) return null
+  const status = ctx.questionnaire!.smokingStatus
+  if (status !== "current_daily" && status !== "current_social" && status !== "vape_daily" && status !== "current") return null
+  const fuso = ctx.oralKit!.fusobacteriumPct ?? 0
+  const porph = ctx.oralKit!.porphyromonasPct ?? 0
+  const neisseria = ctx.oralKit!.neisseriaPct ?? 999
+  if (fuso <= 1.0 && porph <= 0.5 && neisseria >= 5) return null
+
+  const markers: string[] = []
+  if (fuso > 1.0) markers.push(`Fusobacterium at ${fuso.toFixed(1)}%`)
+  if (porph > 0.5) markers.push(`Porphyromonas at ${porph.toFixed(2)}%`)
+  if (neisseria < 5) markers.push(`Neisseria depleted at ${neisseria.toFixed(1)}%`)
+
+  return {
+    id: "smoking-oral-impact",
+    priority: 1,
+    panels: ["questionnaire", "oral"],
+    severity: "attention",
+    title: "Smoking is showing up in your oral bacteria",
+    oneLiner: `Your ${status === "vape_daily" ? "vaping" : "smoking"} and oral bacteria are telling the same story — ${markers.join(", ")}.`,
+    narrative: `Your ${status === "vape_daily" ? "vaping" : "smoking"} is one of the few exposures that simultaneously suppresses nitrate-reducing bacteria AND feeds gum inflammation bacteria. ${markers.join(". ")}. This is a direct, well-documented effect — tobacco changes the oxygen and pH environment in your mouth, favoring exactly the species you'd want to suppress.`,
+    chain: { label: "The chain", text: `Tobacco exposure → reduced oral oxygen → Neisseria suppressed + anaerobic gum bacteria thrive → dual cardiovascular impact` },
+    datapoints: [
+      ...(fuso > 1.0 ? [{ label: "Fusobacterium", value: fuso.toFixed(1), unit: "%", verdict: "attention" as const }] : []),
+      ...(porph > 0.5 ? [{ label: "Porphyromonas", value: porph.toFixed(2), unit: "%", verdict: "attention" as const }] : []),
+      ...(neisseria < 5 ? [{ label: "Neisseria", value: neisseria.toFixed(1), unit: "%", verdict: "low" as const }] : []),
+      { label: "Smoking", value: status === "vape_daily" ? "Vape daily" : "Current" },
+    ],
+  }
+}
+
+const rule_sugarFrequency_cavityBacteria: RuleFn = (ctx) => {
+  if (!ctx.hasQuestionnaire || !ctx.hasOralKit) return null
+  const sugar = ctx.questionnaire!.sugarIntake
+  const mutans = ctx.oralKit!.sMutansPct ?? 0
+  const sobrinus = ctx.oralKit!.sSobrinusPct ?? 0
+  const highSugar = sugar === "often" || sugar === "multiple_daily" || sugar === "every_meal"
+  const cavityElevated = mutans > 0.5 || sobrinus > 0.3
+
+  if (highSugar && cavityElevated) {
+    return {
+      id: "sugar-cavity-link",
+      priority: 2,
+      panels: ["questionnaire", "oral"],
+      severity: "watch",
+      title: "Sugar frequency is feeding your cavity bacteria",
+      oneLiner: `S. mutans at ${mutans.toFixed(2)}% combined with frequent sugar creates repeated acid attacks — frequency matters more than total amount.`,
+      narrative: `Your sugar intake pattern creates the conditions cavity bacteria thrive in. S. mutans at ${mutans.toFixed(2)}% and S. sobrinus at ${sobrinus.toFixed(2)}% feed on sugar — each exposure triggers a 20-minute acid attack on your enamel. Spacing meals further apart and eliminating sugary sipping between meals is the most direct lever.`,
+      chain: { label: "The chain", text: `Frequent sugar → S. mutans feeds → 20-min acid attack per exposure → enamel erosion over time` },
+      datapoints: [
+        { label: "S. mutans", value: mutans.toFixed(2), unit: "%", verdict: "attention" },
+        { label: "S. sobrinus", value: sobrinus.toFixed(2), unit: "%", verdict: sobrinus > 0.3 ? "attention" : "good" },
+        { label: "Sugar intake", value: sugar?.replace(/_/g, " ") ?? "—" },
+      ],
+    }
+  }
+
+  if (!highSugar && cavityElevated) {
+    return {
+      id: "cavity-without-sugar",
+      priority: 3,
+      panels: ["questionnaire", "oral"],
+      severity: "watch",
+      title: "Cavity bacteria elevated despite modest sugar intake",
+      oneLiner: `S. mutans at ${mutans.toFixed(2)}% but your sugar intake is ${sugar?.replace(/_/g, " ") ?? "moderate"} — something else may be driving the pattern.`,
+      narrative: `Your S. mutans is elevated but your sugar intake is modest. Reduced saliva flow — from medications, dehydration, or mouth breathing — can produce the same pattern. Your mouth breathing status and medication list are worth reviewing alongside this finding.`,
+      datapoints: [
+        { label: "S. mutans", value: mutans.toFixed(2), unit: "%", verdict: "watch" },
+        { label: "Sugar intake", value: sugar?.replace(/_/g, " ") ?? "—", verdict: "good" },
+      ],
+    }
+  }
+
+  return null
+}
+
+const rule_antibiotics_diversitySuppression: RuleFn = (ctx) => {
+  if (!ctx.hasQuestionnaire || !ctx.hasOralKit) return null
+  const abx = ctx.questionnaire!.antibioticsWindow
+  if (abx !== "within_1_month" && abx !== "within_3_months") return null
+  const shannon = ctx.oralKit!.shannonIndex ?? 999
+  const neisseria = ctx.oralKit!.neisseriaPct ?? 999
+  if (shannon >= 4.0 && neisseria >= 5) return null
+
+  const timeframe = abx === "within_1_month" ? "within the last month" : "within the last 3 months"
+
+  return {
+    id: "antibiotic-recovery",
+    priority: 2,
+    panels: ["questionnaire", "oral"],
+    severity: "context",
+    title: "Your microbiome is still recovering from antibiotics",
+    oneLiner: `Shannon diversity at ${shannon < 999 ? shannon.toFixed(2) : "—"} with antibiotics ${timeframe} — recovery typically takes 3–6 months.`,
+    narrative: `You took antibiotics ${timeframe}, and your oral microbiome shows the expected temporary disruption — ${shannon < 4.0 ? `Shannon diversity at ${shannon.toFixed(2)} (below the 4.0 target)` : ""}${shannon < 4.0 && neisseria < 5 ? " and " : ""}${neisseria < 5 ? `Neisseria depleted at ${neisseria.toFixed(1)}%` : ""}. This is a transient pattern, not a permanent state. Recovery typically takes 3–6 months. Fermented foods and dietary variety accelerate the rebuild.`,
+    datapoints: [
+      ...(shannon < 4.0 ? [{ label: "Shannon", value: shannon.toFixed(2), verdict: "watch" as const }] : []),
+      ...(neisseria < 5 ? [{ label: "Neisseria", value: neisseria.toFixed(1), unit: "%", verdict: "low" as const }] : []),
+      { label: "Antibiotics", value: timeframe },
+    ],
+  }
+}
+
+const rule_flossing_escalation: RuleFn = (ctx) => {
+  if (!ctx.hasQuestionnaire || !ctx.hasOralKit) return null
+  const floss = ctx.questionnaire!.flossingFreq
+  if (floss !== "daily" && floss !== "twice_daily") return null
+  const fuso = ctx.oralKit!.fusobacteriumPct ?? 0
+  const porph = ctx.oralKit!.porphyromonasPct ?? 0
+  const agg = ctx.oralKit!.aggregatibacterPct ?? 0
+  if (fuso <= 1.0 && porph <= 0.5 && agg <= 0.5) return null
+
+  const elevated: string[] = []
+  if (fuso > 1.0) elevated.push(`Fusobacterium ${fuso.toFixed(1)}%`)
+  if (porph > 0.5) elevated.push(`Porphyromonas ${porph.toFixed(2)}%`)
+  if (agg > 0.5) elevated.push(`Aggregatibacter ${agg.toFixed(2)}%`)
+
+  return {
+    id: "flossing-not-enough",
+    priority: 2,
+    panels: ["questionnaire", "oral"],
+    severity: "watch",
+    title: "Daily flossing but gum bacteria still elevated",
+    oneLiner: `You floss daily, but ${elevated.join(", ")} remain above target — mechanical cleaning alone isn't reaching the source.`,
+    narrative: `You're doing the right thing with daily flossing, but orange-complex bacteria are still elevated: ${elevated.join(", ")}. This usually means either chronic mouth breathing is drying the gumline, professional cleaning is overdue, or pockets are deeper than floss can reach. A periodontal exam with pocket depth measurements is the next step.`,
+    datapoints: [
+      { label: "Flossing", value: "Daily", verdict: "good" },
+      ...(fuso > 1.0 ? [{ label: "Fusobacterium", value: fuso.toFixed(1), unit: "%", verdict: "attention" as const }] : []),
+      ...(porph > 0.5 ? [{ label: "Porphyromonas", value: porph.toFixed(2), unit: "%", verdict: "attention" as const }] : []),
+      ...(agg > 0.5 ? [{ label: "Aggregatibacter", value: agg.toFixed(2), unit: "%", verdict: "attention" as const }] : []),
+    ],
+  }
+}
+
+const rule_nitrateEscalation: RuleFn = (ctx) => {
+  if (!ctx.hasQuestionnaire || !ctx.hasOralKit) return null
+  const nitrate = ctx.questionnaire!.dietaryNitrateFrequency
+  if (nitrate !== "daily" && nitrate !== "multiple_daily" && nitrate !== "several_weekly") return null
+  const neisseria = ctx.oralKit!.neisseriaPct ?? 999
+  if (neisseria >= 10) return null
+  if (ctx.questionnaire!.smokingStatus === "current_daily" || ctx.questionnaire!.smokingStatus === "current") return null
+
+  return {
+    id: "nitrate-diet-but-low-neisseria",
+    priority: 3,
+    panels: ["questionnaire", "oral"],
+    severity: "watch",
+    title: "Eating greens but nitrate-reducing bacteria still low",
+    oneLiner: `You eat nitrate-rich foods ${nitrate?.replace(/_/g, " ")}, but Neisseria is at ${neisseria.toFixed(1)}% — something is actively suppressing them.`,
+    narrative: `Your diet provides plenty of substrate for nitrate-reducing bacteria, but Neisseria sits at just ${neisseria.toFixed(1)}% against a 10–13% target. The substrate isn't the problem — something is actively suppressing these bacteria. The most common suppressors are antiseptic mouthwash, heavy peroxide whitening, or medications that reduce saliva flow. Identifying and removing the suppressor is the highest-leverage step.`,
+    datapoints: [
+      { label: "Neisseria", value: neisseria.toFixed(1), unit: "%", verdict: "low" },
+      { label: "Nitrate intake", value: nitrate?.replace(/_/g, " ") ?? "—", verdict: "good" },
+    ],
+  }
+}
+
 // ── ENGINE ──────────────────────────────────────────────────────────────────
 
 const ALL_RULES: RuleFn[] = [
@@ -475,6 +634,12 @@ const ALL_RULES: RuleFn[] = [
   rule_sinus_inflammation,
   rule_shortSleep_metabolic,
   rule_hrv_cardiovascular,
+  // Questionnaire × oral (Phase A)
+  rule_smoking_gumBacteria,
+  rule_sugarFrequency_cavityBacteria,
+  rule_antibiotics_diversitySuppression,
+  rule_flossing_escalation,
+  rule_nitrateEscalation,
   // Positive signals
   rule_strongDiversity,
   rule_strongMetabolic,
