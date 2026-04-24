@@ -3,6 +3,10 @@ import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { createHash } from "crypto"
 import { MARKERS, type MarkerDefinition, computeVerdict, computeScalePosition, getValueFromCtx } from "../markers/registry"
 import type { UserPanelContext } from "../user-context"
+import { getRelevantEvidence } from "../evidence/relevant-evidence"
+import { buildEvidencePromptSection } from "../evidence/prompt-builder"
+import { stripInlineCitations } from "../evidence/citation-stripper"
+import { CATEGORY_TOPICS } from "../evidence/category-topic-map"
 
 const CURRENT_PROMPT_VERSION = "v1"
 
@@ -102,6 +106,12 @@ export async function generateMarkerInsight(
   const start = Date.now()
 
   try {
+    const topics = CATEGORY_TOPICS[marker.category] ?? []
+    const evidence = topics.length > 0 ? await getRelevantEvidence({
+      panel: marker.panel, topics, maxStudies: 4, minConfidence: "medium",
+    }) : []
+    const evidenceSection = buildEvidencePromptSection(evidence)
+
     const openai = new OpenAI()
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -109,7 +119,7 @@ export async function generateMarkerInsight(
       max_tokens: 400,
       response_format: { type: "json_object" },
       messages: [
-        { role: "system", content: buildSystemPrompt(marker, ctx) },
+        { role: "system", content: buildSystemPrompt(marker, ctx) + evidenceSection },
         { role: "user", content: `The user's ${marker.label} is ${userValue} ${marker.unit ?? ""}. Generate the insight.` },
       ],
     })
@@ -122,12 +132,15 @@ export async function generateMarkerInsight(
       cross_panel_observations?: { related_marker: string; observation: string }[]
     }
 
+    const cleanMeaning = parsed.plain_meaning ? stripInlineCitations(parsed.plain_meaning).cleanedText : null
+    const cleanNarrative = parsed.narrative ? stripInlineCitations(parsed.narrative).cleanedText : null
+
     const insight: MarkerInsight = {
       markerId,
       verdict,
       verdictLabel: parsed.verdict_label ?? verdictFallback(verdict),
-      plainMeaning: parsed.plain_meaning ?? `Your ${marker.label} is ${userValue} ${marker.unit ?? ""}.`,
-      narrative: parsed.narrative ?? null,
+      plainMeaning: cleanMeaning ?? `Your ${marker.label} is ${userValue} ${marker.unit ?? ""}.`,
+      narrative: cleanNarrative,
       scaleUserPosition: scalePos,
       crossPanelObservations: (parsed.cross_panel_observations ?? []).map(o => ({ relatedMarker: o.related_marker, observation: o.observation })),
       generatedAt: new Date().toISOString(),

@@ -3,10 +3,15 @@ import { createClient } from "../../../../lib/supabase/server"
 import { createClient as createServiceClient } from "@supabase/supabase-js"
 import OpenAI from "openai"
 import { ageRangeToMidpoint } from "../../../../lib/score/recalculate"
+import { getRelevantEvidence } from "../../../../lib/evidence/relevant-evidence"
+import { buildEvidencePromptSection } from "../../../../lib/evidence/prompt-builder"
+import { stripInlineCitations } from "../../../../lib/evidence/citation-stripper"
+import { CATEGORY_TOPICS } from "../../../../lib/evidence/category-topic-map"
+import { hashUserId } from "../../../../lib/logging/safe-log"
 
 export const dynamic = "force-dynamic"
 
-const PROMPT_VERSION = "v8"
+const PROMPT_VERSION = "v9"
 
 function svc() {
   return createServiceClient(
@@ -908,6 +913,22 @@ Return ONLY valid JSON (no markdown, no backticks, no preamble) with this exact 
     primary_pattern: kit.primary_pattern,
   }))
 
+  // ── Fetch relevant evidence ────────────────────────────────────────────────
+  const allTopics = [
+    ...CATEGORY_TOPICS.bacterial_diversity ?? [],
+    ...CATEGORY_TOPICS.nitric_oxide_pathway ?? [],
+    ...CATEGORY_TOPICS.gum_health_bacteria ?? [],
+    ...CATEGORY_TOPICS.cavity_bacteria ?? [],
+    ...CATEGORY_TOPICS.nighttime_breathing ?? [],
+  ]
+  const evidence = await getRelevantEvidence({
+    panel: "oral",
+    topics: [...new Set(allTopics)],
+    maxStudies: 8,
+    minConfidence: "medium",
+  })
+  const evidenceSection = buildEvidencePromptSection(evidence)
+
   // ── Call OpenAI ────────────────────────────────────────────────────────────
   const openaiKey = process.env.OPENAI_API_KEY
   if (!openaiKey) return NextResponse.json({ error: "No AI key" }, { status: 503 })
@@ -923,16 +944,34 @@ Return ONLY valid JSON (no markdown, no backticks, no preamble) with this exact 
       temperature: 0.1,
       store: false,
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: SYSTEM_PROMPT + evidenceSection },
         { role: "user", content: userPrompt },
       ],
     })
     const raw = completion.choices[0]?.message.content ?? "{}"
     const cleaned = raw.replace(/```json/gi, "").replace(/```/g, "").trim()
     result = JSON.parse(cleaned) as Record<string, unknown>
-    console.log(`[oral-narrative] v5 generated user=${userId.slice(0, 8)} tier=${sleepTier} pattern=${kit.primary_pattern} headline="${result.headline}"`)
+
+    // Strip any inline citations that leaked through
+    if (typeof result.narrative === "string") {
+      const stripped = stripInlineCitations(result.narrative)
+      if (stripped.hadHallucinations) {
+        console.warn(`[oral-narrative] stripped ${stripped.citationsFound.length} citations`)
+        try {
+          const db = svc()
+          await db.from("narrative_hallucination_log").insert({
+            route: "oral/narrative",
+            category: kit.primary_pattern,
+            user_id_hashed: hashUserId(userId),
+            hallucinations: stripped.citationsFound,
+            raw_output_preview: (result.narrative as string).slice(0, 500),
+          })
+        } catch { /* non-fatal */ }
+      }
+      result.narrative = stripped.cleanedText
+    }
   } catch (err) {
-    console.error("[oral-narrative] v5 generation failed:", err)
+    console.error("[oral-narrative] generation failed:", err)
     return NextResponse.json({ narrative: null, error: String(err) }, { status: 500 })
   }
 

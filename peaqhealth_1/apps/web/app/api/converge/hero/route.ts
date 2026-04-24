@@ -6,8 +6,12 @@ import { computeConvergeObservations } from "../../../../lib/converge/observatio
 import { validateConvergeContent } from "../../../../lib/converge/validate"
 import OpenAI from "openai"
 import { createHash } from "crypto"
+import { getRelevantEvidence } from "../../../../lib/evidence/relevant-evidence"
+import { buildEvidencePromptSection } from "../../../../lib/evidence/prompt-builder"
+import { stripInlineCitations } from "../../../../lib/evidence/citation-stripper"
+import { CATEGORY_TOPICS } from "../../../../lib/evidence/category-topic-map"
 
-const PROMPT_VERSION = 1
+const PROMPT_VERSION = 2
 
 function svc() {
   return createServiceClient(
@@ -158,6 +162,13 @@ export async function POST(req: Request) {
 
   const userMessage = `USER CONTEXT: ${panelSummary.join(", ")}. ${ctx.firstName ? `Name: ${ctx.firstName}.` : ""} OBSERVATIONS:\n${obsText}`
 
+  const evidence = await getRelevantEvidence({
+    panel: "cross-panel",
+    topics: [...(CATEGORY_TOPICS.oral_cardiovascular ?? []), ...(CATEGORY_TOPICS.sleep_oral_breathing ?? [])],
+    maxStudies: 6,
+  })
+  const evidenceSection = buildEvidencePromptSection(evidence)
+
   try {
     const openai = new OpenAI()
     const completion = await openai.chat.completions.create({
@@ -165,7 +176,7 @@ export async function POST(req: Request) {
       temperature: 0.7,
       max_tokens: 600,
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: SYSTEM_PROMPT + evidenceSection },
         ...FEW_SHOT_EXAMPLES,
         { role: "user", content: userMessage },
       ],
@@ -180,7 +191,10 @@ export async function POST(req: Request) {
     }
 
     const headline = result.headline ?? "Your cross-panel picture"
-    const paragraphs = result.paragraphs ?? []
+    const paragraphs = (result.paragraphs ?? []).map(p => {
+      const stripped = stripInlineCitations(p)
+      return stripped.cleanedText
+    })
 
     const issues = validateConvergeContent(paragraphs.join(" "), ctx, observations)
     if (issues.length > 0) {
