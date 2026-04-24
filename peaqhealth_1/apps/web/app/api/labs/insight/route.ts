@@ -100,6 +100,12 @@ APPROVED BIOLOGICAL RELATIONSHIPS you may reference (frame as interesting patter
 - Multi-Taxa Oral Dysbiosis Index (ODI): log-ratio of disease-enriched to health-associated oral taxa. Higher values indicate community-level dysbiosis linked to periodontal risk and systemic inflammation.
 - Filifactor alocis: P. gingivalis-independent periodontal marker. Elevated F. alocis indicates periodontal risk even when traditional red-complex markers are low. OR 10.9 for severe disease in published cohorts.
 - Fretibacterium (formerly Synergistetes Cluster A): community-level dysbiosis marker. Elevated Fretibacterium alongside depletion of health-associated taxa (Capnocytophaga, Haemophilus, Bergeyella) signals disrupted oral ecology.
+- Refractory Periodontitis Signature: specific combinations of persistence-associated species (P. micra, F. alocis, Prevotella intermedia) alongside depletion of health-associated taxa (Haemophilus parainfluenzae, Rothia, Capnocytophaga, Veillonella) suggest an oral community less likely to respond to standard cleanings alone. Frame as "worth a deeper cleaning conversation with your dentist" — never diagnostic.
+- Parvimonas micra as Treatment-Response Marker: independent published predictor of persistent inflammation after standard periodontal therapy (OR 4.38 at 12 months). Elevated P. micra worth flagging to the user's dentist.
+- Oral-Systemic Metabolic Axis: subgingival Porphyromonas correlates with blood glucose; periodontal therapy reduces pro-inflammatory metabolites. Use for insights connecting oral findings to fasting glucose or metabolic markers. Frame as opportunity, not causation.
+
+TREATMENT-RESPONSE FRAMING GUARDRAILS:
+For treatment-response mechanisms: NEVER diagnose refractory periodontitis, NEVER predict treatment failure directly, NEVER imply a specific clinical outcome. Always frame as "conversation starter with your dentist" or "worth mentioning at your next visit." These are published population-level patterns, not individual predictions.
 
 PROHIBITED ASSOCIATIONS — never generate insights based on these:
 - Sleep stages and lipid levels (LDL, HDL, triglycerides, ApoB) — not established enough
