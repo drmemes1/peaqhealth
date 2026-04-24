@@ -625,6 +625,29 @@ const rule_nitrateEscalation: RuleFn = (ctx) => {
 
 // ── ENGINE ──────────────────────────────────────────────────────────────────
 
+const rule_toothbrushing_cvd: RuleFn = (ctx) => {
+  if (!ctx.hasQuestionnaire) return null
+  const q = ctx.questionnaire as Record<string, unknown> | null
+  const brushing = q?.brushing_frequency as string | null
+  const flossing = q?.flossing_freq as string | null ?? q?.flossingFreq as string | null
+  const goodBrushing = brushing === "twice_daily" || brushing === "more_than_twice"
+  const goodFlossing = flossing === "daily" || flossing === "most_days"
+  if (!goodBrushing || !goodFlossing) return null
+  return {
+    id: "toothbrushing-cvd-protection",
+    priority: 20,
+    panels: ["questionnaire"],
+    severity: "positive",
+    title: "Your oral hygiene is associated with cardiovascular protection",
+    oneLiner: "Each additional daily brushing is associated with a 9% lower risk of cardiovascular events in the largest study of its kind.",
+    narrative: "Your brushing frequency alone is associated with a meaningful reduction in cardiovascular risk. In the largest study of its kind (Park 2019, 247,696 adults, 9.5-year follow-up), each additional daily brushing was associated with a 9% lower risk of cardiovascular events. Combined with regular flossing, your oral hygiene routine is working in your favor across panels.",
+    datapoints: [
+      { label: "CVD risk reduction per brushing", value: "9%", verdict: "good" },
+      { label: "Professional cleaning effect", value: "14%", verdict: "good" },
+    ],
+  }
+}
+
 const ALL_RULES: RuleFn[] = [
   // Cross-panel (highest value)
   rule_nitricOxide_LDL,
@@ -641,6 +664,7 @@ const ALL_RULES: RuleFn[] = [
   rule_flossing_escalation,
   rule_nitrateEscalation,
   // Positive signals
+  rule_toothbrushing_cvd,
   rule_strongDiversity,
   rule_strongMetabolic,
   rule_strongHDL,

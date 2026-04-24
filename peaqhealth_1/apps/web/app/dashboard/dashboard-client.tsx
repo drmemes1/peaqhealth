@@ -13,7 +13,9 @@ import { HealthPictureBlock } from "./components/HealthPictureBlock"
 import CnvrgLogo from "../components/CnvrgLogo"
 import type { ConvergeObservation } from "../../lib/converge/observations"
 import type { InterventionWithState } from "../../lib/interventions/engagements"
+import type { DoseResponseResult } from "../../lib/oral/nitrateDoseResponse"
 import { ActionPlan } from "../components/interventions/ActionPlan"
+import { NitrateOpportunityCard } from "../components/dashboard/NitrateOpportunityCard"
 
 const serif = "'Cormorant Garamond', Georgia, serif"
 const sans  = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
@@ -534,6 +536,7 @@ export function DashboardClient(props: ScoreWheelProps & {
   convergeObservations?: ConvergeObservation[];
   showV2CatchUp?: boolean;
   interventions?: InterventionWithState[];
+  nitrateDoseResponse?: DoseResponseResult | null;
 }) {
   const { wearableNeedsReconnect = false, firstName, peaqAgeBreakdown, cachedGuidance, convergeObservations = [] } = props
   // cachedInsight intentionally unused — Cnvrg Insight card has been removed from the dashboard surface.
@@ -1110,6 +1113,11 @@ export function DashboardClient(props: ScoreWheelProps & {
                     }}
                   />
                 </div>
+              )}
+
+              {/* NITRATE DOSE-RESPONSE OPPORTUNITY */}
+              {props.nitrateDoseResponse && props.nitrateDoseResponse.predictedSbpDropMidpoint >= 1.0 && (
+                <NitrateOpportunityCard result={props.nitrateDoseResponse} />
               )}
 
               {/* ZONE 2 — FROM CNVRG (dynamic from articles table) */}

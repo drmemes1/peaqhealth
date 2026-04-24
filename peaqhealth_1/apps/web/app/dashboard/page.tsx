@@ -423,6 +423,18 @@ export default async function DashboardPage() {
     .eq("user_id", user.id)
   const interventionsWithState = applyEngagements(rawInterventions, (engagementRows ?? []) as Array<{ intervention_id: string; action: "committed" | "already_doing" | "not_relevant"; created_at: string; retracted_at: string | null }>)
 
+  // Compute nitrate dose-response if oral data exists
+  const { computeDoseResponse } = await import("../../lib/oral/nitrateDoseResponse")
+  let nitrateDoseResponse: ReturnType<typeof computeDoseResponse> | null = null
+  if (panelCtx.hasOralKit && panelCtx.oralKit) {
+    const dietFreq = panelCtx.questionnaire?.dietaryNitrateFrequency ?? null
+    nitrateDoseResponse = computeDoseResponse({
+      nrCompositePct: panelCtx.oralKit.nitricOxideTotal,
+      dietaryNitrateFrequency: dietFreq,
+      systolicBp: null,
+    })
+  }
+
   const questionnaireVersion = (lifestyle as Record<string, unknown> | null)?.questionnaire_version as string | null
   const showV2CatchUp = !!lifestyle && questionnaireVersion !== "v2"
 
@@ -448,5 +460,6 @@ export default async function DashboardPage() {
     convergeObservations={convergeObservations}
     showV2CatchUp={showV2CatchUp}
     interventions={interventionsWithState}
+    nitrateDoseResponse={nitrateDoseResponse}
   />
 }

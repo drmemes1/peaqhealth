@@ -151,8 +151,9 @@ const rule_dentalCleaning: RuleFn = (ctx) => {
     priority: m >= 24 ? 1 : 2,
     timing: "This month",
     why: m >= 24
-      ? "Professional cleanings reset bacterial load. After 2+ years, bacterial biofilm has likely calcified into calculus that home care can't reach."
-      : "Regular cleanings every 6 months keep bacterial load manageable. Your last one was over 6 months ago.",
+      ? "Professional cleanings reset bacterial load. After 2+ years, bacterial biofilm has likely calcified into calculus that home care can't reach. Beyond the oral benefit, regular professional cleaning is independently associated with a 14% reduction in cardiovascular events (Park 2019, European Heart Journal, 247,696 adults, 9.5-year follow-up)."
+      : "Regular cleanings every 6 months keep bacterial load manageable. Your last one was over 6 months ago. In the largest study of its kind, regular professional cleaning was associated with a 14% reduction in cardiovascular events (Park 2019, European Heart Journal).",
+    evidence: "strong",
   }
 }
 
