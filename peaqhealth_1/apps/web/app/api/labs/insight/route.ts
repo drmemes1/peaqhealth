@@ -97,6 +97,9 @@ APPROVED BIOLOGICAL RELATIONSHIPS you may reference (frame as interesting patter
 - Sleep efficiency and next-day inflammatory tone
 - Protective oral bacteria and systemic immune balance
 - REM sleep and metabolic recovery (glucose markers)
+- Multi-Taxa Oral Dysbiosis Index (ODI): log-ratio of disease-enriched to health-associated oral taxa. Higher values indicate community-level dysbiosis linked to periodontal risk and systemic inflammation.
+- Filifactor alocis: P. gingivalis-independent periodontal marker. Elevated F. alocis indicates periodontal risk even when traditional red-complex markers are low. OR 10.9 for severe disease in published cohorts.
+- Fretibacterium (formerly Synergistetes Cluster A): community-level dysbiosis marker. Elevated Fretibacterium alongside depletion of health-associated taxa (Capnocytophaga, Haemophilus, Bergeyella) signals disrupted oral ecology.
 
 PROHIBITED ASSOCIATIONS — never generate insights based on these:
 - Sleep stages and lipid levels (LDL, HDL, triglycerides, ApoB) — not established enough
