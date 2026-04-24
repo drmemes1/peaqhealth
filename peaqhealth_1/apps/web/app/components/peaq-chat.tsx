@@ -14,7 +14,7 @@ interface Message {
 const SUGGESTIONS = [
   "What does my data mean?",
   "How does Cnvrg calculate my scores?",
-  "Tell me about my bacteria",
+  "What should I read to learn more?",
 ]
 
 function timestamp() {
