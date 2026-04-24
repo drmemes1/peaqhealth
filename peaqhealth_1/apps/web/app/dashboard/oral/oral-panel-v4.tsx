@@ -142,32 +142,53 @@ function buildSignals(ctx: UserPanelContext, subInsights: SubInsight[]): OralSig
     secondaryRead: o.namedSpecies != null ? `${o.namedSpecies} named species across ${o.genera ?? "—"} genera` : undefined,
   })
 
-  // 5. Nighttime breathing
+  // 5. Nighttime breathing — questionnaire alone is sufficient to signal
   const envPattern = o.envPattern
   const aerobic = o.envAerobicScorePct
-  const breathingStatus: Status = envPattern === "mouth_breathing" || envPattern === "mixed" ? "watch" : envPattern === "osa_paradox" ? "attention" : "strong"
   const qMb = ctx.questionnaire?.mouthBreathing === "confirmed" || ctx.questionnaire?.mouthBreathing === "often"
-  const hasTwoSources = qMb && (envPattern === "mouth_breathing" || envPattern === "mixed")
+  const oralMb = envPattern === "mouth_breathing" || envPattern === "mixed"
+  const hasTwoSources = qMb && oralMb
+  const hasAnySources = qMb || oralMb || envPattern === "osa_paradox"
+
+  const breathingStatus: Status = hasAnySources ? (envPattern === "osa_paradox" ? "attention" : "watch") : (envPattern === "balanced" ? "strong" : envPattern == null && !qMb ? "strong" : "watch")
+  const breathingValue = qMb || oralMb ? "Mouth" : envPattern === "osa_paradox" ? "Watch" : envPattern === "balanced" ? "Nasal" : "Pending"
+
+  let breathingRead: string
+  if (hasTwoSources) {
+    const when = ctx.questionnaire?.mouthBreathingWhen === "daytime_and_sleep" ? "day and night" : "sleep"
+    breathingRead = aerobic != null
+      ? `Your questionnaire and oral bacteria agree — mouth breathing during ${when}. Aerobic shift at ${aerobic.toFixed(1)}% confirms drier overnight conditions.`
+      : `Your questionnaire and oral bacteria agree — mouth breathing during ${when}. Two independent sources converging on the same finding.`
+  } else if (qMb && !oralMb) {
+    const when = ctx.questionnaire?.mouthBreathingWhen === "daytime_and_sleep" ? "day and night" : "sleep"
+    breathingRead = envPattern != null
+      ? `Your questionnaire confirms mouth breathing during ${when}. Your oral bacteria show a ${envPattern.replace(/_/g, " ")} pattern — the bacterial layer doesn't fully corroborate yet.`
+      : `Your questionnaire confirms mouth breathing during ${when}. Your oral environment data will add the bacterial layer once computed.`
+  } else if (oralMb && !qMb) {
+    breathingRead = `Your oral bacteria show an aerobic shift at ${aerobic != null ? aerobic.toFixed(1) + "%" : "elevated levels"}, consistent with mouth breathing. Your questionnaire hasn't flagged this — the bacteria are the primary source here.`
+  } else if (envPattern === "balanced") {
+    breathingRead = "Your oral bacteria show a balanced aerobic/anaerobic community — no breathing disruption signal detected."
+  } else if (envPattern === "osa_paradox") {
+    breathingRead = "Your bacteria show an unusual pattern — oxygen-loving species are very high while gum-area bacteria are unusually suppressed. Worth discussing with your doctor."
+  } else {
+    breathingRead = "Breathing pattern data is still being assembled. Your questionnaire and oral bacteria will each add a layer."
+  }
 
   signals.push({
     id: "nighttime_breathing",
     category: "breathing",
     eyebrow: "NIGHTTIME BREATHING",
     title: "Breathing pattern",
-    value: envPattern === "mouth_breathing" || envPattern === "mixed" ? "Mouth" : envPattern === "osa_paradox" ? "Watch" : "Nasal",
+    value: breathingValue,
     status: breathingStatus,
     variant: "sleep-tint",
-    primaryRead: hasTwoSources
-      ? `Your questionnaire and oral bacteria agree — mouth breathing during ${ctx.questionnaire?.mouthBreathingWhen === "daytime_and_sleep" ? "day and night" : "sleep"}. Aerobic shift at ${f(aerobic)}% confirms drier overnight conditions.`
-      : envPattern === "balanced"
-      ? "Your oral bacteria show a balanced aerobic/anaerobic community — no breathing disruption signal detected."
-      : `Your oral environment shows a ${envPattern?.replace(/_/g, " ")} pattern. Aerobic shift at ${f(aerobic)}%.`,
+    primaryRead: breathingRead,
     confidenceDots: [
-      { label: "Questionnaire", filled: ctx.hasQuestionnaire },
-      { label: "Oral bacteria", filled: ctx.hasOralKit },
+      { label: "Questionnaire", filled: qMb },
+      { label: "Oral bacteria", filled: oralMb || envPattern != null },
       { label: "Wearable", filled: ctx.hasWearable },
     ],
-    sources: hasTwoSources ? "2 sources corroborating" : `${[ctx.hasQuestionnaire && "questionnaire", ctx.hasOralKit && "oral"].filter(Boolean).join(" + ")}`,
+    sources: hasTwoSources ? "2 sources corroborating" : `${[qMb && "questionnaire", (oralMb || envPattern != null) && "oral"].filter(Boolean).join(" + ") || "assembling"}`,
   })
 
   return signals
