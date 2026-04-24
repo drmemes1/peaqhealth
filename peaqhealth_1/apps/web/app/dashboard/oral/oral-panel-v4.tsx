@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react"
 import Link from "next/link"
 import type { UserPanelContext } from "../../../lib/user-context"
 import { getSubInsights, type SubInsight } from "../../../lib/oral/subInsights"
-import { computeHalitosisScore } from "../../../lib/oral/halitosisScore"
+import { computeHalitosisScore, getBreathDescription } from "../../../lib/oral/halitosisScore"
 import { SignalCard } from "../../components/oral/SignalCard"
 import { EcoCard } from "../../components/oral/EcoCard"
 import { HeroLine } from "../../components/oral/HeroLine"
@@ -274,7 +274,7 @@ export function OralPanelV4({ ctx }: { ctx: UserPanelContext }) {
         <EcoCard name="pH balance" value={o.phBalanceApi?.toFixed(2) ?? "—"} status={o.phBalanceCategory === "well_buffered" ? "strong" : "watch"} label={o.phBalanceCategory === "well_buffered" ? "Buffered" : "Watch"} />
         <EcoCard name="Protective ratio" value={o.protectiveRatio?.toFixed(1) ?? "—"} unit="×" status={(o.protectiveRatio ?? 0) >= 5 ? "strong" : "watch"} label={(o.protectiveRatio ?? 0) >= 5 ? "Strong defense" : "Moderate"} />
         {halitosis && (
-          <EcoCard name="Breath freshness" value={Math.round(halitosis.breathScore)} unit="/100" status={halitosis.status} label={halitosis.label} />
+          <EcoCard name="Breath freshness" value={Math.round(halitosis.breathScore)} unit="/100" status={halitosis.status} label={halitosis.label} description={getBreathDescription(halitosis.status)} />
         )}
       </div>
 
