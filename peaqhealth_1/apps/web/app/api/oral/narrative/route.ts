@@ -37,7 +37,15 @@ const n = (v: unknown): number | null => {
   return Number.isFinite(x) ? x : null
 }
 
-// ── V5 system prompt (verbatim — do not modify) ─────────────────────────────
+/**
+ * Oral narrative system prompt — SOURCE OF TRUTH
+ *
+ * This prompt is the authoritative version. There is no external .md file.
+ * When updating, update the version number below and add a note to the
+ * change log in docs/INSIGHTS.md.
+ *
+ * Current version: v9
+ */
 const SYSTEM_PROMPT = `# PEAQ HEALTH — ORAL NARRATIVE SYSTEM PROMPT
 # Version 5.0
 # Panels: Oral microbiome (L7) · Blood biomarkers · Sleep (wearable + questionnaire OR questionnaire only) · Lifestyle

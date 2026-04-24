@@ -1,7 +1,7 @@
 # Peaq Health — INSIGHTS.md
 ## Connection Rules Engine + Cross-Panel Intelligence
 
-**Version:** 1.3 (DRAFT)
+**Version:** 1.4
 **Date:** April 2026
 **Status:** Draft — for internal review before pilot implementation
 **Classification:** Internal / Confidential — core product IP
@@ -53,15 +53,7 @@ environment they live in matters more than their count alone."
 
 ## Borderline Value Framing Rule
 
-When a user's value sits within 5% of the cutoff between two ranges,
-the narrative must acknowledge that:
-
-1. Single lab values vary day-to-day by 5-10% for biological reasons
-   (hydration, recent meal, stress, sleep, time of day).
-2. A value just over a cutoff is not meaningfully different from a
-   value just under it, clinically.
-3. The right framing is "worth rechecking at your next draw to see if
-   the pattern holds" — NOT "this is elevated."
+> Phrasing guidance for borderline values lives in docs/INSIGHT_COMPOSITION_GUIDE.md Section 4.
 
 ### Borderline thresholds (within 5% of cutoff)
 
@@ -84,34 +76,10 @@ the narrative must acknowledge that:
 | Fasting Insulin| 10 uIU/mL    | 10-10.5 uIU/mL                       |
 | Vitamin B12    | 300 pg/mL    | 290-300 pg/mL (borderline low)       |
 
-### Narrative pattern for borderline values
-
-CORRECT (for Glucose 101):
-"Your fasting glucose is 101 mg/dL, one point above the common
-reference cutoff of 100. A single value this close to the line can
-easily reflect normal day-to-day variation. Most clinicians would
-suggest rechecking at your next blood draw to see whether the pattern
-holds. Until you have a second reading, the honest interpretation is:
-keep an eye on it."
-
-WRONG:
-"Your glucose level is measured at 101 mg/dL, which is slightly above
-the common reference range. Research associates glucose levels in this
-range with metabolic processes that may interact with lipid metabolism..."
-
-### Status pill for borderline values
-
-Use "RECHECK" or "BORDERLINE" instead of "WATCH" for borderline values.
-
-### When borderline AND frankly-abnormal exist together
-
-Lead with the frankly-abnormal finding. Mention borderline second with
-explicit acknowledgment it is close to the line.
-
 ---
 
 LANGUAGE COMPLIANCE — READ BEFORE EDITING ANY RULE
-Version: 2.0 (aligned with TONE_GUIDE.md v2.0)
+Version: 2.0 (aligned with INSIGHT_COMPOSITION_GUIDE.md Section 1)
 Applies to: Every connection line, expanded copy, and action in
 this document. No rule ships without passing this checklist.
 
