@@ -121,6 +121,14 @@
 - Baima G, et al. Metabolomic changes after periodontal therapy: oral-gut axis. *Journal of Periodontal Research*. 2025;60(4):70055. DOI: 10.1111/jre.70055
 - Lu H, et al. Porphyromonas gingivalis association with fasting glucose and HbA1c. *Journal of Periodontology*. 2022;93(11):1644–1653. DOI: 10.1002/JPER.20-0764
 
+**Supporting References:**
+
+- Samulak R, Suwała M, Dembowska E. *Nonsurgical periodontal therapy with/without 980 nm diode laser in patients after myocardial infarction: a randomized clinical trial.* Lasers in Medical Science, 2021.
+
+  Role: Supporting evidence for oral-cardiovascular narrative specifically in post-MI populations. RCT (n=36, under-65, 6 weeks to 6 months post-MI) demonstrated that SRP improves periodontal parameters and reduces periodontal bacteria counts at 3-month follow-up. Adjunctive 980nm diode laser provided additional bacterial reduction over SRP alone.
+
+  Peaq usage: Reference-only. Supports the plausibility of periodontal therapy benefiting medically complex cardiovascular patients. Do NOT use this paper to recommend specific adjunctive therapies (laser, minocycline, aPDT) in insight content — Peaq insights never recommend specific clinical interventions.
+
 ---
 
 ### 4. Baseline Microbiome Predicts Treatment Outcome
@@ -175,10 +183,28 @@
 
 ---
 
+## Adjunctive Periodontal Therapies (Reference Only)
+
+**NOTE:** Entries in this section are background evidence about clinical treatment options (adjunctive therapies to SRP). They are NOT used to generate insights, drive scoring, or recommend interventions. Peaq insights never recommend specific clinical treatments. These references exist for:
+- Background context when writing B2B or clinician-facing material
+- Informing how insights discuss dental follow-up options in general terms
+- Supporting the plausibility of "discuss with your dentist" framing
+
+---
+
+**Tabenski L, Moder D, Cieplik F, et al.** *Antimicrobial photodynamic therapy vs. local minocycline in addition to non-surgical therapy of deep periodontal pockets: a controlled randomized clinical trial.* Clinical Oral Investigations. 2017 Sep;21(7):2253-2264. DOI: 10.1007/s00784-016-2018-6. PMID: 27909894.
+
+Key finding: Head-to-head RCT of antimicrobial photodynamic therapy (aPDT) vs. local minocycline as adjuncts to SRP in deep periodontal pockets. Provides comparative evidence on adjunctive therapy choices.
+
+Peaq usage: Reference-only. Do NOT cite in user-facing insights. Do NOT add to the approved mechanisms list in the system prompt.
+
+---
+
 ## Change Log
 
 | Date | Change |
 |---|---|
+| 2026-04-24 | Two supporting references added: Samulak 2021 attached under "Periodontal Therapy Improves Systemic Markers"; Tabenski 2017 filed under new "Adjunctive Periodontal Therapies (Reference Only)" section. Neither creates new mechanisms or changes insight generation. |
 | 2026-04-24 | Seven mechanisms added under "Treatment Response and Longitudinal Monitoring." Three approved (Refractory Signature, P. micra failure predictor, periodontal-systemic axis). Four evidence-on-file pending serial sampling or strain-level capability. |
 | 2026-04-24 | Three mechanisms promoted from pending to approved: Multi-Taxa Dysbiosis Index, Filifactor alocis, Fretibacterium (terminology corrected from Synergistetes Cluster A). Lab panel capability verified — all taxa present in Zymo species-level reporting. |
 | 2026-04-24 | Added: oral disease + ischemic stroke (DARIC cohort, Wood 2025). Ready for integration pending Narod sign-off. |
