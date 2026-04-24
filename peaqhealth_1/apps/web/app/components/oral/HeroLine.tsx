@@ -9,22 +9,26 @@ export function HeroLine({ strong, watch, attention, watchCategories }: {
   const total = strong + watch + attention
   if (total === 0) return null
 
+  const needsNoticing = watch + attention
+
   let headline: string
   let sub: string
 
-  if (attention === 0 && watch === 0) {
+  if (needsNoticing === 0) {
     headline = "Your mouth is in a strong place overall."
     sub = `${strong} signals, all in the strong range.`
-  } else if (attention === 0 && watch <= 2) {
-    const areas = watchCategories.length > 0 ? watchCategories.join(" and ") : "a few"
-    headline = `Your mouth is in a good place overall — a few ${areas} signals are worth your attention.`
-    sub = `${strong} strong · ${watch} worth noticing`
-  } else if (attention === 0) {
+  } else if (strong >= needsNoticing && needsNoticing <= 2) {
+    const areas = watchCategories.length > 0 ? watchCategories.join(" and ") : "a couple of"
+    headline = attention > 0
+      ? `Your mouth is in a good place overall — one signal needs attention and ${watch > 0 ? "a couple are" : "it's"} worth noticing.`
+      : `Your mouth is in a good place overall — a few ${areas} signals are worth your attention.`
+    sub = `${strong} strong · ${needsNoticing} worth noticing`
+  } else if (strong >= needsNoticing) {
     headline = "Your mouth has strong signals and a few that need a closer look."
-    sub = `${strong} strong · ${watch} worth noticing`
+    sub = `${strong} strong · ${needsNoticing} worth noticing`
   } else {
     headline = "Your mouth has several signals that need attention — here's what we're seeing."
-    sub = `${attention} need attention · ${watch} worth noticing · ${strong} strong`
+    sub = `${attention > 0 ? `${attention} need attention · ` : ""}${watch} worth noticing · ${strong} strong`
   }
 
   return (
