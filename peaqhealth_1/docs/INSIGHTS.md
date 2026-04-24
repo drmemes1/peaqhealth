@@ -1,11 +1,11 @@
 # Peaq Health — INSIGHTS.md
 ## Connection Rules Engine + Cross-Panel Intelligence
 
-**Version:** 1.4
+**Version:** 1.5
 **Date:** April 2026
 **Status:** Draft — for internal review before pilot implementation
 **Classification:** Internal / Confidential — core product IP
-**Prior version:** 1.2 (46 rules, April 2026)
+**Prior version:** 1.4 (April 2026)
 
 > **Regulatory note:** Peaq Health is a wellness product, not a medical device. Nothing in this document or in any user-facing insight constitutes a medical diagnosis, treatment recommendation, or substitute for professional medical advice. All rules surface patterns across panels and offer educational context rooted in peer-reviewed research. Users are encouraged to share their results with their healthcare providers. No rule should be interpreted as confirming or ruling out any disease or condition.
 
@@ -48,6 +48,66 @@ WRONG: "Your cavity bacteria are elevated"
 RIGHT: "Your cavity bacteria are slightly elevated, but your mouth's
 buffering and protective bacteria are keeping them in check — the
 environment they live in matters more than their count alone."
+
+---
+
+## Oral Dysbiosis Index (ODI)
+
+**Added:** April 2026 (v1.5)
+
+The Oral Dysbiosis Index is a log-ratio of disease-enriched to health-associated taxa, computed from species-level Zymo panel abundances.
+
+**Formula:**
+
+    ODI = log2( sum(disease_enriched_abundances) / sum(health_associated_abundances) )
+
+**Disease-enriched taxa** (sum these):
+Filifactor alocis, Treponema socranskii, Treponema vincentii, Fretibacterium fastidiosum, Fretibacterium sp67092, Selenomonas noxia, Selenomonas infelix, Selenomonas artemidis (and other Selenomonas spp), Peptostreptococcus anaerobius-stomatis, Tannerella forsythia, Porphyromonas endodontalis, Porphyromonas gingivalis (if present).
+
+**Health-associated taxa** (sum these):
+Capnocytophaga ochracea (and all other Capnocytophaga spp), Bergeyella cardium (and all other Bergeyella spp), Haemophilus (all species), Streptococcus salivarius, Streptococcus sanguinis, Streptococcus gordonii.
+
+**Interpretation bands:**
+
+| ODI | Band | Status |
+|---|---|---|
+| < -1.0 | Health-skewed | Strong |
+| -1.0 to 0 | Health-leaning | Strong |
+| 0 to 1.0 | Borderline | Watch |
+| > 1.0 | Dysbiotic | Attention |
+| > 2.0 | Strongly dysbiotic | Attention |
+
+**Evidence:** clinical-evidence-base.md → Multi-Taxa Dysbiosis Index
+
+---
+
+### CONNECTION: Dysbiotic oral community + elevated systemic inflammation
+
+**Trigger:** ODI > 1.0 AND hsCRP > 1.0 mg/L
+**Panels:** oral + blood
+**Severity:** Watch
+**Mechanism:** Multi-Taxa Dysbiosis Index → oral-systemic inflammation axis
+**Framing:** Wellness-focused; connects oral ecology to measured systemic inflammation.
+
+---
+
+### CONNECTION: Elevated F. alocis with healthy P. gingivalis
+
+**Trigger:** F. alocis > 0.001 (relative abundance) AND P. gingivalis < detection threshold
+**Panels:** oral
+**Severity:** Watch
+**Mechanism:** Filifactor alocis (P. gingivalis-independent marker)
+**Framing:** F. alocis is an independent marker of periodontal risk that can be elevated even when P. gingivalis is low. OR 10.9 for severe disease across geographies.
+
+---
+
+### CONNECTION: Elevated Fretibacterium + low health-associated diversity
+
+**Trigger:** Fretibacterium fastidiosum > 0.001 AND Capnocytophaga + Haemophilus + Bergeyella combined abundance < 25th percentile
+**Panels:** oral
+**Severity:** Watch
+**Mechanism:** Fretibacterium (formerly Synergistetes Cluster A)
+**Framing:** Loss of health-associated taxa alongside Fretibacterium enrichment signals community-level dysbiosis.
 
 ---
 
