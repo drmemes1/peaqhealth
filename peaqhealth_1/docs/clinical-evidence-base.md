@@ -52,8 +52,36 @@
 
 ---
 
+## Oral Disease and Ischemic Stroke Risk
+
+> **STATUS: Ready for integration pending Narod sign-off. Not yet wired into insights or scoring.**
+
+### Combined Periodontal Disease and Dental Caries → Ischemic Stroke
+
+**Key findings** (DARIC — Dental ARIC cohort: 5,986 adults, mean age 63, median 21-year follow-up, US cohort):
+
+- Periodontal disease + dental caries together: **86% higher ischemic stroke risk** vs good oral health (adjusted for cardiovascular risk factors)
+- Periodontal disease alone: 44% higher risk (HR 1.44, 95% CI 1.09–1.91)
+- Risk elevation most pronounced for thrombotic and cardioembolic stroke subtypes
+- Regular dental care: 29% lower likelihood of PD; 81% lower likelihood of having both PD + caries
+- Absolute stroke incidence over follow-up: 4% (good oral health), 7% (PD only), 10% (PD + caries)
+
+**Clinical relevance for Cnvrg:** Directly supports cross-panel connections between oral health markers and cardiovascular/cerebrovascular risk. Provides a concrete risk multiplier (1.86× for combined PD + caries) usable in user-facing insights. Regular dental care is a modifiable behavior Cnvrg can surface.
+
+**Candidate connections (pending sign-off):**
+
+1. Oral panel dysbiosis + lifestyle questionnaire flagging irregular dental care → "watch" insight with stroke prevention framing
+2. Strengthen existing oral-cardiovascular insights (Rules 1A, 28A) with this risk-magnitude evidence
+
+**Reference:**
+
+- Wood S, Logue L, Meyer J, Moss K, Beck JD, Johansen MC, Rosamond WD, Sen S. Combined Influence of Dental Caries and Periodontal Disease on Ischemic Stroke Risk. *Neurology Open Access*. 2025;1(4):e000036. DOI: 10.1212/WN9.0000000000000036
+
+---
+
 ## Change Log
 
 | Date | Change |
 |---|---|
+| 2026-04-24 | Added: oral disease + ischemic stroke (DARIC cohort, Wood 2025). Ready for integration pending Narod sign-off. |
 | 2026-04-24 | Initial file created with 3 pending mechanisms: multi-taxa dysbiosis index, F. alocis biomarker, Synergistetes Cluster A. All pending clinical review. |
