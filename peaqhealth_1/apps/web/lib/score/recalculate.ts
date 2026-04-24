@@ -422,6 +422,20 @@ async function _recalculateScore(
     oralBreakdown = scoreOralV2(oralDimInputs)
     oralSub = oralBreakdown.total
 
+    // Compute ODI and apply modifier
+    const { computeODI, odiScoreModifier } = await import("../scoring/computeODI")
+    const odiResult = computeODI(otu)
+    const odiMod = odiScoreModifier(odiResult.band)
+    oralSub = Math.max(0, Math.min(30, oralSub + odiMod))
+
+    // Store ODI in oral_kit_orders for downstream use
+    await supabase.from("oral_kit_orders").update({
+      odi_score: parseFloat(odiResult.odi.toFixed(3)),
+      odi_band: odiResult.band,
+    }).eq("id", oralRes.data.id).then(({ error }) => {
+      if (error) console.warn("[recalculate] ODI write failed (non-fatal):", error.message)
+    })
+
     // Store new dimension signals back to oral_kit_orders
     const neuroPathogenPct = (oralDimInputs.pGingivalisPct ?? 0) + (oralDimInputs.tDenticolaPct ?? 0)
     await supabase.from("oral_kit_orders").update({

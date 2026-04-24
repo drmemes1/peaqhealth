@@ -99,6 +99,29 @@ Example: "The Lp(a) + sleep insight isn't clinically defensible — kill it."
 3. Remove mechanism references from the system prompt if no longer used elsewhere.
 4. Change log in `INSIGHTS.md`.
 
+### 6. Evidence-on-file (captured but not integrated)
+
+Use when adding clinical evidence you want recorded but not yet wired in.
+
+1. Add mechanism to `clinical-evidence-base.md` under a "Pending Clinical Review" section.
+2. Mark with `STATUS: Pending clinical review. Not yet wired into insights or scoring.`
+3. Do NOT update INSIGHTS.md, system prompts, or scoring.
+4. Change log entry in evidence base only.
+
+Later, to promote evidence from pending to approved, use workflow #7.
+
+### 7. Promoting pending evidence to integrated
+
+Use when moving evidence from "on file" to fully used in insights and/or scoring.
+
+1. **Verify lab capability first.** Query existing user data to confirm the relevant taxa/biomarkers are actually detectable at the required resolution. If not, either de-prioritize or flag as "requires lab upgrade."
+2. Update `clinical-evidence-base.md`: remove pending flag, move entry to main section, add integration date.
+3. Add connection(s) to `INSIGHTS.md` using the approved mechanism.
+4. Add mechanism to approved list in `apps/web/app/api/labs/insight/route.ts` and bump prompt version.
+5. If scoring changes: update scoring engine, bump scoring version to force recalc.
+6. Regenerate insights and scores for test users. Log outputs.
+7. Change log entries in all affected files.
+
 ---
 
 ## Ground rules
@@ -110,6 +133,7 @@ Example: "The Lp(a) + sleep insight isn't clinically defensible — kill it."
 5. **Flag conflicts, don't resolve them silently.** Use `<!-- CONFLICT: ... -->` and surface to Igor/Narod.
 6. **Don't create new .md files without a reason.** Can it live as a section in an existing file? Usually yes.
 7. **Version everything that matters.** Bump on substance changes, not typos.
+8. **Verify lab capability before wiring evidence into scoring or insights.** Having a citation is not enough — the lab panel must actually detect the relevant taxa/biomarkers at the resolution the evidence requires.
 
 ---
 
@@ -144,4 +168,5 @@ Once a quarter, 30 minutes:
 
 ## Change Log
 
+- `2026-04-24 — v1.1 — Added workflows #6 (evidence-on-file) and #7 (promoting evidence). Added ground rule #8 (verify lab capability).`
 - `2026-04-24 — v1.0 — Initial runbook created alongside doc restructure.`

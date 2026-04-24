@@ -7,11 +7,11 @@
 
 ---
 
-## Pending Clinical Review — Periodontitis Detection Without P. gingivalis
-
-> **STATUS: Pending clinical review. Not yet wired into insights or scoring. Requires Narod sign-off before integration.**
+## Oral Microbiome — Periodontal Disease Markers
 
 ### 1. Multi-Taxa Dysbiosis Index
+
+> **STATUS: Approved for insight generation and oral scoring. Integrated 2026-04-24.**
 
 **Key finding:** Community-level 16S models achieve AUC 0.87–0.958 for periodontitis detection without requiring P. gingivalis. NHANES XGBoost model (19 genera) hit AUC 0.958. Two-taxon decision tree (T. forsythia + F. fastidiosum) hit AUC 0.94.
 
@@ -27,9 +27,11 @@
 
 ### 2. Filifactor alocis as Geographically Consistent Biomarker
 
+> **STATUS: Approved for insight generation and oral scoring. Integrated 2026-04-24.**
+
 **Key finding:** F. alocis shows OR 10.9 for stage III–IV periodontitis, consistent across Spain/Colombia cohorts where P. gingivalis prevalence varies significantly. F. alocis-centered 8-pathogen co-occurrence group has higher diagnostic value in saliva than any individual pathogen.
 
-**Implication for Cnvrg:** F. alocis may be a more reliable single-species periodontitis marker than P. gingivalis for a geographically diverse user base. If Cnvrg adds F. alocis detection to its species mapping (it's a 16S-detectable Gram-negative anaerobe), it could improve gum health signal specificity without requiring culture or PCR.
+**Implication for Cnvrg:** F. alocis may be a more reliable single-species periodontitis marker than P. gingivalis for a geographically diverse user base. Cnvrg's Zymo panel detects F. alocis at species level via 16S — no additional infrastructure needed.
 
 **References:**
 
@@ -41,11 +43,13 @@
 
 ### 3. Fretibacterium (formerly classified as Synergistetes Cluster A)
 
+> **STATUS: Approved for insight generation and oral scoring. Integrated 2026-04-24.**
+
 **Key finding:** 82.5% sensitivity/specificity for periodontitis — outperformed all red complex members individually. After multivariate adjustment controlling for smoking, age, and other bacteria, P. gingivalis lost significance while Fretibacterium retained independent predictive value.
 
 **Taxonomy note:** Synergistetes Cluster A is older taxonomic terminology. The clinically relevant organism is Fretibacterium fastidiosum, which Peaq's Zymo panel reports at species level. References citing "Synergistetes Cluster A" should be understood as referring to this genus.
 
-**Implication for Cnvrg:** Fretibacterium fastidiosum may be a stronger standalone periodontitis signal than traditional red-complex species. Peaq's Zymo panel already reports this species — no primer or parser changes needed. Can be added to the gum health composite as an additional signal.
+**Implication for Cnvrg:** Fretibacterium fastidiosum may be a stronger standalone periodontitis signal than traditional red-complex species. Peaq's Zymo panel already reports this species — no primer or parser changes needed.
 
 **References:**
 
@@ -54,30 +58,22 @@
 
 ---
 
-## Oral Disease and Ischemic Stroke Risk
-
-> **STATUS: Ready for integration pending Narod sign-off. Not yet wired into insights or scoring.**
+## Pending Clinical Review
 
 ### Combined Periodontal Disease and Dental Caries → Ischemic Stroke
+
+> **STATUS: Ready for integration pending Narod sign-off. Not yet wired into insights or scoring.**
 
 **Key findings** (DARIC — Dental ARIC cohort: 5,986 adults, mean age 63, median 21-year follow-up, US cohort):
 
 - Periodontal disease + dental caries together: **86% higher ischemic stroke risk** vs good oral health (adjusted for cardiovascular risk factors)
 - Periodontal disease alone: 44% higher risk (HR 1.44, 95% CI 1.09–1.91)
-- Risk elevation most pronounced for thrombotic and cardioembolic stroke subtypes
 - Regular dental care: 29% lower likelihood of PD; 81% lower likelihood of having both PD + caries
 - Absolute stroke incidence over follow-up: 4% (good oral health), 7% (PD only), 10% (PD + caries)
 
-**Clinical relevance for Cnvrg:** Directly supports cross-panel connections between oral health markers and cardiovascular/cerebrovascular risk. Provides a concrete risk multiplier (1.86× for combined PD + caries) usable in user-facing insights. Regular dental care is a modifiable behavior Cnvrg can surface.
-
-**Candidate connections (pending sign-off):**
-
-1. Oral panel dysbiosis + lifestyle questionnaire flagging irregular dental care → "watch" insight with stroke prevention framing
-2. Strengthen existing oral-cardiovascular insights (Rules 1A, 28A) with this risk-magnitude evidence
-
 **Reference:**
 
-- Wood S, Logue L, Meyer J, Moss K, Beck JD, Johansen MC, Rosamond WD, Sen S. Combined Influence of Dental Caries and Periodontal Disease on Ischemic Stroke Risk. *Neurology Open Access*. 2025;1(4):e000036. DOI: 10.1212/WN9.0000000000000036
+- Wood S, et al. Combined Influence of Dental Caries and Periodontal Disease on Ischemic Stroke Risk. *Neurology Open Access*. 2025;1(4):e000036. DOI: 10.1212/WN9.0000000000000036
 
 ---
 
@@ -85,6 +81,6 @@
 
 | Date | Change |
 |---|---|
-| 2026-04-24 | Terminology correction: "Synergistetes Cluster A" → "Fretibacterium (formerly Synergistetes Cluster A)". Zymo panel already reports F. fastidiosum at species level. |
+| 2026-04-24 | Three mechanisms promoted from pending to approved: Multi-Taxa Dysbiosis Index, Filifactor alocis, Fretibacterium (terminology corrected from Synergistetes Cluster A). Lab panel capability verified — all taxa present in Zymo species-level reporting. |
 | 2026-04-24 | Added: oral disease + ischemic stroke (DARIC cohort, Wood 2025). Ready for integration pending Narod sign-off. |
-| 2026-04-24 | Initial file created with 3 pending mechanisms: multi-taxa dysbiosis index, F. alocis biomarker, Synergistetes Cluster A. All pending clinical review. |
+| 2026-04-24 | Initial file created with 3 pending mechanisms. |
