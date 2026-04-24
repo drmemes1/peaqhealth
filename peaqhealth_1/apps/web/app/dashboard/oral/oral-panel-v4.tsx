@@ -142,32 +142,51 @@ function buildSignals(ctx: UserPanelContext, subInsights: SubInsight[]): OralSig
     secondaryRead: o.namedSpecies != null ? `${o.namedSpecies} named species across ${o.genera ?? "—"} genera` : undefined,
   })
 
-  // 5. Nighttime breathing — questionnaire alone is sufficient to signal
+  // 5. Nighttime breathing — evaluate from RAW species data, not pre-computed env_pattern
   const envPattern = o.envPattern
   const aerobic = o.envAerobicScorePct
   const qMb = ctx.questionnaire?.mouthBreathing === "confirmed" || ctx.questionnaire?.mouthBreathing === "often"
-  const oralMb = envPattern === "mouth_breathing" || envPattern === "mixed"
+
+  // Compute bacterial mouth-breathing signal directly from species
+  const hasOralSpecies = o.neisseriaPct != null || o.fusobacteriumPct != null
+  const fuso = o.fusobacteriumPct ?? 0
+  const neisseria = o.neisseriaPct ?? 0
+  const aaRatio = o.envAerobicAnaerobicRatio
+
+  const bacterialMbSignals: string[] = []
+  if (fuso > 1.5) bacterialMbSignals.push(`Fusobacterium ${fuso.toFixed(1)}%`)
+  if (neisseria > 12) bacterialMbSignals.push(`Neisseria elevated at ${neisseria.toFixed(1)}%`)
+  if (aaRatio != null && aaRatio > 3.0) bacterialMbSignals.push(`aerobic/anaerobic ratio ${aaRatio.toFixed(1)}×`)
+  if (aerobic != null && aerobic > 25) bacterialMbSignals.push(`aerobic shift ${aerobic.toFixed(1)}%`)
+
+  // Oral corroboration: pre-computed env_pattern OR direct bacterial signals
+  const oralMbFromPattern = envPattern === "mouth_breathing" || envPattern === "mixed"
+  const oralMbFromSpecies = bacterialMbSignals.length >= 1
+  const oralMb = oralMbFromPattern || oralMbFromSpecies
   const hasTwoSources = qMb && oralMb
   const hasAnySources = qMb || oralMb || envPattern === "osa_paradox"
 
-  const breathingStatus: Status = hasAnySources ? (envPattern === "osa_paradox" ? "attention" : "watch") : (envPattern === "balanced" ? "strong" : envPattern == null && !qMb ? "strong" : "watch")
-  const breathingValue = qMb || oralMb ? "Mouth" : envPattern === "osa_paradox" ? "Watch" : envPattern === "balanced" ? "Nasal" : "Pending"
+  const breathingStatus: Status = hasAnySources
+    ? (envPattern === "osa_paradox" ? "attention" : "watch")
+    : (hasOralSpecies && !qMb ? "strong" : envPattern == null && !qMb && !hasOralSpecies ? "strong" : "watch")
+
+  const breathingValue = qMb || oralMb ? "Mouth" : envPattern === "osa_paradox" ? "Watch" : hasOralSpecies ? "Nasal" : "Pending"
 
   let breathingRead: string
   if (hasTwoSources) {
     const when = ctx.questionnaire?.mouthBreathingWhen === "daytime_and_sleep" ? "day and night" : "sleep"
-    breathingRead = aerobic != null
-      ? `Your questionnaire and oral bacteria agree — mouth breathing during ${when}. Aerobic shift at ${aerobic.toFixed(1)}% confirms drier overnight conditions.`
-      : `Your questionnaire and oral bacteria agree — mouth breathing during ${when}. Two independent sources converging on the same finding.`
-  } else if (qMb && !oralMb) {
+    const bacterialDetail = bacterialMbSignals.length > 0 ? ` (${bacterialMbSignals.join(", ")})` : ""
+    breathingRead = `Your questionnaire and oral bacteria both confirm mouth breathing — ${when} per your answers.${bacterialDetail ? ` Bacterial markers: ${bacterialMbSignals.join(", ")}.` : ""}`
+  } else if (qMb && !oralMb && hasOralSpecies) {
     const when = ctx.questionnaire?.mouthBreathingWhen === "daytime_and_sleep" ? "day and night" : "sleep"
-    breathingRead = envPattern != null
-      ? `Your questionnaire confirms mouth breathing during ${when}. Your oral bacteria show a ${envPattern.replace(/_/g, " ")} pattern — the bacterial layer doesn't fully corroborate yet.`
-      : `Your questionnaire confirms mouth breathing during ${when}. Your oral environment data will add the bacterial layer once computed.`
+    breathingRead = `Your questionnaire indicates mouth breathing during ${when}, but your oral bacteria don't show the typical signature. This can happen when mouth breathing is recent or intermittent.`
+  } else if (qMb && !hasOralSpecies) {
+    const when = ctx.questionnaire?.mouthBreathingWhen === "daytime_and_sleep" ? "day and night" : "sleep"
+    breathingRead = `Your questionnaire indicates mouth breathing during ${when}. Oral bacteria corroboration will arrive with your sample results.`
   } else if (oralMb && !qMb) {
-    breathingRead = `Your oral bacteria show an aerobic shift at ${aerobic != null ? aerobic.toFixed(1) + "%" : "elevated levels"}, consistent with mouth breathing. Your questionnaire hasn't flagged this — the bacteria are the primary source here.`
-  } else if (envPattern === "balanced") {
-    breathingRead = "Your oral bacteria show a balanced aerobic/anaerobic community — no breathing disruption signal detected."
+    breathingRead = `Your oral bacteria show a mouth-breathing signature (${bacterialMbSignals.join(", ")}) even though you didn't report mouth breathing. This sometimes happens when people mouth-breathe unknowingly during sleep.`
+  } else if (hasOralSpecies && !qMb) {
+    breathingRead = "Your questionnaire and oral bacteria both suggest nasal breathing — the healthier default."
   } else if (envPattern === "osa_paradox") {
     breathingRead = "Your bacteria show an unusual pattern — oxygen-loving species are very high while gum-area bacteria are unusually suppressed. Worth discussing with your doctor."
   } else {
@@ -185,10 +204,10 @@ function buildSignals(ctx: UserPanelContext, subInsights: SubInsight[]): OralSig
     primaryRead: breathingRead,
     confidenceDots: [
       { label: "Questionnaire", filled: qMb },
-      { label: "Oral bacteria", filled: oralMb || envPattern != null },
+      { label: "Oral bacteria", filled: oralMb || (hasOralSpecies && !qMb) },
       { label: "Wearable", filled: ctx.hasWearable },
     ],
-    sources: hasTwoSources ? "2 sources corroborating" : `${[qMb && "questionnaire", (oralMb || envPattern != null) && "oral"].filter(Boolean).join(" + ") || "assembling"}`,
+    sources: hasTwoSources ? "2 sources corroborating" : `${[qMb && "questionnaire", oralMb && "oral bacteria"].filter(Boolean).join(" + ") || (hasOralSpecies ? "oral" : "assembling")}`,
   })
 
   return signals
@@ -217,14 +236,20 @@ export function OralPanelV4({ ctx }: { ctx: UserPanelContext }) {
 
   const halitosis = useMemo(() => {
     if (!o) return null
+    const q = ctx.questionnaire
     return computeHalitosisScore({
       solobacteriumPct: null,
       prevotellaCommensalPct: null,
       peptostreptococcusPct: null,
       fusobacteriumPct: o.fusobacteriumPct,
       porphyromonasPct: o.porphyromonasPct,
-    })
-  }, [o])
+    }, q ? {
+      mouthBreathing: q.mouthBreathing,
+      mouthBreathingWhen: q.mouthBreathingWhen,
+      stressLevel: q.stressLevel,
+      gerdNocturnal: q.gerdNocturnal,
+    } : undefined)
+  }, [o, ctx.questionnaire])
 
   const effectiveStatuses = useMemo(() => signals.map(s => {
     if (s.status === "strong" && s.subInsight) return "strong-with-note" as const
