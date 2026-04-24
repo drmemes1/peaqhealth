@@ -77,10 +77,109 @@
 
 ---
 
+## Treatment Response and Longitudinal Monitoring
+
+### 1. Refractory Periodontitis Signature
+
+> **STATUS: Approved for insight generation. Integrated 2026-04-24.**
+
+**Key finding:** Species persisting or increasing in refractory patients despite aggressive therapy include F. alocis, Parvimonas micra, Eubacterium spp., Selenomonas spp., Dialister spp., Catonella morbi, Pseudoramibacter alactolyticus, Shuttlesworthia satelles, Peptostreptococcus sp. OT113. Species enriched in good responders: Haemophilus parainfluenzae, Rothia dentocariosa, Capnocytophaga sputigena, Lautropia mirabilis, Neisseria elongata, Kingella oralis, Gemella haemolysans, Streptococcus australis, Veillonella spp. Dual utility: disease detection AND treatment-response prediction from single-timepoint sampling.
+
+**Implication for Cnvrg:** Enables a "refractory risk signature" insight from a single oral sample — no serial sampling needed. The combination of persistence-associated species + depleted health-associated taxa identifies communities less likely to respond to standard cleanings.
+
+**Reference:**
+
+- Colombo APV, et al. Subgingival microbiota of refractory and non-refractory periodontitis. *Journal of Periodontology*. 2012;83(2):169–178. DOI: 10.1902/jop.2012.110566
+
+---
+
+### 2. Parvimonas micra as Treatment-Failure Predictor
+
+> **STATUS: Approved for insight generation. Integrated 2026-04-24.**
+
+**Key finding:** Baseline P. micra predicts persistence of PD>4mm + BOP at 12 months with OR 4.38. Combined with Prevotella intermedia, AUC 0.72. Molecular mechanism: P. micra evades lysosomal clearance via AppA surface protein. Detectable at baseline — does not require serial sampling.
+
+**Implication for Cnvrg:** P. micra elevation is a flag worth surfacing to users: "mention this to your dentist so targeted care can be considered." The OR 4.38 is one of the strongest single-species predictors of treatment non-response in the periodontal literature.
+
+**References:**
+
+- Mombelli A, et al. Subgingival microbiota associated with persistence and non-persistence of residual pockets. *Journal of Periodontology*. 2017;88(9):892–903. DOI: 10.1902/jop.2017.170286
+- Li C, et al. Parvimonas micra evades lysosomal clearance via AppA surface protein. *EBioMedicine*. 2026;115:106187. DOI: 10.1016/j.ebiom.2026.106187
+
+---
+
+### 3. Periodontal Therapy Improves Systemic Markers
+
+> **STATUS: Approved for insight generation. Integrated 2026-04-24.**
+
+**Key finding:** Periodontal therapy reduces pro-inflammatory metabolites (succinate, TMA), restores short-chain fatty acids, decreases oral-origin species in stool. Subgingival Porphyromonas correlates with blood glucose. Supports Cnvrg's oral-systemic axis narrative for existing cross-panel insights.
+
+**Implication for Cnvrg:** Strengthens the framing of oral health as metabolically actionable. Cleaning your teeth isn't just about your gums — it measurably changes your blood chemistry.
+
+**References:**
+
+- Baima G, et al. Metabolomic changes after periodontal therapy: oral-gut axis. *Journal of Periodontal Research*. 2025;60(4):70055. DOI: 10.1111/jre.70055
+- Lu H, et al. Porphyromonas gingivalis association with fasting glucose and HbA1c. *Journal of Periodontology*. 2022;93(11):1644–1653. DOI: 10.1002/JPER.20-0764
+
+---
+
+### 4. Baseline Microbiome Predicts Treatment Outcome
+
+> **STATUS: Pending clinical review. Evidence on file. Requires B2B clinician-facing feature (pre-treatment risk stratification).**
+
+**Key finding:** Baseline microbiome composition predicts treatment outcome better than treatment type. Pre-treatment 16S could guide personalized therapy selection.
+
+**References:**
+
+- Li L, et al. Pre-treatment microbiome as outcome predictor. *Journal of Periodontology*. 2025;96(1). DOI: 10.1002/JPER.24-0141
+- Bizzarro S, et al. Subgingival microbiome and treatment outcome. *Scientific Reports*. 2016;6:27167. DOI: 10.1038/srep20205
+
+---
+
+### 5. Filifactor alocis ftxA Toxin Gene
+
+> **STATUS: Pending clinical review. Evidence on file. Requires strain-level detection not yet available in Zymo panel.**
+
+**Key finding:** ftxA toxin gene (~50% of F. alocis strains) associated with enhanced clinical attachment loss progression. ftxA-positive carriers may need more aggressive treatment.
+
+**References:**
+
+- Razooqi M, et al. ftxA gene and clinical outcomes. *Frontiers in Cellular and Infection Microbiology*. 2024;14:1501028. DOI: 10.3389/fcimb.2024.1501028
+- Razooqi M, et al. Filifactor alocis virulence factors. *Frontiers in Cellular and Infection Microbiology*. 2024;14:1376358. DOI: 10.3389/fcimb.2024.1376358
+
+---
+
+### 6. Post-Treatment Recolonization Pattern
+
+> **STATUS: Pending clinical review. Evidence on file. Requires serial sampling (baseline + 3mo + 6mo).**
+
+**Key finding:** Post-instrumentation microbiome shifts health-ward by day 1–7, but a subset reforms baseline-like microbiome by day 90. F. nucleatum paradoxically increases post-SRP.
+
+**References:**
+
+- Johnston W, et al. Longitudinal microbiome changes post-SRP. *Scientific Reports*. 2021;11:7134. DOI: 10.1038/s41598-021-89002-z
+- Johnston W, et al. Subgingival microbiome after non-surgical therapy. *Journal of Periodontology*. 2023;94(6):725–737. DOI: 10.1002/JPER.22-0749
+- Duran-Pinedo AE, et al. Microbiome recolonization after scaling. *Journal of Clinical Periodontology*. 2023;50(9):1167–1179. DOI: 10.1111/jcpe.13737
+
+---
+
+### 7. SMDI Durability
+
+> **STATUS: Pending clinical review. Evidence on file. Requires longitudinal ODI tracking across multiple timepoints.**
+
+**Key finding:** Subgingival Microbial Dysbiosis Index improvements persist at 26 months post-treatment, more durable than alpha/beta diversity changes. Validates ODI approach (shipped in PR #229).
+
+**Reference:**
+
+- Hoener zu Bentrup K, et al. (Hagenfeld D senior author). Long-term stability of subgingival microbial dysbiosis index after therapy. *Journal of Clinical Periodontology*. 2023;50(10):1340–1350. DOI: 10.1111/jcpe.13824
+
+---
+
 ## Change Log
 
 | Date | Change |
 |---|---|
+| 2026-04-24 | Seven mechanisms added under "Treatment Response and Longitudinal Monitoring." Three approved (Refractory Signature, P. micra failure predictor, periodontal-systemic axis). Four evidence-on-file pending serial sampling or strain-level capability. |
 | 2026-04-24 | Three mechanisms promoted from pending to approved: Multi-Taxa Dysbiosis Index, Filifactor alocis, Fretibacterium (terminology corrected from Synergistetes Cluster A). Lab panel capability verified — all taxa present in Zymo species-level reporting. |
 | 2026-04-24 | Added: oral disease + ischemic stroke (DARIC cohort, Wood 2025). Ready for integration pending Narod sign-off. |
 | 2026-04-24 | Initial file created with 3 pending mechanisms. |
