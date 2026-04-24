@@ -87,6 +87,51 @@ export function getBreathDescription(status: string): string {
   }
 }
 
+// ── Multi-factor modifier stack (Kikuchi 2025, Popa 2025, Makeeva 2021, etc.) ──
+
+interface ModifierInput {
+  mouthBreathing?: string | null
+  mouthBreathingWhen?: string | null
+  stressLevel?: string | null
+  gerdNocturnal?: boolean | null
+  fusobacteriumPctForCorroboration?: number | null
+}
+
+interface BreathFactor {
+  id: string
+  multiplier: number
+  label: string
+  citation: string
+}
+
+function buildModifiers(q: ModifierInput | undefined): BreathFactor[] {
+  if (!q) return []
+  const factors: BreathFactor[] = []
+
+  const mb = q.mouthBreathing === "confirmed" || q.mouthBreathing === "often" ||
+    q.mouthBreathingWhen === "sleep_only" || q.mouthBreathingWhen === "daytime_and_sleep"
+  if (mb) {
+    const hasBacterialCorroboration = (q.fusobacteriumPctForCorroboration ?? 0) > 1
+    factors.push({
+      id: "mouth_breathing",
+      multiplier: hasBacterialCorroboration ? 0.70 : 0.85,
+      label: hasBacterialCorroboration ? "Nighttime mouth breathing (bacterial + questionnaire)" : "Mouth breathing (self-report)",
+      citation: "Kikuchi 2025",
+    })
+  }
+
+  if (q.gerdNocturnal === true) {
+    factors.push({ id: "gerd", multiplier: 0.85, label: "Nocturnal reflux", citation: "Struch 2008" })
+  }
+
+  const highStress = q.stressLevel === "high" || q.stressLevel === "very_high"
+  if (highStress) {
+    factors.push({ id: "stress", multiplier: 0.95, label: "Elevated stress", citation: "Apessos 2020" })
+  }
+
+  return factors
+}
+
 // Legacy compat — used by oral-panel-v4
 export function computeHalitosisScore(species: {
   solobacteriumPct?: number | null
@@ -94,7 +139,7 @@ export function computeHalitosisScore(species: {
   peptostreptococcusPct?: number | null
   fusobacteriumPct?: number | null
   porphyromonasPct?: number | null
-}): { breathScore: number; vscBurden: number; status: "strong" | "watch" | "attention"; label: string } {
+}, questionnaire?: ModifierInput): { breathScore: number; vscBurden: number; status: "strong" | "watch" | "attention"; label: string; factors: BreathFactor[] } {
   const result = getBreathScore({
     solobacteriumPct: species.solobacteriumPct,
     prevotellaMelaninogenicaPct: species.prevotellaCommensalPct,
@@ -102,10 +147,20 @@ export function computeHalitosisScore(species: {
     fusobacteriumPeriodonticumPct: species.fusobacteriumPct,
     porphyromonasPct: species.porphyromonasPct,
   })
-  return {
-    breathScore: result.score ?? 100,
-    vscBurden: result.vscBurden,
-    status: result.status === "no_data" ? "strong" : result.status,
-    label: result.statusText,
-  }
+
+  const factors = buildModifiers(questionnaire ? {
+    ...questionnaire,
+    fusobacteriumPctForCorroboration: species.fusobacteriumPct,
+  } : undefined)
+
+  const multiplier = factors.reduce((m, f) => m * f.multiplier, 1.0)
+  const adjustedScore = Math.max(0, Math.min(100, Math.round((result.score ?? 100) * multiplier)))
+
+  let status: "strong" | "watch" | "attention"
+  let label: string
+  if (adjustedScore >= 75) { status = "strong"; label = adjustedScore >= 90 ? "Fresh" : "Mild VSC load" }
+  else if (adjustedScore >= 50) { status = "watch"; label = "Moderate VSC signal" }
+  else { status = "attention"; label = "Elevated VSC producers" }
+
+  return { breathScore: adjustedScore, vscBurden: result.vscBurden, status, label, factors }
 }
