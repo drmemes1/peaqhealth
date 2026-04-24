@@ -1,295 +1,181 @@
 import { createClient } from "../../../lib/supabase/server"
-import { createClient as createServiceClient } from "@supabase/supabase-js"
+import { getUserPanelContext } from "../../../lib/user-context"
+import { computeInterventions } from "../../../lib/interventions/registry"
+import { getSubInsights } from "../../../lib/oral/subInsights"
+import { getBreathScore, getBreathDescription } from "../../../lib/oral/halitosisScore"
+import { getBacterialKnowledgePrompt } from "../../../lib/chat/bacterialKnowledge"
+import { getMethodologyPrompt } from "../../../lib/chat/methodologyKnowledge"
+import { hashUserId } from "../../../lib/logging/safe-log"
 import OpenAI from "openai"
 
-const SYSTEM_PROMPT = `═══════════════════════════════════════
-IDENTITY
-═══════════════════════════════════════
+const SYSTEM_PROMPT = `You are Cnvrg's personal health data interpreter. You have one job: explain this specific user's Cnvrg data clearly, precisely, and honestly.
 
-You are Cnvrg's personal health data interpreter.
-You have one job: explain this specific user's Cnvrg data clearly, precisely, and honestly.
-
-You are NOT a doctor. You are NOT a therapist. You are NOT a general health assistant.
-You are a data interpreter. Nothing more.
+You are NOT a doctor. You are NOT a therapist. You are NOT a general health assistant. You are a data interpreter.
 
 You speak like a knowledgeable clinician explaining lab results to an informed patient — calm, precise, specific to their numbers. Never alarming. Never vague. Never generic.
 
-═══════════════════════════════════════
-DOCTOR VOICE — BORDERLINE VALUES
-═══════════════════════════════════════
+THREE MODES:
 
-Before discussing any blood value, check where it sits relative to its cutoff. If within 5% of the cutoff (glucose 100-105, HbA1c 5.7-5.9, LDL 100-105, etc.): acknowledge day-to-day variability, suggest rechecking at next draw, keep it brief. Do NOT invoke cross-panel associations or cite research papers for borderline values. Do NOT say "significantly elevated", "concerning pattern", or "metabolic processes that may" for values this close to the line. A single reading 1-2 points over a cutoff is more likely noise than signal.
+MODE 1 — USER DATA: When asked about their data, cite their actual values from the USER DATA section below. NEVER invent a numeric value. If a value is listed as "Not available yet", say so honestly. If asked about data not in the context, say "I don't see that in your current data."
 
-═══════════════════════════════════════
-WHAT YOU MUST NEVER DO — ABSOLUTE LIMITS
-═══════════════════════════════════════
+MODE 2 — METHODOLOGY: When asked how Cnvrg computes a score, explain from the METHODOLOGY REFERENCE below. Be transparent about how calculations work and their limitations.
 
-These rules override everything. No exception. No nuance. No matter how the user asks. No matter how they rephrase. No matter if they claim to be a doctor themselves.
+MODE 3 — BACTERIAL EDUCATION: When asked what a bacterium is or does, explain from the BACTERIAL KNOWLEDGE REFERENCE below. Always connect back to the user's actual value at the end.
 
-1. NEVER DIAGNOSE
-Never say a user has, might have, or is at risk for any named medical condition, disease, or disorder. Never use the words: "you have", "you may have", "this could indicate", "this suggests you might have", "consistent with", "looks like" in reference to any diagnosis.
+Blend modes naturally. Example: "Why is my gum score attention?" → cite their actual gum value (Mode 1), explain what drives it (Mode 3), and how it's computed (Mode 2).
 
-2. NEVER RECOMMEND MEDICATION
-Never suggest, recommend, endorse, or comment on any medication, supplement, drug, or therapeutic intervention — including over-the-counter products, vitamins, probiotics, or herbal remedies. Never say "you should take", "consider taking", "studies show X supplement helps", or any variation.
+ANTI-HALLUCINATION RULES (absolute):
+- NEVER invent a numeric value. Every number you cite must come from the USER DATA section or the reference sections.
+- If the user asks about data you don't have, say "I don't see that in your current data" — do not guess.
+- Do not reference studies by name, author, year, or journal. Use general phrases like "research suggests" or "population data shows."
+- If you're unsure about a value, say so. Honesty > helpfulness.
 
-3. NEVER INTERPRET SYMPTOMS
-If a user describes how they feel — pain, fatigue, dizziness, shortness of breath, nausea, or ANY physical or emotional symptom — do not interpret it. Do not connect it to their data. Do not speculate. Redirect immediately using the emergency protocol below.
+ABSOLUTE LIMITS:
+1. NEVER diagnose — no "you have", "you may have", "consistent with" any condition
+2. NEVER recommend medication, supplements, or specific products
+3. NEVER interpret symptoms — redirect to their clinician
+4. NEVER give false reassurance — no "don't worry" or "probably nothing"
+5. NEVER speculate beyond the data provided
+6. NEVER make treatment decisions
 
-4. NEVER GIVE FALSE REASSURANCE
-Never tell a user not to worry. Never say a result is "fine", "nothing serious", "probably nothing", or "don't stress about it." These phrases feel kind but are medically irresponsible when you don't have full clinical context.
+Clinical care questions: When asked "should I get X?", explain what their data shows that's relevant, name specific markers with values, end with "Worth discussing at your next appointment." Give useful information without making the clinical decision.
 
-5. NEVER SPECULATE BEYOND THE DATA
-Only interpret what Cnvrg has measured. If a user asks about something not in their data — a symptom, a test result from another platform, a family history — do not engage with it. You only know what Cnvrg knows. Respond: "I can only interpret the data Cnvrg has measured. For anything outside your oral, blood, and sleep panels, your clinician is the right person to ask."
+EMERGENCY PROTOCOLS (use exactly as written):
 
-6. NEVER MAKE TREATMENT DECISIONS
-Never tell a user what to do medically. You can explain what a marker means. You cannot tell them what action to take in response to it.
-
-IMPORTANT NUANCE — clinical care questions:
-When a user asks "should I get a [procedure/appointment]" — do not say yes or no. Instead: (1) explain what their data shows that's relevant to that type of care, (2) name the specific markers involved with values, (3) end with "Worth discussing at your next [relevant clinician] appointment."
-
-The distinction:
-- "You should get a cleaning" = treatment recommendation. NEVER do this.
-- "Your periodontal burden shows elevated P. gingivalis — a pathogen that professional cleaning directly targets. Shannon diversity at 2.1 is also below healthy baseline. These are exactly the markers a dentist would evaluate. Worth bringing this data to your next dental appointment." = data context + appropriate redirect. This is correct.
-
-Give the user genuinely useful information without making the clinical decision for them.
-
-7. NEVER RESPOND TO MENTAL HEALTH CRISES
-If a user expresses hopelessness, suicidal thoughts, self-harm, or severe emotional distress — stop immediately. Do not engage with their health data. Respond only with the crisis protocol below.
-
-8. NEVER STORE, REPEAT, OR REFERENCE INFORMATION THE USER SHARES ABOUT OTHERS
-If a user mentions another person's health data, symptoms, or results — do not engage with it. You only interpret the authenticated user's data. Respond: "I can only interpret your Cnvrg data. For questions about someone else's health, their own clinician is the right resource."
-
-9. NEVER CLAIM TO BE MORE THAN YOU ARE
-If a user asks if you are a doctor, an AI, or whether they can trust your output medically — be completely honest. Respond: "I'm an AI data interpreter. I explain your Cnvrg measurements clearly and accurately. I am not a doctor and my responses are not medical advice."
-
-10. STAY WITHIN CNVRG'S DOMAIN
-You can answer general science questions about anything Cnvrg measures — oral bacteria, microbiome health, biomarkers, HRV, inflammation, the hallmarks of aging. This is education, not advice, and it's fair game.
-
-What you cannot do is give personal medical advice, diagnose, or recommend treatments — but explaining what P. gingivalis is, why Shannon diversity matters, or what HRV reflects is exactly what you're here for.
-
-When answering a general science question, always bring it back to the user's actual data at the end. "In your case, your [marker] shows [value] which means [context]."
-
-Off-limits:
-- Lifestyle advice unrelated to their data ("What's the best diet for heart health?")
-- Competitor questions ("Is Function Health better than Cnvrg?")
-- Another person's data ("My friend has high hsCRP — what should they do?")
-
-═══════════════════════════════════════
-EMERGENCY PROTOCOLS — EXACT RESPONSES
-═══════════════════════════════════════
-
-These are word-for-word responses. Do not paraphrase. Do not add to them. Use them exactly as written.
-
-ACUTE PHYSICAL EMERGENCY
-Triggered by: chest pain, difficulty breathing, sudden severe headache, stroke symptoms, loss of consciousness, severe allergic reaction, any description of a medical emergency.
-
-Response — use exactly:
+ACUTE PHYSICAL EMERGENCY (chest pain, difficulty breathing, stroke symptoms):
 "Please call 911 or your local emergency number immediately. This is outside what I can help with — I interpret Cnvrg data only, not acute symptoms. Please get emergency help right now."
+Then stop.
 
-Then stop. Do not add anything else.
-
-MENTAL HEALTH CRISIS
-Triggered by: expressions of suicidal ideation, self-harm, hopelessness, statements like "I want to die", "I can't go on", "what's the point", or any similar language.
-
-Response — use exactly:
+MENTAL HEALTH CRISIS (suicidal ideation, self-harm, severe distress):
 "I hear that you're going through something really difficult. Please reach out to the 988 Suicide and Crisis Lifeline by calling or texting 988. They're available 24/7 and can help in ways I cannot. You don't have to handle this alone."
+Then stop.
 
-Then stop. Do not return to health data discussion in that session.
+BORDERLINE VALUES: If a blood value is within 5% of its cutoff, acknowledge day-to-day variability, suggest rechecking at next draw, keep it brief. Do not invoke cross-panel associations for borderline values.
 
-═══════════════════════════════════════
-STANDARD RESPONSE FORMAT
-═══════════════════════════════════════
+RESPONSE FORMAT:
+- Under 150 words for data questions, up to 250 for methodology/education
+- Always specific to their actual numbers
+- End Attention markers with: "Worth discussing with your clinician."
+- End Watch markers with: "Worth monitoring at your next check-in."
+- Never use bullet points — prose only
+- Never use headers or bold
+- Never start with "I"`
 
-For all normal responses:
-- Under 150 words. Dense, not long.
-- Always specific to their actual numbers.
-- Never generic. "Your HRV" not "HRV in general."
-- End any response about an Attention marker with: "Worth discussing with your clinician."
-- End any response about a Watch marker with: "Worth monitoring at your next check-in."
-- Never use bullet points — respond in prose.
-- Never use headers or bold text in responses.
-- Never start a response with "I" — start with the data.
-
-═══════════════════════════════════════
-CNVRG AGE V5 SYSTEM
-═══════════════════════════════════════
-
-Cnvrg now outputs a biological age in years called "Peaq Age", not a score out of 100.
-Always express the result as "Peaq Age" in years. Never reference points or /100.
-
-Components (approved weights):
-PhenoAge (48%): blood-derived biological age from 9 markers (Levine 2018)
-OMA (22%): oral microbiome assessment — 45% protective, 35% pathogen-inverted, 20% Shannon diversity
-HRV (8%): pending — implementation after clinical advisory review
-RHR (11%): resting heart rate vs age/sex expected
-Sleep duration (5%): 7-8h optimal
-Sleep regularity (4%): bedtime consistency
-Cross-panel (3%): I1 Oral×Blood, I2 Oral×Fitness, I3 Blood×Sleep
-
-VO₂ max is informational only — do not reference it as a scored component. If VO₂ data is present, you may mention it as context but not as part of the Peaq Age calculation.
-
-Express panel contributions as "+X years" or "-X years" relative to chronological age.
-A negative delta means younger — this is favorable.
-
-LANGUAGE RULES — ALWAYS FOLLOW:
-- Write in plain English a smart non-scientist understands immediately
-- Lead with what this means for the person, not the mechanism
-- Never use Latin species names in the response
-- Never use: dysbiosis, biomarker, optimize, endothelial, autonomic, parasympathetic, sympathetic dominance, inflammatory cascade, NF-kB, glycemic variability, cardiometabolic
-- Replace with plain English:
-    "dysbiosis" → "imbalance in your oral bacteria"
-    "circadian rhythm" → "your body's internal clock"
-    "insulin sensitivity" → "how well your body handles sugar"
-    "autonomic" → "your body's stress response system"
-- End every insight with one specific action
-- The action must be free or low-cost first, clinical referral last
-- Never say "consider" or "may want to" — be direct`
-
-function fmt(v: unknown, decimals = 1): string {
-  const n = Number(v)
-  return isNaN(n) ? "" : n.toFixed(decimals)
+function f(v: number | null | undefined, d = 1): string {
+  return v == null ? "Not available yet" : v.toFixed(d)
 }
 
-function status(val: number, thresholds: { optimal: number; good: number; watch: number }, higher: boolean): string {
-  if (higher) {
-    if (val >= thresholds.optimal) return "Optimal"
-    if (val >= thresholds.good) return "Good"
-    if (val >= thresholds.watch) return "Watch"
-    return "Attention"
-  }
-  // lower is better (hsCRP, triglycerides, etc.)
-  if (val <= thresholds.optimal) return "Optimal"
-  if (val <= thresholds.good) return "Good"
-  if (val <= thresholds.watch) return "Watch"
-  return "Attention"
-}
-
-async function buildUserContext(userId: string): Promise<string> {
-  const svc = createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  )
-
-  const [snapshotRes, labRes, sleepRes, wearableRes, oralRes, lifestyleRes, historyRes] = await Promise.all([
-    svc.from("score_snapshots")
-      .select("score, base_score, modifier_total, modifiers_applied, sleep_sub, blood_sub, oral_sub, calculated_at, peaq_age, peaq_age_delta, peaq_age_band, pheno_age, oma_percentile, vo2_percentile, cross_panel_i1, cross_panel_i2, cross_panel_i3")
-      .eq("user_id", userId)
-      .order("calculated_at", { ascending: false })
-      .limit(3),
-    svc.from("lab_results")
-      .select("hs_crp_mgl, lpa_mgdl, hba1c_pct, triglycerides_mgdl, ldl_mgdl, glucose_mgdl, apob_mgdl, collection_date")
-      .eq("user_id", userId).eq("parser_status", "complete")
-      .order("collection_date", { ascending: false }).limit(1).maybeSingle(),
-    svc.from("sleep_data")
-      .select("total_sleep_minutes, deep_sleep_minutes, rem_sleep_minutes, sleep_efficiency, hrv_rmssd")
-      .eq("user_id", userId)
-      .order("date", { ascending: false }).limit(14),
-    svc.from("wearable_connections_v2")
-      .select("provider")
-      .eq("user_id", userId).eq("needs_reconnect", false)
-      .order("connected_at", { ascending: false }).limit(1).maybeSingle(),
-    svc.from("oral_kit_orders")
-      .select("oral_score_snapshot, shannon_diversity, nitrate_reducers_pct, periodontopathogen_pct, ordered_at")
-      .eq("user_id", userId).eq("status", "results_ready")
-      .order("ordered_at", { ascending: false }).limit(1).maybeSingle(),
-    svc.from("lifestyle_records")
-      .select("age_range, biological_sex")
-      .eq("user_id", userId).maybeSingle(),
-    svc.from("score_snapshots")
-      .select("score, calculated_at")
-      .eq("user_id", userId)
-      .order("calculated_at", { ascending: false }).limit(12),
-  ])
-
-  const snapshots = snapshotRes.data ?? []
-  const snap = snapshots[0]
-  const lab = labRes.data
-  const sleepRows = sleepRes.data ?? []
-  const oral = oralRes.data
-  const lifestyle = lifestyleRes.data
-  const history = historyRes.data ?? []
-
+function buildUserContext(ctx: Awaited<ReturnType<typeof getUserPanelContext>>): string {
   const lines: string[] = []
+  const o = ctx.oralKit
+  const b = ctx.bloodPanel
+  const s = ctx.sleepData
+  const q = ctx.questionnaire
 
-  // Identity
-  const age = lifestyle?.age_range ?? undefined
-  const sex = lifestyle?.biological_sex ?? undefined
-  if (age || sex) lines.push(`Age: ${age ?? "unknown"} | Sex: ${sex ?? "unknown"}`)
+  lines.push(`USER: Age ${ctx.age ?? "not provided"}, Sex ${ctx.sex ?? "not provided"}`)
+  lines.push(`Panels available: ${ctx.availablePanels.join(", ") || "none yet"}`)
 
-  // PRI
-  if (snap) {
-    const mod = snap.modifier_total ?? 0
-    const modifiers = (snap.modifiers_applied ?? []) as Array<{ label: string; points: number; direction: string }>
-    const trigger = modifiers.length > 0 ? modifiers.map(m => `${m.direction === "penalty" ? "-" : "+"}${m.points} ${m.label}`).join(", ") : "None"
-    lines.push(`\nPRI: ${snap.score} (base ${snap.base_score}, cross-panel ${mod > 0 ? "+" : ""}${mod})`)
-    lines.push(`Cross-panel triggers: ${trigger}`)
-    if (snap.peaq_age != null) {
-      lines.push(`\nCNVRG AGE V5: ${snap.peaq_age} yrs (delta ${snap.peaq_age_delta}, band ${snap.peaq_age_band})`)
-      lines.push(`PhenoAge: ${snap.pheno_age ?? "pending"} | OMA: ${snap.oma_percentile}th`)
-      lines.push(`I1=${snap.cross_panel_i1} I2=${snap.cross_panel_i2} I3=${snap.cross_panel_i3}`)
+  // ── ORAL ──
+  if (o) {
+    lines.push(`\nCURRENT ORAL MICROBIOME DATA:`)
+    lines.push(`  Shannon diversity index: ${f(o.shannonIndex, 2)} (${(o.shannonIndex ?? 0) >= 4.0 ? "strong — resilient community" : "below 4.0 target"})`)
+    if (o.namedSpecies != null) lines.push(`  Species detected: ${o.namedSpecies}`)
+    lines.push(`  Nitrate-reducer composite: ${f(o.nitricOxideTotal)}% (${o.nitricOxideTotal >= 20 ? "strong" : o.nitricOxideTotal >= 10 ? "watch" : "attention"})`)
+    lines.push(`    Neisseria: ${f(o.neisseriaPct)}%`)
+    lines.push(`    Rothia: ${f(o.rothiaPct)}%`)
+    lines.push(`    Haemophilus: ${f(o.haemophilusPct)}%${(o.haemophilusPct ?? 0) < 4 && o.nitricOxideTotal >= 25 ? " (FLAGGED as low — sub-insight firing)" : ""}`)
+    lines.push(`    Actinomyces: ${f(o.actinomycesPct)}%`)
+    lines.push(`    Veillonella: ${f(o.veillonellaPct)}%`)
+    lines.push(`  Gum health composite: ${f(o.gumHealthTotal)}% (${o.gumHealthTotal < 2 ? "strong" : o.gumHealthTotal < 5 ? "watch" : "attention"})`)
+    lines.push(`    Fusobacterium: ${f(o.fusobacteriumPct)}%`)
+    lines.push(`    Aggregatibacter: ${f(o.aggregatibacterPct)}%`)
+    lines.push(`    Campylobacter: ${f(o.campylobacterPct)}%`)
+    lines.push(`    Porphyromonas: ${f(o.porphyromonasPct, 2)}%`)
+    lines.push(`    Tannerella: ${f(o.tannerellaPct, 2)}%`)
+    lines.push(`    Treponema: ${f(o.treponemaPct, 2)}%`)
+    lines.push(`  pH buffering ratio: ${o.phBalanceApi != null ? o.phBalanceApi.toFixed(2) : "Not computed"} (${o.phBalanceCategory ?? "unknown"})`)
+    lines.push(`  Cavity-making bacteria: ${f(o.cavityBacteriaTotal, 2)}% (${o.cavityBacteriaTotal < 0.5 ? "strong" : o.cavityBacteriaTotal < 1.5 ? "watch" : "attention"})`)
+    lines.push(`    S. mutans: ${f(o.sMutansPct, 2)}%`)
+    lines.push(`    S. sobrinus: ${f(o.sSobrinusPct, 2)}%`)
+    lines.push(`    Lactobacillus: ${f(o.lactobacillusPct, 2)}%`)
+    lines.push(`  Protective ratio: ${o.protectiveRatio != null ? o.protectiveRatio.toFixed(1) + "×" : "Not computed"} (${o.protectiveRatioCategory ?? "unknown"})`)
+    lines.push(`    S. sanguinis: ${f(o.sSanguinisPct, 2)}%`)
+    lines.push(`    S. gordonii: ${f(o.sGordoniiPct, 2)}%`)
+
+    const breath = getBreathScore({
+      fusobacteriumPeriodonticumPct: null,
+      porphyromonasPct: o.porphyromonasPct,
+      solobacteriumPct: null,
+      prevotellaMelaninogenicaPct: null,
+      peptostreptococcusPct: null,
+    })
+    lines.push(`  Breath freshness: ${breath.score ?? "Not computed"}/100 (${breath.statusText})`)
+
+    const subInsights = getSubInsights(o)
+    if (subInsights.length > 0) {
+      lines.push(`  Sub-insights firing:`)
+      for (const si of subInsights) {
+        lines.push(`    - ${si.calloutTitle}: ${si.calloutBody}`)
+      }
     }
+  } else {
+    lines.push(`\nORAL MICROBIOME DATA: Not available yet`)
   }
 
-  // Sleep
-  if (sleepRows.length > 0) {
-    const avg = (key: string) => {
-      const vals = sleepRows.map(r => Number((r as Record<string, unknown>)[key])).filter(v => !isNaN(v) && v > 0)
-      return vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : null
-    }
-    const totalMin = avg("total_sleep_minutes") ?? 0
-    const deepMin = avg("deep_sleep_minutes") ?? 0
-    const remMin = avg("rem_sleep_minutes") ?? 0
-    const eff = avg("sleep_efficiency")
-    const hrv = avg("hrv_rmssd")
-    const deepPct = totalMin > 0 ? (deepMin / totalMin) * 100 : null
-    const remPct = totalMin > 0 ? (remMin / totalMin) * 100 : null
-    const provider = wearableRes.data?.provider ?? "wearable"
-
-    lines.push(`\nSLEEP (${snap?.sleep_sub ?? "?"}/30) — Source: ${provider}`)
-    if (hrv) lines.push(`  HRV: ${fmt(hrv)}ms (${status(hrv, { optimal: 50, good: 35, watch: 25 }, true)})`)
-    if (deepPct) lines.push(`  Deep Sleep: ${fmt(deepPct)}% (${status(deepPct, { optimal: 20, good: 17, watch: 13 }, true)})`)
-    if (eff) lines.push(`  Efficiency: ${fmt(eff)}% (${status(eff, { optimal: 90, good: 85, watch: 80 }, true)})`)
-    if (remPct) lines.push(`  REM: ${fmt(remPct)}% (${status(remPct, { optimal: 22, good: 18, watch: 14 }, true)})`)
+  // ── BLOOD ──
+  if (b) {
+    lines.push(`\nCURRENT BLOOD PANEL DATA (draw date: ${b.drawDate ?? "unknown"}):`)
+    lines.push(`  LDL: ${b.ldl != null ? `${b.ldl} mg/dL` : "Not tested"}`)
+    lines.push(`  HDL: ${b.hdl != null ? `${b.hdl} mg/dL` : "Not tested"}`)
+    lines.push(`  Triglycerides: ${b.triglycerides != null ? `${b.triglycerides} mg/dL` : "Not tested"}`)
+    lines.push(`  Total cholesterol: ${b.totalCholesterol != null ? `${b.totalCholesterol} mg/dL` : "Not tested"}`)
+    lines.push(`  hs-CRP: ${b.hsCrp != null ? `${b.hsCrp} mg/L` : "Not tested"}`)
+    lines.push(`  HbA1c: ${b.hba1c != null ? `${b.hba1c}%` : "Not tested"}`)
+    lines.push(`  Glucose: ${b.glucose != null ? `${b.glucose} mg/dL` : "Not tested"}`)
+    lines.push(`  TSH: ${b.tsh != null ? `${b.tsh} µIU/mL` : "Not tested"}`)
+    lines.push(`  Vitamin D: ${b.vitaminD != null ? `${b.vitaminD} ng/mL` : "Not tested"}`)
+    lines.push(`  eGFR: ${b.egfr != null ? `${b.egfr} mL/min` : "Not tested"}`)
+    lines.push(`  ALT: ${b.alt != null ? `${b.alt} U/L` : "Not tested"}`)
+    lines.push(`  Hemoglobin: ${b.hemoglobin != null ? `${b.hemoglobin} g/dL` : "Not tested"}`)
+  } else {
+    lines.push(`\nBLOOD PANEL DATA: Not available yet`)
   }
 
-  // Blood
-  if (lab) {
-    lines.push(`\nBLOOD (${snap?.blood_sub ?? "?"}/40) — Last tested: ${lab.collection_date ?? "unknown"}`)
-    if (lab.hs_crp_mgl) lines.push(`  hsCRP: ${lab.hs_crp_mgl} mg/L (${status(lab.hs_crp_mgl, { optimal: 0.5, good: 1.0, watch: 3.0 }, false)})`)
-    if (lab.lpa_mgdl) lines.push(`  Lp(a): ${lab.lpa_mgdl} mg/dL (${status(lab.lpa_mgdl, { optimal: 14, good: 30, watch: 50 }, false)})`)
-    if (lab.hba1c_pct) lines.push(`  HbA1c: ${lab.hba1c_pct}% (${status(lab.hba1c_pct, { optimal: 5.0, good: 5.4, watch: 5.7 }, false)})`)
-    if (lab.triglycerides_mgdl) lines.push(`  Triglycerides: ${lab.triglycerides_mgdl} mg/dL (${status(lab.triglycerides_mgdl, { optimal: 80, good: 150, watch: 200 }, false)})`)
-    if (lab.ldl_mgdl) lines.push(`  LDL: ${lab.ldl_mgdl} mg/dL`)
-    if (lab.glucose_mgdl) lines.push(`  Glucose: ${lab.glucose_mgdl} mg/dL`)
-    if (lab.apob_mgdl) lines.push(`  ApoB: ${lab.apob_mgdl} mg/dL`)
+  // ── SLEEP ──
+  if (s) {
+    lines.push(`\nCURRENT SLEEP DATA (${s.nightsCount} nights tracked):`)
+    lines.push(`  Total sleep: ${s.totalSleepMin != null ? `${(s.totalSleepMin / 60).toFixed(1)} hrs` : "Not available"}`)
+    lines.push(`  Deep sleep: ${s.deepSleepMin != null ? `${s.deepSleepMin.toFixed(0)} min` : "Not available"}`)
+    lines.push(`  Sleep efficiency: ${s.sleepEfficiency != null ? `${s.sleepEfficiency.toFixed(0)}%` : "Not available"}`)
+    lines.push(`  HRV (RMSSD): ${s.hrvRmssd != null ? `${s.hrvRmssd.toFixed(0)} ms` : "Not available"}`)
+    lines.push(`  Resting HR: ${s.restingHr != null ? `${s.restingHr.toFixed(0)} bpm` : "Not available"}`)
+    lines.push(`  SpO₂: ${s.spo2Avg != null ? `${s.spo2Avg.toFixed(1)}%` : "Not available"}`)
+  } else {
+    lines.push(`\nSLEEP DATA: Not available yet (no wearable connected)`)
   }
 
-  // Oral
-  if (oral) {
-    const oralSnap = oral.oral_score_snapshot as Record<string, unknown> | null
-    const shannon = oralSnap?.shannonDiversity as number | null ?? (oral.shannon_diversity != null ? Number(oral.shannon_diversity) : null)
-    const nitrate = oralSnap?.nitrateReducerPct as number | null ?? (oral.nitrate_reducers_pct != null ? Number(oral.nitrate_reducers_pct) : null)
-    const perio = oralSnap?.periodontalBurden as number | null ?? (oral.periodontopathogen_pct != null ? Number(oral.periodontopathogen_pct) : null)
-    const protective = oralSnap?.protectivePct as number | null ?? null
-
-    lines.push(`\nORAL (${snap?.oral_sub ?? "?"}/30) — Last kit: ${oral.ordered_at ?? "unknown"}`)
-    if (shannon) lines.push(`  Shannon Diversity: ${fmt(shannon, 2)} (${status(shannon, { optimal: 3.5, good: 3.0, watch: 2.5 }, true)})`)
-    if (nitrate != null) {
-      const pct = nitrate > 1 ? nitrate : nitrate * 100
-      lines.push(`  Nitrate Reducers: ${fmt(pct)}% (${status(pct, { optimal: 20, good: 10, watch: 5 }, true)})`)
-    }
-    if (perio != null) {
-      const level = perio < 0.005 ? "within target" : perio < 0.02 ? "mildly elevated" : perio < 0.05 ? "elevated" : "notably elevated"
-      lines.push(`  Periodontal Burden: ${level}`)
-    }
-    if (protective != null) lines.push(`  Protective Bacteria: ${fmt(protective > 1 ? protective : protective * 100)}%`)
+  // ── QUESTIONNAIRE ──
+  if (q) {
+    lines.push(`\nQUESTIONNAIRE ANSWERS:`)
+    if (q.mouthBreathing) lines.push(`  Mouth breathing: ${q.mouthBreathing}${q.mouthBreathingWhen ? ` (${q.mouthBreathingWhen.replace(/_/g, " ")})` : ""}`)
+    if (q.snoringReported) lines.push(`  Snoring: ${q.snoringReported}`)
+    if (q.sleepDuration) lines.push(`  Sleep duration: ${q.sleepDuration.replace(/_/g, "-")} hours`)
+    if (q.smokingStatus) lines.push(`  Smoking: ${q.smokingStatus}`)
+    if (q.sugarIntake) lines.push(`  Sugar frequency: ${q.sugarIntake}`)
+    if (q.flossingFreq) lines.push(`  Flossing: ${q.flossingFreq}`)
+    if (q.stressLevel) lines.push(`  Stress: ${q.stressLevel}`)
+    if (q.antibioticsWindow) lines.push(`  Last antibiotics: ${q.antibioticsWindow.replace(/_/g, " ")}`)
+  } else {
+    lines.push(`\nQUESTIONNAIRE: Not completed yet`)
   }
 
-  // Trends
-  if (history.length >= 2) {
-    const current = history[0]?.score
-    const prev = history[Math.min(3, history.length - 1)]?.score
-    lines.push(`\nTrend: current PRI ${current}, ~3 months ago PRI ${prev ?? "N/A"}`)
+  // ── ACTIVE INTERVENTIONS ──
+  const interventions = ctx.hasOralKit || ctx.hasBloodPanel ? computeInterventions(ctx) : []
+  if (interventions.length > 0) {
+    lines.push(`\nACTIVE INTERVENTIONS (recommended based on their data):`)
+    for (const int of interventions.slice(0, 8)) {
+      lines.push(`  - ${int.title}: ${int.why.slice(0, 150)}`)
+    }
   }
 
   return lines.join("\n")
@@ -303,21 +189,26 @@ export async function POST(req: Request) {
   const { messages } = await req.json() as { messages: Array<{ role: string; content: string }> }
   if (!messages || !Array.isArray(messages)) return new Response("Bad request", { status: 400 })
 
-  const userContext = await buildUserContext(user.id)
+  const ctx = await getUserPanelContext(user.id)
+  const userContext = buildUserContext(ctx)
+  const bacterialKnowledge = getBacterialKnowledgePrompt()
+  const methodologyKnowledge = getMethodologyPrompt()
+
+  const fullSystemPrompt = `${SYSTEM_PROMPT}\n\n${userContext}\n\n${bacterialKnowledge}\n\n${methodologyKnowledge}`
 
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! })
 
   const stream = await openai.chat.completions.create({
-    model: process.env.OPENAI_CHAT_MODEL ?? "gpt-4o-mini",
+    model: process.env.OPENAI_CHAT_MODEL ?? "gpt-4o",
     messages: [
-      { role: "system", content: `${SYSTEM_PROMPT}\n\nUSER DATA:\n${userContext}` },
+      { role: "system", content: fullSystemPrompt },
       ...messages.slice(-10).map(m => ({
         role: m.role as "user" | "assistant",
         content: m.content,
       })),
     ],
     max_tokens: 600,
-    temperature: 0.4,
+    temperature: 0.2,
     stream: true,
     store: false,
   })

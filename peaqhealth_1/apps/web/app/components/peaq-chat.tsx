@@ -12,9 +12,9 @@ interface Message {
 }
 
 const SUGGESTIONS = [
-  "Why did my score change?",
-  "What's driving my cross-panel signal?",
-  "Which marker should I focus on?",
+  "What does my data mean?",
+  "How does Cnvrg calculate my scores?",
+  "Tell me about my bacteria",
 ]
 
 function timestamp() {
