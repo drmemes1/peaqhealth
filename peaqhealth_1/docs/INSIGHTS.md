@@ -1,7 +1,7 @@
 # Peaq Health — INSIGHTS.md
 ## Connection Rules Engine + Cross-Panel Intelligence
 
-**Version:** 1.5
+**Version:** 1.6
 **Date:** April 2026
 **Status:** Draft — for internal review before pilot implementation
 **Classification:** Internal / Confidential — core product IP
@@ -108,6 +108,45 @@ Capnocytophaga ochracea (and all other Capnocytophaga spp), Bergeyella cardium (
 **Severity:** Watch
 **Mechanism:** Fretibacterium (formerly Synergistetes Cluster A)
 **Framing:** Loss of health-associated taxa alongside Fretibacterium enrichment signals community-level dysbiosis.
+
+---
+
+### CONNECTION: Refractory Risk Signature (oral baseline)
+
+**Added:** April 2026 (v1.6)
+
+**Trigger:** At least 2 of [Parvimonas micra > 0.001, Filifactor alocis > 0.001, Prevotella intermedia > 0.001] AND at least 2 of [Haemophilus parainfluenzae, Rothia dentocariosa, Capnocytophaga sputigena, Veillonella spp.] below 25th percentile.
+**Panels:** oral
+**Severity:** Watch
+**Mechanism:** Refractory Periodontitis Signature (Colombo 2012)
+**Framing:** The combination of persistence-associated species alongside depleted health-associated taxa suggests a community less likely to shift toward health with standard cleanings alone. Frame as "your oral community may benefit from a more thorough initial cleaning regimen — worth discussing with your dentist." Wellness framing only — do NOT imply disease or diagnose refractory periodontitis.
+**Evidence:** clinical-evidence-base.md → Refractory Periodontitis Signature
+
+---
+
+### CONNECTION: Elevated Parvimonas micra
+
+**Added:** April 2026 (v1.6)
+
+**Trigger:** Parvimonas micra > 0.002 relative abundance
+**Panels:** oral
+**Severity:** Watch
+**Mechanism:** Parvimonas micra as Treatment-Failure Predictor (Mombelli 2017, Li 2026)
+**Framing:** P. micra is one of the few oral bacteria with published data showing independent association with persistent inflammation even after standard cleanings. Frame as "worth flagging at your next dental visit" — NOT as a prediction of failure.
+**Evidence:** clinical-evidence-base.md → Parvimonas micra as Treatment-Failure Predictor
+
+---
+
+### CONNECTION: Oral-Systemic Metabolic Axis (Porphyromonas + glucose)
+
+**Added:** April 2026 (v1.6)
+
+**Trigger:** sum(Porphyromonas spp relative abundance) > 0.005 AND fasting_glucose > 100 mg/dL
+**Panels:** oral + blood
+**Severity:** Watch
+**Mechanism:** Periodontal Therapy Improves Systemic Markers (Baima 2025, Lu 2022)
+**Framing:** Published research shows subgingival Porphyromonas correlates with blood glucose, and periodontal therapy can reduce pro-inflammatory metabolites affecting systemic inflammation. Frame as an opportunity: "improvements to oral health may support your metabolic markers."
+**Evidence:** clinical-evidence-base.md → Periodontal Therapy Improves Systemic Markers
 
 ---
 

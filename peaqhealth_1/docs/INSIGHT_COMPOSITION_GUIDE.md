@@ -191,6 +191,27 @@ Content should read like an experienced primary care doctor talking to a patient
 | 15-30% outside        | WATCH CLOSELY | Clinical |
 | >30% outside          | ATTENTION     | Clinical |
 
+### Causation vs. Correlation Language
+
+When presenting research correlations (e.g., Porphyromonas correlates with blood glucose), use "associated with" or "research shows a link between" — never "causes" or "affects."
+
+User-facing implication language must be conditional ("may support," "could benefit"), never deterministic ("will improve," "reduces your").
+
+**Approved correlation language:**
+- "associated with"
+- "research shows a link between"
+- "in population studies, X tends to track with Y"
+- "improvements to X may support Y"
+- "addressing X could benefit Y"
+
+**Banned deterministic language:**
+- "causes" / "drives" / "triggers" (when describing correlations)
+- "will improve" / "will reduce" / "will lower"
+- "reduces your" / "affects your" (as definitive claims)
+- "proven to" (outside of RCT context with explicit citation)
+
+**The test:** If the underlying evidence is observational (cohort, cross-sectional, NHANES), the language must be correlational. Only RCT-level evidence supports "shown to" framing — and even then, frame as "research has shown" not "this will."
+
 ### Programmatic Enforcement
 
 `apps/web/lib/tone-guard.ts` checks surface files for forbidden phrases at test time. Adding a banned phrase to user-facing copy will fail CI.
@@ -352,4 +373,5 @@ Lead with the frankly-abnormal finding. Mention borderline second with explicit 
 
 | Date | Version | Change |
 |---|---|---|
+| 2026-04-24 | 1.1 | Added "Causation vs. Correlation Language" rule to Section 1. Approved/banned phrasing for observational vs. RCT evidence. |
 | 2026-04-24 | 1.0 | Initial consolidation from TONE_GUIDE v3.1, WRITING_STYLE, EVIDENCE_GROUNDING, and INSIGHTS borderline phrasing. |
