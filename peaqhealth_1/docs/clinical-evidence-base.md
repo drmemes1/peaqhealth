@@ -39,11 +39,13 @@
 
 ---
 
-### 3. Oral Synergistetes Cluster A
+### 3. Fretibacterium (formerly classified as Synergistetes Cluster A)
 
-**Key finding:** 82.5% sensitivity/specificity for periodontitis — outperformed all red complex members individually. After multivariate adjustment controlling for smoking, age, and other bacteria, P. gingivalis lost significance while Synergistetes retained independent predictive value.
+**Key finding:** 82.5% sensitivity/specificity for periodontitis — outperformed all red complex members individually. After multivariate adjustment controlling for smoking, age, and other bacteria, P. gingivalis lost significance while Fretibacterium retained independent predictive value.
 
-**Implication for Cnvrg:** Synergistetes Cluster A may be a stronger standalone periodontitis signal than traditional red-complex species. Currently not in Cnvrg's species mapping. Adding it would require confirming 16S primer coverage and updating the OTU-to-species mapping in the L7 parser.
+**Taxonomy note:** Synergistetes Cluster A is older taxonomic terminology. The clinically relevant organism is Fretibacterium fastidiosum, which Peaq's Zymo panel reports at species level. References citing "Synergistetes Cluster A" should be understood as referring to this genus.
+
+**Implication for Cnvrg:** Fretibacterium fastidiosum may be a stronger standalone periodontitis signal than traditional red-complex species. Peaq's Zymo panel already reports this species — no primer or parser changes needed. Can be added to the gum health composite as an additional signal.
 
 **References:**
 
@@ -83,5 +85,6 @@
 
 | Date | Change |
 |---|---|
+| 2026-04-24 | Terminology correction: "Synergistetes Cluster A" → "Fretibacterium (formerly Synergistetes Cluster A)". Zymo panel already reports F. fastidiosum at species level. |
 | 2026-04-24 | Added: oral disease + ischemic stroke (DARIC cohort, Wood 2025). Ready for integration pending Narod sign-off. |
 | 2026-04-24 | Initial file created with 3 pending mechanisms: multi-taxa dysbiosis index, F. alocis biomarker, Synergistetes Cluster A. All pending clinical review. |
