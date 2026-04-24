@@ -6,40 +6,67 @@
  *
  * Evidence: docs/clinical-evidence-base.md → Multi-Taxa Dysbiosis Index
  *
- * Version: v1
+ * IMPORTANT: Only named species with published periodontitis associations
+ * are included. No genus-prefix matching — uncharacterized sp-codes are
+ * excluded to prevent noise from inflating the index.
+ *
+ * Version: v2
  */
 
-const DISEASE_ENRICHED_TAXA = [
-  "Filifactor alocis",
-  "Treponema socranskii",
-  "Treponema vincentii",
-  "Fretibacterium fastidiosum",
-  "Selenomonas noxia",
-  "Selenomonas infelix",
-  "Selenomonas artemidis",
-  "Peptostreptococcus stomatis",
-  "Tannerella forsythia",
-  "Porphyromonas endodontalis",
-  "Porphyromonas gingivalis",
-]
+// ── Zymo key normalization ─────────────────────────────────────────────────
+// Zymo uses hyphenated compound labels like "Streptococcus salivarius-vestibularis-sp4753"
+// We need to match the primary species name before the first hyphen.
 
-const DISEASE_GENUS_PREFIXES = [
-  "Selenomonas ",
-  "Porphyromonas ",
-  "Fretibacterium ",
-]
+function normalizeZymoKey(key: string): string[] {
+  const candidates = [key]
+  const hyphenIdx = key.indexOf("-")
+  if (hyphenIdx > 0) {
+    const parts = key.split(" ")
+    if (parts.length >= 2) {
+      const genus = parts[0]
+      const speciesRaw = parts.slice(1).join(" ")
+      const primarySpecies = speciesRaw.split("-")[0]
+      if (primarySpecies && primarySpecies !== speciesRaw) {
+        candidates.push(`${genus} ${primarySpecies}`)
+      }
+    }
+  }
+  return candidates
+}
 
-const HEALTH_TAXA = [
-  "Streptococcus salivarius",
-  "Streptococcus sanguinis",
-  "Streptococcus gordonii",
-]
+// ── Evidence-validated taxa only ───────────────────────────────────────────
+// Each entry has a published periodontitis association. No sp-codes or
+// uncharacterized HOMD entries.
 
-const HEALTH_GENUS_PREFIXES = [
-  "Capnocytophaga ",
-  "Bergeyella ",
-  "Haemophilus ",
-]
+const DISEASE_ENRICHED_TAXA = new Set([
+  "filifactor alocis",
+  "treponema socranskii",
+  "treponema vincentii",
+  "fretibacterium fastidiosum",
+  "selenomonas noxia",
+  "selenomonas infelix",
+  "selenomonas artemidis",
+  "peptostreptococcus stomatis",
+  "peptostreptococcus anaerobius",
+  "tannerella forsythia",
+  "porphyromonas endodontalis",
+  "porphyromonas gingivalis",
+])
+
+const HEALTH_ASSOCIATED_TAXA = new Set([
+  "streptococcus salivarius",
+  "streptococcus sanguinis",
+  "streptococcus gordonii",
+  "capnocytophaga ochracea",
+  "capnocytophaga gingivalis",
+  "capnocytophaga granulosa",
+  "capnocytophaga leadbetteri",
+  "capnocytophaga sputigena",
+  "bergeyella cardium",
+  "haemophilus parainfluenzae",
+  "haemophilus haemolyticus",
+  "haemophilus pittmaniae",
+])
 
 const PSEUDOCOUNT = 1e-6
 
@@ -65,18 +92,20 @@ export function computeODI(otuTable: Record<string, number>): ODIResult {
     const val = Number(abundance)
     if (!Number.isFinite(val) || val <= 0) continue
 
-    const isDiseaseExact = DISEASE_ENRICHED_TAXA.some(t => taxon.toLowerCase() === t.toLowerCase())
-    const isDiseaseGenus = DISEASE_GENUS_PREFIXES.some(p => taxon.startsWith(p))
-    if (isDiseaseExact || isDiseaseGenus) {
-      diseaseSum += val
-      diseaseUsed.push(taxon)
-    }
+    const candidates = normalizeZymoKey(taxon)
 
-    const isHealthExact = HEALTH_TAXA.some(t => taxon.toLowerCase() === t.toLowerCase())
-    const isHealthGenus = HEALTH_GENUS_PREFIXES.some(p => taxon.startsWith(p))
-    if (isHealthExact || isHealthGenus) {
-      healthSum += val
-      healthUsed.push(taxon)
+    for (const candidate of candidates) {
+      const lower = candidate.toLowerCase()
+      if (DISEASE_ENRICHED_TAXA.has(lower)) {
+        diseaseSum += val
+        diseaseUsed.push(taxon)
+        break
+      }
+      if (HEALTH_ASSOCIATED_TAXA.has(lower)) {
+        healthSum += val
+        healthUsed.push(taxon)
+        break
+      }
     }
   }
 
