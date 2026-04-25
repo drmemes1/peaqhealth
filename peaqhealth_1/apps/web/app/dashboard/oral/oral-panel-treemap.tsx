@@ -1,0 +1,111 @@
+"use client"
+
+import Link from "next/link"
+import type { UserPanelContext } from "../../../lib/user-context"
+import { OralTreemap } from "../../components/panels/oral/Treemap"
+import { PositionSidebar } from "../../components/panels/oral/PositionSidebar"
+import { getBreathScore } from "../../../lib/oral/halitosisScore"
+
+const serif = "'Cormorant Garamond', Georgia, serif"
+const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
+
+type Status = "strong" | "watch" | "attention"
+
+export function OralPanelTreemap({ ctx, genusCounts }: { ctx: UserPanelContext; genusCounts: Record<string, number> }) {
+  const o = ctx.oralKit
+  if (!o) {
+    return (
+      <div style={{ maxWidth: 1320, margin: "0 auto", padding: "56px 40px 120px", background: "#EDEAE1" }}>
+        <Link href="/dashboard" style={{ fontFamily: sans, fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase", color: "#B8935A", fontWeight: 600, textDecoration: "none" }}>← Dashboard</Link>
+        <h1 style={{ fontFamily: serif, fontSize: 64, fontWeight: 500, letterSpacing: "-0.025em", margin: "32px 0 16px" }}>Oral <em style={{ fontStyle: "italic", color: "#6B6860" }}>Microbiome</em></h1>
+        <p style={{ fontFamily: sans, fontSize: 14, color: "#8C897F" }}>No oral results on file. Take your sample to see your community.</p>
+      </div>
+    )
+  }
+
+  const shannon = o.shannonIndex ?? 0
+  const shannonStatus: Status = shannon >= 4.0 ? "strong" : shannon >= 3.0 ? "watch" : "attention"
+  const phVal = o.phBalanceApi ?? 0.5
+  const phStatus: Status = phVal <= 0.25 ? "strong" : phVal <= 0.45 ? "watch" : "attention"
+  const ratioVal = o.protectiveRatio
+  const ratioStatus: Status = (ratioVal ?? 0) >= 5 ? "strong" : (ratioVal ?? 0) >= 2 ? "watch" : "attention"
+  const breath = getBreathScore({ fusobacteriumPeriodonticumPct: null, porphyromonasPct: o.porphyromonasPct, solobacteriumPct: null, prevotellaMelaninogenicaPct: null, peptostreptococcusPct: null })
+  const breathStatus: Status = breath.status === "no_data" ? "watch" : breath.status
+
+  // Count statuses for summary
+  const statuses = [shannonStatus, phStatus, ratioStatus, breathStatus]
+  const attCount = statuses.filter(s => s === "attention").length
+  const watchCount = statuses.filter(s => s === "watch").length
+  const strongCount = statuses.filter(s => s === "strong").length
+
+  const summaryLine = attCount === 0 && watchCount === 0
+    ? "A varied, resilient ecosystem across all markers."
+    : attCount === 0
+    ? `A varied, mostly-resilient ecosystem with ${watchCount} pattern${watchCount > 1 ? "s" : ""} worth your attention.`
+    : `A varied ecosystem with ${attCount} pattern${attCount > 1 ? "s" : ""} needing attention and ${watchCount} worth noticing.`
+
+  return (
+    <div style={{ maxWidth: 1320, margin: "0 auto", padding: "56px 40px 120px", background: "#EDEAE1", position: "relative" }}>
+      {/* Breadcrumb */}
+      <Link href="/dashboard" style={{ fontFamily: sans, fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase", color: "#B8935A", fontWeight: 600, textDecoration: "none", display: "inline-block", marginBottom: 32 }}>← Dashboard</Link>
+
+      {/* Header */}
+      <div style={{ marginBottom: 48, paddingBottom: 32, borderBottom: "1px solid #D6D3C8", display: "grid", gridTemplateColumns: "1fr auto", gap: 40, alignItems: "end" }}>
+        <div>
+          <div style={{ fontFamily: sans, fontSize: 10, letterSpacing: "0.22em", textTransform: "uppercase", color: "#8C897F", fontWeight: 500, marginBottom: 14 }}>Your oral panel</div>
+          <h1 style={{ fontFamily: serif, fontSize: 64, fontWeight: 500, letterSpacing: "-0.025em", lineHeight: 1, marginBottom: 16 }}>
+            Oral <em style={{ fontStyle: "italic", color: "#6B6860" }}>Microbiome</em>
+          </h1>
+          <div style={{ fontFamily: serif, fontStyle: "italic", fontSize: 20, color: "#6B6860", letterSpacing: "0.005em", maxWidth: 680, lineHeight: 1.45 }}>
+            {summaryLine}
+          </div>
+        </div>
+        <div style={{ textAlign: "right", fontFamily: sans, fontSize: 11, letterSpacing: "0.16em", textTransform: "uppercase", color: "#8C897F", fontWeight: 500, lineHeight: 2 }}>
+          <div>Sample · <strong style={{ color: "#2C2A24", fontWeight: 600 }}>{o.collectionDate ?? "Unknown"}</strong></div>
+          <div><strong style={{ color: "#2C2A24", fontWeight: 600 }}>{o.namedSpecies ?? "—"}</strong> species · <strong style={{ color: "#2C2A24", fontWeight: 600 }}>{o.genera ?? "—"}</strong> genera</div>
+          <div style={{ display: "flex", gap: 28, justifyContent: "flex-end", marginTop: 8 }}>
+            {attCount > 0 && <span style={{ color: "#8C3A3A" }}><strong style={{ fontFamily: serif, fontSize: 16, letterSpacing: 0, textTransform: "none", fontWeight: 700, marginRight: 4 }}>{attCount}</strong>need attention</span>}
+            {watchCount > 0 && <span style={{ color: "#B8923C" }}><strong style={{ fontFamily: serif, fontSize: 16, letterSpacing: 0, textTransform: "none", fontWeight: 700, marginRight: 4 }}>{watchCount}</strong>worth noticing</span>}
+            {strongCount > 0 && <span style={{ color: "#4A7A4A" }}><strong style={{ fontFamily: serif, fontSize: 16, letterSpacing: 0, textTransform: "none", fontWeight: 700, marginRight: 4 }}>{strongCount}</strong>strong</span>}
+          </div>
+        </div>
+      </div>
+
+      {/* Hero: Treemap + Sidebar */}
+      <div className="oral-hero-grid" style={{ display: "grid", gridTemplateColumns: "1fr 280px", gap: 24, alignItems: "stretch", marginBottom: 80 }}>
+        <OralTreemap
+          genusCounts={genusCounts}
+          speciesCount={o.namedSpecies ?? 0}
+          generaCount={o.genera ?? 0}
+          shannonDiversity={shannon}
+          sMutans={o.sMutansPct ?? 0}
+          breathFreshness={breath.score}
+        />
+        <PositionSidebar
+          shannon={{ value: shannon, status: shannonStatus }}
+          ph={{ value: phVal, status: phStatus }}
+          ratio={{ value: ratioVal, status: ratioStatus }}
+          breath={{ value: breath.score, status: breathStatus }}
+        />
+      </div>
+
+      {/* PR B sections (cross-panel, cards, trajectory, actions, deep-dive) will go here */}
+      <div style={{ textAlign: "center", padding: 40, color: "#8C897F", fontFamily: sans, fontSize: 13 }}>
+        Magazine cards, cross-panel connection, trajectory, and actions — shipping in PR B.
+      </div>
+
+      <div style={{ textAlign: "center", marginTop: 24 }}>
+        <Link href="/dashboard/converge" style={{ fontFamily: sans, fontSize: 13, color: "#B8935A", textDecoration: "none", fontWeight: 500 }}>
+          See how this connects to your other panels →
+        </Link>
+      </div>
+
+      <style>{`
+        @media (max-width: 1100px) {
+          .oral-hero-grid { grid-template-columns: 1fr !important; }
+          .oral-sidebar { flex-direction: row !important; overflow-x: auto; gap: 12px !important; }
+        }
+      `}</style>
+    </div>
+  )
+}
