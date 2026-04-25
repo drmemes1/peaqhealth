@@ -4,6 +4,10 @@ import Link from "next/link"
 import type { UserPanelContext } from "../../../lib/user-context"
 import { OralTreemap } from "../../components/panels/oral/Treemap"
 import { PositionSidebar } from "../../components/panels/oral/PositionSidebar"
+import { CrossPanelConnection } from "../../components/panels/oral/CrossPanelConnection"
+import { InterpretationCards } from "../../components/panels/oral/InterpretationCards"
+import { TrajectorySection } from "../../components/panels/oral/TrajectorySection"
+import { DeepDiveDoors } from "../../components/panels/oral/DeepDiveDoors"
 import { getBreathScore } from "../../../lib/oral/halitosisScore"
 
 const serif = "'Cormorant Garamond', Georgia, serif"
@@ -89,15 +93,52 @@ export function OralPanelTreemap({ ctx, genusCounts }: { ctx: UserPanelContext; 
         />
       </div>
 
-      {/* PR B sections (cross-panel, cards, trajectory, actions, deep-dive) will go here */}
-      <div style={{ textAlign: "center", padding: 40, color: "#8C897F", fontFamily: sans, fontSize: 13 }}>
-        Magazine cards, cross-panel connection, trajectory, and actions — shipping in PR B.
+      {/* Section 02 — Cross-panel */}
+      <div style={{ marginBottom: 80 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 28, paddingBottom: 16, borderBottom: "1px solid #E5E2D8" }}>
+          <div>
+            <span style={{ fontFamily: serif, fontStyle: "italic", fontSize: 14, color: "#B8935A", marginRight: 14 }}>02</span>
+            <span style={{ fontFamily: serif, fontSize: 32, fontWeight: 500, letterSpacing: "-0.012em" }}>How this <em style={{ fontStyle: "italic", color: "#6B6860" }}>connects</em> to your other panels</span>
+          </div>
+          <span style={{ fontFamily: sans, fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", color: "#8C897F", fontWeight: 500 }}>The closed-loop view</span>
+        </div>
+        <CrossPanelConnection ctx={ctx} />
       </div>
 
-      <div style={{ textAlign: "center", marginTop: 24 }}>
-        <Link href="/dashboard/converge" style={{ fontFamily: sans, fontSize: 13, color: "#B8935A", textDecoration: "none", fontWeight: 500 }}>
-          See how this connects to your other panels →
-        </Link>
+      {/* Section 03 — Interpretation cards */}
+      <div style={{ marginBottom: 80 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 28, paddingBottom: 16, borderBottom: "1px solid #E5E2D8" }}>
+          <div>
+            <span style={{ fontFamily: serif, fontStyle: "italic", fontSize: 14, color: "#B8935A", marginRight: 14 }}>03</span>
+            <span style={{ fontFamily: serif, fontSize: 32, fontWeight: 500 }}>What&rsquo;s happening, <em style={{ fontStyle: "italic", color: "#6B6860" }}>card by card</em></span>
+          </div>
+          <span style={{ fontFamily: sans, fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", color: "#8C897F", fontWeight: 500 }}>Sort: Status · Filter: All</span>
+        </div>
+        <InterpretationCards ctx={ctx} />
+      </div>
+
+      {/* Section 04 — Trajectory */}
+      <div style={{ marginBottom: 80 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 28, paddingBottom: 16, borderBottom: "1px solid #E5E2D8" }}>
+          <div>
+            <span style={{ fontFamily: serif, fontStyle: "italic", fontSize: 14, color: "#B8935A", marginRight: 14 }}>04</span>
+            <span style={{ fontFamily: serif, fontSize: 32, fontWeight: 500 }}>Your trajectory <em style={{ fontStyle: "italic", color: "#6B6860" }}>over time</em></span>
+          </div>
+          <span style={{ fontFamily: sans, fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", color: "#8C897F", fontWeight: 500 }}>First sample · retest in 8 weeks</span>
+        </div>
+        <TrajectorySection sampleDate={o.collectionDate} />
+      </div>
+
+      {/* Section 05 — Deep dive doors */}
+      <div style={{ marginBottom: 0 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 28, paddingBottom: 16, borderBottom: "1px solid #E5E2D8" }}>
+          <div>
+            <span style={{ fontFamily: serif, fontStyle: "italic", fontSize: 14, color: "#B8935A", marginRight: 14 }}>05</span>
+            <span style={{ fontFamily: serif, fontSize: 32, fontWeight: 500 }}>Want to <em style={{ fontStyle: "italic", color: "#6B6860" }}>go deeper</em>?</span>
+          </div>
+          <span style={{ fontFamily: sans, fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", color: "#8C897F", fontWeight: 500 }}>Explore · Methodology · Science</span>
+        </div>
+        <DeepDiveDoors speciesCount={o.namedSpecies ?? 0} />
       </div>
 
       <style>{`
