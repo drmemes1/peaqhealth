@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
+import { useSearchParams } from "next/navigation"
 import { treemap, hierarchy, treemapSquarify } from "d3-hierarchy"
 import { lookupTaxon, CATEGORY_LABELS, CATEGORY_COLORS, type BacteriaCategory } from "../../../../lib/oral/bacteriaTaxonomy"
 import { computeVeillonellaContext } from "../../../../lib/oral/veillonellaContext"
@@ -32,6 +33,9 @@ interface TileData {
 }
 
 export function OralTreemap({ genusCounts, speciesCount, generaCount, shannonDiversity, sMutans, breathFreshness }: TreemapProps) {
+  const searchParams = useSearchParams()
+  const simulateHalitosis = searchParams.get("simulate") === "halitosis_active"
+
   const tiles = useMemo(() => {
     const sorted = Object.entries(genusCounts)
       .filter(([k]) => k !== "__meta")
@@ -56,9 +60,11 @@ export function OralTreemap({ genusCounts, speciesCount, generaCount, shannonDiv
       let flagLabel: string | null = null
       let flagStyle: "warm" | "cool" | undefined = undefined
 
-      // Veillonella context
+      // Veillonella context (with dev simulation flag)
       if (genus.toLowerCase() === "veillonella") {
-        const vCtx = computeVeillonellaContext({ veillonella: pct, sMutans, breathFreshness, shannonDiversity })
+        const vCtx = simulateHalitosis
+          ? { state: "flagged" as const, flagLabel: "Halitosis", firedPatterns: ["halitosis_contribution" as const], abundance: pct, flagTooltip: "Simulated for testing", relatedCard: "breath-freshness" }
+          : computeVeillonellaContext({ veillonella: pct, sMutans, breathFreshness, shannonDiversity })
         if (vCtx.state === "shifted") colorVar = "--tm-slate-shift"
         if (vCtx.flagLabel) { flagLabel = vCtx.flagLabel; flagStyle = "warm" }
       }
@@ -146,50 +152,80 @@ export function OralTreemap({ genusCounts, speciesCount, generaCount, shannonDiv
       {/* Treemap SVG */}
       <svg viewBox="0 0 900 600" style={{ width: "100%", height: "auto", borderRadius: 12, overflow: "hidden" }}>
         {layout.map((tile, i) => {
-          const isSmall = tile.w < 80 || tile.h < 60
-          const isMicro = tile.w < 60 || tile.h < 45
+          const area = tile.w * tile.h
           const textColor = tile.category === "commensal" || tile.category === "minor" ? "#3A3830" : "#FAFAF8"
+          const hasFlag = !!tile.flagLabel
+
+          // Responsive font sizing based on tile area
+          const nameFontSize = area > 50000 ? 18 : area > 20000 ? 14 : area > 8000 ? 12 : 10
+          const pctFontSize = area > 50000 ? 26 : area > 20000 ? 18 : area > 8000 ? 14 : 11
+          const tagFontSize = area > 20000 ? 8 : 7
+          const showTag = tile.h > 55 && tile.w > 70
+          const showFlag = hasFlag && tile.w > 65 && tile.h > 45
+          const showName = tile.w > 40 && tile.h > 30
+
+          // Truncate long names for small tiles
+          const maxNameChars = area > 20000 ? 20 : area > 8000 ? 12 : 8
+          const displayName = tile.displayName.length > maxNameChars ? tile.displayName.slice(0, maxNameChars - 1) + "…" : tile.displayName
+
+          // Vertical positions
+          const pad = area > 20000 ? 14 : 10
+          const tagY = tile.y0 + pad + tagFontSize
+          const nameY = showTag ? tagY + nameFontSize + 4 : tile.y0 + pad + nameFontSize
+          const pctY = tile.y1 - pad
+          const flagY = tile.y0 + pad + tagFontSize
+
+          // Eyebrow max width — leave room for flag if present
+          const tagMaxWidth = showFlag ? tile.w - 80 : tile.w - 28
+
+          const href = tile.isExplore ? "/explore" : `/dashboard/oral`
 
           return (
-            <g key={i} style={{ cursor: "pointer" }}>
-              <defs>
-                <linearGradient id={`tg-${i}`} x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor={CATEGORY_COLORS[tile.category] ?? "#E0DAC6"} />
-                  <stop offset="100%" stopColor={CATEGORY_COLORS[tile.category] ?? "#DDD5C0"} stopOpacity={0.8} />
-                </linearGradient>
-              </defs>
-              <rect
-                x={tile.x0} y={tile.y0} width={tile.w} height={tile.h}
-                rx={4} fill={`url(#tg-${i})`}
-                stroke={tile.genus.toLowerCase().startsWith("haemophilus") && (tile.flagLabel === "Low") ? "rgba(184,146,60,0.6)" : "none"}
-                strokeWidth={tile.genus.toLowerCase().startsWith("haemophilus") && (tile.flagLabel === "Low") ? 1.5 : 0}
-                strokeDasharray={tile.genus.toLowerCase().startsWith("haemophilus") ? "4,3" : "none"}
-              />
-              {/* Category tag */}
-              {!isMicro && (
-                <text x={tile.x0 + 14} y={tile.y0 + 22} fill={textColor} opacity={0.8}
-                  style={{ fontFamily: sans, fontSize: 8, letterSpacing: "0.2em", textTransform: "uppercase", fontWeight: 600 }}>
-                  {CATEGORY_LABELS[tile.category] ?? ""}
+            <a key={i} href={href} style={{ cursor: "pointer" }}>
+              <g>
+                <defs>
+                  <linearGradient id={`tg-${i}`} x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor={CATEGORY_COLORS[tile.category] ?? "#E0DAC6"} />
+                    <stop offset="100%" stopColor={CATEGORY_COLORS[tile.category] ?? "#DDD5C0"} stopOpacity={0.8} />
+                  </linearGradient>
+                  <clipPath id={`clip-tag-${i}`}><rect x={tile.x0 + pad} y={tile.y0} width={tagMaxWidth} height={30} /></clipPath>
+                </defs>
+                <rect
+                  x={tile.x0} y={tile.y0} width={tile.w} height={tile.h}
+                  rx={4} fill={`url(#tg-${i})`}
+                  stroke={tile.genus.toLowerCase().startsWith("haemophilus") && hasFlag ? "rgba(184,146,60,0.6)" : "none"}
+                  strokeWidth={tile.genus.toLowerCase().startsWith("haemophilus") && hasFlag ? 1.5 : 0}
+                  strokeDasharray={tile.genus.toLowerCase().startsWith("haemophilus") ? "4,3" : "none"}
+                />
+                {/* Category eyebrow — clipped to avoid flag collision */}
+                {showTag && (
+                  <text x={tile.x0 + pad} y={tagY} fill={textColor} opacity={0.8} clipPath={`url(#clip-tag-${i})`}
+                    style={{ fontFamily: sans, fontSize: tagFontSize, letterSpacing: "0.18em", textTransform: "uppercase", fontWeight: 600 }}>
+                    {CATEGORY_LABELS[tile.category] ?? ""}
+                  </text>
+                )}
+                {/* Flag pill — absolute top-right, never collides with eyebrow */}
+                {showFlag && (
+                  <text x={tile.x1 - pad} y={flagY} fill={tile.flagStyle === "warm" ? "#FFD89B" : textColor} textAnchor="end" opacity={0.9}
+                    style={{ fontFamily: sans, fontSize: 8, letterSpacing: "0.14em", textTransform: "uppercase", fontWeight: 700 }}>
+                    {tile.flagLabel}
+                  </text>
+                )}
+                {/* Name — responsive font size */}
+                {showName && (
+                  <text x={tile.x0 + pad} y={nameY} fill={textColor}
+                    style={{ fontFamily: serif, fontSize: nameFontSize, fontStyle: "italic", fontWeight: 500 }}>
+                    <title>{tile.displayName}</title>
+                    {displayName}
+                  </text>
+                )}
+                {/* Percentage — bottom right */}
+                <text x={tile.x1 - pad} y={pctY} fill={textColor} textAnchor="end"
+                  style={{ fontFamily: serif, fontSize: pctFontSize, fontWeight: 500, letterSpacing: "-0.02em" }}>
+                  {(tile.pct * 100).toFixed(tile.pct < 0.01 ? 2 : 1)}%
                 </text>
-              )}
-              {/* Name */}
-              <text x={tile.x0 + 14} y={tile.y0 + (isMicro ? 28 : isSmall ? 38 : 46)} fill={textColor}
-                style={{ fontFamily: serif, fontSize: isMicro ? 11 : isSmall ? 14 : 17, fontStyle: "italic", fontWeight: 500 }}>
-                {tile.displayName}
-              </text>
-              {/* Percentage */}
-              <text x={tile.x1 - 14} y={tile.y1 - 12} fill={textColor} textAnchor="end"
-                style={{ fontFamily: serif, fontSize: isMicro ? 14 : isSmall ? 18 : 24, fontWeight: 500, letterSpacing: "-0.02em" }}>
-                {(tile.pct * 100).toFixed(tile.pct < 0.01 ? 2 : 1)}%
-              </text>
-              {/* Flag */}
-              {tile.flagLabel && !isMicro && (
-                <text x={tile.x1 - 14} y={tile.y0 + 22} fill={tile.flagStyle === "warm" ? "#FFD89B" : textColor} textAnchor="end" opacity={0.9}
-                  style={{ fontFamily: sans, fontSize: 8, letterSpacing: "0.16em", textTransform: "uppercase", fontWeight: 700 }}>
-                  {tile.flagLabel}
-                </text>
-              )}
-            </g>
+              </g>
+            </a>
           )
         })}
       </svg>

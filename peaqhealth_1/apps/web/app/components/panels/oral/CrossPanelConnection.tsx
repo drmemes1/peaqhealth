@@ -1,6 +1,7 @@
 "use client"
 
 import type { UserPanelContext } from "../../../../lib/user-context"
+import { WhatThisMeans } from "../../ui/WhatThisMeans"
 
 const serif = "'Cormorant Garamond', Georgia, serif"
 const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
@@ -52,14 +53,16 @@ export function CrossPanelConnection({ ctx }: { ctx: UserPanelContext }) {
         </div>
       </div>
 
-      <div style={{ marginTop: 8, padding: "20px 24px", background: "#F0EBDB", borderRadius: 12, fontFamily: serif, fontStyle: "italic", fontSize: 16, lineHeight: 1.55, color: "#3A3830", borderLeft: "3px solid #B8935A" }}>
-        {o ? <>Your oral nitrate-reducing bacteria — Neisseria {(o.neisseriaPct ?? 0).toFixed(1)}%, Rothia {(o.rothiaPct ?? 0).toFixed(1)}% — convert dietary nitrate into nitric oxide, the molecule that regulates blood pressure and vessel flexibility. </> : "Your oral data will reveal your nitrate-reducing community. "}
-        <strong style={{ fontStyle: "normal", fontWeight: 600, color: "#2C2A24" }}>
-          {!hasBlood && !hasSleep ? "Adding a blood panel and wearable would complete the cross-panel picture." :
-           !hasBlood ? "Adding a blood panel would show the downstream effect on your LDL and BP." :
-           !hasSleep ? "Connecting a wearable would show whether your HRV reflects this NO support." :
-           "All three panels are connected — your oral, blood, and sleep data tell a unified story."}
-        </strong>
+      <div style={{ marginTop: 8 }}>
+        <WhatThisMeans variant="mechanism" citation="Vanhatalo 2018, Norouzzadeh 2025">
+          {o ? <>Your oral nitrate-reducing bacteria — Neisseria {(o.neisseriaPct ?? 0).toFixed(1)}%, Rothia {(o.rothiaPct ?? 0).toFixed(1)}% — convert dietary nitrate into nitric oxide, the molecule that regulates blood pressure and vessel flexibility. </> : "Your oral data will reveal your nitrate-reducing community. "}
+          <strong style={{ fontStyle: "normal", fontWeight: 600, color: "#2C2A24" }}>
+            {!hasBlood && !hasSleep ? "Adding a blood panel and wearable would complete the cross-panel picture." :
+             !hasBlood ? "Adding a blood panel would show the downstream effect on your LDL and BP." :
+             !hasSleep ? "Connecting a wearable would show whether your HRV reflects this NO support." :
+             "All three panels are connected — your oral, blood, and sleep data tell a unified story."}
+          </strong>
+        </WhatThisMeans>
       </div>
     </div>
   )
