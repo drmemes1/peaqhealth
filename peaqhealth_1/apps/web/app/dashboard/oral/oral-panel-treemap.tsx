@@ -9,6 +9,7 @@ import { InterpretationCards } from "../../components/panels/oral/Interpretation
 import { TrajectorySection } from "../../components/panels/oral/TrajectorySection"
 import { DeepDiveDoors } from "../../components/panels/oral/DeepDiveDoors"
 import { getBreathScore } from "../../../lib/oral/halitosisScore"
+import { computeModifiers } from "../../../lib/oral/halitosisModifiers"
 
 const serif = "'Cormorant Garamond', Georgia, serif"
 const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
@@ -33,7 +34,21 @@ export function OralPanelTreemap({ ctx, genusCounts }: { ctx: UserPanelContext; 
   const phStatus: Status = phVal <= 0.25 ? "strong" : phVal <= 0.45 ? "watch" : "attention"
   const ratioVal = o.protectiveRatio
   const ratioStatus: Status = (ratioVal ?? 0) >= 5 ? "strong" : (ratioVal ?? 0) >= 2 ? "watch" : "attention"
-  const breath = getBreathScore({ fusobacteriumPeriodonticumPct: null, porphyromonasPct: o.porphyromonasPct, solobacteriumPct: null, prevotellaMelaninogenicaPct: null, peptostreptococcusPct: null })
+  const q = ctx.questionnaire
+  const qr = ctx.questionnaire as Record<string, unknown> | null
+  const mbConfirmed = q?.mouthBreathing === "confirmed" || q?.mouthBreathing === "often"
+  const modResult = computeModifiers({
+    mouthBreathingConfirmed: mbConfirmed,
+    dryMouthSeverity: null,
+    osaPattern: false,
+    gerdSymptoms: q?.gerdNocturnal === true,
+    xerogenicMedications: false,
+    tongueScraping: qr?.tongue_scraping_freq as string | null,
+    stressHigh: q?.stressLevel === "high",
+    sleepQualityLow: q?.sleepQualSelf === "poor" || q?.sleepQualSelf === "very_poor",
+    badBreathSelf: null,
+  })
+  const breath = getBreathScore({ fusobacteriumPeriodonticumPct: null, porphyromonasPct: o.porphyromonasPct, solobacteriumPct: null, prevotellaMelaninogenicaPct: null, peptostreptococcusPct: null }, modResult)
   const breathStatus: Status = breath.status === "no_data" ? "watch" : breath.status
 
   // Count statuses for summary
