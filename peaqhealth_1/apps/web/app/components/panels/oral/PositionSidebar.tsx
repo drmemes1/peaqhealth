@@ -23,7 +23,10 @@ function SideCard({ eyebrow, value, unit, status, scoreKey, svgId, userPos, rang
     <div style={{
       background: "var(--paper)", border: "1px solid var(--line)", borderRadius: 14,
       padding: "18px 20px 16px", position: "relative", overflow: "hidden",
-    }}>
+      cursor: "pointer", transition: "border-color 0.15s, box-shadow 0.15s, transform 0.15s",
+    }}
+    onMouseEnter={e => { e.currentTarget.style.borderColor = "#B8935A"; e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(44,42,36,0.06)" }}
+    onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "none" }}>
       <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 2, background: color }} />
       <div style={{ fontFamily: sans, fontSize: 9, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--muted)", fontWeight: 600, marginBottom: 8 }}>{eyebrow}</div>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, marginBottom: 10 }}>
