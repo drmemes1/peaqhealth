@@ -31,4 +31,8 @@ export const ORAL_THRESHOLDS: Record<string, ThresholdEntry & Record<string, unk
   tannerella: { typical_max: 0.005, citation: "Socransky1998", status: "literature_only" },
   treponema: { typical_max: 0.005, citation: "Socransky1998", status: "literature_only" },
   shannon: { typical_min: 3.5, typical_max: 5.5, flag_low: 3.0, citation: "Chaturvedi2025", status: "literature_only" },
+  breath_freshness: {
+    fresh_min: 90, mild_min: 75, moderate_min: 60, elevated_min: 40,
+    citation: "Kikuchi2025,Popa2025", status: "pilot_validation_pending" as ThresholdStatus,
+  },
 }

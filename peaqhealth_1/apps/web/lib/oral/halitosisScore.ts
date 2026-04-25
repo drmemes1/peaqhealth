@@ -8,10 +8,13 @@ export interface TopContributor {
 
 export interface BreathScoreResult {
   score: number | null
+  baseScore: number | null
   status: "strong" | "watch" | "attention" | "no_data"
   statusText: string
   topContributors: TopContributor[]
   vscBurden: number
+  modifierBreakdown?: { id: string; label: string; type: string; value: number; fired: boolean }[]
+  effectiveCap?: number
 }
 
 interface SpeciesData {
@@ -32,7 +35,7 @@ const PRODUCERS: { key: keyof SpeciesData; species: string; displayName: string;
   { key: "atopobiumPct", species: "atopobium_parvulum", displayName: "Atopobium parvulum", weight: 1.0 },
 ]
 
-export function getBreathScore(species: SpeciesData): BreathScoreResult {
+export function getBreathScore(species: SpeciesData, modifierResult?: { effectiveCap: number; bonusTotal: number; modifiers: { id: string; label: string; type: string; value: number; fired: boolean }[] }): BreathScoreResult {
   let hasAnyData = false
   let weightedSum = 0
   let totalWeight = 0
@@ -51,6 +54,7 @@ export function getBreathScore(species: SpeciesData): BreathScoreResult {
   if (!hasAnyData) {
     return {
       score: null,
+      baseScore: null,
       status: "no_data",
       statusText: "Insufficient data",
       topContributors: [],
@@ -59,22 +63,34 @@ export function getBreathScore(species: SpeciesData): BreathScoreResult {
   }
 
   const vscBurden = totalWeight > 0 ? weightedSum / totalWeight : 0
-  const score = Math.max(0, Math.min(100, Math.round(100 - vscBurden * 8)))
+  let baseScore = Math.max(0, Math.min(100, Math.round(100 - vscBurden * 8)))
+
+  // Apply modifiers if provided
+  const effectiveCap = modifierResult?.effectiveCap ?? 100
+  const bonusTotal = modifierResult?.bonusTotal ?? 0
+  let score = Math.min(baseScore, effectiveCap) + bonusTotal
+  score = Math.max(0, Math.min(100, Math.round(score)))
 
   const topContributors = contributions
     .filter(c => c.pct > 0)
     .sort((a, b) => b.contribution - a.contribution)
     .slice(0, 3)
 
+  // New thresholds (recalibrated for multi-factor model)
   let status: BreathScoreResult["status"]
   let statusText: string
 
-  if (score >= 80) { status = "strong"; statusText = "Fresh" }
-  else if (score >= 60) { status = "strong"; statusText = "Mild VSC load" }
-  else if (score >= 40) { status = "watch"; statusText = "Moderate VSC" }
+  if (score >= 90) { status = "strong"; statusText = "Fresh" }
+  else if (score >= 75) { status = "strong"; statusText = "Mild" }
+  else if (score >= 60) { status = "watch"; statusText = "Moderate" }
+  else if (score >= 40) { status = "watch"; statusText = "Elevated" }
   else { status = "attention"; statusText = "High VSC" }
 
-  return { score, status, statusText, topContributors, vscBurden }
+  return {
+    score, baseScore, status, statusText, topContributors, vscBurden,
+    modifierBreakdown: modifierResult?.modifiers,
+    effectiveCap: modifierResult?.effectiveCap,
+  }
 }
 
 export function getBreathDescription(status: string): string {
