@@ -254,8 +254,8 @@ function parseL7Input(raw: string): ParseResult {
     let mapped_column: string | null = null
     let mapping_type: ParsedEntry["mapping_type"] = taxo.is_placeholder ? "placeholder" : "unmatched"
 
-    // Only named species contribute to dedicated columns
     if (taxo.is_named) {
+      // Named species: map to species-specific or genus-sum columns
       if (SPECIES_COLUMNS[speciesLower]) {
         mapped_column = SPECIES_COLUMNS[speciesLower]
         mapping_type = "species_exact"
@@ -281,6 +281,14 @@ function parseL7Input(raw: string): ParseResult {
       }
 
       if (genusLower === "streptococcus") strepTotal += pct
+    } else if (taxo.is_placeholder && taxo.genus && taxo.genus !== "NA") {
+      // Placeholder species (sp+digits): aggregate into parent genus column
+      if (GENUS_COLUMNS[genusLower]) {
+        mapped_column = GENUS_COLUMNS[genusLower]
+        genusSums[mapped_column] = (genusSums[mapped_column] ?? 0) + pct
+      }
+      if (genusLower === "streptococcus") strepTotal += pct
+      if (genusLower === "prevotella") prevotellaCommensalTotal += pct
     }
 
     allEntries.push({
@@ -346,7 +354,7 @@ function parseL7Input(raw: string): ParseResult {
     community_summary: communitySummary,
     entries: allEntries,
     parsed_at: new Date().toISOString(),
-    parser_version: "v3",
+    parser_version: "v4",
   }
 
   const trackedCount = allEntries.filter(e => e.mapping_type !== "unmatched" && e.mapping_type !== "placeholder").length
