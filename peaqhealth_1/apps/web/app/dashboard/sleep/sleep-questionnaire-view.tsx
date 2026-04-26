@@ -264,7 +264,8 @@ export default function SleepQuestionnaireView({ ctx }: { ctx: UserPanelContext 
 
   const q = ctx.questionnaire
   const mbConfirmed = q?.mouthBreathing === "confirmed" || q?.mouthBreathing === "often"
-  const hasOralBreathing = ctx.oralKit?.envPattern === "mouth_breathing" || ctx.oralKit?.envPattern === "mixed"
+  const hasOralBreathing = ctx.oralKit?.envPattern === "mouth_breathing" || ctx.oralKit?.envPattern === "mixed" ||
+    (ctx.oralKit != null && ((ctx.oralKit.fusobacteriumPct ?? 0) > 1.5 || (ctx.oralKit.neisseriaPct ?? 0) > 12))
   const aerobicShift = ctx.oralKit?.envAerobicScorePct
   const mbWhen = q?.mouthBreathingWhen === "daytime_and_sleep" ? "daytime and sleep" : q?.mouthBreathingWhen === "sleep_only" ? "sleep" : "reported"
 

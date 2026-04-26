@@ -180,15 +180,17 @@ const rule_cavityBacteria_glucose: RuleFn = (ctx) => {
 
 const rule_mouthBreathing_multiSource: RuleFn = (ctx) => {
   if (!ctx.hasOralKit || !ctx.hasQuestionnaire) return null
-  const env = ctx.oralKit!.envPattern
+  const o = ctx.oralKit!
+  const env = o.envPattern
   const qMb = ctx.questionnaire!.mouthBreathing
-  const oralMatch = env === "mouth_breathing" || env === "mixed"
+  const oralMatch = env === "mouth_breathing" || env === "mixed" ||
+    ((o.fusobacteriumPct ?? 0) > 1.5 || (o.neisseriaPct ?? 0) > 12)
   const qMatch = qMb === "confirmed" || qMb === "often" || qMb === "yes"
 
   if (!oralMatch || !qMatch) return null
 
-  const aerobic = ctx.oralKit!.envAerobicScorePct
-  const anaerobic = ctx.oralKit!.envAnaerobicLoadPct
+  const aerobic = o.envAerobicScorePct
+  const anaerobic = o.envAnaerobicLoadPct
   const when = ctx.questionnaire!.mouthBreathingWhen
 
   return {

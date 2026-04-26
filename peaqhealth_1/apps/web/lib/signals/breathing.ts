@@ -11,12 +11,14 @@ export function getBreathingSignal(ctx: UserPanelContext): BreathingSignal {
   const wearableSuggests = ctx.sleepData?.breathingRateAvg != null && ctx.sleepData.breathingRateAvg > 17
   const questionnaireSuggests = ctx.questionnaire?.mouthBreathing === "confirmed" || ctx.questionnaire?.mouthBreathing === "often" ||
     ctx.questionnaire?.mouthBreathingWhen === "sleep_only" || ctx.questionnaire?.mouthBreathingWhen === "daytime_and_sleep"
-  const oralSuggests = ctx.oralKit?.envPattern === "mouth_breathing" || ctx.oralKit?.envPattern === "mixed"
+  const o = ctx.oralKit
+  const oralSuggests = o?.envPattern === "mouth_breathing" || o?.envPattern === "mixed" ||
+    (o != null && ((o.fusobacteriumPct ?? 0) > 1.5 || (o.neisseriaPct ?? 0) > 12))
 
   const sources: BreathingSignal["sources"] = []
   if (ctx.hasWearable && ctx.sleepData) sources.push("wearable")
   if (ctx.hasQuestionnaire && ctx.questionnaire?.mouthBreathing != null) sources.push("questionnaire")
-  if (ctx.hasOralKit && ctx.oralKit?.envPattern != null) sources.push("oral")
+  if (ctx.hasOralKit && (o?.envPattern != null || o?.fusobacteriumPct != null || o?.neisseriaPct != null)) sources.push("oral")
 
   const positives = [wearableSuggests, questionnaireSuggests, oralSuggests].filter(Boolean).length
 
