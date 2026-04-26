@@ -89,6 +89,7 @@ export default async function BacteriaDetailPage({ params }: { params: Promise<{
         userOralDate={userOralDate}
         isLoggedIn={!!user}
         heroVideo={existsSync(join(process.cwd(), "public", `${slug}.mp4`)) ? `/${slug}.mp4` : null}
+        heroImage={existsSync(join(process.cwd(), "public", `${slug}.png`)) ? `/${slug}.png` : null}
       />
     </div>
   )
