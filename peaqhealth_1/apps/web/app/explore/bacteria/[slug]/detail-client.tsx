@@ -53,7 +53,7 @@ function renderMarkdown(md: string): React.ReactNode[] {
   while (i < lines.length) {
     const line = lines[i]
     if (line.startsWith("## ")) {
-      nodes.push(<h3 key={i} style={{ fontFamily: sans, fontSize: 16, fontWeight: 600, color: "#042C53", margin: "24px 0 10px" }}>{renderInline(line.slice(3))}</h3>)
+      nodes.push(<h3 key={i} style={{ fontFamily: serif, fontSize: 22, fontWeight: 400, fontStyle: "italic", color: "#042C53", margin: "1.75rem 0 0.75rem" }}>{renderInline(line.slice(3))}</h3>)
       i++; continue
     }
     if (line.startsWith("### ")) {
