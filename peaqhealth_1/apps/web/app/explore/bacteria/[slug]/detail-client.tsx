@@ -144,12 +144,13 @@ function Collapsible({ title, defaultOpen, children, sectionCitations }: {
 
 // ── Main component ─────────────────────────────────────────────────────────
 
-export function DetailClient({ row, citations, userOralValue, userOralDate, isLoggedIn }: {
+export function DetailClient({ row, citations, userOralValue, userOralDate, isLoggedIn, heroVideo }: {
   row: Record<string, unknown>
   citations: Citation[]
   userOralValue: number | null
   userOralDate: string | null
   isLoggedIn: boolean
+  heroVideo: string | null
 }) {
   const categories = (row.peaq_categories ?? []) as string[]
   const direction = row.desired_direction as string | null
@@ -188,8 +189,29 @@ export function DetailClient({ row, citations, userOralValue, userOralDate, isLo
   return (
     <>
       {/* 1. Hero */}
-      <div style={{ background: "#141410", padding: "80px 24px 48px" }}>
-        <div style={{ maxWidth: 760, margin: "0 auto" }}>
+      <div style={{ background: "#141410", padding: "80px 24px 48px", position: "relative", overflow: "hidden" }}>
+        {heroVideo && (
+          <>
+            <video
+              autoPlay muted loop playsInline
+              style={{
+                position: "absolute", inset: 0,
+                width: "100%", height: "100%",
+                objectFit: "cover",
+                opacity: 0.25,
+                pointerEvents: "none",
+              }}
+            >
+              <source src={heroVideo} type="video/mp4" />
+            </video>
+            <div style={{
+              position: "absolute", inset: 0,
+              background: "linear-gradient(180deg, rgba(20,20,16,0.3) 0%, rgba(20,20,16,0.7) 100%)",
+              pointerEvents: "none",
+            }} />
+          </>
+        )}
+        <div style={{ maxWidth: 760, margin: "0 auto", position: "relative", zIndex: 1 }}>
           <Link href="/explore" style={{
             fontFamily: sans, fontSize: 12, color: "rgba(255,255,255,0.35)",
             textDecoration: "none", display: "inline-block", marginBottom: 20,

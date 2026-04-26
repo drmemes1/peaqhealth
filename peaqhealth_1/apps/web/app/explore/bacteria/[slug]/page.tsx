@@ -1,4 +1,6 @@
 import { notFound } from "next/navigation"
+import { existsSync } from "fs"
+import { join } from "path"
 import { createClient } from "../../../../lib/supabase/server"
 import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { Nav } from "../../../components/nav"
@@ -86,6 +88,7 @@ export default async function BacteriaDetailPage({ params }: { params: Promise<{
         userOralValue={userOralValue}
         userOralDate={userOralDate}
         isLoggedIn={!!user}
+        heroVideo={existsSync(join(process.cwd(), "public", `${slug}.mp4`)) ? `/${slug}.mp4` : null}
       />
     </div>
   )
