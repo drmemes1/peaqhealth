@@ -7,57 +7,82 @@ const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 
 export function ExploreHero() {
   return (
-    <>
-      {/* Hero */}
-      <div style={{ textAlign: "center", padding: "88px 0 48px" }}>
-        <span style={{
-          fontFamily: sans, fontSize: 11, letterSpacing: "2px",
-          textTransform: "uppercase", color: "#9A7200",
-          display: "block", marginBottom: 20,
-        }}>
-          CDC NHANES Study &middot; 9,660 Americans
-        </span>
-        <h1 style={{
-          fontFamily: serif, fontSize: 52, fontWeight: 400,
-          color: "#141410", lineHeight: 1.15,
-          margin: "0 0 20px",
-        }}>
-          Your oral bacteria show up<br />in your <em style={{ fontStyle: "italic", color: "#9A7200" }}>blood.</em>
-        </h1>
-        <p style={{
-          fontFamily: sans, fontSize: 15, color: "rgba(20,20,16,0.5)",
-          lineHeight: 1.7, maxWidth: 540, margin: "0 auto",
-        }}>
-          The bacteria in your mouth track with markers in your bloodstream. A single diversity score does not. This library walks through what each organism does, what it has been associated with, and what&rsquo;s actually known about shifting it.
-        </p>
-      </div>
-
-      {/* Stats row */}
+    <div style={{
+      position: "relative", overflow: "hidden",
+      margin: "0 -24px", padding: "0 24px",
+    }}>
+      {/* Background image */}
+      <img
+        src="/bacteria1.png"
+        alt=""
+        style={{
+          position: "absolute", inset: 0,
+          width: "100%", height: "100%",
+          objectFit: "cover", objectPosition: "center 30%",
+          opacity: 0.12,
+          pointerEvents: "none",
+        }}
+      />
       <div style={{
-        display: "grid", gridTemplateColumns: "1fr 1fr",
-        gap: 16, marginBottom: 64, maxWidth: 560, marginLeft: "auto", marginRight: "auto",
-      }}>
-        <div style={{
-          background: "#fff", borderRadius: 10, padding: "28px 24px",
-          border: "0.5px solid rgba(20,20,16,0.08)", textAlign: "center",
-        }}>
-          <div style={{ fontFamily: serif, fontSize: 48, fontWeight: 300, color: "#141410", lineHeight: 1, marginBottom: 8 }}>
-            9,848
-          </div>
-          <div style={{ fontFamily: sans, fontSize: 12, color: "rgba(20,20,16,0.5)", lineHeight: 1.4 }}>
-            People in the dataset
-          </div>
+        position: "absolute", inset: 0,
+        background: "linear-gradient(180deg, rgba(250,250,248,0.3) 0%, rgba(250,250,248,0.85) 60%, rgba(250,250,248,1) 100%)",
+        pointerEvents: "none",
+      }} />
+
+      <div style={{ position: "relative", zIndex: 1 }}>
+        {/* Hero text */}
+        <div style={{ textAlign: "center", padding: "88px 0 48px" }}>
+          <span style={{
+            fontFamily: sans, fontSize: 11, letterSpacing: "2px",
+            textTransform: "uppercase", color: "#9A7200",
+            display: "block", marginBottom: 20,
+          }}>
+            CDC NHANES Study &middot; 9,660 Americans
+          </span>
+          <h1 style={{
+            fontFamily: serif, fontSize: 52, fontWeight: 400,
+            color: "#141410", lineHeight: 1.15,
+            margin: "0 0 20px",
+          }}>
+            Your oral bacteria show up<br />in your <em style={{ fontStyle: "italic", color: "#9A7200" }}>blood.</em>
+          </h1>
+          <p style={{
+            fontFamily: sans, fontSize: 15, color: "rgba(20,20,16,0.5)",
+            lineHeight: 1.7, maxWidth: 540, margin: "0 auto",
+          }}>
+            The bacteria in your mouth track with markers in your bloodstream. A single diversity score does not. This library walks through what each organism does, what it has been associated with, and what&rsquo;s actually known about shifting it.
+          </p>
         </div>
+
+        {/* Stats row */}
         <div style={{
-          background: "#fff", borderRadius: 10, padding: "28px 24px",
-          border: "0.5px solid rgba(20,20,16,0.08)", textAlign: "center",
+          display: "grid", gridTemplateColumns: "1fr 1fr",
+          gap: 16, marginBottom: 64, maxWidth: 560, marginLeft: "auto", marginRight: "auto",
         }}>
-          <div style={{ fontFamily: sans, fontSize: 14, color: "rgba(20,20,16,0.55)", lineHeight: 1.6, padding: "8px 0" }}>
-            Specific bacteria showed signals across the dataset. Diversity score alone did not.
+          <div style={{
+            background: "rgba(255,255,255,0.85)", backdropFilter: "blur(8px)",
+            borderRadius: 10, padding: "28px 24px",
+            border: "0.5px solid rgba(20,20,16,0.08)", textAlign: "center",
+          }}>
+            <div style={{ fontFamily: serif, fontSize: 48, fontWeight: 300, color: "#141410", lineHeight: 1, marginBottom: 8 }}>
+              9,848
+            </div>
+            <div style={{ fontFamily: sans, fontSize: 12, color: "rgba(20,20,16,0.5)", lineHeight: 1.4 }}>
+              People in the dataset
+            </div>
+          </div>
+          <div style={{
+            background: "rgba(255,255,255,0.85)", backdropFilter: "blur(8px)",
+            borderRadius: 10, padding: "28px 24px",
+            border: "0.5px solid rgba(20,20,16,0.08)", textAlign: "center",
+          }}>
+            <div style={{ fontFamily: sans, fontSize: 14, color: "rgba(20,20,16,0.55)", lineHeight: 1.6, padding: "8px 0" }}>
+              Specific bacteria showed signals across the dataset. Diversity score alone did not.
+            </div>
           </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }
 
