@@ -43,15 +43,12 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string
 }
 
 const FILTER_CHIPS = [
-  { key: "all", label: "All" },
-  { key: "periodontal_pathogen", label: "Periodontal" },
-  { key: "nitrate_reducer", label: "Nitrate reducers" },
-  { key: "protective", label: "Protective" },
-  { key: "caries", label: "Caries" },
-  { key: "inflammatory", label: "Inflammatory" },
-  { key: "commensal", label: "Commensal" },
-  { key: "context_dependent", label: "Context dependent" },
-  { key: "metabolic", label: "Metabolic" },
+  { key: "all", label: "All", keys: [] as string[] },
+  { key: "disease", label: "Disease-associated", keys: ["periodontal_pathogen", "inflammatory"] },
+  { key: "health", label: "Health-associated", keys: ["protective", "commensal"] },
+  { key: "nitrate", label: "Nitrate-reducing", keys: ["nitrate_reducer"] },
+  { key: "caries", label: "Cavity-associated", keys: ["caries"] },
+  { key: "context", label: "Context-dependent", keys: ["context_dependent"] },
 ]
 
 function CategoryBadge({ category }: { category: string }) {
@@ -123,7 +120,10 @@ export function BacteriaLibrary({ bacteria }: { bacteria: BacteriaRow[] }) {
   const [search, setSearch] = useState("")
 
   const filtered = bacteria.filter(b => {
-    if (filter !== "all" && !b.peaq_categories.includes(filter)) return false
+    if (filter !== "all") {
+      const chip = FILTER_CHIPS.find(c => c.key === filter)
+      if (chip && !chip.keys.some(k => b.peaq_categories.includes(k))) return false
+    }
     if (search.trim()) {
       const q = search.toLowerCase()
       const nameMatch = b.full_name.toLowerCase().includes(q)
@@ -134,7 +134,7 @@ export function BacteriaLibrary({ bacteria }: { bacteria: BacteriaRow[] }) {
   })
 
   const activeChips = FILTER_CHIPS.filter(chip =>
-    chip.key === "all" || bacteria.some(b => b.peaq_categories.includes(chip.key))
+    chip.key === "all" || bacteria.some(b => chip.keys.some(k => b.peaq_categories.includes(k)))
   )
 
   return (
@@ -183,12 +183,20 @@ export function BacteriaLibrary({ bacteria }: { bacteria: BacteriaRow[] }) {
           No bacteria match. Try a different filter.
         </p>
       ) : (
-        <div className="card-grid" style={{
-          display: "grid", gridTemplateColumns: "1fr 1fr",
-          gap: 16, marginBottom: 48,
-        }}>
-          {filtered.map(b => <BacteriaCard key={b.slug} row={b} />)}
-        </div>
+        <>
+          <div className="card-grid" style={{
+            display: "grid", gridTemplateColumns: "1fr 1fr",
+            gap: 16, marginBottom: 20,
+          }}>
+            {filtered.map(b => <BacteriaCard key={b.slug} row={b} />)}
+          </div>
+          <p style={{
+            fontFamily: sans, fontSize: 12,
+            color: "rgba(20,20,16,0.35)", marginBottom: 48,
+          }}>
+            Showing {filtered.length} of {bacteria.length} bacteria &middot; More publishing weekly
+          </p>
+        </>
       )}
     </div>
   )
