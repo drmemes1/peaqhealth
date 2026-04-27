@@ -10,6 +10,9 @@ import { TrajectorySection } from "../../components/panels/oral/TrajectorySectio
 import { DeepDiveDoors } from "../../components/panels/oral/DeepDiveDoors"
 import { getBreathScore } from "../../../lib/oral/halitosisScore"
 import { computeModifiers } from "../../../lib/oral/halitosisModifiers"
+import { computeBiofilmMaturity, BIOFILM_STAGE_LABELS } from "../../../lib/oral/biofilmMaturity"
+import { computeTranslocation, TRANSLOCATION_LEVEL_LABELS } from "../../../lib/oral/translocationRisk"
+import { computeInflammatoryPattern, INFLAMMATORY_LEVEL_LABELS } from "../../../lib/oral/inflammatoryPattern"
 
 const serif = "'Cormorant Garamond', Georgia, serif"
 const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
@@ -50,6 +53,26 @@ export function OralPanelTreemap({ ctx, genusCounts }: { ctx: UserPanelContext; 
   })
   const breath = getBreathScore({ fusobacteriumPeriodonticumPct: null, porphyromonasPct: o.porphyromonasPct, solobacteriumPct: null, prevotellaMelaninogenicaPct: null, peptostreptococcusPct: null }, modResult)
   const breathStatus: Status = breath.status === "no_data" ? "watch" : breath.status
+
+  // Composite indices (PR 6).
+  const biofilm = computeBiofilmMaturity({
+    streptococcusPct: o.streptococcusTotalPct,
+    actinomycesPct: o.actinomycesPct,
+    porphyromonasPct: o.porphyromonasPct,
+    treponemaPct: o.treponemaPct,
+    tannerellaPct: o.tannerellaPct,
+  })
+  const translocation = computeTranslocation({
+    fNucleatumPct: o.fNucleatumPct,
+    pGingivalisPct: o.pGingivalisPct,
+    fusobacteriumPct: o.fusobacteriumPct,
+  })
+  const inflammatory = computeInflammatoryPattern({
+    prevotellaPct: o.prevotellaPct,
+    veillonellaPct: o.veillonellaPct,
+    neisseriaPct: o.neisseriaPct,
+    haemophilusPct: o.haemophilusPct,
+  })
 
   // Count statuses for summary
   const statuses = [shannonStatus, phStatus, ratioStatus, breathStatus]
@@ -105,6 +128,9 @@ export function OralPanelTreemap({ ctx, genusCounts }: { ctx: UserPanelContext; 
           ph={{ value: phVal, status: phStatus }}
           ratio={{ value: ratioVal, status: ratioStatus }}
           breath={{ value: breath.score, status: breathStatus }}
+          biofilm={{ value: biofilm.ratio, status: biofilm.status, statusLabel: BIOFILM_STAGE_LABELS[biofilm.stage] }}
+          translocation={{ value: translocation.score, status: translocation.status, statusLabel: TRANSLOCATION_LEVEL_LABELS[translocation.level] }}
+          inflammatory={{ value: inflammatory.signal, status: inflammatory.status, statusLabel: INFLAMMATORY_LEVEL_LABELS[inflammatory.level] }}
         />
       </div>
 

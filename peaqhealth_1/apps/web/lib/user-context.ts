@@ -49,6 +49,10 @@ export interface OralKitData {
   tannerellaPct: number | null
   treponemaPct: number | null
   pIntermediaPct: number | null
+  streptococcusTotalPct: number | null
+  prevotellaPct: number | null
+  fNucleatumPct: number | null
+  pGingivalisPct: number | null
   sMutansPct: number | null
   sSobrinusPct: number | null
   lactobacillusPct: number | null
@@ -205,6 +209,8 @@ async function buildContext(userId: string): Promise<UserPanelContext> {
       neisseriaPct: ne, rothiaPct: ro, haemophilusPct: ha, actinomycesPct: ac, veillonellaPct: ve,
       fusobacteriumPct: fu, aggregatibacterPct: ag, campylobacterPct: ca,
       porphyromonasPct: po, tannerellaPct: ta, treponemaPct: tr, pIntermediaPct: pi,
+      streptococcusTotalPct: n(o.streptococcus_total_pct), prevotellaPct: n(o.prevotella_pct),
+      fNucleatumPct: n(o.fusobacterium_nucleatum_pct), pGingivalisPct: n(o.porphyromonas_gingivalis_pct),
       sMutansPct: sm, sSobrinusPct: ss, lactobacillusPct: la,
       sSanguinisPct: sg, sGordoniiPct: go, sSalivariusPct: n(o.s_salivarius_pct),
       envPattern: s(o.env_pattern), primaryPattern: s(o.primary_pattern),
