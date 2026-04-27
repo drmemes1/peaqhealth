@@ -110,7 +110,7 @@ function renderInline(text: string): React.ReactNode {
     if (italicUnderscoreMatch?.index !== undefined) candidates.push({ idx: italicUnderscoreMatch.index, len: italicUnderscoreMatch[0].length, node: <em key={`i-${key++}`} style={{ fontStyle: "italic" }}>{renderInline(italicUnderscoreMatch[1])}</em> })
     if (italicAsteriskMatch?.index !== undefined) candidates.push({ idx: italicAsteriskMatch.index, len: italicAsteriskMatch[0].length, node: <em key={`i-${key++}`} style={{ fontStyle: "italic" }}>{renderInline(italicAsteriskMatch[1])}</em> })
     if (linkMatch?.index !== undefined) candidates.push({ idx: linkMatch.index, len: linkMatch[0].length, node: <a key={`a-${key++}`} href={linkMatch[2]} target="_blank" rel="noopener noreferrer" style={{ color: "#185FA5", textDecoration: "underline" }}>{renderInline(linkMatch[1])}</a> })
-    if (sMutansMatch?.index !== undefined) candidates.push({ idx: sMutansMatch.index, len: sMutansMatch[0].length, node: <Link key={`sm-${key++}`} href="/explore/bacteria/s-mutans" style={{ color: "#185FA5", textDecoration: "underline" }}>{sMutansMatch[0]}</Link> })
+    if (sMutansMatch?.index !== undefined) candidates.push({ idx: sMutansMatch.index, len: sMutansMatch[0].length, node: <Link key={`sm-${key++}`} href="/explore/oral-bacteria/streptococcus/mutans" style={{ color: "#185FA5", textDecoration: "underline" }}>{sMutansMatch[0]}</Link> })
     if (candidates.length === 0) { parts.push(remaining); break }
     candidates.sort((a, b) => a.idx - b.idx)
     const first = candidates[0]
@@ -158,7 +158,10 @@ function Collapsible({ title, defaultOpen, children, sectionCitations }: {
 
 // ── Main component ─────────────────────────────────────────────────────────
 
-export function DetailClient({ row, citations, userOralValue, userOralDate, isLoggedIn, heroVideo, heroImage }: {
+interface BreadcrumbItem { label: string; href?: string }
+interface SpeciesItem { slug: string; species: string; full_name: string; consumer_friendly_name: string | null; href: string }
+
+export function DetailClient({ row, citations, userOralValue, userOralDate, isLoggedIn, heroVideo, heroImage, breadcrumb, speciesList, userOralUnavailable }: {
   row: Record<string, unknown>
   citations: Citation[]
   userOralValue: number | null
@@ -166,6 +169,9 @@ export function DetailClient({ row, citations, userOralValue, userOralDate, isLo
   isLoggedIn: boolean
   heroVideo: string | null
   heroImage: string | null
+  breadcrumb?: BreadcrumbItem[]
+  speciesList?: SpeciesItem[]
+  userOralUnavailable?: boolean
 }) {
   const categories = (row.peaq_categories ?? []) as string[]
   const direction = row.desired_direction as string | null
@@ -246,12 +252,21 @@ export function DetailClient({ row, citations, userOralValue, userOralDate, isLo
           </>
         ) : null}
         <div style={{ maxWidth: 760, margin: "0 auto", position: "relative", zIndex: 1 }}>
-          <Link href="/explore" style={{
+          <div style={{
             fontFamily: sans, fontSize: 12, color: "rgba(255,255,255,0.35)",
-            textDecoration: "none", display: "inline-block", marginBottom: 20,
+            display: "inline-block", marginBottom: 20,
           }}>
-            Explore &rsaquo; Oral bacteria &rsaquo; {row.full_name as string}
-          </Link>
+            {(breadcrumb ?? [{ label: "Explore", href: "/explore" }, { label: "Oral bacteria", href: "/explore/oral-bacteria" }, { label: row.full_name as string }]).map((b, idx, arr) => (
+              <span key={idx}>
+                {b.href ? (
+                  <Link href={b.href} style={{ color: "inherit", textDecoration: "none" }}>{b.label}</Link>
+                ) : (
+                  <span style={{ fontStyle: row.taxonomic_level === "species" || idx === arr.length - 1 ? "italic" : "normal" }}>{b.label}</span>
+                )}
+                {idx < arr.length - 1 ? " › " : ""}
+              </span>
+            ))}
+          </div>
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
             {categories.map(cat => {
@@ -314,6 +329,18 @@ export function DetailClient({ row, citations, userOralValue, userOralDate, isLo
             }}>
               {renderInline(summaryBox)}
             </p>
+
+            {/* Species-level data missing notice */}
+            {!hasUserData && userOralUnavailable && (
+              <div style={{
+                background: "rgba(255,255,255,0.6)", borderRadius: 12,
+                padding: "14px 18px", marginBottom: 16,
+                fontFamily: sans, fontSize: 13, color: "#185FA5", lineHeight: 1.5,
+              }}>
+                Species-level data not available for your sample
+                {rangeMin != null && rangeMax != null ? ` · Typical healthy range: ${rangeMin}–${rangeMax}%` : ""}.
+              </div>
+            )}
 
             {/* Your result sub-card */}
             {hasUserData && (
@@ -433,7 +460,18 @@ export function DetailClient({ row, citations, userOralValue, userOralDate, isLo
                   ) : null}
                 </>
               ) : direction === "decrease" ? (
-                row.section_6_decrease ? <>{renderMarkdown(row.section_6_decrease as string)}</> : null
+                row.section_5_increase ? (
+                  <>
+                    {renderMarkdown(row.section_5_increase as string)}
+                    {row.section_6_decrease ? (
+                      <p style={{ fontFamily: sans, fontSize: 13, fontStyle: "italic", color: "rgba(20,20,16,0.55)", marginTop: 16, lineHeight: 1.6 }}>
+                        {renderInline(row.section_6_decrease as string)}
+                      </p>
+                    ) : null}
+                  </>
+                ) : row.section_6_decrease ? (
+                  <>{renderMarkdown(row.section_6_decrease as string)}</>
+                ) : null
               ) : (
                 row.section_5_increase ? <>{renderMarkdown(row.section_5_increase as string)}</> : null
               )}
@@ -444,6 +482,41 @@ export function DetailClient({ row, citations, userOralValue, userOralDate, isLo
             <Collapsible title="Species detail" sectionCitations={citationsForSections(7)}>
               {renderMarkdown(row.section_7_species_nuance as string)}
             </Collapsible>
+          ) : null}
+
+          {speciesList && speciesList.length > 0 ? (
+            <div style={{
+              borderTop: "0.5px solid rgba(20,20,16,0.08)",
+              padding: "24px 0",
+            }}>
+              <h3 style={{
+                fontFamily: serif, fontSize: 22, fontWeight: 400, fontStyle: "italic",
+                color: "#042C53", margin: "0 0 4px",
+              }}>
+                Species pages
+              </h3>
+              <p style={{ fontFamily: sans, fontSize: 13, color: "rgba(20,20,16,0.55)", margin: "0 0 16px" }}>
+                Deeper writeups for individual species in this genus.
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 10 }}>
+                {speciesList.map(sp => (
+                  <Link key={sp.slug} href={sp.href} style={{
+                    display: "block", textDecoration: "none",
+                    background: "#fff", borderLeft: "3px solid #185FA5",
+                    borderRadius: 8, padding: "14px 16px",
+                  }}>
+                    <div style={{ fontFamily: serif, fontSize: 17, fontStyle: "italic", color: "#042C53", lineHeight: 1.2 }}>
+                      {sp.full_name}
+                    </div>
+                    {sp.consumer_friendly_name ? (
+                      <div style={{ fontFamily: sans, fontSize: 12, color: "rgba(20,20,16,0.55)", marginTop: 4 }}>
+                        {sp.consumer_friendly_name}
+                      </div>
+                    ) : null}
+                  </Link>
+                ))}
+              </div>
+            </div>
           ) : null}
 
           {row.section_8_uncertainty ? (

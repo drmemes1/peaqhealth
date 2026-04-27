@@ -1,13 +1,13 @@
-import { notFound, redirect } from "next/navigation"
+import { notFound } from "next/navigation"
 import { existsSync } from "fs"
 import { join } from "path"
-import { createClient } from "../../../../lib/supabase/server"
+import { createClient } from "../../../../../lib/supabase/server"
 import { createClient as createServiceClient } from "@supabase/supabase-js"
-import { Nav } from "../../../components/nav"
-import { DetailClient } from "./detail-client"
+import { Nav } from "../../../../components/nav"
+import { DetailClient } from "../../../bacteria/[slug]/detail-client"
 
-export default async function BacteriaDetailPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params
+export default async function SpeciesDetailPage({ params }: { params: Promise<{ genus: string; species: string }> }) {
+  const { genus, species } = await params
   const supabase = await createClient()
 
   const svc = createServiceClient(
@@ -15,27 +15,25 @@ export default async function BacteriaDetailPage({ params }: { params: Promise<{
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   )
 
+  const { data: genusRow } = await svc
+    .from("bacteria_reference")
+    .select("id, slug, full_name, genus")
+    .eq("slug", genus)
+    .eq("taxonomic_level", "genus")
+    .eq("published", true)
+    .maybeSingle()
+
+  if (!genusRow) notFound()
+
   const { data: row } = await svc
     .from("bacteria_reference")
     .select("*")
-    .eq("slug", slug)
+    .eq("parent_genus_id", genusRow.id)
+    .eq("species", species)
     .eq("published", true)
     .maybeSingle()
 
   if (!row) notFound()
-
-  // Permanent forward to the new /explore/oral-bacteria/{genus}[/{species}] hierarchy.
-  if (row.taxonomic_level === "genus") {
-    redirect(`/explore/oral-bacteria/${row.slug}`)
-  } else if (row.taxonomic_level === "species" && row.parent_genus_id) {
-    const { data: parent } = await svc
-      .from("bacteria_reference")
-      .select("slug")
-      .eq("id", row.parent_genus_id)
-      .maybeSingle()
-    const speciesShort = (row.species as string | null) ?? (row.slug as string).replace(`${parent?.slug ?? ""}-`, "")
-    if (parent?.slug) redirect(`/explore/oral-bacteria/${parent.slug}/${speciesShort}`)
-  }
 
   const { data: citationsRaw } = await svc
     .from("bacteria_reference_citations")
@@ -62,6 +60,7 @@ export default async function BacteriaDetailPage({ params }: { params: Promise<{
   const { data: { user } } = await supabase.auth.getUser()
   let userOralValue: number | null = null
   let userOralDate: string | null = null
+  let userOralUnavailable = false
 
   if (user) {
     const { data: oralKit } = await svc
@@ -75,22 +74,24 @@ export default async function BacteriaDetailPage({ params }: { params: Promise<{
 
     if (oralKit) {
       const genusLower = (row.genus as string).toLowerCase()
-      const speciesCol = row.species ? `${genusLower}_${(row.species as string).toLowerCase().replace(/ /g, "_")}_pct` : null
-      const genusCol = `${genusLower}_pct`
-
-      if (speciesCol && oralKit[speciesCol] != null) {
+      const speciesLower = (row.species as string).toLowerCase().replace(/ /g, "_")
+      const speciesCol = `${genusLower}_${speciesLower}_pct`
+      if (oralKit[speciesCol] != null) {
         userOralValue = Number(oralKit[speciesCol])
-      } else if (oralKit[genusCol] != null) {
-        userOralValue = Number(oralKit[genusCol])
+      } else {
+        userOralUnavailable = true
       }
-
-      if (row.taxonomic_level === "genus" && genusCol === "streptococcus_pct" && oralKit.streptococcus_total_pct != null) {
-        userOralValue = Number(oralKit.streptococcus_total_pct)
-      }
-
       userOralDate = oralKit.collection_date ?? oralKit.ordered_at ?? null
     }
   }
+
+  const slug = row.slug as string
+  const breadcrumb = [
+    { label: "Explore", href: "/explore" },
+    { label: "Oral bacteria", href: "/explore/oral-bacteria" },
+    { label: genusRow.full_name as string, href: `/explore/oral-bacteria/${genus}` },
+    { label: row.full_name as string },
+  ]
 
   return (
     <div style={{ background: "#FAFAF8", minHeight: "100vh" }}>
@@ -103,6 +104,8 @@ export default async function BacteriaDetailPage({ params }: { params: Promise<{
         isLoggedIn={!!user}
         heroVideo={existsSync(join(process.cwd(), "public", `${slug}.mp4`)) ? `/${slug}.mp4` : null}
         heroImage={existsSync(join(process.cwd(), "public", `${slug}.png`)) ? `/${slug}.png` : null}
+        breadcrumb={breadcrumb}
+        userOralUnavailable={userOralUnavailable}
       />
     </div>
   )

@@ -62,9 +62,9 @@ function buildSignals(ctx: UserPanelContext, subInsights: SubInsight[]): OralSig
     secondaryRead: `Neisseria ${f(o.neisseriaPct)}% · Rothia ${f(o.rothiaPct)}% · Haemophilus ${f(o.haemophilusPct)}%`,
     subInsight: haemophilusSub,
     chips: [
-      { label: "Neisseria", href: "/explore/bacteria/neisseria" },
-      { label: "Rothia", href: "/explore/bacteria/rothia" },
-      { label: "Haemophilus", flagged: haemophilusSub != null, href: "/explore/bacteria/haemophilus" },
+      { label: "Neisseria", href: "/explore/oral-bacteria/neisseria" },
+      { label: "Rothia", href: "/explore/oral-bacteria/rothia" },
+      { label: "Haemophilus", flagged: haemophilusSub != null, href: "/explore/oral-bacteria/haemophilus" },
       { label: "Actinomyces" },
       { label: "Veillonella" },
     ],
