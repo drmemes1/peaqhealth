@@ -104,11 +104,13 @@ function renderInline(text: string): React.ReactNode {
     const italicUnderscoreMatch = remaining.match(/_(.+?)_/)
     const italicAsteriskMatch = remaining.match(/(?<!\*)\*([^*\n]+?)\*(?!\*)/)
     const linkMatch = remaining.match(/\[([^\]]+)\]\(([^)]+)\)/)
+    const sMutansMatch = remaining.match(/\bS\.\s?mutans\b/)
     const candidates: { idx: number; len: number; node: React.ReactNode }[] = []
     if (boldMatch?.index !== undefined) candidates.push({ idx: boldMatch.index, len: boldMatch[0].length, node: <strong key={`b-${key++}`} style={{ fontWeight: 600, color: "#141410" }}>{renderInline(boldMatch[1])}</strong> })
     if (italicUnderscoreMatch?.index !== undefined) candidates.push({ idx: italicUnderscoreMatch.index, len: italicUnderscoreMatch[0].length, node: <em key={`i-${key++}`} style={{ fontStyle: "italic" }}>{renderInline(italicUnderscoreMatch[1])}</em> })
     if (italicAsteriskMatch?.index !== undefined) candidates.push({ idx: italicAsteriskMatch.index, len: italicAsteriskMatch[0].length, node: <em key={`i-${key++}`} style={{ fontStyle: "italic" }}>{renderInline(italicAsteriskMatch[1])}</em> })
     if (linkMatch?.index !== undefined) candidates.push({ idx: linkMatch.index, len: linkMatch[0].length, node: <a key={`a-${key++}`} href={linkMatch[2]} target="_blank" rel="noopener noreferrer" style={{ color: "#185FA5", textDecoration: "underline" }}>{renderInline(linkMatch[1])}</a> })
+    if (sMutansMatch?.index !== undefined) candidates.push({ idx: sMutansMatch.index, len: sMutansMatch[0].length, node: <Link key={`sm-${key++}`} href="/explore/bacteria/s-mutans" style={{ color: "#185FA5", textDecoration: "underline" }}>{sMutansMatch[0]}</Link> })
     if (candidates.length === 0) { parts.push(remaining); break }
     candidates.sort((a, b) => a.idx - b.idx)
     const first = candidates[0]
