@@ -86,7 +86,10 @@ export default async function GenusDetailPage({ params }: { params: Promise<{ ge
       if (genusCol === "streptococcus_pct" && oralKit.streptococcus_total_pct != null) {
         userOralValue = Number(oralKit.streptococcus_total_pct)
       }
-      userOralDate = oralKit.collection_date ?? oralKit.ordered_at ?? null
+      userOralDate = (oralKit.report_date as string | null)
+        ?? (oralKit.collection_date as string | null)
+        ?? (oralKit.ordered_at as string | null)
+        ?? null
     }
   }
 

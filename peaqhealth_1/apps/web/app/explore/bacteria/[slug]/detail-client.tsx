@@ -160,8 +160,9 @@ function Collapsible({ title, defaultOpen, children, sectionCitations }: {
 
 interface BreadcrumbItem { label: string; href?: string }
 interface SpeciesItem { slug: string; species: string; full_name: string; consumer_friendly_name: string | null; href: string }
+export type UserOralStatus = "detected" | "below_detection" | "unavailable"
 
-export function DetailClient({ row, citations, userOralValue, userOralDate, isLoggedIn, heroVideo, heroImage, breadcrumb, speciesList, userOralUnavailable }: {
+export function DetailClient({ row, citations, userOralValue, userOralDate, isLoggedIn, heroVideo, heroImage, breadcrumb, speciesList, userOralStatus }: {
   row: Record<string, unknown>
   citations: Citation[]
   userOralValue: number | null
@@ -171,7 +172,7 @@ export function DetailClient({ row, citations, userOralValue, userOralDate, isLo
   heroImage: string | null
   breadcrumb?: BreadcrumbItem[]
   speciesList?: SpeciesItem[]
-  userOralUnavailable?: boolean
+  userOralStatus?: UserOralStatus | null
 }) {
   const categories = (row.peaq_categories ?? []) as string[]
   const direction = row.desired_direction as string | null
@@ -330,18 +331,6 @@ export function DetailClient({ row, citations, userOralValue, userOralDate, isLo
               {renderInline(summaryBox)}
             </p>
 
-            {/* Species-level data missing notice */}
-            {!hasUserData && userOralUnavailable && (
-              <div style={{
-                background: "rgba(255,255,255,0.6)", borderRadius: 12,
-                padding: "14px 18px", marginBottom: 16,
-                fontFamily: sans, fontSize: 13, color: "#185FA5", lineHeight: 1.5,
-              }}>
-                Species-level data not available for your sample
-                {rangeMin != null && rangeMax != null ? ` · Typical healthy range: ${rangeMin}–${rangeMax}%` : ""}.
-              </div>
-            )}
-
             {/* Your result sub-card */}
             {hasUserData && (
               <div style={{
@@ -372,6 +361,71 @@ export function DetailClient({ row, citations, userOralValue, userOralDate, isLo
                     Healthy range: {rangeMin}–{rangeMax}%
                   </p>
                 )}
+              </div>
+            )}
+
+            {/* Below-detection card (species lookup configured, no value) */}
+            {!hasUserData && userOralStatus === "below_detection" && (() => {
+              const genus = row.genus as string | null
+              const species = row.species as string | null
+              const shortName = genus && species ? `${genus[0]}. ${species}` : (row.full_name as string)
+              let badgeLabel = "Not detected"
+              let badgeColor = "#6B6860"
+              let subline: string
+              if (direction === "decrease") {
+                badgeLabel = "At healthy level"
+                badgeColor = "#2D6A4F"
+                subline = `*${shortName}* is typically undetectable in healthy adults — this is the expected result.`
+              } else if (direction === "increase") {
+                badgeLabel = "Below typical"
+                badgeColor = "#9A7200"
+                subline = `*${shortName}* is typically present in most healthy adults. Below-detection results may reflect daily antiseptic mouthwash use, recent antibiotics, or lab detection limits.`
+              } else {
+                subline = `This species was below detection in your sample.`
+              }
+              return (
+                <div style={{
+                  background: "rgba(255,255,255,0.6)", borderRadius: 12,
+                  padding: "18px 22px", marginBottom: 16,
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
+                    <div>
+                      <span style={{ fontFamily: sans, fontSize: 10, letterSpacing: "1px", textTransform: "uppercase", color: "#185FA5" }}>
+                        Your result{userOralDate ? ` · ${new Date(userOralDate).toLocaleDateString("en-US", { month: "short", year: "numeric" })}` : ""}
+                      </span>
+                      <div style={{ fontFamily: serif, fontSize: 28, fontWeight: 300, color: "#042C53", lineHeight: 1.1, marginTop: 4 }}>
+                        Not detected
+                      </div>
+                    </div>
+                    <span style={{
+                      fontFamily: sans, fontSize: 10, letterSpacing: "1px", textTransform: "uppercase",
+                      fontWeight: 600, color: badgeColor,
+                      background: `${badgeColor}14`, borderRadius: 4, padding: "4px 10px",
+                    }}>
+                      {badgeLabel}
+                    </span>
+                  </div>
+                  <p style={{ fontFamily: sans, fontSize: 13, color: "#185FA5", margin: "10px 0 0", lineHeight: 1.5 }}>
+                    {renderInline(subline)}
+                  </p>
+                  {rangeMin != null && rangeMax != null && (
+                    <p style={{ fontFamily: sans, fontSize: 12, color: "#185FA5", margin: "6px 0 0", opacity: 0.7 }}>
+                      Typical healthy range: {rangeMin}–{rangeMax}%
+                    </p>
+                  )}
+                </div>
+              )
+            })()}
+
+            {/* Lookup not configured for this organism */}
+            {!hasUserData && userOralStatus === "unavailable" && (
+              <div style={{
+                background: "rgba(255,255,255,0.6)", borderRadius: 12,
+                padding: "14px 18px", marginBottom: 16,
+                fontFamily: sans, fontSize: 13, color: "#185FA5", lineHeight: 1.5,
+              }}>
+                Result not available for this organism
+                {rangeMin != null && rangeMax != null ? ` · Typical healthy range: ${rangeMin}–${rangeMax}%` : ""}.
               </div>
             )}
 

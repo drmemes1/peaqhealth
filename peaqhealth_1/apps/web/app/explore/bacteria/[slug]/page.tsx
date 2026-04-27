@@ -88,7 +88,7 @@ export default async function BacteriaDetailPage({ params }: { params: Promise<{
         userOralValue = Number(oralKit.streptococcus_total_pct)
       }
 
-      userOralDate = oralKit.collection_date ?? oralKit.ordered_at ?? null
+      userOralDate = oralKit.report_date ?? oralKit.collection_date ?? oralKit.ordered_at ?? null
     }
   }
 

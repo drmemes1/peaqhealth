@@ -4,7 +4,7 @@ import { join } from "path"
 import { createClient } from "../../../../../lib/supabase/server"
 import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { Nav } from "../../../../components/nav"
-import { DetailClient } from "../../../bacteria/[slug]/detail-client"
+import { DetailClient, type UserOralStatus } from "../../../bacteria/[slug]/detail-client"
 
 export default async function SpeciesDetailPage({ params }: { params: Promise<{ genus: string; species: string }> }) {
   const { genus, species } = await params
@@ -60,7 +60,7 @@ export default async function SpeciesDetailPage({ params }: { params: Promise<{ 
   const { data: { user } } = await supabase.auth.getUser()
   let userOralValue: number | null = null
   let userOralDate: string | null = null
-  let userOralUnavailable = false
+  let userOralStatus: UserOralStatus | null = null
 
   if (user) {
     const { data: oralKit } = await svc
@@ -73,15 +73,40 @@ export default async function SpeciesDetailPage({ params }: { params: Promise<{ 
       .maybeSingle()
 
     if (oralKit) {
-      const genusLower = (row.genus as string).toLowerCase()
-      const speciesLower = (row.species as string).toLowerCase().replace(/ /g, "_")
-      const speciesCol = `${genusLower}_${speciesLower}_pct`
-      if (oralKit[speciesCol] != null) {
-        userOralValue = Number(oralKit[speciesCol])
+      // Strict species-level lookup. NEVER fall back to genus.
+      const userDataColumn = row.user_data_column as string | null
+      const otuLookupKeys = (row.otu_lookup_keys ?? []) as string[]
+
+      if (userDataColumn) {
+        const v = (oralKit as Record<string, unknown>)[userDataColumn]
+        if (v != null && Number(v) > 0) {
+          userOralValue = Number(v)
+          userOralStatus = "detected"
+        } else {
+          userOralStatus = "below_detection"
+        }
+      } else if (otuLookupKeys.length > 0) {
+        const rawOtu = (oralKit.raw_otu_table ?? {}) as Record<string, number>
+        let found = false
+        for (const key of otuLookupKeys) {
+          const v = rawOtu[key]
+          if (v != null && Number(v) > 0) {
+            // raw_otu_table stores fractions (e.g. 0.074); convert to percentage
+            userOralValue = Number(v) * 100
+            userOralStatus = "detected"
+            found = true
+            break
+          }
+        }
+        if (!found) userOralStatus = "below_detection"
       } else {
-        userOralUnavailable = true
+        userOralStatus = "unavailable"
       }
-      userOralDate = oralKit.collection_date ?? oralKit.ordered_at ?? null
+
+      userOralDate = (oralKit.report_date as string | null)
+        ?? (oralKit.collection_date as string | null)
+        ?? (oralKit.ordered_at as string | null)
+        ?? null
     }
   }
 
@@ -105,7 +130,7 @@ export default async function SpeciesDetailPage({ params }: { params: Promise<{ 
         heroVideo={existsSync(join(process.cwd(), "public", `${slug}.mp4`)) ? `/${slug}.mp4` : null}
         heroImage={existsSync(join(process.cwd(), "public", `${slug}.png`)) ? `/${slug}.png` : null}
         breadcrumb={breadcrumb}
-        userOralUnavailable={userOralUnavailable}
+        userOralStatus={userOralStatus}
       />
     </div>
   )
