@@ -119,14 +119,17 @@ function renderInline(text: string): React.ReactNode {
 
   while (remaining.length > 0) {
     const boldMatch = remaining.match(/\*\*(.+?)\*\*/)
-    const italicMatch = remaining.match(/_(.+?)_/)
+    const italicUnderscoreMatch = remaining.match(/_(.+?)_/)
+    const italicAsteriskMatch = remaining.match(/(?<!\*)\*([^*\n]+?)\*(?!\*)/)
     const linkMatch = remaining.match(/\[([^\]]+)\]\(([^)]+)\)/)
 
     const candidates: { idx: number; len: number; node: React.ReactNode }[] = []
     if (boldMatch?.index !== undefined)
       candidates.push({ idx: boldMatch.index, len: boldMatch[0].length, node: <strong key={`b-${key++}`} style={{ fontWeight: 600, color: "#141410" }}>{boldMatch[1]}</strong> })
-    if (italicMatch?.index !== undefined)
-      candidates.push({ idx: italicMatch.index, len: italicMatch[0].length, node: <em key={`i-${key++}`} style={{ fontStyle: "italic" }}>{italicMatch[1]}</em> })
+    if (italicUnderscoreMatch?.index !== undefined)
+      candidates.push({ idx: italicUnderscoreMatch.index, len: italicUnderscoreMatch[0].length, node: <em key={`i-${key++}`} style={{ fontStyle: "italic" }}>{italicUnderscoreMatch[1]}</em> })
+    if (italicAsteriskMatch?.index !== undefined)
+      candidates.push({ idx: italicAsteriskMatch.index, len: italicAsteriskMatch[0].length, node: <em key={`i-${key++}`} style={{ fontStyle: "italic" }}>{italicAsteriskMatch[1]}</em> })
     if (linkMatch?.index !== undefined)
       candidates.push({ idx: linkMatch.index, len: linkMatch[0].length, node: <a key={`a-${key++}`} href={linkMatch[2]} style={{ color: "#B8860B", textDecoration: "underline" }}>{linkMatch[1]}</a> })
 
