@@ -105,10 +105,10 @@ function renderInline(text: string): React.ReactNode {
     const italicAsteriskMatch = remaining.match(/(?<!\*)\*([^*\n]+?)\*(?!\*)/)
     const linkMatch = remaining.match(/\[([^\]]+)\]\(([^)]+)\)/)
     const candidates: { idx: number; len: number; node: React.ReactNode }[] = []
-    if (boldMatch?.index !== undefined) candidates.push({ idx: boldMatch.index, len: boldMatch[0].length, node: <strong key={`b-${key++}`} style={{ fontWeight: 600, color: "#141410" }}>{boldMatch[1]}</strong> })
-    if (italicUnderscoreMatch?.index !== undefined) candidates.push({ idx: italicUnderscoreMatch.index, len: italicUnderscoreMatch[0].length, node: <em key={`i-${key++}`} style={{ fontStyle: "italic" }}>{italicUnderscoreMatch[1]}</em> })
-    if (italicAsteriskMatch?.index !== undefined) candidates.push({ idx: italicAsteriskMatch.index, len: italicAsteriskMatch[0].length, node: <em key={`i-${key++}`} style={{ fontStyle: "italic" }}>{italicAsteriskMatch[1]}</em> })
-    if (linkMatch?.index !== undefined) candidates.push({ idx: linkMatch.index, len: linkMatch[0].length, node: <a key={`a-${key++}`} href={linkMatch[2]} target="_blank" rel="noopener noreferrer" style={{ color: "#185FA5", textDecoration: "underline" }}>{linkMatch[1]}</a> })
+    if (boldMatch?.index !== undefined) candidates.push({ idx: boldMatch.index, len: boldMatch[0].length, node: <strong key={`b-${key++}`} style={{ fontWeight: 600, color: "#141410" }}>{renderInline(boldMatch[1])}</strong> })
+    if (italicUnderscoreMatch?.index !== undefined) candidates.push({ idx: italicUnderscoreMatch.index, len: italicUnderscoreMatch[0].length, node: <em key={`i-${key++}`} style={{ fontStyle: "italic" }}>{renderInline(italicUnderscoreMatch[1])}</em> })
+    if (italicAsteriskMatch?.index !== undefined) candidates.push({ idx: italicAsteriskMatch.index, len: italicAsteriskMatch[0].length, node: <em key={`i-${key++}`} style={{ fontStyle: "italic" }}>{renderInline(italicAsteriskMatch[1])}</em> })
+    if (linkMatch?.index !== undefined) candidates.push({ idx: linkMatch.index, len: linkMatch[0].length, node: <a key={`a-${key++}`} href={linkMatch[2]} target="_blank" rel="noopener noreferrer" style={{ color: "#185FA5", textDecoration: "underline" }}>{renderInline(linkMatch[1])}</a> })
     if (candidates.length === 0) { parts.push(remaining); break }
     candidates.sort((a, b) => a.idx - b.idx)
     const first = candidates[0]
@@ -310,7 +310,7 @@ export function DetailClient({ row, citations, userOralValue, userOralDate, isLo
               fontFamily: sans, fontSize: 15, color: "#042C53",
               lineHeight: 1.7, margin: "0 0 20px",
             }}>
-              {summaryBox}
+              {renderInline(summaryBox)}
             </p>
 
             {/* Your result sub-card */}
@@ -355,7 +355,7 @@ export function DetailClient({ row, citations, userOralValue, userOralDate, isLo
                       Do
                     </span>
                     <p style={{ fontFamily: sans, fontSize: 13, color: "#042C53", lineHeight: 1.6, margin: 0 }}>
-                      {actionDo}
+                      {renderInline(actionDo)}
                     </p>
                   </div>
                 ) : null}
@@ -365,7 +365,7 @@ export function DetailClient({ row, citations, userOralValue, userOralDate, isLo
                       Avoid
                     </span>
                     <p style={{ fontFamily: sans, fontSize: 13, color: "#042C53", lineHeight: 1.6, margin: 0 }}>
-                      {actionAvoid}
+                      {renderInline(actionAvoid)}
                     </p>
                   </div>
                 ) : null}
