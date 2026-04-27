@@ -64,9 +64,19 @@ function renderMarkdown(md: string): React.ReactNode[] {
       const items: string[] = []
       while (i < lines.length && (lines[i].startsWith("- ") || lines[i].startsWith("* "))) { items.push(lines[i].slice(2)); i++ }
       nodes.push(
-        <ul key={`ul-${i}`} style={{ fontFamily: sans, fontSize: 14, color: "#3A3830", lineHeight: 1.75, margin: "8px 0 8px 20px", padding: 0 }}>
-          {items.map((item, j) => <li key={j}>{renderInline(item)}</li>)}
+        <ul key={`ul-${i}`} style={{ fontFamily: sans, fontSize: 14, color: "#3A3830", lineHeight: 1.75, margin: "8px 0 12px", paddingLeft: 22, listStyleType: "disc", listStylePosition: "outside" }}>
+          {items.map((item, j) => <li key={j} style={{ margin: "4px 0", paddingLeft: 4 }}>{renderInline(item)}</li>)}
         </ul>
+      )
+      continue
+    }
+    if (/^\d+\.\s/.test(line)) {
+      const items: string[] = []
+      while (i < lines.length && /^\d+\.\s/.test(lines[i])) { items.push(lines[i].replace(/^\d+\.\s/, "")); i++ }
+      nodes.push(
+        <ol key={`ol-${i}`} style={{ fontFamily: sans, fontSize: 14, color: "#3A3830", lineHeight: 1.75, margin: "8px 0 12px", paddingLeft: 24, listStyleType: "decimal", listStylePosition: "outside" }}>
+          {items.map((item, j) => <li key={j} style={{ margin: "4px 0", paddingLeft: 4 }}>{renderInline(item)}</li>)}
+        </ol>
       )
       continue
     }

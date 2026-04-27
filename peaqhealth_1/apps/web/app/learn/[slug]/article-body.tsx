@@ -65,10 +65,28 @@ function renderMarkdown(md: string): React.ReactNode[] {
       nodes.push(
         <ul key={`ul-${i}`} style={{
           fontFamily: sans, fontSize: 15, color: "#4A4A42",
-          lineHeight: 1.8, margin: "12px 0 12px 20px", padding: 0,
+          lineHeight: 1.8, margin: "12px 0 16px", paddingLeft: 24,
+          listStyleType: "disc", listStylePosition: "outside",
         }}>
-          {items.map((item, j) => <li key={j}>{renderInline(item)}</li>)}
+          {items.map((item, j) => <li key={j} style={{ margin: "6px 0", paddingLeft: 4 }}>{renderInline(item)}</li>)}
         </ul>
+      )
+      continue
+    }
+    if (/^\d+\.\s/.test(line)) {
+      const items: string[] = []
+      while (i < lines.length && /^\d+\.\s/.test(lines[i])) {
+        items.push(lines[i].replace(/^\d+\.\s/, ""))
+        i++
+      }
+      nodes.push(
+        <ol key={`ol-${i}`} style={{
+          fontFamily: sans, fontSize: 15, color: "#4A4A42",
+          lineHeight: 1.8, margin: "12px 0 16px", paddingLeft: 26,
+          listStyleType: "decimal", listStylePosition: "outside",
+        }}>
+          {items.map((item, j) => <li key={j} style={{ margin: "6px 0", paddingLeft: 4 }}>{renderInline(item)}</li>)}
+        </ol>
       )
       continue
     }
