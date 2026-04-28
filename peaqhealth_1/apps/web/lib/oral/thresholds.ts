@@ -35,4 +35,26 @@ export const ORAL_THRESHOLDS: Record<string, ThresholdEntry & Record<string, unk
     fresh_min: 90, mild_min: 75, moderate_min: 60, elevated_min: 40,
     citation: "Kikuchi2025,Popa2025", status: "pilot_validation_pending" as ThresholdStatus,
   },
+  biofilm_maturity: {
+    immature: { min: 0, max: 0.05 },
+    developing: { min: 0.05, max: 0.15 },
+    mature: { min: 0.15, max: 0.30 },
+    advanced: { min: 0.30, max: 999 },
+    citation: "Socransky1998,Lamont2018",
+    status: "pilot_validation_pending" as ThresholdStatus,
+  },
+  translocation: {
+    low: { min: 0, max: 1.5 },
+    moderate: { min: 1.5, max: 3.5 },
+    elevated: { min: 3.5, max: 999 },
+    citation: "Atarashi2017,Konig2016,Schmidt2019",
+    status: "pilot_validation_pending" as ThresholdStatus,
+  },
+  inflammatory_pattern: {
+    not_present: { min: 0, max: 0.5 },
+    subtle: { min: 0.5, max: 1.5 },
+    marked: { min: 1.5, max: 999 },
+    citation: "Wei2024,Jung2026",
+    status: "pilot_validation_pending" as ThresholdStatus,
+  },
 }
