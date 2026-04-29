@@ -23,8 +23,9 @@ html {
   --ink-08: rgba(20,20,16,0.08);
   --ink-06: rgba(20,20,16,0.06);
   --ink-04: rgba(20,20,16,0.04);
-  --gold: #C49A3C;
-  --gold-dim: rgba(196,154,60,0.12);
+  /* Gold updated to oravi spec (#C49A3C → #B8935A). See ADR-0011. */
+  --gold: #B8935A;
+  --gold-dim: rgba(184,147,90,0.12);
   --gold-light: #F5E6B8;
 
   /* Panel colors — identical in both modes */
@@ -81,6 +82,44 @@ html {
   --peaq-ink-faint: #B4B2A9;
   --peaq-border: rgba(20,20,16,0.1);
   --peaq-border-strong: rgba(20,20,16,0.2);
+
+  /* ─── Oravi brand foundation tokens (ADR-0011) ─────────────────────────── */
+  /* Surfaces */
+  --cream-warm: #F0EBDB;
+  --paper: #FAFAF8;
+  --paper-warm: #F6F3EB;
+  --paper-deeper: #F2EDE0;
+
+  /* Ink shades scoped to oravi components — does not retag global --ink. */
+  --ink-soft: #2C2A24;
+  --ink-soft-2: #5A574E;
+
+  /* Gold accents */
+  --gold-deep: #9A7848;
+  --gold-pale: rgba(184, 147, 90, 0.10);
+  --gold-line: rgba(184, 147, 90, 0.35);
+
+  /* Hairline borders */
+  --hairline: rgba(26, 24, 21, 0.12);
+  --hairline-strong: rgba(26, 24, 21, 0.20);
+
+  /* Bacterial category palette — used by CompositionBar in next PR */
+  --c-heart: #5A8A6F;
+  --c-remin: #7B9CB8;
+  --c-commensal: #B8B098;
+  --c-context: #C9A878;
+  --c-cavity: #C28E5A;
+  --c-orange: #B8743F;
+  --c-red: #985F4A;
+
+  /* Status family — three-tier (strong / watch / attention) */
+  --status-strong: #6B8F73;
+  --status-watch: #B8893A;
+  --status-attention: #A85F3A;
+
+  /* Cross-panel signal accent (sleep-dusk) */
+  --link-accent: #4A6485;
+  --link-accent-pale: rgba(74, 100, 133, 0.08);
 }
 
 /* ─── Dark mode: system preference ───────────────────────────────────────── */
@@ -206,7 +245,108 @@ html {
 body {
   background: var(--off-white);
   color: var(--ink);
-  font-family: var(--font-body);
+  font-family: var(--font-instrument-sans), var(--font-body);
+}
+
+/* ─── Oravi typography (ADR-0011) ─────────────────────────────────────────── */
+/* Manrope is the display family for headings + data; Instrument Sans is body. */
+h1, h2, h3 {
+  font-family: var(--font-manrope), system-ui, sans-serif;
+}
+
+.font-display     { font-family: var(--font-manrope), sans-serif; }
+
+.heading-display {
+  font-family: var(--font-manrope), sans-serif;
+  font-weight: 700;
+  font-size: 56px;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+.heading-section {
+  font-family: var(--font-manrope), sans-serif;
+  font-weight: 700;
+  font-size: 36px;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+}
+
+.lede {
+  font-family: var(--font-manrope), sans-serif;
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+}
+
+.tagline {
+  font-family: var(--font-manrope), sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  color: var(--gold);
+  letter-spacing: 0.02em;
+}
+
+.eyebrow {
+  font-family: var(--font-manrope), sans-serif;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--gold);
+}
+
+.eyebrow-subtle {
+  font-family: var(--font-manrope), sans-serif;
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--ink-soft-2);
+}
+
+.metric-large {
+  font-family: var(--font-manrope), sans-serif;
+  font-weight: 700;
+  font-size: 44px;
+  letter-spacing: -0.03em;
+}
+
+.metric-medium {
+  font-family: var(--font-manrope), sans-serif;
+  font-weight: 700;
+  font-size: 30px;
+  letter-spacing: -0.025em;
+}
+
+.metric-unit {
+  font-family: var(--font-manrope), sans-serif;
+  font-weight: 500;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft-2);
+}
+
+.body-text {
+  font-family: var(--font-instrument-sans), sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.body-small {
+  font-family: var(--font-instrument-sans), sans-serif;
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+@media (max-width: 640px) {
+  .heading-display { font-size: 40px; }
+  .heading-section { font-size: 28px; }
+  .lede { font-size: 19px; }
 }
 
 ::selection {
