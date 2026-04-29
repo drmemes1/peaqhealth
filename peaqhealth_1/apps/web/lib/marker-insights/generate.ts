@@ -50,7 +50,7 @@ function buildSystemPrompt(marker: MarkerDefinition, ctx: UserPanelContext): str
     if (val != null) connectedValues.push(`${conn.label}: ${val} ${conn.unit ?? ""}`)
   }
 
-  return `You are generating a structured insight for a single health marker on Cnvrg Health.
+  return `You are generating a structured insight for a single health marker on Oravi.
 
 MARKER:
 - ID: ${marker.id}

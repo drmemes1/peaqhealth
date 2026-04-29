@@ -1,6 +1,6 @@
 # Clinical Evidence Base
 
-Structured repository of peer-reviewed evidence that grounds every clinical claim Cnvrg makes to users. Each file contains the raw output from a clinical literature synthesis query, preserved verbatim for provenance.
+Structured repository of peer-reviewed evidence that grounds every clinical claim Oravi makes to users. Each file contains the raw output from a clinical literature synthesis query, preserved verbatim for provenance.
 
 ## Folder structure
 

@@ -1,11 +1,11 @@
 ═══════════════════════════════════════════════════════════════════
-PEAQ HEALTH — BRAND GUIDELINES
+ORAVI — BRAND GUIDELINES
 Version 1.0 · March 2026
 ═══════════════════════════════════════════════════════════════════
 
 ─── BRAND ESSENCE ─────────────────────────────────────────────────
 
-Name:        Peaq Health
+Name:        Oravi
 Tagline:     Reach for the peaq.
 Sub-tagline: Sleep · Blood · Oral microbiome — one score, updated nightly.
 
@@ -134,7 +134,7 @@ BODY FONT: Instrument Sans
 
 TYPOGRAPHIC RULES:
   - Eyebrow labels: ALWAYS uppercase, letter-spacing 0.1em
-    Example: "PEAQ HEALTH · 2026"
+    Example: "ORAVI · 2026"
   - Button text: ALWAYS uppercase, letter-spacing 0.06–0.08em
   - Headlines: NEVER uppercase, sentence case only
   - Body: Never justify text, always left-align
@@ -312,7 +312,7 @@ Pending states:
   Make it feel like opportunity, not failure
 
 Legal copy (always include):
-  "For informational purposes only. Peaq does not provide
+  "For informational purposes only. Oravi does not provide
    medical advice. Always consult a licensed healthcare
    provider regarding your results."
 
@@ -325,7 +325,7 @@ Legal copy (always include):
   - Healthcare attorney review required before taking
     real customer money
 
-─── WHAT PEAQ IS NOT ──────────────────────────────────────────────
+─── WHAT ORAVI IS NOT ──────────────────────────────────────────────
 
   × Not a medical device
   × Not a diagnostic tool
@@ -336,7 +336,7 @@ Legal copy (always include):
   × Not hype-driven wellness ("transform your life!")
   × Not purple gradients and Inter font
 
-─── WHAT PEAQ IS ──────────────────────────────────────────────────
+─── WHAT ORAVI IS ──────────────────────────────────────────────────
 
   ✓ A precision health intelligence platform
   ✓ Evidence-based, peer-reviewed science behind every number
@@ -347,5 +347,5 @@ Legal copy (always include):
   ✓ Luxury editorial aesthetic — feels like a premium product
 
 ═══════════════════════════════════════════════════════════════════
-PEAQ HEALTH · peaqhealth.me · Confidential · March 2026
+ORAVI · oravi.com · Confidential · March 2026
 ═══════════════════════════════════════════════════════════════════

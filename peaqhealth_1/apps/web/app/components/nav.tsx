@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import CnvrgLogo from "./CnvrgLogo";
+import OraviLogo from "./OraviLogo";
 
 interface NavProps {
   cartCount?: number;
@@ -50,7 +50,7 @@ export function Nav({ cartCount = 0, onCartOpen }: NavProps) {
       <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-6">
         {/* Logo */}
         <Link href="/dashboard" style={{ textDecoration: "none" }}>
-          <CnvrgLogo size="sm" showTagline={false} />
+          <OraviLogo size="sm" showTagline={false} />
         </Link>
 
         {/* Center nav links */}

@@ -140,7 +140,7 @@ Props from ScoreWheelProps: breakdown, score, modifier_total, sleepConnected, or
   - "CROSS-PANEL" 6.5px uppercase gold
 
 **PRI score block (right of peaks):**
-- "PEAQ RESILIENCE INDEX" — 9px uppercase #bbb letter-spacing 2px
+- "ORAVI RESILIENCE INDEX" — 9px uppercase #bbb letter-spacing 2px
 - Score: Cormorant Garant 80px weight 300 #1a1a18 (count-up animation)
 - Tagline: Cormorant Garant italic 14px #bbb — "Three signals. One measure of " + gold "resilience."
 - Sub: 10px #bbb "68 base · −4 cross-panel"
@@ -215,7 +215,7 @@ Hover: rgba(0,0,0,0.013) background, 80ms ease
 - Click: expand inline card below row
   - White card, border 0.5px rgba(0,0,0,0.06), border-radius 8px, padding 12px 16px
   - What this marker measures (11px #555)
-  - Why Peaq tests for it (11px #555)
+  - Why Oravi tests for it (11px #555)
   - Optimal range (10px #bbb)
   - Your value + trend
   - Animate: height 0→auto + opacity 0→1, 200ms ease
@@ -426,7 +426,7 @@ Three sections — one per hallmark:
 - Heading: Cormorant Garant 28px #1a1a18
 - Body: 13px #555 line-height 1.7, max-width 640px
 - Citation: 9px #bbb italic "Source: Author et al., Journal, Year"
-- Which Peaq markers measure this hallmark — small chips in panel color
+- Which Oravi markers measure this hallmark — small chips in panel color
 
 If hasWearable = false: gold-bordered banner at top of sleep/HRV section:
 "You're viewing this without a wearable connected. HRV and sleep stage data requires WHOOP or Oura."
@@ -562,7 +562,7 @@ Verify on every page:
 - peaq_logo.png with CSS filter — never a letter "p"
 - Cream (#F6F4EF) page backgrounds
 - Panel dividers are cream gaps, not borders or hr
-- "Peaq Resilience Index" everywhere, never "Score" alone
+- "Oravi Resilience Index" everywhere, never "Score" alone
 - Cormorant Garant for all headings — never Inter
 - 0.5px borders everywhere — never 1px
 - Inline SVG icons — never CDN

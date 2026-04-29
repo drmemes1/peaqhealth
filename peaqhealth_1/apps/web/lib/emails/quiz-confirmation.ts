@@ -57,10 +57,10 @@ function getSignalBarLabel(tags: string[]): string {
 
 function getClosingCta(tags: string[]): string {
   if (tags.includes("sexFemale"))
-    return "Cnvrg measures the oral signals most relevant to women&rsquo;s cardiovascular, hormonal, and reproductive health, connected to your blood biomarkers and sleep data in a single score."
+    return "Oravi measures the oral signals most relevant to women&rsquo;s cardiovascular, hormonal, and reproductive health, connected to your blood biomarkers and sleep data in a single score."
   if (tags.includes("sexMale"))
-    return "Cnvrg measures the oral signals most relevant to men&rsquo;s cardiovascular, blood pressure, and sleep health, connected to your blood biomarkers in a single score."
-  return "Cnvrg measures oral, blood, and sleep signals together because no single panel tells the whole story."
+    return "Oravi measures the oral signals most relevant to men&rsquo;s cardiovascular, blood pressure, and sleep health, connected to your blood biomarkers in a single score."
+  return "Oravi measures oral, blood, and sleep signals together because no single panel tells the whole story."
 }
 
 // ── Signal bars ──────────────────────────────────────────────────────────
@@ -109,7 +109,7 @@ function getPrimarySignalCopy(tags: string[]): { h2: string; body: string } {
   }
   if (isFemale && hasPregnant) return {
     h2: "Pregnancy changes your oral microbiome in ways that matter beyond your mouth.",
-    body: "Hormonal shifts increase gingival inflammation and create conditions that favor periodontal pathogens. Women with periodontitis face 5.56&times; higher preeclampsia risk. Cnvrg would measure your periodontal pathogen load alongside your inflammatory markers to give you a complete picture.",
+    body: "Hormonal shifts increase gingival inflammation and create conditions that favor periodontal pathogens. Women with periodontitis face 5.56&times; higher preeclampsia risk. Oravi would measure your periodontal pathogen load alongside your inflammatory markers to give you a complete picture.",
   }
   if (isFemale && hasAutoimmune && hasPerio) return {
     h2: "Your immune system and your oral microbiome are speaking the same inflammatory language.",
@@ -121,11 +121,11 @@ function getPrimarySignalCopy(tags: string[]): { h2: string; body: string } {
   }
   if (isFemale && hasHormonal && (hasPerio || hasNitrate)) return {
     h2: "Hormonal shifts directly alter your oral microbiome.",
-    body: "Estrogen fluctuations affect periodontal tissue inflammation throughout the cycle, during pregnancy, and at menopause. Thyroid dysfunction depletes nitrate-reducing bacteria, the same bacteria your blood vessels depend on for pressure regulation. Cnvrg tracks both.",
+    body: "Estrogen fluctuations affect periodontal tissue inflammation throughout the cycle, during pregnancy, and at menopause. Thyroid dysfunction depletes nitrate-reducing bacteria, the same bacteria your blood vessels depend on for pressure regulation. Oravi tracks both.",
   }
   if (isFemale && hasPostMeno && (hasAirway || hasCv)) return {
     h2: "After menopause, cardiovascular and sleep apnea risk converge.",
-    body: "Risk of sleep apnea increases significantly after menopause due to loss of progesterone&rsquo;s protective effect on upper airway tone. OSA patients are 2.46&times; more likely to have periodontitis. Estrogen loss simultaneously accelerates periodontal attachment loss and cardiovascular risk. Cnvrg tracks the intersection of all three.",
+    body: "Risk of sleep apnea increases significantly after menopause due to loss of progesterone&rsquo;s protective effect on upper airway tone. OSA patients are 2.46&times; more likely to have periodontitis. Estrogen loss simultaneously accelerates periodontal attachment loss and cardiovascular risk. Oravi tracks the intersection of all three.",
   }
   if (isFemale && hasCv) return {
     h2: "Cardiovascular disease is the leading killer of women, and your oral microbiome is part of that story.",
@@ -133,7 +133,7 @@ function getPrimarySignalCopy(tags: string[]): { h2: string; body: string } {
   }
   if (isFemale) return {
     h2: "Your oral microbiome is influencing systems your doctor has never connected to your mouth.",
-    body: "Cnvrg measures four oral signals: nitrate-reducing bacteria, periodontal pathogens, microbial diversity, and OSA-associated taxa. It connects them to your blood and sleep data. For women, these connections run through cardiovascular health, hormonal biology, and inflammatory disease in ways that are only now being documented at scale.",
+    body: "Oravi measures four oral signals: nitrate-reducing bacteria, periodontal pathogens, microbial diversity, and OSA-associated taxa. It connects them to your blood and sleep data. For women, these connections run through cardiovascular health, hormonal biology, and inflammatory disease in ways that are only now being documented at scale.",
   }
 
   // ── Male-specific paths ────────────────────────────────────────────────
@@ -147,7 +147,7 @@ function getPrimarySignalCopy(tags: string[]): { h2: string; body: string } {
   }
   if (isMale && hasOsa && hasPerio) return {
     h2: "Sleep apnea and gum disease share a biological pathway, and you may have both.",
-    body: "OSA patients are 2.46&times; more likely to have periodontitis across meta-analyses of 88,000+ people. Intermittent hypoxia from OSA drives oxidative stress that accelerates periodontal tissue breakdown, while periodontal inflammation elevates systemic CRP that disrupts sleep architecture. Cnvrg tracks both panels because treating one affects the other.",
+    body: "OSA patients are 2.46&times; more likely to have periodontitis across meta-analyses of 88,000+ people. Intermittent hypoxia from OSA drives oxidative stress that accelerates periodontal tissue breakdown, while periodontal inflammation elevates systemic CRP that disrupts sleep architecture. Oravi tracks both panels because treating one affects the other.",
   }
   if (isMale && hasCv && !hasPerio) return {
     h2: "Family history of heart disease changes how we interpret your oral panel.",
@@ -155,7 +155,7 @@ function getPrimarySignalCopy(tags: string[]): { h2: string; body: string } {
   }
   if (isMale) return {
     h2: "Your oral microbiome is influencing systems your doctor has never connected to your mouth.",
-    body: "Cnvrg measures nitrate-reducing bacteria, periodontal pathogens, microbial diversity, and OSA-associated taxa, then connects them to your blood and sleep data. For men, these connections run through cardiovascular risk, blood pressure regulation, and sleep-disordered breathing in ways that are only now being documented at population scale.",
+    body: "Oravi measures nitrate-reducing bacteria, periodontal pathogens, microbial diversity, and OSA-associated taxa, then connects them to your blood and sleep data. For men, these connections run through cardiovascular risk, blood pressure regulation, and sleep-disordered breathing in ways that are only now being documented at population scale.",
   }
 
   // ── Generic paths ──────────────────────────────────────────────────────
@@ -181,11 +181,11 @@ function getPrimarySignalCopy(tags: string[]): { h2: string; body: string } {
   }
   return {
     h2: "Your oral microbiome, blood biomarkers, and sleep signals are part of the same system.",
-    body: "Most health platforms measure one of these. Cnvrg measures all three and finds the connections between them that no single test can see. Your quiz answers have identified at least one cross-panel signal worth measuring.",
+    body: "Most health platforms measure one of these. Oravi measures all three and finds the connections between them that no single test can see. Your quiz answers have identified at least one cross-panel signal worth measuring.",
   }
 }
 
-// ── What Cnvrg would measure copy ─────────────────────────────────────────
+// ── What Oravi would measure copy ─────────────────────────────────────────
 
 function getMeasureCopy(tags: string[]): { h2: string; body: string } {
   const hasPerio  = tags.includes("periodontal")
@@ -199,15 +199,15 @@ function getMeasureCopy(tags: string[]): { h2: string; body: string } {
   }
   if (hasPerio && hasCv) return {
     h2: "The oral-cardiovascular connection, made measurable.",
-    body: "Cnvrg connects your periodontal pathogen load directly to your hs-CRP and Lp(a), two blood markers predictive of cardiovascular events beyond standard LDL panels.",
+    body: "Oravi connects your periodontal pathogen load directly to your hs-CRP and Lp(a), two blood markers predictive of cardiovascular events beyond standard LDL panels.",
   }
   if (hasAirway && hasNitrate) return {
     h2: "Your oral microbiome as a sleep health predictor.",
-    body: "Cnvrg tracks OSA-associated taxa at species-level resolution and connects them to your nightly HRV and SpO2 from your wearable. The nitrate pathway shows up in both your blood pressure data and your sleep architecture.",
+    body: "Oravi tracks OSA-associated taxa at species-level resolution and connects them to your nightly HRV and SpO2 from your wearable. The nitrate pathway shows up in both your blood pressure data and your sleep architecture.",
   }
   return {
     h2: "One score. Three panels. The connections between them.",
-    body: "Oral microbiome sequencing at species-level resolution, 40+ blood biomarkers from any lab, and nightly sleep data from your wearable, unified into a single Peaq Age that recalculates as your data updates.",
+    body: "Oral microbiome sequencing at species-level resolution, 40+ blood biomarkers from any lab, and nightly sleep data from your wearable, unified into a single Oravi Age that recalculates as your data updates.",
   }
 }
 
@@ -344,9 +344,9 @@ export function renderQuizConfirmationEmail(props: QuizEmailProps): string {
   </div>
 </td></tr>
 
-<!-- 5. WHAT CNVRG WOULD MEASURE -->
+<!-- 5. WHAT ORAVI WOULD MEASURE -->
 <tr><td style="background-color:#ffffff;padding:28px 48px;">
-  <div style="font-family:Arial,sans-serif;font-size:9px;color:#C49A3C;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:12px;">What Cnvrg would measure first</div>
+  <div style="font-family:Arial,sans-serif;font-size:9px;color:#C49A3C;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:12px;">What Oravi would measure first</div>
   <h2 style="font-family:Georgia,serif;font-size:19px;font-weight:400;color:#16150F;line-height:1.35;margin:0 0 12px;">${measure.h2}</h2>
   <p style="font-family:Arial,sans-serif;font-size:13px;color:#666666;line-height:1.75;margin:0;">${measure.body}</p>
 </td></tr>
@@ -372,7 +372,7 @@ export function renderQuizConfirmationEmail(props: QuizEmailProps): string {
     </td></tr>
     <tr><td style="padding:12px 0;">
       <span style="font-family:Georgia,serif;font-size:12px;color:#C49A3C;">04</span>
-      <span style="font-family:Arial,sans-serif;font-size:13px;font-weight:500;color:#16150F;margin-left:12px;">Your Peaq Age</span>
+      <span style="font-family:Arial,sans-serif;font-size:13px;font-weight:500;color:#16150F;margin-left:12px;">Your Oravi Age</span>
       <p style="font-family:Arial,sans-serif;font-size:12px;color:#999999;line-height:1.5;margin:4px 0 0 28px;">A single number from 0&ndash;100. With the cross-panel signals your doctors aren&rsquo;t seeing.</p>
     </td></tr>
   </table>

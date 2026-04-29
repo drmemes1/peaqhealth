@@ -42,7 +42,7 @@ function computeDataHash(ctx: Record<string, unknown>): string {
   return createHash("sha256").update(JSON.stringify(snapshot)).digest("hex").slice(0, 16)
 }
 
-const SYSTEM_PROMPT = `You are generating the opening narrative for a cross-panel health summary on Cnvrg Health.
+const SYSTEM_PROMPT = `You are generating the opening narrative for a cross-panel health summary on Oravi.
 
 VOICE:
 - Name the mechanism, not the condition

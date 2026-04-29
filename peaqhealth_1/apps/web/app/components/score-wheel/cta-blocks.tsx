@@ -76,7 +76,7 @@ export function CTABlocks({ sleepConnected, labFreshness, oralActive }: CTABlock
       {!oralActive && (
         <CTABlock
           color="var(--oral-c)"
-          title={<>Complete your <em style={{ fontStyle: "italic" }}>Cnvrg profile.</em></>}
+          title={<>Complete your <em style={{ fontStyle: "italic" }}>Oravi profile.</em></>}
           points="+27 pts"
           features={["Shannon diversity from 16S sequencing","Nitrate-reducing bacteria — NO pathway","Periodontal pathogen burden","OSA-associated taxa","4 cross-panel terms unlocked","Results in 10–14 days"]}
           buttonLabel="Order oral microbiome kit — $129"

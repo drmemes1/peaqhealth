@@ -1671,7 +1671,7 @@ export function ScoreWheel({
       source: "Walker, M. (2017). Why We Sleep. Xander Dumas et al., Nature Communications (2020) — glymphatic clearance during NREM sleep.",
     },
     hrv: {
-      explanation: "Heart rate variability measures variation in time between heartbeats — a proxy for how well your autonomic nervous system is balancing stress and recovery. Higher HRV generally reflects better cardiovascular fitness, lower inflammation, and greater resilience. HRV declines naturally with age, so Cnvrg uses age-adjusted targets.",
+      explanation: "Heart rate variability measures variation in time between heartbeats — a proxy for how well your autonomic nervous system is balancing stress and recovery. Higher HRV generally reflects better cardiovascular fitness, lower inflammation, and greater resilience. HRV declines naturally with age, so Oravi uses age-adjusted targets.",
       source: "Shaffer & Ginsberg (2017). Frontiers in Public Health — An Overview of Heart Rate Variability Metrics and Norms.",
     },
     spo2Avg: {
@@ -2332,7 +2332,7 @@ export function ScoreWheel({
 
       {/* FOOTER */}
       <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, textAlign: "center", color: "var(--ink-30)", maxWidth: 400, margin: "0 auto", lineHeight: 1.7 }}>
-        For informational purposes only. Cnvrg does not provide medical advice. Always consult a licensed healthcare provider regarding your results.
+        For informational purposes only. Oravi does not provide medical advice. Always consult a licensed healthcare provider regarding your results.
       </p>
 
       {/* SLEEP TOGGLE TOAST */}

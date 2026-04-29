@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import CnvrgLogo from "../components/CnvrgLogo"
+import OraviLogo from "../components/OraviLogo"
 import { createClient } from "@/lib/supabase/client"
 
 // ─── Ambient peaks SVG (loops slowly, no data needed) ────────────────────────
@@ -205,7 +205,7 @@ export function LoginForm({ defaultTab = "signin" }: { defaultTab?: Tab }) {
       >
         {/* Logo */}
         <div style={{ marginBottom: "auto" }}>
-          <CnvrgLogo size="md" showTagline={false} dark />
+          <OraviLogo size="md" showTagline={false} dark />
         </div>
 
         {/* Center content */}
@@ -218,7 +218,7 @@ export function LoginForm({ defaultTab = "signin" }: { defaultTab?: Tab }) {
             transition: "opacity 0.6s ease, transform 0.6s ease",
           }}>
             How complete is<br />
-            <em style={{ color: "#C49A3C", fontStyle: "italic" }}>your Cnvrgture?</em>
+            <em style={{ color: "#C49A3C", fontStyle: "italic" }}>your Oravi?</em>
           </h1>
 
           <p style={{
@@ -227,7 +227,7 @@ export function LoginForm({ defaultTab = "signin" }: { defaultTab?: Tab }) {
             opacity: mounted ? 1 : 0, transform: mounted ? "none" : "translateY(8px)",
             transition: "opacity 0.6s ease 0.1s, transform 0.6s ease 0.1s",
           }}>
-            Cnvrg combines your blood biomarkers, sleep data, and oral microbiome into a single longevity score — updated continuously as your biology changes.
+            Oravi combines your blood biomarkers, sleep data, and oral microbiome into a single longevity score — updated continuously as your biology changes.
           </p>
 
           {/* Value props */}
@@ -282,7 +282,7 @@ export function LoginForm({ defaultTab = "signin" }: { defaultTab?: Tab }) {
       }}>
         {/* Mobile logo */}
         <div style={{ marginBottom: 32, display: "none" }} className="lg:hidden">
-          <CnvrgLogo size="md" showTagline={false} />
+          <OraviLogo size="md" showTagline={false} />
         </div>
 
         <div style={{ width: "100%", maxWidth: 380 }}>

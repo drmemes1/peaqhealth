@@ -262,7 +262,7 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
               onBlur={e => (e.currentTarget.style.borderColor = "var(--ink-30)")}
             />
             <p className="mt-1 font-body text-[10px]" style={{ color: "var(--ink-30)" }}>
-              Required for accurate Peaq Age calculation
+              Required for accurate Oravi Age calculation
             </p>
           </div>
 
@@ -383,7 +383,7 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
               Include sleep in score
             </p>
             <p className="font-body text-xs leading-relaxed" style={{ color: 'var(--ink-40)', margin: 0, maxWidth: '340px' }}>
-              When enabled, nightly WHOOP/Oura data contributes 30pts to your Peaq Age. Disable if you prefer a blood + oral only baseline.
+              When enabled, nightly WHOOP/Oura data contributes 30pts to your Oravi Age. Disable if you prefer a blood + oral only baseline.
             </p>
             <p className="font-body" style={{ fontSize: '11px', color: sleepHidden ? '#A32D2D' : '#3B6D11', margin: '4px 0 0' }}>
               {sleepHidden ? 'Sleep is paused — score shown out of 70' : 'Sleep is active — contributing up to 30pts'}
@@ -438,7 +438,7 @@ export function SettingsClient({ userId, email, firstName: initialFirst, lastNam
 
           <RowItem
             label="Sign out"
-            description="Sign out of your Cnvrg Health account on this device"
+            description="Sign out of your Oravi account on this device"
             right={
               <button
                 onClick={signOut}

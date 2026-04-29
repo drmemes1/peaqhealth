@@ -117,7 +117,7 @@ export function LandingHero() {
 
         {/* Secondary */}
         <p className="fade-up hero-secondary" style={{ animationDelay: "200ms" }}>
-          Most platforms hear one signal. Cnvrg listens to three.
+          Most platforms hear one signal. Oravi listens to three.
         </p>
 
         {/* Body */}
@@ -144,7 +144,7 @@ export function LandingHero() {
 
         {/* No-wearable explainer — only visible in off state */}
         <p className="hero-no-wearable-note">
-          Cnvrg works with or without a wearable. Sleep and HRV data adds a powerful
+          Oravi works with or without a wearable. Sleep and HRV data adds a powerful
           third signal, but your oral and blood panels tell a complete story on their own.
         </p>
       </div>

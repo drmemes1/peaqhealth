@@ -1,4 +1,4 @@
-# Peaq Health — INSIGHTS.md
+# Oravi — INSIGHTS.md
 ## Connection Rules Engine + Cross-Panel Intelligence
 
 **Version:** 1.6
@@ -7,7 +7,7 @@
 **Classification:** Internal / Confidential — core product IP
 **Prior version:** 1.4 (April 2026)
 
-> **Regulatory note:** Peaq Health is a wellness product, not a medical device. Nothing in this document or in any user-facing insight constitutes a medical diagnosis, treatment recommendation, or substitute for professional medical advice. All rules surface patterns across panels and offer educational context rooted in peer-reviewed research. Users are encouraged to share their results with their healthcare providers. No rule should be interpreted as confirming or ruling out any disease or condition.
+> **Regulatory note:** Oravi is a wellness product, not a medical device. Nothing in this document or in any user-facing insight constitutes a medical diagnosis, treatment recommendation, or substitute for professional medical advice. All rules surface patterns across panels and offer educational context rooted in peer-reviewed research. Users are encouraged to share their results with their healthcare providers. No rule should be interpreted as confirming or ruling out any disease or condition.
 
 ---
 
@@ -187,7 +187,7 @@ The Two Principles Every Rule Must Follow
 Users do not need to know the pathway. They need to know what it means
 for them, in plain language.
 2. Reflect data. Do not interpret it.
-Peaq shows what the data is doing. The user and their medical
+Oravi shows what the data is doing. The user and their medical
 professional draw conclusions. Rules surface patterns — they do not
 diagnose, predict, or name conditions.
 
@@ -311,12 +311,12 @@ toward a specific test, specialist, or clinical procedure
  Biological basis (internal) may use clinical language —
 user-facing copy (connection line, expanded, action) may not
 
-# WHY PEAQ USES MEASURED HRV, NOT GENETIC HRV
+# WHY ORAVI USES MEASURED HRV, NOT GENETIC HRV
 ## Phenotypic vs Genetically Predicted Heart Rate Variability
 
 Heart rate variability can be described in two fundamentally different ways. One is what your wearable records each night — the actual beat to beat variation in your heart rhythm, shaped by everything happening in your body right now. This is phenotypic HRV. The other is what your DNA predicts your HRV should be, based on the handful of genetic variants known to influence cardiac autonomic function. This is genetically predicted HRV.
 
-Peaq tracks phenotypic HRV (specifically RMSSD, the root mean square of successive differences between heartbeats) because the evidence shows it is the version that actually predicts health outcomes.
+Oravi tracks phenotypic HRV (specifically RMSSD, the root mean square of successive differences between heartbeats) because the evidence shows it is the version that actually predicts health outcomes.
 
 ### The evidence
 
@@ -336,11 +336,11 @@ Nitric oxide is a direct modulator of cardiac vagal tone. It enhances parasympat
 
 When this pathway is disrupted — through low Neisseria abundance, antiseptic mouthwash use, or a dysbiotic oral microbiome — nitric oxide availability drops, vagal tone decreases, and measured RMSSD falls. This is not a genetic change. It is a phenotypic change driven by the composition of the oral microbiome, which is itself modifiable through diet, oral hygiene practices, and avoidance of antimicrobial disruption.
 
-This is the biological chain Peaq's three panel system is designed to capture:
+This is the biological chain Oravi's three panel system is designed to capture:
 
 **Oral panel** (Neisseria abundance, oral diversity, pathogen load) → **nitric oxide availability** → **autonomic tone** → **Wearable panel** (RMSSD) → and simultaneously → **Blood panel** (blood pressure regulation, CRP, cardiovascular markers)
 
-Measured RMSSD sits at the intersection of all three panels. It is not just a heart metric. It is a readout of how well the oral to cardiovascular pathway is functioning, how effectively the body is managing inflammation, and how well the autonomic nervous system is recovering during sleep. That is why Peaq includes it in the biological age composite and uses it as a cross-panel signal in the connection rules engine.
+Measured RMSSD sits at the intersection of all three panels. It is not just a heart metric. It is a readout of how well the oral to cardiovascular pathway is functioning, how effectively the body is managing inflammation, and how well the autonomic nervous system is recovering during sleep. That is why Oravi includes it in the biological age composite and uses it as a cross-panel signal in the connection rules engine.
 
 ### Why not use genetic HRV?
 
@@ -357,34 +357,34 @@ Genetic HRV (polygenic risk scores) may eventually prove useful as a baseline an
 
 ---
 
-# SECTION 1: Viome vs Peaq Competitive Map
+# SECTION 1: Viome vs Oravi Competitive Map
 
 ## How to Read This Table
 
-Viome's 8 health score categories are compared against what Peaq currently covers, where Peaq can add new rules using its existing three panels (oral microbiome via 16S, blood work via CBC/CMP, wearables via WHOOP/Oura), and where Viome has structural advantages Peaq cannot match without new data infrastructure.
+Viome's 8 health score categories are compared against what Oravi currently covers, where Oravi can add new rules using its existing three panels (oral microbiome via 16S, blood work via CBC/CMP, wearables via WHOOP/Oura), and where Viome has structural advantages Oravi cannot match without new data infrastructure.
 
 ---
 
 ## Comparative Table
 
-| Health Dimension | What Viome Does | What Peaq v1.2 Covers | What Peaq v1.3 Can Add (3-panel) | What Peaq Cannot Match (structural gap) |
+| Health Dimension | What Viome Does | What Oravi v1.2 Covers | What Oravi v1.3 Can Add (3-panel) | What Oravi Cannot Match (structural gap) |
 |---|---|---|---|---|
-| **Oral Health** | 16 sub-scores including: Gum Health, Dental Health, Oral Pathogen Activity, Oral Inflammatory Pathways, Oral Mucin Degradation, Cavity Promoting Microbes/Pathways, Oral Sulfide Production, Oral Polyamine Production, Breath Odor | Rules 1–7, 9, 10, 11, 12, 13, 14, 16A, 20, 21, 22 — covers pathogens, NO pathway, cavity risk, breath, gum bacteria at species level | Oral barrier / leaky gums composite; oral diversity as health signal; Fusobacterium-specific cardiovascular rules; gum pathogen + blood convergence rules | RNA-level pathway scoring (mucin degradation pathway activity, polyamine production rate) — Peaq detects species, not pathway expression rates; Viome's per-user RNA scoring of metabolic activity goes beyond 16S |
-| **Gut Health** | 20+ sub-scores: butyrate production, LPS biosynthesis, methane/sulfide/ammonia production, bile acid metabolism, TMA production, oxalate metabolism, uric acid production | None — Peaq has no gut panel | Indirect proxies: DNRA organisms as metabolic pathway signal (Rules 6A, 12B); future: oral-gut axis rule | Entire gut panel; butyrate, LPS, methane, TMA, bile acid pathway scoring require stool sample; Peaq cannot replicate without adding a gut test |
+| **Oral Health** | 16 sub-scores including: Gum Health, Dental Health, Oral Pathogen Activity, Oral Inflammatory Pathways, Oral Mucin Degradation, Cavity Promoting Microbes/Pathways, Oral Sulfide Production, Oral Polyamine Production, Breath Odor | Rules 1–7, 9, 10, 11, 12, 13, 14, 16A, 20, 21, 22 — covers pathogens, NO pathway, cavity risk, breath, gum bacteria at species level | Oral barrier / leaky gums composite; oral diversity as health signal; Fusobacterium-specific cardiovascular rules; gum pathogen + blood convergence rules | RNA-level pathway scoring (mucin degradation pathway activity, polyamine production rate) — Oravi detects species, not pathway expression rates; Viome's per-user RNA scoring of metabolic activity goes beyond 16S |
+| **Gut Health** | 20+ sub-scores: butyrate production, LPS biosynthesis, methane/sulfide/ammonia production, bile acid metabolism, TMA production, oxalate metabolism, uric acid production | None — Oravi has no gut panel | Indirect proxies: DNRA organisms as metabolic pathway signal (Rules 6A, 12B); future: oral-gut axis rule | Entire gut panel; butyrate, LPS, methane, TMA, bile acid pathway scoring require stool sample; Oravi cannot replicate without adding a gut test |
 | **Heart & Metabolic Health** | Oxidative stress, vascular health, cholesterol metabolism, kidney function, blood sugar regulation, TMA/TMAO pathway, metabolic efficiency | Rules 1A/1D (NO+LDL/RHR), 5A/5B (OMA+RHR), 12A/12B (oral bacteria+glucose), 17A (triple convergence), 18A/18B/18C (wearable+blood metabolic), 19B (sleep+glucose), 20A (oral+kidney) | Metabolic convergence composite rules (3+ signals aligning); CRP+glucose+RHR+oral pathogen cluster; oral pathogens + LDL oxidation risk framing | TMA/TMAO pathway (requires stool); CGM-based glycemic response prediction; food recommendation engine |
-| **Inflammation Response** (InflammAging) | InflammAging™ score: chronic low-grade inflammation composite from gut + oral + cellular RNA data | Rules 2A, 3A, 9A/9B, 15A, 18C (individual inflammation signals) | **InflammAging composite rule**: CRP + oral pathogens + poor sleep + elevated RHR all firing together → aggregate signal; makes Peaq's multi-panel inflammatory picture visible as a single convergence | RNA-level inflammatory gene expression; Viome can see whether inflammatory genes are being transcribed; 16S only shows who is present, not what they are doing |
+| **Inflammation Response** (InflammAging) | InflammAging™ score: chronic low-grade inflammation composite from gut + oral + cellular RNA data | Rules 2A, 3A, 9A/9B, 15A, 18C (individual inflammation signals) | **InflammAging composite rule**: CRP + oral pathogens + poor sleep + elevated RHR all firing together → aggregate signal; makes Oravi's multi-panel inflammatory picture visible as a single convergence | RNA-level inflammatory gene expression; Viome can see whether inflammatory genes are being transcribed; 16S only shows who is present, not what they are doing |
 | **Immune System Health** | 14+ pathway scores: innate/adaptive immunity, toxin clearance, oxidative stress management, cytokine/interleukin signaling, wound healing | Rule 19A (short sleep + WBC); Rule 22A/22B (oral pathogens + WBC) | Immune burden composite (high WBC + high oral pathogens + short sleep = overactivated immune state); favorable immune state composite (balanced WBC + low pathogens + adequate sleep); lymphocyte differential rules | Gut-derived immune signaling (Th1/Th2/Treg balance from gut microbiome); cytokine panel from RNA sequencing |
-| **Biological Age** | BioAge™ combining gut + oral + cellular RNA data | PhenoAge from blood (CBC+CMP), OMA score from oral, wearable contribution to Peaq Age; Rules 8A/8B (trend detection), 15A/15B (blood age + oral) | Oral diversity as aging input (low Shannon diversity → unfavorable aging signal); composite "all-clear" favorable rule when all panels show healthy signals | RNA-based BioAge; Viome can see which aging-related genes are actively being expressed; Peaq measures phenotypic markers, not transcriptional activity |
+| **Biological Age** | BioAge™ combining gut + oral + cellular RNA data | PhenoAge from blood (CBC+CMP), OMA score from oral, wearable contribution to Oravi Age; Rules 8A/8B (trend detection), 15A/15B (blood age + oral) | Oral diversity as aging input (low Shannon diversity → unfavorable aging signal); composite "all-clear" favorable rule when all panels show healthy signals | RNA-based BioAge; Viome can see which aging-related genes are actively being expressed; Oravi measures phenotypic markers, not transcriptional activity |
 | **Brain & Cognitive Health** | Serotonin/GABA production pathways, focus activity, methylation, circadian rhythm regulation | Rule 9A/9B (oral pathogens + cognitive health framing via neuroinflammation) | Sleep architecture × immune function rules (deep sleep + WBC, REM deprivation + CRP) provide indirect cognitive health signals | Gut-derived serotonin and GABA pathway scoring; gut microbiome produces ~95% of body serotonin; oral connection is secondary |
-| **Cellular & Energy Efficiency** | Mitochondrial function, energy pathway efficiency, oxidative stress from RNA data | Indirect via PhenoAge (albumin, RDW reflect cellular metabolic health) | RDW + sleep short + pathogens composite (reflects cellular stress from multiple sources) | RNA-based cellular energy pathway scoring; Peaq has no cellular-level signal |
-| **Sleep / Recovery** | Not a primary Viome score; circadian rhythm mentioned under Brain & Cognitive | Rules 3, 4A, 8C/8D, 13A, 15A, 16B, 18A/18B, 19A/19B/19C (extensive sleep + blood/oral) | Sleep architecture × immune function expansion; sleep regularity × lymphocyte; REM × CRP trajectory | Continuous glucose monitoring during sleep; Viome's circadian analysis is microbiome-based (gut); Peaq's wearable data is more granular here than Viome |
+| **Cellular & Energy Efficiency** | Mitochondrial function, energy pathway efficiency, oxidative stress from RNA data | Indirect via PhenoAge (albumin, RDW reflect cellular metabolic health) | RDW + sleep short + pathogens composite (reflects cellular stress from multiple sources) | RNA-based cellular energy pathway scoring; Oravi has no cellular-level signal |
+| **Sleep / Recovery** | Not a primary Viome score; circadian rhythm mentioned under Brain & Cognitive | Rules 3, 4A, 8C/8D, 13A, 15A, 16B, 18A/18B, 19A/19B/19C (extensive sleep + blood/oral) | Sleep architecture × immune function expansion; sleep regularity × lymphocyte; REM × CRP trajectory | Continuous glucose monitoring during sleep; Viome's circadian analysis is microbiome-based (gut); Oravi's wearable data is more granular here than Viome |
 | **Oral Microbiome Diversity** | Included in Oral Health scores (alpha diversity, protective microbes) | OMA score implicitly captures diversity as a community-level index; Shannon diversity tracked | New rules explicitly connecting Shannon diversity to mortality risk, cardiovascular risk, and inflammation using Vogtmann 2025 (n=7,721) and Yang 2024 (n=8,224) | RNA-based functional diversity (Viome can see what diverse communities are *doing*, not just who is there) |
 
 ---
 
 ## Structural Gap Summary
 
-### HIGH PRIORITY — Can Build with Peaq's Existing 3 Panels
+### HIGH PRIORITY — Can Build with Oravi's Existing 3 Panels
 1. Oral barrier / leaky gums composite rule (pathogens + CRP + WBC)
 2. Oral diversity as independent mortality/aging signal
 3. InflammAging composite (CRP + oral pathogens + poor sleep + elevated RHR)
@@ -396,7 +396,7 @@ Viome's 8 health score categories are compared against what Peaq currently cover
 
 ### CANNOT MATCH WITHOUT NEW INFRASTRUCTURE
 - Gut panel (stool test): butyrate, LPS, TMA/TMAO, bile acids, methane — Viome's largest moat
-- RNA sequencing: pathway activity scoring vs. Peaq's species composition; this is the core tech difference — not a gap to close, a deliberate strategic choice
+- RNA sequencing: pathway activity scoring vs. Oravi's species composition; this is the core tech difference — not a gap to close, a deliberate strategic choice
 - CGM integration: glycemic response prediction requires continuous glucose data
 - Custom supplement formulation: requires manufacturing partner
 - Food recommendation engine (Superfoods/Blockers): requires food database + microbiome correlation engine
@@ -458,7 +458,7 @@ These rules continue from Rule 22 in v1.2. The format is identical to v1.2.
 
 **Connection line:** A less diverse oral ecosystem is showing up in your inflammation levels — and research suggests this combination is worth paying attention to.
 
-**Expanded:** Your mouth is home to several hundred bacterial species in a healthy state. When that community narrows — fewer species, less balance — two things tend to happen: harmful species face less competition and expand, and the overall immune environment in your mouth becomes less stable. Your oral panel shows a lower diversity than is typical, and your inflammation marker reflects it. Two large studies following tens of thousands of people over nearly nine years found that lower oral diversity was independently associated with higher mortality risk — adjusted for smoking, age, medication use, and chronic conditions. This is not something Peaq diagnoses. It is a pattern worth paying attention to and one you can improve through oral care, diet, and overall health habits.
+**Expanded:** Your mouth is home to several hundred bacterial species in a healthy state. When that community narrows — fewer species, less balance — two things tend to happen: harmful species face less competition and expand, and the overall immune environment in your mouth becomes less stable. Your oral panel shows a lower diversity than is typical, and your inflammation marker reflects it. Two large studies following tens of thousands of people over nearly nine years found that lower oral diversity was independently associated with higher mortality risk — adjusted for smoking, age, medication use, and chronic conditions. This is not something Oravi diagnoses. It is a pattern worth paying attention to and one you can improve through oral care, diet, and overall health habits.
 
 **Action:** Oral diversity responds to diet more than most people realize. Fermented foods (natural yogurt, kefir, sauerkraut), fiber variety, and eliminating antiseptic mouthwash are the three evidence-supported levers for increasing oral microbial diversity. Diversity typically shifts within four to six weeks of consistent dietary change.
 
@@ -498,7 +498,7 @@ These rules continue from Rule 22 in v1.2. The format is identical to v1.2.
 
 ## RULE 25: Metabolic Syndrome Convergence (Triple Signal)
 
-**Biological basis:** Metabolic syndrome is defined by the convergence of hyperglycemia, dyslipidemia, hypertension, and abdominal obesity. Peaq can detect a metabolic convergence pattern from three independent inputs: blood (HbA1c, fasting glucose, LDL/HDL, CRP), wearable (RHR, HRV), and oral (DNRA organisms that impair nitric oxide pathway critical to insulin sensitivity). Wang et al. (2015, Int J Epidemiol, n=73,357) showed each 10 bpm increase in RHR raised incident diabetes risk by 23%. Azulay et al. (2022, Tromsø 6, n=7,704) confirmed HRV declines within the normal HbA1c range — meaning wearables may catch metabolic drift before blood panels do. The oral pathway adds a third independent dimension: DNRA organisms divert dietary nitrate from the nitric oxide pathway, directly impairing the molecular mechanism of insulin sensitivity (NO activates GLUT4 in skeletal muscle).
+**Biological basis:** Metabolic syndrome is defined by the convergence of hyperglycemia, dyslipidemia, hypertension, and abdominal obesity. Oravi can detect a metabolic convergence pattern from three independent inputs: blood (HbA1c, fasting glucose, LDL/HDL, CRP), wearable (RHR, HRV), and oral (DNRA organisms that impair nitric oxide pathway critical to insulin sensitivity). Wang et al. (2015, Int J Epidemiol, n=73,357) showed each 10 bpm increase in RHR raised incident diabetes risk by 23%. Azulay et al. (2022, Tromsø 6, n=7,704) confirmed HRV declines within the normal HbA1c range — meaning wearables may catch metabolic drift before blood panels do. The oral pathway adds a third independent dimension: DNRA organisms divert dietary nitrate from the nitric oxide pathway, directly impairing the molecular mechanism of insulin sensitivity (NO activates GLUT4 in skeletal muscle).
 
 ---
 
@@ -509,7 +509,7 @@ These rules continue from Rule 22 in v1.2. The format is identical to v1.2.
 
 **Connection line:** Three independent measurements are pointing at the same pattern — your metabolism is under pressure from more directions than any single test would show.
 
-**Expanded:** Your blood panel, your wearable data, and your oral microbiome are each flagging a piece of the same picture. Elevated blood sugar or glucose control markers tell part of the story. But your resting heart rate or recovery metric suggests your autonomic nervous system is also under strain — the sympathetic system running hotter than it should directly impairs insulin sensitivity. And your oral panel shows bacteria that are diverting dietary nitrate away from the pathway your body uses to help muscles absorb glucose efficiently. Three different measurements. Three different mechanisms. One converging pattern. Your doctor can see one side. Your wearable sees another. Peaq sees all three at once.
+**Expanded:** Your blood panel, your wearable data, and your oral microbiome are each flagging a piece of the same picture. Elevated blood sugar or glucose control markers tell part of the story. But your resting heart rate or recovery metric suggests your autonomic nervous system is also under strain — the sympathetic system running hotter than it should directly impairs insulin sensitivity. And your oral panel shows bacteria that are diverting dietary nitrate away from the pathway your body uses to help muscles absorb glucose efficiently. Three different measurements. Three different mechanisms. One converging pattern. Your doctor can see one side. Your wearable sees another. Oravi sees all three at once.
 
 **Action:** This is a three-front intervention: (1) Zone 2 cardiovascular exercise — 150 minutes per week — addresses all three signals simultaneously (lowers RHR, improves insulin sensitivity, supports the oral microbiome toward nitrate-reducing species); (2) stop antiseptic mouthwash to restore the nitric oxide pathway; (3) discuss blood sugar trajectory with your doctor, bringing this data as context. These are not separate problems.
 
@@ -746,7 +746,7 @@ These rules continue from Rule 22 in v1.2. The format is identical to v1.2.
 
 **Connection line:** We are watching a possible connection between your reduced REM and the inflammation in your blood panel.
 
-**Expanded:** REM sleep and inflammation have a complex, bidirectional relationship that researchers are still characterizing. What is well-established: consistently reduced total restorative sleep — including short REM — is associated with elevated IL-6 and other inflammatory markers. Your REM average is below the typical range, and your CRP is elevated at the same time. This is emerging science, and wearable REM estimates are less precise than other sleep metrics — Peaq is flagging this connection because we can see both signals simultaneously, not because the relationship is as well-established as other rules in this engine. It is worth watching on your next retest.
+**Expanded:** REM sleep and inflammation have a complex, bidirectional relationship that researchers are still characterizing. What is well-established: consistently reduced total restorative sleep — including short REM — is associated with elevated IL-6 and other inflammatory markers. Your REM average is below the typical range, and your CRP is elevated at the same time. This is emerging science, and wearable REM estimates are less precise than other sleep metrics — Oravi is flagging this connection because we can see both signals simultaneously, not because the relationship is as well-established as other rules in this engine. It is worth watching on your next retest.
 
 **Action:** Alcohol and many sleep medications suppress REM sleep specifically. If either applies to you, eliminating alcohol within three hours of sleep and discussing REM-preserving alternatives with your doctor are the two most evidence-aligned actions. Focus first on addressing CRP through better-established levers (sleep regularity, oral health, exercise).
 
@@ -756,7 +756,7 @@ These rules continue from Rule 22 in v1.2. The format is identical to v1.2.
 
 ## RULE 30: Favorable Composite Rules — Cross-Panel All-Clear
 
-**Biological basis:** Favorable rules are systematically underrepresented in most health platforms, which default toward pathology detection. Peaq's insight layer should be as capable of recognizing health-span extension as risk escalation. Research on favorable composite states is direct: low CRP is a strong predictor of reduced all-cause mortality independent of other factors. High oral diversity correlates with reduced mortality in two large prospective studies. OMA above median combined with low CRP and good sleep describes a state of coordinated health optimization across all three Peaq panels. These rules exist to affirm what is working and encourage continuity — behavior change research consistently shows that positive reinforcement of current behavior is more effective at sustaining healthy habits than risk-based framing alone.
+**Biological basis:** Favorable rules are systematically underrepresented in most health platforms, which default toward pathology detection. Oravi's insight layer should be as capable of recognizing health-span extension as risk escalation. Research on favorable composite states is direct: low CRP is a strong predictor of reduced all-cause mortality independent of other factors. High oral diversity correlates with reduced mortality in two large prospective studies. OMA above median combined with low CRP and good sleep describes a state of coordinated health optimization across all three Oravi panels. These rules exist to affirm what is working and encourage continuity — behavior change research consistently shows that positive reinforcement of current behavior is more effective at sustaining healthy habits than risk-based framing alone.
 
 ---
 
@@ -767,7 +767,7 @@ These rules continue from Rule 22 in v1.2. The format is identical to v1.2.
 
 **Connection line:** Your oral health, blood panel, and sleep are all in a strong alignment — three independent measurements pointing in the same favorable direction.
 
-**Expanded:** Most health platforms are designed to catch problems. Peaq is designed to see the full picture, which means recognizing when the system is working well. Your oral microbiome shows a healthy balance — protective species in good shape, harmful bacteria well-controlled. Your CRP tells us the oral health picture is translating to systemic low inflammation. And your sleep data shows both adequate duration and consistency — the pattern research most reliably associates with healthy immune function and slower biological aging. These three panels rarely align this cleanly. Each one is influenced by different lifestyle factors: oral health responds to diet and hygiene, CRP responds to multiple inputs, and sleep responds to schedule and environment. When all three are favorable simultaneously, it means multiple systems are working together.
+**Expanded:** Most health platforms are designed to catch problems. Oravi is designed to see the full picture, which means recognizing when the system is working well. Your oral microbiome shows a healthy balance — protective species in good shape, harmful bacteria well-controlled. Your CRP tells us the oral health picture is translating to systemic low inflammation. And your sleep data shows both adequate duration and consistency — the pattern research most reliably associates with healthy immune function and slower biological aging. These three panels rarely align this cleanly. Each one is influenced by different lifestyle factors: oral health responds to diet and hygiene, CRP responds to multiple inputs, and sleep responds to schedule and environment. When all three are favorable simultaneously, it means multiple systems are working together.
 
 **Action:** This is a profile worth protecting and tracking. Whatever your current oral care routine, diet, and sleep habits look like — keep doing them. Retest in 6 months. If a major life change occurs (antibiotics, illness, extended travel, dietary shift), retest sooner and look for the first panel to shift.
 
@@ -842,7 +842,7 @@ These rules continue from Rule 22 in v1.2. The format is identical to v1.2.
 
 **Connection line:** The bacteria that produce nitric oxide in your mouth are depleted, your inflammation is elevated, and your autonomic nervous system is feeling both — this is the specific chain our three panels were designed to catch.
 
-**Expanded:** This is the core connection that makes Peaq different from a blood test, a wearable, or an oral microbiome test alone.
+**Expanded:** This is the core connection that makes Oravi different from a blood test, a wearable, or an oral microbiome test alone.
 
 Neisseria species on your tongue are the primary converters of dietary nitrate into nitrite, which your body then uses to produce nitric oxide. Nitric oxide does two things simultaneously: it relaxes blood vessels (lowering blood pressure and reducing vascular inflammation) and it modulates parasympathetic tone at the heart (increasing HRV). When Neisseria abundance drops below the 10th percentile, this pathway is functionally impaired. Nitrate supplementation studies have shown that Neisseria abundance directly correlates with plasma nitrite levels — meaning less Neisseria translates to less systemic nitric oxide, not theoretically but measurably.
 
@@ -893,12 +893,12 @@ Expanding the existing future rules table with new candidates from the Viome com
 | Oral diversity → All-cause mortality (standalone rule) | Oral × Demographics | Low Shannon diversity + age over 50 | Moderate — Vogtmann 2025 (JID, n=7,721): Shannon HR 0.85/SD; Yang 2024 (n=8,224): Q4 HR 0.58 | Rule 24A now covers this at population level; age-gated standalone rule for 50+ as elevated-stakes version deferred pending single-dataset concern resolution |
 | OSA oral signature → CVD | Oral × Wearable × Blood | OSA oral taxa + sleep fragmentation + CVD markers | Weak-Preliminary — Chen 2022 distinct signatures; not yet independent of AHI | Unchanged — hold until oral signature independence from AHI demonstrated |
 | Oral × Diabetes complications (retinopathy) | Oral × Blood | Pathogen burden + HbA1c + duration | Moderate for retinopathy — Park 2022 (n=11,353): periodontitis aHR 1.21 for retinopathy | Relevant for established diabetics; gates on HbA1c > 6.5% and known diabetes status from demographics |
-| *TMA/TMAO pathway connection | Blood × Oral (future: + Gut) | Oral DNRA organisms + elevated lipids/glucose | Proposed — requires TMAO blood assay not in standard CBC/CMP | Viome's strongest metabolic differentiation; Peaq cannot measure without adding TMAO to blood panel |
-| *Oral mucin degradation → Leaky gums score | Oral (RNA-level) | Mucin-degrading pathway activity elevated | Not measurable with 16S — requires RNA sequencing (metatranscriptomics) | Viome's specific advantage; Peaq's Rule 23A approximates with species-level proxy |
-| *Glycemic response prediction | Oral × Wearable × Food log | DNRA organisms + glucose variability + dietary data | Not measurable without CGM + food log integration | Viome has this; Peaq would need CGM API + food logging feature |
-| *Custom supplement formulation | All panels | Multi-panel deficiency pattern | Viome's product moat; requires supplement manufacturing partner | Strategic decision: Peaq can recommend supplement categories (e.g., nitrate, magnesium) without formulation partnership |
+| *TMA/TMAO pathway connection | Blood × Oral (future: + Gut) | Oral DNRA organisms + elevated lipids/glucose | Proposed — requires TMAO blood assay not in standard CBC/CMP | Viome's strongest metabolic differentiation; Oravi cannot measure without adding TMAO to blood panel |
+| *Oral mucin degradation → Leaky gums score | Oral (RNA-level) | Mucin-degrading pathway activity elevated | Not measurable with 16S — requires RNA sequencing (metatranscriptomics) | Viome's specific advantage; Oravi's Rule 23A approximates with species-level proxy |
+| *Glycemic response prediction | Oral × Wearable × Food log | DNRA organisms + glucose variability + dietary data | Not measurable without CGM + food log integration | Viome has this; Oravi would need CGM API + food logging feature |
+| *Custom supplement formulation | All panels | Multi-panel deficiency pattern | Viome's product moat; requires supplement manufacturing partner | Strategic decision: Oravi can recommend supplement categories (e.g., nitrate, magnesium) without formulation partnership |
 | *Atopy/allergy + oral diversity | Oral × Lifestyle/Demographics | Low diversity + atopic history | Weak-Preliminary — Lee 2025 (JACIG, n=453): reduced oral diversity in atopy/rhinitis | Single cross-sectional study; needs prospective replication before consumer-facing rule |
-| *Hepcidin pathway — Oral × Iron | Oral × Blood | Tier 1 pathogen > 80th pct + ferritin elevated + serum iron low | Moderate-Strong — Han 2024 (J Dent Sci, n=79+79): hepcidin elevated in periodontitis, normalized post-NSPT; iron sequestration confirmed | Ready for promotion; needs iron (serum) and ferritin added to standard blood panel as Peaq markers |
+| *Hepcidin pathway — Oral × Iron | Oral × Blood | Tier 1 pathogen > 80th pct + ferritin elevated + serum iron low | Moderate-Strong — Han 2024 (J Dent Sci, n=79+79): hepcidin elevated in periodontitis, normalized post-NSPT; iron sequestration confirmed | Ready for promotion; needs iron (serum) and ferritin added to standard blood panel as Oravi markers |
 | *NLR elevated × Age (40+) | Blood × Demographics | NLR > 3.0 + age > 40 + OMA weak | Moderate — Leucuța 2022 meta-analysis: NLR elevated in periodontitis; NLR > 3.0 independently predicts cardiovascular risk | Requires CBC differential; currently gated by Rule 27C which includes oral panel |
 | *Oral bacteria → Depression signal | Oral × Wearable × Lifestyle | Low Neisseria + elevated Prevotella + poor sleep + mood flag | Emerging-Moderate — Malan-Müller 2024 (Transl Psychiatry, n=470): Neisseria elongata lower in anxiety; Prevotella higher in depression | Lifestyle questionnaire (mood flag) required; Phase 3 candidate |
 
@@ -1023,7 +1023,7 @@ Rules added in v1.3 are marked in **bold**.
 | **New Rule 32B** | Oral-to-autonomic favorable: Neisseria > 40th pct + hsCRP < 1.0 + RMSSD > 60th pct = NO pathway intact, all three panels confirm |
 | **Rule 32 integrates all three collaborator lines** | Cites Vanhatalo 2018 (Neisseria → plasma nitrite), Kapil 2013 (mouthwash ablation), Tegegne 2023 (phenotypic HRV mortality), Tegegne 2018 (Lifelines population norms), Joshipura 2017 (mouthwash → metabolic disruption, n=945), and Adibi 2026 (RMSSD-CRP correlation framework) |
 | **Future rules table expanded** | New entries: TMA/TMAO pathway, oral mucin degradation (RNA-level), glycemic response prediction, custom supplements, atopy/allergy + oral diversity, hepcidin/iron pathway, NLR × age, oral bacteria × depression signal |
-| **Competitive context added** | Section 1: Viome vs Peaq competitive map — defines what Peaq can address with existing panels vs. structural gaps requiring new infrastructure |
+| **Competitive context added** | Section 1: Viome vs Oravi competitive map — defines what Oravi can address with existing panels vs. structural gaps requiring new infrastructure |
 | **NLR added as required biomarker** | Rules 27C, 29B require neutrophil-to-lymphocyte ratio from CBC differential. This should be a standard output if not already. |
 | **Favorable rule count** | Increased from 12 (v1.2) to 21 (v1.3). Ratio of favorable to unfavorable: 12:28 → 21:41 (ratio improved from 1:2.3 to 1:2.0) |
 
@@ -1038,7 +1038,7 @@ Rules added in v1.3 are marked in **bold**.
 | Deep sleep (N3) in minutes | 29A, (existing 16B, 19C) | Already available from WHOOP/Oura; confirm field mapping |
 | Daily step count average | 31A, 31B | Available from WHOOP/Oura; confirm 7-day or 14-day rolling average output |
 | Fusobacterium at species level | 28A, 28B, 28C | Available from 16S; confirm it appears as named species in output, not collapsed to genus |
-| Fasting ferritin + serum iron | Future Rule (hepcidin pathway) | Not currently in standard Peaq blood panel; flag as Phase 2 addition |
+| Fasting ferritin + serum iron | Future Rule (hepcidin pathway) | Not currently in standard Oravi blood panel; flag as Phase 2 addition |
 
 ---
 

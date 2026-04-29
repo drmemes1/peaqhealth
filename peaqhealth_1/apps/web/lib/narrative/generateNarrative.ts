@@ -24,7 +24,7 @@ export interface ValidationResult {
   warnings: string[]
 }
 
-const SYSTEM_PROMPT = `You are Cnvrg's clinical narrative engine. Generate a personalized health interpretation based on structured user data.
+const SYSTEM_PROMPT = `You are Oravi's clinical narrative engine. Generate a personalized health interpretation based on structured user data.
 
 CRITICAL RULES:
 1. NEVER invent a numeric value. Only cite values present in USER_SITUATION.

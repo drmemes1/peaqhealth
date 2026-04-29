@@ -1,13 +1,13 @@
-# DESIGN.md — Peaq Health
-**Version 2.0 — Synthesized from Peaq identity + Apple, Linear, Framer, Notion design systems**
+# DESIGN.md — Oravi
+**Version 2.0 — Synthesized from Oravi identity + Apple, Linear, Framer, Notion design systems**
 
-> This is the single source of truth for all Peaq Health UI. Read this entire file before touching any component. Every decision here is intentional. Deviate only with explicit justification.
+> This is the single source of truth for all Oravi UI. Read this entire file before touching any component. Every decision here is intentional. Deviate only with explicit justification.
 
 ---
 
 ## 1. Philosophy & Atmosphere
 
-Peaq Health is **clinical luxury** — the rarest combination in digital health. It has the scientific credibility of a medical instrument and the aesthetic restraint of a premium object. It never motivates. It never celebrates. It measures, reports, and illuminates.
+Oravi is **clinical luxury** — the rarest combination in digital health. It has the scientific credibility of a medical instrument and the aesthetic restraint of a premium object. It never motivates. It never celebrates. It measures, reports, and illuminates.
 
 **The core tension that drives every design decision:**
 > *Density without overwhelm. Precision without coldness. Premium without pretension.*
@@ -18,7 +18,7 @@ Borrow from the best:
 - **Framer**: Motion that feels inevitable, not decorative. Things arrive with purpose.
 - **Notion**: Warm minimalism. Serif type that makes data feel considered, not clinical.
 
-The interface should feel like a **beautifully designed medical report** — not an app, not a dashboard, not a wellness platform. When someone opens Peaq, they should feel they are looking at something serious and rare.
+The interface should feel like a **beautifully designed medical report** — not an app, not a dashboard, not a wellness platform. When someone opens Oravi, they should feel they are looking at something serious and rare.
 
 ---
 
@@ -26,7 +26,7 @@ The interface should feel like a **beautifully designed medical report** — not
 
 ### The Mark
 
-The Peaq logo has two components:
+The Oravi logo has two components:
 
 **Peaks mark** — Three mountain peaks rendered as thin continuous line strokes (`stroke-width` ~1.5–2px, `fill: none`). The leftmost and rightmost peaks are smooth triangles. The **middle peak** contains an embedded EKG/heartbeat spike — the stroke line briefly drops sharply then spikes up before reaching the apex. This heartbeat-in-a-mountain is the single most distinctive element of the brand. It must be reproduced faithfully as an SVG path — never simplified or omitted.
 
@@ -45,7 +45,7 @@ The Peaq logo has two components:
 
 ```
 Asset: peaq_logo.png
-Location: /assets/images/peaq_logo.png (or equivalent in project)
+Location: /assets/images/oravi.png (or equivalent in project)
 Format: PNG with transparent background
 ```
 
@@ -364,7 +364,7 @@ Bottom (dark `#16150F`): cross-panel signals — total in Cormorant Garant 42px 
 
 ## 8. Scoring
 
-**Peaq Resilience Index (PRI)** — never "score", "health score", or "wellness score".
+**Oravi Resilience Index (PRI)** — never "score", "health score", or "wellness score".
 
 ```
 PRI = Sleep(24/30) + Blood(34/40) + Oral(10/30) + cross-panel(-4) = 64

@@ -1,5 +1,5 @@
 import { calculatePeaqScore, type LifestyleInputs, type BloodInputs, type OralInputs, type SleepInputs } from "@peaq/score-engine"
-// Peaq Age removed — import kept for type compatibility with score engine
+// Oravi Age removed — import kept for type compatibility with score engine
 import type { OMAInputs } from "@peaq/score-engine"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { scoreOralV2, type OralDimensionInputs } from "../oral/dimensions-v2"
@@ -519,7 +519,7 @@ async function _recalculateScore(
   )
   console.log(`[recovery-hrv] user=${userId.slice(0,8)} median=${hrvResult.rmssd_median}ms nights=${hrvResult.nights_count} pct=${hrvResult.percentile} status=${hrvResult.status} min14=${hrvResult.has_minimum_nights}`)
 
-  // ── Save snapshot (dual-write: legacy v4 score + Peaq Age v5) ──────────────
+  // ── Save snapshot (dual-write: legacy v4 score + Oravi Age v5) ──────────────
   const { data: insertedRow, error: insertError } = await supabase.from("score_snapshots").insert({
     user_id:                userId,
     calculated_at:          new Date().toISOString(),
@@ -623,7 +623,7 @@ async function cacheInsightAndGuidance(
       temperature: 0.7,
       max_tokens: 300,
       messages: [
-        { role: "system", content: "You are Cnvrg's clinical intelligence layer. Return JSON: {\"headline\":\"One bold statement about overall health picture\",\"body\":\"ONE plain-English sentence under 100 characters. Explain WHY it matters. No Peaq Age, no deltas, no lab values with units.\"}. Be specific but human. No hedging.\n\nLANGUAGE RULES — ALWAYS FOLLOW:\n- Write in plain English a smart non-scientist understands immediately\n- Lead with what this means for the person, not the mechanism\n- Never use Latin species names in the response\n- Never use: dysbiosis, biomarker, optimize, endothelial, autonomic, parasympathetic, sympathetic dominance, inflammatory cascade, NF-kB, glycemic variability, cardiometabolic\n- Replace with plain English:\n    \"dysbiosis\" → \"imbalance in your oral bacteria\"\n    \"circadian rhythm\" → \"your body's internal clock\"\n    \"insulin sensitivity\" → \"how well your body handles sugar\"\n    \"autonomic\" → \"your body's stress response system\"\n- End every insight with one specific action\n- The action must be free or low-cost first, clinical referral last\n- Never say \"consider\" or \"may want to\" — be direct" },
+        { role: "system", content: "You are Oravi's clinical intelligence layer. Return JSON: {\"headline\":\"One bold statement about overall health picture\",\"body\":\"ONE plain-English sentence under 100 characters. Explain WHY it matters. No Oravi Age, no deltas, no lab values with units.\"}. Be specific but human. No hedging.\n\nLANGUAGE RULES — ALWAYS FOLLOW:\n- Write in plain English a smart non-scientist understands immediately\n- Lead with what this means for the person, not the mechanism\n- Never use Latin species names in the response\n- Never use: dysbiosis, biomarker, optimize, endothelial, autonomic, parasympathetic, sympathetic dominance, inflammatory cascade, NF-kB, glycemic variability, cardiometabolic\n- Replace with plain English:\n    \"dysbiosis\" → \"imbalance in your oral bacteria\"\n    \"circadian rhythm\" → \"your body's internal clock\"\n    \"insulin sensitivity\" → \"how well your body handles sugar\"\n    \"autonomic\" → \"your body's stress response system\"\n- End every insight with one specific action\n- The action must be free or low-cost first, clinical referral last\n- Never say \"consider\" or \"may want to\" — be direct" },
         { role: "user", content: `Generate a dashboard insight:\n${dataContext}` },
       ],
       response_format: { type: "json_object" },
@@ -646,7 +646,7 @@ async function cacheInsightAndGuidance(
   console.log(`[insight cache] user=${userId.slice(0,8)} headline=${headline ? "yes" : "no"} guidance=${guidance.length}`)
 }
 
-// ── Peaq Age V5 context builder ─────────────────────────────────────────────
+// ── Oravi Age V5 context builder ─────────────────────────────────────────────
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ORAL ENVIRONMENT INDEX + DIFFERENTIAL PATTERN SCORES

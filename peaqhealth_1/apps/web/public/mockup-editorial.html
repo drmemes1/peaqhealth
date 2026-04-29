@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oravi — Editorial Dashboard Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+
+:root{
+  --cream:  #F6F4EF;
+  --card:   #FFFFFF;
+  --dark:   #16150F;
+  --ink:    #1a1a18;
+  --ink2:   #8C8A82;
+  --ink3:   #bbb;
+  --gold:   #C49A3C;
+  --sleep:  #185FA5;
+  --blood:  #A32D2D;
+  --oral:   #3B6D11;
+  --border: rgba(0,0,0,0.06);
+
+  --opt-c:  #27500A; --opt-bg:  #EAF3DE;
+  --good-c: #085041; --good-bg: #E1F5EE;
+  --watch-c:#633806; --watch-bg:#FAEEDA;
+  --attn-c: #791F1F; --attn-bg: #FCEBEB;
+}
+
+body{
+  font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+  background:var(--cream);
+  color:var(--ink);
+}
+
+/* ── SIDEBAR ──────────────────────────────────────────── */
+.sidebar{
+  position:fixed;top:0;left:-48px;
+  width:48px;height:100vh;
+  background:var(--dark);
+  display:flex;flex-direction:column;align-items:center;
+  padding:16px 0 18px;gap:4px;
+  z-index:100;
+  transition:left 300ms cubic-bezier(0.4,0,0.2,1);
+}
+.sidebar-trigger{
+  position:fixed;top:0;left:0;width:12px;height:100vh;z-index:99;
+}
+.sidebar-trigger:hover ~ .sidebar,
+.sidebar:hover{left:0;}
+
+.sidebar img{width:28px;height:auto;filter:invert(1) brightness(1.8);margin-bottom:12px;}
+.s-icon{
+  width:36px;height:36px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  color:rgba(255,255,255,0.28);
+  transition:background 150ms ease,color 150ms ease;
+  cursor:pointer;
+}
+.s-icon:hover{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.6);}
+.s-icon.active{background:rgba(196,154,60,0.12);color:#C49A3C;}
+.sidebar .spacer{flex:1;}
+.sidebar .avatar{
+  width:30px;height:30px;border-radius:50%;
+  background:rgba(196,154,60,0.18);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Cormorant Garamond',serif;font-size:12px;color:var(--gold);
+  margin-top:8px;
+}
+
+/* ── MAIN CONTENT ─────────────────────────────────────── */
+.main{
+  max-width:860px;
+  margin:0 auto;
+  padding:clamp(48px,6vw,80px) 32px clamp(64px,8vw,120px);
+}
+
+/* ── TOPBAR ───────────────────────────────────────────── */
+.topbar{
+  display:flex;align-items:baseline;justify-content:space-between;
+  margin-bottom:clamp(48px,6vw,72px);
+  animation:fadeIn 400ms ease both;
+  animation-delay:50ms;
+}
+.greeting{font-family:'Cormorant Garamond',serif;font-size:19px;color:var(--ink);}
+.greeting-meta{font-size:10px;color:var(--ink3);letter-spacing:0.5px;margin-left:12px;}
+.topbar-actions{display:flex;gap:8px;}
+.btn-outline{
+  font-size:9px;letter-spacing:1.5px;text-transform:uppercase;
+  padding:6px 13px;border-radius:6px;
+  border:0.5px solid rgba(0,0,0,0.10);background:transparent;color:var(--ink2);cursor:pointer;
+}
+.btn-gold{
+  font-size:9px;letter-spacing:1.5px;text-transform:uppercase;
+  padding:6px 13px;border-radius:6px;
+  background:var(--gold);color:#fff;border:none;cursor:pointer;
+}
+
+/* ── HERO: SCORE ──────────────────────────────────────── */
+.score-hero{
+  position:relative;
+  margin-bottom:clamp(48px,6vw,80px);
+  padding-bottom:32px;
+  border-bottom:0.5px solid var(--border);
+  animation:fadeIn 600ms ease both;
+  animation-delay:150ms;
+}
+
+.score-label{
+  font-size:9px;letter-spacing:3px;text-transform:uppercase;
+  color:var(--ink3);margin-bottom:8px;
+}
+
+.score-number{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(96px,14vw,140px);
+  font-weight:300;
+  line-height:0.85;
+  color:var(--ink);
+  letter-spacing:-2px;
+  position:relative;
+  z-index:2;
+}
+
+/* Peaks watermark behind score */
+.score-watermark{
+  position:absolute;
+  top:50%;left:0;
+  transform:translateY(-55%);
+  width:100%;height:auto;
+  opacity:0.035;
+  z-index:1;
+  pointer-events:none;
+}
+
+.score-tagline{
+  font-family:'Cormorant Garamond',serif;
+  font-size:16px;font-weight:400;font-style:italic;
+  color:var(--ink3);
+  margin-top:12px;
+}
+.score-tagline em{font-style:normal;color:var(--gold);}
+
+.score-meta{
+  font-size:10px;color:var(--ink3);margin-top:8px;letter-spacing:0.3px;
+}
+
+/* ── STAT CHIPS ───────────────────────────────────────── */
+.chips{
+  display:flex;gap:8px;
+  margin-bottom:clamp(48px,6vw,72px);
+}
+.chip{
+  flex:1;
+  background:var(--card);
+  border:0.5px solid var(--border);
+  border-radius:8px;
+  padding:12px 16px;
+  display:flex;align-items:center;gap:10px;
+  cursor:pointer;
+  transition:transform 150ms cubic-bezier(0.34,1.56,0.64,1);
+}
+.chip:nth-child(1){animation:chipIn 150ms cubic-bezier(0.34,1.56,0.64,1) both;animation-delay:250ms;}
+.chip:nth-child(2){animation:chipIn 150ms cubic-bezier(0.34,1.56,0.64,1) both;animation-delay:310ms;}
+.chip:nth-child(3){animation:chipIn 150ms cubic-bezier(0.34,1.56,0.64,1) both;animation-delay:370ms;}
+.chip:hover{transform:translateY(-2px);}
+.chip-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.chip-label{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink3);}
+.chip-score{font-family:'Cormorant Garamond',serif;font-size:22px;line-height:1;}
+.chip-max{font-size:10px;color:var(--ink3);}
+.chip-bar{width:48px;height:2px;background:rgba(0,0,0,0.06);border-radius:1px;margin-left:auto;}
+.chip-bar-fill{height:2px;border-radius:1px;}
+
+/* ── CROSS-PANEL PULL QUOTE ───────────────────────────── */
+.cross-panel-quote{
+  border-top:1px solid var(--gold);
+  border-bottom:1px solid var(--gold);
+  padding:28px 0;
+  margin-bottom:clamp(48px,6vw,72px);
+  text-align:center;
+  animation:fadeIn 500ms ease both;
+  animation-delay:500ms;
+}
+.cpq-label{
+  font-size:8px;letter-spacing:2.5px;text-transform:uppercase;
+  color:var(--gold);margin-bottom:8px;
+}
+.cpq-value{
+  font-family:'Cormorant Garamond',serif;
+  font-size:36px;font-weight:300;color:var(--gold);
+  margin-bottom:6px;
+}
+.cpq-detail{font-size:11px;color:var(--ink2);line-height:1.6;max-width:520px;margin:0 auto;}
+
+/* ── PEAKS SVG (watermark version for hero) ───────────── */
+.peaks-section{
+  margin-bottom:clamp(48px,6vw,72px);
+  animation:fadeIn 700ms ease both;
+  animation-delay:350ms;
+}
+
+.peaks-svg{overflow:visible;width:100%;height:auto;display:block;}
+
+/* Breathing animation per peak */
+@keyframes breathe1{
+  0%,100%{transform:scaleY(1);}
+  50%{transform:scaleY(1.005);}
+}
+@keyframes breathe2{
+  0%,100%{transform:scaleY(1);}
+  50%{transform:scaleY(1.005);}
+}
+@keyframes breathe3{
+  0%,100%{transform:scaleY(1);}
+  50%{transform:scaleY(1.005);}
+}
+.peak-sleep{transform-origin:center bottom;animation:breathe1 6s ease-in-out infinite;}
+.peak-blood{transform-origin:center bottom;animation:breathe2 6s ease-in-out infinite;animation-delay:-2s;}
+.peak-oral{transform-origin:center bottom;animation:breathe3 6s ease-in-out infinite;animation-delay:-4s;}
+
+/* ── PANEL SECTIONS ───────────────────────────────────── */
+.panel-section{
+  margin-bottom:6px;
+  background:var(--card);
+}
+
+.panel-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 0;
+  border-bottom:0.5px solid var(--border);
+}
+.panel-header-left{display:flex;align-items:center;gap:8px;}
+.panel-dot{width:6px;height:6px;border-radius:50%;}
+.panel-name{font-family:'Cormorant Garamond',serif;font-size:17px;}
+.panel-meta{font-size:10px;color:var(--ink3);}
+.panel-link{font-size:10px;color:var(--gold);text-decoration:none;cursor:pointer;}
+
+/* ── BIOMARKER ROWS ───────────────────────────────────── */
+.bm-row{
+  display:grid;
+  grid-template-columns:1fr 64px 80px 120px;
+  align-items:center;
+  gap:12px;
+  padding:12px 0;
+  border-bottom:0.5px solid rgba(0,0,0,0.03);
+  transition:background 80ms ease;
+  cursor:default;
+}
+.bm-row:hover{background:rgba(0,0,0,0.013);}
+.bm-row:last-child{border-bottom:none;}
+
+.bm-name{font-size:12px;color:var(--ink);}
+.bm-sub{font-size:10px;color:var(--ink3);margin-top:1px;}
+
+/* Sparkline placeholder */
+.bm-spark{width:48px;height:20px;}
+.bm-spark polyline{fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
+
+/* Value + unit */
+.bm-val{font-size:14px;font-weight:500;color:var(--ink);text-align:right;}
+.bm-unit{font-size:10px;color:var(--ink3);margin-left:2px;}
+
+/* ── ZONE BAR ─────────────────────────────────────────── */
+.zone-bar{
+  width:100%;height:2px;
+  background:rgba(0,0,0,0.04);
+  border-radius:1px;
+  position:relative;
+}
+/* Colored zone wash */
+.zone-fill{
+  position:absolute;top:0;height:2px;border-radius:1px;
+  opacity:0.35;
+}
+/* User's position dot */
+.zone-dot{
+  position:absolute;top:-3px;
+  width:8px;height:8px;
+  border-radius:50%;
+  border:1.5px solid #fff;
+  transform:translateX(-50%);
+  z-index:2;
+}
+
+/* ── SECTION DIVIDER (cream gap) ──────────────────────── */
+.section-gap{
+  height:6px;
+  background:var(--cream);
+}
+
+/* ── ANIMATIONS ───────────────────────────────────────── */
+@keyframes fadeIn{
+  from{opacity:0;transform:translateY(12px);}
+  to{opacity:1;transform:translateY(0);}
+}
+@keyframes chipIn{
+  from{opacity:0;transform:translateY(12px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+/* Biomarker row stagger */
+.bm-row{opacity:0;animation:fadeIn 300ms ease both;}
+.bm-row:nth-child(1){animation-delay:600ms;}
+.bm-row:nth-child(2){animation-delay:640ms;}
+.bm-row:nth-child(3){animation-delay:680ms;}
+.bm-row:nth-child(4){animation-delay:720ms;}
+.bm-row:nth-child(5){animation-delay:760ms;}
+.bm-row:nth-child(6){animation-delay:800ms;}
+
+/* ECG baseline trace */
+@keyframes ecgScroll{
+  from{transform:translateX(0);}
+  to{transform:translateX(-50%);}
+}
+
+/* ── FOOTER ───────────────────────────────────────────── */
+.editorial-footer{
+  margin-top:64px;
+  padding-top:24px;
+  border-top:0.5px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.footer-logo{height:20px;opacity:0.3;}
+.footer-note{font-size:10px;color:var(--ink3);max-width:320px;text-align:right;line-height:1.6;}
+</style>
+</head>
+<body>
+
+<!-- ── SIDEBAR (hidden, slides on hover) ──────────────── -->
+<div class="sidebar-trigger"></div>
+<div class="sidebar">
+  <img src="/images/peaq_logo_transparent.png" alt="Oravi">
+  <div class="s-icon active">
+    <svg width="15" height="15" viewBox="0 0 17 17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="10" y="1" width="6" height="6" rx="1.5"/>
+      <rect x="1" y="10" width="6" height="6" rx="1.5"/><rect x="10" y="10" width="6" height="6" rx="1.5"/>
+    </svg>
+  </div>
+  <div class="s-icon">
+    <svg width="15" height="15" viewBox="0 0 17 17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="2,13 8.5,9 15,13"/><polygon points="2,10 8.5,6 15,10"/><polygon points="2,7 8.5,3 15,7"/>
+    </svg>
+  </div>
+  <div class="s-icon">
+    <svg width="15" height="15" viewBox="0 0 17 17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 1v5.5L2 14a1.5 1.5 0 001.3 2.2h10.4A1.5 1.5 0 0015 14l-4-7.5V1"/><line x1="5" y1="1" x2="12" y2="1"/>
+    </svg>
+  </div>
+  <div class="s-icon">
+    <svg width="15" height="15" viewBox="0 0 17 17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 1.5L2.5 4.5v10a1 1 0 001 1h10a1 1 0 001-1v-10L13 1.5H4z"/><path d="M2.5 4.5h12"/><path d="M6 7a2.5 2.5 0 005 0"/>
+    </svg>
+  </div>
+  <div class="spacer"></div>
+  <div class="s-icon">
+    <svg width="15" height="15" viewBox="0 0 17 17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="8.5" cy="8.5" r="2.5"/><path d="M8.5 1v1.5M8.5 14.5V16M1 8.5h1.5M14.5 8.5H16M3.2 3.2l1.06 1.06M12.74 12.74l1.06 1.06M3.2 13.8l1.06-1.06M12.74 4.26l1.06-1.06"/>
+    </svg>
+  </div>
+  <div class="avatar">IK</div>
+</div>
+
+<!-- ── MAIN ────────────────────────────────────────────── -->
+<div class="main">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div>
+      <span class="greeting">Good morning, Igor.</span>
+      <span class="greeting-meta">Last synced Apr 4, 8:12 AM &middot; WHOOP</span>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn-outline">Sync Now</button>
+      <button class="btn-gold">Add Data</button>
+    </div>
+  </div>
+
+  <!-- ── SCORE HERO ────────────────────────────────────── -->
+  <div class="score-hero">
+    <div class="score-label">Oravi Resilience Index</div>
+    <div style="position:relative;">
+      <!-- Peaks watermark -->
+      <svg class="score-watermark" viewBox="0 0 860 180" preserveAspectRatio="xMidYMid meet">
+        <path d="M0,160 L140,160 L220,30 L300,160 L400,160 L480,55 L560,160 L660,160 L720,100 L780,160 L860,160" fill="none" stroke="rgba(0,0,0,0.08)" stroke-width="1.2"/>
+        <!-- EKG blip in middle peak -->
+        <path d="M460,75 L468,75 L472,55 L476,90 L480,55 L484,75 L492,75" fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="0.8"/>
+      </svg>
+      <div class="score-number">64</div>
+    </div>
+    <div class="score-tagline">Three signals. One measure of <em>resilience.</em></div>
+    <div class="score-meta">68 base &middot; &minus;4 cross-panel &middot; Updated 2h ago</div>
+  </div>
+
+  <!-- ── STAT CHIPS ────────────────────────────────────── -->
+  <div class="chips">
+    <div class="chip">
+      <span class="chip-dot" style="background:var(--sleep);"></span>
+      <span class="chip-label">Sleep</span>
+      <span class="chip-score" style="color:var(--sleep);">24</span>
+      <span class="chip-max">/30</span>
+      <span class="chip-bar"><span class="chip-bar-fill" style="width:80%;background:var(--sleep);"></span></span>
+    </div>
+    <div class="chip">
+      <span class="chip-dot" style="background:var(--blood);"></span>
+      <span class="chip-label">Blood</span>
+      <span class="chip-score" style="color:var(--blood);">34</span>
+      <span class="chip-max">/40</span>
+      <span class="chip-bar"><span class="chip-bar-fill" style="width:85%;background:var(--blood);"></span></span>
+    </div>
+    <div class="chip">
+      <span class="chip-dot" style="background:var(--oral);"></span>
+      <span class="chip-label">Oral</span>
+      <span class="chip-score" style="color:var(--oral);">10</span>
+      <span class="chip-max">/30</span>
+      <span class="chip-bar"><span class="chip-bar-fill" style="width:33%;background:var(--oral);"></span></span>
+    </div>
+  </div>
+
+  <!-- ── PEAKS (breathing) ─────────────────────────────── -->
+  <div class="peaks-section">
+    <svg class="peaks-svg" viewBox="0 0 680 200" preserveAspectRatio="xMidYMid meet">
+      <!-- ECG baseline trace -->
+      <g style="animation:ecgScroll 12s linear infinite;" clip-path="url(#ecgClip)">
+        <path d="M0,165 l20,0 l3,-4 l3,8 l3,-12 l3,16 l3,-8 l20,0 l20,0 l3,-4 l3,8 l3,-12 l3,16 l3,-8 l20,0 l20,0 l3,-4 l3,8 l3,-12 l3,16 l3,-8 l20,0 l20,0 l3,-4 l3,8 l3,-12 l3,16 l3,-8 l20,0 l20,0 l3,-4 l3,8 l3,-12 l3,16 l3,-8 l20,0 l20,0 l3,-4 l3,8 l3,-12 l3,16 l3,-8 l20,0 l20,0 l3,-4 l3,8 l3,-12 l3,16 l3,-8 l20,0" fill="none" stroke="rgba(0,0,0,0.04)" stroke-width="0.7"/>
+      </g>
+      <defs><clipPath id="ecgClip"><rect x="20" y="0" width="640" height="200"/></clipPath></defs>
+
+      <!-- Baseline rule -->
+      <line x1="40" y1="170" x2="640" y2="170" stroke="rgba(0,0,0,0.07)" stroke-width="0.5"/>
+
+      <!-- Mountain silhouette bg -->
+      <path d="M40,170 L120,170 L180,60 L240,170 L340,170 L400,50 L460,170 L540,170 L580,110 L620,170 L640,170" fill="url(#mountainGrad)" stroke="none"/>
+      <defs>
+        <linearGradient id="mountainGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="rgba(200,205,216,0.22)"/>
+          <stop offset="100%" stop-color="rgba(200,205,216,0.03)"/>
+        </linearGradient>
+      </defs>
+
+      <!-- Sleep peak (24/30 = 80% of 130 = 104px) -->
+      <g class="peak-sleep">
+        <polygon points="120,170 180,66 240,170" fill="url(#sleepGrad)" stroke="var(--sleep)" stroke-width="0.8"/>
+        <defs><linearGradient id="sleepGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(24,95,165,0.18)"/><stop offset="100%" stop-color="rgba(24,95,165,0.02)"/></linearGradient></defs>
+        <text x="180" y="56" text-anchor="middle" font-family="'Cormorant Garamond',serif" font-size="15" fill="var(--sleep)">24</text>
+        <text x="180" y="184" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="7" letter-spacing="1.5" text-transform="uppercase" fill="var(--ink3)">SLEEP</text>
+        <text x="180" y="193" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="6.5" fill="var(--ink3)">/30</text>
+      </g>
+
+      <!-- Blood peak (34/40 = 85% of 130 = 110px) -->
+      <g class="peak-blood">
+        <polygon points="340,170 400,60 460,170" fill="url(#bloodGrad)" stroke="var(--blood)" stroke-width="0.8"/>
+        <defs><linearGradient id="bloodGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(163,45,45,0.18)"/><stop offset="100%" stop-color="rgba(163,45,45,0.02)"/></linearGradient></defs>
+        <text x="400" y="50" text-anchor="middle" font-family="'Cormorant Garamond',serif" font-size="15" fill="var(--blood)">34</text>
+        <text x="400" y="184" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="7" letter-spacing="1.5" fill="var(--ink3)">BLOOD</text>
+        <text x="400" y="193" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="6.5" fill="var(--ink3)">/40</text>
+      </g>
+
+      <!-- Oral peak (10/30 = 33% of 130 = 43px) -->
+      <g class="peak-oral">
+        <polygon points="540,170 580,127 620,170" fill="url(#oralGrad)" stroke="var(--oral)" stroke-width="0.8"/>
+        <defs><linearGradient id="oralGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(59,109,17,0.18)"/><stop offset="100%" stop-color="rgba(59,109,17,0.02)"/></linearGradient></defs>
+        <text x="580" y="117" text-anchor="middle" font-family="'Cormorant Garamond',serif" font-size="15" fill="var(--oral)">10</text>
+        <text x="580" y="184" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="7" letter-spacing="1.5" fill="var(--ink3)">ORAL</text>
+        <text x="580" y="193" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="6.5" fill="var(--ink3)">/30</text>
+      </g>
+
+      <!-- Cross-panel inverted triangle -->
+      <polygon points="620,170 640,143 660,170" fill="none" stroke="var(--gold)" stroke-width="0.7" stroke-dasharray="3,2.5" opacity="0.6"/>
+      <text x="640" y="138" text-anchor="middle" font-family="'Cormorant Garamond',serif" font-size="13" fill="var(--gold)">&minus;4</text>
+      <text x="640" y="184" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="6" letter-spacing="1" fill="var(--gold)" opacity="0.7">CROSS</text>
+    </svg>
+  </div>
+
+  <!-- ── CROSS-PANEL PULL QUOTE ────────────────────────── -->
+  <div class="cross-panel-quote">
+    <div class="cpq-label">Cross-Panel Signal Active</div>
+    <div class="cpq-value">&minus;4 pts</div>
+    <div class="cpq-detail">
+      Triple cardiovascular stack: elevated periodontal burden, low HRV, and elevated Lp(a)
+      compound risk beyond individual scores. Oral + Sleep + Blood.
+    </div>
+  </div>
+
+  <!-- ── SLEEP PANEL ───────────────────────────────────── -->
+  <div class="panel-section">
+    <div class="panel-header">
+      <div class="panel-header-left">
+        <span class="panel-dot" style="background:var(--sleep);"></span>
+        <span class="panel-name" style="color:var(--sleep);">Sleep</span>
+      </div>
+      <span class="panel-meta"><strong style="color:var(--ink);">24</strong> / 30 &middot; WHOOP &middot; 14 nights avg</span>
+      <span class="panel-link">View all &rarr;</span>
+    </div>
+
+    <div class="bm-row">
+      <div><div class="bm-name">Deep Sleep</div><div class="bm-sub">Slow-wave &middot; % of total</div></div>
+      <svg class="bm-spark" viewBox="0 0 48 20"><polyline stroke="var(--sleep)" points="2,14 8,12 14,16 20,10 26,8 32,11 38,6 44,9"/></svg>
+      <div class="bm-val">19.2<span class="bm-unit">%</span></div>
+      <div class="zone-bar">
+        <div class="zone-fill" style="left:56%;width:44%;background:var(--opt-bg);"></div>
+        <div class="zone-fill" style="left:30%;width:26%;background:var(--good-bg);"></div>
+        <div class="zone-fill" style="left:0;width:30%;background:var(--watch-bg);"></div>
+        <div class="zone-dot" style="left:64%;background:var(--sleep);"></div>
+      </div>
+    </div>
+
+    <div class="bm-row">
+      <div><div class="bm-name">HRV (RMSSD)</div><div class="bm-sub">Age-adjusted &middot; 40&ndash;44 male</div></div>
+      <svg class="bm-spark" viewBox="0 0 48 20"><polyline stroke="var(--sleep)" points="2,16 8,14 14,18 20,15 26,17 32,16 38,18 44,16"/></svg>
+      <div class="bm-val">27.1<span class="bm-unit">ms</span></div>
+      <div class="zone-bar">
+        <div class="zone-fill" style="left:65%;width:35%;background:var(--opt-bg);"></div>
+        <div class="zone-fill" style="left:35%;width:30%;background:var(--good-bg);"></div>
+        <div class="zone-fill" style="left:0;width:35%;background:var(--attn-bg);"></div>
+        <div class="zone-dot" style="left:18%;background:var(--attn-c);"></div>
+      </div>
+    </div>
+
+    <div class="bm-row">
+      <div><div class="bm-name">Sleep Efficiency</div><div class="bm-sub">Time asleep / time in bed</div></div>
+      <svg class="bm-spark" viewBox="0 0 48 20"><polyline stroke="var(--sleep)" points="2,8 8,6 14,9 20,5 26,7 32,4 38,6 44,5"/></svg>
+      <div class="bm-val">88.4<span class="bm-unit">%</span></div>
+      <div class="zone-bar">
+        <div class="zone-fill" style="left:60%;width:40%;background:var(--opt-bg);"></div>
+        <div class="zone-fill" style="left:30%;width:30%;background:var(--good-bg);"></div>
+        <div class="zone-fill" style="left:0;width:30%;background:var(--watch-bg);"></div>
+        <div class="zone-dot" style="left:72%;background:var(--opt-c);"></div>
+      </div>
+    </div>
+
+    <div class="bm-row">
+      <div><div class="bm-name">REM Sleep</div><div class="bm-sub">% of total sleep time</div></div>
+      <svg class="bm-spark" viewBox="0 0 48 20"><polyline stroke="var(--sleep)" points="2,10 8,8 14,12 20,9 26,7 32,10 38,8 44,7"/></svg>
+      <div class="bm-val">22.8<span class="bm-unit">%</span></div>
+      <div class="zone-bar">
+        <div class="zone-fill" style="left:55%;width:45%;background:var(--opt-bg);"></div>
+        <div class="zone-fill" style="left:25%;width:30%;background:var(--good-bg);"></div>
+        <div class="zone-fill" style="left:0;width:25%;background:var(--watch-bg);"></div>
+        <div class="zone-dot" style="left:70%;background:var(--opt-c);"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-gap"></div>
+
+  <!-- ── BLOOD PANEL ───────────────────────────────────── -->
+  <div class="panel-section">
+    <div class="panel-header">
+      <div class="panel-header-left">
+        <span class="panel-dot" style="background:var(--blood);"></span>
+        <span class="panel-name" style="color:var(--blood);">Blood</span>
+      </div>
+      <span class="panel-meta"><strong style="color:var(--ink);">34</strong> / 40 &middot; LabCorp &middot; Feb 2026</span>
+      <span class="panel-link">View all &rarr;</span>
+    </div>
+
+    <div class="bm-row">
+      <div><div class="bm-name">hsCRP</div><div class="bm-sub">High-sensitivity C-reactive protein</div></div>
+      <svg class="bm-spark" viewBox="0 0 48 20"><polyline stroke="var(--blood)" points="2,12 8,10 14,8 20,11 26,14 32,12 38,10 44,11"/></svg>
+      <div class="bm-val">1.8<span class="bm-unit">mg/L</span></div>
+      <div class="zone-bar">
+        <div class="zone-fill" style="left:0;width:25%;background:var(--opt-bg);"></div>
+        <div class="zone-fill" style="left:25%;width:25%;background:var(--good-bg);"></div>
+        <div class="zone-fill" style="left:50%;width:25%;background:var(--watch-bg);"></div>
+        <div class="zone-fill" style="left:75%;width:25%;background:var(--attn-bg);"></div>
+        <div class="zone-dot" style="left:60%;background:var(--watch-c);"></div>
+      </div>
+    </div>
+
+    <div class="bm-row">
+      <div><div class="bm-name">Lp(a)</div><div class="bm-sub">Lipoprotein(a) &middot; genetic</div></div>
+      <svg class="bm-spark" viewBox="0 0 48 20"><polyline stroke="var(--blood)" points="2,8 8,8 14,8 20,8 26,8 32,8 38,8 44,8"/></svg>
+      <div class="bm-val">44.9<span class="bm-unit">mg/dL</span></div>
+      <div class="zone-bar">
+        <div class="zone-fill" style="left:0;width:40%;background:var(--opt-bg);"></div>
+        <div class="zone-fill" style="left:40%;width:25%;background:var(--good-bg);"></div>
+        <div class="zone-fill" style="left:65%;width:35%;background:var(--watch-bg);"></div>
+        <div class="zone-dot" style="left:58%;background:var(--watch-c);"></div>
+      </div>
+    </div>
+
+    <div class="bm-row">
+      <div><div class="bm-name">LDL Cholesterol</div><div class="bm-sub">Low-density lipoprotein</div></div>
+      <svg class="bm-spark" viewBox="0 0 48 20"><polyline stroke="var(--blood)" points="2,14 8,12 14,10 20,8 26,9 32,7 38,8 44,6"/></svg>
+      <div class="bm-val">98<span class="bm-unit">mg/dL</span></div>
+      <div class="zone-bar">
+        <div class="zone-fill" style="left:0;width:35%;background:var(--opt-bg);"></div>
+        <div class="zone-fill" style="left:35%;width:30%;background:var(--good-bg);"></div>
+        <div class="zone-fill" style="left:65%;width:35%;background:var(--watch-bg);"></div>
+        <div class="zone-dot" style="left:48%;background:var(--good-c);"></div>
+      </div>
+    </div>
+
+    <div class="bm-row">
+      <div><div class="bm-name">Glucose</div><div class="bm-sub">Fasting blood glucose</div></div>
+      <svg class="bm-spark" viewBox="0 0 48 20"><polyline stroke="var(--blood)" points="2,10 8,9 14,11 20,8 26,10 32,9 38,10 44,8"/></svg>
+      <div class="bm-val">91<span class="bm-unit">mg/dL</span></div>
+      <div class="zone-bar">
+        <div class="zone-fill" style="left:0;width:50%;background:var(--opt-bg);"></div>
+        <div class="zone-fill" style="left:50%;width:30%;background:var(--good-bg);"></div>
+        <div class="zone-fill" style="left:80%;width:20%;background:var(--watch-bg);"></div>
+        <div class="zone-dot" style="left:55%;background:var(--good-c);"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-gap"></div>
+
+  <!-- ── ORAL PANEL ────────────────────────────────────── -->
+  <div class="panel-section">
+    <div class="panel-header">
+      <div class="panel-header-left">
+        <span class="panel-dot" style="background:var(--oral);"></span>
+        <span class="panel-name" style="color:var(--oral);">Oral Microbiome</span>
+      </div>
+      <span class="panel-meta"><strong style="color:var(--ink);">10</strong> / 30 &middot; 16S rRNA &middot; Mar 2026</span>
+      <span class="panel-link">View all &rarr;</span>
+    </div>
+
+    <div class="bm-row">
+      <div><div class="bm-name">Shannon Diversity</div><div class="bm-sub">Species richness + evenness</div></div>
+      <svg class="bm-spark" viewBox="0 0 48 20"><polyline stroke="var(--oral)" points="2,14 8,15 14,13 20,16 26,14 32,15 38,14 44,15"/></svg>
+      <div class="bm-val">2.1<span class="bm-unit">idx</span></div>
+      <div class="zone-bar">
+        <div class="zone-fill" style="left:60%;width:40%;background:var(--opt-bg);"></div>
+        <div class="zone-fill" style="left:35%;width:25%;background:var(--good-bg);"></div>
+        <div class="zone-fill" style="left:0;width:35%;background:var(--attn-bg);"></div>
+        <div class="zone-dot" style="left:22%;background:var(--attn-c);"></div>
+      </div>
+    </div>
+
+    <div class="bm-row">
+      <div><div class="bm-name">Nitrate Reducers</div><div class="bm-sub">Neisseria, Rothia, Veillonella</div></div>
+      <svg class="bm-spark" viewBox="0 0 48 20"><polyline stroke="var(--oral)" points="2,16 8,15 14,17 20,14 26,16 32,15 38,17 44,16"/></svg>
+      <div class="bm-val">4.2<span class="bm-unit">%</span></div>
+      <div class="zone-bar">
+        <div class="zone-fill" style="left:50%;width:50%;background:var(--opt-bg);"></div>
+        <div class="zone-fill" style="left:25%;width:25%;background:var(--good-bg);"></div>
+        <div class="zone-fill" style="left:0;width:25%;background:var(--attn-bg);"></div>
+        <div class="zone-dot" style="left:14%;background:var(--attn-c);"></div>
+      </div>
+    </div>
+
+    <div class="bm-row">
+      <div><div class="bm-name">Periodontal Burden</div><div class="bm-sub">P. gingivalis + T. denticola</div></div>
+      <svg class="bm-spark" viewBox="0 0 48 20"><polyline stroke="var(--oral)" points="2,8 8,10 14,7 20,12 26,9 32,11 38,8 44,10"/></svg>
+      <div class="bm-val">Elevated</div>
+      <div class="zone-bar">
+        <div class="zone-fill" style="left:0;width:30%;background:var(--opt-bg);"></div>
+        <div class="zone-fill" style="left:30%;width:25%;background:var(--good-bg);"></div>
+        <div class="zone-fill" style="left:55%;width:20%;background:var(--watch-bg);"></div>
+        <div class="zone-fill" style="left:75%;width:25%;background:var(--attn-bg);"></div>
+        <div class="zone-dot" style="left:68%;background:var(--watch-c);"></div>
+      </div>
+    </div>
+
+    <div class="bm-row">
+      <div><div class="bm-name">Protective Bacteria</div><div class="bm-sub">Beneficial species abundance</div></div>
+      <svg class="bm-spark" viewBox="0 0 48 20"><polyline stroke="var(--oral)" points="2,14 8,13 14,15 20,12 26,14 32,13 38,14 44,13"/></svg>
+      <div class="bm-val">8.1<span class="bm-unit">%</span></div>
+      <div class="zone-bar">
+        <div class="zone-fill" style="left:50%;width:50%;background:var(--opt-bg);"></div>
+        <div class="zone-fill" style="left:25%;width:25%;background:var(--good-bg);"></div>
+        <div class="zone-fill" style="left:0;width:25%;background:var(--watch-bg);"></div>
+        <div class="zone-dot" style="left:20%;background:var(--watch-c);"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── FOOTER ────────────────────────────────────────── -->
+  <div class="editorial-footer">
+    <img src="/images/peaq_logo_transparent.png" alt="Oravi" class="footer-logo">
+    <div class="footer-note">
+      For informational purposes only. Not a medical device.
+      Not intended to diagnose, treat, cure, or prevent any disease.
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

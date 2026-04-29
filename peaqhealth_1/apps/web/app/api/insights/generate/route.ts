@@ -4,7 +4,7 @@ import OpenAI from "openai"
 
 export const dynamic = "force-dynamic"
 
-const SYSTEM_PROMPT = `You are Cnvrg's clinical intelligence layer.
+const SYSTEM_PROMPT = `You are Oravi's clinical intelligence layer.
 Analyze this user's biomarker data and generate dashboard insights.
 
 Rules:
@@ -36,7 +36,7 @@ Before writing about any blood value, check where it sits. If within 5% of cutof
 Return valid JSON only:
 {
   "headline": "One bold clinical statement about overall picture",
-  "headline_sub": "ONE plain-English sentence UNDER 100 CHARACTERS that a non-medical person understands immediately. Explain WHY it matters, not WHAT the number is. Do NOT mention Peaq Age, deltas, eGFR, or any lab values with units (mg/dL, mL/min, etc). Good: 'Your sleep and oral health are reinforcing each other.' Bad: 'A Peaq Age of 39.6 with eGFR 103 mL/min.'",
+  "headline_sub": "ONE plain-English sentence UNDER 100 CHARACTERS that a non-medical person understands immediately. Explain WHY it matters, not WHAT the number is. Do NOT mention Oravi Age, deltas, eGFR, or any lab values with units (mg/dL, mL/min, etc). Good: 'Your sleep and oral health are reinforcing each other.' Bad: 'A Oravi Age of 39.6 with eGFR 103 mL/min.'",
   "insights_positive": [
     {
       "panels": ["sleep", "blood"],
@@ -63,7 +63,7 @@ Return valid JSON only:
   ]
 }
 
-Always express the score as 'Peaq Age' in years, not points or /100. A negative delta means younger (favorable). Components: PhenoAge 48%, OMA 22%, RHR 11%, HRV 8% (pending), Sleep 9%, Cross-panel 3%. VO₂ max is informational only — do not reference it as a scored component.
+Always express the score as 'Oravi Age' in years, not points or /100. A negative delta means younger (favorable). Components: PhenoAge 48%, OMA 22%, RHR 11%, HRV 8% (pending), Sleep 9%, Cross-panel 3%. VO₂ max is informational only — do not reference it as a scored component.
 
 LANGUAGE RULES — ALWAYS FOLLOW:
 - Write in plain English a smart non-scientist understands immediately
@@ -181,8 +181,8 @@ export async function POST() {
   dataContext += `Oral: ${snapshot.oral_sub}/30\n`
   dataContext += `Cross-panel modifier: ${snapshot.modifier_total}\n`
   if (snapshot.peaq_age != null) {
-    dataContext += `\n== CNVRG AGE V5 ==\n`
-    dataContext += `Peaq Age: ${snapshot.peaq_age} yrs | Delta: ${snapshot.peaq_age_delta} | Band: ${snapshot.peaq_age_band}\n`
+    dataContext += `\n== ORAVI AGE V5 ==\n`
+    dataContext += `Oravi Age: ${snapshot.peaq_age} yrs | Delta: ${snapshot.peaq_age_delta} | Band: ${snapshot.peaq_age_band}\n`
     dataContext += `PhenoAge: ${snapshot.pheno_age ?? "pending"} | OMA: ${snapshot.oma_percentile}th pct\n`
     dataContext += `I1=${snapshot.cross_panel_i1} I2=${snapshot.cross_panel_i2} I3=${snapshot.cross_panel_i3}\n`
   }

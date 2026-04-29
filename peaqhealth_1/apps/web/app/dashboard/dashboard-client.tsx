@@ -10,7 +10,7 @@ import { PanelConvergence } from "../components/panel-convergence"
 import { RefreshCw } from "lucide-react"
 import { CrossPanelCard } from "./components/CrossPanelCard"
 import { HealthPictureBlock } from "./components/HealthPictureBlock"
-import CnvrgLogo from "../components/CnvrgLogo"
+import OraviLogo from "../components/OraviLogo"
 import type { ConvergeObservation } from "../../lib/converge/observations"
 import type { InterventionWithState } from "../../lib/interventions/engagements"
 import type { DoseResponseResult } from "../../lib/oral/nitrateDoseResponse"
@@ -71,7 +71,7 @@ interface Indicator {
 
 function truncateInsightBody(text: string, max = 100): string {
   let cleaned = text
-    .replace(/Cnvrg\s*Age\s*of\s*[\d.]+\s*(?:years?)?/gi, "")
+    .replace(/Oravi\s*Age\s*of\s*[\d.]+\s*(?:years?)?/gi, "")
     .replace(/delta\s*of\s*[+-]?[\d.]+/gi, "")
     .replace(/eGFR\s*(?:at\s*)?\d+\s*mL\/min/gi, "")
     .replace(/\d+\.?\d*\s*(?:mL|mg|mmol)(?:\/[a-zA-Z]+)?/gi, "")
@@ -539,7 +539,7 @@ export function DashboardClient(props: ScoreWheelProps & {
   nitrateDoseResponse?: DoseResponseResult | null;
 }) {
   const { wearableNeedsReconnect = false, firstName, peaqAgeBreakdown, cachedGuidance, convergeObservations = [] } = props
-  // cachedInsight intentionally unused — Cnvrg Insight card has been removed from the dashboard surface.
+  // cachedInsight intentionally unused — Oravi Insight card has been removed from the dashboard surface.
   const crossPanelSignals = props.crossPanelSignals ?? []
   const snapshotUpdatedAt = props.snapshotUpdatedAt ?? null
   const panelsActive = props.panelsActive ?? { oral: false, blood: false, sleep: false }
@@ -753,9 +753,9 @@ export function DashboardClient(props: ScoreWheelProps & {
             {/* ── LEFT COLUMN (main) ─────────────────────────────────────── */}
             <div className="dashboard-left" style={{ flex: "1 1 0", minWidth: 0, maxWidth: 700 }}>
 
-              {/* 0. CNVRG LOGO */}
+              {/* 0. ORAVI LOGO */}
               <div style={{ marginBottom: 32 }}>
-                <CnvrgLogo size="md" showTagline={true} />
+                <OraviLogo size="md" showTagline={true} />
               </div>
 
               {/* 1. GREETING — italic gold name */}
@@ -907,7 +907,7 @@ export function DashboardClient(props: ScoreWheelProps & {
                 if (b && b.i3 === -0.2)
                   signals.push({ title: "Low inflammation with great sleep", body: "Consistent sleep timing and low hs-CRP together are one of the strongest combinations in the formula.", tag: "Blood × Sleep", color: DS.gold, positive: true })
                 if (signals.length === 0 && panelCount >= 1)
-                  signals.push({ title: "Cross-panel signals unlock as you connect panels", body: "When your oral, blood, and sleep data combine, Cnvrg surfaces connections no single test can see.", tag: null, color: DS.inkMuted, positive: false })
+                  signals.push({ title: "Cross-panel signals unlock as you connect panels", body: "When your oral, blood, and sleep data combine, Oravi surfaces connections no single test can see.", tag: null, color: DS.inkMuted, positive: false })
                 if (signals.length === 0) return null
 
                 return (
@@ -1120,7 +1120,7 @@ export function DashboardClient(props: ScoreWheelProps & {
                 <NitrateOpportunityCard result={props.nitrateDoseResponse} />
               )}
 
-              {/* ZONE 2 — FROM CNVRG (dynamic from articles table) */}
+              {/* ZONE 2 — FROM ORAVI (dynamic from articles table) */}
               <div style={{
                 background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
                 borderRadius: 12, padding: 20,
@@ -1131,7 +1131,7 @@ export function DashboardClient(props: ScoreWheelProps & {
                   textTransform: "uppercase", color: DS.inkMuted,
                   display: "block", marginBottom: 14,
                 }}>
-                  FROM CNVRG
+                  FROM ORAVI
                 </span>
                 {(articles ?? [
                   { slug: "", title: "How your oral health affects your heart", readTime: 5 },
@@ -1168,7 +1168,7 @@ export function DashboardClient(props: ScoreWheelProps & {
               }}>
                 <img
                   src="/peaqdentist1.png"
-                  alt="Cnvrg Dentist"
+                  alt="Oravi Dentist"
                   style={{
                     position: "absolute", inset: 0, width: "100%", height: "100%",
                     objectFit: "cover", objectPosition: "top center",
@@ -1190,7 +1190,7 @@ export function DashboardClient(props: ScoreWheelProps & {
                     fontFamily: serif, fontSize: 18, fontWeight: 400,
                     color: "#FFFFFF", margin: "0 0 4px", lineHeight: 1.3,
                   }}>
-                    Cnvrg Dentists
+                    Oravi Dentists
                   </p>
                   <p style={{
                     fontFamily: sans, fontSize: 12, color: DS.gold,
@@ -1201,7 +1201,7 @@ export function DashboardClient(props: ScoreWheelProps & {
                 </div>
               </div>
 
-              {/* ZONE 3 — GET MORE FROM CNVRG (only if panels missing) */}
+              {/* ZONE 3 — GET MORE FROM ORAVI (only if panels missing) */}
               {anyMissing && (
                 <div style={{
                   background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
@@ -1213,7 +1213,7 @@ export function DashboardClient(props: ScoreWheelProps & {
                     textTransform: "uppercase", color: DS.inkMuted,
                     display: "block", marginBottom: 14,
                   }}>
-                    GET MORE FROM CNVRG
+                    GET MORE FROM ORAVI
                   </span>
                   <div style={{ display: "flex", flexDirection: "column" }}>
                     {!hasSleep && (

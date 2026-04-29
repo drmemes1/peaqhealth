@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef } from "react"
 
-interface CnvrgTriangleProps {
+interface OraviTriangleProps {
   score: number
   breakdown: { sleepSub: number; bloodSub: number; oralSub: number; lifestyleSub: number }
   modifier_total?: number
@@ -31,7 +31,7 @@ function easeOut(t: number) {
   return 1 - (1 - t) ** 3
 }
 
-export function CnvrgTriangle({ score, breakdown, modifier_total }: CnvrgTriangleProps) {
+export function OraviTriangle({ score, breakdown, modifier_total }: OraviTriangleProps) {
   const sleepPct = (breakdown.sleepSub / 30) * 100
   const bloodPct = (breakdown.bloodSub / 40) * 100
   const oralPct  = (breakdown.oralSub / 30) * 100
@@ -190,7 +190,7 @@ export function CnvrgTriangle({ score, breakdown, modifier_total }: CnvrgTriangl
             textAnchor="middle"
             style={{ fontFamily: sans, fontSize: 8, letterSpacing: "2px", textTransform: "uppercase" as const, fill: "#bbb" }}
           >
-            CNVRG RESILIENCE INDEX
+            ORAVI RESILIENCE INDEX
           </text>
           <text
             x={200} y={centroidY + 28}

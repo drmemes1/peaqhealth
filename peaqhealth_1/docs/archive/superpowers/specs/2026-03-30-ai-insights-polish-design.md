@@ -4,7 +4,7 @@
 
 ## Overview
 
-Four targeted improvements to make AI insights across the Peaq Health platform consistent, individually tailored, and premium without being pushy or giving medical advice. Uses "consider" / "this has shown" / "research has linked" framing throughout.
+Four targeted improvements to make AI insights across the Oravi platform consistent, individually tailored, and premium without being pushy or giving medical advice. Uses "consider" / "this has shown" / "research has linked" framing throughout.
 
 ---
 

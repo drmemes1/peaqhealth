@@ -187,7 +187,7 @@ export async function generateWeeklySnapshot(userId: string): Promise<Record<str
     : "No recent check-in"
 
   // ── Prompts ───────────────────────────────────────────────────────────────
-  const systemPrompt = `You are the weekly insight engine for Cnvrg Health, a longevity platform built by a cardiologist and periodontist.
+  const systemPrompt = `You are the weekly insight engine for Oravi, a longevity platform built by a cardiologist and periodontist.
 
 Generate a warm, motivating weekly snapshot based on this user's health data.
 
@@ -235,7 +235,7 @@ BANNED IN OUTPUT:
 - Use qualitative descriptors only: "within target", "mildly elevated", "elevated", "notably elevated"
 - Example: "your periodontal burden is notably elevated" NOT "your periodontal burden is 384.5%"
 
-Always express the score as 'Peaq Age' in years, not points or /100. A negative delta means younger (favorable). Components: PhenoAge 48%, OMA 22%, VO₂ 13%, RHR 11%, Sleep 9%, Cross-panel 3%.`
+Always express the score as 'Oravi Age' in years, not points or /100. A negative delta means younger (favorable). Components: PhenoAge 48%, OMA 22%, VO₂ 13%, RHR 11%, Sleep 9%, Cross-panel 3%.`
 
   const userPrompt = `Generate a weekly snapshot for week of ${weekStart}.
 
@@ -252,7 +252,7 @@ Sleep: ${currentSnapshot?.sleep_sub ?? "no data"}/30
 Blood: ${currentSnapshot?.blood_sub ?? "no data"}/40
 Oral: ${currentSnapshot?.oral_sub ?? "no data"}/30
 Lifestyle: contextual only (not scored — informs insights)
-${currentSnapshot?.peaq_age != null ? `\nCNVRG AGE V5: ${currentSnapshot.peaq_age} yrs (delta ${currentSnapshot.peaq_age_delta}, band ${currentSnapshot.peaq_age_band})\nPhenoAge: ${currentSnapshot.pheno_age ?? "pending"} | OMA: ${currentSnapshot.oma_percentile}th | VO2: ${currentSnapshot.vo2_percentile ?? "n/a"}th\nI1=${currentSnapshot.cross_panel_i1} I2=${currentSnapshot.cross_panel_i2} I3=${currentSnapshot.cross_panel_i3}` : ""}
+${currentSnapshot?.peaq_age != null ? `\nORAVI AGE V5: ${currentSnapshot.peaq_age} yrs (delta ${currentSnapshot.peaq_age_delta}, band ${currentSnapshot.peaq_age_band})\nPhenoAge: ${currentSnapshot.pheno_age ?? "pending"} | OMA: ${currentSnapshot.oma_percentile}th | VO2: ${currentSnapshot.vo2_percentile ?? "n/a"}th\nI1=${currentSnapshot.cross_panel_i1} I2=${currentSnapshot.cross_panel_i2} I3=${currentSnapshot.cross_panel_i3}` : ""}
 
 PREVIOUS WEEK:
 Previous total score: ${prevWeekRow?.total_score ?? "no prior data"}

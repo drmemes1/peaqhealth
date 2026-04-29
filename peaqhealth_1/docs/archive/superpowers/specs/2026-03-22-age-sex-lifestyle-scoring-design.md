@@ -14,7 +14,7 @@ Add age range and biological sex to the lifestyle questionnaire. Both fields gat
 
 ## Cross-Cutting Constraint: No Medical Advice
 
-Peaq cannot give medical advice. Every recommendation, screening prompt, and insight must use appropriately hedged language:
+Oravi cannot give medical advice. Every recommendation, screening prompt, and insight must use appropriately hedged language:
 
 - ✅ "Consider discussing coronary artery calcium (CAC) scoring with your doctor"
 - ✅ "Consider asking your provider about colorectal cancer screening options"
@@ -274,7 +274,7 @@ Remove from `SYSTEM_PROMPT`:
 > "You never say 'consider' or 'may want to' — you say what needs to be done and why."
 
 Replace with:
-> "You always frame clinical recommendations as things the patient should *consider discussing with their doctor* — Peaq provides health information, not medical advice. Use language like 'consider asking your doctor about...' or 'it may be worth discussing with your physician...'"
+> "You always frame clinical recommendations as things the patient should *consider discussing with their doctor* — Oravi provides health information, not medical advice. Use language like 'consider asking your doctor about...' or 'it may be worth discussing with your physician...'"
 
 Add to the `LIFESTYLE:` section of the user prompt:
 ```

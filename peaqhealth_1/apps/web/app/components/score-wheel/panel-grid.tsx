@@ -279,7 +279,7 @@ function CompletePictureBanner({ missingPanels }: { missingPanels: ('sleep' | 'b
       return 'Your oral microbiome is the one panel that connects directly to your blood and sleep data — P. gingivalis burden affects both Lp(a) and HRV through known biological pathways.'
     }
     if (missingPanels.includes('blood')) {
-      return 'Blood biomarkers give your Peaq Age its cardiovascular context — without them, the cross-panel signals between sleep and oral health have nothing to anchor to.'
+      return 'Blood biomarkers give your Oravi Age its cardiovascular context — without them, the cross-panel signals between sleep and oral health have nothing to anchor to.'
     }
     if (missingPanels.includes('sleep')) {
       return 'Sleep updates your score every night and is the only longitudinal panel — without it, your score is a snapshot rather than a living signal.'

@@ -358,7 +358,7 @@ export function FindingsExplorer() {
         }}>
           Shannon diversity (a measure of how many different bacteria you have)
           showed no significant connection to blood markers when tested alone across 9,848 people.
-          Cnvrg still includes diversity as one signal in your oral score, because research shows it
+          Oravi still includes diversity as one signal in your oral score, because research shows it
           matters for overall oral ecosystem health. But diversity alone doesn&rsquo;t tell you which
           bacteria are present. That&rsquo;s why specific bacteria are at the center of your score.
         </p>

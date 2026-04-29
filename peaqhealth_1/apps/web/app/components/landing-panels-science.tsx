@@ -63,7 +63,7 @@ export function LandingPanelsAndScience() {
           fontWeight: 400, lineHeight: 1.3, margin: "0 0 48px", maxWidth: 560,
         }}>
           Most health platforms measure one thing.
-          Cnvrg measures three — and finds the connections between them.
+          Oravi measures three — and finds the connections between them.
         </p>
 
         <div style={{

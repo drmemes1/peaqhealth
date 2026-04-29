@@ -314,7 +314,7 @@ export async function GET() {
   const hrvTarget = getHRVTarget(age)
 
   // ── Build prompts ──────────────────────────────────────────────────────────
-  const systemPrompt = `You are the oral microbiome intelligence engine for Peaq Health, a longevity platform built by a cardiologist and periodontist.
+  const systemPrompt = `You are the oral microbiome intelligence engine for Oravi, a longevity platform built by a cardiologist and periodontist.
 
 Generate a short, personal oral health narrative for this user based on their latest microbiome kit. Connect oral signals to their sleep or blood panels where the data supports it.
 

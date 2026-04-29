@@ -1,4 +1,4 @@
-# HRV (Heart Rate Variability) — Peaq Health Reference Document
+# HRV (Heart Rate Variability) — Oravi Reference Document
 
 **Version:** 1.0  
 **Date:** April 2026  
@@ -38,7 +38,7 @@ RMSSD reflects high-frequency vagal modulation of the sinoatrial node. Higher va
 3. Sympathetic dominance → chronic low-grade inflammation (elevated CRP, IL-6)
 4. Impaired parasympathetic anti-inflammatory reflex (Tracey 2002 — vagal anti-inflammatory pathway)
 
-Pathway 3 is directly relevant to the Peaq cross-panel model: oral dysbiosis → systemic inflammation → suppressed vagal tone → low HRV. This is the Gabby finding (Neisseria 2.7%, HRV 32ms, expected ~47ms for 32F).
+Pathway 3 is directly relevant to the Oravi cross-panel model: oral dysbiosis → systemic inflammation → suppressed vagal tone → low HRV. This is the Gabby finding (Neisseria 2.7%, HRV 32ms, expected ~47ms for 32F).
 
 ### 1.4 Weight Justification: 8%
 
@@ -138,7 +138,7 @@ const hrv_delta = capVal(-(hrv_percentile - 50) * 0.12, 6);
 
 ### 4.1 Minimum Nights Gate
 
-**Require >= 20 nights before HRV contributes to the Peaq Age formula.**
+**Require >= 20 nights before HRV contributes to the Oravi Age formula.**
 
 Below 20 nights:
 - HRV is displayed on the dashboard as informational only
@@ -155,7 +155,7 @@ Below 20 nights:
 
 Once >= 20 nights are available, compute the **median RMSSD** over the 30-night window, not the mean.
 
-**Why median:** The median is resistant to outliers by definition. A single night at 18ms when the baseline is 45ms shifts the median by ~1ms; it would shift the mean by ~5ms. One bad night (illness, alcohol, travel stress) should not penalize the user's Peaq Age for 30 days.
+**Why median:** The median is resistant to outliers by definition. A single night at 18ms when the baseline is 45ms shifts the median by ~1ms; it would shift the mean by ~5ms. One bad night (illness, alcohol, travel stress) should not penalize the user's Oravi Age for 30 days.
 
 ```typescript
 function rollingMedianRMSSD(nights: number[]): number {
@@ -195,9 +195,9 @@ Only nights below 2.5ms get removed — extremely conservative, catches only tru
 Expected for 32F: median ~47ms (30-39 age decade, female)  
 Percentile: approximately 20th (RMSSD 32ms vs IQR 34-64ms for 30-39F)  
 HRV delta = -(20-50) x 0.12 = +3.6 years  
-Weight: 8% -> contribution = 0.08 x 3.6 = +0.29 years to Peaq Age
+Weight: 8% -> contribution = 0.08 x 3.6 = +0.29 years to Oravi Age
 
-*Note: HRV delta is explicitly NOT currently included in the V5 Peaq Age formula as implemented in Phase 1. It will be added in the next formula version. The Gabriella calculation above shows how it would behave.*
+*Note: HRV delta is explicitly NOT currently included in the V5 Oravi Age formula as implemented in Phase 1. It will be added in the next formula version. The Gabriella calculation above shows how it would behave.*
 
 ---
 
@@ -215,7 +215,7 @@ RMSSD varies systematically across the menstrual cycle:
 
 Source: Bai et al., Front Physiol 2022; Shaffer & Ginsberg meta-analysis subgroup analysis.
 
-**Implication:** A female user measured primarily in her luteal phase will have a systematically lower 30-night median RMSSD than one measured in the follicular phase — not because of biological aging, but because of normal hormonal variation. This would incorrectly penalize her Peaq Age.
+**Implication:** A female user measured primarily in her luteal phase will have a systematically lower 30-night median RMSSD than one measured in the follicular phase — not because of biological aging, but because of normal hormonal variation. This would incorrectly penalize her Oravi Age.
 
 ### 5.2 Proposed Phase Correction (v5.1 — not in current implementation)
 
@@ -288,7 +288,7 @@ Show trend arrow on HRV metric in dashboard:
 
 ### 7.1 Current Interactions (V5 as Implemented)
 
-The V5 Peaq Age formula cross-panel interactions (I1, I2, I3) currently reference RHR, not HRV:
+The V5 Oravi Age formula cross-panel interactions (I1, I2, I3) currently reference RHR, not HRV:
 
 - **I2:** OMA x Fitness — fires when OMA > 70th pct AND RHR < (expectedRHR - 5) -> -0.2 yrs
 
@@ -335,7 +335,7 @@ If the beetroot protocol restores Neisseria from 8% to 20%+ (Vanhatalo 2018: +35
 
 ## Section 8 — What HRV Is NOT in This Formula
 
-**HRV in Peaq Age is not:**
+**HRV in Oravi Age is not:**
 - A recovery score (that's WHOOP's interpretation layer)
 - A readiness score (that's Oura's interpretation layer)
 - A stress indicator (though stressed people tend to have lower HRV)
@@ -344,7 +344,7 @@ If the beetroot protocol restores Neisseria from 8% to 20%+ (Vanhatalo 2018: +35
 
 **Why this matters for user communication:**
 
-Users will say "my recovery was 85% today but my HRV component shows attention — why?" The answer: WHOOP's recovery score uses a different algorithm (proprietary), includes strain from the previous day, and is optimized for short-term athletic decisions. Peaq's HRV component uses only the objective RMSSD measurement normalized to population norms for biological age assessment. A 35-year-old with RMSSD of 28ms has a low HRV component regardless of what WHOOP says their recovery is.
+Users will say "my recovery was 85% today but my HRV component shows attention — why?" The answer: WHOOP's recovery score uses a different algorithm (proprietary), includes strain from the previous day, and is optimized for short-term athletic decisions. Oravi's HRV component uses only the objective RMSSD measurement normalized to population norms for biological age assessment. A 35-year-old with RMSSD of 28ms has a low HRV component regardless of what WHOOP says their recovery is.
 
 ---
 
@@ -374,7 +374,7 @@ Users will say "my recovery was 85% today but my HRV component shows attention �
 
 9. Does she have unpublished data from her own lab that would strengthen or weaken any of these positions?
 
-10. Would she be willing to be acknowledged as a scientific advisor in the Peaq Health methodology documentation?
+10. Would she be willing to be acknowledged as a scientific advisor in the Oravi methodology documentation?
 
 ---
 
@@ -388,7 +388,7 @@ Users will say "my recovery was 85% today but my HRV component shows attention �
 
 ## Appendix A — Implementation Checklist for Claude Code
 
-When implementing HRV in the Peaq Age formula (post-Bale call):
+When implementing HRV in the Oravi Age formula (post-Bale call):
 
 - [ ] Add `hrv_rmssd` rolling median to `recalculate.ts` inputs (already stored in `wearable_sleep_data`)
 - [ ] Implement `rollingMedianRMSSD()` with IQR clipping

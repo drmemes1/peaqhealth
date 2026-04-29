@@ -13,7 +13,7 @@ interface Message {
 
 const SUGGESTIONS = [
   "What does my data mean?",
-  "How does Cnvrg calculate my scores?",
+  "How does Oravi calculate my scores?",
   "What should I read to learn more?",
 ]
 
@@ -21,7 +21,7 @@ function timestamp() {
   return new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
 }
 
-export function CnvrgChat() {
+export function OraviChat() {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>(() => {
     if (typeof window === "undefined") return []
@@ -177,7 +177,7 @@ export function CnvrgChat() {
                   flexShrink: 0,
                 }} />
                 <span style={{ fontFamily: serif, fontSize: 20, fontWeight: 300, color: "#1a1a18" }}>
-                  Ask Cnvrg
+                  Ask Oravi
                 </span>
               </div>
               <div style={{

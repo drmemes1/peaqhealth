@@ -398,7 +398,7 @@ export function ExploreMethodology() {
           color: "rgba(20,20,16,0.3)", lineHeight: 1.6,
           marginTop: 32,
         }}>
-          Analysis: Cnvrg Health &middot; Dataset: NHANES 2009&ndash;2012 &middot;
+          Analysis: Oravi &middot; Dataset: NHANES 2009&ndash;2012 &middot;
           Spearman rank correlations on log-transformed genus relative abundances
         </p>
       </div>

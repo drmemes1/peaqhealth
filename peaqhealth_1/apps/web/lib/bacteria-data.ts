@@ -100,10 +100,10 @@ export const BACTERIA: BacteriaEntry[] = [
     headline: "Higher levels linked to lower blood sugar, lower triglycerides, lower blood pressure",
     bodyText: "Haemophilus helps your body produce nitric oxide \u2014 a molecule that relaxes blood vessels, improves blood flow, and reduces blood sugar buildup. People with more Haemophilus tend to have lower HbA1c and better cardiovascular markers.",
     interactions: [
-      { icon: "TrendingDown", title: "Lower HbA1c", body: "Strong inverse association with long-term blood sugar. People with more Haemophilus had consistently lower HbA1c across 9,848 Americans.", citation: "Cnvrg NHANES analysis: r=\u22120.074, p=9\u00d710\u207b\u00b9\u00b3" },
-      { icon: "Droplets", title: "Lower triglycerides", body: "Strongest protective correlation in the entire study. Higher Haemophilus = lower triglycerides.", citation: "Cnvrg NHANES analysis: r=\u22120.094, p=3\u00d710\u207b\u00b9\u2070" },
-      { icon: "HeartPulse", title: "Lower blood pressure", body: "Consistent with the nitrate-nitrite-NO pathway. Oral nitrate-reducing bacteria help regulate vascular tone.", citation: "Cnvrg NHANES analysis: Systolic r=\u22120.047, p=5\u00d710\u207b\u2076" },
-      { icon: "TrendingUp", title: "Higher HDL", body: "Positive association with \u2018good cholesterol\u2019. One of few bacteria to show a protective lipid signal.", citation: "Cnvrg NHANES analysis: r=+0.040, p=1\u00d710\u207b\u2074" },
+      { icon: "TrendingDown", title: "Lower HbA1c", body: "Strong inverse association with long-term blood sugar. People with more Haemophilus had consistently lower HbA1c across 9,848 Americans.", citation: "Oravi NHANES analysis: r=\u22120.074, p=9\u00d710\u207b\u00b9\u00b3" },
+      { icon: "Droplets", title: "Lower triglycerides", body: "Strongest protective correlation in the entire study. Higher Haemophilus = lower triglycerides.", citation: "Oravi NHANES analysis: r=\u22120.094, p=3\u00d710\u207b\u00b9\u2070" },
+      { icon: "HeartPulse", title: "Lower blood pressure", body: "Consistent with the nitrate-nitrite-NO pathway. Oral nitrate-reducing bacteria help regulate vascular tone.", citation: "Oravi NHANES analysis: Systolic r=\u22120.047, p=5\u00d710\u207b\u2076" },
+      { icon: "TrendingUp", title: "Higher HDL", body: "Positive association with \u2018good cholesterol\u2019. One of few bacteria to show a protective lipid signal.", citation: "Oravi NHANES analysis: r=+0.040, p=1\u00d710\u207b\u2074" },
     ],
     bloodMarkers: [
       { name: "HbA1c", effect: "\u2193 lower", strength: 80 },
@@ -113,7 +113,7 @@ export const BACTERIA: BacteriaEntry[] = [
     ],
     citations: [
       "Bryan NS et al. Oral microbiome and nitric oxide. Curr Hypertens Rep. 2017;19:33.",
-      "Cnvrg Health NHANES 2009\u20132012 analysis, April 2026.",
+      "Oravi NHANES 2009\u20132012 analysis, April 2026.",
     ],
     whatToDo: [
       "Eat nitrate-rich leafy greens \u2014 spinach, arugula, beets",
@@ -138,10 +138,10 @@ export const BACTERIA: BacteriaEntry[] = [
     headline: "Higher levels linked to lower inflammation and lower blood pressure",
     bodyText: "Neisseria is the primary nitrate-reducing bacteria in your mouth. It converts dietary nitrates from vegetables into nitric oxide \u2014 the molecule your blood vessels use to stay relaxed and flexible.",
     interactions: [
-      { icon: "Wind", title: "Lower systolic blood pressure", body: "Strongest blood pressure association in the entire dataset. Neisseria produces the nitric oxide that dilates blood vessels.", citation: "Cnvrg NHANES analysis: r=\u22120.061, p=2\u00d710\u207b\u2079" },
-      { icon: "Wind", title: "Lower diastolic blood pressure", body: "Consistent across both systolic and diastolic readings in nearly 10,000 Americans.", citation: "Cnvrg NHANES analysis: r=\u22120.048, p=4\u00d710\u207b\u2076" },
-      { icon: "Flame", title: "Lower hsCRP", body: "Nitric oxide has anti-inflammatory properties. More Neisseria correlates with lower systemic inflammation.", citation: "Cnvrg NHANES analysis: r=\u22120.051, p=5\u00d710\u207b\u2074" },
-      { icon: "Droplets", title: "Lower triglycerides", body: "Inverse association with blood lipids, consistent with improved metabolic function.", citation: "Cnvrg NHANES analysis: r=\u22120.058, p=1\u00d710\u207b\u2074" },
+      { icon: "Wind", title: "Lower systolic blood pressure", body: "Strongest blood pressure association in the entire dataset. Neisseria produces the nitric oxide that dilates blood vessels.", citation: "Oravi NHANES analysis: r=\u22120.061, p=2\u00d710\u207b\u2079" },
+      { icon: "Wind", title: "Lower diastolic blood pressure", body: "Consistent across both systolic and diastolic readings in nearly 10,000 Americans.", citation: "Oravi NHANES analysis: r=\u22120.048, p=4\u00d710\u207b\u2076" },
+      { icon: "Flame", title: "Lower hsCRP", body: "Nitric oxide has anti-inflammatory properties. More Neisseria correlates with lower systemic inflammation.", citation: "Oravi NHANES analysis: r=\u22120.051, p=5\u00d710\u207b\u2074" },
+      { icon: "Droplets", title: "Lower triglycerides", body: "Inverse association with blood lipids, consistent with improved metabolic function.", citation: "Oravi NHANES analysis: r=\u22120.058, p=1\u00d710\u207b\u2074" },
     ],
     bloodMarkers: [
       { name: "Systolic BP", effect: "\u2193 lower", strength: 70 },
@@ -176,10 +176,10 @@ export const BACTERIA: BacteriaEntry[] = [
     headline: "Higher levels linked to higher blood sugar, higher inflammation, higher blood pressure",
     bodyText: "Tannerella forsythia is part of the \u2018red complex\u2019 \u2014 three bacteria strongly associated with advanced gum disease and systemic inflammation.",
     interactions: [
-      { icon: "AlertTriangle", title: "Higher glucose", body: "Strong positive association with fasting glucose. Systemic inflammation from Tannerella impairs insulin signaling.", citation: "Cnvrg NHANES analysis: r=+0.054, p=3\u00d710\u207b\u2074" },
-      { icon: "Activity", title: "Higher HbA1c", body: "Long-term blood sugar rises with Tannerella burden. Consistent across nearly 10,000 Americans.", citation: "Cnvrg NHANES analysis: r=+0.050, p=1\u00d710\u207b\u2076" },
-      { icon: "Flame", title: "Higher total cholesterol", body: "Lipid disruption alongside metabolic effects. Multi-domain pathogen.", citation: "Cnvrg NHANES analysis: r=+0.056, p=8\u00d710\u207b\u2078" },
-      { icon: "HeartPulse", title: "Higher blood pressure", body: "Both systolic and diastolic associations. Vascular inflammation from chronic periodontal infection.", citation: "Cnvrg NHANES analysis: Diastolic r=+0.052, p=4\u00d710\u207b\u2077" },
+      { icon: "AlertTriangle", title: "Higher glucose", body: "Strong positive association with fasting glucose. Systemic inflammation from Tannerella impairs insulin signaling.", citation: "Oravi NHANES analysis: r=+0.054, p=3\u00d710\u207b\u2074" },
+      { icon: "Activity", title: "Higher HbA1c", body: "Long-term blood sugar rises with Tannerella burden. Consistent across nearly 10,000 Americans.", citation: "Oravi NHANES analysis: r=+0.050, p=1\u00d710\u207b\u2076" },
+      { icon: "Flame", title: "Higher total cholesterol", body: "Lipid disruption alongside metabolic effects. Multi-domain pathogen.", citation: "Oravi NHANES analysis: r=+0.056, p=8\u00d710\u207b\u2078" },
+      { icon: "HeartPulse", title: "Higher blood pressure", body: "Both systolic and diastolic associations. Vascular inflammation from chronic periodontal infection.", citation: "Oravi NHANES analysis: Diastolic r=+0.052, p=4\u00d710\u207b\u2077" },
     ],
     bloodMarkers: [
       { name: "Glucose", effect: "\u2191 rises", strength: 60 },
@@ -220,8 +220,8 @@ export const BACTERIA: BacteriaEntry[] = [
     bodyText: "Fusobacterium nucleatum is one of the most studied bacteria in cancer research. In the CDC blood marker data, elevated Fusobacterium correlated with higher LDL and blood glucose.",
     interactions: [
       { icon: "Dna", title: "Colorectal cancer", body: "Consistently enriched in colorectal tumor tissue. Studied as a potential early detection biomarker. Promotes tumor proliferation via FadA adhesin.", citation: "Castellarin M et al., Genome Research 2012" },
-      { icon: "TrendingUp", title: "Higher LDL cholesterol", body: "Positive association with LDL in nearly 4,500 Americans with fasting bloodwork.", citation: "Cnvrg NHANES analysis: r=+0.058, p=1\u00d710\u207b\u2074" },
-      { icon: "Activity", title: "Higher glucose", body: "Elevated fasting glucose in people with higher Fusobacterium abundance.", citation: "Cnvrg NHANES analysis: r=+0.038, p=0.010" },
+      { icon: "TrendingUp", title: "Higher LDL cholesterol", body: "Positive association with LDL in nearly 4,500 Americans with fasting bloodwork.", citation: "Oravi NHANES analysis: r=+0.058, p=1\u00d710\u207b\u2074" },
+      { icon: "Activity", title: "Higher glucose", body: "Elevated fasting glucose in people with higher Fusobacterium abundance.", citation: "Oravi NHANES analysis: r=+0.038, p=0.010" },
     ],
     bloodMarkers: [
       { name: "LDL", effect: "\u2191 rises", strength: 65 },
@@ -254,7 +254,7 @@ export const BACTERIA: BacteriaEntry[] = [
     headline: "Elevated levels linked to higher systemic inflammation",
     bodyText: "Prevotella intermedia is a periodontal pathogen linked to gum inflammation and bleeding. It thrives in inflamed tissue and produces compounds that further drive immune activation.",
     interactions: [
-      { icon: "Flame", title: "Systemic inflammation (hsCRP)", body: "Higher Prevotella correlated with elevated hsCRP \u2014 a marker that predicts cardiovascular events. Inflammation from the mouth enters the bloodstream.", citation: "Cnvrg NHANES analysis: r=+0.035, p=0.017" },
+      { icon: "Flame", title: "Systemic inflammation (hsCRP)", body: "Higher Prevotella correlated with elevated hsCRP \u2014 a marker that predicts cardiovascular events. Inflammation from the mouth enters the bloodstream.", citation: "Oravi NHANES analysis: r=+0.035, p=0.017" },
       { icon: "Zap", title: "Hormone-responsive growth", body: "Prevotella uses progesterone and estradiol as growth factors. Elevated during pregnancy, puberty, and hormonal fluctuations.", citation: "Kornman & Loesche, J Periodontal Research 1980" },
     ],
     bloodMarkers: [

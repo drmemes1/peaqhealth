@@ -16,7 +16,7 @@ export const markerInfo: Record<string, MarkerInfo> = {
   hrv: {
     why: `HRV (RMSSD) is not just a sleep recovery metric. It reflects the balance of your autonomic nervous system. As we age, parasympathetic tone declines. That matters because the parasympathetic system actively suppresses systemic inflammation via the cholinergic anti-inflammatory pathway. When it weakens, the brake on inflammation is released, fuelling inflammaging, now formally recognized as hallmark #11 of aging (López-Otín et al., Cell 2023).
 
-Cnvrg scores HRV on two axes simultaneously:
+Oravi scores HRV on two axes simultaneously:
 
 1. Population percentile: where you stand relative to healthy people your age and sex, anchored in the Lifelines Cohort (n=84,772), the largest single-cohort RMSSD normative dataset published.
 
@@ -99,7 +99,7 @@ López-Otín C et al. Cell. 2023;186(2):243–278 (hallmarks of aging, includes 
     tip: "Professional dental cleaning (scaling and root planing) is the most effective intervention for reducing subgingival pathogen load. Effect is measurable within weeks in oral microbiome sequencing.",
   },
   "osa-taxa": {
-    why: "People with obstructive sleep apnea are 2.46\u00d7 more likely to have periodontitis, confirmed across meta-analyses covering 88,000+ patients. OSA-related intermittent hypoxia drives oxidative stress that accelerates periodontal tissue breakdown, while elevated periodontal pathogen load raises systemic CRP, disrupting sleep architecture. Cnvrg tracks Prevotella and Fusobacterium abundance as a signal that this shared inflammatory pathway may be active in your oral panel.",
+    why: "People with obstructive sleep apnea are 2.46\u00d7 more likely to have periodontitis, confirmed across meta-analyses covering 88,000+ patients. OSA-related intermittent hypoxia drives oxidative stress that accelerates periodontal tissue breakdown, while elevated periodontal pathogen load raises systemic CRP, disrupting sleep architecture. Oravi tracks Prevotella and Fusobacterium abundance as a signal that this shared inflammatory pathway may be active in your oral panel.",
     target: "<1% of reads",
     citation: "Portelli et al., Dentistry Journal 2024 (meta-analysis, n=88,040); Mi et al., BMC Oral Health 2023 (Mendelian randomization); Zhu et al., Sleep and Breathing 2023 (meta-analysis, n=31,800)",
     tip: "If OSA-associated taxa are elevated alongside low HRV or SpO2 on your sleep panel, discuss sleep-disordered breathing with your physician. Professional dental cleaning reduces the periodontal pathogen load that may be driving systemic inflammation.",

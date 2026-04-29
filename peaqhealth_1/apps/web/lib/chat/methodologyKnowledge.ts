@@ -14,7 +14,7 @@ export const METHODOLOGY: MethodologyEntry[] = [
     howComputed: "Standard Shannon entropy formula (H' = -Σ pi × ln(pi)) applied to species-level relative abundances from 16S rRNA sequencing. Uses Zymo rarefaction-corrected values.",
     inputs: ["All species-level OTU abundances from your oral sample"],
     thresholds: "≥4.0 strong (resilient community), 3.0-4.0 watch, <3.0 attention. Population reference: mean 4.58 in US adults.",
-    limitations: "Diversity alone doesn't tell you which species are present — a diverse community with many pathogens is still diverse. That's why Cnvrg evaluates individual species alongside diversity.",
+    limitations: "Diversity alone doesn't tell you which species are present — a diverse community with many pathogens is still diverse. That's why Oravi evaluates individual species alongside diversity.",
   },
   {
     scoreName: "Nitrate-reducer composite",
@@ -29,7 +29,7 @@ export const METHODOLOGY: MethodologyEntry[] = [
     whatItMeasures: "Combined abundance of bacteria linked to gum tissue inflammation. Includes both orange-complex (early-stage) and red-complex (active) species.",
     howComputed: "Sum of seven species: Fusobacterium + Aggregatibacter + Campylobacter + Porphyromonas + Tannerella + Treponema + P. intermedia.",
     inputs: ["All seven gum-associated species percentages"],
-    thresholds: "<2% strong, 2-5% watch, >5% attention. Cnvrg distinguishes orange-complex (early, manageable with hygiene) from red-complex (active, needs professional evaluation).",
+    thresholds: "<2% strong, 2-5% watch, >5% attention. Oravi distinguishes orange-complex (early, manageable with hygiene) from red-complex (active, needs professional evaluation).",
     limitations: "Bacterial abundance doesn't equal clinical disease. Some people carry elevated gum bacteria without clinical symptoms. The bacteria indicate risk, not diagnosis.",
   },
   {
@@ -70,5 +70,5 @@ export function getMethodologyPrompt(): string {
   const lines = METHODOLOGY.map(m =>
     `${m.scoreName}: ${m.whatItMeasures} How computed: ${m.howComputed} Thresholds: ${m.thresholds} Limitations: ${m.limitations}`
   )
-  return `METHODOLOGY REFERENCE (how Cnvrg computes scores):\n${lines.join("\n\n")}`
+  return `METHODOLOGY REFERENCE (how Oravi computes scores):\n${lines.join("\n\n")}`
 }

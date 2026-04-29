@@ -28,24 +28,24 @@
 
 ## Existing pilot samples
 
-### Pilot.Peaq.1 (Igor, TEST-4)
+### Pilot.Oravi.1 (Igor, TEST-4)
 - Collected via Zymo salivary DNA kit
 - Method: passive drool (unstimulated)
 - Timing: morning before brushing
 - **Compatible with standardized protocol:** Yes
 
-### Pilot.Peaq.2 (Gabby/nanajarian, TEST-1)
+### Pilot.Oravi.2 (Gabby/nanajarian, TEST-1)
 - Collected via same Zymo kit
 - Method: passive drool (unstimulated)
 - **Compatible with standardized protocol:** Yes
 
-### Pilot.Peaq.3
+### Pilot.Oravi.3
 - Not yet collected or data not uploaded
 - **Status:** Pending
 
 ## Comparability note
 
-Samples collected before this protocol was locked (Pilot.Peaq.1, .2) followed the same unstimulated passive drool method and are considered directly comparable to future samples collected under the standardized protocol.
+Samples collected before this protocol was locked (Pilot.Oravi.1, .2) followed the same unstimulated passive drool method and are considered directly comparable to future samples collected under the standardized protocol.
 
 ## Sequencing partner
 

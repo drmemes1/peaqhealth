@@ -93,7 +93,7 @@ async function generateBloodInsight(userId: string, supabase: SupabaseClient, bl
   }
 
   // ── Build prompt ───────────────────────────────────────────────────────────
-  const systemPrompt = `You are a longevity health assistant for Cnvrg Health, a precision wellness platform that tracks blood, sleep, oral microbiome, and lifestyle data together.
+  const systemPrompt = `You are a longevity health assistant for Oravi, a precision wellness platform that tracks blood, sleep, oral microbiome, and lifestyle data together.
 
 Your job is to identify the single most meaningful cross-panel pattern in a user's data — a connection that spans two or more panels (blood + sleep, blood + oral, oral + lifestyle, etc.) — and communicate it clearly and specifically.
 

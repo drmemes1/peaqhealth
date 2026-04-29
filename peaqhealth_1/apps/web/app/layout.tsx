@@ -10,34 +10,34 @@ const FB_APP_ID = process.env.NEXT_PUBLIC_FB_APP_ID ?? "000000000000000"
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://peaqhealth.vercel.app"),
-  title: "Cnvrg Health — We fill in the gaps.",
+  title: "Oravi — We fill in the gaps.",
   description:
     "The first platform connecting your oral microbiome, blood biomarkers, and sleep data into a single longevity score.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Cnvrg",
+    title: "Oravi",
   },
   openGraph: {
-    title: "Cnvrg Health",
+    title: "Oravi",
     description:
       "The first platform connecting your oral microbiome, blood biomarkers, and sleep data into a single longevity score.",
     url: "https://peaqhealth.vercel.app",
-    siteName: "Cnvrg Health",
+    siteName: "Oravi",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Cnvrg — Three signals. One measure of resilience.",
+        alt: "Oravi — Three signals. One measure of resilience.",
       },
     ],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Cnvrg Health",
+    title: "Oravi",
     description:
       "The first platform connecting your oral microbiome, blood biomarkers, and sleep data into a single longevity score.",
     images: ["/og-image.png"],

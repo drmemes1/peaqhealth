@@ -57,14 +57,14 @@ export function StepScore({ data, onNext }: Props) {
     <div className="flex flex-col items-center gap-8">
       <div className="text-center">
         <h2 className="font-display text-4xl font-light tracking-tight text-ink">
-          Your Peaq Age
+          Your Oravi Age
         </h2>
         <p className="mt-3 font-body text-sm text-ink/50">
           {getBandMessage(band)}
         </p>
       </div>
 
-      {/* Peaq Age number — animated count-up */}
+      {/* Oravi Age number — animated count-up */}
       <div className="flex flex-col items-center">
         <span style={{
           fontFamily: serif, fontSize: 72, fontWeight: 300,
@@ -118,7 +118,7 @@ export function StepScore({ data, onNext }: Props) {
       </div>
 
       <p className="font-body text-xs text-ink/35 text-center max-w-sm leading-relaxed">
-        Your Peaq Age will refine as more panels come online. Each additional data source sharpens the picture.
+        Your Oravi Age will refine as more panels come online. Each additional data source sharpens the picture.
       </p>
 
       <button

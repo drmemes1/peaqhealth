@@ -72,7 +72,7 @@ export const MARKER_DEFINITIONS: Record<string, MarkerDef> = {
     why_it_matters: `hs-CRP is your body's real-time readout of systemic inflammation. Your liver produces it whenever your immune system is on alert — from an injury, an infection, or something more chronic like gum disease or disrupted sleep.\n\nThe high-sensitivity version detects levels as low as 0.1 mg/L. That precision matters because the range linked to cardiovascular disease and accelerated cellular aging — 1 to 3 mg/L — is well below what a standard CRP test would even report.\n\nhs-CRP is one of the most responsive markers to lifestyle change — most people can move it meaningfully within 4 to 8 weeks.`,
     missing_state: {
       headline: 'hs-CRP is not on your current panel',
-      body: 'Standard CRP misses the range that matters most for cardiovascular risk — it only catches large inflammatory events. hs-CRP measures 10x more precisely and captures the chronic low-grade inflammation that drives aging. Without it, several Cnvrg cross-panel connections cannot fire.',
+      body: 'Standard CRP misses the range that matters most for cardiovascular risk — it only catches large inflammatory events. hs-CRP measures 10x more precisely and captures the chronic low-grade inflammation that drives aging. Without it, several Oravi cross-panel connections cannot fire.',
       cta: 'Request hs-CRP at your next blood draw',
       cta_sub: '~$15 add-on at Quest Diagnostics or LabCorp. Ask specifically for "high-sensitivity CRP" — standard CRP cannot substitute.',
       urgency: 'high',
@@ -105,7 +105,7 @@ export const MARKER_DEFINITIONS: Record<string, MarkerDef> = {
       { name: 'Psyllium husk (10g daily)', why: 'Soluble fiber with consistent evidence for modest LDL reduction', strength: 'strong' },
       { name: 'Berberine (500mg twice daily)', why: 'Activates AMPK pathway — LDL reduction comparable to low-dose statin in small RCTs', strength: 'moderate' },
     ],
-    why_it_matters: `LDL carries cholesterol through your bloodstream. When elevated, LDL particles can penetrate artery walls and become oxidized — the first step in arterial plaque formation.\n\nThe number alone tells an incomplete story. Nitric oxide — produced partly by your oral bacteria — prevents LDL from penetrating and oxidizing inside artery walls. A statin manages how much LDL is in your blood. Your oral microbiome determines how much damage that LDL can do.\n\nThis is why Cnvrg looks at LDL alongside your oral bacteria, not just in isolation.`,
+    why_it_matters: `LDL carries cholesterol through your bloodstream. When elevated, LDL particles can penetrate artery walls and become oxidized — the first step in arterial plaque formation.\n\nThe number alone tells an incomplete story. Nitric oxide — produced partly by your oral bacteria — prevents LDL from penetrating and oxidizing inside artery walls. A statin manages how much LDL is in your blood. Your oral microbiome determines how much damage that LDL can do.\n\nThis is why Oravi looks at LDL alongside your oral bacteria, not just in isolation.`,
     missing_state: {
       headline: 'LDL not found on your panel',
       body: 'LDL is included in a standard lipid panel at any lab. If your most recent upload did not include it, it may be in a different document.',
@@ -618,7 +618,7 @@ export const MARKER_DEFINITIONS: Record<string, MarkerDef> = {
       { name: 'L. reuteri probiotic', why: 'Multiple RCTs show reduction in periodontal pathogens', strength: 'strong' },
       { name: 'CoQ10 100mg', why: 'Supports gum tissue health', strength: 'moderate' },
     ],
-    why_it_matters: `These bacteria are associated with gum disease, inflammation, and systemic effects via the bloodstream. They create a persistent low-grade alert state.\n\nCRP reflects this. Dentists and doctors rarely see both sides. Cnvrg does.`,
+    why_it_matters: `These bacteria are associated with gum disease, inflammation, and systemic effects via the bloodstream. They create a persistent low-grade alert state.\n\nCRP reflects this. Dentists and doctors rarely see both sides. Oravi does.`,
     missing_state: {
       headline: 'No oral kit results yet',
       body: 'requires an Oral Microbiome Assessment',

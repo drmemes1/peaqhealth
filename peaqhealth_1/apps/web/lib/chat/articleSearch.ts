@@ -44,7 +44,7 @@ export const ARTICLE_SEARCH_TOOL = {
   type: "function" as const,
   function: {
     name: "search_articles",
-    description: "Search Cnvrg's curated article library. Use when the user asks for deeper reading on a topic, requests an article, or asks about content that might be in a Cnvrg article. Returns top 5 matching articles.",
+    description: "Search Oravi's curated article library. Use when the user asks for deeper reading on a topic, requests an article, or asks about content that might be in a Oravi article. Returns top 5 matching articles.",
     parameters: {
       type: "object" as const,
       properties: {

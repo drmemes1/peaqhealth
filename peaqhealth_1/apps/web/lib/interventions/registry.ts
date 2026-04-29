@@ -133,7 +133,7 @@ const rule_periodontalExam: RuleFn = (ctx) => {
     category: "professional",
     priority: 1,
     timing: "This month",
-    why: "Your gum bacteria suggest active subgingival inflammation. A periodontal exam measures pocket depth — the only way to know if bacteria are below the reach of home care. Bring your Cnvrg report.",
+    why: "Your gum bacteria suggest active subgingival inflammation. A periodontal exam measures pocket depth — the only way to know if bacteria are below the reach of home care. Bring your Oravi report.",
     markerLink: "/dashboard/panels/oral/markers/gum_health_total",
   }
 }

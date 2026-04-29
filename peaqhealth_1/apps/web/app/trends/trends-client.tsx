@@ -148,7 +148,7 @@ function getRetestRecommendation(daysSinceBlood: number | null, daysSinceOral: n
   const noOral  = daysSinceOral  === null
 
   if (noBlood && noOral) {
-    return "Upload your blood panel and order an oral kit to unlock your full Peaq Age. For the most meaningful snapshot, consider doing both around the same time — blood and oral data taken together paint a much clearer picture of your cardiovascular and systemic health."
+    return "Upload your blood panel and order an oral kit to unlock your full Oravi Age. For the most meaningful snapshot, consider doing both around the same time — blood and oral data taken together paint a much clearer picture of your cardiovascular and systemic health."
   }
   if (!noBlood && noOral) {
     return "You have blood data but no oral microbiome results yet. Order an oral kit — when tested around the same time as your blood panel, the two together reveal cross-panel signals (like how your oral bacteria may be influencing your Lp(a) and hsCRP) that neither panel can show alone."
@@ -705,7 +705,7 @@ function SleepPausedCard() {
         Your sleep panel is currently paused
       </div>
       <p style={{ fontFamily: font, fontSize: '13px', color: 'var(--ink-40)', lineHeight: 1.65, marginBottom: '16px' }}>
-        Sleep is the only panel that updates every night — it gives Cnvrg the longitudinal signal that makes your score meaningful over time. HRV, deep sleep, and sleep efficiency directly connect to your blood and oral microbiome signals.
+        Sleep is the only panel that updates every night — it gives Oravi the longitudinal signal that makes your score meaningful over time. HRV, deep sleep, and sleep efficiency directly connect to your blood and oral microbiome signals.
       </p>
       {[
         { connection: 'Sleep → Blood', text: 'Poor sleep architecture elevates cortisol and drives insulin resistance — measurable in your blood panel.' },
@@ -1001,7 +1001,7 @@ export function TrendsClient() {
             )}
 
             {/* ─── 6. SCORE HISTORY (open by default) ──────── */}
-            <CollapsibleSection title="Peaq Age history" defaultOpen={true}>
+            <CollapsibleSection title="Oravi Age history" defaultOpen={true}>
               <div style={{ marginBottom: 8 }}>
                 <div style={{ display: "flex", gap: 20, marginBottom: 12, flexWrap: "wrap" }}>
                   {[

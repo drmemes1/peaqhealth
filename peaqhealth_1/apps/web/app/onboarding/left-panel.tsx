@@ -1,7 +1,7 @@
 // LEGACY: Panel "pts" labels (27/33/13) reflect legacy /100 scoring. Update after onboarding redesign.
 "use client";
 
-import CnvrgLogo from "../components/CnvrgLogo";
+import OraviLogo from "../components/OraviLogo";
 import { STEPS, STEP_LABELS, type OnboardingStep, type PanelStates, type PanelStatus } from "./types";
 
 const PANEL_CONFIG: { key: keyof PanelStates; label: string; color: string; pts: string }[] = [
@@ -45,7 +45,7 @@ export function LeftPanel({ currentStep, panels }: LeftPanelProps) {
     <div className="sticky top-0 flex h-svh w-full flex-col justify-between bg-ink p-8 lg:w-80 lg:min-w-80">
       {/* Logo */}
       <div>
-        <CnvrgLogo size="md" showTagline={false} dark />
+        <OraviLogo size="md" showTagline={false} dark />
       </div>
 
       {/* Step dots */}

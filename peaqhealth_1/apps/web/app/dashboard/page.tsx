@@ -293,7 +293,7 @@ export default async function DashboardPage() {
     oral:  snapshot && prevSnapshot.oral_sub  != null ? (snapshot.oral_sub  ?? 0) - (prevSnapshot.oral_sub  ?? 0) : null,
   } : undefined
 
-  // Extract Peaq Age V5 breakdown from snapshot (written by dual-write in recalculate.ts)
+  // Extract Oravi Age V5 breakdown from snapshot (written by dual-write in recalculate.ts)
   const peaqAgeBreakdown = snapshot?.peaq_age_breakdown as Record<string, unknown> | null
 
   // Derive positive signals ("what's working") for the right rail
@@ -318,7 +318,7 @@ export default async function DashboardPage() {
   })
   const generatedPlanItems = generatePlanItems(markerStatuses)
 
-  // Derive top 3 cross-panel signals for the CrossPanelCard (replaces Peaq Age + Insight cards)
+  // Derive top 3 cross-panel signals for the CrossPanelCard (replaces Oravi Age + Insight cards)
   const hrvMedian = snapshot?.hrv_rmssd_median as number | null
   const hrvPct = snapshot?.hrv_percentile as number | null
   const hrvStatus = snapshot?.hrv_status as string | null

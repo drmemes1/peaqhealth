@@ -28,7 +28,7 @@ function SingleConnectionLine({ connection }: { connection: ConnectionLine }) {
         textTransform: "uppercase", color: "#7A7A6E",
         display: "block", marginBottom: 4,
       }}>
-        CNVRG CONNECTION
+        ORAVI CONNECTION
       </span>
 
       <p style={{

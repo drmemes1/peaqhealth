@@ -14,10 +14,10 @@ export async function POST(req: NextRequest) {
   }
 
   const resend = new Resend(resendKey)
-  const from = "Cnvrg Health <hello@peaqhealth.me>"
+  const from = "Oravi <hello@oravi.com>"
   const { error } = await resend.emails.send({
     from,
-    to: "info@peaqhealth.me",
+    to: "info@oravi.com",
     subject: `New waitlist signup: ${email}`,
     html: `<p>New waitlist signup:</p><p><strong>${email}</strong></p><p>Date: ${new Date().toISOString()}</p>`,
   })

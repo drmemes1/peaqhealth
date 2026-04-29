@@ -2,7 +2,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import CnvrgLogo from "../../components/CnvrgLogo"
+import OraviLogo from "../../components/OraviLogo"
 import { validateKitCode } from "../../../lib/kit-code"
 
 type RegistrationStatus = "idle" | "loading" | "success" | "error"
@@ -17,29 +17,29 @@ const STATUS_STEPS = [
 function formatKitCodeInput(raw: string): string {
   // Strip everything non-alphanumeric, uppercase
   const clean = raw.replace(/[^A-Z0-9]/gi, "").toUpperCase()
-  // Inject dashes at positions 4 (after PEAQ) and 8 (after 4-char segment)
-  // Expected final: PEAQ-XXXX-XXXXX
-  // We allow the user to type without the PEAQ prefix or with it
+  // Inject dashes at positions 4 (after ORAVI) and 8 (after 4-char segment)
+  // Expected final: ORAVI-XXXX-XXXXX
+  // We allow the user to type without the ORAVI prefix or with it
   // Strategy: always build from clean chars
-  // If user typed PEAQ as first 4 chars treat them as the prefix
+  // If user typed ORAVI as first 4 chars treat them as the prefix
   let chars = clean
-  // Remove leading PEAQ if present so we only work with variable segments
-  if (chars.startsWith("PEAQ")) {
+  // Remove leading ORAVI if present so we only work with variable segments
+  if (chars.startsWith("ORAVI")) {
     chars = chars.slice(4)
   }
   // chars now contains up to 9 variable characters (seg1=4, seg2=5)
   const seg1 = chars.slice(0, 4)
   const seg2 = chars.slice(4, 9)
 
-  if (seg1.length === 0) return "PEAQ-"
-  if (seg1.length < 4) return `PEAQ-${seg1}`
-  if (seg2.length === 0) return `PEAQ-${seg1}-`
-  return `PEAQ-${seg1}-${seg2}`
+  if (seg1.length === 0) return "ORAVI-"
+  if (seg1.length < 4) return `ORAVI-${seg1}`
+  if (seg2.length === 0) return `ORAVI-${seg1}-`
+  return `ORAVI-${seg1}-${seg2}`
 }
 
 export default function KitRegisterPage() {
   const router = useRouter()
-  const [inputValue, setInputValue] = useState("PEAQ-")
+  const [inputValue, setInputValue] = useState("ORAVI-")
   const [status, setStatus] = useState<RegistrationStatus>("idle")
   const [errorMessage, setErrorMessage] = useState("")
 
@@ -54,7 +54,7 @@ export default function KitRegisterPage() {
     const kitCode = inputValue.trim()
 
     if (!validateKitCode(kitCode)) {
-      setErrorMessage("Enter a valid kit code in the format PEAQ-XXXX-XXXXX.")
+      setErrorMessage("Enter a valid kit code in the format ORAVI-XXXX-XXXXX.")
       return
     }
 
@@ -100,7 +100,7 @@ export default function KitRegisterPage() {
         padding: "20px 32px",
         borderBottom: "1px solid rgba(0,0,0,0.08)",
       }}>
-        <CnvrgLogo size="sm" showTagline={false} />
+        <OraviLogo size="sm" showTagline={false} />
         <Link
           href="/dashboard"
           style={{
@@ -148,7 +148,7 @@ export default function KitRegisterPage() {
                 type="text"
                 value={inputValue}
                 onChange={handleInputChange}
-                placeholder="PEAQ-XXXX-XXXXX"
+                placeholder="ORAVI-XXXX-XXXXX"
                 maxLength={15}
                 autoComplete="off"
                 spellCheck={false}

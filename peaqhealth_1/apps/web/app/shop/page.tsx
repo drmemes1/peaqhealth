@@ -324,7 +324,7 @@ function StarterKitBundle() {
             </div>
 
             <h2 className="font-display text-4xl md:text-5xl font-light leading-tight" style={{ color: "var(--off-white)" }}>
-              Cnvrg Starter Kit
+              Oravi Starter Kit
             </h2>
 
             <p className="font-body text-sm leading-relaxed" style={{ color: "rgba(250,250,248,0.55)" }}>
@@ -466,7 +466,7 @@ export default function ShopPage() {
           className="font-body text-[10px] uppercase tracking-[0.15em] fade-up"
           style={{ color: "var(--gold)", animationDelay: "0ms" }}
         >
-          The Cnvrg Edit
+          The Oravi Edit
         </span>
         <h1
           className="font-display text-[44px] font-light leading-[1.1] mt-1 fade-up"

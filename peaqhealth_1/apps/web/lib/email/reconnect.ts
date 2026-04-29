@@ -25,19 +25,19 @@ export async function sendReconnectEmail(
   const label = PROVIDER_LABELS[provider] ?? provider
   try {
     await resend.emails.send({
-      from: "Cnvrg Health <noreply@peaqhealth.me>",
+      from: "Oravi <noreply@oravi.com>",
       to: email,
       subject: `Your ${label} needs to be reconnected`,
       html: `
         <div style="font-family: 'Instrument Sans', system-ui, sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 24px; color: #141410;">
           <p style="font-size: 15px; line-height: 1.7; color: rgba(20,20,16,0.60);">
-            Your ${label} connection to Cnvrg Health has expired. Nightly syncing has been paused until you reconnect.
+            Your ${label} connection to Oravi has expired. Nightly syncing has been paused until you reconnect.
           </p>
           <a href="https://peaqhealth.vercel.app/settings" style="display: inline-block; margin-top: 24px; padding: 12px 28px; background: #141410; color: #FAFAF8; text-decoration: none; border-radius: 3px; font-size: 14px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;">
             Reconnect now
           </a>
           <p style="margin-top: 32px; font-size: 11px; color: rgba(20,20,16,0.30);">
-            Cnvrg Health · peaqhealth.vercel.app
+            Oravi · peaqhealth.vercel.app
           </p>
         </div>
       `,

@@ -27,7 +27,7 @@ export default async function LearnPage() {
           textTransform: "uppercase", color: "#7A7A6E",
           display: "block", marginBottom: 6,
         }}>
-          From Cnvrg
+          From Oravi
         </span>
         <h1 style={{
           fontFamily: serif, fontSize: 42, fontWeight: 300,

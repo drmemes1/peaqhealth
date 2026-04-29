@@ -149,7 +149,7 @@ const GENERATED: Record<string, {
     match: i => TRIGGER.red_amber_missing(i.vitamin_d_status ?? null),
     item: {
       title: "Test your vitamin D if you haven't recently",
-      why: "Vitamin D affects oral tissue integrity, immune regulation, and sleep architecture — three systems Cnvrg tracks. Deficiency is common and easy to correct. Ask for 25-OH vitamin D specifically.",
+      why: "Vitamin D affects oral tissue integrity, immune regulation, and sleep architecture — three systems Oravi tracks. Deficiency is common and easy to correct. Ask for 25-OH vitamin D specifically.",
       timing: "Next draw",
       priority: 4,
       marker_link: "/dashboard/blood/vitamin_d",
@@ -256,7 +256,7 @@ function buildLifestyleItems(input: PlanInput): PlanItem[] {
     out.push({
       id: "flossing-escalation",
       title: "Flossing alone isn't enough",
-      why: "Book a periodontal exam for pocket depth measurement. Daily flossing has limits when inflammation persists below the gumline. Bring your Cnvrg report — periodontists find bacterial data clinically useful.",
+      why: "Book a periodontal exam for pocket depth measurement. Daily flossing has limits when inflammation persists below the gumline. Bring your Oravi report — periodontists find bacterial data clinically useful.",
       timing: "This month",
       priority: 1,
     })

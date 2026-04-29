@@ -652,7 +652,7 @@ Find in the system prompt:
 
 Replace with:
 ```typescript
-"You always frame clinical recommendations as things the patient should consider discussing with their doctor — Peaq provides health information, not medical advice. Use language like 'consider asking your doctor about...' or 'it may be worth discussing with your physician...'"
+"You always frame clinical recommendations as things the patient should consider discussing with their doctor — Oravi provides health information, not medical advice. Use language like 'consider asking your doctor about...' or 'it may be worth discussing with your physician...'"
 ```
 
 - [ ] **Step 2: Add age and sex to the lifestyle section of the user prompt**

@@ -1,4 +1,4 @@
-# Peaq Insight Composition Guide
+# Oravi Insight Composition Guide
 
 **Version:** 1.0 (merged from TONE_GUIDE v3.1, WRITING_STYLE, EVIDENCE_GROUNDING, and INSIGHTS borderline phrasing)
 **Last updated:** 2026-04-24
@@ -41,9 +41,9 @@ the sources list. The surface is always plain English.
 
 **Reflect data. Do not interpret it.**
 
-Peaq shows users what their data is doing across panels.
+Oravi shows users what their data is doing across panels.
 The user and their medical professional draw conclusions.
-Peaq never draws a conclusion on the user's behalf.
+Oravi never draws a conclusion on the user's behalf.
 
 This applies to every panel — blood, oral, sleep, and any cross-panel
 convergence. It is not a style preference. It is the regulatory line
@@ -67,7 +67,7 @@ Write for that person. Every time.
 
 **Calm. Direct. Specific. Never alarming. Never diagnostic.**
 
-Peaq is a scientist friend who happens to know your results.
+Oravi is a scientist friend who happens to know your results.
 Not a doctor reading from a chart. Not a wellness influencer.
 A knowledgeable friend who gives you real information in plain language,
 tells you what they would actually do in your situation —
@@ -120,9 +120,9 @@ Surfacing what is working builds trust and motivates the user to protect what is
 
 Before publishing any copy, ask: would a knowledgeable friend say this? If it sounds like a medical pamphlet or a wellness influencer, rewrite it.
 
-#### 10. Peaq-specific framing
+#### 10. Oravi-specific framing
 
-**On-brand:** "Only Peaq can see this connection", "Your data is showing...", "Across your panels, we're seeing..."
+**On-brand:** "Only Oravi can see this connection", "Your data is showing...", "Across your panels, we're seeing..."
 
 **Off-brand:** "Optimize your wellness journey", "You are at risk for...", "We recommend you see a..."
 
@@ -138,7 +138,7 @@ Always include the mandatory disclaimer on every health data card:
 
 #### 12. Regulatory Posture
 
-Peaq is a wellness product. Not a medical device. Not a diagnostic tool. The line: "Your data is showing X pattern" (wellness) vs. "You have/are at risk for Y condition" (medical device).
+Oravi is a wellness product. Not a medical device. Not a diagnostic tool. The line: "Your data is showing X pattern" (wellness) vs. "You have/are at risk for Y condition" (medical device).
 
 ### Red-Flag Words (Never Use on the Surface)
 
@@ -280,7 +280,7 @@ For emphasis on the key mechanism or finding. Never over-accented.
 - Don't open with "Based on your data..." or "Looking at your panels..."
 - Don't use passive voice for findings: "was found to be" → "sits at"
 - Don't hedge with "may" or "might" — state what the data shows
-- Don't explain what Cnvrg is — the user knows
+- Don't explain what Oravi is — the user knows
 - Don't repeat the same number in both paragraphs
 
 ### Bacterial Context Framing Rule

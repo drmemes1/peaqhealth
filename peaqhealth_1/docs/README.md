@@ -1,6 +1,6 @@
-# Peaq Docs — Master Index
+# Oravi Docs — Master Index
 
-Home base for all Peaq documentation. Start here when you need to find or update anything.
+Home base for all Oravi documentation. Start here when you need to find or update anything.
 
 **Last updated:** 2026-04-24
 

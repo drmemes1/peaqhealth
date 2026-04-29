@@ -1,5 +1,5 @@
 import Link from "next/link";
-import CnvrgLogo from "../components/CnvrgLogo";
+import OraviLogo from "../components/OraviLogo";
 
 const EFFECTIVE_DATE = "March 26, 2026";
 
@@ -10,7 +10,7 @@ const sections = [
       "Account information — your email address and encrypted password, used solely to authenticate you.",
       "Health data you provide — wearable sleep metrics (deep sleep %, REM %, HRV, resting heart rate), blood biomarker values from lab reports you upload, oral microbiome sequencing results from your at-home oral kit, and lifestyle questionnaire responses (age range, sex, exercise level, smoking status, diet, alcohol, stress).",
       "Device & usage data — browser type, IP address, pages visited, and session timestamps, collected automatically to keep the service running and secure. We do not use this data for advertising.",
-      "Payment data — if you purchase a kit or subscription, payment is processed by Stripe. Cnvrg Health never sees or stores your full card number.",
+      "Payment data — if you purchase a kit or subscription, payment is processed by Stripe. Oravi never sees or stores your full card number.",
     ],
   },
   {
@@ -45,10 +45,10 @@ const sections = [
   {
     title: "Your rights",
     body: [
-      "You can request a full export of your data at any time by emailing privacy@peaqhealth.me.",
+      "You can request a full export of your data at any time by emailing privacy@oravi.com.",
       "You can request deletion of your account and all associated health data. Deletion is permanent and processed within 30 days.",
       "You can update or correct your lifestyle and demographic data in Settings at any time.",
-      "California residents have additional rights under CCPA, including the right to know, delete, and opt out of sale (we do not sell data). Requests can be directed to privacy@peaqhealth.me.",
+      "California residents have additional rights under CCPA, including the right to know, delete, and opt out of sale (we do not sell data). Requests can be directed to privacy@oravi.com.",
     ],
   },
   {
@@ -67,8 +67,8 @@ const sections = [
   {
     title: "Contact",
     body: [
-      "Questions about this policy or how your data is handled: privacy@peaqhealth.me",
-      "Cnvrg Health, Inc. · United States",
+      "Questions about this policy or how your data is handled: privacy@oravi.com",
+      "Oravi, Inc. · United States",
     ],
   },
 ];
@@ -81,7 +81,7 @@ export default function PrivacyPage() {
         style={{ borderBottomColor: "var(--ink-12)" }}>
         <div className="mx-auto flex h-16 max-w-[820px] items-center justify-between px-6">
           <Link href="/">
-            <CnvrgLogo size="md" showTagline={false} />
+            <OraviLogo size="md" showTagline={false} />
           </Link>
           <Link href="/dashboard"
             className="font-body text-[12px] uppercase tracking-[0.08em]"
@@ -112,7 +112,7 @@ export default function PrivacyPage() {
           </p>
           <div style={{ marginTop: 20, paddingTop: 20, borderTop: "0.5px solid var(--ink-12)" }}>
             <p className="font-body" style={{ fontSize: 15, lineHeight: 1.75, color: "var(--ink-60)", margin: 0, maxWidth: 620 }}>
-              Cnvrg Health is a personal health intelligence platform. We handle sensitive biomarker and
+              Oravi is a personal health intelligence platform. We handle sensitive biomarker and
               lifestyle data. This policy explains exactly what we collect, how it is stored, and the
               commitments we make to you — in plain language.
             </p>
@@ -186,9 +186,9 @@ export default function PrivacyPage() {
           display: "flex", justifyContent: "space-between", alignItems: "center",
           flexWrap: "wrap", gap: 12,
         }}>
-          <CnvrgLogo size="sm" showTagline={false} />
+          <OraviLogo size="sm" showTagline={false} />
           <p className="font-body" style={{ fontSize: 11, color: "var(--ink-30)", margin: 0 }}>
-            © {new Date().getFullYear()} Cnvrg Health, Inc. · privacy@peaqhealth.me
+            © {new Date().getFullYear()} Oravi, Inc. · privacy@oravi.com
           </p>
         </div>
       </main>

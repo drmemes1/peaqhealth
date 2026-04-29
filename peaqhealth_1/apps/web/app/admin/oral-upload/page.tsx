@@ -226,7 +226,7 @@ export default function OralUploadPage() {
               <textarea
                 value={shannonInput}
                 onChange={e => { setShannonInput(e.target.value); setParsed(null); setResult(null); setShannonInfo(null) }}
-                placeholder={"sequences per sample\titeration\tPilot.Peaq.1\tPilot.Peaq.2\t..."}
+                placeholder={"sequences per sample\titeration\tPilot.Oravi.1\tPilot.Oravi.2\t..."}
                 rows={4}
                 style={{
                   width: "100%", fontFamily: "monospace", fontSize: 11, padding: 12,

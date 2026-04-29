@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 
-const CnvrgLogo = ({
+const OraviLogo = ({
   size = "md",
   showTagline = true,
   dark = false,
@@ -35,8 +35,8 @@ const CnvrgLogo = ({
     >
       <div style={{ position: "relative", height: sizes[size].height }}>
         <img
-          src="/cnvrg-logo.png"
-          alt="Cnvrg"
+          src="/oravi.png"
+          alt="Oravi"
           style={{
             height: sizes[size].height,
             opacity: hovered ? 0 : 1,
@@ -88,4 +88,4 @@ const CnvrgLogo = ({
   )
 }
 
-export default CnvrgLogo
+export default OraviLogo

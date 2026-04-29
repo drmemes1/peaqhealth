@@ -1413,7 +1413,7 @@ export function LifestyleForm({ existing }: Props) {
                           Do you have any of the following?
                         </p>
                         <p className="font-body text-[11px] text-ink/35 leading-relaxed mb-3 italic">
-                          Select all that apply. Helps Cnvrg avoid flagging expected patterns.
+                          Select all that apply. Helps Oravi avoid flagging expected patterns.
                         </p>
                         <div className="flex flex-col gap-2 mt-3">
                           {([
@@ -1447,7 +1447,7 @@ export function LifestyleForm({ existing }: Props) {
                           Current medications (optional)
                         </p>
                         <p className="font-body text-[11px] text-ink/35 leading-relaxed mb-3 italic">
-                          Helps Cnvrg avoid flagging expected lab patterns as anomalies.
+                          Helps Oravi avoid flagging expected lab patterns as anomalies.
                         </p>
                         <input
                           type="text"
@@ -1477,7 +1477,7 @@ export function LifestyleForm({ existing }: Props) {
             className="h-12 bg-ink font-body text-sm font-medium uppercase tracking-[0.15em]
                        text-off-white transition-colors hover:bg-gold disabled:opacity-30"
           >
-            {saving ? "Saving…" : saved ? "Panels updated ✓" : "Save Save & recalculate Peaq Age recalculate"}
+            {saving ? "Saving…" : saved ? "Panels updated ✓" : "Save Save & recalculate Oravi Age recalculate"}
           </button>
           {!allAnswered && (
             <p className="font-body text-xs text-ink/30 text-center">

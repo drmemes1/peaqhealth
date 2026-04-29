@@ -8,7 +8,7 @@ const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 const DOORS = [
   { href: "/explore", eyebrow: "Bacterial library", title: "Browse all species", desc: "What each bacterium does, in plain language." },
   { href: "/science", eyebrow: "How we score", title: "Methodology", desc: "Every formula, every threshold, every citation." },
-  { href: "/science", eyebrow: "Cnvrg science", title: "The evidence base", desc: "Peer-reviewed research that grounds every claim." },
+  { href: "/science", eyebrow: "Oravi science", title: "The evidence base", desc: "Peer-reviewed research that grounds every claim." },
   { href: "/learn", eyebrow: "Articles", title: "Read more", desc: "Curated reading on the topics that matter to you." },
 ]
 

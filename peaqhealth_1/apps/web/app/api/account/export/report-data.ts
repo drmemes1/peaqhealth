@@ -48,7 +48,7 @@ export interface ReportData {
   modifiersApplied: ReportModifier[]
   engineVersion: string
   calculatedAt: string
-  // Peaq Age V5
+  // Oravi Age V5
   peaqAge: number | null
   peaqAgeDelta: number | null
   peaqAgeBand: string | null

@@ -1,7 +1,7 @@
 import { WaitlistForm } from "./components/waitlist-form"
 import { LandingHero } from "./components/landing-hero"
 import { OralSnapshot } from "./components/quiz/OralSnapshot"
-import { WhyCnvrg } from "./components/why-peaq"
+import { WhyOravi } from "./components/why-peaq"
 
 /* ─── Design tokens ───────────────────────────────────────────────────────── */
 
@@ -70,8 +70,8 @@ export default function Home() {
           {/* Logo */}
           <div className="landing-nav-logo">
             <img
-              src="/cnvrg-logo.png"
-              alt="Cnvrg Health"
+              src="/oravi.png"
+              alt="Oravi"
               style={{
                 height: 75,
                 width: "auto",
@@ -166,7 +166,7 @@ export default function Home() {
                 "Nightly HRV \u00B7 WHOOP \u00B7 Oura",
                 "Hallmarks of aging \u00B7 L\u00F3pez-Ot\u00EDn 2023",
                 "Cross-panel signals \u00B7 What no single test shows",
-                "Cnvrg Resilience Index \u00B7 Three signals. One number.",
+                "Oravi Resilience Index \u00B7 Three signals. One number.",
               ].map(item => (
                 <span key={item} style={{
                   display: "inline-flex",
@@ -434,7 +434,7 @@ export default function Home() {
               </div>
               <img
                 src="/images/oralkit.png"
-                alt="Cnvrg oral swab kit"
+                alt="Oravi oral swab kit"
                 style={{
                   width: 80,
                   height: "auto",
@@ -558,7 +558,7 @@ export default function Home() {
                   color: INK,
                   margin: "0 0 6px",
                 }}>
-                  Get your Peaq Age
+                  Get your Oravi Age
                 </p>
                 <p style={{
                   fontFamily: sans,
@@ -608,7 +608,7 @@ export default function Home() {
                 fontFamily: serif, fontSize: 20, fontWeight: 400,
                 color: INK, margin: 0, lineHeight: 1.3,
               }}>
-                Three signals, one story — how Cnvrg connects your mouth, blood, and sleep.
+                Three signals, one story — how Oravi connects your mouth, blood, and sleep.
               </p>
             </div>
             <a href="/learn/how-peaq-works" style={{
@@ -625,9 +625,9 @@ export default function Home() {
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════
-          SECTION 4 — WHY CNVRG (dark ink, comparison table)
+          SECTION 4 — WHY ORAVI (dark ink, comparison table)
           ══════════════════════════════════════════════════════════════════ */}
-      <WhyCnvrg />
+      <WhyOravi />
 
       {/* ══════════════════════════════════════════════════════════════════
           VISUAL CHAPTER BREAK + QUIZ
@@ -805,7 +805,7 @@ export default function Home() {
                 <li>Your oral microbiome correlates with systemic inflammation</li>
                 <li>Periodontal pathogens are associated with elevated ASCVD risk</li>
                 <li>Sleep disruption and CRP share a bidirectional relationship</li>
-                <li>Your Peaq Age tracks multi-system health signals over time</li>
+                <li>Your Oravi Age tracks multi-system health signals over time</li>
               </ul>
             </div>
 
@@ -850,7 +850,7 @@ export default function Home() {
             margin: "0 auto",
           }}>
             &ldquo;If we can&rsquo;t cite it, we don&rsquo;t claim it.
-            Every threshold in Cnvrg links back to a peer-reviewed source.&rdquo;
+            Every threshold in Oravi links back to a peer-reviewed source.&rdquo;
           </p>
         </div>
       </section>
@@ -930,8 +930,8 @@ export default function Home() {
         }}>
           {/* Logo — natural color */}
           <img
-            src="/cnvrg-logo.png"
-            alt="Cnvrg Health"
+            src="/oravi.png"
+            alt="Oravi"
             style={{
               height: 24,
               width: "auto",
