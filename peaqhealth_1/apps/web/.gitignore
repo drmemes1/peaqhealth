@@ -41,3 +41,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .superpowers/
+
+# turbo cache + build logs
+.turbo/
+
+# supabase CLI scratch
+supabase/.temp/
