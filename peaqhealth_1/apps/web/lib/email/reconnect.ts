@@ -25,7 +25,7 @@ export async function sendReconnectEmail(
   const label = PROVIDER_LABELS[provider] ?? provider
   try {
     await resend.emails.send({
-      from: "Oravi <noreply@oravi.com>",
+      from: "Oravi <noreply@oravi.health>",
       to: email,
       subject: `Your ${label} needs to be reconnected`,
       html: `

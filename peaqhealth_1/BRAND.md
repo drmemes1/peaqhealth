@@ -347,5 +347,5 @@ Legal copy (always include):
   ✓ Luxury editorial aesthetic — feels like a premium product
 
 ═══════════════════════════════════════════════════════════════════
-ORAVI · oravi.com · Confidential · March 2026
+ORAVI · oravi.health · Confidential · March 2026
 ═══════════════════════════════════════════════════════════════════

@@ -25,7 +25,7 @@ async function sendSleepPush(userId: string, supabase: SupabaseClient) {
   const parts = [hrv, eff, deep].filter(Boolean).join(" · ")
   if (!parts) return
 
-  webpush.setVapidDetails("mailto:igor@oravi.com", process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY)
+  webpush.setVapidDetails("mailto:igor@oravi.health", process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY)
   const subscription = JSON.parse(sub.subscription as string)
   await webpush.sendNotification(subscription, JSON.stringify({
     title: "Your morning Oravi signal",

@@ -10,7 +10,7 @@ export async function POST(req: Request) {
   }
 
   webpush.setVapidDetails(
-    "mailto:igor@oravi.com",
+    "mailto:igor@oravi.health",
     process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
     process.env.VAPID_PRIVATE_KEY,
   )

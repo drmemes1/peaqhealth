@@ -1,0 +1,29 @@
+
+> @peaq/web@0.1.0 test
+> jest
+
+PASS __tests__/pii-scrub.test.ts
+  stripPII
+    ✓ redacts patient name (1 ms)
+    ✓ redacts date of birth
+    ✓ redacts bare SSN pattern
+    ✓ redacts MRN
+    ✓ redacts street address (1 ms)
+    ✓ redacts phone number
+    ✓ redacts email address
+    ✓ preserves glucose value
+    ✓ preserves LDL value
+    ✓ preserves HDL value
+    ✓ preserves HbA1c value
+    ✓ preserves hs-CRP value
+    ✓ preserves Vitamin D value
+    ✓ preserves reference ranges
+    ✓ preserves collection date
+    ✓ preserves lab name
+    ✓ preserves units
+
+Test Suites: 1 passed, 1 total
+Tests:       17 passed, 17 total
+Snapshots:   0 total
+Time:        0.209 s
+Ran all test suites.

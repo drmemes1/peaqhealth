@@ -14,10 +14,10 @@ export async function POST(req: NextRequest) {
   }
 
   const resend = new Resend(resendKey)
-  const from = "Oravi <hello@oravi.com>"
+  const from = "Oravi <hello@oravi.health>"
   const { error } = await resend.emails.send({
     from,
-    to: "info@oravi.com",
+    to: "info@oravi.health",
     subject: `New waitlist signup: ${email}`,
     html: `<p>New waitlist signup:</p><p><strong>${email}</strong></p><p>Date: ${new Date().toISOString()}</p>`,
   })

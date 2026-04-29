@@ -45,10 +45,10 @@ const sections = [
   {
     title: "Your rights",
     body: [
-      "You can request a full export of your data at any time by emailing privacy@oravi.com.",
+      "You can request a full export of your data at any time by emailing privacy@oravi.health.",
       "You can request deletion of your account and all associated health data. Deletion is permanent and processed within 30 days.",
       "You can update or correct your lifestyle and demographic data in Settings at any time.",
-      "California residents have additional rights under CCPA, including the right to know, delete, and opt out of sale (we do not sell data). Requests can be directed to privacy@oravi.com.",
+      "California residents have additional rights under CCPA, including the right to know, delete, and opt out of sale (we do not sell data). Requests can be directed to privacy@oravi.health.",
     ],
   },
   {
@@ -67,7 +67,7 @@ const sections = [
   {
     title: "Contact",
     body: [
-      "Questions about this policy or how your data is handled: privacy@oravi.com",
+      "Questions about this policy or how your data is handled: privacy@oravi.health",
       "Oravi, Inc. · United States",
     ],
   },
@@ -188,7 +188,7 @@ export default function PrivacyPage() {
         }}>
           <OraviLogo size="sm" showTagline={false} />
           <p className="font-body" style={{ fontSize: 11, color: "var(--ink-30)", margin: 0 }}>
-            © {new Date().getFullYear()} Oravi, Inc. · privacy@oravi.com
+            © {new Date().getFullYear()} Oravi, Inc. · privacy@oravi.health
           </p>
         </div>
       </main>

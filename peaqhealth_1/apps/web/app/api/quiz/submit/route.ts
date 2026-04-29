@@ -56,8 +56,8 @@ export async function POST(req: NextRequest) {
 
     // 1. Internal notification (unchanged)
     await resend.emails.send({
-      from: "Oravi <hello@oravi.com>",
-      to: "info@oravi.com",
+      from: "Oravi <hello@oravi.health>",
+      to: "info@oravi.health",
       subject: `Quiz: ${result.tier} risk \u2014 ${email}`,
       html: `
         <p><strong>New quiz submission</strong></p>
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
 
     const tierLabel = result.tier === "high" ? "High" : result.tier === "moderate" ? "Moderate" : "Low"
     await resend.emails.send({
-      from: "Oravi <hello@oravi.com>",
+      from: "Oravi <hello@oravi.health>",
       to: email.toLowerCase().trim(),
       subject: `Your Oravi signal profile \u2014 ${tierLabel} signal density`,
       html: confirmationHtml,

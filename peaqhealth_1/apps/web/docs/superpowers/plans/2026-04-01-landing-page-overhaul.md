@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Redesign oravi.com landing page to feature both app screenshots in a staggered hero, add a science pathway section, replace text-only insight quotes with a real product showcase, and add stat chips to the panel cards.
+**Goal:** Redesign oravi.health landing page to feature both app screenshots in a staggered hero, add a science pathway section, replace text-only insight quotes with a real product showcase, and add stat chips to the panel cards.
 
 **Architecture:** All changes are in `app/page.tsx` (server component, inline styles) and `app/components/landing-panels-science.tsx` (client component, same style pattern). New CSS rules go in `app/globals.css`. No new files, no new components.
 

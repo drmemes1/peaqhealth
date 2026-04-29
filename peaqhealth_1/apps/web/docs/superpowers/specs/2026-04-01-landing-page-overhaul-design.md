@@ -2,7 +2,7 @@
 
 > **For agentic workers:** Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this spec task-by-task.
 
-**Goal:** Redesign oravi.com landing page to better showcase the product through real app screenshots, establish the science hook before the product pitch, and remove section repetition.
+**Goal:** Redesign oravi.health landing page to better showcase the product through real app screenshots, establish the science hook before the product pitch, and remove section repetition.
 
 **Approach:** Semi-overhaul — keep existing components and copy, replace two sections, add two new sections, upgrade hero and three-panels. All changes in `apps/web/app/page.tsx` and `apps/web/app/components/landing-panels-science.tsx`.
 
