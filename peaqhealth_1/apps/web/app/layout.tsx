@@ -1,7 +1,23 @@
 import type { Metadata } from "next";
+import { Manrope, Instrument_Sans } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "./components/theme-provider";
 import { GlobalChat } from "./components/global-chat";
+
+const manrope = Manrope({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-manrope",
+  display: "swap",
+});
+
+const instrumentSans = Instrument_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  style: ["normal", "italic"],
+  variable: "--font-instrument-sans",
+  display: "swap",
+});
 
 // fb:app_id requires a Facebook App ID from developers.facebook.com.
 // To set up: create a Consumer app, copy the App ID, add to Vercel env
@@ -53,7 +69,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={`${manrope.variable} ${instrumentSans.variable}`}>
       <head>
         <meta name="theme-color" content="#141410" />
         <meta name="mobile-web-app-capable" content="yes" />
