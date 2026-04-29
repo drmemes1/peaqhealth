@@ -2,6 +2,7 @@ import { WaitlistForm } from "./components/waitlist-form"
 import { LandingHero } from "./components/landing-hero"
 import { OralSnapshot } from "./components/quiz/OralSnapshot"
 import { WhyOravi } from "./components/why-peaq"
+import { OraviMark } from "./components/OraviMark"
 
 /* ─── Design tokens ───────────────────────────────────────────────────────── */
 
@@ -67,17 +68,9 @@ export default function Home() {
           alignItems: "center",
           justifyContent: "space-between",
         }}>
-          {/* Logo */}
-          <div className="landing-nav-logo">
-            <img
-              src="/oravi.png"
-              alt="Oravi"
-              style={{
-                height: 75,
-                width: "auto",
-                filter: "var(--lp-logo-filter)",
-              }}
-            />
+          {/* Logo — wordmark cropped + blended; theme filter inverts colors when on cream */}
+          <div className="landing-nav-logo" style={{ filter: "var(--lp-logo-filter)" }}>
+            <OraviMark height={36} blend="screen" />
           </div>
 
           {/* Center links */}
@@ -928,16 +921,10 @@ export default function Home() {
           paddingTop: 32,
           paddingBottom: 32,
         }}>
-          {/* Logo — natural color */}
-          <img
-            src="/oravi.png"
-            alt="Oravi"
-            style={{
-              height: 24,
-              width: "auto",
-              opacity: 0.5,
-            }}
-          />
+          {/* Logo — natural color, dark theme so screen-blend the wordmark */}
+          <div style={{ opacity: 0.5, filter: "var(--lp-logo-filter)" }}>
+            <OraviMark height={20} blend="screen" />
+          </div>
 
           {/* Disclaimer */}
           <p style={{

@@ -51,23 +51,9 @@ export function Nav({ cartCount = 0, onCartOpen }: NavProps) {
       }}
     >
       <div className="oravi-nav-inner mx-auto flex max-w-[1200px] items-center justify-between" style={{ padding: "16px 32px" }}>
-        {/* Brand cluster */}
-        <Link href="/dashboard" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ color: "var(--ink)", display: "inline-flex", alignItems: "center" }}>
-            <OraviMark size={28} />
-          </span>
-          <span
-            style={{
-              fontFamily: "var(--font-manrope), sans-serif",
-              fontWeight: 700,
-              fontSize: 22,
-              letterSpacing: "-0.02em",
-              color: "var(--ink)",
-              textTransform: "lowercase",
-            }}
-          >
-            oravi
-          </span>
+        {/* Brand cluster — the wordmark image carries both the mark and the wordmark */}
+        <Link href="/dashboard" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center" }}>
+          <OraviMark height={32} blend="multiply" />
         </Link>
 
         {/* Center nav links */}
