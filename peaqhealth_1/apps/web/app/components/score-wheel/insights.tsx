@@ -110,7 +110,7 @@ function InsightCard({ item, isPrimary }: { item: InsightCardData; isPrimary?: b
 
       {/* Headline */}
       <p style={{
-        fontFamily: "'Cormorant Garamond', Georgia, serif",
+        fontFamily: "var(--font-manrope), system-ui, sans-serif",
         fontSize: isPrimary ? 21 : 17, fontWeight: 400,
         color: "var(--ink)", margin: "0 0 8px", lineHeight: 1.25,
       }}>
@@ -237,7 +237,7 @@ export function Insights({ sleepConnected, hasBlood, oralActive, lifestyleActive
     <div>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 16 }}>
-        <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 22, fontWeight: 300, color: "var(--ink)", margin: 0 }}>
+        <h3 style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 22, fontWeight: 300, color: "var(--ink)", margin: 0 }}>
           Insights
         </h3>
         {loading ? (

@@ -34,7 +34,7 @@ type QuestionnaireData = { mouth_breathing?: string | null; mouth_breathing_when
 type WearableData = { nights_available: number; avg_spo2: number | null; avg_respiratory_rate: number | null; avg_rhr: number | null } | null
 
 const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 const STATUS_COLORS = { good: "#1A8C4E", watch: "#B8860B", concern: "#A84D4D", info: "rgba(184,134,11,0.6)", mixed: "#B8860B", pending: "#C8C6BE" } as const
 
 function spStatus(v: number | null, goodBelow: number): "good" | "watch" | "concern" { return v == null ? "good" : v < goodBelow ? "good" : v < goodBelow * 3 ? "watch" : "concern" }

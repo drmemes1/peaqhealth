@@ -197,7 +197,7 @@ function Section({ title, defaultOpen, children }: {
           {title}
         </span>
         <span style={{
-          fontFamily: "'Cormorant Garamond', serif", fontSize: 16, color: "var(--ink-30)",
+          fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 16, color: "var(--ink-30)",
           width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center",
           border: "0.5px solid var(--ink-12)", borderRadius: "50%",
         }}>
@@ -252,13 +252,13 @@ function SleepMiniChart({
         <AreaChart data={data} margin={{ top: 4, right: 8, left: -24, bottom: 0 }}>
           <XAxis
             dataKey="label"
-            tick={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 11, fill: "var(--ink-30)" }}
+            tick={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 11, fill: "var(--ink-30)" }}
             axisLine={false} tickLine={false}
             interval={Math.max(0, Math.floor(data.length / 8))}
           />
           <YAxis
             domain={domain}
-            tick={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 11, fill: "var(--ink-30)" }}
+            tick={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 11, fill: "var(--ink-30)" }}
             axisLine={false} tickLine={false} tickCount={4}
           />
           <Tooltip
@@ -314,7 +314,7 @@ function MetricRow({
           <div style={{ flex: 1 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <span style={{ width: 8, height: 8, borderRadius: "50%", background: dotColor, display: "inline-block", flexShrink: 0 }} />
-              <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 15, color: "var(--ink)" }}>{name}</span>
+              <span style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 15, color: "var(--ink)" }}>{name}</span>
               {infoContent && (
                 <button
                   onClick={() => setExpanded(e => !e)}
@@ -414,7 +414,7 @@ export function SleepPanelClient({ nights, snapshot, wearable, connectionInput }
         <Nav />
         <main style={{ maxWidth: 680, margin: "0 auto", padding: "32px 24px 80px" }}>
           <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
-            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 36, fontWeight: 300, color: "var(--ink)", margin: 0 }}>Sleep</h1>
+            <h1 style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 36, fontWeight: 300, color: "var(--ink)", margin: 0 }}>Sleep</h1>
             <Link
               href="/dashboard"
               style={{ fontFamily: "var(--font-body)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--ink-30)", textDecoration: "none" }}
@@ -495,7 +495,7 @@ export function SleepPanelClient({ nights, snapshot, wearable, connectionInput }
         {/* Header */}
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
-            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 36, fontWeight: 300, color: "var(--ink)", margin: 0 }}>Sleep</h1>
+            <h1 style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 36, fontWeight: 300, color: "var(--ink)", margin: 0 }}>Sleep</h1>
             {sleepSub !== undefined && (
               <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink-30)" }}>Sleep panel</span>
             )}
@@ -525,7 +525,7 @@ export function SleepPanelClient({ nights, snapshot, wearable, connectionInput }
               Deep Sleep
             </p>
             <p style={{ margin: "0 0 4px", fontFamily: "var(--font-body)", fontSize: 10, color: "var(--ink-30)" }}>30-day avg</p>
-            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 48, fontWeight: 300, color: "var(--ink)", lineHeight: 1 }}>
+            <span style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 48, fontWeight: 300, color: "var(--ink)", lineHeight: 1 }}>
               {avgDeep != null ? Math.round(avgDeep) : "—"}
             </span>
             <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "var(--ink-30)", marginLeft: 4 }}>%</span>
@@ -537,7 +537,7 @@ export function SleepPanelClient({ nights, snapshot, wearable, connectionInput }
               HRV
             </p>
             <p style={{ margin: "0 0 4px", fontFamily: "var(--font-body)", fontSize: 10, color: "var(--ink-30)" }}>30-day avg</p>
-            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 48, fontWeight: 300, color: "var(--ink)", lineHeight: 1 }}>
+            <span style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 48, fontWeight: 300, color: "var(--ink)", lineHeight: 1 }}>
               {avgHrv != null ? Math.round(avgHrv) : "—"}
             </span>
             <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "var(--ink-30)", marginLeft: 4 }}>ms</span>
@@ -549,7 +549,7 @@ export function SleepPanelClient({ nights, snapshot, wearable, connectionInput }
               Efficiency
             </p>
             <p style={{ margin: "0 0 4px", fontFamily: "var(--font-body)", fontSize: 10, color: "var(--ink-30)" }}>30-day avg</p>
-            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 48, fontWeight: 300, color: "var(--ink)", lineHeight: 1 }}>
+            <span style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 48, fontWeight: 300, color: "var(--ink)", lineHeight: 1 }}>
               {avgEff != null ? Math.round(avgEff) : "—"}
             </span>
             <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "var(--ink-30)", marginLeft: 4 }}>%</span>
@@ -585,7 +585,7 @@ export function SleepPanelClient({ nights, snapshot, wearable, connectionInput }
             </div>
 
             {narrative.headline && (
-              <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 300, color: "var(--ink)", lineHeight: 1.3, margin: "0 0 10px" }}>
+              <p style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 20, fontWeight: 300, color: "var(--ink)", lineHeight: 1.3, margin: "0 0 10px" }}>
                 {narrative.headline}
               </p>
             )}

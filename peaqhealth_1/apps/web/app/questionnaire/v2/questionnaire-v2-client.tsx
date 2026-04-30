@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { V2_QUESTIONS, getV2QuestionCount } from "../../../lib/questionnaire/v2-questions"
 import { ExplanationBox, UnitToggle, RadioOption, CheckboxOption, QuestionScreen, QuestionNavigation } from "../../components/questionnaire/v2"
 
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 const TOTAL = getV2QuestionCount()
 

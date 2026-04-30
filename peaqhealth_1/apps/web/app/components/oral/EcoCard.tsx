@@ -1,6 +1,6 @@
 "use client"
 
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 
 const ACCENT: Record<string, string> = { strong: "#4A7A4A", watch: "#B8860B", attention: "#9B3838", no_data: "#A8A59B" }

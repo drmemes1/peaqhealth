@@ -46,7 +46,7 @@ export function HeroTitle({ score, sleepConnected, hasBlood, oralActive, subline
 
   return (
     <div style={{ textAlign: "center" }}>
-      <h2 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 34, fontWeight: 300, letterSpacing: "-0.01em", color: "var(--ink)", lineHeight: 1.2, margin: 0 }}>
+      <h2 style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 34, fontWeight: 300, letterSpacing: "-0.01em", color: "var(--ink)", lineHeight: 1.2, margin: 0 }}>
         {headline}
       </h2>
       <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, marginTop: 12, color: "var(--ink-60)", maxWidth: 360, margin: "12px auto 0", lineHeight: 1.7 }}>

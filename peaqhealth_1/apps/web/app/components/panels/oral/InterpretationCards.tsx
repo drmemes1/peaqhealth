@@ -3,7 +3,7 @@
 import type { UserPanelContext } from "../../../../lib/user-context"
 import { getSubInsights } from "../../../../lib/oral/subInsights"
 
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 
 function f(v: number | null | undefined, d = 1): string { return v == null ? "—" : v.toFixed(d) }

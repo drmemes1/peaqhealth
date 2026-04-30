@@ -10,7 +10,7 @@ import { SectionHeader } from "../../components/panels"
 import { BLOOD_CATEGORIES } from "../../../lib/blood/categories"
 import { MARKERS } from "../../../lib/blood/marker-content"
 
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 
 type Status = "attention" | "watch" | "strong" | "not_tested"

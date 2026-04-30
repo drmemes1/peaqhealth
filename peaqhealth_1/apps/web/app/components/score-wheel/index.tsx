@@ -573,7 +573,7 @@ function InteractionCard({ interaction }: { interaction: ComputedInteraction }) 
             width: 14, height: 14, borderRadius: "50%",
             border: `0.5px solid ${hoverLearn ? "var(--ink-30)" : "var(--ink-20)"}`,
             display: "inline-flex", alignItems: "center", justifyContent: "center",
-            fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 12, lineHeight: 1,
+            fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 12, lineHeight: 1,
             flexShrink: 0, transition: "border-color 0.15s ease",
           }}>
             {learnOpen ? "−" : "+"}
@@ -906,7 +906,7 @@ function CrossPanelInteractions({
                     paddingLeft: 20,
                   }}>
                     <span style={{
-                      fontFamily: "'Cormorant Garamond', Georgia, serif",
+                      fontFamily: "var(--font-manrope), system-ui, sans-serif",
                       fontSize: 20, fontWeight: 400, lineHeight: 1,
                       color: pointColor,
                       minWidth: 32,
@@ -916,7 +916,7 @@ function CrossPanelInteractions({
                     </span>
                     <div style={{ flex: 1 }}>
                       <p style={{
-                        fontFamily: "'Cormorant Garamond', Georgia, serif",
+                        fontFamily: "var(--font-manrope), system-ui, sans-serif",
                         fontSize: 17, fontWeight: 400, lineHeight: 1.35,
                         color: "var(--ink, #1a1a18)",
                         margin: "0 0 4px",
@@ -1003,7 +1003,7 @@ function CrossPanelInteractions({
             Cross-Panel Signals
           </p>
           <p style={{
-            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontFamily: "var(--font-manrope), system-ui, sans-serif",
             fontStyle: "italic", fontSize: 17, lineHeight: 1.4,
             color: "var(--ink-40, rgba(20,20,16,0.40))",
             margin: 0,
@@ -1038,7 +1038,7 @@ function CrossPanelInteractions({
                 width: 20, height: 20, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
                 border: `0.5px solid ${hoverToggle ? "#C49A3C" : "rgba(184,134,11,0.4)"}`,
                 color: hoverToggle ? "#C49A3C" : "rgba(184,134,11,0.6)",
-                fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 16, lineHeight: 1,
+                fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 16, lineHeight: 1,
                 transition: "border-color 0.2s ease, color 0.2s ease", flexShrink: 0, marginLeft: 8,
               }}
             >
@@ -1074,7 +1074,7 @@ function CrossPanelInteractions({
           display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap",
         }}>
           <div>
-            <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", fontSize: 17, color: "var(--ink)", margin: "0 0 4px", lineHeight: 1.3 }}>
+            <p style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontStyle: "italic", fontSize: 17, color: "var(--ink)", margin: "0 0 4px", lineHeight: 1.3 }}>
               Your cross-panel intelligence is waiting.
             </p>
             <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink-60)", margin: 0, lineHeight: 1.5 }}>
@@ -1100,7 +1100,7 @@ function CrossPanelInteractions({
         }}>
           <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#9A7200", flexShrink: 0, animation: "cpPulse 2s infinite", display: "inline-block" }} />
           <div>
-            <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", fontSize: 17, color: "var(--ink)", margin: "0 0 4px", lineHeight: 1.3 }}>
+            <p style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontStyle: "italic", fontSize: 17, color: "var(--ink)", margin: "0 0 4px", lineHeight: 1.3 }}>
               Your sample is on its way.
             </p>
             <p style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 13, color: "var(--ink-60)", margin: 0, lineHeight: 1.5 }}>
@@ -1148,7 +1148,7 @@ const CollapsiblePanel = React.forwardRef<CollapsiblePanelHandle, {
         onClick={() => setOpen((o) => !o)}
       >
         <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
-          <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 22, fontWeight: 300, color: "var(--ink)", margin: 0 }}>{title}</h3>
+          <h3 style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 22, fontWeight: 300, color: "var(--ink)", margin: 0 }}>{title}</h3>
           {score !== undefined && maxScore !== undefined && (
             <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, color: "var(--ink-30)" }}>
               {score}/{maxScore} pts
@@ -1168,7 +1168,7 @@ const CollapsiblePanel = React.forwardRef<CollapsiblePanelHandle, {
               width: 20, height: 20, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
               border: `0.5px solid ${hoverToggle ? "var(--gold)" : "var(--ink-20)"}`,
               color: hoverToggle ? "var(--gold)" : "var(--ink-60)",
-              fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 16, lineHeight: 1,
+              fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 16, lineHeight: 1,
               transition: "border-color 0.2s ease, color 0.2s ease", flexShrink: 0,
             }}
           >
@@ -1229,7 +1229,7 @@ function OralSpeciesRow({ name, role, val, target, note, isPathogen, flagFn, lea
     >
       <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ margin: 0, fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 13, fontStyle: "italic", color: notDetected ? "var(--ink-30)" : "var(--ink)", lineHeight: 1.3 }}>
+          <p style={{ margin: 0, fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 13, fontStyle: "italic", color: notDetected ? "var(--ink-30)" : "var(--ink)", lineHeight: 1.3 }}>
             {name}
           </p>
           <p style={{ margin: "2px 0 0", fontFamily: font, fontSize: 11, color: "var(--ink-60)", lineHeight: 1.3 }}>
@@ -1270,7 +1270,7 @@ function OralSpeciesRow({ name, role, val, target, note, isPathogen, flagFn, lea
         <span style={{
           width: 12, height: 12, borderRadius: "50%", border: "0.5px solid var(--ink-20)",
           display: "inline-flex", alignItems: "center", justifyContent: "center",
-          fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 10, lineHeight: 1, flexShrink: 0,
+          fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 10, lineHeight: 1, flexShrink: 0,
         }}>
           {expanded ? "−" : "+"}
         </span>
@@ -1313,7 +1313,7 @@ function OralSection({ title, children }: { title: string; children: React.React
             width: 16, height: 16, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
             border: `0.5px solid ${hov ? "#3B6D11" : "rgba(45,106,79,0.35)"}`,
             color: hov ? "#3B6D11" : "rgba(45,106,79,0.5)",
-            fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 13, lineHeight: 1,
+            fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 13, lineHeight: 1,
             transition: "border-color 0.2s ease, color 0.2s ease", flexShrink: 0,
           }}
         >
@@ -1360,7 +1360,7 @@ function CompleteMicrobiomePanel({ species, shannonDiversity }: {
             width: 20, height: 20, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
             border: `0.5px solid ${hov ? "#3B6D11" : "rgba(45,106,79,0.4)"}`,
             color: hov ? "#3B6D11" : "rgba(45,106,79,0.6)",
-            fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 16, lineHeight: 1,
+            fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 16, lineHeight: 1,
             transition: "border-color 0.2s ease, color 0.2s ease", flexShrink: 0,
           }}
         >
@@ -1435,7 +1435,7 @@ function CompleteMicrobiomePanel({ species, shannonDiversity }: {
             {/* Shannon diversity */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderBottom: "0.5px solid var(--ink-06)" }}>
               <div>
-                <p style={{ margin: 0, fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 13, fontStyle: "italic", color: "var(--ink)" }}>Shannon Diversity Index</p>
+                <p style={{ margin: 0, fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 13, fontStyle: "italic", color: "var(--ink)" }}>Shannon Diversity Index</p>
                 <p style={{ margin: "2px 0 0", fontFamily: font, fontSize: 11, color: "var(--ink-60)" }}>Species richness and evenness — target ≥3.0</p>
               </div>
               <div style={{ textAlign: "right" }}>
@@ -1456,7 +1456,7 @@ function CompleteMicrobiomePanel({ species, shannonDiversity }: {
             {sp("Species richness") > 0 && (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderBottom: "0.5px solid var(--ink-06)" }}>
                 <div>
-                  <p style={{ margin: 0, fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 13, fontStyle: "italic", color: "var(--ink)" }}>Species Richness</p>
+                  <p style={{ margin: 0, fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 13, fontStyle: "italic", color: "var(--ink)" }}>Species Richness</p>
                   <p style={{ margin: "2px 0 0", fontFamily: font, fontSize: 11, color: "var(--ink-60)" }}>Total OTUs detected — target &gt;150</p>
                 </div>
                 <div style={{ textAlign: "right" }}>
@@ -1510,7 +1510,7 @@ function BacteriaGroup({ title, rows, mounted }: {
             width: 16, height: 16, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
             border: `0.5px solid ${hov ? "var(--gold)" : "var(--ink-20)"}`,
             color: hov ? "var(--gold)" : "var(--ink-60)",
-            fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 13, lineHeight: 1,
+            fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 13, lineHeight: 1,
             transition: "border-color 0.2s ease, color 0.2s ease", flexShrink: 0,
           }}
         >
@@ -1876,7 +1876,7 @@ export function ScoreWheel({
                 </defs>
 
                 {/* Score number */}
-                <text x="340" y="68" textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="80" fontWeight="400" fill="#1a1a18" letterSpacing="-1">{displayScore}</text>
+                <text x="340" y="68" textAnchor="middle" fontFamily="var(--font-manrope), system-ui, sans-serif" fontSize="80" fontWeight="400" fill="#1a1a18" letterSpacing="-1">{displayScore}</text>
 
                 {/* Mountain bg */}
                 <path d="M0 310 L30 268 L90 285 L170 210 L240 248 L330 165 L400 200 L460 175 L520 210 L575 185 L625 215 L660 198 L680 208 L680 310 Z" fill="url(#pviz-mtn1)" />
@@ -1888,50 +1888,50 @@ export function ScoreWheel({
                 {/* SLEEP — center 130, base 70px */}
                 <polygon points={`95,${BL} 130,${sleepApexY} 165,${BL}`} fill="url(#pviz-sleep)" stroke="#185FA5" strokeWidth="1.2" />
                 <circle cx="130" cy={sleepApexY} r="4.5" fill="#185FA5" />
-                <text x="130" y={sleepApexY - 14} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="18" fill="#185FA5">{sScore}</text>
+                <text x="130" y={sleepApexY - 14} textAnchor="middle" fontFamily="var(--font-manrope), system-ui, sans-serif" fontSize="18" fill="#185FA5">{sScore}</text>
 
                 {/* BLOOD — center 280, base 80px */}
                 <polygon points={`240,${BL} 280,${bloodApexY} 320,${BL}`} fill="url(#pviz-blood)" stroke="#A32D2D" strokeWidth="1.2" />
                 <circle cx="280" cy={bloodApexY} r="4.5" fill="#A32D2D" />
-                <text x="280" y={bloodApexY - 14} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="18" fill="#A32D2D">{bScore}</text>
+                <text x="280" y={bloodApexY - 14} textAnchor="middle" fontFamily="var(--font-manrope), system-ui, sans-serif" fontSize="18" fill="#A32D2D">{bScore}</text>
 
                 {/* ORAL — center 430, base 54px */}
                 <polygon points={`403,${BL} 430,${oralApexY} 457,${BL}`} fill="url(#pviz-oral)" stroke="#3B6D11" strokeWidth="1.2" />
                 <circle cx="430" cy={oralApexY} r="4.5" fill="#3B6D11" />
-                <text x="430" y={oralApexY - 14} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="18" fill="#3B6D11">{oScore}</text>
+                <text x="430" y={oralApexY - 14} textAnchor="middle" fontFamily="var(--font-manrope), system-ui, sans-serif" fontSize="18" fill="#3B6D11">{oScore}</text>
 
                 {/* CROSS-PANEL — center 580, base 48px */}
                 {crossNet !== 0 && crossNet < 0 && (
                   <>
                     <polygon points={`556,${BL} 604,${BL} 580,${BL + crossH}`} fill="url(#pviz-cross)" stroke="#C49A3C" strokeWidth=".9" strokeDasharray="4 3" />
                     <circle cx="580" cy={BL + crossH} r="3.5" fill="#C49A3C" />
-                    <text x="580" y={BL - 12} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="16" fill="#C49A3C">{crossLabel}</text>
+                    <text x="580" y={BL - 12} textAnchor="middle" fontFamily="var(--font-manrope), system-ui, sans-serif" fontSize="16" fill="#C49A3C">{crossLabel}</text>
                   </>
                 )}
                 {crossNet > 0 && (
                   <>
                     <polygon points={`556,${BL} 604,${BL} 580,${BL - crossH}`} fill="url(#pviz-cross)" stroke="#C49A3C" strokeWidth=".9" strokeDasharray="4 3" />
                     <circle cx="580" cy={BL - crossH} r="3.5" fill="#C49A3C" />
-                    <text x="580" y={BL - crossH - 12} textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontSize="16" fill="#C49A3C">{crossLabel}</text>
+                    <text x="580" y={BL - crossH - 12} textAnchor="middle" fontFamily="var(--font-manrope), system-ui, sans-serif" fontSize="16" fill="#C49A3C">{crossLabel}</text>
                   </>
                 )}
 
                 {/* Labels */}
-                <text x="130" y="360" textAnchor="middle" fontSize="10" fill="#999" letterSpacing="2" fontFamily="'Cormorant Garamond', Georgia, serif">SLEEP</text>
-                <text x="280" y="360" textAnchor="middle" fontSize="10" fill="#999" letterSpacing="2" fontFamily="'Cormorant Garamond', Georgia, serif">BLOOD</text>
-                <text x="430" y="360" textAnchor="middle" fontSize="10" fill="#999" letterSpacing="2" fontFamily="'Cormorant Garamond', Georgia, serif">ORAL</text>
-                <text x="580" y="360" textAnchor="middle" fontSize="10" fill="#C49A3C" letterSpacing="1.5" fontFamily="'Cormorant Garamond', Georgia, serif">CROSS-PANEL</text>
-                <text x="130" y="374" textAnchor="middle" fontSize="9" fill="#ccc" fontFamily="'Cormorant Garamond', Georgia, serif">/30</text>
-                <text x="280" y="374" textAnchor="middle" fontSize="9" fill="#ccc" fontFamily="'Cormorant Garamond', Georgia, serif">/40</text>
-                <text x="430" y="374" textAnchor="middle" fontSize="9" fill="#ccc" fontFamily="'Cormorant Garamond', Georgia, serif">/30</text>
-                <text x="580" y="374" textAnchor="middle" fontSize="9" fill="#C49A3C" opacity=".6" fontFamily="'Cormorant Garamond', Georgia, serif">modifier</text>
+                <text x="130" y="360" textAnchor="middle" fontSize="10" fill="#999" letterSpacing="2" fontFamily="var(--font-manrope), system-ui, sans-serif">SLEEP</text>
+                <text x="280" y="360" textAnchor="middle" fontSize="10" fill="#999" letterSpacing="2" fontFamily="var(--font-manrope), system-ui, sans-serif">BLOOD</text>
+                <text x="430" y="360" textAnchor="middle" fontSize="10" fill="#999" letterSpacing="2" fontFamily="var(--font-manrope), system-ui, sans-serif">ORAL</text>
+                <text x="580" y="360" textAnchor="middle" fontSize="10" fill="#C49A3C" letterSpacing="1.5" fontFamily="var(--font-manrope), system-ui, sans-serif">CROSS-PANEL</text>
+                <text x="130" y="374" textAnchor="middle" fontSize="9" fill="#ccc" fontFamily="var(--font-manrope), system-ui, sans-serif">/30</text>
+                <text x="280" y="374" textAnchor="middle" fontSize="9" fill="#ccc" fontFamily="var(--font-manrope), system-ui, sans-serif">/40</text>
+                <text x="430" y="374" textAnchor="middle" fontSize="9" fill="#ccc" fontFamily="var(--font-manrope), system-ui, sans-serif">/30</text>
+                <text x="580" y="374" textAnchor="middle" fontSize="9" fill="#C49A3C" opacity=".6" fontFamily="var(--font-manrope), system-ui, sans-serif">modifier</text>
               </svg>
             </div>
 
             {/* Tagline */}
             <div style={{ textAlign: "center", padding: "20px 32px 28px", borderTop: "0.5px solid #EDEBE5" }}>
               <div style={{
-                fontFamily: "'Cormorant Garamond', Georgia, serif",
+                fontFamily: "var(--font-manrope), system-ui, sans-serif",
                 fontSize: 24, fontWeight: 400, color: "#1a1a18", lineHeight: 1.35,
               }}>
                 Real room to <em style={{ fontStyle: "italic", color: "#C49A3C" }}>improve.</em><br />
@@ -2140,7 +2140,7 @@ export function ScoreWheel({
         )}
 
         {bloodData?.bloodInsight && (
-          <p style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontStyle: "italic", fontSize: 16, color: "var(--ink-80)", lineHeight: 1.55, margin: "0 0 14px", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+          <p style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontStyle: "italic", fontSize: 16, color: "var(--ink-80)", lineHeight: 1.55, margin: "0 0 14px", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
             {bloodData.bloodInsight}
           </p>
         )}

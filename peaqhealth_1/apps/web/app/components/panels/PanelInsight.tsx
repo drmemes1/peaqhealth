@@ -3,7 +3,7 @@
 import { useState, useEffect, type ReactNode } from "react"
 
 const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 
 type Tab = "picture" | "converge" | "actions"
 type TabData = { content: string | null; pullquotes: string[]; citations: string[] }

@@ -3,7 +3,7 @@
 import { CappuccinoCard, Strong, Gold } from "../../components/panels/CappuccinoCard"
 
 const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 
 function DropIcon({ color }: { color: string }) {
   return (

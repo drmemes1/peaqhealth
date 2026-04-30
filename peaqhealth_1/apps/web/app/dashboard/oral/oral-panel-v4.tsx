@@ -11,7 +11,7 @@ import { HeroLine } from "../../components/oral/HeroLine"
 import { ExploreHint } from "../../components/oral/ExploreHint"
 import { OralSortControls, type OralSort, type OralFilter } from "../../components/oral/OralSortControls"
 
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 
 type Status = "strong" | "watch" | "attention"

@@ -6,7 +6,7 @@ import { OraviMark } from "./components/OraviMark"
 
 /* ─── Design tokens ───────────────────────────────────────────────────────── */
 
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 const sans  = "'Instrument Sans', system-ui, sans-serif"
 
 // Landing page color tokens — all reactive to [data-landing-theme] via CSS vars in globals.css.

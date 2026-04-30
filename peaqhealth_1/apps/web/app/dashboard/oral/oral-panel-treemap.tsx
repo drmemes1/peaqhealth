@@ -14,7 +14,7 @@ import { computeBiofilmMaturity, BIOFILM_STAGE_LABELS } from "../../../lib/oral/
 import { computeTranslocation, TRANSLOCATION_LEVEL_LABELS } from "../../../lib/oral/translocationRisk"
 import { computeInflammatoryPattern, INFLAMMATORY_LEVEL_LABELS } from "../../../lib/oral/inflammatoryPattern"
 
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 
 type Status = "strong" | "watch" | "attention"

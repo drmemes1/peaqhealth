@@ -9,7 +9,7 @@ interface OraviTriangleProps {
   modifier_total?: number
 }
 
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 const sans = "-apple-system, BlinkMacSystemFont, sans-serif"
 
 // Triangle vertices (equilateral, 30% smaller, centered in 400x400)

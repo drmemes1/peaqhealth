@@ -18,7 +18,7 @@ export function StepWelcome({ onNext }: Props) {
       </div>
 
       <div className="flex flex-col items-center gap-1">
-        <span style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 64, fontWeight: 300, color: "var(--ink)", lineHeight: 1, opacity: 0.15 }}>
+        <span style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 64, fontWeight: 300, color: "var(--ink)", lineHeight: 1, opacity: 0.15 }}>
           Oravi Age
         </span>
       </div>

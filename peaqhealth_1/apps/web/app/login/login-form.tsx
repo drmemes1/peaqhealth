@@ -211,7 +211,7 @@ export function LoginForm({ defaultTab = "signin" }: { defaultTab?: Tab }) {
         {/* Center content */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", maxWidth: 520 }}>
           <h1 style={{
-            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontFamily: "var(--font-manrope), system-ui, sans-serif",
             fontSize: 52, fontWeight: 300, lineHeight: 1.1,
             color: "#F6F4EF", margin: "0 0 24px",
             opacity: mounted ? 1 : 0, transform: mounted ? "none" : "translateY(12px)",

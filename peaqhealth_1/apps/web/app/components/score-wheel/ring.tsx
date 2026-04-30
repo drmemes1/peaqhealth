@@ -173,7 +173,7 @@ export function ScoreRingComponent({
         <span
           ref={scoreNumRef}
           className={scorePulse ? "score-pulse" : ""}
-          style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 70, fontWeight: 300, lineHeight: 1, letterSpacing: "-0.02em", color: "var(--ink)", display: "block" }}
+          style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 70, fontWeight: 300, lineHeight: 1, letterSpacing: "-0.02em", color: "var(--ink)", display: "block" }}
         >
           {displayScore}
         </span>

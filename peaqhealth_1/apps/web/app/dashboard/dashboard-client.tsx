@@ -15,7 +15,7 @@ import type { InterventionWithState } from "../../lib/interventions/engagements"
 import type { DoseResponseResult } from "../../lib/oral/nitrateDoseResponse"
 import { NitrateOpportunityCard } from "../components/dashboard/NitrateOpportunityCard"
 
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 const sans  = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 
 // ─── Design System Colors ───────────────────────────────────────────────────

@@ -10,7 +10,7 @@ const GOLD        = "#B8860B"
 const ORAL_GREEN  = "#2D6A4F"
 const AMBER       = "#92650A"
 
-const FONT_DISPLAY = "'Cormorant Garamond', Georgia, serif"
+const FONT_DISPLAY = "var(--font-manrope), system-ui, sans-serif"
 const FONT_BODY    = "'Instrument Sans', system-ui, sans-serif"
 
 // ── Data ─────────────────────────────────────────────────────────────────────

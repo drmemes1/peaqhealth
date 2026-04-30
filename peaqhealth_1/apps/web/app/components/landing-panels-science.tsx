@@ -4,7 +4,7 @@ import { useState, useCallback } from "react"
 import Link from "next/link"
 import { LandingCitations } from "./landing-citations"
 
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 const sans  = "'Instrument Sans', system-ui, sans-serif"
 
 const INK    = "#1a1a18"

@@ -10,7 +10,7 @@ import type { MarkerDef } from "../../../../lib/markers/definitions"
 import { MARKER_RULES_COUNT } from "../../../../lib/markers/definitions"
 import { LineChart, Line, XAxis, YAxis, ReferenceArea, Tooltip, ResponsiveContainer, Dot } from "recharts"
 
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 const sans  = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 
 const THRESHOLD_COLORS = { green: "#1A8C4E", amber: "#E07B00", red: "#D42B2B" } as const

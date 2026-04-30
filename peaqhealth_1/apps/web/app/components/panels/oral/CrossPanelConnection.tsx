@@ -3,7 +3,7 @@
 import type { UserPanelContext } from "../../../../lib/user-context"
 import { WhatThisMeans } from "../../ui/WhatThisMeans"
 
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 
 export function CrossPanelConnection({ ctx }: { ctx: UserPanelContext }) {

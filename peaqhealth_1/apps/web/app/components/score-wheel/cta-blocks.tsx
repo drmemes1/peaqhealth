@@ -19,7 +19,7 @@ function CTABlock({ color, title, points, features, buttonLabel, href }: CTABloc
   return (
     <div style={{ borderRadius: 4, overflow: "hidden" }}>
       <div style={{ background: color, padding: "16px 20px", display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
-        <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 20, fontWeight: 300, color: "var(--white)", margin: 0 }}>{title}</h3>
+        <h3 style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 20, fontWeight: 300, color: "var(--white)", margin: 0 }}>{title}</h3>
         <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 11, textTransform: "uppercase", color: "rgba(255,255,255,0.65)" }}>{points} available</span>
       </div>
       <div style={{ background: "var(--white)", border: "0.5px solid var(--ink-12)", borderTop: "none", borderRadius: "0 0 4px 4px", padding: "16px 20px" }}>

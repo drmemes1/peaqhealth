@@ -1,6 +1,6 @@
 "use client"
 
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 
 const PANEL_COLORS = { oral: "#2D6A4F", blood: "#C0392B", sleep: "#4A7FB5" } as const

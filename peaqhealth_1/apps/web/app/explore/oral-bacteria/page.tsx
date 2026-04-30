@@ -2,7 +2,7 @@ import Link from "next/link"
 import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { Nav } from "../../components/nav"
 
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 
 interface SpeciesEntry {

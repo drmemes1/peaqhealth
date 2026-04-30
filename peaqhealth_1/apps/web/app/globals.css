@@ -36,7 +36,7 @@ html {
   --oral-c: #3B6D11;
   --oral-bg: #EAF3DE;
 
-  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-display: var(--font-manrope), system-ui, sans-serif;
   --font-body: "Instrument Sans", system-ui, sans-serif;
 
   --amber: #92400E;

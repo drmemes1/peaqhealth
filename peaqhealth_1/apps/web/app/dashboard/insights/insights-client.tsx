@@ -20,7 +20,7 @@ export function InsightsClient({ snapshot, weekly }: {
 
         {/* Header */}
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
-          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 36, fontWeight: 300, color: "var(--ink)", margin: 0 }}>
+          <h1 style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 36, fontWeight: 300, color: "var(--ink)", margin: 0 }}>
             AI Insights
           </h1>
           <Link href="/dashboard" style={{ fontFamily: "var(--font-body)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--ink-30)", textDecoration: "none" }}
@@ -32,7 +32,7 @@ export function InsightsClient({ snapshot, weekly }: {
 
         {/* Hero */}
         <div style={{ marginBottom: 48 }}>
-          <p style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: 22, lineHeight: 1.4, color: "var(--ink)", margin: "0 0 16px" }}>
+          <p style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontStyle: "italic", fontSize: 22, lineHeight: 1.4, color: "var(--ink)", margin: "0 0 16px" }}>
             Your data, interpreted.
           </p>
           <p style={{ fontFamily: "var(--font-body)", fontSize: 14, lineHeight: 1.7, color: "var(--ink-60)", margin: 0, maxWidth: 560 }}>
@@ -57,7 +57,7 @@ export function InsightsClient({ snapshot, weekly }: {
                 {trendLabel}
               </span>
             </div>
-            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 19, lineHeight: 1.4, color: "var(--ink)", margin: "0 0 10px" }}>
+            <p style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 19, lineHeight: 1.4, color: "var(--ink)", margin: "0 0 10px" }}>
               {headline}
             </p>
             {body && (
@@ -75,7 +75,7 @@ export function InsightsClient({ snapshot, weekly }: {
             padding: 24,
             marginBottom: 32,
           }}>
-            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: 17, color: "var(--ink-40)", lineHeight: 1.4, margin: 0 }}>
+            <p style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontStyle: "italic", fontSize: 17, color: "var(--ink-40)", lineHeight: 1.4, margin: 0 }}>
               Your weekly AI insight will appear here once enough data is available.
             </p>
           </div>

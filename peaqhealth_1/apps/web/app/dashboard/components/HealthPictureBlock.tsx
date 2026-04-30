@@ -80,7 +80,7 @@ export function HealthPictureBlock({ observations, panelsActive, updatedAt, spec
             <span style={{
               position: "absolute", inset: 0,
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 36, fontWeight: 300, color: "#FFFFFF",
+              fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 36, fontWeight: 300, color: "#FFFFFF",
               letterSpacing: -1,
             }}>
               {speciesCount ?? "—"}

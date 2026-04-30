@@ -6,7 +6,7 @@ import { treemap, hierarchy, treemapSquarify } from "d3-hierarchy"
 import { lookupTaxon, CATEGORY_LABELS, CATEGORY_COLORS, type BacteriaCategory } from "../../../../lib/oral/bacteriaTaxonomy"
 import { computeVeillonellaContext } from "../../../../lib/oral/veillonellaContext"
 
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 
 const LONG_TAIL_THRESHOLD = 0.005

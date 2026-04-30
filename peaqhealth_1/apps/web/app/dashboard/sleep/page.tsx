@@ -31,7 +31,7 @@ export default async function SleepPage() {
       <div className="min-h-svh" style={{ background: "#F5F3EE" }}>
         <Nav />
         <main style={{ maxWidth: 680, margin: "0 auto", padding: "32px 24px 80px" }}>
-          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 36, fontWeight: 300, color: "var(--ink)", margin: "0 0 24px" }}>Sleep</h1>
+          <h1 style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 36, fontWeight: 300, color: "var(--ink)", margin: "0 0 24px" }}>Sleep</h1>
           <p style={{ fontFamily: "var(--font-body)", fontSize: 14, color: "var(--ink-60)", lineHeight: 1.6, marginBottom: 16 }}>
             Complete your sleep questionnaire or connect a wearable to see your sleep data here.
           </p>

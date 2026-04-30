@@ -85,7 +85,7 @@ export function ScoreHistoryChart({ data }: ScoreHistoryChartProps) {
         <XAxis
           dataKey="label"
           tick={{
-            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontFamily: "var(--font-manrope), system-ui, sans-serif",
             fontSize: 12,
             fill: "var(--ink-40)",
           }}
@@ -95,7 +95,7 @@ export function ScoreHistoryChart({ data }: ScoreHistoryChartProps) {
         <YAxis
           domain={[0, 100]}
           tick={{
-            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontFamily: "var(--font-manrope), system-ui, sans-serif",
             fontSize: 12,
             fill: "var(--ink-40)",
           }}

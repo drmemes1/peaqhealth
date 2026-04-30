@@ -4,7 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { Nav } from "../../components/nav"
 
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 const sans  = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 
 const NON_STANDARD_TEST_COPY: Record<string, { name: string; ask_for: string; why_short: string }> = {

@@ -72,7 +72,7 @@ export function NextSteps({
   return (
     <div>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 16 }}>
-        <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 22, fontWeight: 300, color: "var(--ink)", margin: 0 }}>
+        <h3 style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 22, fontWeight: 300, color: "var(--ink)", margin: 0 }}>
           What to focus on <em style={{ fontStyle: "italic", color: "var(--gold)" }}>next.</em>
         </h3>
       </div>

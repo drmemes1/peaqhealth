@@ -107,7 +107,7 @@ const C = {
   ink: "var(--ink)",
 } as const
 
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 const sans  = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 const body = "var(--font-body, 'Instrument Sans', sans-serif)"
 
@@ -586,7 +586,7 @@ function SleepNarrativeCard() {
 
       {/* Headline */}
       {typeof narrative.headline === "string" && (
-        <div style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 20, fontWeight: 300, color: "var(--ink)", lineHeight: 1.3, marginBottom: 10 }}>
+        <div style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 20, fontWeight: 300, color: "var(--ink)", lineHeight: 1.3, marginBottom: 10 }}>
           {narrative.headline}
         </div>
       )}
@@ -647,7 +647,7 @@ function SleepNarrativeCard() {
                       </button>
                     )}
                   </div>
-                  <div style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 18, fontWeight: 300, color: m.ok(m.value!) ? "var(--sleep-c)" : "var(--ink-60)" }}>
+                  <div style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 18, fontWeight: 300, color: m.ok(m.value!) ? "var(--sleep-c)" : "var(--ink-60)" }}>
                     {m.value!.toFixed(1)}{m.unit}
                   </div>
                 </div>
@@ -701,7 +701,7 @@ function SleepPausedCard() {
           Manage →
         </a>
       </div>
-      <div style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: '18px', color: 'var(--ink)', lineHeight: 1.4, marginBottom: '10px' }}>
+      <div style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: '18px', color: 'var(--ink)', lineHeight: 1.4, marginBottom: '10px' }}>
         Your sleep panel is currently paused
       </div>
       <p style={{ fontFamily: font, fontSize: '13px', color: 'var(--ink-40)', lineHeight: 1.65, marginBottom: '16px' }}>

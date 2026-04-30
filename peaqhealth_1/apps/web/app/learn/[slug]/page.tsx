@@ -4,7 +4,7 @@ import { createClient } from "../../../lib/supabase/server"
 import { Nav } from "../../components/nav"
 import { ArticleBody } from "./article-body"
 
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 const sans  = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 
 export default async function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {

@@ -8,7 +8,7 @@ import { getAirwaySignal } from "../../../lib/signals/airway"
 import { getCognitiveSignal } from "../../../lib/signals/cognitive"
 import { getSleepDurationSignal } from "../../../lib/signals/sleep-duration"
 
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 
 const S = {

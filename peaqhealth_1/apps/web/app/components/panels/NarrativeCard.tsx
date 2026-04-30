@@ -1,4 +1,4 @@
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 
 interface Props {
   children: React.ReactNode

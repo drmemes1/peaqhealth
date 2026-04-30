@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { OnboardingData } from "./types";
 
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 
 function getBandMessage(band: string): string {
   if (band === "EXCEPTIONAL") return "Exceptional. Your biology is well ahead of your age.";

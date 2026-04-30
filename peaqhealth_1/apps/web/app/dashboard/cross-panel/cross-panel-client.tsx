@@ -73,7 +73,7 @@ export function CrossPanelClient({ snapshot }: { snapshot: Record<string, unknow
 
         {/* Header */}
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
-          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 36, fontWeight: 300, color: "var(--ink)", margin: 0 }}>
+          <h1 style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 36, fontWeight: 300, color: "var(--ink)", margin: 0 }}>
             Cross-panel signals
           </h1>
           <Link href="/dashboard" style={{ fontFamily: "var(--font-body)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--ink-30)", textDecoration: "none" }}
@@ -85,13 +85,13 @@ export function CrossPanelClient({ snapshot }: { snapshot: Record<string, unknow
 
         {/* Hero */}
         <div style={{ marginBottom: 48 }}>
-          <p style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: 22, lineHeight: 1.4, color: "var(--ink)", margin: "0 0 16px" }}>
+          <p style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontStyle: "italic", fontSize: 22, lineHeight: 1.4, color: "var(--ink)", margin: "0 0 16px" }}>
             When panels compound, the score reflects it.
           </p>
           <p style={{ fontFamily: "var(--font-body)", fontSize: 14, lineHeight: 1.7, color: "var(--ink-60)", margin: "0 0 24px", maxWidth: 560 }}>
             Cross-panel modifiers fire when signals from multiple panels amplify each other — either compounding risk or reinforcing protection. Unlike individual panel scores, these modifiers detect patterns that no single test can see.
           </p>
-          <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, color: modifierTotal < 0 ? "var(--status-attention-text, #791F1F)" : "var(--status-optimal-text, #27500A)", margin: 0 }}>
+          <p style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 28, color: modifierTotal < 0 ? "var(--status-attention-text, #791F1F)" : "var(--status-optimal-text, #27500A)", margin: 0 }}>
             Net effect: {modifierTotal > 0 ? "+" : ""}{modifierTotal} pts
           </p>
         </div>
@@ -130,7 +130,7 @@ export function CrossPanelClient({ snapshot }: { snapshot: Record<string, unknow
                       ) : null
                     })}
                   </div>
-                  <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, color: pointColor }}>
+                  <span style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 18, color: pointColor }}>
                     {m.direction === "bonus" ? "+" : "−"}{m.points} pts
                   </span>
                 </div>
@@ -173,7 +173,7 @@ export function CrossPanelClient({ snapshot }: { snapshot: Record<string, unknow
           })}
 
           {modifiers.length === 0 && (
-            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: 17, color: "var(--ink-40)", lineHeight: 1.4 }}>
+            <p style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontStyle: "italic", fontSize: 17, color: "var(--ink-40)", lineHeight: 1.4 }}>
               Your panels show no compounding risk signals. Check back as your data updates.
             </p>
           )}

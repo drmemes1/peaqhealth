@@ -8,7 +8,7 @@ import { computeInflammatoryPattern, INFLAMMATORY_LEVEL_LABELS } from "../../../
 import { WhatThisMeans } from "../../../../components/ui/WhatThisMeans"
 import { Nav } from "../../../../components/nav"
 
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 
 type Status = "strong" | "watch" | "attention"

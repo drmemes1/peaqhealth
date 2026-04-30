@@ -4,7 +4,7 @@ import Link from "next/link"
 import type { MarkerDefinition, Verdict } from "../../../../lib/markers/registry"
 import { computeScalePosition } from "../../../../lib/markers/registry"
 
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 
 const STATUS_COLORS: Record<string, string> = {

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from "react"
 import { QUIZ_QUESTIONS, scoreQuiz, type QuizResult } from "../../../lib/quizScoring"
 
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 const sans  = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 const ACCENT = "#C49A3C"
 const INK    = "#1a1a18"

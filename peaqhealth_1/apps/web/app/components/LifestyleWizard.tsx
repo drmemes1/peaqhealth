@@ -469,7 +469,7 @@ export default function LifestyleWizard({
     return (
       <div className="min-h-svh flex items-center justify-center px-6" style={{ background: "#FAFAF8" }}>
         <div className="text-center max-w-md">
-          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, fontWeight: 400, color: "#141410", marginBottom: 12 }}>
+          <h1 style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 32, fontWeight: 400, color: "#141410", marginBottom: 12 }}>
             All done — thank you.
           </h1>
           <p style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: 14, color: "#9B9891", marginBottom: 32, lineHeight: 1.6 }}>
@@ -514,7 +514,7 @@ export default function LifestyleWizard({
       <div className="flex-1 flex items-center justify-center px-6 pb-24">
         <div style={{ maxWidth: 520, width: "100%" }}>
           <h2 style={{
-            fontFamily: "'Cormorant Garamond', serif", fontSize: 26, fontWeight: 400,
+            fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 26, fontWeight: 400,
             color: "#141410", lineHeight: 1.35, marginBottom: 28, textAlign: "center",
           }}>
             {q.question}
@@ -572,7 +572,7 @@ export default function LifestyleWizard({
                   autoFocus
                   style={{
                     width: 140, padding: "12px 16px",
-                    fontFamily: "'Cormorant Garamond', serif", fontSize: 32, fontWeight: 300,
+                    fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 32, fontWeight: 300,
                     color: "#141410", textAlign: "center",
                     border: "1.5px solid rgba(20,20,16,0.15)", borderRadius: 3,
                     background: "#fff", outline: "none",

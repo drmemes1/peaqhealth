@@ -49,7 +49,7 @@ export default function PanelsPage() {
       <main style={{ maxWidth: 680, margin: "0 auto", padding: "32px 24px 80px" }}>
 
         <h1 style={{
-          fontFamily: "'Cormorant Garamond', serif",
+          fontFamily: "var(--font-manrope), system-ui, sans-serif",
           fontSize: 36, fontWeight: 300, color: "var(--ink)",
           margin: "0 0 8px",
         }}>
@@ -104,7 +104,7 @@ export default function PanelsPage() {
                   </span>
                 </div>
                 <span style={{
-                  fontFamily: "'Cormorant Garamond', serif",
+                  fontFamily: "var(--font-manrope), system-ui, sans-serif",
                   fontSize: 14, color: "var(--ink-30)",
                 }}>
                   {p.score}

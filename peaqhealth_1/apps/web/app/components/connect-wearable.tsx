@@ -137,7 +137,7 @@ export function ConnectWearable({ onSuccess, onSkip, mode }: ConnectWearableProp
           <span style={{ fontSize: 22, color: "var(--sleep-c)" }}>✓</span>
         </div>
         <p style={{
-          fontFamily: "'Cormorant Garamond', Georgia, serif",
+          fontFamily: "var(--font-manrope), system-ui, sans-serif",
           fontSize: 22, fontWeight: 300, color: "var(--ink)", margin: "0 0 6px",
         }}>
           {connectedLabel} connected

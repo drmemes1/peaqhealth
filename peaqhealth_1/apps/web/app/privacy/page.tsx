@@ -101,7 +101,7 @@ export default function PrivacyPage() {
             Legal
           </p>
           <h1 style={{
-            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontFamily: "var(--font-manrope), system-ui, sans-serif",
             fontSize: 42, fontWeight: 300, color: "var(--ink)",
             lineHeight: 1.15, margin: "0 0 16px",
           }}>
@@ -156,7 +156,7 @@ export default function PrivacyPage() {
                   {String(si + 1).padStart(2, "0")}
                 </span>
                 <h2 style={{
-                  fontFamily: "'Cormorant Garamond', Georgia, serif",
+                  fontFamily: "var(--font-manrope), system-ui, sans-serif",
                   fontSize: 22, fontWeight: 400, color: "var(--ink)",
                   margin: 0, lineHeight: 1.2,
                 }}>

@@ -7,7 +7,7 @@ import type { InterventionWithState } from "../../../lib/interventions/engagemen
 import { ActionPlan } from "../../components/interventions/ActionPlan"
 
 const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 
 const SEVERITY_DOT: Record<string, string> = {
   positive: "#1A8C4E",

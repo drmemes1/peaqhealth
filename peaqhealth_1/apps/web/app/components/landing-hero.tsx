@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { LandingPanelStrip } from "./landing-panel-strip"
 
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 const sans  = "'Instrument Sans', system-ui, sans-serif"
 
 const HERO_VIDEOS = ["/videos/heropeaq.mp4", "/videos/heromovie.mp4", "/videos/heroclimbing.mp4"]

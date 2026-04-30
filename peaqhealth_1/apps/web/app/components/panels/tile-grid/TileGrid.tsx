@@ -7,7 +7,7 @@ import { MARKERS_BY_PANEL, type MarkerDefinition, type Verdict, computeVerdict, 
 import type { UserPanelContext } from "../../../../lib/user-context"
 import { SectionHeader } from "../index"
 
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 
 const STATUS_ORDER: Record<string, number> = { concern: 0, watch: 1, recheck: 2, pending: 3, good: 4 }

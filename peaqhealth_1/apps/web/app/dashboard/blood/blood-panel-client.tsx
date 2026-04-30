@@ -236,7 +236,7 @@ function Section({
         }}
       >
         <span style={{ fontFamily: "var(--font-body)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--ink-30)", fontWeight: 600 }}>{title}</span>
-        <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 16, color: "var(--ink-30)", width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", border: "0.5px solid var(--ink-12)", borderRadius: "50%" }}>
+        <span style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 16, color: "var(--ink-30)", width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", border: "0.5px solid var(--ink-12)", borderRadius: "50%" }}>
           {open ? "−" : "+"}
         </span>
       </button>
@@ -410,7 +410,7 @@ export function BloodPanelClient({ lab, snapshot, history, ageRange, stressLevel
         {/* Header */}
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
-            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 36, fontWeight: 300, color: "var(--ink)", margin: 0 }}>Blood</h1>
+            <h1 style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 36, fontWeight: 300, color: "var(--ink)", margin: 0 }}>Blood</h1>
             {bloodScore !== undefined && (
               <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink-30)" }}>PhenoAge panel</span>
             )}
@@ -453,7 +453,7 @@ export function BloodPanelClient({ lab, snapshot, history, ageRange, stressLevel
         {/* AI Insight */}
         {bloodInsight && (
           <p style={{
-            fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontSize: 17,
+            fontFamily: "var(--font-manrope), system-ui, sans-serif", fontStyle: "italic", fontSize: 17,
             color: "var(--ink-65)", lineHeight: 1.55, margin: "0 0 24px",
             display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden",
           }}>
@@ -554,7 +554,7 @@ export function BloodPanelClient({ lab, snapshot, history, ageRange, stressLevel
         {/* Past results */}
         {history.length > 0 && (
           <div style={{ marginTop: 40 }}>
-            <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 300, color: "var(--ink)", margin: "0 0 12px" }}>Past results</h3>
+            <h3 style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 20, fontWeight: 300, color: "var(--ink)", margin: "0 0 12px" }}>Past results</h3>
             <div style={{ border: "0.5px solid var(--ink-12)", borderRadius: 4, overflow: "hidden" }}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 60px 60px", padding: "8px 16px", borderBottom: "0.5px solid var(--ink-12)" }}>
                 <span style={{ fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--ink-30)" }}>Date</span>

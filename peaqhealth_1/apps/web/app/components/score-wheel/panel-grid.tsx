@@ -47,7 +47,7 @@ function PanelCard({ label, color, trackColor, score, max, active, locked, desc,
         )}
       </div>
       <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-        <span style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 34, fontWeight: 300, color: active ? color : "var(--ink-30)" }}>
+        <span style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 34, fontWeight: 300, color: active ? color : "var(--ink-30)" }}>
           {active ? score : "—"}
         </span>
         <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 12, color: "var(--ink-30)" }}>/ {max}</span>
@@ -100,7 +100,7 @@ function SyncingCard({ provider }: { provider?: string }) {
         animation: "sleep-pulse 2s ease infinite",
       }} />
       <p style={{
-        fontFamily: "'Cormorant Garamond', Georgia, serif",
+        fontFamily: "var(--font-manrope), system-ui, sans-serif",
         fontSize: 15,
         fontWeight: 400,
         color: "var(--color-text-primary, var(--ink))",
@@ -179,7 +179,7 @@ function EmptyPanelCard({ panel, oralOrdered = false }: {
         {config.label}
       </div>
       <div style={{
-        fontFamily: "'Cormorant Garamond', Georgia, serif",
+        fontFamily: "var(--font-manrope), system-ui, sans-serif",
         fontSize: '34px',
         fontWeight: 300,
         color: 'var(--ink-30)',
@@ -396,7 +396,7 @@ function WhyAllThree() {
           border: '0.5px solid var(--ink-08)',
         }}>
           <div style={{
-            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontFamily: "var(--font-manrope), system-ui, sans-serif",
             fontSize: '15px',
             color: 'var(--ink)',
             marginBottom: '12px',
@@ -497,7 +497,7 @@ export function PanelGrid({
   return (
     <div>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12 }}>
-        <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 22, fontWeight: 300, color: "var(--ink)", margin: 0 }}>Panel breakdown</h3>
+        <h3 style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 22, fontWeight: 300, color: "var(--ink)", margin: 0 }}>Panel breakdown</h3>
         <span style={{ fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-30)" }}>Score composition</span>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 10 }}>

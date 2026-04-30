@@ -4,7 +4,7 @@ import { useState } from "react"
 import type { UserSituation } from "../../../../lib/narrative/situationModel"
 import type { NarrativeResult, ValidationResult } from "../../../../lib/narrative/generateNarrative"
 
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 
 const STATUS_COLOR: Record<string, string> = { strong: "#4A7A4A", watch: "#B8860B", attention: "#9B3838" }

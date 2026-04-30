@@ -122,7 +122,7 @@ export default function KitRegisterPage() {
         padding: "64px 24px 80px",
       }}>
         <h1 style={{
-          fontFamily: "var(--font-display, 'Cormorant Garamond', serif)",
+          fontFamily: "var(--font-display, var(--font-manrope), system-ui, sans-serif)",
           fontSize: "clamp(36px, 6vw, 52px)",
           fontWeight: 400,
           lineHeight: 1.1,

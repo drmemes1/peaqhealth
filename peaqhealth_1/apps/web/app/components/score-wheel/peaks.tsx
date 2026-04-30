@@ -168,7 +168,7 @@ export function PeaksVisualization({
                 <text
                   x={p.cx} y={apexY - 12}
                   textAnchor="middle"
-                  fontFamily="'Cormorant Garamond', Georgia, serif"
+                  fontFamily="var(--font-manrope), system-ui, sans-serif"
                   fontSize={18} fontWeight={400}
                   fill={p.color}
                 >
@@ -219,7 +219,7 @@ export function PeaksVisualization({
                 <circle cx={CP_CX} cy={BL + crossH} r={3.5} fill="#C49A3C" />
                 <text
                   x={CP_CX} y={BL - 12} textAnchor="middle"
-                  fontFamily="'Cormorant Garamond', Georgia, serif"
+                  fontFamily="var(--font-manrope), system-ui, sans-serif"
                   fontSize={16} fill="#C49A3C"
                 >
                   {crossLabel}
@@ -235,7 +235,7 @@ export function PeaksVisualization({
                 <circle cx={CP_CX} cy={BL - crossH} r={3.5} fill="#C49A3C" />
                 <text
                   x={CP_CX} y={BL - crossH - 12} textAnchor="middle"
-                  fontFamily="'Cormorant Garamond', Georgia, serif"
+                  fontFamily="var(--font-manrope), system-ui, sans-serif"
                   fontSize={16} fill="#C49A3C"
                 >
                   {crossLabel}

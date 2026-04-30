@@ -3,7 +3,7 @@
 import { useState } from "react"
 import type { ConnectionLine } from "@peaq/score-engine"
 
-const serif = "'Cormorant Garamond', Georgia, serif"
+const serif = "var(--font-manrope), system-ui, sans-serif"
 const sans  = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 
 const DIRECTION_STYLES = {

@@ -18,7 +18,7 @@ export default async function BloodPage() {
       <div className="min-h-svh" style={{ background: "#F5F3EE" }}>
         <Nav />
         <main style={{ maxWidth: 680, margin: "0 auto", padding: "32px 24px 80px" }}>
-          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 36, fontWeight: 300, color: "var(--ink)", margin: "0 0 24px" }}>Blood Panel</h1>
+          <h1 style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 36, fontWeight: 300, color: "var(--ink)", margin: "0 0 24px" }}>Blood Panel</h1>
           <p style={{ fontFamily: "var(--font-body)", fontSize: 14, color: "var(--ink-60)" }}>No blood results on file.</p>
           <Link href="/dashboard" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--gold)", display: "inline-block", marginTop: 12 }}>← Back to dashboard</Link>
         </main>
