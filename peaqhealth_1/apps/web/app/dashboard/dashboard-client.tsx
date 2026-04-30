@@ -10,7 +10,6 @@ import { PanelConvergence } from "../components/panel-convergence"
 import { RefreshCw } from "lucide-react"
 import { CrossPanelCard } from "./components/CrossPanelCard"
 import { HealthPictureBlock } from "./components/HealthPictureBlock"
-import OraviLogo from "../components/OraviLogo"
 import type { ConvergeObservation } from "../../lib/converge/observations"
 import type { InterventionWithState } from "../../lib/interventions/engagements"
 import type { DoseResponseResult } from "../../lib/oral/nitrateDoseResponse"
@@ -752,11 +751,6 @@ export function DashboardClient(props: ScoreWheelProps & {
 
             {/* ── LEFT COLUMN (main) ─────────────────────────────────────── */}
             <div className="dashboard-left" style={{ flex: "1 1 0", minWidth: 0, maxWidth: 700 }}>
-
-              {/* 0. ORAVI LOGO */}
-              <div style={{ marginBottom: 32 }}>
-                <OraviLogo size="md" showTagline={true} />
-              </div>
 
               {/* 1. GREETING — italic gold name */}
               <div style={{ marginBottom: 36 }}>
