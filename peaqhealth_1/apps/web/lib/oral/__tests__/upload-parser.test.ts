@@ -144,13 +144,51 @@ describe("parseL7Input — column mapping", () => {
     expect(result.columnValues["s_salivarius_pct"]).toBeCloseTo(6.0, 3)
   })
 
-  test("placeholder sp\\d+ rows are not mapped", () => {
+  test("placeholder sp\\d+ Streptococcus rows feed streptococcus_total_pct (regression vs v2 fixed in PR-247)", () => {
     const raw = buildL7([
       { taxon: `${TAX_PREFIX};g__Streptococcus;s__sp13375`, abundance: 0.01 },
     ])
     const result = parseL7Input(raw)
-    expect(result.columnValues["streptococcus_total_pct"]).toBe(0)
+    // Placeholder rows do not produce a species_exact column write, but they
+    // DO contribute to the parent-genus accumulator. For Streptococcus the
+    // accumulator is streptococcus_total_pct (no GENUS_COLUMNS entry exists).
+    expect(result.columnValues["streptococcus_total_pct"]).toBeCloseTo(1.0, 4)
     expect(result.parserUnresolvedSpecies).toEqual([])
+    // The row is present in __meta.entries with mapping_type='placeholder'.
+    const entry = result.entries.find(e => e.species === "sp13375")
+    expect(entry?.mapping_type).toBe("placeholder")
+  })
+
+  test("placeholder sp\\d+ Veillonella rows feed veillonella_pct (regression vs v2 fixed in PR-247)", () => {
+    const raw = buildL7([
+      { taxon: "k__Bacteria;p__Firmicutes;c__Negativicutes;o__Veillonellales;f__Veillonellaceae;g__Veillonella;s__sp99999", abundance: 0.005 },
+    ])
+    const result = parseL7Input(raw)
+    expect(result.columnValues["veillonella_pct"]).toBeCloseTo(0.5, 4)
+    const entry = result.entries.find(e => e.species === "sp99999")
+    expect(entry?.mapping_type).toBe("placeholder")
+    expect(entry?.mapped_column).toBe("veillonella_pct")
+  })
+
+  test("named + placeholder rows aggregate together — Porphyromonas case from 700df5f", () => {
+    // The original incident: Igor's Porphyromonas was reported at 0.28%
+    // (named only) when the L7 file's full Porphyromonas signal was 2.18%
+    // because placeholder rows like 'Porphyromonas sp13375' weren't summed.
+    // PR-245 inadvertently reintroduced that gap; PR-247 restores the fix.
+    const raw = buildL7([
+      { taxon: "k__Bacteria;p__Bacteroidetes;c__Bacteroidia;o__Bacteroidales;f__Porphyromonadaceae;g__Porphyromonas;s__endodontalis", abundance: 0.0028 },
+      { taxon: "k__Bacteria;p__Bacteroidetes;c__Bacteroidia;o__Bacteroidales;f__Porphyromonadaceae;g__Porphyromonas;s__sp13375", abundance: 0.0190 },
+    ])
+    const result = parseL7Input(raw)
+    expect(result.columnValues["porphyromonas_pct"]).toBeCloseTo(2.18, 2)
+  })
+
+  test("placeholder Prevotella rows feed prevotella_commensal_pct (Prevotella has no GENUS_COLUMNS entry)", () => {
+    const raw = buildL7([
+      { taxon: "k__Bacteria;p__Bacteroidetes;c__Bacteroidia;o__Bacteroidales;f__Prevotellaceae;g__Prevotella;s__sp42", abundance: 0.01 },
+    ])
+    const result = parseL7Input(raw)
+    expect(result.columnValues["prevotella_commensal_pct"]).toBeCloseTo(1.0, 4)
   })
 })
 
