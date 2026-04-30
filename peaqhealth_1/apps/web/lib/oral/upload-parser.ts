@@ -295,6 +295,23 @@ export function parseL7Input(raw: string): ParseResult {
       }
 
       if (genusLower === "streptococcus") strepTotal += pct
+    } else if (taxo.is_placeholder && taxo.genus && taxo.genus !== "NA") {
+      // Placeholder species (sp\d+ — Zymo's unresolved-OTU naming) get
+      // aggregated into the parent genus column. Mirrors v2 behavior from
+      // commit 700df5f ("fix: parser aggregates placeholder species into
+      // parent genus") which lifted Igor's Porphyromonas from 0.28% to
+      // 2.18%. The branch was lost when parseL7Input was extracted in
+      // PR-245; restored here. See ADR-0017.
+      if (GENUS_COLUMNS[genusLower]) {
+        mapped_column = GENUS_COLUMNS[genusLower]
+        genusSums[mapped_column] = (genusSums[mapped_column] ?? 0) + pct
+      }
+      // Streptococcus has no GENUS_COLUMNS entry; placeholder Streptococcus
+      // rows tick the strepTotal accumulator that drives streptococcus_total_pct.
+      if (genusLower === "streptococcus") strepTotal += pct
+      // Prevotella placeholder rows feed prevotella_commensal_pct (matching
+      // v2 — non-intermedia Prevotella is treated as commensal).
+      if (genusLower === "prevotella") prevotellaCommensalTotal += pct
     }
 
     allEntries.push({
