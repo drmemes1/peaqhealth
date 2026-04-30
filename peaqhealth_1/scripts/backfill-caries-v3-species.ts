@@ -35,7 +35,7 @@ import {
   resolveSpeciesColumn,
 } from "../apps/web/lib/oral/upload-parser"
 
-type Entry = {
+export type Entry = {
   genus: string
   species: string | null
   pct: number
@@ -47,7 +47,7 @@ const DRY_RUN = process.env.DRY_RUN === "1"
 const FORCE = process.env.FORCE === "1"
 const ONLY = (process.env.ONLY ?? "").split(",").map(s => s.trim()).filter(Boolean)
 
-function reparseEntries(entries: Entry[]): {
+export function reparseEntries(entries: Entry[]): {
   columnValues: Record<string, number>
   unresolved: string[]
 } {
@@ -59,8 +59,26 @@ function reparseEntries(entries: Entry[]): {
   let prevotellaCommensalTotal = 0
 
   for (const entry of entries) {
-    if (!entry.is_named) continue
-    const genusLower = entry.genus.toLowerCase()
+    const genusLower = entry.genus?.toLowerCase() ?? ""
+
+    if (!entry.is_named) {
+      if (entry.is_placeholder && entry.genus && entry.genus !== "NA") {
+        // Placeholder species (Zymo's `sp\d+` unresolved-OTU calls) aggregate
+        // into the parent-genus column, mirroring upload-parser.ts (PR-247 /
+        // ADR-0017). Without this, kits with significant placeholder share
+        // (Porphyromonas, Veillonella, …) get under-counted on backfill —
+        // e.g. Pilot.Peaq.1's porphyromonas_pct collapsed from 2.18% to 0.28%.
+        // See ADR-0018.
+        if (GENUS_COLUMNS[genusLower]) {
+          const col = GENUS_COLUMNS[genusLower]
+          genusSums[col] = (genusSums[col] ?? 0) + entry.pct
+        }
+        if (genusLower === "streptococcus") strepTotal += entry.pct
+        if (genusLower === "prevotella") prevotellaCommensalTotal += entry.pct
+      }
+      continue
+    }
+
     const speciesLower = entry.species?.toLowerCase() ?? ""
 
     const exactKey = `${genusLower} ${speciesLower}`
@@ -176,4 +194,6 @@ async function main() {
   if (DRY_RUN) console.log("(DRY_RUN was set — no writes performed)")
 }
 
-main().catch(e => { console.error(e); process.exit(1) })
+if (require.main === module) {
+  main().catch(e => { console.error(e); process.exit(1) })
+}
