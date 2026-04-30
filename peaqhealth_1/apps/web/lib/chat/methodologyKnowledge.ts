@@ -5,6 +5,8 @@ export interface MethodologyEntry {
   inputs: string[]
   thresholds: string
   limitations: string
+  /** Optional reference list. Not yet emitted by getMethodologyPrompt; reserved for future detail surfaces. */
+  citations?: string[]
 }
 
 export const METHODOLOGY: MethodologyEntry[] = [
@@ -63,6 +65,98 @@ export const METHODOLOGY: MethodologyEntry[] = [
     inputs: ["Questionnaire: mouth_breathing field", "Oral: species-level bacterial signatures", "Wearable: respiratory rate, SpO₂ (when connected)"],
     thresholds: "Nasal (strong) when no sources flag. Watch when one or more sources flag. Two sources agreeing is labeled 'confirmed'.",
     limitations: "Without a wearable, the system relies on questionnaire and bacteria — both are indirect measures. Mouth breathing can be intermittent or positional, which bacteria may not capture from a single sample.",
+  },
+
+  // ── Caries v3 (defined in lib/oral/caries-v3.ts; not yet wired to the pipeline — see ADR-0014). ──
+  {
+    scoreName: "Cariogenic Load Index v3",
+    whatItMeasures: "Active demineralization pressure from acid-producing oral bacteria, with synergy-aware weighting.",
+    howComputed:
+      "Sum of weighted abundances of primary cariogens (S. mutans, S. sobrinus, Scardovia wiggsiae, Lactobacillus at 1.0× each) plus B. dentium (0.6×, unconditional), plus conditional synergists S. sputigena (0.4×) and P. denticola (0.15×) — only contributing when S. mutans ≥ 0.05% — plus moderate-evidence species P. acidifaciens (0.3×) and Leptotrichia wadei/shahii (0.2×).",
+    inputs: [
+      "S. mutans relative abundance",
+      "S. sobrinus",
+      "Scardovia wiggsiae",
+      "Lactobacillus",
+      "Bifidobacterium dentium",
+      "Selenomonas sputigena (conditional on S. mutans)",
+      "Propionibacterium acidifaciens",
+      "Leptotrichia wadei / shahii",
+      "Prevotella denticola (conditional on S. mutans)",
+    ],
+    thresholds: "minimal < 0.2 %, low 0.2–0.5 %, elevated 0.5–1.5 %, high ≥ 1.5 %",
+    limitations:
+      "No 16S-based caries score has been validated in a longitudinal adult cohort with > 1 year follow-up. Weights are evidence-derived but the composite has not been externally validated. Reflects current microbial state, not lifetime risk or past disease history.",
+    citations: [
+      "Mazurel 2025 (J Dent Res) — S. mutans meta-analysis",
+      "Cho 2023 (Nature Comm) — S. sputigena pathobiont",
+      "Henne 2015 (Anaerobe) — B. dentium specificity",
+      "Niu 2023 (Arch Oral Biol) — P. denticola synergy",
+      "Wolff 2013 (Caries Res) — P. acidifaciens",
+      "Kahharova 2023 (J Dent Res) — Leptotrichia pre-dysbiosis",
+    ],
+  },
+  {
+    scoreName: "Commensal Sufficiency Index",
+    whatItMeasures: "Health of the primary acid-buffering system (arginine deiminase / ADS).",
+    howComputed:
+      "Sum of ADS-primary species: S. sanguinis + S. gordonii + S. cristatus. Excludes S. mitis (arginine-negative classically) and Veillonella (reclassified as pathobiont per Wei 2024).",
+    inputs: [
+      "S. sanguinis relative abundance",
+      "S. gordonii",
+      "S. cristatus",
+    ],
+    thresholds: "severely_depleted < 0.1 %, depleted 0.1–0.5 %, reduced 0.5–1.0 %, adequate 1.0–2.0 %, robust ≥ 2.0 %",
+    limitations:
+      "No published cutoff exists. Thresholds are derived from clinical correlation in pilot data and ecological theory (Marsh 2003). Severe depletion as an independent predictor of caries lacks prospective adjusted-model validation in adults.",
+    citations: [
+      "Huang 2015 (Caries Res) — S. sanguinis ADS prevalence",
+      "Liu 2008 (Appl Environ Microbiol) — S. gordonii ADS regulation",
+      "Wijeyeweera 1989 (Arch Oral Biol) — ADS > urease for plaque pH",
+      "Price 1986 (J Med Microbiol) — S. mitis arginine-negative",
+    ],
+  },
+  {
+    scoreName: "pH Balance API v3",
+    whatItMeasures: "Ratio of acid-producing to pH-buffering bacterial mass, evidence-tiered.",
+    howComputed:
+      "acidSum / (acidSum + bufferSum + 0.001). Buffer tiers: ADS-strong (S. sanguinis, S. gordonii) × 2.0; ADS-moderate (S. cristatus, S. parasanguinis, S. australis, A. naeslundii) × 1.0; urease tier (S. salivarius × 1.0, H. parainfluenzae × 0.5); nitrate-reduction tier (Neisseria, Rothia × 0.5). Veillonella excluded from buffer (reclassified as pathobiont).",
+    inputs: ["All buffer-tier species", "All acidogenic species (see CLI inputs)"],
+    thresholds:
+      "well_buffered ≤ 0.25, mildly_acidogenic 0.25–0.45, moderately_acidogenic 0.45–0.65, strongly_acidogenic > 0.65",
+    limitations:
+      "Should be interpreted alongside CLI and CSI. A 'well_buffered' API with elevated CLI indicates compensated active risk, not safety. Thresholds may need recalibration as the user population grows.",
+    citations: [
+      "Wei 2024 (Microbiol Spectrum) — Veillonella as pathobiont",
+      "Gross 2012 (PLoS One) — Veillonella predicts future caries",
+      "Noorda 1988 (Caries Res) — Veillonella does not buffer",
+      "Wijeyeweera 1989 — ADS > urease > nitrate hierarchy",
+    ],
+  },
+  {
+    scoreName: "Compensated Dysbiosis Flag",
+    whatItMeasures: "Identifies the phenotype where pathogens are not yet elevated but defenses are compromised.",
+    howComputed: "Boolean flag: TRUE when CLI is minimal/low AND CSI is depleted/severely_depleted.",
+    inputs: ["Cariogenic Load Index category", "Commensal Sufficiency Index category"],
+    thresholds: "TRUE = ecologically fragile state; recommend monitoring and protective interventions.",
+    limitations:
+      "This phenotype has not been prospectively validated as a discrete clinical entity in adults. The concept is supported by ecological theory (Marsh 2003) and pediatric longitudinal data (Kahharova 2023, Blostein 2022); adult longitudinal evidence is lacking.",
+    citations: [
+      "Kahharova 2023 — pre-dysbiosis precedes caries by up to 3 years",
+      "Blostein 2022 — commensal depletion predicts ECC at 12 months",
+      "Marsh 2003 — ecological plaque hypothesis",
+    ],
+  },
+  {
+    scoreName: "Caries Risk Category",
+    whatItMeasures: "Composite caries-risk classification combining CLI, CSI, and the synergy state.",
+    howComputed:
+      "4-quadrant classification: low_risk_stable (CLI low + CSI robust); compensated_active_risk (CLI elevated + CSI robust); compensated_dysbiosis_risk (CLI low + CSI depleted); active_disease_risk (CLI elevated + CSI depleted). insufficient_data when neither pair holds.",
+    inputs: ["CLI category", "CSI category", "Synergy active flag", "Confounder adjustments"],
+    thresholds: "See category definitions above.",
+    limitations:
+      "Reflects current microbial state. Past disease history, salivary flow, fluoride exposure, dietary patterns, and clinical findings (DMFT) are independent risk factors not captured by microbiome alone. Not a diagnostic tool.",
+    citations: ["Composite of all caries v3 underlying citations"],
   },
 ]
 
