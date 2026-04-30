@@ -76,6 +76,25 @@ export interface OralKitData {
   cariogenicLoadCategory: string | null
   protectiveRatio: number | null
   protectiveRatioCategory: string | null
+
+  // Caries v3 fields. Optional because PR-α (parser/schema) has not yet
+  // populated them on oral_kit_orders; this PR ships only the v3 module.
+  // See ADR-0014 and lib/oral/caries-v3.ts for the contract.
+  phBalanceApiV3?: number | null
+  phBalanceApiV3Category?: string | null
+  cariogenicLoadV3?: number | null
+  cariogenicLoadV3Category?: string | null
+  protectiveRatioV3?: number | null
+  protectiveRatioV3Category?: string | null
+  commensalSufficiencyIndex?: number | null
+  commensalSufficiencyCategory?: string | null
+  adsPrimaryPct?: number | null
+  adsExtendedPct?: number | null
+  compensatedDysbiosisFlag?: boolean | null
+  synergyActiveFlag?: boolean | null
+  cariesRiskCategory?: string | null
+  confounderAdjustments?: Record<string, string> | null
+  reliabilityFlag?: string | null
 }
 
 export interface BloodPanelData {
