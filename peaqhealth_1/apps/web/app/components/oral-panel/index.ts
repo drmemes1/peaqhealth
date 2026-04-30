@@ -17,7 +17,7 @@ export type { SignalChainProps, SignalChainItem } from "./SignalChain"
 export { default as InterventionCard } from "./InterventionCard"
 export type { InterventionCardProps, InterventionCardVariant } from "./InterventionCard"
 
-export { default as ConnectionCard } from "./ConnectionCard"
+export { default as ConnectionCard, Biomarker } from "./ConnectionCard"
 export type { ConnectionCardProps } from "./ConnectionCard"
 
 export { default as DistributionViz } from "./DistributionViz"

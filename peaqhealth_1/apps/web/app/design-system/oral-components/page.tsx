@@ -6,6 +6,7 @@ import {
   SignalChain,
   InterventionCard,
   ConnectionCard,
+  Biomarker,
   DistributionViz,
   TrajectoryPanel,
 } from "../../components/oral-panel"
@@ -127,9 +128,9 @@ export default function OralComponentsShowcase() {
         <Section title="ConnectionCard" description="Cross-panel synthesis. Uses link-accent (sleep-dusk) instead of gold to signal &lsquo;reasoning across data sources&rsquo;.">
           <ConnectionCard eyebrow="Cross-panel signal" title="Three patterns converge">
             Your inflammatory pattern signal is mildly elevated, your{" "}
-            <ConnectionCard.Biomarker>hs-CRP</ConnectionCard.Biomarker> sits at the upper end of the
+            <Biomarker>hs-CRP</Biomarker> sits at the upper end of the
             normal range, and your{" "}
-            <ConnectionCard.Biomarker>LDL</ConnectionCard.Biomarker>{" "}
+            <Biomarker>LDL</Biomarker>{" "}
             crept up at the last draw. Each on its own is unremarkable;
             together they tell a more coherent story about low-grade
             inflammatory load.

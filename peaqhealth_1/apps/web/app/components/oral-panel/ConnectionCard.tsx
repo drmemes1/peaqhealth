@@ -80,9 +80,12 @@ function ConnectionCardBase({ eyebrow, title, children }: ConnectionCardProps) {
 
 /**
  * Biomarker — inline emphasis for biomarker references inside a
- * ConnectionCard body (e.g. <ConnectionCard.Biomarker>hs-CRP</…>).
+ * ConnectionCard body, e.g. <Biomarker>hs-CRP</Biomarker>. Exported as
+ * a named export rather than a dot-property on ConnectionCard so it
+ * survives Next.js's client-reference serialization when consumed from
+ * a server component.
  */
-function Biomarker({ children }: { children: ReactNode }) {
+export function Biomarker({ children }: { children: ReactNode }) {
   return (
     <span
       style={{
@@ -96,5 +99,4 @@ function Biomarker({ children }: { children: ReactNode }) {
   )
 }
 
-const ConnectionCard = Object.assign(ConnectionCardBase, { Biomarker })
-export default ConnectionCard
+export default ConnectionCardBase
