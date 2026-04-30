@@ -298,6 +298,27 @@ const QUESTIONS: Question[] = [
   },
   // I. Medications
   {
+    type: "choice", key: "chlorhexidine_use", dbCol: "chlorhexidine_use",
+    question: "Have you used chlorhexidine mouthwash or rinse recently?",
+    descriptor: "Brand names include Peridex, PerioGard, Periochip. Often prescribed after dental procedures or for gum disease — different from over-the-counter mouthwash like Listerine. Chlorhexidine strongly suppresses the protective bacteria we measure.",
+    options: [
+      { value: "never", label: "Never" },
+      { value: "past_8wks", label: "Used in past 8 weeks but not currently" },
+      { value: "currently_using", label: "Currently using" },
+    ],
+  },
+  {
+    type: "choice", key: "xerostomia_self_report", dbCol: "xerostomia_self_report",
+    question: "How often do you experience dry mouth?",
+    descriptor: "Beyond just feeling thirsty — actual dry mouth sensation, especially on waking or during the day. Reduced saliva limits the substrates your buffering bacteria need.",
+    options: [
+      { value: "never", label: "Never" },
+      { value: "occasional", label: "Occasionally" },
+      { value: "frequent", label: "Frequently (most days)" },
+      { value: "constant", label: "Constantly" },
+    ],
+  },
+  {
     type: "choice", key: "medication_ppi_detail", dbCol: "medication_ppi_detail",
     question: "Do you take a daily proton pump inhibitor (Omeprazole, Pantoprazole, Nexium, Prilosec, Prevacid)?",
     descriptor: "PPIs change the acid-base balance throughout your digestive tract, including your mouth. They affect the bacteria we measure for caries and gum health.",
