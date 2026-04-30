@@ -8,6 +8,7 @@ import {
   computeDifferentialScores,
 } from "../../../../lib/score/recalculate"
 import { computeCariesPanel } from "../../../../lib/oral/caries-panel"
+import { runCariesV3 } from "../../../../lib/oral/caries-v3-runner"
 import {
   GENUS_COLUMNS,
   SPECIES_COLUMNS,
@@ -220,6 +221,19 @@ export async function POST(request: NextRequest) {
         .order("updated_at", { ascending: false })
         .limit(1)
         .maybeSingle()
+
+      // Step 3b: caries v3 (additive — runs alongside v2; soft-fails)
+      const v3 = runCariesV3(kitRow, lifestyle)
+      if (v3) {
+        const { error: v3Err } = await supabase.from("oral_kit_orders").update(v3.update).eq("id", kitId)
+        if (v3Err) {
+          steps.push(`Caries v3 write failed (continuing): ${v3Err.message}`)
+        } else {
+          steps.push(`Caries v3: ${v3.result.cariesRiskCategory} (CLI=${v3.result.cariogenicLoadIndex.toFixed(3)} ${v3.result.cariogenicLoadCategory}, CSI=${v3.result.commensalSufficiencyCategory}, synergy=${v3.result.synergyActiveFlag}, compensated_dysbiosis=${v3.result.compensatedDysbiosisFlag}, conf=${v3.result.confidence})`)
+        }
+      } else {
+        steps.push(`Caries v3 runner returned null (see server logs)`)
+      }
 
       // Step 4: interpretability tier
       const tierResult = computeInterpretabilityTier(kitRow)
@@ -498,6 +512,19 @@ export async function POST(request: NextRequest) {
       const { data: lifestyle } = await supabase
         .from("lifestyle_records").select("*")
         .eq("user_id", targetUserId).order("updated_at", { ascending: false }).limit(1).maybeSingle()
+
+      // Caries v3 (additive — runs alongside v2; soft-fails)
+      const v3 = runCariesV3(updated, lifestyle)
+      if (v3) {
+        const { error: v3Err } = await supabase.from("oral_kit_orders").update(v3.update).eq("id", kitId)
+        if (v3Err) {
+          steps.push(`Caries v3 write failed (continuing): ${v3Err.message}`)
+        } else {
+          steps.push(`Caries v3: ${v3.result.cariesRiskCategory} (CLI=${v3.result.cariogenicLoadIndex.toFixed(3)} ${v3.result.cariogenicLoadCategory}, CSI=${v3.result.commensalSufficiencyCategory}, synergy=${v3.result.synergyActiveFlag}, compensated_dysbiosis=${v3.result.compensatedDysbiosisFlag})`)
+        }
+      } else {
+        steps.push(`Caries v3 runner returned null (see server logs)`)
+      }
 
       const tierResult = computeInterpretabilityTier(updated)
       await supabase.from("oral_kit_orders").update({
