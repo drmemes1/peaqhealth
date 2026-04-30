@@ -13,7 +13,6 @@ import { HealthPictureBlock } from "./components/HealthPictureBlock"
 import type { ConvergeObservation } from "../../lib/converge/observations"
 import type { InterventionWithState } from "../../lib/interventions/engagements"
 import type { DoseResponseResult } from "../../lib/oral/nitrateDoseResponse"
-import { ActionPlan } from "../components/interventions/ActionPlan"
 import { NitrateOpportunityCard } from "../components/dashboard/NitrateOpportunityCard"
 
 const serif = "'Cormorant Garamond', Georgia, serif"
@@ -1090,24 +1089,6 @@ export function DashboardClient(props: ScoreWheelProps & {
                   )
                 })()}
               </div>
-
-              {/* INTERVENTION-BASED ACTION PLAN */}
-              {(props.interventions ?? []).length > 0 && (
-                <div style={{
-                  background: DS.cardBg, border: `0.5px solid ${DS.cardBorder}`,
-                  borderRadius: 12, padding: 20,
-                  boxShadow: "0 1px 3px rgba(20,20,16,0.06)",
-                }}>
-                  <ActionPlan
-                    density="compact"
-                    interventions={props.interventions!}
-                    onEngage={async (id, action, reason) => {
-                      await fetch("/api/interventions/engagement", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ interventionId: id, action, reason }) })
-                      window.location.reload()
-                    }}
-                  />
-                </div>
-              )}
 
               {/* NITRATE DOSE-RESPONSE OPPORTUNITY */}
               {props.nitrateDoseResponse && props.nitrateDoseResponse.predictedSbpDropMidpoint >= 1.0 && (
