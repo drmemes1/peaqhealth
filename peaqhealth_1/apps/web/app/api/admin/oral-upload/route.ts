@@ -8,6 +8,13 @@ import {
   computeDifferentialScores,
 } from "../../../../lib/score/recalculate"
 import { computeCariesPanel } from "../../../../lib/oral/caries-panel"
+import {
+  GENUS_COLUMNS,
+  SPECIES_COLUMNS,
+  resolveSpeciesColumn,
+  parseL7Input,
+} from "../../../../lib/oral/upload-parser"
+import type { ParsedEntry, ParseResult } from "../../../../lib/oral/upload-parser"
 
 const ADMIN_USER_ID = "f08a47b5-4a8f-4b8c-b4d5-8f1de407d686"
 
@@ -18,52 +25,9 @@ function svc() {
   )
 }
 
-// ── Species-to-column mapping ───────────────────────────────────────────────
-
-const GENUS_COLUMNS: Record<string, string> = {
-  neisseria: "neisseria_pct",
-  haemophilus: "haemophilus_pct",
-  rothia: "rothia_pct",
-  actinomyces: "actinomyces_pct",
-  veillonella: "veillonella_pct",
-  porphyromonas: "porphyromonas_pct",
-  treponema: "treponema_pct",
-  fusobacterium: "fusobacterium_pct",
-  aggregatibacter: "aggregatibacter_pct",
-  campylobacter: "campylobacter_pct",
-  lactobacillus: "lactobacillus_pct",
-  peptostreptococcus: "peptostreptococcus_pct",
-  parvimonas: "parvimonas_pct",
-  granulicatella: "granulicatella_pct",
-}
-
-const SPECIES_COLUMNS: Record<string, string> = {
-  "tannerella forsythia": "tannerella_pct",
-  "prevotella intermedia": "prevotella_intermedia_pct",
-  "streptococcus mutans": "s_mutans_pct",
-  "streptococcus sobrinus": "s_sobrinus_pct",
-  "streptococcus sanguinis": "s_sanguinis_pct",
-  "streptococcus gordonii": "s_gordonii_pct",
-  "scardovia wiggsiae": "scardovia_pct",
-}
-
-const S_SALIVARIUS_SPECIES = ["streptococcus salivarius", "streptococcus vestibularis"]
-
-interface ParsedEntry {
-  taxonomy_full: string
-  kingdom: string
-  phylum: string
-  class_: string
-  order: string
-  family: string
-  genus: string
-  species: string | null
-  is_named: boolean
-  is_placeholder: boolean
-  pct: number
-  mapped_column: string | null
-  mapping_type: "genus_sum" | "species_exact" | "special" | "unmatched" | "placeholder"
-}
+// Species/genus column mapping tables and the L7 parser now live in
+// apps/web/lib/oral/upload-parser.ts so they can be unit-tested. The route
+// imports the public surface above.
 
 interface ShannonResult {
   shannon: number
@@ -72,81 +36,6 @@ interface ShannonResult {
   iterations: number
   rarefactionCurve: Record<string, number>
   allSamples: string[]
-}
-
-interface CommunitySummary {
-  total_entries_present: number
-  named_species_count: number
-  unnamed_placeholder_count: number
-  distinct_genera: number
-  distinct_phyla: number
-  total_abundance_captured: number
-}
-
-interface ParseResult {
-  entries: ParsedEntry[]
-  communitySummary: CommunitySummary
-  columnValues: Record<string, number>
-  shannonDiversity: number | null
-  shannonSource: "zymo_rarefaction" | "computed_l7" | null
-  speciesCount: number
-  totalTracked: number
-  totalUntracked: number
-  rawOtu: Record<string, unknown>
-}
-
-interface TaxonomyParsed {
-  taxonomy_full: string
-  kingdom: string
-  phylum: string
-  class_: string
-  order: string
-  family: string
-  genus: string
-  species: string | null
-  is_named: boolean
-  is_placeholder: boolean
-  fullSpecies: string
-}
-
-function extractTaxonomy(taxon: string): TaxonomyParsed {
-  const levels = taxon.split(";").map(l => l.trim())
-  const extract = (prefix: string) => {
-    const match = levels.find(l => l.startsWith(prefix))
-    return match ? match.slice(prefix.length).replace(/_/g, " ").trim() : ""
-  }
-
-  const kingdom = extract("k__")
-  const phylum = extract("p__")
-  const class_ = extract("c__")
-  const order = extract("o__")
-  const family = extract("f__")
-  const genus = extract("g__")
-  let species = extract("s__") || null
-
-  if (!genus && !species) {
-    const cleaned = taxon.replace(/[dkpcofgs]__/g, "").replace(/;/g, " ").replace(/_/g, " ").trim()
-    const parts = cleaned.split(/\s+/)
-    return {
-      taxonomy_full: taxon, kingdom, phylum, class_, order, family,
-      genus: parts[0] || "", species: parts[1] || null,
-      is_named: true, is_placeholder: false, fullSpecies: parts.slice(0, 2).join(" "),
-    }
-  }
-
-  if (!species || species === "" || species.toLowerCase() === "na") {
-    return { taxonomy_full: taxon, kingdom, phylum, class_, order, family, genus, species: null, is_named: false, is_placeholder: true, fullSpecies: genus }
-  }
-
-  const firstPart = species.split("-")[0].replace(/ /g, "")
-  const isPureSpNumber = /^sp\d+$/i.test(firstPart)
-
-  return {
-    taxonomy_full: taxon, kingdom, phylum, class_, order, family, genus, species,
-    is_named: !isPureSpNumber,
-    is_placeholder: isPureSpNumber,
-    fullSpecies: `${genus} ${species}`,
-  }
 }
 
 function parseShannonFile(raw: string, sampleIndex?: number): ShannonResult {
@@ -202,167 +91,6 @@ function parseShannonFile(raw: string, sampleIndex?: number): ShannonResult {
   }
 }
 
-function parseL7Input(raw: string): ParseResult {
-  const lines = raw.trim().split(/\r?\n/).filter(l => l.trim() && !l.startsWith("#"))
-
-  const delimiter = lines[0]?.includes("\t") ? "\t" : ","
-  const hasHeader = lines[0]?.toLowerCase().includes("otu") || lines[0]?.toLowerCase().includes("taxonomy")
-  const dataLines = hasHeader ? lines.slice(1) : lines
-
-  // First pass: collect all rows, detect fractional vs percentage
-  const rawRows: { taxo: TaxonomyParsed; val: number }[] = []
-  let valSum = 0
-
-  for (const line of dataLines) {
-    const cols = line.split(delimiter).map(c => c.trim())
-    if (cols.length < 2) continue
-    const taxon = cols[0]
-    const firstNumCol = cols.slice(1).find(c => { const v = parseFloat(c); return Number.isFinite(v) })
-    const val = firstNumCol != null ? parseFloat(firstNumCol) : NaN
-    if (!Number.isFinite(val) || val <= 0) continue
-    valSum += val
-    rawRows.push({ taxo: extractTaxonomy(taxon), val })
-  }
-
-  const isFractional = valSum > 0 && valSum <= 2
-  const multiplier = isFractional ? 100 : 1
-
-  // Second pass: classify, map, and accumulate
-  const allEntries: ParsedEntry[] = []
-  const genusSums: Record<string, number> = {}
-  const speciesSums: Record<string, number> = {}
-  let sSalivariusTotal = 0
-  let strepTotal = 0
-  let prevotellaCommensalTotal = 0
-  const generaSet = new Set<string>()
-  const phylaSet = new Set<string>()
-  let namedCount = 0
-  let placeholderCount = 0
-  let totalAbundance = 0
-
-  for (const { taxo, val } of rawRows) {
-    const pct = parseFloat((val * multiplier).toFixed(4))
-    totalAbundance += pct
-
-    const genusLower = taxo.genus.toLowerCase()
-    const speciesLower = taxo.fullSpecies.toLowerCase()
-    if (taxo.genus) generaSet.add(taxo.genus)
-    if (taxo.phylum) phylaSet.add(taxo.phylum)
-    if (taxo.is_named) namedCount++
-    if (taxo.is_placeholder) placeholderCount++
-
-    let mapped_column: string | null = null
-    let mapping_type: ParsedEntry["mapping_type"] = taxo.is_placeholder ? "placeholder" : "unmatched"
-
-    // Only named species contribute to dedicated columns
-    if (taxo.is_named) {
-      if (SPECIES_COLUMNS[speciesLower]) {
-        mapped_column = SPECIES_COLUMNS[speciesLower]
-        mapping_type = "species_exact"
-        speciesSums[mapped_column] = (speciesSums[mapped_column] ?? 0) + pct
-      } else if (genusLower === "streptococcus" && taxo.species && (taxo.species.toLowerCase().includes("salivarius") || taxo.species.toLowerCase().includes("vestibularis"))) {
-        mapped_column = "s_salivarius_pct"
-        mapping_type = "special"
-        sSalivariusTotal += pct
-      } else if (genusLower === "prevotella") {
-        if (taxo.species && taxo.species.toLowerCase().includes("intermedia")) {
-          mapped_column = "prevotella_intermedia_pct"
-          mapping_type = "species_exact"
-          speciesSums[mapped_column] = (speciesSums[mapped_column] ?? 0) + pct
-        } else {
-          mapped_column = "prevotella_commensal_pct"
-          mapping_type = "special"
-          prevotellaCommensalTotal += pct
-        }
-      } else if (GENUS_COLUMNS[genusLower]) {
-        mapped_column = GENUS_COLUMNS[genusLower]
-        mapping_type = "genus_sum"
-        genusSums[mapped_column] = (genusSums[mapped_column] ?? 0) + pct
-      }
-
-      if (genusLower === "streptococcus") strepTotal += pct
-    }
-
-    allEntries.push({
-      taxonomy_full: taxo.taxonomy_full,
-      kingdom: taxo.kingdom,
-      phylum: taxo.phylum,
-      class_: taxo.class_,
-      order: taxo.order,
-      family: taxo.family,
-      genus: taxo.genus,
-      species: taxo.species,
-      is_named: taxo.is_named,
-      is_placeholder: taxo.is_placeholder,
-      pct,
-      mapped_column,
-      mapping_type,
-    })
-  }
-
-  // Column values for dedicated DB columns — every tracked column gets a value
-  // (0.0 if absent from sample, never null — null means parser hasn't run)
-  const ALL_TRACKED_COLUMNS = [
-    ...Object.values(GENUS_COLUMNS),
-    ...Object.values(SPECIES_COLUMNS),
-    "s_salivarius_pct", "streptococcus_total_pct", "prevotella_commensal_pct",
-  ]
-  const columnValues: Record<string, number> = {}
-  for (const col of ALL_TRACKED_COLUMNS) columnValues[col] = 0
-  for (const [col, val] of Object.entries(genusSums)) columnValues[col] = parseFloat(val.toFixed(4))
-  for (const [col, val] of Object.entries(speciesSums)) columnValues[col] = parseFloat(val.toFixed(4))
-  columnValues["s_salivarius_pct"] = parseFloat(sSalivariusTotal.toFixed(4))
-  columnValues["streptococcus_total_pct"] = parseFloat(strepTotal.toFixed(4))
-  columnValues["prevotella_commensal_pct"] = parseFloat(prevotellaCommensalTotal.toFixed(4))
-
-  // Fallback Shannon (natural log, all entries — inaccurate vs Zymo rarefaction)
-  const pctVals = allEntries.map(e => e.pct).filter(v => v > 0)
-  const pctTotal = pctVals.reduce((a, b) => a + b, 0)
-  let shannonDiversity: number | null = null
-  if (pctTotal > 0) {
-    shannonDiversity = -pctVals.reduce((h, v) => {
-      const p = v / pctTotal
-      return p > 0 ? h + p * Math.log(p) : h
-    }, 0)
-    shannonDiversity = parseFloat(shannonDiversity.toFixed(3))
-  }
-
-  const communitySummary: CommunitySummary = {
-    total_entries_present: allEntries.length,
-    named_species_count: namedCount,
-    unnamed_placeholder_count: placeholderCount,
-    distinct_genera: generaSet.size,
-    distinct_phyla: phylaSet.size,
-    total_abundance_captured: parseFloat(totalAbundance.toFixed(2)),
-  }
-
-  // Build raw_otu_table — flat species→fraction at top level for backward compatibility
-  const flatOtu: Record<string, unknown> = {}
-  for (const entry of allEntries) {
-    const key = entry.species ? `${entry.genus} ${entry.species}` : entry.genus
-    flatOtu[key] = ((flatOtu[key] as number) ?? 0) + entry.pct / 100
-  }
-  flatOtu["__meta"] = {
-    community_summary: communitySummary,
-    entries: allEntries,
-    parsed_at: new Date().toISOString(),
-    parser_version: "v3",
-  }
-
-  const trackedCount = allEntries.filter(e => e.mapping_type !== "unmatched" && e.mapping_type !== "placeholder").length
-
-  return {
-    entries: allEntries.sort((a, b) => b.pct - a.pct),
-    communitySummary,
-    columnValues,
-    shannonDiversity,
-    shannonSource: shannonDiversity != null ? "computed_l7" : null,
-    speciesCount: allEntries.length,
-    totalTracked: trackedCount,
-    totalUntracked: allEntries.length - trackedCount,
-    rawOtu: flatOtu,
-  }
-}
 
 // ── Route handler ───────────────────────────────────────────────────────────
 
@@ -449,6 +177,7 @@ export async function POST(request: NextRequest) {
         shannon_diversity: parsed.shannonDiversity,
         species_count: parsed.speciesCount,
         status: "results_uploaded",
+        parser_unresolved_species: parsed.parserUnresolvedSpecies.length > 0 ? parsed.parserUnresolvedSpecies : null,
       }
       if (shannonResult) {
         updateData.rarefaction_curve = shannonResult.rarefactionCurve
@@ -459,6 +188,9 @@ export async function POST(request: NextRequest) {
         .eq("id", kitId)
       if (writeErr) throw new Error(`Write species failed: ${writeErr.message}`)
       steps.push(`Wrote ${Object.keys(parsed.columnValues).length} columns + raw_otu_table (${parsed.speciesCount} species)`)
+      if (parsed.parserUnresolvedSpecies.length > 0) {
+        steps.push(`Hyphenated calls resolved: ${parsed.parserUnresolvedSpecies.length} (e.g. ${parsed.parserUnresolvedSpecies[0]})`)
+      }
       steps.push(`Shannon: ${parsed.shannonDiversity?.toFixed(4)} (${parsed.shannonSource}${shannonResult ? `, depth ${shannonResult.maxDepth}, ${shannonResult.iterations} iterations` : ""})`)
 
       // Step 2: reload kit row for scoring
@@ -679,9 +411,12 @@ export async function POST(request: NextRequest) {
       if (entries.length === 0) throw new Error("No __meta.entries in raw_otu_table — needs full re-upload")
       steps.push(`Found ${entries.length} entries in raw_otu_table.__meta.entries`)
 
-      // Re-run column mapping with current (fixed) parser rules
+      // Re-run column mapping with current parser rules. Hyphenated species
+      // calls go through resolveSpeciesColumn() so the v3 species map (e.g.
+      // "mitis-pneumoniae" → s_mitis_pct) backfills correctly.
       const genusSums: Record<string, number> = {}
       const speciesSums: Record<string, number> = {}
+      const reparseUnresolved: string[] = []
       let sSalivariusTotal = 0
       let strepTotal = 0
       let prevotellaCommensalTotal = 0
@@ -691,20 +426,30 @@ export async function POST(request: NextRequest) {
         const genusLower = entry.genus.toLowerCase()
         const speciesLower = entry.species?.toLowerCase() ?? ""
 
-        if (SPECIES_COLUMNS[`${entry.genus.toLowerCase()} ${speciesLower}`]) {
-          const col = SPECIES_COLUMNS[`${entry.genus.toLowerCase()} ${speciesLower}`]
-          speciesSums[col] = (speciesSums[col] ?? 0) + entry.pct
-        } else if (genusLower === "streptococcus" && (speciesLower.includes("salivarius") || speciesLower.includes("vestibularis"))) {
-          sSalivariusTotal += entry.pct
-        } else if (genusLower === "prevotella") {
-          if (speciesLower.includes("intermedia")) {
-            speciesSums["prevotella_intermedia_pct"] = (speciesSums["prevotella_intermedia_pct"] ?? 0) + entry.pct
-          } else {
-            prevotellaCommensalTotal += entry.pct
+        const exactKey = `${genusLower} ${speciesLower}`
+        const exactCol = SPECIES_COLUMNS[exactKey]
+        if (exactCol) {
+          speciesSums[exactCol] = (speciesSums[exactCol] ?? 0) + entry.pct
+        } else {
+          const hyphen = speciesLower.includes("-")
+            ? resolveSpeciesColumn(genusLower, speciesLower)
+            : { column: null, unresolved: null }
+
+          if (hyphen.column) {
+            speciesSums[hyphen.column] = (speciesSums[hyphen.column] ?? 0) + entry.pct
+            if (hyphen.unresolved) reparseUnresolved.push(hyphen.unresolved)
+          } else if (genusLower === "streptococcus" && (speciesLower.includes("salivarius") || speciesLower.includes("vestibularis"))) {
+            sSalivariusTotal += entry.pct
+          } else if (genusLower === "prevotella") {
+            if (speciesLower.includes("intermedia")) {
+              speciesSums["prevotella_intermedia_pct"] = (speciesSums["prevotella_intermedia_pct"] ?? 0) + entry.pct
+            } else {
+              prevotellaCommensalTotal += entry.pct
+            }
+          } else if (GENUS_COLUMNS[genusLower]) {
+            const col = GENUS_COLUMNS[genusLower]
+            genusSums[col] = (genusSums[col] ?? 0) + entry.pct
           }
-        } else if (GENUS_COLUMNS[genusLower]) {
-          const col = GENUS_COLUMNS[genusLower]
-          genusSums[col] = (genusSums[col] ?? 0) + entry.pct
         }
 
         if (genusLower === "streptococcus") strepTotal += entry.pct
@@ -722,12 +467,19 @@ export async function POST(request: NextRequest) {
       columnValues["streptococcus_total_pct"] = parseFloat(strepTotal.toFixed(4))
       columnValues["prevotella_commensal_pct"] = parseFloat(prevotellaCommensalTotal.toFixed(4))
 
+      const reparseUpdate: Record<string, unknown> = {
+        ...columnValues,
+        parser_unresolved_species: reparseUnresolved.length > 0 ? reparseUnresolved : null,
+      }
       const { error: writeErr } = await supabase
         .from("oral_kit_orders")
-        .update(columnValues)
+        .update(reparseUpdate)
         .eq("id", kitId)
       if (writeErr) throw new Error(`Write columns failed: ${writeErr.message}`)
       steps.push(`Wrote ${Object.keys(columnValues).length} columns (s_salivarius=${sSalivariusTotal.toFixed(2)}, lactobacillus=${columnValues["lactobacillus_pct"]})`)
+      if (reparseUnresolved.length > 0) {
+        steps.push(`Hyphenated calls resolved: ${reparseUnresolved.length} (e.g. ${reparseUnresolved[0]})`)
+      }
 
       // Re-compute caries panel
       const cariesReparse = computeCariesPanel(columnValues as unknown as Parameters<typeof computeCariesPanel>[0])
