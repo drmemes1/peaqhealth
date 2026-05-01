@@ -232,7 +232,41 @@ describe("parser — validateAndComputeFromRaw", () => {
     ;(raw.markers.ldl_mgdl as unknown as { value: unknown }).value = "125"
     const result = validateAndComputeFromRaw(raw)
     expect(result.markers.ldl_mgdl).toBeNull()
-    expect(result.warnings.some(w => /ldl_mgdl.*outside valid range/i.test(w))).toBe(true)
+    // Validator now distinguishes type errors ("not a finite number") from
+    // out-of-range rejections. String values fall in the type-error branch.
+    expect(result.warnings.some(w => /ldl_mgdl.*not a finite number/i.test(w))).toBe(true)
+  })
+
+  test("Lp(a) reported in nmol/L → converted to mg/dL (÷ 2.5) + warning", () => {
+    const result = validateAndComputeFromRaw(rawOutput({
+      lipoprotein_a_mgdl: { value: 75, unitFound: "nmol/L" },
+    }))
+    expect(result.markers.lipoprotein_a_mgdl).not.toBeNull()
+    expect(result.markers.lipoprotein_a_mgdl?.value).toBeCloseTo(30, 4) // 75 / 2.5
+    expect(result.markers.lipoprotein_a_mgdl?.unitFound).toMatch(/converted from nmol\/L/i)
+    expect(result.warnings.some(w => /lipoprotein_a_mgdl converted/i.test(w))).toBe(true)
+  })
+
+  test("Glucose reported in mmol/L → converted to mg/dL (× 18.0182)", () => {
+    const result = validateAndComputeFromRaw(rawOutput({
+      glucose_mgdl: { value: 5, unitFound: "mmol/L" },
+    }))
+    expect(result.markers.glucose_mgdl?.value).toBeCloseTo(90.091, 2) // 5 * 18.0182
+  })
+
+  test("Same unit (case-different) → no conversion, no warning", () => {
+    const result = validateAndComputeFromRaw(rawOutput({
+      ldl_mgdl: { value: 125, unitFound: "mg/dl" },  // lowercase l
+    }))
+    expect(result.markers.ldl_mgdl?.value).toBe(125)
+    expect(result.warnings.some(w => /ldl_mgdl converted/i.test(w))).toBe(false)
+  })
+
+  test("Unknown unit → accepted as-is with no conversion (no entry in conversion table)", () => {
+    const result = validateAndComputeFromRaw(rawOutput({
+      ldl_mgdl: { value: 125, unitFound: "weird-unit" },
+    }))
+    expect(result.markers.ldl_mgdl?.value).toBe(125)
   })
 
   test("NaN / Infinity values rejected", () => {
