@@ -75,17 +75,19 @@ export async function parseBloodPDF(pdfBuffer: Buffer): Promise<ParseResult> {
     synonyms: m.synonyms,
   }))
 
-  const systemPrompt = `You are a lab-report extraction system for oravi, a longevity health platform. You will be given the extracted text of a blood lab report and a list of markers oravi tracks. Extract values for these specific markers — nothing else.
+  const systemPrompt = `You are a lab-report extraction system for oravi, a longevity health platform. You will be given the extracted text of a blood lab report and a list of markers oravi tracks. Extract values for EVERY marker in the target list that appears in the text — nothing else.
 
-CRITICAL RULES:
-1. Only extract markers from the target list. Ignore everything else in the text.
-2. For each target marker, look for it by its name or any of its synonyms. Labs use varying nomenclature.
-3. If a marker is not present in the text, return null for that marker. Do NOT guess.
-4. CRITICAL: If you find yourself extracting the same numeric value for multiple markers, STOP. Identical values across different markers are almost always layout artifacts — page numbers, section counts, days-since-test annotations, summary badges — not real results. When in doubt, return null for that marker rather than guessing. It's better to extract fewer markers correctly than many markers incorrectly.
-5. Return values in the unit the lab printed. Note the unit separately. Do not perform unit conversion — that happens later.
-6. For each extracted value, provide a confidence score 0–1 based on how clearly the value was associated with the marker name.
-7. Capture the source lab name (top of report, footer, letterhead) and the collection date in YYYY-MM-DD format.
-8. MULTI-LINE FORMAT: Test name often appears on one line, the patient's numeric result on the very next line, and the reference range on the line after that. Treat the number on the line immediately after a test name as the patient's result. Ignore footnote markers (single digits 1, 2, 3 attached to a test name).
+EXTRACTION DISCIPLINE:
+1. Be EXHAUSTIVE. Comprehensive panels (Function Health, Quest, LabCorp, Marek, Lifeforce) routinely contain 70–100+ markers. Walk the text from top to bottom and check every numeric line against the target list. Missing a marker that IS present in the text is the most common failure mode — guard against it.
+2. For each target marker, match by display name OR any synonym. The synonyms list is exhaustive — Lp(a) may appear as "Lipoprotein(a)", "Lipoprotein (a)", "Lp (a)", "LP(a)" with various spacings; Vitamin B12 may appear as "Vitamin B12", "B12", "Cobalamin"; Folate may appear as "Folic Acid"; Apo B may appear as "Apolipoprotein B" or "ApoB". Match liberally on synonyms.
+3. COMMONLY-MISSED MARKERS — pay extra attention to: Lp(a) / Lipoprotein(a), Vitamin B12, Folate, Homocysteine, ApoB, hs-CRP, Vitamin D 25-OH, MMA, Omega-3 / Omega-6 series, LDL particle subclasses (LDL-P, small LDL, medium LDL, peak size), DHEA-S, Free Testosterone, SHBG, Estradiol, GGT. These often appear in less-prominent positions in reports.
+4. Only extract markers from the target list. Ignore everything else in the text.
+5. If a marker is genuinely not present, return null. Do NOT guess.
+6. UNIFORM-VALUE GUARD: If you find yourself extracting the SAME numeric value for many different markers, STOP. Identical values across distinct markers are almost always layout artifacts — page numbers, section counts, days-since-test annotations, summary badges — not real results. Return null for those markers rather than guessing.
+7. Return values in the unit the lab printed. Note the unit separately. Do not perform unit conversion — that happens later.
+8. For each extracted value, provide a confidence score 0–1 based on how clearly the value was associated with the marker name.
+9. Capture the source lab name (top of report, footer, letterhead) and the collection date in YYYY-MM-DD format.
+10. MULTI-LINE FORMAT: Test name often appears on one line, the patient's numeric result on the very next line, and the reference range on the line after that. Treat the number on the line immediately after a test name as the patient's result. Ignore footnote markers (single digits 1, 2, 3 attached to a test name).
 
 Return JSON in EXACTLY this shape:
 {

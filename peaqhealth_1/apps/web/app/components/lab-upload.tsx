@@ -80,157 +80,119 @@ interface MarkerDef {
   placeholder: string
 }
 
-const CATEGORIES: Array<{ name: string; markers: MarkerDef[] }> = [
-  {
-    name: "Cardiovascular",
-    markers: [
-      { slug: "ldl_mgdl",             name: "LDL Cholesterol",   unit: "mg/dL",   placeholder: "110"  },
-      { slug: "hdl_mgdl",             name: "HDL Cholesterol",   unit: "mg/dL",   placeholder: "58"   },
-      { slug: "triglycerides_mgdl",   name: "Triglycerides",     unit: "mg/dL",   placeholder: "95"   },
-      { slug: "total_cholesterol_mgdl",name: "Total Cholesterol", unit: "mg/dL",   placeholder: "180"  },
-      { slug: "apob_mgdl",            name: "ApoB",              unit: "mg/dL",   placeholder: "85"   },
-      { slug: "lipoprotein_a_mgdl",             name: "Lp(a)",             unit: "mg/dL",   placeholder: "18"   },
-      { slug: "non_hdl_cholesterol_mgdl",          name: "Non-HDL",           unit: "mg/dL",   placeholder: "130"  },
-      { slug: "vldl_mgdL",            name: "VLDL",              unit: "mg/dL",   placeholder: "14"   },
-      // ldl/hdl ratio not in registry; use total_chol_hdl_ratio (computed) — display omitted
-    ],
-  },
-  {
-    name: "Inflammation",
-    markers: [
-      { slug: "hs_crp_mgl",  name: "hs-CRP",  unit: "mg/L",  placeholder: "0.8" },
-      { slug: "wbc_thousand_ul",    name: "WBC",     unit: "K/uL",  placeholder: "5.5" },
-      { slug: "rdw_percent",    name: "RDW",     unit: "%",     placeholder: "13"  },
-      { slug: "albumin_gdl",name: "Albumin", unit: "g/dL",  placeholder: "4.5" },
-    ],
-  },
-  {
-    name: "Metabolic",
-    markers: [
-      { slug: "glucose_mgdl",        name: "Glucose",         unit: "mg/dL",   placeholder: "88"  },
-      { slug: "hba1c_percent",           name: "HbA1c",           unit: "%",       placeholder: "5.2" },
-      { slug: "creatinine_mgdl",     name: "Creatinine",      unit: "mg/dL",   placeholder: "0.9" },
-      { slug: "egfr_mlmin",          name: "eGFR",            unit: "mL/min",  placeholder: "95"  },
-      { slug: "bun_mgdl",            name: "BUN",             unit: "mg/dL",   placeholder: "14"  },
-      { slug: "uric_acid_mgdl",       name: "Uric Acid",       unit: "mg/dL",   placeholder: "5.5" },
-      { slug: "insulin_uiuml",name: "Fasting Insulin", unit: "µIU/mL",  placeholder: "7"   },
-    ],
-  },
-  {
-    name: "Liver",
-    markers: [
-      { slug: "alt_ul",             name: "ALT",       unit: "U/L",   placeholder: "22" },
-      { slug: "ast_ul",             name: "AST",       unit: "U/L",   placeholder: "20" },
-      { slug: "alp_ul",         name: "Alk Phos",  unit: "U/L",   placeholder: "70" },
-      { slug: "total_bilirubin_mgdl",name: "Bilirubin", unit: "mg/dL", placeholder: "0.8"},
-    ],
-  },
-  {
-    name: "Hormones",
-    markers: [
-      { slug: "testosterone_total_ngdl", name: "Testosterone",      unit: "ng/dL",  placeholder: "550" },
-      { slug: "testosterone_free_pgml",    name: "Free Testosterone", unit: "pg/mL",  placeholder: "12"  },
-      { slug: "tsh_uiuml",         name: "TSH",               unit: "µIU/mL", placeholder: "1.8" },
-      { slug: "dhea_sulfate_ugdl",       name: "DHEA-S",            unit: "µg/dL",  placeholder: "200" },
-      { slug: "igf1_ngmL",         name: "IGF-1",             unit: "ng/mL",  placeholder: "180" },
-      { slug: "shbg_nmoll",        name: "SHBG",              unit: "nmol/L", placeholder: "40"  },
-    ],
-  },
-  {
-    name: "Micronutrients",
-    markers: [
-      { slug: "vitamin_d_ngml",   name: "Vitamin D",  unit: "ng/mL", placeholder: "42"  },
-      { slug: "ferritin_ngml",   name: "Ferritin",   unit: "ng/mL", placeholder: "80"  },
-      { slug: "hemoglobin_gdl",  name: "Hemoglobin", unit: "g/dL",  placeholder: "14"  },
-      { slug: "mcv_fl",          name: "MCV",        unit: "fL",    placeholder: "90"  },
-    ],
-  },
-  {
-    name: "CBC",
-    markers: [
-      { slug: "hematocrit_percent",  name: "Hematocrit",  unit: "%",     placeholder: "42"  },
-      { slug: "platelets_thousand_ul",   name: "Platelets",   unit: "K/uL",  placeholder: "250" },
-      { slug: "rbc_million_ul",         name: "RBC",         unit: "M/uL",  placeholder: "4.8" },
-      { slug: "mch_pg",          name: "MCH",         unit: "pg",    placeholder: "30"  },
-      { slug: "mchc_gdl",        name: "MCHC",        unit: "g/dL",  placeholder: "33"  },
-      { slug: "neutrophils_pct", name: "Neutrophils", unit: "%",     placeholder: "60"  },
-      { slug: "lymphs_pct",      name: "Lymphs",      unit: "%",     placeholder: "30"  },
-    ],
-  },
-  {
-    name: "Electrolytes",
-    markers: [
-      { slug: "sodium_mmolL",     name: "Sodium",        unit: "mmol/L", placeholder: "140" },
-      { slug: "potassium_mmolL",  name: "Potassium",     unit: "mmol/L", placeholder: "4.2" },
-      { slug: "chloride_mmolL",   name: "Chloride",      unit: "mmol/L", placeholder: "102" },
-      { slug: "co2_mmolL",        name: "CO2",           unit: "mmol/L", placeholder: "25"  },
-      { slug: "calcium_mgdL",     name: "Calcium",       unit: "mg/dL",  placeholder: "9.5" },
-      { slug: "total_protein_gdl", name: "Total Protein", unit: "g/dL",   placeholder: "7.2" },
-      { slug: "globulin_gdL",     name: "Globulin",      unit: "g/dL",   placeholder: "2.5" },
-    ],
-  },
+// CATEGORIES is now derived from the marker registry — every registry entry
+// shows up in the review UI, grouped by its primary category. Adding a marker
+// to the registry automatically adds it here. See ADR-0020.
+import {
+  BLOOD_MARKER_REGISTRY,
+  type BloodMarker,
+  type MarkerCategory,
+} from "../../lib/blood/markerRegistry"
+
+// Display order + label for each category. Anything not listed falls under
+// "Other" at the end.
+const CATEGORY_DISPLAY: Array<{ key: MarkerCategory; label: string }> = [
+  { key: "lipids",             label: "Heart & Lipids" },
+  { key: "metabolic",          label: "Metabolic" },
+  { key: "kidney",             label: "Kidney" },
+  { key: "liver",              label: "Liver" },
+  { key: "blood_count",        label: "Complete Blood Count" },
+  { key: "immune",             label: "White Blood Cells" },
+  { key: "electrolytes",       label: "Electrolytes" },
+  { key: "nutrients",          label: "Nutrients" },
+  { key: "hormones",           label: "Hormones" },
+  { key: "thyroid",            label: "Thyroid" },
+  { key: "stress_aging",       label: "Stress & Aging" },
+  { key: "inflammation",       label: "Advanced Inflammation" },
+  { key: "advanced_lipids",    label: "Advanced Lipids (NMR)" },
+  { key: "advanced_nutrients", label: "Omega & Methylation" },
+  { key: "advanced_thyroid",   label: "Thyroid Antibodies" },
+  { key: "heavy_metals",       label: "Heavy Metals" },
+  { key: "male_health",        label: "Prostate / Male Health" },
+  { key: "pancreas",           label: "Pancreas" },
 ]
 
-// Slugs for the legacy manual-entry display (kept for manual phase)
+const PLACEHOLDER_BY_UNIT: Record<string, string> = {
+  "mg/dL": "0", "mg/L": "0", "g/dL": "0", "U/L": "0", "%": "0",
+  "ng/mL": "0", "pg/mL": "0", "µg/dL": "0", "µg/L": "0",
+  "K/µL": "0", "million/µL": "0", "fL": "0", "pg": "0",
+  "mmol/L": "0", "µmol/L": "0", "nmol/L": "0", "µmol/L (free T4)": "0",
+  "µIU/mL": "0", "mIU/mL": "0", "IU/mL": "0", "ratio": "0",
+  "mL/min/1.73m²": "0", "Å": "0",
+}
+
+function buildCategoriesFromRegistry(): Array<{ name: string; markers: MarkerDef[] }> {
+  // Group by the marker's PRIMARY (first) category so each marker appears once.
+  const byCategory = new Map<MarkerCategory | "other", BloodMarker[]>()
+  for (const m of BLOOD_MARKER_REGISTRY) {
+    const primary = m.categories[0] ?? "other"
+    if (!byCategory.has(primary)) byCategory.set(primary, [])
+    byCategory.get(primary)!.push(m)
+  }
+  const groups: Array<{ name: string; markers: MarkerDef[] }> = []
+  const seen = new Set<MarkerCategory>()
+  for (const { key, label } of CATEGORY_DISPLAY) {
+    const list = byCategory.get(key)
+    if (!list || list.length === 0) continue
+    seen.add(key)
+    groups.push({
+      name: label,
+      markers: list.map(m => ({
+        slug: m.id,
+        name: m.shortName ?? m.displayName,
+        unit: m.unit,
+        placeholder: PLACEHOLDER_BY_UNIT[m.unit] ?? "0",
+      })),
+    })
+  }
+  // Sweep up any categories not in CATEGORY_DISPLAY (defensive — if a new
+  // category is added to the registry without updating this list).
+  for (const [key, list] of byCategory) {
+    if (key === "other" || seen.has(key as MarkerCategory)) continue
+    groups.push({
+      name: String(key),
+      markers: list.map(m => ({
+        slug: m.id,
+        name: m.shortName ?? m.displayName,
+        unit: m.unit,
+        placeholder: PLACEHOLDER_BY_UNIT[m.unit] ?? "0",
+      })),
+    })
+  }
+  const otherList = byCategory.get("other") ?? []
+  if (otherList.length > 0) {
+    groups.push({
+      name: "Other",
+      markers: otherList.map(m => ({
+        slug: m.id,
+        name: m.shortName ?? m.displayName,
+        unit: m.unit,
+        placeholder: PLACEHOLDER_BY_UNIT[m.unit] ?? "0",
+      })),
+    })
+  }
+  return groups
+}
+
+const CATEGORIES = buildCategoriesFromRegistry()
+
+// Manual-entry shorthand (one big flat list).
 const DISPLAY_MARKERS: MarkerDef[] = CATEGORIES.flatMap(c => c.markers)
 
-// High-value markers to show as blank "+" rows when missing
+// High-value markers to show as blank "+" rows when missing — these are
+// the markers users most frequently want to manually enter when not on
+// the lab. Registry IDs.
 const HIGH_VALUE_SLUGS = new Set([
-  "apoB_mgdL", "hsCRP_mgL", "hba1c_percent", "vitaminD_ngmL",
-  "lpa_mgdL", "egfr_mLmin", "testosterone_ngdL", "ferritin_ngmL",
+  "apob_mgdl", "hs_crp_mgl", "hba1c_percent", "vitamin_d_ngml",
+  "lipoprotein_a_mgdl", "egfr_mlmin", "testosterone_total_ngdl",
+  "ferritin_ngml", "vitamin_b12_pgml", "homocysteine_umoll",
 ])
 
-// Plausible ranges [min, max] — warn if outside, don't block
-const PLAUSIBLE_RANGES: Record<string, [number, number]> = {
-  ldl_mgdL:              [10,  400],
-  hdl_mgdL:              [5,   150],
-  triglycerides_mgdL:    [20,  1500],
-  totalCholesterol_mgdL: [50,  500],
-  apoB_mgdL:             [20,  300],
-  lpa_mgdL:              [0,   400],
-  nonHDL_mgdL:           [10,  400],
-  vldl_mgdL:             [1,   150],
-  ldlHdlRatio:           [0.5, 15],
-  hsCRP_mgL:             [0,   50],
-  wbc_thousand_ul:               [1,   50],
-  rdw_percent:               [8,   25],
-  albumin_gdL:           [1,   6],
-  glucose_mgdL:          [40,  600],
-  hba1c_percent:             [3,   20],
-  creatinine_mgdL:       [0.2, 15],
-  egfr_mLmin:            [5,   200],
-  bun_mgdL:              [2,   120],
-  uricAcid_mgdL:         [1,   20],
-  fastingInsulin_uIUmL:  [1,   200],
-  alt_UL:                [5,   1000],
-  ast_UL:                [5,   1000],
-  alkPhos_UL:            [20,  1000],
-  totalBilirubin_mgdL:   [0.1, 30],
-  testosterone_ngdL:     [5,   2000],
-  freeTesto_pgmL:        [0.5, 50],
-  tsh_uIUmL:             [0.01,50],
-  dhea_s_ugdL:           [5,   800],
-  igf1_ngmL:             [30,  800],
-  shbg_nmolL:            [5,   300],
-  vitaminD_ngmL:         [4,   200],
-  ferritin_ngmL:         [1,   3000],
-  hemoglobin_gdL:        [5,   22],
-  mcv_fL:                [50,  130],
-  hematocrit_percent:        [15,  65],
-  platelets_thousand_ul:         [50,  1500],
-  rbc_mil:               [1,   9],
-  mch_pg:                [15,  50],
-  mchc_gdl:              [25,  40],
-  neutrophils_pct:       [5,   95],
-  lymphs_pct:            [5,   90],
-  sodium_mmolL:          [110, 160],
-  potassium_mmolL:       [2,   7],
-  chloride_mmolL:        [80,  120],
-  co2_mmolL:             [10,  40],
-  calcium_mgdL:          [5,   15],
-  totalProtein_gdL:      [3,   12],
-  globulin_gdL:          [1,   8],
-}
+// Plausible ranges [min, max] — derived from the registry's validRange,
+// keyed by registry ID. Used for client-side warnings on edited values.
+const PLAUSIBLE_RANGES: Record<string, [number, number]> = Object.fromEntries(
+  BLOOD_MARKER_REGISTRY.map(m => [m.id, [m.validRange.min, m.validRange.max] as [number, number]]),
+)
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
