@@ -200,3 +200,15 @@ CREATE TABLE blood_marker_confidence (
 
 CREATE INDEX idx_marker_confidence_result
   ON blood_marker_confidence(blood_result_id);
+
+-- ── score_snapshots: re-point lab_result_id → blood_result_id ──────────────
+-- The DROP TABLE lab_results CASCADE above removed the FK constraint on
+-- score_snapshots.lab_result_id; the column itself remains as orphaned
+-- UUID. Drop it and add the new FK to blood_results so future score
+-- snapshots can join back to the source lab draw.
+
+ALTER TABLE score_snapshots
+  DROP COLUMN IF EXISTS lab_result_id;
+
+ALTER TABLE score_snapshots
+  ADD COLUMN IF NOT EXISTS blood_result_id uuid REFERENCES blood_results(id) ON DELETE SET NULL;

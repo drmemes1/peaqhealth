@@ -1,602 +1,33 @@
+/**
+ * Blood-results PDF parsing endpoint.
+ *
+ * Post-architectural-reset (PR-252 / ADR-0020), this route is a thin
+ * wrapper around `parseBloodPDF` from apps/web/lib/blood/parser.ts.
+ * The OpenAI prompt is built from the marker registry, so adding a
+ * marker requires zero changes here — just a row in the registry and
+ * a column in the migration.
+ *
+ * The old per-format branching (Quest pattern, LabCorp pattern,
+ * Junction-specific path, regex fallback, Azure OCR, unpdf-then-OpenAI
+ * cascade) is all gone. parseBloodPDF handles every format from a
+ * single configuration. The Function Health 14-bug — and the class of
+ * layout-artifact failures that produced it — is caught at the parser
+ * layer's uniform-value guard.
+ *
+ * Response shape matches what /api/labs/save expects: registry-keyed
+ * markers + parser metadata. The frontend pipes the response straight
+ * through to save without translation.
+ */
+
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "../../../../lib/supabase/server"
-import OpenAI from "openai"
-import { stripPII } from "../../../../lib/pii-scrub"
-
-// ─── Types ──────────────────────────────────────────────────────────────────
+import { parseBloodPDF, type ParseResult } from "../../../../lib/blood/parser"
 
 interface FileInput {
   base64: string
   filename: string
   type?: string
 }
-
-interface FileResult {
-  filename: string
-  markers: Record<string, number>
-  markersFound: number
-  labName?: string
-  collectionDate?: string
-  notes?: Record<string, string>
-  parserUsed: "openai" | "openai-vision" | "azure-hybrid" | "failed"
-  error?: string
-}
-
-// ─── Azure text extraction ───────────────────────────────────────────────────
-
-async function extractTextWithAzure(buffer: Buffer, model = "prebuilt-read"): Promise<string | null> {
-  const endpoint = process.env.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT
-  const apiKey = process.env.AZURE_DOCUMENT_INTELLIGENCE_KEY
-  if (!endpoint || !apiKey) return null
-
-  try {
-    const analyzeUrl = `${endpoint}documentintelligence/documentModels/${model}:analyze?api-version=2024-11-30`
-
-    const submitRes = await fetch(analyzeUrl, {
-      method: "POST",
-      headers: {
-        "Ocp-Apim-Subscription-Key": apiKey,
-        "Content-Type": "application/pdf",
-      },
-      body: new Uint8Array(buffer),
-    })
-
-    if (!submitRes.ok) return null
-
-    const operationUrl = submitRes.headers.get("Operation-Location")
-    if (!operationUrl) return null
-
-    for (let i = 0; i < 15; i++) {
-      await new Promise((r) => setTimeout(r, 2000))
-
-      const pollRes = await fetch(operationUrl, {
-        headers: { "Ocp-Apim-Subscription-Key": apiKey },
-      })
-
-      if (!pollRes.ok) continue
-
-      const data = await pollRes.json() as Record<string, unknown>
-      if (data.status === "succeeded") {
-        const result = data.analyzeResult as Record<string, unknown> | undefined
-        // Use result.content directly — prebuilt-read returns the full concatenated
-        // text of every page with no page limits, preserving line order.
-        if (typeof result?.content === "string" && result.content.length > 0) {
-          return result.content
-        }
-
-        // Fallback for models that don't populate content (should not happen with prebuilt-read)
-        const pages = (result?.pages ?? []) as Array<{ lines?: Array<{ content: string }> }>
-        const tables = (result?.tables ?? []) as Array<{ cells?: Array<{ content: string }> }>
-        return [
-          ...pages.flatMap(p => p.lines ?? []).map(l => l.content),
-          ...tables.flatMap(t => t.cells ?? []).map(c => c.content).filter(Boolean),
-        ].join("\n") || null
-      }
-
-      if (data.status === "failed") return null
-    }
-  } catch {
-    // fall through
-  }
-
-  return null
-}
-
-// ─── OpenAI Vision OCR (primary fallback for scanned PDFs) ──────────────────
-// Renders PDF pages to PNG via unpdf, sends as images to GPT-4o vision.
-// Same BAA, same vendor, one fewer key than Azure Document Intelligence.
-
-async function extractTextWithOpenAIVision(buffer: Buffer): Promise<string | null> {
-  const openaiKey = process.env.OPENAI_API_KEY
-  if (!openaiKey) return null
-
-  try {
-    const { renderPageAsImage, getDocumentProxy } = await import("unpdf")
-    const doc = await getDocumentProxy(new Uint8Array(buffer))
-    const pageCount = doc.numPages
-    const maxPages = Math.min(pageCount, 8)
-
-    const imageUrls: { type: "image_url"; image_url: { url: string; detail: "high" } }[] = []
-    for (let p = 1; p <= maxPages; p++) {
-      const result = await renderPageAsImage(doc, p, { scale: 2 })
-      const imageData = result instanceof ArrayBuffer ? result : (result as { image: ArrayBuffer }).image ?? result
-      const pngBase64 = Buffer.from(imageData as ArrayBuffer).toString("base64")
-      imageUrls.push({
-        type: "image_url",
-        image_url: { url: `data:image/png;base64,${pngBase64}`, detail: "high" },
-      })
-    }
-
-    if (imageUrls.length === 0) return null
-
-    const openai = new OpenAI({ apiKey: openaiKey })
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      max_tokens: 8192,
-      temperature: 0,
-      store: false,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: "Extract ALL text from these lab report pages. Preserve the exact layout — test names, values, units, reference ranges, dates, lab name. Return only the extracted text, no commentary.",
-            },
-            ...imageUrls,
-          ],
-        },
-      ],
-    })
-
-    const text = response.choices[0]?.message?.content
-    if (text && text.length > 500) {
-      console.log("[vision-ocr] extracted", text.length, "chars from", imageUrls.length, "pages")
-      return text
-    }
-    console.log("[vision-ocr] insufficient text:", text?.length ?? 0)
-    return null
-  } catch (err) {
-    console.error("[vision-ocr] failed:", (err as Error).message)
-    return null
-  }
-}
-
-// ─── Regex fallback parser ────────────────────────────────────────────────────
-// Used when OpenAI parsing fails or times out. Matches known marker names against
-// extracted text lines. Handles LabCorp (value on next line) and Quest (value
-// after reference range line).
-
-function parseWithRegexFallback(text: string): Record<string, unknown> {
-  const markers: Record<string, unknown> = {}
-  const lines = text.split("\n").map(l => l.trim()).filter(Boolean)
-
-  // Each entry: [output key, ...search strings (case-insensitive)]
-  const DEFS: [string, ...string[]][] = [
-    ["ldl_mgdL",            "ldl cholesterol", "ldl-c", "ldl chol"],
-    ["hdl_mgdL",            "hdl cholesterol", "hdl-c", "hdl chol"],
-    ["triglycerides_mgdL",  "triglycerides", "triglyceride"],
-    ["hsCRP_mgL",           "hs-crp", "hscrp", "c-reactive protein, hs", "high-sensitivity crp"],
-    ["hba1c_pct",           "hemoglobin a1c", "hba1c", "a1c"],
-    ["glucose_mgdL",        "glucose, serum", "glucose, plasma", "glucose"],
-    ["vitaminD_ngmL",       "25-oh vitamin d", "25-hydroxyvitamin", "vitamin d, 25-oh"],
-    ["apoB_mgdL",           "apolipoprotein b", "apob"],
-    ["lpa_mgdL",            "lipoprotein(a)", "lipoprotein (a)", "lp(a)"],
-    ["creatinine_mgdL",     "creatinine, serum", "creatinine"],
-    ["egfr_mLmin",          "egfr", "glomerular filtration"],
-    ["alt_UL",              "alt (sgpt)", "alanine aminotransferase", "alt"],
-    ["ast_UL",              "ast (sgot)", "aspartate aminotransferase", "ast"],
-    ["wbc_kul",             "wbc", "white blood cell", "leukocytes"],
-    ["hemoglobin_gdL",      "hemoglobin", "hgb"],
-    ["rdw_pct",             "rdw", "red cell distribution"],
-    ["mcv_fL",              "mcv", "mean corpuscular volume"],
-    ["lymphs_pct",          "lymphocytes %", "lymphocyte %", "lymph %", "lymphocytes", "lymphs"],
-    ["albumin_gdL",         "albumin, serum", "albumin"],
-    ["bun_mgdL",            "bun", "urea nitrogen"],
-    ["alkPhos_UL",          "alkaline phosphatase", "alk phos"],
-    ["totalBilirubin_mgdL", "bilirubin, total", "total bilirubin"],
-    ["sodium_mmolL",        "sodium, serum", "sodium"],
-    ["potassium_mmolL",     "potassium, serum", "potassium"],
-    ["totalCholesterol_mgdL","total cholesterol", "cholesterol, total"],
-    ["nonHDL_mgdL",         "non-hdl cholesterol", "non hdl"],
-    ["testosterone_ngdL",   "testosterone, serum", "testosterone, total"],
-    ["freeTesto_pgmL",      "free testosterone", "testosterone, free"],
-    ["shbg_nmolL",          "shbg", "sex hormone binding"],
-    ["ferritin_ngmL",       "ferritin, serum", "ferritin"],
-    ["tsh_uIUmL",           "tsh", "thyroid stimulating"],
-  ]
-
-  const numOnLine = (s: string): number | null => {
-    // standalone number, possibly with decimal
-    const m = s.match(/^\s*(\d+\.?\d*)\s*$/)
-    return m ? parseFloat(m[1]) : null
-  }
-
-  for (const [key, ...patterns] of DEFS) {
-    for (let i = 0; i < lines.length; i++) {
-      const lower = lines[i].toLowerCase()
-      if (!patterns.some(p => lower.includes(p))) continue
-
-      // Check current line for "Label: 1.23" or "Label 1.23 unit"
-      const inline = lines[i].match(/[\s:]+(\d+\.?\d+)\s*(?:mg|g|mmol|nmol|ng|pg|iu|ul|fl|%|ratio|k\/ul|x10)?\/?\S*\s*$/i)
-      if (inline) { markers[key] = parseFloat(inline[1]); break }
-
-      // Check next 3 lines for a standalone number (LabCorp / Quest pattern)
-      for (let j = i + 1; j <= Math.min(i + 3, lines.length - 1); j++) {
-        const n = numOnLine(lines[j])
-        if (n !== null && n > 0) { markers[key] = n; break }
-        // Skip lines that look like reference ranges
-        if (lines[j].match(/\d+\s*[-–]\s*\d+/)) continue
-        // Stop if next line is a different marker name (long text)
-        if (lines[j].length > 30 && !/^\d/.test(lines[j])) break
-      }
-      if (markers[key]) break
-    }
-  }
-
-  // labName heuristic
-  const allText = text.toLowerCase()
-  if (allText.includes("labcorp")) markers.labName = "LabCorp"
-  else if (allText.includes("quest")) markers.labName = "Quest Diagnostics"
-
-  // collection date
-  const dateMatch = text.match(/(?:collected|collection date|date collected)[:\s]+(\d{1,2}\/\d{1,2}\/\d{2,4}|\d{4}-\d{2}-\d{2})/i)
-  if (dateMatch) {
-    const raw = dateMatch[1]
-    const parts = raw.split(/[-\/]/)
-    if (parts.length === 3) {
-      // Normalize to YYYY-MM-DD
-      const [a, b, c] = parts.map(Number)
-      markers.collectionDate = a > 31
-        ? `${a}-${String(b).padStart(2,"0")}-${String(c).padStart(2,"0")}`
-        : `${c > 99 ? c : 2000 + c}-${String(a).padStart(2,"0")}-${String(b).padStart(2,"0")}`
-    }
-  }
-
-  return markers
-}
-
-// ─── Lab text normalizer ──────────────────────────────────────────────────────
-// Collapses Practice Fusion / Quality Laboratory multiline format:
-//   "GLUCOSE 1\n100\n74-106 mg/dL\n06/11/2025" → "GLUCOSE: 100"
-// LabCorp inline format ("Glucose B, 01  83  mg/dL") is unaffected because
-// those lines don't end with a bare footnote digit.
-
-function normalizeLabText(text: string): string {
-  const lines = text.split("\n")
-  const result: string[] = []
-  let i = 0
-
-  while (i < lines.length) {
-    const line = lines[i].trim()
-
-    // Detect: "TEST NAME <digit>" where digit is a trailing footnote number
-    const testNameMatch = line.match(/^([A-Z][A-Z0-9 ,.()/]+?)\s+\d+$/)
-    const nextLine = lines[i + 1]?.trim()
-    const isNumericValue = nextLine !== undefined && /^[<>]?[\d.]+$/.test(nextLine)
-
-    if (testNameMatch && isNumericValue) {
-      const testName = testNameMatch[1].trim()
-      const value = nextLine
-      result.push(`${testName}: ${value}`)
-      i += 2 // consumed: test-name line + value line
-
-      // Skip optional reference range line (e.g. "74-106 mg/dL")
-      const refLine = lines[i]?.trim()
-      if (refLine && /^[\d.<> ]+-[\d.<> ]+/.test(refLine)) i++
-
-      // Skip optional date/time line (e.g. "06/11/2025 02:10 am")
-      const dateLine = lines[i]?.trim()
-      if (dateLine && /^\d{2}\/\d{2}\/\d{4}/.test(dateLine)) i++
-    } else {
-      result.push(lines[i])
-      i++
-    }
-  }
-
-  return result.join("\n")
-}
-
-// ─── Azure OpenAI parser (primary) ───────────────────────────────────────────
-
-async function extractTextDirect(buffer: Buffer): Promise<string> {
-  try {
-    const { extractText } = await import("unpdf")
-    const { text } = await extractText(new Uint8Array(buffer), { mergePages: true })
-    if (text && text.length > 100) {
-      console.log("[unpdf] extracted", text.length, "chars")
-      return text
-    }
-    console.log("[unpdf] too short:", text?.length ?? 0, "chars")
-  } catch (err) {
-    console.error("[unpdf] failed:", (err as Error).message)
-  }
-  return ""
-}
-
-async function parseWithAzureOpenAI(fullText: string): Promise<Record<string, unknown> | null> {
-  const openaiKey = process.env.OPENAI_API_KEY
-  if (!openaiKey) return null
-
-  // HIPAA BAA signed 2026-03-28. Zero Data Retention active. Confirmation: uKTeFVcJ3x
-  const openai = new OpenAI({ apiKey: openaiKey })
-
-  const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 25000)
-
-  try {
-    const originalLength = fullText.length
-    const scrubbedText = stripPII(fullText)
-    const normalizedText = normalizeLabText(scrubbedText)
-    console.log("[labs-upload] text pipeline: raw=%d scrubbed=%d normalized=%d", originalLength, scrubbedText.length, normalizedText.length)
-
-    const messages = [
-        {
-          role: "system" as const,
-          content: `You are a medical lab report parser. Extract EVERY lab value present in the text regardless of lab format, section header, or abbreviation used. Ignore all vendor notes, reference ranges, ratio tables, and classification guidelines — only extract the patient's actual numeric result next to the test name. Map common synonyms: GLUCOSE=glucose_mgdL, HGB/HEMOGLOBIN=hemoglobin_gdL, HCT/HEMATOCRIT=hematocrit_pct, GLYCOHEMOGLOBIN/HbA1c=hba1c_pct, ALBUMIN=albumin_gdL, ALT/ALT SGPT=alt_UL, AST/AST SGOT=ast_UL, WBC/WBC AUTOMATED=wbc_kul, RDW=rdw_pct, MCV=mcv_fL, VITAMIN D/VITAMIN D,25-HYDROXY=vitaminD_ngmL, VITAMIN B12=vitaminB12_pgmL, FOLATE=folate_ngmL, GFR ESTIMATION/eGFR=egfr_mLmin, BUN=bun_mgdL, CREATININE=creatinine_mgdL, PLT/PLATELETS=platelets_kul, RBC=rbc_mil, NEUTROPHILS %=neutrophils_pct, LYMPHOCYTES %/LYMPHS=lymphs_pct. Return null for fields not found. Return ONLY valid JSON. Start your response with { and end with }.`,
-        },
-        {
-          role: "user" as const,
-          content: `Parse this lab report and return JSON.
-
-EXTRACTION RULES:
-- Extract the PATIENT RESULT value only — never use reference range numbers
-- Never use 0 as a value — use null if not found
-- If Lp(a) is reported in nmol/L, convert to mg/dL by dividing by 2.5 (internal storage is mg/dL)
-- collectionDate in YYYY-MM-DD format
-- labName: the lab company name found in the report (e.g. "LabCorp", "Quest Diagnostics")
-- For Apolipoprotein B: the result is the number immediately following the test name, before any reference table
-- MULTI-LINE FORMAT: Test name often appears on one line, the patient's numeric result on the very next line, and the reference range on the line after that. Treat the number on the line immediately after a test name as the patient's result.
-- FOOTNOTE NUMBERS: Ignore any superscript footnote markers (single digits like 1, 2, 3) that appear attached to a test name or result — they are not part of the value.
-
-COMMON SYNONYMS (map these to the field shown):
-- CRP High Sensitivity / hs-CRP / C-Reactive Protein = hsCRP_mgL
-- Glycohemoglobin / Hemoglobin A1c / GLYCOHEMOGLOBIN / HbA1c = hba1c_pct
-- GLUCOSE / Glucose, Fasting / Glucose, Serum = glucose_mgdL
-- HGB / Hgb / HEMOGLOBIN = hemoglobin_gdL
-- HCT / HEMATOCRIT = hematocrit_pct
-- ALBUMIN = albumin_gdL
-- ALT / ALT SGPT / Alanine Aminotransferase = alt_UL
-- AST / AST SGOT / Aspartate Aminotransferase = ast_UL
-- WBC / WBC AUTOMATED / White Blood Cell Count = wbc_kul
-- RDW = rdw_pct
-- MCV = mcv_fL
-- BUN / Blood Urea Nitrogen = bun_mgdL
-- CREATININE / Creatinine, Serum = creatinine_mgdL
-- 25-Hydroxyvitamin D / Vitamin D 25-OH / VITAMIN D / VITAMIN D,25-HYDROXY / 25-OH Vit D = vitaminD_ngmL
-- VITAMIN B12 / Cobalamin = vitaminB12_pgmL
-- FOLATE / Folic Acid = folate_ngmL
-- GFR ESTIMATION / eGFR Non-African / Glomerular Filtration Rate = egfr_mLmin
-- Lipoprotein (a) / Lp(a) = lpa_mgdL
-- Alkaline Phosphatase / Alk Phos = alkPhos_UL
-- Thyroid Stimulating Hormone = tsh_uIUmL
-- Thyroxine Free / T4 Free / FT4 = free_t4_ngdL
-- Triiodothyronine Free / T3 Free / FT3 = free_t3_pgmL
-- DHEA Sulfate / DHEA-S = dhea_s_ugdL
-- Insulin-Like Growth Factor / IGF-1 = igf1_ngmL
-- Anti-Thyroid Peroxidase / TPO Antibodies = tpoAntibodies_iuML
-- Prostate Specific Antigen / PSA = psa_ngmL
-- Carcinoembryonic Antigen / CEA = cea_ngmL
-- CA 19-9 / Carbohydrate Antigen 19-9 = ca199_UmL
-
-Return JSON with EVERY field below — use null for fields not found, never omit:
-{
-  "ldl_mgdL": "LDL Cholesterol in mg/dL",
-  "hdl_mgdL": "HDL Cholesterol in mg/dL",
-  "triglycerides_mgdL": "Triglycerides in mg/dL",
-  "totalCholesterol_mgdL": "Total Cholesterol in mg/dL",
-  "nonHDL_mgdL": "Non-HDL Cholesterol in mg/dL",
-  "vldl_mgdL": "VLDL Cholesterol in mg/dL",
-  "hsCRP_mgL": "hs-CRP or C-Reactive Protein value in mg/L",
-  "hba1c_pct": "HbA1c or Hemoglobin A1c as percentage",
-  "glucose_mgdL": "Glucose or Fasting Glucose in mg/dL",
-  "fastingInsulin_uIUmL": "Insulin Fasting in uIU/mL",
-  "vitaminD_ngmL": "Vitamin D 25-OH or 25-Hydroxyvitamin D in ng/mL",
-  "apoB_mgdL": "ApoB or Apolipoprotein B in mg/dL",
-  "lpa_mgdL": "Lp(a) or Lipoprotein(a) in mg/dL",
-  "homocysteine_umolL": "Homocysteine in umol/L",
-  "uricAcid_mgdL": "Uric Acid in mg/dL",
-  "creatinine_mgdL": "Creatinine in mg/dL",
-  "egfr_mLmin": "eGFR Non-African American in mL/min/1.73m2",
-  "bun_mgdL": "BUN or Blood Urea Nitrogen in mg/dL",
-  "alt_UL": "ALT or Alanine Aminotransferase in U/L",
-  "ast_UL": "AST or Aspartate Aminotransferase in U/L",
-  "alkPhos_UL": "Alk Phos or Alkaline Phosphatase in U/L",
-  "totalBilirubin_mgdL": "Total Bilirubin in mg/dL",
-  "albumin_gdL": "Albumin in g/dL",
-  "globulin_gdL": "Globulin in g/dL",
-  "totalProtein_gdL": "Total Protein in g/dL",
-  "sodium_mmolL": "Sodium in mmol/L or mEq/L",
-  "potassium_mmolL": "Potassium in mmol/L or mEq/L",
-  "calcium_mgdL": "Calcium in mg/dL",
-  "chloride_mmolL": "Chloride in mmol/L or mEq/L",
-  "co2_mmolL": "CO2 or Bicarbonate in mmol/L",
-  "wbc_kul": "WBC or White Blood Cell count in K/uL",
-  "hemoglobin_gdL": "Hemoglobin in g/dL",
-  "hematocrit_pct": "Hematocrit as %",
-  "rdw_pct": "RDW or Red Cell Distribution Width as %",
-  "mcv_fL": "MCV or Mean Corpuscular Volume in fL",
-  "mch_pg": "MCH in pg",
-  "mchc_gdl": "MCHC in g/dL",
-  "platelets_kul": "Platelets in K/uL",
-  "rbc_mil": "RBC in million/uL",
-  "neutrophils_pct": "Neutrophils %",
-  "lymphs_pct": "Lymphocytes %",
-  "ferritin_ngmL": "Ferritin in ng/mL",
-  "testosterone_ngdL": "Testosterone Total in ng/dL",
-  "freeTesto_pgmL": "Testosterone Free in pg/mL",
-  "shbg_nmolL": "SHBG or Sex Hormone Binding Globulin in nmol/L",
-  "tsh_uIUmL": "TSH or Thyroid Stimulating Hormone in uIU/mL",
-  "free_t4_ngdL": "Free T4 or Thyroxine Free in ng/dL",
-  "free_t3_pgmL": "Free T3 or Triiodothyronine Free in pg/mL",
-  "dhea_s_ugdL": "DHEA-S or DHEA Sulfate in ug/dL",
-  "igf1_ngmL": "IGF-1 in ng/mL",
-  "cortisol_ugdL": "Cortisol in ug/dL",
-  "vitaminB12_pgmL": "Vitamin B12 or Cobalamin in pg/mL",
-  "folate_ngmL": "Folate or Folic Acid in ng/mL",
-  "psa_ngmL": "PSA or Prostate Specific Antigen in ng/mL",
-  "cea_ngmL": "CEA or Carcinoembryonic Antigen in ng/mL",
-  "ca199_UmL": "CA 19-9 or Carbohydrate Antigen 19-9 in U/mL",
-  "thyroglobulin_ngmL": "Thyroglobulin in ng/mL",
-  "tpoAntibodies_iuML": "TPO Antibodies or Anti-Thyroid Peroxidase in IU/mL",
-  "collectionDate": "YYYY-MM-DD",
-  "labName": "lab company name from the report"
-}
-
-LAB REPORT TEXT:
-${normalizedText}`,
-        },
-    ]
-    const response = await openai.chat.completions.create({
-      model:       process.env.OPENAI_MODEL ?? "gpt-4.1-mini",
-      max_tokens:  4096,
-      temperature: 0.1,
-      store:       false,  // ZDR — never store
-      messages,
-    }, { signal: controller.signal })
-
-    const raw = response.choices[0]?.message?.content
-    const finishReason = response.choices[0]?.finish_reason
-    console.log("[labs-upload] finish_reason:", finishReason)
-    if (!raw) return null
-
-    const clean = raw
-      .replace(/```json/gi, "")
-      .replace(/```/g, "")
-      .trim()
-
-    const parsed = JSON.parse(clean) as Record<string, unknown>
-    const nonNull = Object.entries(parsed).filter(([, v]) => v !== null && v !== undefined && v !== "null")
-    console.log("[labs-upload] parsed %d fields, %d non-null", Object.keys(parsed).length, nonNull.length)
-    return parsed
-  } catch (err) {
-    const e = err as { message?: string; status?: number; code?: string }
-    console.error("[labs-upload] openai error:", e.message, e.code, e.status)
-    return null
-  } finally {
-    clearTimeout(timeoutId)
-  }
-}
-
-// ─── Extract markers from parsed JSON ───────────────────────────────────────
-
-function extractFromParsedJson(
-  parsed: Record<string, unknown>
-): { markers: Record<string, number>; labName?: string; collectionDate?: string } {
-  const markers: Record<string, number> = {}
-  let labName: string | undefined
-  let collectionDate: string | undefined
-
-  for (const [key, val] of Object.entries(parsed)) {
-    if (key === "labName" && typeof val === "string") {
-      labName = val
-      continue
-    }
-    if (key === "collectionDate" && typeof val === "string") {
-      collectionDate = val
-      continue
-    }
-    if (typeof val === "number" && val > 0) {
-      markers[key] = val
-    } else if (typeof val === "string") {
-      const num = parseFloat(val)
-      if (!isNaN(num) && num > 0) markers[key] = num
-    }
-  }
-
-  // Calculate LDL:HDL ratio if both present
-  if (markers.ldl_mgdL && markers.hdl_mgdL) {
-    markers.ldlHdlRatio = Math.round((markers.ldl_mgdL / markers.hdl_mgdL) * 100) / 100
-  }
-
-  return { markers, labName, collectionDate }
-}
-
-// ─── File processing ────────────────────────────────────────────────────────
-// Flow: unpdf (fast text) → OpenAI parse → if scanned, OpenAI Vision OCR →
-//       OpenAI parse → Azure OCR (legacy fallback) → regex fallback
-
-async function processFile(file: FileInput, _index: number): Promise<FileResult> {
-  const buffer = Buffer.from(file.base64, "base64")
-
-  // Step 1: Try unpdf (instant, no API call) — always attempt parse if ANY text extracted
-  const directText = await extractTextDirect(buffer)
-  if (directText) {
-    const openaiResult = await parseWithAzureOpenAI(directText)
-    if (openaiResult) {
-      const { markers, labName, collectionDate } = extractFromParsedJson(openaiResult)
-      if (Object.keys(markers).length > 0) {
-        return { filename: file.filename, markers, markersFound: Object.keys(markers).length, labName, collectionDate, parserUsed: "openai" }
-      }
-    }
-    // unpdf extracted text but OpenAI found no markers — try regex on it
-    const regexResult = parseWithRegexFallback(directText)
-    const { markers: regexMarkers, labName: regexLab, collectionDate: regexDate } = extractFromParsedJson(regexResult)
-    if (Object.keys(regexMarkers).length > 0) {
-      console.log("[parser] regex fallback on unpdf text — markers:", Object.keys(regexMarkers).length)
-      return { filename: file.filename, markers: regexMarkers, markersFound: Object.keys(regexMarkers).length, labName: regexLab, collectionDate: regexDate, parserUsed: "openai" }
-    }
-  }
-
-  // Step 2: unpdf failed entirely — try OpenAI Vision OCR (renders pages to PNG)
-  console.log("[parser] unpdf insufficient, trying OpenAI Vision OCR")
-  let fullText = await extractTextWithOpenAIVision(buffer)
-
-  if (fullText && fullText.length > 500) {
-    console.log("[parser] vision OCR extracted:", fullText.length, "chars")
-  } else {
-    // Step 2b: Vision failed — fall back to Azure OCR (legacy, kept for rollback)
-    console.log("[parser] vision OCR insufficient, trying Azure fallback")
-    fullText = await extractTextWithAzure(buffer)
-    if (fullText && fullText.length < 3000) {
-      const ocrRetry = await extractTextWithAzure(buffer, "prebuilt-read")
-      if (ocrRetry && ocrRetry.length > (fullText?.length ?? 0)) fullText = ocrRetry
-    }
-  }
-
-  if (!fullText || fullText.length < 100) {
-    return {
-      filename: file.filename,
-      markers: {},
-      markersFound: 0,
-      parserUsed: "failed",
-      error: "We couldn't extract text from this PDF. If it's a scanned document, try downloading a fresh copy from your lab's patient portal — portal PDFs are text-based and parse correctly.",
-    }
-  }
-
-  // Step 3: Parse the extracted text with OpenAI
-  console.log("[parser] total extracted text:", fullText.length, "chars")
-  const normalizedText = fullText
-  const CHUNK_SIZE = 12000
-  const chunks: string[] = []
-  for (let i = 0; i < normalizedText.length; i += CHUNK_SIZE) {
-    chunks.push(normalizedText.slice(i, i + CHUNK_SIZE))
-  }
-
-  let mergedOpenAIResult: Record<string, unknown> | null = null
-  for (let ci = 0; ci < chunks.length; ci++) {
-    const chunkResult = await parseWithAzureOpenAI(chunks[ci])
-    if (!chunkResult) continue
-    if (!mergedOpenAIResult) {
-      mergedOpenAIResult = { ...chunkResult }
-    } else {
-      for (const [k, v] of Object.entries(chunkResult)) {
-        if (k === "collectionDate" || k === "labName") continue
-        if (v !== null && v !== undefined && mergedOpenAIResult[k] == null) {
-          mergedOpenAIResult[k] = v
-        }
-      }
-    }
-  }
-
-  if (mergedOpenAIResult) {
-    const { markers, labName, collectionDate } = extractFromParsedJson(mergedOpenAIResult)
-    if (Object.keys(markers).length > 0) {
-      const usedVision = !directText
-      console.log(`[parser] used: ${usedVision ? "openai-vision" : "openai"} — markers:`, Object.keys(markers).length)
-      return { filename: file.filename, markers, markersFound: Object.keys(markers).length, labName, collectionDate, parserUsed: usedVision ? "openai-vision" : "openai" }
-    }
-  }
-
-  // Step 4: Regex fallback
-  console.log("[parser] falling back to regex parser")
-  const regexResult = parseWithRegexFallback(fullText)
-  const { markers, labName, collectionDate } = extractFromParsedJson(regexResult)
-  if (Object.keys(markers).length > 0) {
-    console.log("[parser] used: regex-fallback — markers:", Object.keys(markers).length)
-    return { filename: file.filename, markers, markersFound: Object.keys(markers).length, labName, collectionDate, parserUsed: "openai" }
-  }
-
-  return {
-    filename: file.filename,
-    markers: {},
-    markersFound: 0,
-    parserUsed: "failed",
-    error: "Could not extract markers from this file",
-  }
-}
-
-// ─── Route handler ──────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -607,9 +38,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Lab parser not configured" }, { status: 500 })
   }
 
+  // ── Accept any of the legacy upload shapes ──────────────────────────────
   let files: FileInput[]
   try {
-    const body = await request.json() as Record<string, unknown>
+    const body = (await request.json()) as Record<string, unknown>
     if (Array.isArray(body.files)) {
       files = body.files as FileInput[]
     } else if (typeof body.pdfBase64 === "string") {
@@ -627,66 +59,79 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "No files provided" }, { status: 422 })
   }
 
-  const results = await Promise.all(files.map((f, i) => processFile(f, i)))
-
-  const succeeded = results.filter((r) => !r.error)
-  if (succeeded.length === 0) {
-    return NextResponse.json({
-      error: "Could not read your lab reports. Try uploading clearer scans or enter your values manually.",
-      perFile: results.map((r) => ({ filename: r.filename, error: r.error })),
-    }, { status: 422 })
-  }
-
-  // Merge markers — most recent collectionDate takes precedence
-  const merged: Record<string, number> = {}
-  const markerSource: Record<string, string> = {}
-  const mergedNotes: Record<string, string> = {}
-
-  const sorted = [...succeeded].sort((a, b) => {
-    if (!a.collectionDate && !b.collectionDate) return 0
-    if (!a.collectionDate) return 1
-    if (!b.collectionDate) return -1
-    return b.collectionDate.localeCompare(a.collectionDate)
-  })
-
-  for (const result of sorted) {
-    for (const [key, val] of Object.entries(result.markers)) {
-      if (!(key in merged)) {
-        merged[key] = val
-        markerSource[key] = result.filename
-        if (result.notes?.[key]) mergedNotes[key] = result.notes[key]
-      }
+  // ── Parse each file via the registry-driven parser ──────────────────────
+  // The parser throws on uniform-value layout artifacts (the 14-bug
+  // failure mode). Out-of-range values are rejected at the value
+  // level (marker → null + warning).
+  const results: Array<{ filename: string; result?: ParseResult; error?: string }> = []
+  for (const file of files) {
+    try {
+      const buffer = Buffer.from(file.base64, "base64")
+      const result = await parseBloodPDF(buffer)
+      results.push({ filename: file.filename, result })
+    } catch (err) {
+      const message = (err as Error).message ?? "Unknown parsing error"
+      console.error(`[labs-upload] ${file.filename}:`, message)
+      results.push({ filename: file.filename, error: message })
     }
   }
 
-  const dates = results.map((r) => r.collectionDate).filter(Boolean) as string[]
-  const collectionDate = dates.length > 0 ? dates.sort()[0] : new Date().toISOString().slice(0, 10)
-  const labName = results.find((r) => r.labName)?.labName
-  const parsersUsed = [...new Set(succeeded.map((r) => r.parserUsed))]
+  const succeeded = results.filter(r => r.result)
+  if (succeeded.length === 0) {
+    return NextResponse.json(
+      {
+        error:
+          "Could not read your lab reports. If the parser detected a likely layout artifact, " +
+          "try downloading a fresh PDF from your lab's portal — portal PDFs parse most reliably.",
+        perFile: results.map(r => ({ filename: r.filename, error: r.error })),
+      },
+      { status: 422 },
+    )
+  }
 
-  console.log("[parser] merged total markers:", Object.keys(merged).length, "parsers:", parsersUsed.join(", "))
+  // ── Merge across multiple files ─────────────────────────────────────────
+  // Most-recent collectedAt wins on conflicts. For a single-file upload
+  // this is a no-op.
+  const sorted = [...succeeded].sort((a, b) => {
+    const aDate = a.result!.collectedAt ?? ""
+    const bDate = b.result!.collectedAt ?? ""
+    return bDate.localeCompare(aDate)
+  })
 
-  const perFile = results.map((r) => ({
-    filename: r.filename,
-    markersFound: r.markersFound,
-    parserUsed: r.parserUsed,
-    error: r.error,
-  }))
+  const mergedMarkers: ParseResult["markers"] = {}
+  const mergedWarnings: string[] = []
+  let mergedSourceLab: string | null = null
+  let mergedCollectedAt: string | null = null
+  let mergedConfidence = 0
+  let confidenceCount = 0
 
-  const failedFiles = results.filter((r) => r.error)
-  const warnings = failedFiles.map((f) => `Could not read ${f.filename}`)
+  for (const { result } of sorted as Array<{ result: ParseResult }>) {
+    for (const [markerId, parsed] of Object.entries(result.markers)) {
+      if (parsed && !mergedMarkers[markerId]) {
+        mergedMarkers[markerId] = parsed
+      } else if (!mergedMarkers[markerId]) {
+        // first-seen null is fine — caller treats absent as null
+        mergedMarkers[markerId] = null
+      }
+    }
+    if (!mergedSourceLab && result.sourceLab) mergedSourceLab = result.sourceLab
+    if (!mergedCollectedAt && result.collectedAt) mergedCollectedAt = result.collectedAt
+    if (typeof result.overallConfidence === "number") {
+      mergedConfidence += result.overallConfidence
+      confidenceCount++
+    }
+    mergedWarnings.push(...result.warnings)
+  }
 
   return NextResponse.json({
     status: "complete",
-    markers: merged,
-    markerSource,
-    markerNotes: Object.keys(mergedNotes).length > 0 ? mergedNotes : undefined,
-    labName,
-    collectionDate,
-    markersFound: Object.keys(merged).length,
-    parserUsed: parsersUsed.join(", "),
-    filesProcessed: succeeded.length,
-    perFile,
-    warnings: warnings.length > 0 ? warnings : undefined,
+    markers: mergedMarkers,
+    sourceLab: mergedSourceLab,
+    collectedAt: mergedCollectedAt,
+    parserUsed: "openai-vision-v1",
+    parseConfidence: confidenceCount > 0 ? mergedConfidence / confidenceCount : 0,
+    markersFound: Object.values(mergedMarkers).filter(m => m !== null).length,
+    warnings: mergedWarnings,
+    perFile: results.map(r => ({ filename: r.filename, error: r.error })),
   })
 }

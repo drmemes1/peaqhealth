@@ -1,14 +1,75 @@
+/**
+ * Blood-results save endpoint.
+ *
+ * Post-architectural-reset (PR-252 / ADR-0020), this route:
+ *   1. Accepts a registry-keyed payload from /api/labs/upload (or
+ *      programmatic callers that already validated the markers).
+ *   2. Inserts ONE NEW ROW into blood_results per test (no upsert —
+ *      the per-user-upsert was the old failure mode where a fresh
+ *      upload silently overwrote prior history).
+ *   3. Inserts per-marker confidence rows into blood_marker_confidence
+ *      for forensic debugging.
+ *   4. Triggers a score recalculation (which now reads blood_results).
+ *   5. Generates a cross-panel AI insight from the freshly-saved row.
+ *
+ * Payload contract:
+ *   {
+ *     markers: { [registryId]: { value, unitFound, confidence, rawExtractedText, wasComputed } | null },
+ *     sourceLab?: string,
+ *     collectedAt?: string,            // YYYY-MM-DD or ISO
+ *     parserUsed?: string,             // 'openai-vision-v1' | 'manual' | …
+ *     parseConfidence?: number,
+ *     rawPdfPath?: string,
+ *   }
+ */
+
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "../../../../lib/supabase/server"
-import { createClient as createServiceClient } from "@supabase/supabase-js"
-import { recalculateScore } from "../../../../lib/score/recalculate"
-import type { BloodMarkers } from "../../../components/lab-upload"
+import { createClient as createServiceClient, type SupabaseClient } from "@supabase/supabase-js"
 import OpenAI from "openai"
-import type { SupabaseClient } from "@supabase/supabase-js"
+import { recalculateScore } from "../../../../lib/score/recalculate"
+import { BLOOD_MARKER_REGISTRY } from "../../../../lib/blood/markerRegistry"
+
+interface SaveMarkerPayload {
+  value: number
+  unitFound?: string
+  confidence?: number
+  rawExtractedText?: string
+  wasComputed?: boolean
+}
+
+/** Marker values may arrive either as the structured ParseResult shape OR as plain numbers (from manual entry). */
+type MarkerValue = SaveMarkerPayload | number | null | undefined
+
+interface SaveBody {
+  markers: { [markerId: string]: MarkerValue }
+  sourceLab?: string | null
+  collectedAt?: string | null
+  parserUsed?: string
+  parseConfidence?: number
+  rawPdfPath?: string | null
+}
+
+function normalizeMarker(v: MarkerValue): SaveMarkerPayload | null {
+  if (v == null) return null
+  if (typeof v === "number") {
+    return Number.isFinite(v) && v > 0
+      ? { value: v, unitFound: "", confidence: 0, rawExtractedText: "[manual entry]", wasComputed: false }
+      : null
+  }
+  if (typeof v === "object" && typeof v.value === "number" && Number.isFinite(v.value)) {
+    return v
+  }
+  return null
+}
 
 type DbRow = Record<string, number | string | null | undefined>
 
-async function generateBloodInsight(userId: string, supabase: SupabaseClient, bloodRow: DbRow): Promise<string | null> {
+async function generateBloodInsight(
+  userId: string,
+  supabase: SupabaseClient,
+  bloodRow: DbRow,
+): Promise<string | null> {
   const key = process.env.OPENAI_API_KEY
   if (!key) return null
 
@@ -16,28 +77,28 @@ async function generateBloodInsight(userId: string, supabase: SupabaseClient, bl
 
   // ── Blood panel ────────────────────────────────────────────────────────────
   const bloodLines: string[] = []
-  if (n(bloodRow.ldl_mgdl))           bloodLines.push(`LDL: ${bloodRow.ldl_mgdl} mg/dL`)
-  if (n(bloodRow.hdl_mgdl))           bloodLines.push(`HDL: ${bloodRow.hdl_mgdl} mg/dL`)
-  if (n(bloodRow.triglycerides_mgdl)) bloodLines.push(`Triglycerides: ${bloodRow.triglycerides_mgdl} mg/dL`)
-  if (n(bloodRow.hs_crp_mgl))         bloodLines.push(`hsCRP: ${bloodRow.hs_crp_mgl} mg/L`)
-  if (n(bloodRow.glucose_mgdl))       bloodLines.push(`Glucose: ${bloodRow.glucose_mgdl} mg/dL`)
-  if (n(bloodRow.hba1c_pct))          bloodLines.push(`HbA1c: ${bloodRow.hba1c_pct}%`)
-  if (n(bloodRow.vitamin_d_ngml))     bloodLines.push(`Vitamin D: ${bloodRow.vitamin_d_ngml} ng/mL`)
-  if (n(bloodRow.apob_mgdl))          bloodLines.push(`ApoB: ${bloodRow.apob_mgdl} mg/dL`)
-  if (n(bloodRow.egfr_mlmin))         bloodLines.push(`eGFR: ${bloodRow.egfr_mlmin} mL/min`)
-  if (n(bloodRow.alt_ul))             bloodLines.push(`ALT: ${bloodRow.alt_ul} U/L`)
-  if (n(bloodRow.wbc_kul))            bloodLines.push(`WBC: ${bloodRow.wbc_kul} K/uL`)
-  if (n(bloodRow.albumin_gdl))        bloodLines.push(`Albumin: ${bloodRow.albumin_gdl} g/dL`)
-  if (n(bloodRow.hemoglobin_gdl))     bloodLines.push(`Hemoglobin: ${bloodRow.hemoglobin_gdl} g/dL`)
-  if (n(bloodRow.lpa_mgdl))           bloodLines.push(`Lp(a): ${Math.round(Number(bloodRow.lpa_mgdl) * 2.5)} nmol/L`)
+  if (n(bloodRow.ldl_mgdl))                bloodLines.push(`LDL: ${bloodRow.ldl_mgdl} mg/dL`)
+  if (n(bloodRow.hdl_mgdl))                bloodLines.push(`HDL: ${bloodRow.hdl_mgdl} mg/dL`)
+  if (n(bloodRow.triglycerides_mgdl))      bloodLines.push(`Triglycerides: ${bloodRow.triglycerides_mgdl} mg/dL`)
+  if (n(bloodRow.hs_crp_mgl))              bloodLines.push(`hsCRP: ${bloodRow.hs_crp_mgl} mg/L`)
+  if (n(bloodRow.glucose_mgdl))            bloodLines.push(`Glucose: ${bloodRow.glucose_mgdl} mg/dL`)
+  if (n(bloodRow.hba1c_percent))           bloodLines.push(`HbA1c: ${bloodRow.hba1c_percent}%`)
+  if (n(bloodRow.vitamin_d_ngml))          bloodLines.push(`Vitamin D: ${bloodRow.vitamin_d_ngml} ng/mL`)
+  if (n(bloodRow.apob_mgdl))               bloodLines.push(`ApoB: ${bloodRow.apob_mgdl} mg/dL`)
+  if (n(bloodRow.egfr_mlmin))              bloodLines.push(`eGFR: ${bloodRow.egfr_mlmin} mL/min`)
+  if (n(bloodRow.alt_ul))                  bloodLines.push(`ALT: ${bloodRow.alt_ul} U/L`)
+  if (n(bloodRow.wbc_thousand_ul))         bloodLines.push(`WBC: ${bloodRow.wbc_thousand_ul} K/uL`)
+  if (n(bloodRow.albumin_gdl))             bloodLines.push(`Albumin: ${bloodRow.albumin_gdl} g/dL`)
+  if (n(bloodRow.hemoglobin_gdl))          bloodLines.push(`Hemoglobin: ${bloodRow.hemoglobin_gdl} g/dL`)
+  if (n(bloodRow.lipoprotein_a_mgdl))      bloodLines.push(`Lp(a): ${Math.round(Number(bloodRow.lipoprotein_a_mgdl) * 2.5)} nmol/L`)
   if (bloodLines.length === 0) return null
 
   const missingBlood: string[] = []
-  if (!n(bloodRow.hs_crp_mgl))     missingBlood.push("hsCRP")
-  if (!n(bloodRow.hba1c_pct))      missingBlood.push("HbA1c")
-  if (!n(bloodRow.vitamin_d_ngml)) missingBlood.push("Vitamin D")
-  if (!n(bloodRow.apob_mgdl))      missingBlood.push("ApoB")
-  if (!n(bloodRow.lpa_mgdl))       missingBlood.push("Lp(a)")
+  if (!n(bloodRow.hs_crp_mgl))         missingBlood.push("hsCRP")
+  if (!n(bloodRow.hba1c_percent))      missingBlood.push("HbA1c")
+  if (!n(bloodRow.vitamin_d_ngml))     missingBlood.push("Vitamin D")
+  if (!n(bloodRow.apob_mgdl))          missingBlood.push("ApoB")
+  if (!n(bloodRow.lipoprotein_a_mgdl)) missingBlood.push("Lp(a)")
 
   // ── Sleep / wearable ───────────────────────────────────────────────────────
   const { data: wearable } = await supabase
@@ -125,24 +186,21 @@ ${sleepLines.length > 0 ? `\nSleep data: ${sleepLines.join(", ")}` : ""}
 ${oralLines.length > 0 ? `\nOral microbiome: ${oralLines.join(", ")}` : ""}
 ${lifestyleLines.length > 0 ? `\nLifestyle: ${lifestyleLines.join(", ")}` : ""}`.trim()
 
-  // HIPAA BAA signed 2026-03-28. Zero Data Retention active. Confirmation: uKTeFVcJ3x
+  // HIPAA BAA signed 2026-03-28. Zero Data Retention active.
   try {
     const client = new OpenAI({ apiKey: key })
     const model  = process.env.OPENAI_MODEL ?? "gpt-4.1-mini"
-    console.log("[labs-save] generating blood insight, model:", model)
     const res = await client.chat.completions.create({
       model,
       max_tokens: 150,
       temperature: 0.7,
-      store: false,  // ZDR — never store
+      store: false,
       messages: [
         { role: "system" as const, content: systemPrompt },
         { role: "user"   as const, content: userMessage },
       ],
     })
-    const insight = res.choices[0]?.message?.content?.trim() ?? null
-    console.log("[labs-save] blood insight generated, tokens:", res.usage?.total_tokens)
-    return insight
+    return res.choices[0]?.message?.content?.trim() ?? null
   } catch (err) {
     const e = err as { message?: string }
     console.error("[labs-save] insight error:", e.message)
@@ -150,159 +208,112 @@ ${lifestyleLines.length > 0 ? `\nLifestyle: ${lifestyleLines.join(", ")}` : ""}`
   }
 }
 
-const LOCK_WINDOW_MS = 24 * 60 * 60 * 1000  // 24 hours
+// ── Route handler ───────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  let markers: BloodMarkers
-  let labDate: string | undefined
-  let source: string = "upload_pdf"
-  let labName: string | undefined
-
+  let body: SaveBody
   try {
-    const body = await request.json() as { markers: BloodMarkers; labDate?: string; source?: string; labName?: string }
-    markers = body.markers
-    labDate = body.labDate
-    source  = body.source ?? "upload_pdf"
-    labName = body.labName
+    body = (await request.json()) as SaveBody
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
   }
-
-  if (labDate) {
-    const today      = new Date().toISOString().slice(0, 10)
-    const fiveYrsAgo = new Date(Date.now() - 5 * 365.25 * 24 * 3600 * 1000).toISOString().slice(0, 10)
-    if (labDate > today) {
-      return NextResponse.json({ error: "Lab date cannot be in the future" }, { status: 400 })
-    }
-    if (labDate < fiveYrsAgo) {
-      return NextResponse.json({ error: "Lab date cannot be more than 5 years ago" }, { status: 400 })
-    }
+  if (!body || typeof body !== "object" || !body.markers || typeof body.markers !== "object") {
+    return NextResponse.json({ error: "Missing markers payload" }, { status: 400 })
   }
 
-  const collectionDate  = labDate ?? new Date().toISOString().slice(0, 10)
-  const lockExpiresAt   = new Date(Date.now() + LOCK_WINDOW_MS).toISOString()
+  // ── Validate collectedAt ─────────────────────────────────────────────────
+  const today      = new Date().toISOString().slice(0, 10)
+  const fiveYrsAgo = new Date(Date.now() - 5 * 365.25 * 24 * 3600 * 1000).toISOString().slice(0, 10)
+  let collectedAt = body.collectedAt
+    ? body.collectedAt.length > 10 ? body.collectedAt : `${body.collectedAt}T00:00:00Z`
+    : new Date().toISOString()
+  const collectedDateOnly = collectedAt.slice(0, 10)
+  if (collectedDateOnly > today) {
+    return NextResponse.json({ error: "Lab date cannot be in the future" }, { status: 400 })
+  }
+  if (collectedDateOnly < fiveYrsAgo) {
+    return NextResponse.json({ error: "Lab date cannot be more than 5 years ago" }, { status: 400 })
+  }
 
-  // ── Check existing row ────────────────────────────────────────────────────
-  const { data: existing } = await supabase
-    .from("lab_results")
-    .select("id, is_locked, version")
-    .eq("user_id", user.id)
-    .maybeSingle()
+  // ── Build the row from registry IDs ──────────────────────────────────────
+  const row: Record<string, unknown> = {
+    user_id:          user.id,
+    collected_at:     collectedAt,
+    source_lab:       body.sourceLab ?? null,
+    parser_used:      body.parserUsed ?? "manual",
+    parse_confidence: typeof body.parseConfidence === "number" ? body.parseConfidence : null,
+    raw_pdf_path:     body.rawPdfPath ?? null,
+  }
 
-  const isNewVersion = existing?.is_locked === true
-  const nextVersion  = isNewVersion ? (existing.version ?? 1) + 1 : (existing?.version ?? 1)
+  // Map every registry id → DB column. Markers absent from the payload
+  // are written as NULL. The set of columns matches the registry exactly
+  // (enforced by the schema-sync test). normalizeMarker tolerates both
+  // structured ParseResult marker objects and bare numbers (manual entry).
+  const normalizedMarkers: Record<string, SaveMarkerPayload | null> = {}
+  for (const m of BLOOD_MARKER_REGISTRY) {
+    const normalized = normalizeMarker(body.markers[m.id])
+    normalizedMarkers[m.id] = normalized
+    row[m.id] = normalized?.value ?? null
+  }
 
-  // ── Upsert markers into lab_results ──────────────────────────────────────
-  // Cast to access all extended marker fields the frontend now passes through
-  const m = markers as Record<string, unknown>
-
-  const { error: upsertError } = await supabase
-    .from("lab_results")
-    .upsert({
-      user_id:            user.id,
-      source,
-      lab_name:           labName ?? null,
-      collection_date:    collectionDate,
-      parser_status:      "complete",
-      is_locked:          false,
-      lock_expires_at:    lockExpiresAt,
-      version:            nextVersion,
-      // Core markers
-      hs_crp_mgl:              m.hsCRP_mgL          ?? null,
-      vitamin_d_ngml:          m.vitaminD_ngmL      ?? null,
-      apob_mgdl:               m.apoB_mgdL          ?? null,
-      ldl_mgdl:                m.ldl_mgdL           ?? null,
-      hdl_mgdl:                m.hdl_mgdL           ?? null,
-      triglycerides_mgdl:      m.triglycerides_mgdL ?? null,
-      lpa_mgdl:                m.lpa_mgdL           ?? null,
-      glucose_mgdl:            m.glucose_mgdL       ?? null,
-      hba1c_pct:               m.hba1c_pct          ?? null,
-      // Extended markers
-      total_cholesterol_mgdl:  m.totalCholesterol_mgdL ?? null,
-      non_hdl_mgdl:            m.nonHDL_mgdL           ?? null,
-      vldl_mgdl:               m.vldl_mgdL             ?? null,
-      egfr_mlmin:              m.egfr_mLmin            ?? null,
-      creatinine_mgdl:         m.creatinine_mgdL       ?? null,
-      bun_mgdl:                m.bun_mgdL              ?? null,
-      uric_acid_mgdl:          m.uricAcid_mgdL         ?? null,
-      fasting_insulin_uiuml:   m.fastingInsulin_uIUmL  ?? null,
-      alt_ul:                  m.alt_UL                ?? null,
-      ast_ul:                  m.ast_UL                ?? null,
-      alk_phos_ul:             m.alkPhos_UL            ?? null,
-      total_bilirubin_mgdl:    m.totalBilirubin_mgdL   ?? null,
-      albumin_gdl:             m.albumin_gdL           ?? null,
-      wbc_kul:                 m.wbc_kul               ?? null,
-      hemoglobin_gdl:          m.hemoglobin_gdL        ?? null,
-      hematocrit_pct:          m.hematocrit_pct        ?? null,
-      rdw_pct:                 m.rdw_pct               ?? null,
-      mcv_fl:                  m.mcv_fL                ?? null,
-      platelets_kul:           m.platelets_kul         ?? null,
-      testosterone_ngdl:       m.testosterone_ngdL     ?? null,
-      free_testo_pgml:         m.freeTesto_pgmL        ?? null,
-      shbg_nmoll:              m.shbg_nmolL            ?? null,
-      tsh_uiuml:               m.tsh_uIUmL             ?? null,
-      ferritin_ngml:           m.ferritin_ngmL         ?? null,
-      sodium_mmoll:            m.sodium_mmolL          ?? null,
-      potassium_mmoll:         m.potassium_mmolL       ?? null,
-      homocysteine_umoll:      m.homocysteine_umolL    ?? null,
-      mch_pg:                  m.mch_pg                ?? null,
-      mchc_gdl:                m.mchc_gdl              ?? null,
-      rbc_mil:                 m.rbc_mil               ?? null,
-      neutrophils_pct:         m.neutrophils_pct       ?? null,
-      lymphs_pct:              m.lymphs_pct            ?? null,
-      globulin_gdl:            m.globulin_gdL          ?? null,
-      total_protein_gdl:       m.totalProtein_gdL      ?? null,
-      calcium_mgdl:            m.calcium_mgdL          ?? null,
-      chloride_mmoll:          m.chloride_mmolL        ?? null,
-      co2_mmoll:               m.co2_mmolL             ?? null,
-      free_t4_ngdl:            m.free_t4_ngdL          ?? null,
-      free_t3_pgml:            m.free_t3_pgmL          ?? null,
-      dhea_s_ugdl:             m.dhea_s_ugdL           ?? null,
-      igf1_ngml:               m.igf1_ngmL             ?? null,
-      cortisol_ugdl:           m.cortisol_ugdL         ?? null,
-      vitamin_b12_pgml:        m.vitaminB12_pgmL       ?? null,
-      folate_ngml:             m.folate_ngmL           ?? null,
-      psa_ngml:                m.psa_ngmL              ?? null,
-      cea_ngml:                m.cea_ngmL              ?? null,
-      ca199_uml:               m.ca199_UmL             ?? null,
-      thyroglobulin_ngml:      m.thyroglobulin_ngmL    ?? null,
-      tpo_antibodies_iuml:     m.tpoAntibodies_iuML    ?? null,
-    }, { onConflict: "user_id" })
-
-  if (upsertError) {
-    console.error("[labs/save] upsert error:", upsertError)
+  // ── Insert blood_results row ─────────────────────────────────────────────
+  const { data: bloodResult, error: insertError } = await supabase
+    .from("blood_results")
+    .insert(row)
+    .select()
+    .single()
+  if (insertError || !bloodResult) {
+    console.error("[labs/save] insert error:", insertError)
     return NextResponse.json({ error: "Failed to save lab results" }, { status: 500 })
   }
 
+  // ── Insert per-marker confidence rows ────────────────────────────────────
+  const confidenceRows: Array<{
+    blood_result_id: string
+    marker_id: string
+    confidence: number
+    raw_extracted_text: string | null
+    was_computed: boolean
+  }> = []
+  for (const [markerId, parsed] of Object.entries(normalizedMarkers)) {
+    if (!parsed) continue
+    confidenceRows.push({
+      blood_result_id: bloodResult.id as string,
+      marker_id: markerId,
+      confidence: typeof parsed.confidence === "number" ? parsed.confidence : 0,
+      raw_extracted_text: typeof parsed.rawExtractedText === "string" ? parsed.rawExtractedText : null,
+      was_computed: parsed.wasComputed === true,
+    })
+  }
+  if (confidenceRows.length > 0) {
+    const { error: confErr } = await supabase
+      .from("blood_marker_confidence")
+      .insert(confidenceRows)
+    if (confErr) {
+      // Non-fatal — the result row is saved, confidence is forensic only.
+      console.error("[labs/save] confidence insert error (continuing):", confErr.message)
+    }
+  }
+
+  // ── Score recalc + cross-panel insight (run in parallel) ─────────────────
   const serviceClient = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
   )
-
-  // Fetch the full saved row so the insight generator sees all columns (incl. extended markers)
-  const { data: savedRow } = await supabase
-    .from("lab_results")
-    .select("hs_crp_mgl, vitamin_d_ngml, apob_mgdl, ldl_mgdl, hdl_mgdl, triglycerides_mgdl, lpa_mgdl, glucose_mgdl, hba1c_pct, egfr_mlmin, alt_ul, wbc_kul, albumin_gdl, hemoglobin_gdl")
-    .eq("user_id", user.id)
-    .single()
 
   const [newScore, bloodInsight] = await Promise.all([
     recalculateScore(user.id, serviceClient),
-    generateBloodInsight(user.id, supabase, savedRow ?? {}),
+    generateBloodInsight(user.id, supabase, row as DbRow),
   ])
 
-  if (bloodInsight) {
-    await supabase.from("lab_results").update({ blood_insight: bloodInsight }).eq("user_id", user.id)
-  }
-
   return NextResponse.json({
-    score:        newScore,
-    isNewVersion,
-    lockExpiresAt,
-    bloodInsight: bloodInsight ?? undefined,
+    bloodResultId:    bloodResult.id,
+    score:            newScore,
+    markersExtracted: confidenceRows.length,
+    bloodInsight:     bloodInsight ?? undefined,
   })
 }

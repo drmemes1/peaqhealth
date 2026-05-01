@@ -24,9 +24,9 @@ export async function POST(request: NextRequest) {
 
   const supabase = createServiceClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
-  const { data: lab } = await supabase.from("lab_results")
+  const { data: lab } = await supabase.from("blood_results")
     .select("*").eq("user_id", user.id).eq("parser_status", "complete")
-    .order("collection_date", { ascending: false }).limit(1).maybeSingle()
+    .order("collected_at", { ascending: false }).limit(1).maybeSingle()
 
   const { data: lifestyle } = await supabase.from("lifestyle_records")
     .select("age_range, biological_sex, smoking_status").eq("user_id", user.id)

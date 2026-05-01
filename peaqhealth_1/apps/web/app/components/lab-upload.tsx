@@ -288,6 +288,14 @@ export function LabUpload({ onSkip, onComplete }: LabUploadProps) {
     setSelectedFiles((prev) => prev.filter((f) => f.name !== name))
   }
 
+  // Post-architectural-reset (PR-252):
+  //   • /api/labs/upload returns registry-keyed markers (`{ [id]: { value, … } | null }`),
+  //     plus sourceLab, collectedAt, parserUsed, parseConfidence.
+  //   • /api/labs/save accepts that same shape directly — no client-side
+  //     translation. The save route normalizes structured-vs-numeric shapes.
+  // The interim flow auto-saves immediately after parsing (the confirm/review
+  // screen below still uses camelCase BloodMarkers keys; rebuilding it
+  // against the registry is the next slice of the cutover).
   const handleUpload = useCallback(async () => {
     if (selectedFiles.length === 0) return
     setError(null)
@@ -309,9 +317,11 @@ export function LabUpload({ onSkip, onComplete }: LabUploadProps) {
       })
 
       const data = await res.json() as {
-        markers?: Record<string, number>
-        labName?: string
-        collectionDate?: string
+        markers?: Record<string, { value: number; unitFound?: string; confidence?: number; rawExtractedText?: string; wasComputed?: boolean } | null>
+        sourceLab?: string | null
+        collectedAt?: string | null
+        parserUsed?: string
+        parseConfidence?: number
         error?: string
       }
 
@@ -319,40 +329,56 @@ export function LabUpload({ onSkip, onComplete }: LabUploadProps) {
         throw new Error(data.error ?? `HTTP ${res.status}`)
       }
 
-      if (!data.markers || Object.keys(data.markers).length === 0) {
-        throw new Error("We processed your files but couldn't identify standard lab markers. Try entering your values manually.")
+      if (!data.markers) {
+        throw new Error("Parser returned no markers payload.")
       }
 
-      // Capture ALL markers from API
-      const edited: Record<string, number | null> = {}
-      const found = new Set<string>()
-      for (const [k, v] of Object.entries(data.markers)) {
-        if (typeof v === "number" && v > 0) {
-          edited[k] = v
-          found.add(k)
-        }
+      const extractedCount = Object.values(data.markers).filter(m => m !== null).length
+      if (extractedCount === 0) {
+        throw new Error("We processed your file but couldn't identify any markers from this layout. Try downloading a fresh PDF from your lab's portal.")
       }
 
-      setEditedMarkers(edited)
-      setParsedSlugs(found)
-      setParsedLabName(data.labName)
-      setParsedCollectionDate(data.collectionDate ?? new Date().toISOString().slice(0, 10))
-      setValidationWarning(null)
-      setInvalidSlugs(new Set())
-      setPhase("confirm")
+      // Auto-save the structured payload directly. The save route writes a
+      // new row to blood_results + blood_marker_confidence and triggers
+      // score recalculation.
+      setPhase("saving")
+      const saveRes = await fetch("/api/labs/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          markers:        data.markers,
+          sourceLab:      data.sourceLab ?? null,
+          collectedAt:    data.collectedAt ?? null,
+          parserUsed:     data.parserUsed ?? "openai-vision-v1",
+          parseConfidence: data.parseConfidence ?? null,
+        }),
+      })
+      const saveData = await saveRes.json() as { score?: number; error?: string; bloodResultId?: string; markersExtracted?: number }
+      if (!saveRes.ok) throw new Error(saveData.error ?? `HTTP ${saveRes.status}`)
+
+      if (onComplete) onComplete()
+      else router.push("/dashboard")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed")
       setPhase("idle")
     }
-  }, [selectedFiles])
+  }, [selectedFiles, onComplete, router])
 
-  async function saveMarkers(markers: Record<string, unknown>, src = "upload_pdf", labName?: string) {
+  async function saveMarkers(markers: Record<string, unknown>) {
+    // Manual-entry save path — keeps the existing review/confirm flow
+    // working. The save route normalizes bare numbers via normalizeMarker,
+    // so we can pass editedMarkers (Record<string, number>) directly.
     setPhase("saving")
     try {
       const res = await fetch("/api/labs/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ markers, labDate: markers.labDate, source: src, labName }),
+        body: JSON.stringify({
+          markers,
+          collectedAt: parsedCollectionDate ?? null,
+          sourceLab:   parsedLabName ?? null,
+          parserUsed:  "manual",
+        }),
       })
       const data = await res.json() as { score?: number; error?: string }
       if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`)
@@ -402,7 +428,7 @@ export function LabUpload({ onSkip, onComplete }: LabUploadProps) {
       if (val != null && val > 0) markers[slug] = val
     }
 
-    saveMarkers(markers, "upload_pdf", parsedLabName)
+    saveMarkers(markers)
   }
 
   function handleManualSave() {
@@ -411,7 +437,7 @@ export function LabUpload({ onSkip, onComplete }: LabUploadProps) {
       const v = parseFloat(manualValues[m.slug] ?? "")
       if (!isNaN(v)) markers[m.slug] = v
     }
-    saveMarkers(markers, "manual_entry")
+    saveMarkers(markers)
   }
 
   // ── Saving ────────────────────────────────────────────────────────────────

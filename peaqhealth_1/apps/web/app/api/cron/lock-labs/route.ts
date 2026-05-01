@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
   // Find all rows whose lock window has expired and are not yet locked
   const { data: expiredRows, error: fetchError } = await supabase
-    .from("lab_results")
+    .from("blood_results")
     .select("id, user_id, collection_date, lab_name, hs_crp_mgl, vitamin_d_ngml, apob_mgdl, ldl_mgdl, hdl_mgdl, triglycerides_mgdl, lpa_mgdl, glucose_mgdl, hba1c_pct, esr_mmhr, homocysteine_umoll, ferritin_ngml")
     .eq("is_locked", false)
     .not("lock_expires_at", "is", null)
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     // Copy to lab_history
     const { error: historyError } = await supabase
-      .from("lab_history")
+      .from("blood_results")
       .insert({
         user_id:           row.user_id,
         collection_date:   row.collection_date,
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
 
     // Mark lab_results row as locked
     const { error: lockError } = await supabase
-      .from("lab_results")
+      .from("blood_results")
       .update({ is_locked: true, locked_at: now })
       .eq("id", row.id)
 

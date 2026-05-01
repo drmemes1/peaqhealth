@@ -210,7 +210,7 @@ export async function GET() {
   )
 
   const [labRes, sleepRes, wearableRes, oralRes, lifestyleRes, checkinRes] = await Promise.all([
-    svc.from("lab_results").select("*").eq("user_id", user.id).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).maybeSingle(),
+    svc.from("blood_results").select("*").eq("user_id", user.id).eq("parser_status", "complete").order("collected_at", { ascending: false }).limit(1).maybeSingle(),
     svc.from("sleep_data").select("date,source,total_sleep_minutes,deep_sleep_minutes,rem_sleep_minutes,sleep_efficiency,hrv_rmssd,spo2,resting_heart_rate").eq("user_id", user.id).order("date", { ascending: false }).limit(15),
     svc.from("wearable_connections_v2").select("provider").eq("user_id", user.id).eq("needs_reconnect", false).order("connected_at", { ascending: false }).limit(1).maybeSingle(),
     svc.from("oral_kit_orders").select("oral_score_snapshot,shannon_diversity,nitrate_reducers_pct,periodontopathogen_pct,osa_taxa_pct,neuro_signal_pct,metabolic_signal_pct,proliferative_signal_pct").eq("user_id", user.id).eq("status", "results_ready").order("ordered_at", { ascending: false }).limit(1).maybeSingle(),

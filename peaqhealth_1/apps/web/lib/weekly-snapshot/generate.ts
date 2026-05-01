@@ -75,10 +75,10 @@ export async function generateWeeklySnapshot(userId: string): Promise<Record<str
       .maybeSingle(),
 
     supabase
-      .from("lab_results")
+      .from("blood_results")
       .select("collection_date, hs_crp_mgl, ldl_mgdl, hdl_mgdl, apob_mgdl, triglycerides_mgdl, glucose_mgdl, hba1c_pct, vitamin_d_ngml, lpa_mgdl, created_at")
       .eq("user_id", userId)
-      .order("collection_date", { ascending: false })
+      .order("collected_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
 

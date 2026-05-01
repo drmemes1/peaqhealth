@@ -107,6 +107,19 @@ function num(v: unknown): number | undefined {
   return typeof v === "number" && v > 0 ? v : undefined
 }
 
+/**
+ * Translates a `blood_results` row → score-engine `BloodInputs`. The
+ * engine's input naming (camelCase + unit suffix) predates the
+ * registry; this is the translation seam at the engine boundary, per
+ * ADR-0020. Column names below are registry IDs; engine field names
+ * stay as-is so the engine itself doesn't need to change.
+ *
+ * Markers that exist in the engine's input shape but NOT in the
+ * registry (esr_mmhr, igf1_ngmL, thyroglobulin_ngmL, cea_ngmL,
+ * ca199_UmL, vldl_mgdL) read undefined here. The engine treats
+ * missing inputs gracefully. Re-adding any of them is "one row in
+ * the registry" if scoring proves to need them.
+ */
 export function mapLabRow(row: Record<string, unknown>): BloodInputs | undefined {
   const mapped = {
     hsCRP_mgL:              num(row.hs_crp_mgl),
@@ -115,44 +128,42 @@ export function mapLabRow(row: Record<string, unknown>): BloodInputs | undefined
     ldl_mgdL:               num(row.ldl_mgdl),
     hdl_mgdL:               num(row.hdl_mgdl),
     triglycerides_mgdL:     num(row.triglycerides_mgdl),
-    lpa_mgdL:               num(row.lpa_mgdl),
+    lpa_mgdL:               num(row.lipoprotein_a_mgdl),
     glucose_mgdL:           num(row.glucose_mgdl),
-    hba1c_pct:              num(row.hba1c_pct),
+    hba1c_pct:              num(row.hba1c_percent),
     eGFR_mLmin:             num(row.egfr_mlmin),
     alt_UL:                 num(row.alt_ul),
     ast_UL:                 num(row.ast_ul),
     albumin_gdL:            num(row.albumin_gdl),
     hemoglobin_gdL:         num(row.hemoglobin_gdl),
-    wbc_x10L:               num(row.wbc_kul),
-    rdw_pct:                num(row.rdw_pct),
+    wbc_x10L:               num(row.wbc_thousand_ul),
+    rdw_pct:                num(row.rdw_percent),
     mcv_fL:                 num(row.mcv_fl),
-    esr_mmhr:               num(row.esr_mmhr),
     homocysteine_umolL:     num(row.homocysteine_umoll),
     ferritin_ngmL:          num(row.ferritin_ngml),
     creatinine_mgdL:        num(row.creatinine_mgdl),
     bun_mgdL:               num(row.bun_mgdl),
-    alkPhos_UL:             num(row.alk_phos_ul),
+    alkPhos_UL:             num(row.alp_ul),
     totalBilirubin_mgdL:    num(row.total_bilirubin_mgdl),
-    testosterone_ngdL:      num(row.testosterone_ngdl),
-    freeTesto_pgmL:         num(row.free_testo_pgml),
+    testosterone_ngdL:      num(row.testosterone_total_ngdl),
+    freeTesto_pgmL:         num(row.testosterone_free_pgml),
     shbg_nmolL:             num(row.shbg_nmoll),
     totalCholesterol_mgdL:  num(row.total_cholesterol_mgdl),
-    nonHDL_mgdL:            num(row.non_hdl_mgdl),
+    nonHDL_mgdL:            num(row.non_hdl_cholesterol_mgdl),
     tsh_uIUmL:              num(row.tsh_uiuml),
-    freeT4_ngdL:            num(row.free_t4_ngdl),
-    freeT3_pgmL:            num(row.free_t3_pgml),
+    freeT4_ngdL:            num(row.t4_free_ngdl),
+    freeT3_pgmL:            num(row.t3_free_pgml),
     tpoAntibodies_iuML:     num(row.tpo_antibodies_iuml),
     sodium_mmolL:           num(row.sodium_mmoll),
     potassium_mmolL:        num(row.potassium_mmoll),
     uricAcid_mgdL:          num(row.uric_acid_mgdl),
-    fastingInsulin_uIUmL:   num(row.fasting_insulin_uiuml),
-    dhea_s_ugdL:            num(row.dhea_s_ugdl),
-    igf1_ngmL:              num(row.igf1_ngml),
+    fastingInsulin_uIUmL:   num(row.insulin_uiuml),
+    dhea_s_ugdL:            num(row.dhea_sulfate_ugdl),
     cortisol_ugdL:          num(row.cortisol_ugdl),
     vitaminB12_pgmL:        num(row.vitamin_b12_pgml),
     folate_ngmL:            num(row.folate_ngml),
-    psa_ngmL:               num(row.psa_ngml),
-    labCollectionDate:      row.collection_date as string | undefined,
+    psa_ngmL:               num(row.psa_total_ngml),
+    labCollectionDate:      typeof row.collected_at === "string" ? row.collected_at.slice(0, 10) : undefined,
   }
   const presentKeys = Object.entries(mapped)
     .filter(([k, v]) => k !== "labCollectionDate" && v !== undefined && (v as number) > 0)
@@ -226,7 +237,7 @@ async function _recalculateScore(
   supabase: SupabaseClient
 ): Promise<number> {
   const [labsRes, oralRes, lifestyleRes, manualSleepRes, sleepNightsRes, profileRes] = await Promise.all([
-    supabase.from("lab_results").select("*").eq("user_id", userId).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).maybeSingle(),
+    supabase.from("blood_results").select("*").eq("user_id", userId).order("collected_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("oral_kit_orders").select("*").eq("user_id", userId).not("shannon_diversity", "is", null).order("ordered_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("lifestyle_records").select("*").eq("user_id", userId).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("manual_sleep_entries").select("duration_seconds,quality").eq("user_id", userId).order("date", { ascending: false }).limit(14),
@@ -536,7 +547,7 @@ async function _recalculateScore(
     modifiers_applied:      modifiers,
     lifestyle_context:      lifestyleContext,
     interaction_pool:       legacyResult.breakdown.interactionPool,
-    lab_result_id:          labsRes.data?.id ?? null,
+    blood_result_id:        labsRes.data?.id ?? null,
     oral_kit_id:            oralRes.data?.id ?? null,
     wearable_connection_id: null,
     lifestyle_record_id:    lifestyleRes.data?.id ?? null,

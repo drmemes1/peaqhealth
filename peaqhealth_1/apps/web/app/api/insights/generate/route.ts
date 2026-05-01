@@ -121,7 +121,7 @@ export async function POST() {
     { data: lifestyle },
     { data: wearable },
   ] = await Promise.all([
-    svc.from("lab_results").select("*").eq("user_id", user.id).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).maybeSingle(),
+    svc.from("blood_results").select("*").eq("user_id", user.id).eq("parser_status", "complete").order("collected_at", { ascending: false }).limit(1).maybeSingle(),
     svc.from("oral_kit_orders").select("*").eq("user_id", user.id).not("shannon_diversity", "is", null).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     svc.from("sleep_data").select("*").eq("user_id", user.id).order("date", { ascending: false }).limit(14),
     svc.from("lifestyle_records").select("*").eq("user_id", user.id).maybeSingle(),

@@ -172,11 +172,11 @@ export async function fetchReportData(userId: string, supabase: SupabaseClient):
       .maybeSingle(),
 
     supabase
-      .from("lab_results")
+      .from("blood_results")
       .select("*")
       .eq("user_id", userId)
       .eq("parser_status", "complete")
-      .order("collection_date", { ascending: false })
+      .order("collected_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
 

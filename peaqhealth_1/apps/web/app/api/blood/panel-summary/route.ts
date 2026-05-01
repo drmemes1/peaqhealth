@@ -17,7 +17,7 @@ export async function GET() {
   if (cached?.content) return NextResponse.json(cached)
 
   const [{ data: lab }, { data: oral }, { data: lifestyle }] = await Promise.all([
-    supabase.from("lab_results").select(LAB_COLS).eq("user_id", user.id).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).maybeSingle(),
+    supabase.from("blood_results").select(LAB_COLS).eq("user_id", user.id).eq("parser_status", "complete").order("collected_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("oral_kit_orders").select("neisseria_pct, fusobacterium_pct, porphyromonas_pct, env_pattern").eq("user_id", user.id).not("shannon_diversity", "is", null).order("ordered_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("lifestyle_records").select("smoking_status, biological_sex, age_range").eq("user_id", user.id).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
   ])
