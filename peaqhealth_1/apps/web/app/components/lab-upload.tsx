@@ -84,65 +84,65 @@ const CATEGORIES: Array<{ name: string; markers: MarkerDef[] }> = [
   {
     name: "Cardiovascular",
     markers: [
-      { slug: "ldl_mgdL",             name: "LDL Cholesterol",   unit: "mg/dL",   placeholder: "110"  },
-      { slug: "hdl_mgdL",             name: "HDL Cholesterol",   unit: "mg/dL",   placeholder: "58"   },
-      { slug: "triglycerides_mgdL",   name: "Triglycerides",     unit: "mg/dL",   placeholder: "95"   },
-      { slug: "totalCholesterol_mgdL",name: "Total Cholesterol", unit: "mg/dL",   placeholder: "180"  },
-      { slug: "apoB_mgdL",            name: "ApoB",              unit: "mg/dL",   placeholder: "85"   },
-      { slug: "lpa_mgdL",             name: "Lp(a)",             unit: "mg/dL",   placeholder: "18"   },
-      { slug: "nonHDL_mgdL",          name: "Non-HDL",           unit: "mg/dL",   placeholder: "130"  },
+      { slug: "ldl_mgdl",             name: "LDL Cholesterol",   unit: "mg/dL",   placeholder: "110"  },
+      { slug: "hdl_mgdl",             name: "HDL Cholesterol",   unit: "mg/dL",   placeholder: "58"   },
+      { slug: "triglycerides_mgdl",   name: "Triglycerides",     unit: "mg/dL",   placeholder: "95"   },
+      { slug: "total_cholesterol_mgdl",name: "Total Cholesterol", unit: "mg/dL",   placeholder: "180"  },
+      { slug: "apob_mgdl",            name: "ApoB",              unit: "mg/dL",   placeholder: "85"   },
+      { slug: "lipoprotein_a_mgdl",             name: "Lp(a)",             unit: "mg/dL",   placeholder: "18"   },
+      { slug: "non_hdl_cholesterol_mgdl",          name: "Non-HDL",           unit: "mg/dL",   placeholder: "130"  },
       { slug: "vldl_mgdL",            name: "VLDL",              unit: "mg/dL",   placeholder: "14"   },
-      { slug: "ldlHdlRatio",          name: "LDL:HDL Ratio",     unit: "ratio",   placeholder: "2.1"  },
+      // ldl/hdl ratio not in registry; use total_chol_hdl_ratio (computed) — display omitted
     ],
   },
   {
     name: "Inflammation",
     markers: [
-      { slug: "hsCRP_mgL",  name: "hs-CRP",  unit: "mg/L",  placeholder: "0.8" },
+      { slug: "hs_crp_mgl",  name: "hs-CRP",  unit: "mg/L",  placeholder: "0.8" },
       { slug: "wbc_thousand_ul",    name: "WBC",     unit: "K/uL",  placeholder: "5.5" },
       { slug: "rdw_percent",    name: "RDW",     unit: "%",     placeholder: "13"  },
-      { slug: "albumin_gdL",name: "Albumin", unit: "g/dL",  placeholder: "4.5" },
+      { slug: "albumin_gdl",name: "Albumin", unit: "g/dL",  placeholder: "4.5" },
     ],
   },
   {
     name: "Metabolic",
     markers: [
-      { slug: "glucose_mgdL",        name: "Glucose",         unit: "mg/dL",   placeholder: "88"  },
+      { slug: "glucose_mgdl",        name: "Glucose",         unit: "mg/dL",   placeholder: "88"  },
       { slug: "hba1c_percent",           name: "HbA1c",           unit: "%",       placeholder: "5.2" },
-      { slug: "creatinine_mgdL",     name: "Creatinine",      unit: "mg/dL",   placeholder: "0.9" },
-      { slug: "egfr_mLmin",          name: "eGFR",            unit: "mL/min",  placeholder: "95"  },
-      { slug: "bun_mgdL",            name: "BUN",             unit: "mg/dL",   placeholder: "14"  },
-      { slug: "uricAcid_mgdL",       name: "Uric Acid",       unit: "mg/dL",   placeholder: "5.5" },
-      { slug: "fastingInsulin_uIUmL",name: "Fasting Insulin", unit: "µIU/mL",  placeholder: "7"   },
+      { slug: "creatinine_mgdl",     name: "Creatinine",      unit: "mg/dL",   placeholder: "0.9" },
+      { slug: "egfr_mlmin",          name: "eGFR",            unit: "mL/min",  placeholder: "95"  },
+      { slug: "bun_mgdl",            name: "BUN",             unit: "mg/dL",   placeholder: "14"  },
+      { slug: "uric_acid_mgdl",       name: "Uric Acid",       unit: "mg/dL",   placeholder: "5.5" },
+      { slug: "insulin_uiuml",name: "Fasting Insulin", unit: "µIU/mL",  placeholder: "7"   },
     ],
   },
   {
     name: "Liver",
     markers: [
-      { slug: "alt_UL",             name: "ALT",       unit: "U/L",   placeholder: "22" },
-      { slug: "ast_UL",             name: "AST",       unit: "U/L",   placeholder: "20" },
-      { slug: "alkPhos_UL",         name: "Alk Phos",  unit: "U/L",   placeholder: "70" },
-      { slug: "totalBilirubin_mgdL",name: "Bilirubin", unit: "mg/dL", placeholder: "0.8"},
+      { slug: "alt_ul",             name: "ALT",       unit: "U/L",   placeholder: "22" },
+      { slug: "ast_ul",             name: "AST",       unit: "U/L",   placeholder: "20" },
+      { slug: "alp_ul",         name: "Alk Phos",  unit: "U/L",   placeholder: "70" },
+      { slug: "total_bilirubin_mgdl",name: "Bilirubin", unit: "mg/dL", placeholder: "0.8"},
     ],
   },
   {
     name: "Hormones",
     markers: [
-      { slug: "testosterone_ngdL", name: "Testosterone",      unit: "ng/dL",  placeholder: "550" },
-      { slug: "freeTesto_pgmL",    name: "Free Testosterone", unit: "pg/mL",  placeholder: "12"  },
-      { slug: "tsh_uIUmL",         name: "TSH",               unit: "µIU/mL", placeholder: "1.8" },
-      { slug: "dhea_s_ugdL",       name: "DHEA-S",            unit: "µg/dL",  placeholder: "200" },
+      { slug: "testosterone_total_ngdl", name: "Testosterone",      unit: "ng/dL",  placeholder: "550" },
+      { slug: "testosterone_free_pgml",    name: "Free Testosterone", unit: "pg/mL",  placeholder: "12"  },
+      { slug: "tsh_uiuml",         name: "TSH",               unit: "µIU/mL", placeholder: "1.8" },
+      { slug: "dhea_sulfate_ugdl",       name: "DHEA-S",            unit: "µg/dL",  placeholder: "200" },
       { slug: "igf1_ngmL",         name: "IGF-1",             unit: "ng/mL",  placeholder: "180" },
-      { slug: "shbg_nmolL",        name: "SHBG",              unit: "nmol/L", placeholder: "40"  },
+      { slug: "shbg_nmoll",        name: "SHBG",              unit: "nmol/L", placeholder: "40"  },
     ],
   },
   {
     name: "Micronutrients",
     markers: [
-      { slug: "vitaminD_ngmL",   name: "Vitamin D",  unit: "ng/mL", placeholder: "42"  },
-      { slug: "ferritin_ngmL",   name: "Ferritin",   unit: "ng/mL", placeholder: "80"  },
-      { slug: "hemoglobin_gdL",  name: "Hemoglobin", unit: "g/dL",  placeholder: "14"  },
-      { slug: "mcv_fL",          name: "MCV",        unit: "fL",    placeholder: "90"  },
+      { slug: "vitamin_d_ngml",   name: "Vitamin D",  unit: "ng/mL", placeholder: "42"  },
+      { slug: "ferritin_ngml",   name: "Ferritin",   unit: "ng/mL", placeholder: "80"  },
+      { slug: "hemoglobin_gdl",  name: "Hemoglobin", unit: "g/dL",  placeholder: "14"  },
+      { slug: "mcv_fl",          name: "MCV",        unit: "fL",    placeholder: "90"  },
     ],
   },
   {
@@ -150,7 +150,7 @@ const CATEGORIES: Array<{ name: string; markers: MarkerDef[] }> = [
     markers: [
       { slug: "hematocrit_percent",  name: "Hematocrit",  unit: "%",     placeholder: "42"  },
       { slug: "platelets_thousand_ul",   name: "Platelets",   unit: "K/uL",  placeholder: "250" },
-      { slug: "rbc_mil",         name: "RBC",         unit: "M/uL",  placeholder: "4.8" },
+      { slug: "rbc_million_ul",         name: "RBC",         unit: "M/uL",  placeholder: "4.8" },
       { slug: "mch_pg",          name: "MCH",         unit: "pg",    placeholder: "30"  },
       { slug: "mchc_gdl",        name: "MCHC",        unit: "g/dL",  placeholder: "33"  },
       { slug: "neutrophils_pct", name: "Neutrophils", unit: "%",     placeholder: "60"  },
@@ -165,7 +165,7 @@ const CATEGORIES: Array<{ name: string; markers: MarkerDef[] }> = [
       { slug: "chloride_mmolL",   name: "Chloride",      unit: "mmol/L", placeholder: "102" },
       { slug: "co2_mmolL",        name: "CO2",           unit: "mmol/L", placeholder: "25"  },
       { slug: "calcium_mgdL",     name: "Calcium",       unit: "mg/dL",  placeholder: "9.5" },
-      { slug: "totalProtein_gdL", name: "Total Protein", unit: "g/dL",   placeholder: "7.2" },
+      { slug: "total_protein_gdl", name: "Total Protein", unit: "g/dL",   placeholder: "7.2" },
       { slug: "globulin_gdL",     name: "Globulin",      unit: "g/dL",   placeholder: "2.5" },
     ],
   },
@@ -290,12 +290,12 @@ export function LabUpload({ onSkip, onComplete }: LabUploadProps) {
 
   // Post-architectural-reset (PR-252):
   //   • /api/labs/upload returns registry-keyed markers (`{ [id]: { value, … } | null }`),
-  //     plus sourceLab, collectedAt, parserUsed, parseConfidence.
-  //   • /api/labs/save accepts that same shape directly — no client-side
-  //     translation. The save route normalizes structured-vs-numeric shapes.
-  // The interim flow auto-saves immediately after parsing (the confirm/review
-  // screen below still uses camelCase BloodMarkers keys; rebuilding it
-  // against the registry is the next slice of the cutover).
+  //     plus sourceLab, collectedAt, parserUsed, parseConfidence, warnings.
+  //   • Flow: select files → parse → confirm/review → save → /dashboard/blood.
+  //   • The CATEGORIES list driving the confirm UI uses registry IDs as
+  //     slugs; editedMarkers is keyed by registry id. /api/labs/save's
+  //     normalizeMarker accepts bare numbers, so the confirm UI's saveMarkers
+  //     payload (Record<string, number>) flows through unchanged.
   const handleUpload = useCallback(async () => {
     if (selectedFiles.length === 0) return
     setError(null)
@@ -322,6 +322,7 @@ export function LabUpload({ onSkip, onComplete }: LabUploadProps) {
         collectedAt?: string | null
         parserUsed?: string
         parseConfidence?: number
+        warnings?: string[]
         error?: string
       }
 
@@ -333,41 +334,46 @@ export function LabUpload({ onSkip, onComplete }: LabUploadProps) {
         throw new Error("Parser returned no markers payload.")
       }
 
-      const extractedCount = Object.values(data.markers).filter(m => m !== null).length
-      if (extractedCount === 0) {
+      // Flatten the structured ParseResult into editedMarkers (registry id →
+      // numeric value) so the confirm UI can render and edit. Track which
+      // ids were actually extracted (vs missing) for the "found" indicator.
+      const edited: Record<string, number | null> = {}
+      const found = new Set<string>()
+      for (const [id, parsed] of Object.entries(data.markers)) {
+        if (parsed && typeof parsed.value === "number" && Number.isFinite(parsed.value) && parsed.value > 0) {
+          edited[id] = parsed.value
+          found.add(id)
+        }
+      }
+
+      if (found.size === 0) {
         throw new Error("We processed your file but couldn't identify any markers from this layout. Try downloading a fresh PDF from your lab's portal.")
       }
 
-      // Auto-save the structured payload directly. The save route writes a
-      // new row to blood_results + blood_marker_confidence and triggers
-      // score recalculation.
-      setPhase("saving")
-      const saveRes = await fetch("/api/labs/save", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          markers:        data.markers,
-          sourceLab:      data.sourceLab ?? null,
-          collectedAt:    data.collectedAt ?? null,
-          parserUsed:     data.parserUsed ?? "openai-vision-v1",
-          parseConfidence: data.parseConfidence ?? null,
-        }),
-      })
-      const saveData = await saveRes.json() as { score?: number; error?: string; bloodResultId?: string; markersExtracted?: number }
-      if (!saveRes.ok) throw new Error(saveData.error ?? `HTTP ${saveRes.status}`)
-
-      if (onComplete) onComplete()
-      else router.push("/dashboard")
+      setEditedMarkers(edited)
+      setParsedSlugs(found)
+      setParsedLabName(data.sourceLab ?? undefined)
+      setParsedCollectionDate(
+        data.collectedAt ? data.collectedAt.slice(0, 10) : new Date().toISOString().slice(0, 10),
+      )
+      setValidationWarning(
+        data.warnings && data.warnings.length > 0
+          ? `${data.warnings.length} parser warning${data.warnings.length === 1 ? "" : "s"} (e.g. "${data.warnings[0]}")`
+          : null,
+      )
+      setInvalidSlugs(new Set())
+      setPhase("confirm")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed")
       setPhase("idle")
     }
-  }, [selectedFiles, onComplete, router])
+  }, [selectedFiles])
 
   async function saveMarkers(markers: Record<string, unknown>) {
-    // Manual-entry save path — keeps the existing review/confirm flow
-    // working. The save route normalizes bare numbers via normalizeMarker,
-    // so we can pass editedMarkers (Record<string, number>) directly.
+    // Saves editedMarkers (Record<string, number>) keyed by registry id.
+    // /api/labs/save normalizeMarker accepts bare numbers and treats them
+    // as manual-entry-style ParseResult markers. After persist, redirect
+    // to /dashboard/blood so the user lands on their fresh panel.
     setPhase("saving")
     try {
       const res = await fetch("/api/labs/save", {
@@ -377,13 +383,13 @@ export function LabUpload({ onSkip, onComplete }: LabUploadProps) {
           markers,
           collectedAt: parsedCollectionDate ?? null,
           sourceLab:   parsedLabName ?? null,
-          parserUsed:  "manual",
+          parserUsed:  "openai-vision-v1",
         }),
       })
       const data = await res.json() as { score?: number; error?: string }
       if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`)
       if (onComplete) onComplete()
-      else router.push("/dashboard")
+      else router.push("/dashboard/blood")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save")
       setPhase("confirm")
