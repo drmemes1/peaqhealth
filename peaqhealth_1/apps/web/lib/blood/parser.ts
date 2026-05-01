@@ -84,7 +84,7 @@ EXTRACTION DISCIPLINE:
 4. Only extract markers from the target list. Ignore everything else in the text.
 5. If a marker is genuinely not present, return null. Do NOT guess.
 6. UNIFORM-VALUE GUARD: If you find yourself extracting the SAME numeric value for many different markers, STOP. Identical values across distinct markers are almost always layout artifacts — page numbers, section counts, days-since-test annotations, summary badges — not real results. Return null for those markers rather than guessing.
-7. Return values in the unit the lab printed. Note the unit separately. Do not perform unit conversion — that happens later.
+7. Return values in the unit the lab printed (in `unitFound`). Do NOT skip a marker because its unit differs from the registry's expected unit — Function Health, Quest, and many premium labs report Lp(a) in nmol/L, glucose in mmol/L, vitamin D in nmol/L, B12 in pmol/L, testosterone in nmol/L, etc. Always extract; the post-processing layer handles conversion. EXAMPLE: if the lab prints "Lipoprotein (a) 75 nmol/L", return `{value: 75, unitFound: "nmol/L"}` for `lipoprotein_a_mgdl` even though the expectedUnit is mg/dL.
 8. For each extracted value, provide a confidence score 0–1 based on how clearly the value was associated with the marker name.
 9. Capture the source lab name (top of report, footer, letterhead) and the collection date in YYYY-MM-DD format.
 10. MULTI-LINE FORMAT: Test name often appears on one line, the patient's numeric result on the very next line, and the reference range on the line after that. Treat the number on the line immediately after a test name as the patient's result. Ignore footnote markers (single digits 1, 2, 3 attached to a test name).
