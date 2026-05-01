@@ -611,6 +611,7 @@ export const V2_QUESTIONS: QuestionDef[] = [
     ],
     explanation: { label: "What this means", body: "Recent antibiotics temporarily suppress diversity and specific species. If your results show low diversity with recent antibiotic use, we'll flag it as transient — not a permanent state — and suggest recovery-supporting actions." },
   },
+
 ]
 
 export function getV2QuestionCount(): number {

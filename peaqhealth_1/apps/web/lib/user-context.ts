@@ -95,6 +95,19 @@ export interface OralKitData {
   cariesRiskCategory?: string | null
   confounderAdjustments?: Record<string, string> | null
   reliabilityFlag?: string | null
+
+  // NR-α fields. Optional because the runner / pipeline integration ships in
+  // a follow-up PR (NR-β1); this slice only adds the algorithm. See ADR-0019
+  // and lib/oral/nr-v1.ts for the contract.
+  nrCapacityIndex?: number | null
+  nrCapacityCategory?: string | null
+  noSignature?: number | null
+  noSignatureCategory?: string | null
+  nrRiskCategory?: string | null
+  nrParadoxFlag?: boolean | null
+  nrConfidence?: string | null
+  nrReliabilityFlags?: string[] | null
+  nrConfounderAdjustments?: Record<string, string> | null
 }
 
 export interface BloodPanelData {
