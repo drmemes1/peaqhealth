@@ -42,34 +42,29 @@ import {
 
 export type { ParseResult, ParsedMarker } from "./validate"
 
-// ── Production parser — PDF → PNG → OpenAI vision → validate ───────────────
+// ── Production parser — PDF → text via unpdf → OpenAI → validate ──────────
+//
+// Text extraction (not image rendering) is the primary path. unpdf's
+// `extractText` works in Node without a canvas implementation; the
+// `renderPageAsImage` route requires `@napi-rs/canvas` which isn't
+// bundled. Most lab PDFs (LabCorp, Quest, Function Health portal exports)
+// are text-based and extract cleanly. Scanned-only PDFs would benefit
+// from vision OCR — that fallback is a future addition once a canvas
+// dependency is wired in.
 
 export async function parseBloodPDF(pdfBuffer: Buffer): Promise<ParseResult> {
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) throw new Error("OPENAI_API_KEY not configured")
 
-  // Step 1 — render PDF pages to PNG. GPT-4o vision accepts images, not
-  //          PDFs directly. unpdf renders pages at scale 2 for OCR fidelity.
-  const { renderPageAsImage, getDocumentProxy } = await import("unpdf")
+  // Step 1 — extract text from the PDF. unpdf's extractText is pure JS,
+  //          no canvas dependency.
+  const { extractText, getDocumentProxy } = await import("unpdf")
   const doc = await getDocumentProxy(new Uint8Array(pdfBuffer))
-  const pageCount = doc.numPages
-  const maxPages = Math.min(pageCount, 12)
-
-  const imageContent: Array<{
-    type: "image_url"
-    image_url: { url: string; detail: "high" }
-  }> = []
-  for (let p = 1; p <= maxPages; p++) {
-    const result = await renderPageAsImage(doc, p, { scale: 2 })
-    const imageData =
-      result instanceof ArrayBuffer
-        ? result
-        : (result as { image: ArrayBuffer }).image ?? result
-    const pngBase64 = Buffer.from(imageData as ArrayBuffer).toString("base64")
-    imageContent.push({
-      type: "image_url",
-      image_url: { url: `data:image/png;base64,${pngBase64}`, detail: "high" },
-    })
+  const { text } = await extractText(doc, { mergePages: true })
+  if (!text || text.length < 100) {
+    throw new Error(
+      "Could not extract readable text from this PDF. If it's a scanned image (no embedded text layer), download a fresh PDF from your lab portal — portal exports parse most reliably.",
+    )
   }
 
   // Step 2 — build the marker target list for the prompt
@@ -80,16 +75,17 @@ export async function parseBloodPDF(pdfBuffer: Buffer): Promise<ParseResult> {
     synonyms: m.synonyms,
   }))
 
-  const systemPrompt = `You are a lab-report extraction system for oravi, a longevity health platform. You will be given a blood lab report (rendered PDF pages) and a list of markers oravi tracks. Extract values for these specific markers — nothing else.
+  const systemPrompt = `You are a lab-report extraction system for oravi, a longevity health platform. You will be given the extracted text of a blood lab report and a list of markers oravi tracks. Extract values for these specific markers — nothing else.
 
 CRITICAL RULES:
-1. Only extract markers from the target list. Ignore everything else in the PDF.
+1. Only extract markers from the target list. Ignore everything else in the text.
 2. For each target marker, look for it by its name or any of its synonyms. Labs use varying nomenclature.
-3. If a marker is not present in the PDF, return null for that marker. Do NOT guess.
+3. If a marker is not present in the text, return null for that marker. Do NOT guess.
 4. CRITICAL: If you find yourself extracting the same numeric value for multiple markers, STOP. Identical values across different markers are almost always layout artifacts — page numbers, section counts, days-since-test annotations, summary badges — not real results. When in doubt, return null for that marker rather than guessing. It's better to extract fewer markers correctly than many markers incorrectly.
 5. Return values in the unit the lab printed. Note the unit separately. Do not perform unit conversion — that happens later.
 6. For each extracted value, provide a confidence score 0–1 based on how clearly the value was associated with the marker name.
 7. Capture the source lab name (top of report, footer, letterhead) and the collection date in YYYY-MM-DD format.
+8. MULTI-LINE FORMAT: Test name often appears on one line, the patient's numeric result on the very next line, and the reference range on the line after that. Treat the number on the line immediately after a test name as the patient's result. Ignore footnote markers (single digits 1, 2, 3 attached to a test name).
 
 Return JSON in EXACTLY this shape:
 {
@@ -104,7 +100,8 @@ Return JSON in EXACTLY this shape:
   const userText = `Target markers (${markerTargets.length} total):
 ${JSON.stringify(markerTargets, null, 2)}
 
-Extract these markers from the attached PDF pages.`
+LAB REPORT TEXT:
+${text}`
 
   const openai = new OpenAI({ apiKey })
   const response = await openai.chat.completions.create({
@@ -115,10 +112,7 @@ Extract these markers from the attached PDF pages.`
     store: false, // ZDR
     messages: [
       { role: "system", content: systemPrompt },
-      {
-        role: "user",
-        content: [{ type: "text", text: userText }, ...imageContent],
-      },
+      { role: "user", content: userText },
     ],
   })
 
