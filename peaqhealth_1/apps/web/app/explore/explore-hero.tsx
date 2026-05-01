@@ -13,7 +13,7 @@ export function ExploreHero() {
     }}>
       {/* Background image */}
       <img
-        src="/bacteria1.png"
+        src="/oral-bac.png"
         alt=""
         style={{
           position: "absolute", inset: 0,
