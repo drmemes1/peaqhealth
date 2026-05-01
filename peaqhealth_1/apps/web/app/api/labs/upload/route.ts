@@ -328,6 +328,7 @@ EXTRACTION RULES:
 - For Apolipoprotein B: the result is the number immediately following the test name, before any reference table
 - MULTI-LINE FORMAT: Test name often appears on one line, the patient's numeric result on the very next line, and the reference range on the line after that. Treat the number on the line immediately after a test name as the patient's result.
 - FOOTNOTE NUMBERS: Ignore any superscript footnote markers (single digits like 1, 2, 3) that appear attached to a test name or result — they are not part of the value.
+- CRITICAL: If you find yourself extracting the same numeric value for multiple markers, STOP. Identical values across different markers are almost always layout artifacts — page numbers, section counts, days-since-test annotations, summary badges — not real results. When in doubt, return null for that marker rather than guessing. It's better to extract fewer markers correctly than many markers incorrectly.
 
 COMMON SYNONYMS (map these to the field shown):
 - CRP High Sensitivity / hs-CRP / C-Reactive Protein = hsCRP_mgL
