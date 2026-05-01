@@ -5,7 +5,7 @@ import OpenAI from "openai"
 import { NARRATIVE_SYSTEM_BASE, SUMMARY_INSTRUCTION } from "../../../../lib/panel-narrative-base"
 
 const PROMPT_VERSION = "blood-summary-v2"
-const LAB_COLS = "ldl_mgdl, hdl_mgdl, triglycerides_mgdl, total_cholesterol_mgdl, hba1c_pct, glucose_mgdl, hs_crp_mgl, wbc_kul, hematocrit_pct, tsh_uiuml, free_t4_ngdl, egfr_mlmin, vitamin_d_ngml, vitamin_b12_pgml, ferritin_ngml, creatinine_mgdl, albumin_gdl, alt_ul, ast_ul, hemoglobin_gdl, rdw_pct, bun_mgdl, alk_phos_ul, total_bilirubin_mgdl, sodium_mmoll, potassium_mmoll, platelets_kul"
+const LAB_COLS = "ldl_mgdl, hdl_mgdl, triglycerides_mgdl, total_cholesterol_mgdl, hba1c_percent, glucose_mgdl, hs_crp_mgl, wbc_thousand_ul, hematocrit_percent, tsh_uiuml, t4_free_ngdl, egfr_mlmin, vitamin_d_ngml, vitamin_b12_pgml, ferritin_ngml, creatinine_mgdl, albumin_gdl, alt_ul, ast_ul, hemoglobin_gdl, rdw_percent, bun_mgdl, alp_ul, total_bilirubin_mgdl, sodium_mmoll, potassium_mmoll, platelets_thousand_ul"
 
 export async function GET() {
   const sessionClient = await createClient()
@@ -17,7 +17,7 @@ export async function GET() {
   if (cached?.content) return NextResponse.json(cached)
 
   const [{ data: lab }, { data: oral }, { data: lifestyle }] = await Promise.all([
-    supabase.from("blood_results").select(LAB_COLS).eq("user_id", user.id).eq("parser_status", "complete").order("collected_at", { ascending: false }).limit(1).maybeSingle(),
+    supabase.from("blood_results").select(LAB_COLS).eq("user_id", user.id).order("collected_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("oral_kit_orders").select("neisseria_pct, fusobacterium_pct, porphyromonas_pct, env_pattern").eq("user_id", user.id).not("shannon_diversity", "is", null).order("ordered_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("lifestyle_records").select("smoking_status, biological_sex, age_range").eq("user_id", user.id).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
   ])

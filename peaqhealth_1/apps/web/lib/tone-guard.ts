@@ -54,7 +54,7 @@ export const FORBIDDEN_SURFACE_PHRASES = [
 
 export const BORDERLINE_THRESHOLDS: Record<string, { cutoff: number; zone: number }> = {
   glucose_mgdl: { cutoff: 100, zone: 105 },
-  hba1c_pct: { cutoff: 5.7, zone: 5.9 },
+  hba1c_percent: { cutoff: 5.7, zone: 5.9 },
   ldl_mgdl: { cutoff: 100, zone: 105 },
   triglycerides_mgdl: { cutoff: 150, zone: 158 },
   hs_crp_mgl: { cutoff: 1.0, zone: 1.05 },

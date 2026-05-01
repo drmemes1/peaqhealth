@@ -18,7 +18,7 @@ export async function GET() {
 
   const [{ data: kit }, { data: lab }, { data: lifestyle }] = await Promise.all([
     supabase.from("oral_kit_orders").select("shannon_diversity, neisseria_pct, haemophilus_pct, rothia_pct, porphyromonas_pct, fusobacterium_pct, aggregatibacter_pct, s_mutans_pct, s_sanguinis_pct, env_pattern, primary_pattern").eq("user_id", user.id).not("shannon_diversity", "is", null).order("ordered_at", { ascending: false }).limit(1).maybeSingle(),
-    supabase.from("blood_results").select("ldl_mgdl, hs_crp_mgl, glucose_mgdl, hba1c_pct").eq("user_id", user.id).eq("parser_status", "complete").order("collected_at", { ascending: false }).limit(1).maybeSingle(),
+    supabase.from("blood_results").select("ldl_mgdl, hs_crp_mgl, glucose_mgdl, hba1c_percent").eq("user_id", user.id).order("collected_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("lifestyle_records").select("mouth_breathing, flossing_freq, mouthwash_type").eq("user_id", user.id).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
   ])
   if (!kit) return NextResponse.json({ content: null, reason: "no_oral_data" })

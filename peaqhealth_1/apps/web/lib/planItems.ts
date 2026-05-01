@@ -334,9 +334,9 @@ export function deriveMarkerStatuses(data: StatusInput): PlanInput {
   const ldl = (lab?.ldl_mgdl as number | null) ?? null
   const hsCrp = (lab?.hs_crp_mgl as number | null) ?? null
   const glucose = (lab?.glucose_mgdl as number | null) ?? null
-  const hba1c = (lab?.hba1c_pct as number | null) ?? null
+  const hba1c = (lab?.hba1c_percent as number | null) ?? null
   const vitaminD = (lab?.vitamin_d_ngml as number | null) ?? null
-  const lpa = (lab?.lpa_mgdl as number | null) ?? null
+  const lpa = (lab?.lipoprotein_a_mgdl as number | null) ?? null
 
   // Oral
   const omaPct = (snapshot?.oma_percentile as number | null) ?? (breakdown.omaPct as number | null) ?? null

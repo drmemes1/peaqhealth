@@ -40,10 +40,12 @@ const DS = {
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 interface LabHistoryPoint {
-  locked_at: string
-  total_score: number | null
-  blood_score: number | null
-  collection_date: string | null
+  // Per blood-marker registry rewrite (ADR-0020): blood_results is per-test
+  // (no upsert). Trend chart reads collected_at + the four headline markers
+  // we render. Score-tagged history (locked_at / total_score / blood_score)
+  // came from the dropped lab_history table; if/when trend infra rebuilds,
+  // it'll source from score_snapshots joined back to blood_result_id.
+  collected_at: string | null
   ldl_mgdl: number | null
   hdl_mgdl: number | null
   hs_crp_mgl: number | null

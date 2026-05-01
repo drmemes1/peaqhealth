@@ -161,7 +161,7 @@ export const MARKER_DEFINITIONS: Record<string, MarkerDef> = {
       { max: 6.4, label: 'Watch', color: 'amber' },
       { min: 6.4, label: 'Elevated', color: 'red' },
     ],
-    db_column: 'hba1c_pct',
+    db_column: 'hba1c_percent',
     related_articles: ['mouthwash-and-your-microbiome'],
     foods: [
       { name: 'Non-starchy vegetables', why: 'High fiber slows glucose absorption' },
@@ -264,7 +264,7 @@ export const MARKER_DEFINITIONS: Record<string, MarkerDef> = {
       { max: 50, label: 'Watch', color: 'amber' },
       { min: 50, label: 'Elevated', color: 'red' },
     ],
-    db_column: 'lpa_mgdl',
+    db_column: 'lipoprotein_a_mgdl',
     related_articles: ['mouthwash-and-your-microbiome'],
     foods: [
       { name: 'Reduce processed foods and trans fats', why: 'Raises Lp(a)' },
@@ -327,7 +327,7 @@ export const MARKER_DEFINITIONS: Record<string, MarkerDef> = {
       { max: 10.0, label: 'Watch', color: 'amber' },
       { min: 10.0, label: 'Elevated', color: 'red' },
     ],
-    db_column: 'wbc_kul',
+    db_column: 'wbc_thousand_ul',
     related_articles: ['mouthwash-and-your-microbiome'],
     foods: [
       { name: 'Leafy greens and cruciferous vegetables', why: 'Reduce immune overactivation' },
@@ -358,7 +358,7 @@ export const MARKER_DEFINITIONS: Record<string, MarkerDef> = {
       { max: 14.5, label: 'Watch', color: 'amber' },
       { min: 14.5, label: 'Elevated', color: 'red' },
     ],
-    db_column: 'rdw_pct',
+    db_column: 'rdw_percent',
     related_articles: ['mouthwash-and-your-microbiome'],
     foods: [
       { name: 'Iron-rich foods (lean red meat, spinach, lentils)', why: 'Iron deficiency is a common cause of elevated RDW' },

@@ -121,7 +121,7 @@ export async function POST() {
     { data: lifestyle },
     { data: wearable },
   ] = await Promise.all([
-    svc.from("blood_results").select("*").eq("user_id", user.id).eq("parser_status", "complete").order("collected_at", { ascending: false }).limit(1).maybeSingle(),
+    svc.from("blood_results").select("*").eq("user_id", user.id).order("collected_at", { ascending: false }).limit(1).maybeSingle(),
     svc.from("oral_kit_orders").select("*").eq("user_id", user.id).not("shannon_diversity", "is", null).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     svc.from("sleep_data").select("*").eq("user_id", user.id).order("date", { ascending: false }).limit(14),
     svc.from("lifestyle_records").select("*").eq("user_id", user.id).maybeSingle(),
@@ -135,15 +135,15 @@ export async function POST() {
   if (lab) {
     panels.push("blood")
     dataContext += `\n== BLOOD PANEL ==\n`
-    dataContext += `Collection: ${lab.collection_date}\n`
+    dataContext += `Collection: ${lab.collected_at}\n`
     dataContext += `hs-CRP: ${lab.hs_crp_mgl ?? "not tested"} mg/L\n`
     dataContext += `LDL: ${lab.ldl_mgdl ?? "not tested"} mg/dL\n`
     dataContext += `HDL: ${lab.hdl_mgdl ?? "not tested"} mg/dL\n`
     dataContext += `Triglycerides: ${lab.triglycerides_mgdl ?? "not tested"} mg/dL\n`
     dataContext += `Glucose: ${lab.glucose_mgdl ?? "not tested"} mg/dL\n`
-    dataContext += `HbA1c: ${lab.hba1c_pct ?? "not tested"} %\n`
+    dataContext += `HbA1c: ${lab.hba1c_percent ?? "not tested"} %\n`
     dataContext += `ApoB: ${lab.apob_mgdl ?? "not tested"} mg/dL\n`
-    dataContext += `Lp(a): ${lab.lpa_mgdl ? (lab.lpa_mgdl as number * 2.5).toFixed(0) + " nmol/L" : "not tested"}\n`
+    dataContext += `Lp(a): ${lab.lipoprotein_a_mgdl ? (lab.lipoprotein_a_mgdl as number * 2.5).toFixed(0) + " nmol/L" : "not tested"}\n`
     dataContext += `Vitamin D: ${lab.vitamin_d_ngml ?? "not tested"} ng/mL\n`
     dataContext += `eGFR: ${lab.egfr_mlmin ?? "not tested"} mL/min\n`
     dataContext += `Hemoglobin: ${lab.hemoglobin_gdl ?? "not tested"} g/dL\n`

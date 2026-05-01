@@ -26,20 +26,20 @@ const CARDIOVASCULAR: MarkerDef[] = [
   { key: "hdl_mgdl",           name: "HDL Cholesterol",  unit: "mg/dL", target: ">50",      optimalRange: [50, 90],  normalRange: [40, 100], displayMax: 120 },
   { key: "triglycerides_mgdl", name: "Triglycerides",    unit: "mg/dL", target: "<150",     optimalRange: [0, 100],  normalRange: [0, 150],  displayMax: 400, inverted: true },
   { key: "apob_mgdl",          name: "ApoB",             unit: "mg/dL", target: "<90",      optimalRange: [0, 80],   normalRange: [0, 100],  displayMax: 200, inverted: true },
-  { key: "lpa_mgdl",           name: "Lp(a)",            unit: "nmol/L", target: "<75",      optimalRange: [0, 75],   normalRange: [0, 125],   displayMax: 375, inverted: true },
+  { key: "lipoprotein_a_mgdl",           name: "Lp(a)",            unit: "nmol/L", target: "<75",      optimalRange: [0, 75],   normalRange: [0, 125],   displayMax: 375, inverted: true },
   { key: "totalcholesterol_mgdl", name: "Total Cholesterol", unit: "mg/dL", target: "<200", optimalRange: [0, 200],  normalRange: [0, 240],  displayMax: 400, inverted: true },
 ]
 
 const INFLAMMATION: MarkerDef[] = [
   { key: "hs_crp_mgl",  name: "hs-CRP",   unit: "mg/L",  target: "<0.5",  optimalRange: [0, 0.5],  normalRange: [0, 2.0],  displayMax: 10, inverted: true },
-  { key: "wbc_kul",      name: "WBC",       unit: "K/uL",  target: "4-10",  optimalRange: [4, 10],   normalRange: [3.4, 10.8], displayMax: 20 },
-  { key: "rdw_pct",      name: "RDW",       unit: "%",     target: "<14",   optimalRange: [11, 14],  normalRange: [11, 15],  displayMax: 20, inverted: true },
+  { key: "wbc_thousand_ul",      name: "WBC",       unit: "K/uL",  target: "4-10",  optimalRange: [4, 10],   normalRange: [3.4, 10.8], displayMax: 20 },
+  { key: "rdw_percent",      name: "RDW",       unit: "%",     target: "<14",   optimalRange: [11, 14],  normalRange: [11, 15],  displayMax: 20, inverted: true },
   { key: "albumin_gdl",  name: "Albumin",   unit: "g/dL",  target: ">4.0",  optimalRange: [4.0, 5.5], normalRange: [3.5, 5.5], displayMax: 6 },
 ]
 
 const METABOLIC: MarkerDef[] = [
   { key: "glucose_mgdl",         name: "Glucose",          unit: "mg/dL", target: "<100",   optimalRange: [65, 99],   normalRange: [65, 110],  displayMax: 200, inverted: true },
-  { key: "hba1c_pct",            name: "HbA1c",            unit: "%",     target: "<5.4",   optimalRange: [4, 5.4],   normalRange: [4, 5.7],   displayMax: 10, inverted: true },
+  { key: "hba1c_percent",            name: "HbA1c",            unit: "%",     target: "<5.4",   optimalRange: [4, 5.4],   normalRange: [4, 5.7],   displayMax: 10, inverted: true },
   { key: "fastinginsulin_uiuml", name: "Fasting Insulin",  unit: "uIU/mL", target: "<8",   optimalRange: [2, 8],     normalRange: [2, 20],    displayMax: 30, inverted: true },
   { key: "uricacid_mgdl",        name: "Uric Acid",        unit: "mg/dL", target: "<6",     optimalRange: [3, 6],     normalRange: [2, 7],     displayMax: 12, inverted: true },
 ]
@@ -64,20 +64,20 @@ const MICRONUTRIENTS: MarkerDef[] = [
 
 const HORMONES: MarkerDef[] = [
   { key: "tsh_uiuml",         name: "TSH",              unit: "uIU/mL", target: "0.5-3",   optimalRange: [0.5, 3],   normalRange: [0.4, 4.0],  displayMax: 8 },
-  { key: "testosterone_ngdl", name: "Testosterone",     unit: "ng/dL",  target: "400-900", optimalRange: [400, 900], normalRange: [264, 916],  displayMax: 1200 },
+  { key: "testosterone_total_ngdl", name: "Testosterone",     unit: "ng/dL",  target: "400-900", optimalRange: [400, 900], normalRange: [264, 916],  displayMax: 1200 },
   { key: "freetesto_pgml",    name: "Free Testosterone", unit: "pg/mL", target: "8-21",    optimalRange: [8, 21],    normalRange: [6, 25],     displayMax: 35 },
   { key: "shbg_nmoll",        name: "SHBG",             unit: "nmol/L", target: "16-56",   optimalRange: [16, 56],   normalRange: [10, 80],    displayMax: 100 },
 ]
 
 const ADDITIONAL_KEYS = [
-  "hematocrit_pct", "platelets_kul", "rbc_mil", "mch_pg", "mchc_gdl",
+  "hematocrit_percent", "platelets_thousand_ul", "rbc_mil", "mch_pg", "mchc_gdl",
   "neutrophils_pct", "lymphs_pct", "sodium_mmoll", "chloride_mmoll",
   "co2_mmoll", "calcium_mgdl", "totalprotein_gdl", "globulin_gdl", "vldl_mgdl",
 ]
 
 const ADDITIONAL_NAMES: Record<string, { name: string; unit: string }> = {
-  hematocrit_pct: { name: "Hematocrit", unit: "%" },
-  platelets_kul: { name: "Platelets", unit: "K/uL" },
+  hematocrit_percent: { name: "Hematocrit", unit: "%" },
+  platelets_thousand_ul: { name: "Platelets", unit: "K/uL" },
   rbc_mil: { name: "RBC", unit: "M/uL" },
   mch_pg: { name: "MCH", unit: "pg" },
   mchc_gdl: { name: "MCHC", unit: "g/dL" },
@@ -102,13 +102,13 @@ const BLOOD_ZONES: Record<string, {
   hdl_mgdl:             { markerColor: '#A32D2D', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 40 }, { label: 'Watch', color: '#FFE0B2', min: 40, max: 50 }, { label: 'Good', color: '#FFF3CD', min: 50, max: 60 }, { label: 'Optimal', color: '#D4EDDA', min: 60, max: 100 }] },
   triglycerides_mgdl:   { markerColor: '#A32D2D', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 100 }, { label: 'Good', color: '#FFF3CD', min: 100, max: 150 }, { label: 'Watch', color: '#FFE0B2', min: 150, max: 200 }, { label: 'High', color: '#FFCDD2', min: 200, max: 400 }] },
   apob_mgdl:            { markerColor: '#A32D2D', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 80 }, { label: 'Good', color: '#FFF3CD', min: 80, max: 100 }, { label: 'Watch', color: '#FFE0B2', min: 100, max: 130 }, { label: 'High', color: '#FFCDD2', min: 130, max: 200 }] },
-  lpa_mgdl:             { markerColor: '#A32D2D', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 75 }, { label: 'Watch', color: '#FFE0B2', min: 75, max: 125 }, { label: 'High', color: '#FFCDD2', min: 125, max: 375 }] },
+  lipoprotein_a_mgdl:             { markerColor: '#A32D2D', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 75 }, { label: 'Watch', color: '#FFE0B2', min: 75, max: 125 }, { label: 'High', color: '#FFCDD2', min: 125, max: 375 }] },
   totalcholesterol_mgdl:{ markerColor: '#A32D2D', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 200 }, { label: 'Good', color: '#FFF3CD', min: 200, max: 240 }, { label: 'High', color: '#FFCDD2', min: 240, max: 400 }] },
   hs_crp_mgl:           { markerColor: '#A32D2D', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 0, max: 0.5 }, { label: 'Good', color: '#FFF3CD', min: 0.5, max: 1.0 }, { label: 'Watch', color: '#FFE0B2', min: 1.0, max: 3.0 }, { label: 'High', color: '#FFCDD2', min: 3.0, max: 10.0 }] },
-  wbc_kul:              { markerColor: '#A32D2D', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 4 }, { label: 'Optimal', color: '#D4EDDA', min: 4, max: 10 }, { label: 'Watch', color: '#FFE0B2', min: 10, max: 15 }, { label: 'High', color: '#FFCDD2', min: 15, max: 20 }] },
+  wbc_thousand_ul:              { markerColor: '#A32D2D', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 4 }, { label: 'Optimal', color: '#D4EDDA', min: 4, max: 10 }, { label: 'Watch', color: '#FFE0B2', min: 10, max: 15 }, { label: 'High', color: '#FFCDD2', min: 15, max: 20 }] },
   albumin_gdl:          { markerColor: '#A32D2D', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 3.5 }, { label: 'Watch', color: '#FFE0B2', min: 3.5, max: 4.0 }, { label: 'Optimal', color: '#D4EDDA', min: 4.0, max: 5.5 }] },
   glucose_mgdl:         { markerColor: '#A32D2D', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 65, max: 85 }, { label: 'Good', color: '#FFF3CD', min: 85, max: 99 }, { label: 'Watch', color: '#FFE0B2', min: 99, max: 125 }, { label: 'High', color: '#FFCDD2', min: 125, max: 200 }] },
-  hba1c_pct:            { markerColor: '#A32D2D', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 4, max: 5.4 }, { label: 'Good', color: '#FFF3CD', min: 5.4, max: 5.7 }, { label: 'Watch', color: '#FFE0B2', min: 5.7, max: 6.5 }, { label: 'High', color: '#FFCDD2', min: 6.5, max: 10 }] },
+  hba1c_percent:            { markerColor: '#A32D2D', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 4, max: 5.4 }, { label: 'Good', color: '#FFF3CD', min: 5.4, max: 5.7 }, { label: 'Watch', color: '#FFE0B2', min: 5.7, max: 6.5 }, { label: 'High', color: '#FFCDD2', min: 6.5, max: 10 }] },
   fastinginsulin_uiuml: { markerColor: '#A32D2D', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 2, max: 8 }, { label: 'Watch', color: '#FFE0B2', min: 8, max: 20 }, { label: 'High', color: '#FFCDD2', min: 20, max: 30 }] },
   uricacid_mgdl:        { markerColor: '#A32D2D', zones: [{ label: 'Optimal', color: '#D4EDDA', min: 3, max: 6 }, { label: 'Watch', color: '#FFE0B2', min: 6, max: 7 }, { label: 'High', color: '#FFCDD2', min: 7, max: 12 }] },
   egfr_mlmin:           { markerColor: '#A32D2D', zones: [{ label: 'Low', color: '#FFCDD2', min: 0, max: 60 }, { label: 'Watch', color: '#FFE0B2', min: 60, max: 90 }, { label: 'Good', color: '#FFF3CD', min: 90, max: 105 }, { label: 'Optimal', color: '#D4EDDA', min: 105, max: 150 }] },
@@ -211,7 +211,7 @@ function getVal(lab: Record<string, unknown> | null, key: string): number | null
   const v = lab[key]
   if (typeof v === "number" && v > 0) {
     // Lp(a) stored as mg/dL in DB — convert to nmol/L for display
-    if (key === "lpa_mgdl") return Math.round(v * 2.5 * 10) / 10
+    if (key === "lipoprotein_a_mgdl") return Math.round(v * 2.5 * 10) / 10
     return v
   }
   return null
@@ -251,9 +251,9 @@ function Section({
 
 const DB_KEY_TO_MARKER_ID: Record<string, string> = {
   hs_crp_mgl: "hs_crp", ldl_mgdl: "ldl", vitamin_d_ngml: "vitamin_d",
-  hba1c_pct: "hba1c", glucose_mgdl: "glucose", lpa_mgdl: "lpa",
+  hba1c_percent: "hba1c", glucose_mgdl: "glucose", lipoprotein_a_mgdl: "lpa",
   hdl_mgdl: "hdl", triglycerides_mgdl: "triglycerides",
-  wbc_kul: "wbc", rdw_pct: "rdw", mpv_fl: "mpv",
+  wbc_thousand_ul: "wbc", rdw_percent: "rdw", mpv_fl: "mpv",
 }
 
 function MarkerRow({ val, def, isHsCRP }: { val: number | null; def: MarkerDef; isHsCRP?: boolean }) {
@@ -345,7 +345,7 @@ export function BloodPanelClient({ lab, snapshot, history, ageRange, stressLevel
   const lpaFlag = snapshot?.lpa_flag as string | undefined
   const hsCRPRetestFlag = snapshot?.hscrp_retest_flag as boolean | undefined
   const bloodInsight = lab?.blood_insight as string | undefined
-  const collectionDate = lab?.collection_date as string | undefined
+  const collectionDate = lab?.collected_at as string | undefined
 
   const hasData = !!lab
   const [openMissingTooltip, setOpenMissingTooltip] = useState<string | null>(null)
@@ -373,11 +373,11 @@ export function BloodPanelClient({ lab, snapshot, history, ageRange, stressLevel
   const ldl     = getVal(lab, "ldl_mgdl") ?? 0
   const tg      = getVal(lab, "triglycerides_mgdl") ?? 0
 
-  if (getVal(lab, "hba1c_pct") === null) {
+  if (getVal(lab, "hba1c_percent") === null) {
     if (glucose >= 95) {
-      missing.push({ key: "hba1c_pct", name: "HbA1c", pts: 3, reason: `Your fasting glucose of ${glucose} mg/dL is approaching the pre-diabetic threshold — HbA1c would confirm whether this reflects a sustained trend.` })
+      missing.push({ key: "hba1c_percent", name: "HbA1c", pts: 3, reason: `Your fasting glucose of ${glucose} mg/dL is approaching the pre-diabetic threshold — HbA1c would confirm whether this reflects a sustained trend.` })
     } else if (ageAtLeast(ageRange, 40)) {
-      missing.push({ key: "hba1c_pct", name: "HbA1c", pts: 3, reason: `Routine HbA1c screening is recommended after 40, even with normal fasting glucose, to catch early glycemic drift.` })
+      missing.push({ key: "hba1c_percent", name: "HbA1c", pts: 3, reason: `Routine HbA1c screening is recommended after 40, even with normal fasting glucose, to catch early glycemic drift.` })
     }
   }
   if (getVal(lab, "hs_crp_mgl") === null) {
@@ -399,8 +399,8 @@ export function BloodPanelClient({ lab, snapshot, history, ageRange, stressLevel
       missing.push({ key: "apob_mgdl", name: "ApoB", pts: 2, reason: `Your triglycerides of ${tg} mg/dL suggest metabolic dysregulation — ApoB would quantify the atherogenic particle burden.` })
     }
   }
-  if (getVal(lab, "lpa_mgdl") === null) {
-    missing.push({ key: "lpa_mgdl", name: "Lp(a)", pts: 1, reason: `Lp(a) is a genetic cardiovascular risk factor that cannot be modified by diet or exercise. A single test tells you whether it belongs in your prevention strategy.` })
+  if (getVal(lab, "lipoprotein_a_mgdl") === null) {
+    missing.push({ key: "lipoprotein_a_mgdl", name: "Lp(a)", pts: 1, reason: `Lp(a) is a genetic cardiovascular risk factor that cannot be modified by diet or exercise. A single test tells you whether it belongs in your prevention strategy.` })
   }
 
   return (

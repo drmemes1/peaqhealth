@@ -11,9 +11,9 @@ const TEST_MARKERS = {
   ldl_mgdl:            115,
   hdl_mgdl:            62,
   triglycerides_mgdl:  88,
-  lpa_mgdl:            22,
+  lipoprotein_a_mgdl:            22,
   glucose_mgdl:        91,
-  hba1c_pct:           5.3,
+  hba1c_percent:           5.3,
 }
 
 export async function POST() {
@@ -28,8 +28,7 @@ export async function POST() {
   const { error } = await supabase.from("blood_results").insert({
     user_id:         user.id,
     source:          "test_data",
-    collection_date: new Date().toISOString().slice(0, 10),
-    parser_status:   "complete",
+    collected_at: new Date().toISOString().slice(0, 10),
     ...TEST_MARKERS,
   })
 

@@ -10,7 +10,7 @@ interface HistoryPoint {
   locked_at:      string
   total_score:    number | null
   blood_score:    number | null
-  collection_date: string | null
+  collected_at: string | null
   ldl_mgdl:       number | null
   hdl_mgdl:       number | null
   hs_crp_mgl:     number | null

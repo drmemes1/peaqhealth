@@ -6,7 +6,7 @@ const serif = "var(--font-manrope), system-ui, sans-serif"
 const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 
 type User = { id: string; email: string; first_name: string | null; last_name: string | null }
-type Kit = { id: string; kit_code: string | null; status: string; ordered_at: string; collection_date: string | null; shannon_diversity: number | null; neisseria_pct: number | null; primary_pattern: string | null; interpretability_tier: string | null }
+type Kit = { id: string; kit_code: string | null; status: string; ordered_at: string; collected_at: string | null; shannon_diversity: number | null; neisseria_pct: number | null; primary_pattern: string | null; interpretability_tier: string | null }
 type ParsedEntry = { taxonomy_full: string; genus: string; species: string | null; is_named: boolean; is_placeholder: boolean; pct: number; mapped_column: string | null; mapping_type: string }
 type CommunitySummary = { total_entries_present: number; named_species_count: number; unnamed_placeholder_count: number; distinct_genera: number; distinct_phyla: number; total_abundance_captured: number }
 type ParseResult = { entries: ParsedEntry[]; communitySummary: CommunitySummary; columnValues: Record<string, number>; shannonDiversity: number | null; shannonSource: string | null; speciesCount: number; totalTracked: number; totalUntracked: number }

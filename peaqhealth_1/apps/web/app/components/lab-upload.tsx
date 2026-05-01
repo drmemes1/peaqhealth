@@ -18,12 +18,12 @@ export interface BloodMarkers {
   ldlHdlRatio?:           number
   // Inflammation
   hsCRP_mgL?:             number
-  wbc_kul?:               number
-  rdw_pct?:               number
+  wbc_thousand_ul?:               number
+  rdw_percent?:               number
   albumin_gdL?:           number
   // Metabolic
   glucose_mgdL?:          number
-  hba1c_pct?:             number
+  hba1c_percent?:             number
   creatinine_mgdL?:       number
   egfr_mLmin?:            number
   bun_mgdL?:              number
@@ -47,8 +47,8 @@ export interface BloodMarkers {
   hemoglobin_gdL?:        number
   mcv_fL?:                number
   // CBC
-  hematocrit_pct?:        number
-  platelets_kul?:         number
+  hematocrit_percent?:        number
+  platelets_thousand_ul?:         number
   rbc_mil?:               number
   mch_pg?:                number
   mchc_gdl?:              number
@@ -99,8 +99,8 @@ const CATEGORIES: Array<{ name: string; markers: MarkerDef[] }> = [
     name: "Inflammation",
     markers: [
       { slug: "hsCRP_mgL",  name: "hs-CRP",  unit: "mg/L",  placeholder: "0.8" },
-      { slug: "wbc_kul",    name: "WBC",     unit: "K/uL",  placeholder: "5.5" },
-      { slug: "rdw_pct",    name: "RDW",     unit: "%",     placeholder: "13"  },
+      { slug: "wbc_thousand_ul",    name: "WBC",     unit: "K/uL",  placeholder: "5.5" },
+      { slug: "rdw_percent",    name: "RDW",     unit: "%",     placeholder: "13"  },
       { slug: "albumin_gdL",name: "Albumin", unit: "g/dL",  placeholder: "4.5" },
     ],
   },
@@ -108,7 +108,7 @@ const CATEGORIES: Array<{ name: string; markers: MarkerDef[] }> = [
     name: "Metabolic",
     markers: [
       { slug: "glucose_mgdL",        name: "Glucose",         unit: "mg/dL",   placeholder: "88"  },
-      { slug: "hba1c_pct",           name: "HbA1c",           unit: "%",       placeholder: "5.2" },
+      { slug: "hba1c_percent",           name: "HbA1c",           unit: "%",       placeholder: "5.2" },
       { slug: "creatinine_mgdL",     name: "Creatinine",      unit: "mg/dL",   placeholder: "0.9" },
       { slug: "egfr_mLmin",          name: "eGFR",            unit: "mL/min",  placeholder: "95"  },
       { slug: "bun_mgdL",            name: "BUN",             unit: "mg/dL",   placeholder: "14"  },
@@ -148,8 +148,8 @@ const CATEGORIES: Array<{ name: string; markers: MarkerDef[] }> = [
   {
     name: "CBC",
     markers: [
-      { slug: "hematocrit_pct",  name: "Hematocrit",  unit: "%",     placeholder: "42"  },
-      { slug: "platelets_kul",   name: "Platelets",   unit: "K/uL",  placeholder: "250" },
+      { slug: "hematocrit_percent",  name: "Hematocrit",  unit: "%",     placeholder: "42"  },
+      { slug: "platelets_thousand_ul",   name: "Platelets",   unit: "K/uL",  placeholder: "250" },
       { slug: "rbc_mil",         name: "RBC",         unit: "M/uL",  placeholder: "4.8" },
       { slug: "mch_pg",          name: "MCH",         unit: "pg",    placeholder: "30"  },
       { slug: "mchc_gdl",        name: "MCHC",        unit: "g/dL",  placeholder: "33"  },
@@ -176,7 +176,7 @@ const DISPLAY_MARKERS: MarkerDef[] = CATEGORIES.flatMap(c => c.markers)
 
 // High-value markers to show as blank "+" rows when missing
 const HIGH_VALUE_SLUGS = new Set([
-  "apoB_mgdL", "hsCRP_mgL", "hba1c_pct", "vitaminD_ngmL",
+  "apoB_mgdL", "hsCRP_mgL", "hba1c_percent", "vitaminD_ngmL",
   "lpa_mgdL", "egfr_mLmin", "testosterone_ngdL", "ferritin_ngmL",
 ])
 
@@ -192,11 +192,11 @@ const PLAUSIBLE_RANGES: Record<string, [number, number]> = {
   vldl_mgdL:             [1,   150],
   ldlHdlRatio:           [0.5, 15],
   hsCRP_mgL:             [0,   50],
-  wbc_kul:               [1,   50],
-  rdw_pct:               [8,   25],
+  wbc_thousand_ul:               [1,   50],
+  rdw_percent:               [8,   25],
   albumin_gdL:           [1,   6],
   glucose_mgdL:          [40,  600],
-  hba1c_pct:             [3,   20],
+  hba1c_percent:             [3,   20],
   creatinine_mgdL:       [0.2, 15],
   egfr_mLmin:            [5,   200],
   bun_mgdL:              [2,   120],
@@ -216,8 +216,8 @@ const PLAUSIBLE_RANGES: Record<string, [number, number]> = {
   ferritin_ngmL:         [1,   3000],
   hemoglobin_gdL:        [5,   22],
   mcv_fL:                [50,  130],
-  hematocrit_pct:        [15,  65],
-  platelets_kul:         [50,  1500],
+  hematocrit_percent:        [15,  65],
+  platelets_thousand_ul:         [50,  1500],
   rbc_mil:               [1,   9],
   mch_pg:                [15,  50],
   mchc_gdl:              [25,  40],

@@ -30,7 +30,7 @@ export function buildConnectionInput(opts: {
     ? Math.floor((Date.now() - new Date(oralResultsDate).getTime()) / 86400000)
     : null
 
-  const labDate = lab?.collection_date as string | null
+  const labDate = lab?.collected_at as string | null
   const bloodDaysSince = labDate
     ? Math.floor((Date.now() - new Date(labDate).getTime()) / 86400000)
     : null
@@ -64,13 +64,13 @@ export function buildConnectionInput(opts: {
 
     ldl: (lab?.ldl_mgdl as number | null) ?? null,
     hs_crp: (lab?.hs_crp_mgl as number | null) ?? null,
-    hba1c: (lab?.hba1c_pct as number | null) ?? null,
+    hba1c: (lab?.hba1c_percent as number | null) ?? null,
     glucose: (lab?.glucose_mgdl as number | null) ?? null,
-    lpa: lab?.lpa_mgdl ? (lab.lpa_mgdl as number) * 2.5 : null,
+    lpa: lab?.lipoprotein_a_mgdl ? (lab.lipoprotein_a_mgdl as number) * 2.5 : null,
     vitamin_d: (lab?.vitamin_d_ngml as number | null) ?? null,
     mpv: null,
-    wbc: (lab?.wbc_kul as number | null) ?? null,
-    rdw: (lab?.rdw_pct as number | null) ?? null,
+    wbc: (lab?.wbc_thousand_ul as number | null) ?? null,
+    rdw: (lab?.rdw_percent as number | null) ?? null,
     pheno_age: (snapshot?.pheno_age as number | null) ?? (breakdown?.phenoAge as number | null) ?? null,
     blood_days_since_draw: bloodDaysSince,
 

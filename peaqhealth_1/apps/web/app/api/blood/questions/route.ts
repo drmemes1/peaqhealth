@@ -15,7 +15,7 @@ export async function GET() {
   const { data: cached } = await supabase.from("panel_narratives").select("content, pullquotes, citations").eq("user_id", user.id).eq("panel", "blood").eq("tab", "questions").eq("prompt_version", PROMPT_VERSION).maybeSingle()
   if (cached?.content) return NextResponse.json(cached)
 
-  const { data: lab } = await supabase.from("blood_results").select("ldl_mgdl, hdl_mgdl, triglycerides_mgdl, total_cholesterol_mgdl, hba1c_pct, glucose_mgdl, hs_crp_mgl, egfr_mlmin, alt_ul, ast_ul, tsh_uiuml, vitamin_d_ngml").eq("user_id", user.id).eq("parser_status", "complete").order("collected_at", { ascending: false }).limit(1).maybeSingle()
+  const { data: lab } = await supabase.from("blood_results").select("ldl_mgdl, hdl_mgdl, triglycerides_mgdl, total_cholesterol_mgdl, hba1c_percent, glucose_mgdl, hs_crp_mgl, egfr_mlmin, alt_ul, ast_ul, tsh_uiuml, vitamin_d_ngml").eq("user_id", user.id).order("collected_at", { ascending: false }).limit(1).maybeSingle()
   if (!lab) return NextResponse.json({ content: null, reason: "no_blood_data" })
 
   const openaiKey = process.env.OPENAI_API_KEY

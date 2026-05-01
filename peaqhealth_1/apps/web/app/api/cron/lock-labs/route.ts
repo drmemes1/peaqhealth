@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   // Find all rows whose lock window has expired and are not yet locked
   const { data: expiredRows, error: fetchError } = await supabase
     .from("blood_results")
-    .select("id, user_id, collection_date, lab_name, hs_crp_mgl, vitamin_d_ngml, apob_mgdl, ldl_mgdl, hdl_mgdl, triglycerides_mgdl, lpa_mgdl, glucose_mgdl, hba1c_pct, esr_mmhr, homocysteine_umoll, ferritin_ngml")
+    .select("id, user_id, collection_date, lab_name, hs_crp_mgl, vitamin_d_ngml, apob_mgdl, ldl_mgdl, hdl_mgdl, triglycerides_mgdl, lipoprotein_a_mgdl, glucose_mgdl, hba1c_percent, esr_mmhr, homocysteine_umoll, ferritin_ngml")
     .eq("is_locked", false)
     .not("lock_expires_at", "is", null)
     .lt("lock_expires_at", new Date().toISOString())
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
       .from("blood_results")
       .insert({
         user_id:           row.user_id,
-        collection_date:   row.collection_date,
+        collected_at:   row.collection_date,
         lab_name:          row.lab_name ?? null,
         hs_crp_mgl:        row.hs_crp_mgl        ?? null,
         vitamin_d_ngml:    row.vitamin_d_ngml     ?? null,
@@ -57,9 +57,9 @@ export async function GET(request: NextRequest) {
         ldl_mgdl:          row.ldl_mgdl           ?? null,
         hdl_mgdl:          row.hdl_mgdl           ?? null,
         triglycerides_mgdl: row.triglycerides_mgdl ?? null,
-        lpa_mgdl:          row.lpa_mgdl           ?? null,
+        lipoprotein_a_mgdl:          row.lipoprotein_a_mgdl           ?? null,
         glucose_mgdl:      row.glucose_mgdl       ?? null,
-        hba1c_pct:         row.hba1c_pct          ?? null,
+        hba1c_percent:         row.hba1c_percent          ?? null,
         esr_mmhr:          row.esr_mmhr           ?? null,
         homocysteine_umoll: row.homocysteine_umoll ?? null,
         ferritin_ngml:     row.ferritin_ngml      ?? null,

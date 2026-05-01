@@ -26,8 +26,8 @@ export async function GET() {
       .eq("user_id", user.id).not("shannon_diversity", "is", null)
       .order("ordered_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("blood_results")
-      .select("ldl_mgdl, hdl_mgdl, triglycerides_mgdl, hba1c_pct, glucose_mgdl, hs_crp_mgl")
-      .eq("user_id", user.id).eq("parser_status", "complete")
+      .select("ldl_mgdl, hdl_mgdl, triglycerides_mgdl, hba1c_percent, glucose_mgdl, hs_crp_mgl")
+      .eq("user_id", user.id)
       .order("collected_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("lifestyle_records")
       .select("mouth_breathing, snoring_reported, flossing_freq, mouthwash_type, biological_sex, age_range")

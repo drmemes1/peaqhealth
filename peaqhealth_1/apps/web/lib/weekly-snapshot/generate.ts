@@ -76,7 +76,7 @@ export async function generateWeeklySnapshot(userId: string): Promise<Record<str
 
     supabase
       .from("blood_results")
-      .select("collection_date, hs_crp_mgl, ldl_mgdl, hdl_mgdl, apob_mgdl, triglycerides_mgdl, glucose_mgdl, hba1c_pct, vitamin_d_ngml, lpa_mgdl, created_at")
+      .select("collection_date, hs_crp_mgl, ldl_mgdl, hdl_mgdl, apob_mgdl, triglycerides_mgdl, glucose_mgdl, hba1c_percent, vitamin_d_ngml, lipoprotein_a_mgdl, created_at")
       .eq("user_id", userId)
       .order("collected_at", { ascending: false })
       .limit(1)
@@ -128,7 +128,7 @@ export async function generateWeeklySnapshot(userId: string): Promise<Record<str
     bloodData.hdl_mgdl      != null ? `HDL: ${bloodData.hdl_mgdl} mg/dL`          : null,
     bloodData.apob_mgdl     != null ? `ApoB: ${bloodData.apob_mgdl} mg/dL`        : null,
     bloodData.glucose_mgdl  != null ? `Glucose: ${bloodData.glucose_mgdl} mg/dL`  : null,
-    bloodData.hba1c_pct     != null ? `HbA1c: ${bloodData.hba1c_pct}%`            : null,
+    bloodData.hba1c_percent     != null ? `HbA1c: ${bloodData.hba1c_percent}%`            : null,
     bloodData.vitamin_d_ngml!= null ? `Vitamin D: ${bloodData.vitamin_d_ngml} ng/mL` : null,
     bloodData.triglycerides_mgdl != null ? `Triglycerides: ${bloodData.triglycerides_mgdl} mg/dL` : null,
   ].filter(Boolean).join("\n") : "No blood data on file"

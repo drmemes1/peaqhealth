@@ -20,7 +20,7 @@ export default async function PlanPage() {
     supabase.from("score_snapshots").select("*")
       .eq("user_id", user.id).order("calculated_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("blood_results").select("*")
-      .eq("user_id", user.id).eq("parser_status", "complete")
+      .eq("user_id", user.id)
       .order("collected_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("oral_kit_orders").select("*")
       .eq("user_id", user.id).eq("status", "results_ready")
@@ -81,10 +81,10 @@ export default async function PlanPage() {
   const missingTests: string[] = []
   if (hasLab) {
     if (lab.hs_crp_mgl == null || (lab.hs_crp_mgl as number) === 0) missingTests.push("hs_crp")
-    if (lab.lpa_mgdl == null || (lab.lpa_mgdl as number) === 0) missingTests.push("lpa")
+    if (lab.lipoprotein_a_mgdl == null || (lab.lipoprotein_a_mgdl as number) === 0) missingTests.push("lpa")
     if (lab.vitamin_d_ngml == null || (lab.vitamin_d_ngml as number) === 0) missingTests.push("vitamin_d")
-    if (lab.hba1c_pct == null || (lab.hba1c_pct as number) === 0) missingTests.push("hba1c")
-    if (lab.rdw_pct == null || (lab.rdw_pct as number) === 0) missingTests.push("rdw")
+    if (lab.hba1c_percent == null || (lab.hba1c_percent as number) === 0) missingTests.push("hba1c")
+    if (lab.rdw_percent == null || (lab.rdw_percent as number) === 0) missingTests.push("rdw")
     if (lab.mpv_fl == null || (lab.mpv_fl as number) === 0) missingTests.push("mpv")
   } else {
     // No lab — show all non-standard tests

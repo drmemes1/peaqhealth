@@ -115,7 +115,7 @@ You receive a JSON object. Fields marked optional may be null or absent — hand
   "user": {
     "age": 38,
     "sex": "male",
-    "collection_date": "2026-04-12"
+    "collected_at": "2026-04-12"
   },
   "oral": {
     "shannon_diversity": 6.09,
@@ -159,11 +159,11 @@ You receive a JSON object. Fields marked optional may be null or absent — hand
     }
   },
   "blood": {
-    "collection_date": "2025-06-11",
+    "collected_at": "2025-06-11",
     "ldl_mgdl": 88, "hdl_mgdl": 55, "triglycerides_mgdl": 75, "total_cholesterol_mgdl": 158,
-    "hba1c_pct": 5.7, "glucose_mgdl": 100,
-    "hs_crp_mgl": null, "wbc_kul": 4.7, "hematocrit_pct": 43.8,
-    "tsh_uiuml": 0.09, "free_t4_ngdl": 1.9,
+    "hba1c_percent": 5.7, "glucose_mgdl": 100,
+    "hs_crp_mgl": null, "wbc_thousand_ul": 4.7, "hematocrit_percent": 43.8,
+    "tsh_uiuml": 0.09, "t4_free_ngdl": 1.9,
     "egfr_mlmin": 75, "vitamin_d_ngml": 58, "vitamin_b12_pgml": 736,
     "ferritin_ngml": null
   },
@@ -606,7 +606,7 @@ export async function GET(request: Request) {
     .from("oral_narratives")
     .select("*")
     .eq("user_id", userId)
-    .eq("collection_date", kitDate)
+    .eq("collected_at", kitDate)
     .eq("prompt_version", PROMPT_VERSION)
     .maybeSingle()
 
@@ -625,9 +625,9 @@ export async function GET(request: Request) {
   const [labRes, sleepRes, lifestyleRes, profileRes] = await Promise.all([
     supabase
       .from("blood_results")
-      .select("collection_date, ldl_mgdl, hdl_mgdl, triglycerides_mgdl, total_cholesterol_mgdl, hba1c_pct, glucose_mgdl, hs_crp_mgl, wbc_kul, hematocrit_pct, tsh_uiuml, free_t4_ngdl, egfr_mlmin, vitamin_d_ngml, vitamin_b12_pgml, ferritin_ngml")
+      .select("collection_date, ldl_mgdl, hdl_mgdl, triglycerides_mgdl, total_cholesterol_mgdl, hba1c_percent, glucose_mgdl, hs_crp_mgl, wbc_thousand_ul, hematocrit_percent, tsh_uiuml, t4_free_ngdl, egfr_mlmin, vitamin_d_ngml, vitamin_b12_pgml, ferritin_ngml")
       .eq("user_id", userId)
-      .eq("parser_status", "complete")
+      
       .order("collected_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
@@ -796,7 +796,7 @@ export async function GET(request: Request) {
     user: {
       age: userAge,
       sex: biologicalSex ?? "not provided",
-      collection_date: kitDate,
+      collected_at: kitDate,
     },
     oral: {
       shannon_diversity: n(kit.shannon_diversity),
@@ -848,18 +848,18 @@ export async function GET(request: Request) {
       },
     },
     blood: labRes.data ? {
-      collection_date: labRes.data.collection_date,
+      collected_at: labRes.data.collection_date,
       ldl_mgdl: n(labRes.data.ldl_mgdl),
       hdl_mgdl: n(labRes.data.hdl_mgdl),
       triglycerides_mgdl: n(labRes.data.triglycerides_mgdl),
       total_cholesterol_mgdl: n(labRes.data.total_cholesterol_mgdl),
-      hba1c_pct: n(labRes.data.hba1c_pct),
+      hba1c_percent: n(labRes.data.hba1c_percent),
       glucose_mgdl: n(labRes.data.glucose_mgdl),
       hs_crp_mgl: n(labRes.data.hs_crp_mgl),
-      wbc_kul: n(labRes.data.wbc_kul),
-      hematocrit_pct: n(labRes.data.hematocrit_pct),
+      wbc_thousand_ul: n(labRes.data.wbc_thousand_ul),
+      hematocrit_percent: n(labRes.data.hematocrit_percent),
       tsh_uiuml: n(labRes.data.tsh_uiuml),
-      free_t4_ngdl: n(labRes.data.free_t4_ngdl),
+      t4_free_ngdl: n(labRes.data.t4_free_ngdl),
       egfr_mlmin: n(labRes.data.egfr_mlmin),
       vitamin_d_ngml: n(labRes.data.vitamin_d_ngml),
       vitamin_b12_pgml: n(labRes.data.vitamin_b12_pgml),
@@ -988,7 +988,7 @@ Return ONLY valid JSON (no markdown, no backticks, no preamble) with this exact 
     .from("oral_narratives")
     .upsert({
       user_id: userId,
-      collection_date: kitDate,
+      collected_at: kitDate,
       prompt_version: PROMPT_VERSION,
       generated_at: new Date().toISOString(),
       headline: typeof result.headline === "string" ? result.headline : null,
@@ -1006,7 +1006,7 @@ Return ONLY valid JSON (no markdown, no backticks, no preamble) with this exact 
   if (upsertErr) {
     console.error("[oral-narrative] upsert failed:", upsertErr.message)
     return NextResponse.json({
-      narrative: { ...result, collection_date: kitDate, generated_at: new Date().toISOString() },
+      narrative: { ...result, collected_at: kitDate, generated_at: new Date().toISOString() },
       cached: false,
     })
   }

@@ -21,7 +21,7 @@ export async function GET() {
 
   const [{ data: kit }, { data: lab }, { count: sleepCount }, { data: lifestyle }] = await Promise.all([
     supabase.from("oral_kit_orders").select("shannon_diversity, neisseria_pct, haemophilus_pct, porphyromonas_pct, fusobacterium_pct, env_pattern, primary_pattern").eq("user_id", user.id).not("shannon_diversity", "is", null).order("ordered_at", { ascending: false }).limit(1).maybeSingle(),
-    supabase.from("blood_results").select("ldl_mgdl, hdl_mgdl, triglycerides_mgdl, hba1c_pct, glucose_mgdl, hs_crp_mgl, tsh_uiuml").eq("user_id", user.id).eq("parser_status", "complete").order("collected_at", { ascending: false }).limit(1).maybeSingle(),
+    supabase.from("blood_results").select("ldl_mgdl, hdl_mgdl, triglycerides_mgdl, hba1c_percent, glucose_mgdl, hs_crp_mgl, tsh_uiuml").eq("user_id", user.id).order("collected_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("sleep_data").select("id", { count: "exact", head: true }).eq("user_id", user.id).gt("sleep_efficiency", 0),
     supabase.from("lifestyle_records").select("mouth_breathing, snoring_reported").eq("user_id", user.id).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
   ])

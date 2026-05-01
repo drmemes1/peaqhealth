@@ -28,10 +28,10 @@ export default async function DashboardPage() {
   ] = await Promise.all([
     supabase.from("score_snapshots").select("*").eq("user_id", user.id).order("calculated_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("wearable_connections_v2").select("provider,last_synced_at,needs_reconnect").eq("user_id", user.id).order("connected_at", { ascending: false }).limit(1).maybeSingle(),
-    supabase.from("blood_results").select("*").eq("user_id", user.id).eq("parser_status", "complete").order("collected_at", { ascending: false }).limit(1).maybeSingle(),
+    supabase.from("blood_results").select("*").eq("user_id", user.id).order("collected_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("oral_kit_orders").select("id, shannon_diversity").eq("user_id", user.id).limit(1).maybeSingle(),
     supabase.from("lifestyle_records").select("*").eq("user_id", user.id).maybeSingle(),
-    supabase.from("blood_results").select("locked_at, total_score, blood_score, collection_date, ldl_mgdl, hdl_mgdl, hs_crp_mgl, vitamin_d_ngml").eq("user_id", user.id).order("locked_at", { ascending: true }),
+    supabase.from("blood_results").select("collected_at, ldl_mgdl, hdl_mgdl, hs_crp_mgl, vitamin_d_ngml").eq("user_id", user.id).order("collected_at", { ascending: true }),
     supabase.from("sleep_data").select("date,source,total_sleep_minutes,deep_sleep_minutes,rem_sleep_minutes,sleep_efficiency,hrv_rmssd,spo2").eq("user_id", user.id).order("date", { ascending: false }).limit(30),
     supabase.from("profiles").select("first_name").eq("id", user.id).maybeSingle(),
     supabase.from("score_snapshots").select("sleep_sub,blood_sub,oral_sub,calculated_at").eq("user_id", user.id).order("calculated_at", { ascending: false }).range(1, 1).maybeSingle(),
@@ -127,8 +127,8 @@ export default async function DashboardPage() {
   type LabFreshness = 'fresh' | 'aging' | 'stale' | 'expired' | 'none'
   let labFreshness: LabFreshness = 'none'
   let monthsOld = 0
-  if (lab?.collection_date) {
-    const daysSince = (Date.now() - new Date(lab.collection_date).getTime()) / 86400000
+  if (lab?.collected_at) {
+    const daysSince = (Date.now() - new Date(lab.collected_at).getTime()) / 86400000
     monthsOld = Math.floor(daysSince / 30)
     if (daysSince <= 180) labFreshness = 'fresh'
     else if (daysSince <= 270) labFreshness = 'aging'
@@ -171,15 +171,15 @@ export default async function DashboardPage() {
       ldlHdlRatio:    (lab.ldl_mgdl as number) && (lab.hdl_mgdl as number)
                         ? (lab.ldl_mgdl as number) / (lab.hdl_mgdl as number)
                         : 0,
-      hba1c:          (lab.hba1c_pct           as number) ?? 0,
-      lpa:            ((lab.lpa_mgdl            as number) ?? 0) * 2.5,
+      hba1c:          (lab.hba1c_percent           as number) ?? 0,
+      lpa:            ((lab.lipoprotein_a_mgdl            as number) ?? 0) * 2.5,
       triglycerides:  (lab.triglycerides_mgdl  as number) ?? 0,
       ldl:            (lab.ldl_mgdl            as number) ?? 0,
       hdl:            (lab.hdl_mgdl            as number) ?? 0,
       glucose:        (lab.glucose_mgdl        as number) ?? 0,
       egfr:           (lab.egfr_mlmin          as number) ?? 0,
       hemoglobin:     (lab.hemoglobin_gdl      as number) ?? 0,
-      collectionDate: (lab.collection_date     as string) ?? "",
+      collectionDate: (lab.collected_at     as string) ?? "",
       labName:        (lab.lab_name            as string) ?? "Lab",
       monthsOld,
       bloodInsight:   (lab.blood_insight       as string | null) ?? undefined,

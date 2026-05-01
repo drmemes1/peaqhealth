@@ -269,17 +269,16 @@ export async function POST(request: NextRequest) {
         const bloodInputs = mapParserResultToBloodInputs(parserResult)
 
         await supabaseAnon.from("blood_results").update({
-          parser_status:      "complete",
           hs_crp_mgl:         bloodInputs.hsCRP_mgL ?? null,
           vitamin_d_ngml:     bloodInputs.vitaminD_ngmL ?? null,
           apob_mgdl:          bloodInputs.apoB_mgdL ?? null,
           ldl_mgdl:           bloodInputs.ldl_mgdL ?? null,
           hdl_mgdl:           bloodInputs.hdl_mgdL ?? null,
           triglycerides_mgdl: bloodInputs.triglycerides_mgdL ?? null,
-          lpa_mgdl:           bloodInputs.lpa_mgdL ?? null,
+          lipoprotein_a_mgdl:           bloodInputs.lpa_mgdL ?? null,
           glucose_mgdl:       bloodInputs.glucose_mgdL ?? null,
-          hba1c_pct:          bloodInputs.hba1c_pct ?? null,
-          collection_date:    bloodInputs.labCollectionDate ?? null,
+          hba1c_percent:          bloodInputs.hba1c_pct ?? null,
+          collected_at:    bloodInputs.labCollectionDate ?? null,
           lab_name:           bloodInputs.labName ?? null,
         }).eq("id", labRow.id)
 
@@ -639,20 +638,19 @@ export async function POST(request: NextRequest) {
 
         if (existingLab) {
           await supabase.from("blood_results").update({
-            parser_status:      "complete",
             hs_crp_mgl:         bloodInputs.hsCRP_mgL ?? null,
             vitamin_d_ngml:     bloodInputs.vitaminD_ngmL ?? null,
             apob_mgdl:          bloodInputs.apoB_mgdL ?? null,
             ldl_mgdl:           bloodInputs.ldl_mgdL ?? null,
             hdl_mgdl:           bloodInputs.hdl_mgdL ?? null,
             triglycerides_mgdl: bloodInputs.triglycerides_mgdL ?? null,
-            lpa_mgdl:           bloodInputs.lpa_mgdL ?? null,
+            lipoprotein_a_mgdl:           bloodInputs.lpa_mgdL ?? null,
             glucose_mgdl:       bloodInputs.glucose_mgdL ?? null,
-            hba1c_pct:          bloodInputs.hba1c_pct ?? null,
+            hba1c_percent:          bloodInputs.hba1c_pct ?? null,
             esr_mmhr:           bloodInputs.esr_mmhr ?? null,
             homocysteine_umoll: bloodInputs.homocysteine_umolL ?? null,
             ferritin_ngml:      bloodInputs.ferritin_ngmL ?? null,
-            collection_date:    bloodInputs.labCollectionDate ?? null,
+            collected_at:    bloodInputs.labCollectionDate ?? null,
             lab_name:           bloodInputs.labName ?? null,
           }).eq("id", existingLab.id)
 
@@ -662,8 +660,7 @@ export async function POST(request: NextRequest) {
             user_id:                  userId,
             junction_parser_job_id:   jobId,
             source:                   "webhook_parser",
-            parser_status:            "complete",
-            collection_date:          bloodInputs.labCollectionDate ?? new Date().toISOString().slice(0, 10),
+            collected_at:          bloodInputs.labCollectionDate ?? new Date().toISOString().slice(0, 10),
             lab_name:                 bloodInputs.labName ?? null,
             hs_crp_mgl:              bloodInputs.hsCRP_mgL ?? null,
             vitamin_d_ngml:          bloodInputs.vitaminD_ngmL ?? null,
@@ -671,9 +668,9 @@ export async function POST(request: NextRequest) {
             ldl_mgdl:                bloodInputs.ldl_mgdL ?? null,
             hdl_mgdl:                bloodInputs.hdl_mgdL ?? null,
             triglycerides_mgdl:      bloodInputs.triglycerides_mgdL ?? null,
-            lpa_mgdl:                bloodInputs.lpa_mgdL ?? null,
+            lipoprotein_a_mgdl:                bloodInputs.lpa_mgdL ?? null,
             glucose_mgdl:            bloodInputs.glucose_mgdL ?? null,
-            hba1c_pct:               bloodInputs.hba1c_pct ?? null,
+            hba1c_percent:               bloodInputs.hba1c_pct ?? null,
             esr_mmhr:                bloodInputs.esr_mmhr ?? null,
             homocysteine_umoll:      bloodInputs.homocysteine_umolL ?? null,
             ferritin_ngml:           bloodInputs.ferritin_ngmL ?? null,

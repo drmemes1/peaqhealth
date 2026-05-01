@@ -161,11 +161,11 @@ function bloodSt(key: string, v: number | null): Status {
     triglycerides_mgdl: x => x < 100 ? "OPTIMAL" : x < 150 ? "GOOD" : x < 200 ? "WATCH" : "ELEVATED",
     total_cholesterol_mgdl: x => x < 170 ? "OPTIMAL" : x < 200 ? "GOOD" : x < 240 ? "WATCH" : "ELEVATED",
     apob_mgdl: x => x < 80 ? "OPTIMAL" : x < 90 ? "GOOD" : x < 110 ? "WATCH" : "ELEVATED",
-    lpa_mgdl: x => x < 38 ? "OPTIMAL" : x < 75 ? "GOOD" : x < 125 ? "WATCH" : "ELEVATED",
+    lipoprotein_a_mgdl: x => x < 38 ? "OPTIMAL" : x < 75 ? "GOOD" : x < 125 ? "WATCH" : "ELEVATED",
     hs_crp_mgl: x => x < 1.0 ? "OPTIMAL" : x < 2.0 ? "GOOD" : x < 3.0 ? "WATCH" : "ELEVATED",
     glucose_mgdl: x => x >= 70 && x <= 85 ? "OPTIMAL" : x <= 99 ? "GOOD" : x <= 125 ? "WATCH" : "ELEVATED",
-    hba1c_pct: x => x < 5.4 ? "OPTIMAL" : x < 5.7 ? "GOOD" : x < 6.4 ? "WATCH" : "ELEVATED",
-    fasting_insulin_uiuml: x => x < 5 ? "OPTIMAL" : x < 10 ? "GOOD" : x < 15 ? "WATCH" : "ELEVATED",
+    hba1c_percent: x => x < 5.4 ? "OPTIMAL" : x < 5.7 ? "GOOD" : x < 6.4 ? "WATCH" : "ELEVATED",
+    insulin_uiuml: x => x < 5 ? "OPTIMAL" : x < 10 ? "GOOD" : x < 15 ? "WATCH" : "ELEVATED",
     vitamin_d_ngml: x => x >= 50 && x <= 80 ? "OPTIMAL" : x >= 30 ? "GOOD" : x >= 20 ? "WATCH" : "ELEVATED",
     egfr_mlmin: x => x >= 90 ? "OPTIMAL" : x >= 60 ? "GOOD" : x >= 45 ? "WATCH" : "ELEVATED",
     alt_ul: x => x < 25 ? "OPTIMAL" : x < 40 ? "GOOD" : x < 60 ? "WATCH" : "ELEVATED",
@@ -181,11 +181,11 @@ const BLOOD_MARKERS: Array<{ key: string; label: string; unit: string; reference
   { key: "triglycerides_mgdl", label: "Triglycerides", unit: "mg/dL", reference: "<150" },
   { key: "total_cholesterol_mgdl", label: "Total Cholesterol", unit: "mg/dL", reference: "<200" },
   { key: "apob_mgdl", label: "ApoB", unit: "mg/dL", reference: "<80 optimal" },
-  { key: "lpa_mgdl", label: "Lp(a)", unit: "nmol/L", reference: "<75" },
+  { key: "lipoprotein_a_mgdl", label: "Lp(a)", unit: "nmol/L", reference: "<75" },
   { key: "hs_crp_mgl", label: "hs-CRP", unit: "mg/L", reference: "<1.0 optimal" },
   { key: "glucose_mgdl", label: "Glucose (fasting)", unit: "mg/dL", reference: "70\u201385 optimal" },
-  { key: "hba1c_pct", label: "HbA1c", unit: "%", reference: "<5.4% optimal" },
-  { key: "fasting_insulin_uiuml", label: "Insulin (fasting)", unit: "\u00b5IU/mL", reference: "<5 optimal" },
+  { key: "hba1c_percent", label: "HbA1c", unit: "%", reference: "<5.4% optimal" },
+  { key: "insulin_uiuml", label: "Insulin (fasting)", unit: "\u00b5IU/mL", reference: "<5 optimal" },
   { key: "uric_acid_mgdl", label: "Uric Acid", unit: "mg/dL", reference: "3.4\u20137.0" },
   { key: "egfr_mlmin", label: "eGFR", unit: "mL/min", reference: ">90" },
   { key: "creatinine_mgdl", label: "Creatinine", unit: "mg/dL", reference: "0.6\u20131.2" },
@@ -195,14 +195,14 @@ const BLOOD_MARKERS: Array<{ key: string; label: string; unit: string; reference
   { key: "vitamin_d_ngml", label: "Vitamin D", unit: "ng/mL", reference: "50\u201380 optimal" },
   { key: "hemoglobin_gdl", label: "Hemoglobin", unit: "g/dL", reference: "13.5\u201317.5" },
   { key: "tsh_uiuml", label: "TSH", unit: "\u00b5IU/mL", reference: "0.5\u20132.5 optimal" },
-  { key: "testosterone_ngdl", label: "Testosterone", unit: "ng/dL", reference: "300\u20131000 (men)" },
+  { key: "testosterone_total_ngdl", label: "Testosterone", unit: "ng/dL", reference: "300\u20131000 (men)" },
   { key: "ferritin_ngml", label: "Ferritin", unit: "ng/mL", reference: "30\u2013300" },
   { key: "albumin_gdl", label: "Albumin", unit: "g/dL", reference: "3.5\u20135.0" },
-  { key: "wbc_kul", label: "WBC", unit: "K/\u00b5L", reference: "4.0\u201310.5" },
+  { key: "wbc_thousand_ul", label: "WBC", unit: "K/\u00b5L", reference: "4.0\u201310.5" },
 ]
 
 const BLOOD_CTX: Record<string, { body: string; src: string }> = {
-  lpa_mgdl: {
+  lipoprotein_a_mgdl: {
     body: "Lp(a) is largely genetically determined and is an independent cardiovascular risk factor. Levels >75 nmol/L are associated with increased atherosclerotic risk even with otherwise favorable lipid profiles. Discuss with your cardiologist, particularly in the context of any elevated periodontal burden.",
     src: "Tsimikas S, JACC 2017; Nordestgaard BG, Eur Heart J 2010",
   },
@@ -222,7 +222,7 @@ const BLOOD_CTX: Record<string, { body: string; src: string }> = {
     body: "Fasting glucose above 99 mg/dL enters the pre-diabetic range. Time-restricted eating and reduced refined carbohydrate intake are the most effective dietary interventions.",
     src: "ADA Standards of Medical Care 2024",
   },
-  hba1c_pct: {
+  hba1c_percent: {
     body: "HbA1c reflects average blood glucose over the prior 3 months. Values 5.7\u20136.4% indicate pre-diabetes. Paired with fasting glucose, this provides a more complete metabolic picture.",
     src: "ADA Standards of Medical Care 2024",
   },
@@ -456,7 +456,7 @@ function drawBloodPage(doc: InstanceType<typeof PDFDocument>, data: ReportData) 
     const v = labs[key]
     if (v == null || Number(v) === 0) return null
     // Lp(a) stored as mg/dL — convert to nmol/L for display
-    if (key === "lpa_mgdl") return Math.round(Number(v) * 2.5 * 10) / 10
+    if (key === "lipoprotein_a_mgdl") return Math.round(Number(v) * 2.5 * 10) / 10
     return Number(v)
   }
 
@@ -790,7 +790,7 @@ function drawLifestylePage(doc: InstanceType<typeof PDFDocument>, data: ReportDa
   // What to add next
   const labs = data.labs ?? {}
   const missing: Array<[string, string, string]> = []
-  if (!labs.hba1c_pct) missing.push(["HbA1c", "Metabolic health marker", "\u223c3 pts"])
+  if (!labs.hba1c_percent) missing.push(["HbA1c", "Metabolic health marker", "\u223c3 pts"])
   if (!labs.apob_mgdl) missing.push(["ApoB", "Atherogenic particle count", "\u223c3 pts"])
   if (!labs.vitamin_d_ngml) missing.push(["Vitamin D", "Immune and cardiovascular", "\u223c2 pts"])
 

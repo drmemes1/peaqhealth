@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
   const supabase = createServiceClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
   const { data: lab } = await supabase.from("blood_results")
-    .select("*").eq("user_id", user.id).eq("parser_status", "complete")
+    .select("*").eq("user_id", user.id)
     .order("collected_at", { ascending: false }).limit(1).maybeSingle()
 
   const { data: lifestyle } = await supabase.from("lifestyle_records")

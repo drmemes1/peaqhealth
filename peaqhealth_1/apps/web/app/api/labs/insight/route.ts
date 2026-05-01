@@ -210,7 +210,7 @@ export async function GET() {
   )
 
   const [labRes, sleepRes, wearableRes, oralRes, lifestyleRes, checkinRes] = await Promise.all([
-    svc.from("blood_results").select("*").eq("user_id", user.id).eq("parser_status", "complete").order("collected_at", { ascending: false }).limit(1).maybeSingle(),
+    svc.from("blood_results").select("*").eq("user_id", user.id).order("collected_at", { ascending: false }).limit(1).maybeSingle(),
     svc.from("sleep_data").select("date,source,total_sleep_minutes,deep_sleep_minutes,rem_sleep_minutes,sleep_efficiency,hrv_rmssd,spo2,resting_heart_rate").eq("user_id", user.id).order("date", { ascending: false }).limit(15),
     svc.from("wearable_connections_v2").select("provider").eq("user_id", user.id).eq("needs_reconnect", false).order("connected_at", { ascending: false }).limit(1).maybeSingle(),
     svc.from("oral_kit_orders").select("oral_score_snapshot,shannon_diversity,nitrate_reducers_pct,periodontopathogen_pct,osa_taxa_pct,neuro_signal_pct,metabolic_signal_pct,proliferative_signal_pct").eq("user_id", user.id).eq("status", "results_ready").order("ordered_at", { ascending: false }).limit(1).maybeSingle(),
@@ -250,13 +250,13 @@ export async function GET() {
       ApoB_mgdL:        num(lab.apob_mgdl)           ?? null,
       triglycerides_mgdL: num(lab.triglycerides_mgdl) ?? null,
       glucose_mgdL:     num(lab.glucose_mgdl)        ?? null,
-      HbA1c_pct:        num(lab.hba1c_pct)           ?? null,
+      HbA1c_pct:        num(lab.hba1c_percent)           ?? null,
       vitaminD_ngmL:    num(lab.vitamin_d_ngml)      ?? null,
       eGFR:             num(lab.egfr_mlmin)           ?? null,
-      Lpa_mgdL:         num(lab.lpa_mgdl)            ?? null,
+      Lpa_mgdL:         num(lab.lipoprotein_a_mgdl)            ?? null,
       hemoglobin_gdL:   num(lab.hemoglobin_gdl)      ?? null,
       homocysteine_umolL: num(lab.homocysteine_umoll) ?? null,
-      collectionDate:   lab.collection_date ?? null,
+      collectionDate:   lab.collected_at ?? null,
     }
     // Remove nulls to keep prompt concise
     for (const k of Object.keys(bloodData)) {

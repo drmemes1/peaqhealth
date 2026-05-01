@@ -29,7 +29,7 @@ export default async function MarkerPage({ params }: { params: Promise<{ marker:
     { data: labHistory },
   ] = await Promise.all([
     supabase.from("blood_results").select("*")
-      .eq("user_id", user.id).eq("parser_status", "complete")
+      .eq("user_id", user.id)
       .order("collected_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("score_snapshots").select("*")
       .eq("user_id", user.id).order("calculated_at", { ascending: false }).limit(1).maybeSingle(),
@@ -46,7 +46,7 @@ export default async function MarkerPage({ params }: { params: Promise<{ marker:
       .eq("published", true)
       .in("slug", richDef?.related_articles?.length ? richDef.related_articles : ["__none__"]),
     supabase.from("blood_results").select("*")
-      .eq("user_id", user.id).eq("parser_status", "complete")
+      .eq("user_id", user.id)
       .order("collected_at", { ascending: true }).limit(5),
   ])
 

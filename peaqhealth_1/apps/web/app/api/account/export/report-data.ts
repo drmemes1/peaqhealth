@@ -175,7 +175,7 @@ export async function fetchReportData(userId: string, supabase: SupabaseClient):
       .from("blood_results")
       .select("*")
       .eq("user_id", userId)
-      .eq("parser_status", "complete")
+      
       .order("collected_at", { ascending: false })
       .limit(1)
       .maybeSingle(),

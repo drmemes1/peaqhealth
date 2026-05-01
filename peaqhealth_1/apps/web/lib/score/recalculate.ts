@@ -130,14 +130,14 @@ export function mapLabRow(row: Record<string, unknown>): BloodInputs | undefined
     triglycerides_mgdL:     num(row.triglycerides_mgdl),
     lpa_mgdL:               num(row.lipoprotein_a_mgdl),
     glucose_mgdL:           num(row.glucose_mgdl),
-    hba1c_pct:              num(row.hba1c_percent),
+    hba1c_percent:              num(row.hba1c_percent),
     eGFR_mLmin:             num(row.egfr_mlmin),
     alt_UL:                 num(row.alt_ul),
     ast_UL:                 num(row.ast_ul),
     albumin_gdL:            num(row.albumin_gdl),
     hemoglobin_gdL:         num(row.hemoglobin_gdl),
     wbc_x10L:               num(row.wbc_thousand_ul),
-    rdw_pct:                num(row.rdw_percent),
+    rdw_percent:                num(row.rdw_percent),
     mcv_fL:                 num(row.mcv_fl),
     homocysteine_umolL:     num(row.homocysteine_umoll),
     ferritin_ngmL:          num(row.ferritin_ngml),
@@ -618,7 +618,7 @@ async function cacheInsightAndGuidance(
 
     let dataContext = ""
     if (lab) {
-      dataContext += `Blood: hs-CRP ${lab.hs_crp_mgl ?? "?"}, LDL ${lab.ldl_mgdl ?? "?"}, HDL ${lab.hdl_mgdl ?? "?"}, TG ${lab.triglycerides_mgdl ?? "?"}, HbA1c ${lab.hba1c_pct ?? "?"}, Glucose ${lab.glucose_mgdl ?? "?"}, VitD ${lab.vitamin_d_ngml ?? "?"}\n`
+      dataContext += `Blood: hs-CRP ${lab.hs_crp_mgl ?? "?"}, LDL ${lab.ldl_mgdl ?? "?"}, HDL ${lab.hdl_mgdl ?? "?"}, TG ${lab.triglycerides_mgdl ?? "?"}, HbA1c ${lab.hba1c_percent ?? "?"}, Glucose ${lab.glucose_mgdl ?? "?"}, VitD ${lab.vitamin_d_ngml ?? "?"}\n`
     }
     if (oral) {
       dataContext += `Oral: Shannon ${oral.shannon_diversity}, Nitrate ${((oral.nitrate_reducers_pct as number) * 100).toFixed(1)}%, Pathogens ${((oral.periodontopathogen_pct as number) * 100).toFixed(1)}%\n`

@@ -77,7 +77,7 @@ function buildInput(props: GuidanceClientProps): GuidanceInput | null {
     { name: "hdl", clinicalName: "HDL cholesterol", value: (lab.hdl_mgdl as number) ?? 0, unit: " mg/dL", status: bloodStatus("hdl", lab.hdl_mgdl as number | null), target: "≥60 mg/dL" },
     { name: "trig", clinicalName: "Triglycerides", value: (lab.triglycerides_mgdl as number) ?? 0, unit: " mg/dL", status: bloodStatus("trig", lab.triglycerides_mgdl as number | null), target: "<150 mg/dL" },
     { name: "glucose", clinicalName: "Fasting glucose", value: (lab.glucose_mgdl as number) ?? 0, unit: " mg/dL", status: bloodStatus("glucose", lab.glucose_mgdl as number | null), target: "<100 mg/dL" },
-    { name: "hba1c", clinicalName: "HbA1c", value: (lab.hba1c_pct as number) ?? 0, unit: "%", status: bloodStatus("hba1c", lab.hba1c_pct as number | null), target: "<5.4%" },
+    { name: "hba1c", clinicalName: "HbA1c", value: (lab.hba1c_percent as number) ?? 0, unit: "%", status: bloodStatus("hba1c", lab.hba1c_percent as number | null), target: "<5.4%" },
     { name: "vitD", clinicalName: "Vitamin D", value: (lab.vitamin_d_ngml as number) ?? 0, unit: " ng/mL", status: bloodStatus("vitD", lab.vitamin_d_ngml as number | null), target: "30–60 ng/mL" },
   ].filter(m => m.status !== "not_tested") : []
 
@@ -101,7 +101,7 @@ function buildInput(props: GuidanceClientProps): GuidanceInput | null {
     userSex: props.userSex,
     wearable: props.wearableProvider || "none",
     labSource: (lab?.lab_name as string) ?? "Unknown",
-    labDate: (lab?.collection_date as string) ?? "Unknown",
+    labDate: (lab?.collected_at as string) ?? "Unknown",
     sleepScore: (snapshot.sleep_sub as number) ?? 0,
     sleepMax: 30,
     sleepMetrics,

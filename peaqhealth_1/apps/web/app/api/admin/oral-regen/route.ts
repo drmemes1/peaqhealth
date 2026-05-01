@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
   // Build ZymoReport from existing data
   const zymoReport: ZymoReport = {
     sample_id: `regen-${kit.id}`,
-    collection_date: kit.collection_date ?? kit.ordered_at ?? new Date().toISOString(),
+    collection_date: (kit.collection_date as string | null) ?? (kit.ordered_at as string | null) ?? new Date().toISOString(),
     sequencing_date: new Date().toISOString(),
     total_reads: Object.values(taxonomy).reduce((s, v) => s + v, 0),
     taxonomy,
