@@ -837,12 +837,16 @@ export function DashboardClient(props: ScoreWheelProps & {
                 borderRadius: 12, marginBottom: 36, overflow: "hidden",
                 boxShadow: "0 1px 3px rgba(20,20,16,0.06)",
               }}>
-                {(["sleep", "blood", "oral"] as const).map((panel, i) => {
-                  const color = ({ sleep: DS.sleep, blood: DS.blood, oral: DS.oral })[panel]
-                  const status = ({ sleep: sleepStatus, blood: bloodStatus, oral: oralStatus })[panel]
+                {/* When no blood panel is uploaded yet, demote the blood row to the bottom
+                    of the summary so the user sees their populated panels first.
+                    Empty-state placeholder still renders inline (option C). */}
+                {(hasBlood ? ["sleep", "blood", "oral"] : ["sleep", "oral", "blood"]).map((panel, i, arr) => {
+                  const color = ({ sleep: DS.sleep, blood: DS.blood, oral: DS.oral } as const)[panel as "sleep" | "blood" | "oral"]
+                  const status = ({ sleep: sleepStatus, blood: bloodStatus, oral: oralStatus } as const)[panel as "sleep" | "blood" | "oral"]
                   const href = `/dashboard/${panel}`
-                  const summary = panelSummary(panel)
+                  const summary = panelSummary(panel as "sleep" | "blood" | "oral")
                   const showBadge = status !== "Active" || panel !== "sleep" || !hasSleep
+                  void arr
 
                   return (
                     <Link key={panel} href={href} style={{ textDecoration: "none", display: "block" }}>
