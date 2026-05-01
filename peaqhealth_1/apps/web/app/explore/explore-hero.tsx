@@ -86,30 +86,6 @@ export function ExploreHero() {
   )
 }
 
-export function WhySpecificBacteria() {
-  return (
-    <div style={{ marginBottom: 56 }}>
-      <h2 style={{
-        fontFamily: serif, fontSize: 32, fontWeight: 400,
-        color: "#141410", margin: "0 0 20px", lineHeight: 1.2,
-      }}>
-        Why specific bacteria, not a single score
-      </h2>
-      <div style={{ fontFamily: sans, fontSize: 15, color: "rgba(20,20,16,0.6)", lineHeight: 1.75, maxWidth: 620 }}>
-        <p style={{ margin: "0 0 16px" }}>
-          Most oral health products give you one number &mdash; a diversity score, a grade, a 0&ndash;100.
-        </p>
-        <p style={{ margin: "0 0 16px" }}>
-          When the CDC&rsquo;s national dataset was tested against blood markers in nearly 10,000 Americans, the diversity score showed no significant connection. Specific bacteria did. Some are involved in how your body uses dietary nitrate. Some are <em>associated with</em> higher inflammation markers. Some have been recovered from arterial plaque in published studies.
-        </p>
-        <p style={{ margin: 0 }}>
-          Your mouth is a community of dozens of organisms, and the balance is what shows up in the research. That&rsquo;s why this library is organized by organism, not by score.
-        </p>
-      </div>
-    </div>
-  )
-}
-
 export function HowToRead() {
   const pills: { color: string; bg: string; label: string; desc: string }[] = [
     { color: "#C0392B", bg: "rgba(192,57,43,0.08)", label: "Disease-associated", desc: "Research links higher levels with gum disease and systemic inflammation" },
@@ -168,10 +144,25 @@ export function CardiovascularCallout() {
       background: "#141410", borderRadius: 14, padding: "44px 40px",
       marginBottom: 56, position: "relative", overflow: "hidden",
     }}>
+      <img
+        src="/bacteria.png"
+        alt=""
+        aria-hidden="true"
+        style={{
+          position: "absolute", inset: 0, width: "100%", height: "100%",
+          objectFit: "cover", opacity: 0.18, filter: "brightness(0.4) contrast(1.1)",
+          pointerEvents: "none", zIndex: 0,
+        }}
+      />
+      <div style={{
+        position: "absolute", inset: 0,
+        background: "linear-gradient(135deg, rgba(20,20,16,0.85) 0%, rgba(20,20,16,0.7) 100%)",
+        pointerEvents: "none", zIndex: 0,
+      }} />
       <div style={{
         position: "absolute", top: 0, right: 0, width: "50%", height: "100%",
-        background: "radial-gradient(ellipse at 100% 50%, rgba(154,114,0,0.06) 0%, transparent 70%)",
-        pointerEvents: "none",
+        background: "radial-gradient(ellipse at 100% 50%, rgba(154,114,0,0.10) 0%, transparent 70%)",
+        pointerEvents: "none", zIndex: 0,
       }} />
 
       <div style={{ position: "relative", zIndex: 1 }}>

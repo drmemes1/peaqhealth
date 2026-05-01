@@ -1,7 +1,7 @@
 import { createClient } from "../../lib/supabase/server"
 import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { Nav } from "../components/nav"
-import { ExploreHero, WhySpecificBacteria, HowToRead, CardiovascularCallout, WhereYouSit, ExploreMethodology } from "./explore-hero"
+import { ExploreHero, HowToRead, CardiovascularCallout, WhereYouSit, ExploreMethodology } from "./explore-hero"
 import { BacteriaLibrary } from "./bacteria-library"
 
 const serif = "var(--font-manrope), system-ui, sans-serif"
@@ -73,7 +73,6 @@ export default async function ExplorePage() {
       <Nav />
       <main style={{ maxWidth: 760, margin: "0 auto", padding: "0 24px" }}>
         <ExploreHero />
-        <WhySpecificBacteria />
         <HowToRead />
         <CardiovascularCallout />
 
