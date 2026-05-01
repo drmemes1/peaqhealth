@@ -9,6 +9,7 @@ import {
 } from "../../../../lib/score/recalculate"
 import { computeCariesPanel } from "../../../../lib/oral/caries-panel"
 import { runCariesV3 } from "../../../../lib/oral/caries-v3-runner"
+import { runNRV1 } from "../../../../lib/oral/nr-v1-runner"
 import {
   GENUS_COLUMNS,
   SPECIES_COLUMNS,
@@ -233,6 +234,19 @@ export async function POST(request: NextRequest) {
         }
       } else {
         steps.push(`Caries v3 runner returned null (see server logs)`)
+      }
+
+      // Step 3c: NR v1 (additive — runs alongside v2/v3; soft-fails)
+      const nr = runNRV1(kitRow, lifestyle)
+      if (nr) {
+        const { error: nrErr } = await supabase.from("oral_kit_orders").update(nr.update).eq("id", kitId)
+        if (nrErr) {
+          steps.push(`NR v1 write failed (continuing): ${nrErr.message}`)
+        } else {
+          steps.push(`NR v1: ${nr.result.nrRiskCategory} (capacity=${nr.result.nrCapacityIndex.toFixed(2)} ${nr.result.nrCapacityCategory}, signature=${nr.result.noSignature.toFixed(2)} ${nr.result.noSignatureCategory}, paradox=${nr.result.nrParadoxFlag}, conf=${nr.result.confidence})`)
+        }
+      } else {
+        steps.push(`NR v1 runner returned null (see server logs)`)
       }
 
       // Step 4: interpretability tier
