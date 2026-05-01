@@ -11,21 +11,21 @@ export function ExploreHero() {
       position: "relative", overflow: "hidden",
       margin: "0 -24px", padding: "0 24px",
     }}>
-      {/* Background image */}
+      {/* Background image — faint banner across the top, fades into cream */}
       <img
         src="/oral-bac.png"
         alt=""
         style={{
-          position: "absolute", inset: 0,
-          width: "100%", height: "100%",
-          objectFit: "cover", objectPosition: "center 30%",
-          opacity: 0.12,
+          position: "absolute", top: 0, left: 0, right: 0,
+          width: "100%", height: "55%",
+          objectFit: "cover", objectPosition: "center center",
+          opacity: 0.45,
           pointerEvents: "none",
         }}
       />
       <div style={{
         position: "absolute", inset: 0,
-        background: "linear-gradient(180deg, rgba(250,250,248,0.3) 0%, rgba(250,250,248,0.85) 60%, rgba(250,250,248,1) 100%)",
+        background: "linear-gradient(180deg, rgba(250,250,248,0) 0%, rgba(250,250,248,0) 30%, rgba(250,250,248,0.85) 70%, rgba(250,250,248,1) 100%)",
         pointerEvents: "none",
       }} />
 
