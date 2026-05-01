@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "../../../../lib/supabase/server"
 import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { recalculateScore } from "../../../../lib/score/recalculate"
+import { detectUniformValueArtifact } from "../../../../lib/labs/uniform-value-guard"
 import type { BloodMarkers } from "../../../components/lab-upload"
 import OpenAI from "openai"
 import type { SupabaseClient } from "@supabase/supabase-js"
@@ -181,6 +182,19 @@ export async function POST(request: NextRequest) {
     if (labDate < fiveYrsAgo) {
       return NextResponse.json({ error: "Lab date cannot be more than 5 years ago" }, { status: 400 })
     }
+  }
+
+  // ── Sanity guard: refuse uniform-value parser artifacts ─────────────────
+  // See docs/incidents/2026-05-01-function-health-14-bug.md.
+  const artifact = detectUniformValueArtifact(markers as Record<string, unknown>)
+  if (artifact) {
+    console.error(
+      `[labs/save] uniform-value refusal: user=${user.id} value=${artifact.value} count=${artifact.count}/${artifact.total} (${Math.round(artifact.ratio * 100)}%)`,
+    )
+    return NextResponse.json({
+      error:
+        "We couldn't reliably parse this PDF. The values look like a layout artifact rather than real results. Please try uploading again, or contact support if the issue persists.",
+    }, { status: 422 })
   }
 
   const collectionDate  = labDate ?? new Date().toISOString().slice(0, 10)
