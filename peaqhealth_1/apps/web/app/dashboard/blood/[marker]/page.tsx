@@ -1,115 +1,126 @@
 import { notFound, redirect } from "next/navigation"
+import Link from "next/link"
 import { createClient } from "../../../../lib/supabase/server"
-import { MARKER_DEFINITIONS } from "../../../../lib/markers/definitions"
-import { MARKERS } from "../../../../lib/blood/marker-content"
-import { buildConnectionInput } from "../../../../lib/score/buildConnectionInput"
-import { MarkerDetailClient } from "./marker-client"
+import { Nav } from "../../../components/nav"
+import {
+  getMarkerById,
+  isKnownMarkerId,
+} from "../../../../lib/blood/markerRegistry"
+import { MarkerHeroCard } from "../../../components/blood/MarkerHeroCard"
+import { MarkerDisclaimer } from "../../../components/blood/MarkerDisclaimer"
+import { MarkerReflection } from "../../../components/blood/MarkerReflection"
+import { GenericPanelContext } from "../../../components/blood/GenericPanelContext"
+import { ConversationCard } from "../../../components/blood/ConversationCard"
+import { TrendPlaceholder } from "../../../components/blood/TrendPlaceholder"
+import { MarkerDrawers } from "../../../components/blood/MarkerDrawers"
 
+/**
+ * Blood marker detail page.
+ *
+ * Per ADR-0020 + the marker-detail rewrite (PART 5 of the brief):
+ *   • Validates the [marker] URL parameter against the registry. 404 if unknown.
+ *   • Reads the user's most recent blood_results row.
+ *   • Renders: hero (value + status pill + distribution viz) → disclaimer →
+ *     reflection → cluster context (if any) → conversation card → trend
+ *     placeholder → drawers.
+ *   • No cross-panel insights — those will live on the oral panel (separate
+ *     future work). This page is a focused single-marker surface.
+ */
 export default async function MarkerPage({ params }: { params: Promise<{ marker: string }> }) {
   const { marker } = await params
 
-  const richDef = MARKER_DEFINITIONS[marker]
-  const basicDef = MARKERS[marker]
-  if (!richDef && !basicDef) notFound()
+  // Registry-driven 404 — old per-format definitions are gone.
+  if (!isKnownMarkerId(marker)) notFound()
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/login")
 
-  const dbColumn = richDef?.db_column ?? marker
+  const m = getMarkerById(marker)!
 
-  const [
-    { data: lab },
-    { data: snapshot },
-    { data: oral },
-    { data: profile },
-    { data: lifestyle },
-    { data: sleepNights },
-    { data: articles },
-    { data: labHistory },
-  ] = await Promise.all([
-    supabase.from("blood_results").select("*")
-      .eq("user_id", user.id)
-      .order("collected_at", { ascending: false }).limit(1).maybeSingle(),
-    supabase.from("score_snapshots").select("*")
-      .eq("user_id", user.id).order("calculated_at", { ascending: false }).limit(1).maybeSingle(),
-    supabase.from("oral_kit_orders").select("*, raw_otu_table")
-      .eq("user_id", user.id).eq("status", "results_ready")
-      .order("results_date", { ascending: false }).limit(1).maybeSingle(),
-    supabase.from("profiles").select("date_of_birth").eq("id", user.id).single(),
-    supabase.from("lifestyle_records").select("biological_sex, mouthwash_type, nasal_obstruction, sinus_history")
-      .eq("user_id", user.id).limit(1).maybeSingle(),
-    supabase.from("sleep_data")
-      .select("total_sleep_minutes, deep_sleep_minutes, rem_sleep_minutes, sleep_efficiency, hrv_rmssd, resting_heart_rate")
-      .eq("user_id", user.id).order("date", { ascending: false }).limit(30),
-    supabase.from("articles").select("slug, title, summary, read_time_min")
-      .eq("published", true)
-      .in("slug", richDef?.related_articles?.length ? richDef.related_articles : ["__none__"]),
-    supabase.from("blood_results").select("*")
-      .eq("user_id", user.id)
-      .order("collected_at", { ascending: true }).limit(5),
-  ])
+  // Latest blood_results row (per-test, ordered by collected_at DESC).
+  const { data: row } = await supabase
+    .from("blood_results")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("collected_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
 
-  const dobStr = profile?.date_of_birth as string | null
-  const age = dobStr ? Math.floor((Date.now() - new Date(dobStr).getTime()) / (365.25 * 86400000)) : undefined
-
-  const connectionInput = buildConnectionInput({
-    age,
-    sex: lifestyle?.biological_sex as string | null,
-    lab: lab as Record<string, unknown> | null,
-    oral: oral as Record<string, unknown> | null,
-    sleepNights: (sleepNights ?? []) as Array<Record<string, unknown>>,
-    lifestyle: lifestyle as Record<string, unknown> | null,
-    snapshot: snapshot as Record<string, unknown> | null,
-  })
-
-  const value = lab ? (lab[dbColumn] as number | null) ?? null : null
-
-  const history = (labHistory ?? [])
-    .map(row => {
-      const r = row as Record<string, unknown>
-      const v = r[dbColumn] as number | null
-      return v !== null ? { date: r.collection_date as string, value: v } : null
-    })
-    .filter((h): h is { date: string; value: number } => h !== null)
-
-  // Build a unified def for the client — rich def if available, else synthesize from basic
-  const def = richDef ?? {
-    id: marker,
-    label: basicDef!.displayName,
-    fullName: basicDef!.displayName,
-    unit: basicDef!.unit,
-    panel: "blood" as const,
-    dot_id: basicDef!.category,
-    thresholds: basicDef!.optimal ? [
-      ...(basicDef!.optimal.max != null ? [{ max: basicDef!.optimal.max, label: "Optimal", color: "green" as const }] : []),
-      ...(basicDef!.optimal.min != null && basicDef!.optimal.max != null ? [{ min: basicDef!.optimal.max, label: "Watch", color: "amber" as const }] : []),
-      ...(basicDef!.optimal.min != null && !basicDef!.optimal.max ? [{ min: basicDef!.optimal.min, label: "Optimal", color: "green" as const }] : []),
-    ] : [],
-    db_column: marker,
-    related_articles: [] as string[],
-    foods: [],
-    supplements: [],
-    why_it_matters: basicDef!.role,
-    missing_state: { headline: `${basicDef!.displayName} not on your panel`, body: "This marker wasn't included in your most recent blood draw.", cta: "Add to next draw", urgency: "medium" as const },
-  }
+  const rawValue = row ? (row as Record<string, unknown>)[m.id] : null
+  const value = typeof rawValue === "number" && Number.isFinite(rawValue) ? rawValue : null
+  const hasData = value != null
 
   return (
-    <MarkerDetailClient
-      def={def}
-      value={value}
-      connectionInput={connectionInput}
-      history={history}
-      articles={(articles ?? []).map(a => ({
-        slug: a.slug as string,
-        title: a.title as string,
-        summary: (a.summary as string | null) ?? "",
-        readTime: (a.read_time_min as number | null) ?? 5,
-      }))}
-      backHref="/dashboard/blood"
-      backLabel="Back to Blood Panel"
-      panelColor="#C0392B"
-      panelLabel="Blood"
-    />
+    <div className="min-h-svh" style={{ background: "#F5F3EE" }}>
+      <Nav />
+      <main style={{ maxWidth: 720, margin: "0 auto", padding: "32px 24px 80px" }}>
+        {/* Back link */}
+        <div style={{ marginBottom: 20 }}>
+          <Link
+            href="/dashboard/blood"
+            style={{
+              fontFamily: "var(--font-body), 'Instrument Sans', sans-serif",
+              fontSize: 12,
+              color: "var(--gold, #B8860B)",
+              textDecoration: "none",
+            }}
+          >
+            ← Back to blood panel
+          </Link>
+        </div>
+
+        <MarkerHeroCard markerId={marker} value={value} />
+
+        <MarkerDisclaimer />
+
+        {/* Reflection — only if we have data + a populated descriptor */}
+        {hasData && m.descriptor ? (
+          <MarkerReflection markerId={marker} value={value} />
+        ) : !hasData ? (
+          <section style={{ marginBottom: 32 }}>
+            <p
+              style={{
+                fontFamily: "var(--font-body), 'Instrument Sans', sans-serif",
+                fontSize: 15,
+                lineHeight: 1.65,
+                color: "var(--ink-60, rgba(20,20,16,0.6))",
+                margin: 0,
+              }}
+            >
+              No value yet for {m.displayName.toLowerCase()}. Upload a blood panel that includes this marker to see your reading and how it sits in oravi&rsquo;s longevity-oriented range.
+            </p>
+            <Link
+              href="/settings/labs"
+              style={{
+                display: "inline-block",
+                marginTop: 12,
+                fontFamily: "var(--font-body), 'Instrument Sans', sans-serif",
+                fontSize: 14,
+                fontWeight: 500,
+                color: "white",
+                background: "var(--blood-c, #C0392B)",
+                padding: "10px 18px",
+                borderRadius: 8,
+                textDecoration: "none",
+              }}
+            >
+              Upload blood PDF here →
+            </Link>
+          </section>
+        ) : null}
+
+        {/* Cluster context — only if marker has a cluster + we have data */}
+        {hasData && m.cluster ? (
+          <GenericPanelContext currentMarkerId={marker} cluster={m.cluster} />
+        ) : null}
+
+        <ConversationCard />
+
+        <TrendPlaceholder />
+
+        <MarkerDrawers markerId={marker} />
+      </main>
+    </div>
   )
 }

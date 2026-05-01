@@ -50,6 +50,14 @@ export const FORBIDDEN_SURFACE_PHRASES = [
   "rule out",
   "ruled out",
   "not osa",
+
+  // Marker-detail-page specific (added with marker descriptors)
+  "alarming",
+  "critical",
+  "we recommend",
+  "go see your doctor",
+  "see a specialist",
+  "get tested for",
 ]
 
 export const BORDERLINE_THRESHOLDS: Record<string, { cutoff: number; zone: number }> = {
