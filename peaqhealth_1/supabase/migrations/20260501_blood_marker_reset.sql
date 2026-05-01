@@ -123,6 +123,8 @@ CREATE TABLE blood_results (
   iron_binding_capacity_ugdl      numeric,
   iron_saturation_percent         numeric,
   zinc_ugdl                       numeric,
+  vitamin_b12_pgml                numeric,
+  folate_ngml                     numeric,
 
   -- ── STRESS / AGING ────────────────────────────────────────────────────
   cortisol_ugdl                   numeric,

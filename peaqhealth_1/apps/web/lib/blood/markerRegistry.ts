@@ -750,6 +750,25 @@ export const BLOOD_MARKER_REGISTRY: BloodMarker[] = [
     synonyms: ["Zinc", "Zn"],
     validRange: { min: 10, max: 500 },
   },
+  {
+    id: "vitamin_b12_pgml",
+    displayName: "Vitamin B12",
+    shortName: "B12",
+    unit: "pg/mL",
+    categories: ["nutrients"],
+    tier: "standard",
+    synonyms: ["Vitamin B12", "B12", "Cobalamin", "VITAMIN B12"],
+    validRange: { min: 50, max: 5000 },
+  },
+  {
+    id: "folate_ngml",
+    displayName: "Folate",
+    unit: "ng/mL",
+    categories: ["nutrients"],
+    tier: "standard",
+    synonyms: ["Folate", "Folic Acid", "FOLATE", "Folate, Serum"],
+    validRange: { min: 0, max: 50 },
+  },
 
   // ─── STRESS / AGING ─────────────────────────────────────────────────────
   {
