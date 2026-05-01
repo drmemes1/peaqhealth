@@ -611,6 +611,37 @@ export const V2_QUESTIONS: QuestionDef[] = [
     ],
     explanation: { label: "What this means", body: "Recent antibiotics temporarily suppress diversity and specific species. If your results show low diversity with recent antibiotic use, we'll flag it as transient — not a permanent state — and suggest recovery-supporting actions." },
   },
+
+  // ═══ NR-α additions (ADR-0019) ═══
+  // Two NR-pathway-specific lifestyle inputs. Stored alongside the existing
+  // dietary_nitrate_frequency (q35) and tongue_scraping_freq (q26) — those
+  // capture habit detail; these capture the binned signal the NR confounder
+  // logic actually consumes (low/moderate/high; never/occasional/daily). See
+  // ADR-0019 for why both pairs coexist in this slice.
+  {
+    id: "q43", section: "§6 · Diet", sectionLabel: "Diet",
+    type: "choice", dbCol: "dietary_nitrate_intake", tag: "new",
+    question: "How often do you eat leafy greens, beets, or other nitrate-rich foods?",
+    helper: "Includes spinach, arugula, kale, beets, beet juice, celery, and similar. These foods are the substrate your oral bacteria use to produce nitric oxide.",
+    options: [
+      { value: "low", label: "Rarely (less than weekly)" },
+      { value: "moderate", label: "Few times per week" },
+      { value: "high", label: "Most days" },
+    ],
+    explanation: { label: "Why we ask", body: "Even a robust nitrate-reducing community produces little nitric oxide without dietary substrate. Clinical trials use ~6.4 mmol nitrate (≈400 mg/day) — roughly two cups of arugula or one beet." },
+  },
+  {
+    id: "q44", section: "§4 · Oral hygiene", sectionLabel: "Oral hygiene",
+    type: "choice", dbCol: "tongue_scraping", tag: "new",
+    question: "Do you scrape your tongue?",
+    helper: "Tongue scraping mechanically removes some of the bacteria responsible for converting dietary nitrate to nitric oxide. Frequency matters.",
+    options: [
+      { value: "never", label: "Never" },
+      { value: "occasional", label: "Occasionally (a few times per week or less)" },
+      { value: "daily", label: "Daily (or multiple times per day)" },
+    ],
+    explanation: { label: "Why we ask", body: "The nitrate-reducing community lives mostly on the back of the tongue. Daily scraping can suppress it; if your NR scores are low, easing off scraping is one of the fastest levers." },
+  },
 ]
 
 export function getV2QuestionCount(): number {

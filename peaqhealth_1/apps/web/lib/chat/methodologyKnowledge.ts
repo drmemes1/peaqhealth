@@ -158,6 +158,66 @@ export const METHODOLOGY: MethodologyEntry[] = [
       "Reflects current microbial state. Past disease history, salivary flow, fluoride exposure, dietary patterns, and clinical findings (DMFT) are independent risk factors not captured by microbiome alone. Not a diagnostic tool.",
     citations: ["Composite of all caries v3 underlying citations"],
   },
+
+  // ── NR-α (ADR-0019) ───────────────────────────────────────────────────────
+  {
+    scoreName: "NR Capacity Index",
+    whatItMeasures:
+      "Total nitrate-reducing bacterial biomass weighted by per-cell nitrite-producing efficiency.",
+    howComputed:
+      "Tiered weighted sum. Tier 1 (×2.0): Neisseria mucosa/flavescens/subflava, Rothia mucilaginosa/dentocariosa/aeria, Actinomyces odontolyticus. Tier 2 (×1.0): H. parainfluenzae, secondary Neisseria (sicca/cinerea/elongata), A. naeslundii. Tier 3 (×0.4): Veillonella spp., other Actinomyces. Tier 4 (×0.2): Schaalia (reserved; not yet parsed).",
+    inputs: [
+      "Neisseria species abundances (mucosa, flavescens, subflava, other)",
+      "Rothia species abundances (mucilaginosa, dentocariosa, aeria)",
+      "Actinomyces species abundances (odontolyticus, naeslundii, other)",
+      "H. parainfluenzae",
+      "Veillonella genus total",
+    ],
+    thresholds:
+      "depleted < 5, low 5–15, moderate 15–35, robust 35–60, exceptional > 60.",
+    limitations:
+      "Per-cell nitrate reductase activity varies ~15-fold across strains (Doel 2005). Sex differences in oral NR activity not captured (Kapil 2018). Total biomass predicts salivary nitrite but not necessarily plasma nitrite (Burleigh 2018 ceiling effect). Species-level Neisseria/Rothia mostly aren't parsed yet by the upload pipeline; the runner approximates from genus totals — see ADR-0019 § Known gaps.",
+    citations: [
+      "Doel 2005 (Eur J Oral Sci) — per-cell efficiency hierarchy",
+      "Sato-Suzuki 2020 (Sci Rep) — major nitrite-producing genera",
+      "Hyde 2014 — Neisseria species nitrite production",
+      "L'Heureux 2023 (PLoS One) — site-specific NR localization",
+    ],
+  },
+  {
+    scoreName: "NO Signature (Vanhatalo)",
+    whatItMeasures:
+      "Composition pattern predicting systemic NO response to dietary nitrate intake.",
+    howComputed:
+      "(Rothia + Neisseria) / (Veillonella + Prevotella). Higher ratios predict greater plasma nitrite increase after nitrate intake. When both depleting genera are zero, a sentinel of 999 is stored to pin the kit to strongly_favorable while avoiding Infinity.",
+    inputs: [
+      "Rothia genus total",
+      "Neisseria genus total",
+      "Veillonella genus total",
+      "Prevotella genus total",
+    ],
+    thresholds:
+      "strongly_unfavorable < 0.25, unfavorable 0.25–0.5, moderate 0.5–1.5, favorable 1.5–3.0, strongly_favorable > 3.0.",
+    limitations:
+      "Derived from Vanhatalo 2018 (n=18). Composition pattern, not direct measurement. Assumes substrate is available — patients with low dietary nitrate intake may not realize the predicted NO response regardless of signature. Veillonella mass loss during upload (parser investigation pending) may shift signature upward on affected kits.",
+    citations: [
+      "Vanhatalo 2018 (Free Radic Biol Med) — primary signature derivation",
+      "Goh 2022 (J Am Heart Assoc) — ORIGINS study (n=764) cardiometabolic validation",
+      "Burleigh 2018 — salivary nitrite production correlation",
+    ],
+  },
+  {
+    scoreName: "NR Risk Category",
+    whatItMeasures:
+      "Composite classification of nitric oxide pathway health combining capacity and composition.",
+    howComputed:
+      "4-quadrant: optimal (high capacity + favorable signature); capacity_constrained (low + favorable); composition_constrained (high + unfavorable — the paradox); compromised (low + unfavorable). Falls back to insufficient_data when total NR-relevant input mass is below 1%.",
+    inputs: ["NR Capacity Category", "NO Signature Category"],
+    thresholds: "See category definitions above.",
+    limitations:
+      "The composition_constrained category is a novel framing not directly validated against clinical outcomes in adults. Mechanistically supported by Vanhatalo 2018 — Veillonella decreases with nitrate supplementation despite being a dominant NR species. Not a diagnostic for cardiovascular disease; surfaces a microbial pattern, not an outcome.",
+    citations: ["All NR Capacity and NO Signature citations"],
+  },
 ]
 
 export function getMethodologyPrompt(): string {
