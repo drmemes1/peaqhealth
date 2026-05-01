@@ -27,7 +27,7 @@ export default async function LearnPage() {
   return (
     <div className="min-h-svh" style={{ background: "#FAFAF8" }}>
       <Nav />
-      <main style={{ maxWidth: 760, margin: "0 auto", padding: "40px 24px 80px" }}>
+      <main style={{ maxWidth: 960, margin: "0 auto", padding: "40px 24px 80px" }}>
         <span style={{
           fontFamily: sans, fontSize: 10, letterSpacing: "0.12em",
           textTransform: "uppercase", color: "#7A7A6E",
@@ -37,7 +37,7 @@ export default async function LearnPage() {
         </span>
         <h1 style={{
           fontFamily: serif, fontSize: 42, fontWeight: 300,
-          color: "#141410", margin: "0 0 40px", lineHeight: 1.1,
+          color: "#141410", margin: "0 0 32px", lineHeight: 1.1,
         }}>
           Learn
         </h1>
