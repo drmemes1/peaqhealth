@@ -73,8 +73,12 @@ export default async function ExplorePage() {
       <Nav />
       <main style={{ maxWidth: 760, margin: "0 auto", padding: "0 24px" }}>
         <ExploreHero />
+      </main>
+
+      <CardiovascularCallout />
+
+      <main style={{ maxWidth: 760, margin: "0 auto", padding: "0 24px" }}>
         <HowToRead />
-        <CardiovascularCallout />
 
         {/* Library */}
         <div style={{ marginBottom: 48 }}>

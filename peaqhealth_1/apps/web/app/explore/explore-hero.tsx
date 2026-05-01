@@ -141,8 +141,8 @@ export function HowToRead() {
 export function CardiovascularCallout() {
   return (
     <div style={{
-      background: "#141410", borderRadius: 14, padding: "44px 40px",
-      marginBottom: 56, position: "relative", overflow: "hidden",
+      background: "#141410", padding: "120px 24px",
+      marginBottom: 56, marginTop: 32, position: "relative", overflow: "hidden",
     }}>
       <img
         src="/bacteria.png"
@@ -150,30 +150,30 @@ export function CardiovascularCallout() {
         aria-hidden="true"
         style={{
           position: "absolute", inset: 0, width: "100%", height: "100%",
-          objectFit: "cover", opacity: 0.18, filter: "brightness(0.4) contrast(1.1)",
+          objectFit: "cover", opacity: 0.4, filter: "brightness(0.5) contrast(1.15)",
           pointerEvents: "none", zIndex: 0,
         }}
       />
       <div style={{
         position: "absolute", inset: 0,
-        background: "linear-gradient(135deg, rgba(20,20,16,0.85) 0%, rgba(20,20,16,0.7) 100%)",
+        background: "linear-gradient(135deg, rgba(20,20,16,0.78) 0%, rgba(20,20,16,0.6) 100%)",
         pointerEvents: "none", zIndex: 0,
       }} />
       <div style={{
         position: "absolute", top: 0, right: 0, width: "50%", height: "100%",
-        background: "radial-gradient(ellipse at 100% 50%, rgba(154,114,0,0.10) 0%, transparent 70%)",
+        background: "radial-gradient(ellipse at 100% 50%, rgba(154,114,0,0.14) 0%, transparent 70%)",
         pointerEvents: "none", zIndex: 0,
       }} />
 
-      <div style={{ position: "relative", zIndex: 1 }}>
+      <div style={{ position: "relative", zIndex: 1, maxWidth: 760, margin: "0 auto" }}>
         <h3 style={{
-          fontFamily: serif, fontSize: 26, fontWeight: 400,
-          color: "#fff", margin: "0 0 20px", lineHeight: 1.3,
+          fontFamily: serif, fontSize: 38, fontWeight: 400,
+          color: "#fff", margin: "0 0 24px", lineHeight: 1.2,
         }}>
           Why your mouth shows up in your bloodwork.
         </h3>
 
-        <div style={{ fontFamily: sans, fontSize: 14, color: "rgba(255,255,255,0.55)", lineHeight: 1.75, maxWidth: 580 }}>
+        <div style={{ fontFamily: sans, fontSize: 15, color: "rgba(255,255,255,0.7)", lineHeight: 1.8, maxWidth: 620 }}>
           <p style={{ margin: "0 0 16px" }}>
             Vegetables are associated with lower blood pressure partly because the bacteria on your tongue convert their nitrate into nitric oxide &mdash; a molecule your blood vessels use to stay flexible. Without the right bacteria, the conversion runs less efficiently.
           </p>
