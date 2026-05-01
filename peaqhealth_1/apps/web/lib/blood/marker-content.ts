@@ -61,3 +61,35 @@ export const MARKERS: Record<string, MarkerDef> = {
   tsh_uiuml: { key: "tsh_uiuml", displayName: "TSH", unit: "µIU/mL", category: "thyroid", optimal: { min: 0.45, max: 4.5 }, role: "Thyroid-stimulating hormone. Controls metabolic rate, energy, and heart rate. Abnormal TSH is a priority finding that affects how we read HRV.", context: v => v == null ? "Not yet measured." : v >= 0.45 && v <= 4.5 ? `Your ${v} µIU/mL is in the normal range.` : v < 0.45 ? `Your ${v} µIU/mL is below normal — this can affect HRV and heart rate. Worth discussing with your doctor.` : `Your ${v} µIU/mL is above normal. Worth discussing.`, source: "ATA guidelines" },
   t4_free_ngdl: generic("Free T4", "ng/dL", "thyroid"),
 }
+
+// ── Auto-fill from registry ─────────────────────────────────────────────────
+// Every BLOOD_MARKER_REGISTRY id needs a MARKERS entry so the dashboard
+// can render its display name + unit. Anything not curated above falls
+// through to a generic() entry derived from the registry. This is what
+// makes adding a marker to the registry "automatically appear in the UI"
+// per ADR-0020.
+
+import { BLOOD_MARKER_REGISTRY } from "./markerRegistry"
+
+for (const m of BLOOD_MARKER_REGISTRY) {
+  if (MARKERS[m.id]) continue // curated entry takes precedence
+  // Map registry's primary category → marker-content category vocabulary.
+  // The marker-content `category` field is informational; BLOOD_CATEGORIES
+  // (categories.ts) is what actually drives the page grouping.
+  const primary = m.categories[0] ?? "other"
+  const cat: string =
+    primary === "lipids" || primary === "inflammation" ? "heart" :
+    primary === "blood_count" ? "cbc" :
+    primary === "advanced_lipids" ? "advanced_lipids" :
+    primary === "advanced_nutrients" ? "advanced_nutrients" :
+    primary === "advanced_thyroid" ? "advanced_thyroid" :
+    primary
+  MARKERS[m.id] = {
+    key: m.id,
+    displayName: m.displayName,
+    unit: m.unit,
+    category: cat,
+    role: m.description ?? `Part of your panel. Reference ranges vary by lab. Discuss with your provider.`,
+    context: v => v != null ? `Your value: ${v} ${m.unit}.` : "Not yet measured.",
+  }
+}
