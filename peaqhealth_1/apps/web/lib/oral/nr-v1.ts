@@ -83,11 +83,48 @@ export interface NRLifestyleConfounders {
   chlorhexidine_use: "never" | "past_8wks" | "currently_using" | null
   smoking_status: "never" | "former" | "current" | null
   medication_ppi: boolean
-  /** NR-α new field (q43); see migration 20260430_nr_lifestyle_fields.sql. */
-  dietary_nitrate_intake: "low" | "moderate" | "high" | null
-  /** NR-α new field (q44); see migration 20260430_nr_lifestyle_fields.sql. */
-  tongue_scraping: "never" | "occasional" | "daily" | null
+  /**
+   * Existing v2 questionnaire field (q35, dbCol `dietary_nitrate_frequency`).
+   * The 5-option vocab is mapped to the binned NR signal via
+   * `isLowDietaryNitrate` — `rarely` and `few_times_month` trigger the
+   * low-substrate confounder. See ADR-0019 § Lifestyle inputs.
+   */
+  dietary_nitrate_frequency:
+    | "rarely" | "few_times_month" | "several_weekly" | "daily" | "multiple_daily"
+    | null
+  /**
+   * Existing v2 questionnaire field (q26, dbCol `tongue_scraping_freq`).
+   * The 4-option vocab is mapped via `isFrequentTongueScraping` —
+   * `every_morning` and `most_days` trigger the high-frequency confounder.
+   */
+  tongue_scraping_freq:
+    | "never" | "occasionally" | "most_days" | "every_morning"
+    | null
   age_range: string | null
+}
+
+/**
+ * Maps the 5-option `dietary_nitrate_frequency` vocab to the binary
+ * "low substrate" signal the confounder logic branches on. Mirrors the
+ * antibiotics_window / sugar_intake bucketing pattern in
+ * caries-v3-runner.lifestyleFromRow.
+ */
+export function isLowDietaryNitrate(
+  freq: NRLifestyleConfounders["dietary_nitrate_frequency"],
+): boolean {
+  return freq === "rarely" || freq === "few_times_month"
+}
+
+/**
+ * Maps the 4-option `tongue_scraping_freq` vocab to the binary
+ * "high-frequency scraping" signal. `most_days` is included alongside
+ * `every_morning` because both produce daily-or-near-daily mechanical
+ * removal of the tongue-dorsal NR community.
+ */
+export function isFrequentTongueScraping(
+  freq: NRLifestyleConfounders["tongue_scraping_freq"],
+): boolean {
+  return freq === "most_days" || freq === "every_morning"
 }
 
 export interface NRV1Result {
@@ -278,14 +315,14 @@ export function calculateNRV1(
         "PPI use causes Streptococcus overgrowth and Neisseria/Veillonella depletion. NO Signature interpretation may be PPI-confounded."
     }
 
-    if (lifestyle.dietary_nitrate_intake === "low") {
+    if (isLowDietaryNitrate(lifestyle.dietary_nitrate_frequency)) {
       confounderAdjustments.dietary_nitrate =
         "Low dietary nitrate intake limits substrate for the NR community. Even robust NR capacity produces limited NO without dietary substrate. Target 200–400 mg nitrate/day from leafy greens, beets, or supplementation (clinical trials use 6.4 mmol ≈ 400 mg)."
     }
 
-    if (lifestyle.tongue_scraping === "daily") {
+    if (isFrequentTongueScraping(lifestyle.tongue_scraping_freq)) {
       confounderAdjustments.tongue_scraping =
-        "Daily tongue scraping mechanically removes the NR community concentrated on the tongue dorsum. If NR scores are low, consider reducing scraping frequency to every 2–3 days."
+        "Daily or near-daily tongue scraping mechanically removes the NR community concentrated on the tongue dorsum. If NR scores are low, consider reducing scraping frequency to every 2–3 days."
     }
   }
 
@@ -348,7 +385,7 @@ export const ZERO_NR_LIFESTYLE: NRLifestyleConfounders = {
   chlorhexidine_use: null,
   smoking_status: null,
   medication_ppi: false,
-  dietary_nitrate_intake: null,
-  tongue_scraping: null,
+  dietary_nitrate_frequency: null,
+  tongue_scraping_freq: null,
   age_range: null,
 }

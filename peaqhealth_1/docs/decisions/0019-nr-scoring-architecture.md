@@ -103,31 +103,58 @@ NR-relevant confounders consumed:
   Streptococcus overgrowth confounds the signature.
 - `dietary_nitrate_intake=low` — substrate constraint; even robust
   capacity produces little NO without dietary nitrate.
-- `tongue_scraping=daily` — mechanical removal of the tongue-dorsal
-  NR community.
+- `tongue_scraping_freq=most_days | every_morning` — mechanical
+  removal of the tongue-dorsal NR community.
 
-## Lifestyle inputs — two new fields, coexisting with the existing pair
+## Lifestyle inputs — reuse existing v2 columns; no schema changes
 
-The wizard already has `dietary_nitrate_frequency` (q35, 5 options)
-and `tongue_scraping_freq` (q26, 4 options) from the v2 questionnaire
-work. Those capture habit detail; the NR confounder logic needs the
-coarser binned signal it actually branches on (`low | moderate | high`
-and `never | occasional | daily`).
+The v2 questionnaire already has `dietary_nitrate_frequency` (q35,
+5 options: `rarely | few_times_month | several_weekly | daily |
+multiple_daily`) and `tongue_scraping_freq` (q26, 4 options:
+`never | occasionally | most_days | every_morning`). The NR confounder
+logic needs the coarser binned signal it branches on, but the binning
+can happen in TypeScript without an extra column.
 
-Per the spec, this PR adds two new fields rather than rebinding the
-existing columns:
+The first revision of this PR added two new columns
+(`dietary_nitrate_intake`, `tongue_scraping`) with their own
+`low | moderate | high` and `never | occasional | daily` vocabs. Code
+review flagged the duplication: production rows already store v2
+answers in the existing columns, the wizard would render two
+near-identical questions per topic, and any future change in vocab
+would have to keep the pair in sync.
 
-- `dietary_nitrate_intake` (q43, dbCol `dietary_nitrate_intake`)
-- `tongue_scraping` (q44, dbCol `tongue_scraping`)
+The PR was revised to drop the new columns entirely and rebind the
+algorithm onto the existing ones. The mapping happens in two small
+pure helpers exported from `nr-v1.ts`:
 
-Migration: `supabase/migrations/20260430_nr_lifestyle_fields.sql`.
+```ts
+export function isLowDietaryNitrate(freq) {
+  return freq === "rarely" || freq === "few_times_month"
+}
 
-The existing `dietary_nitrate_frequency` and `tongue_scraping_freq`
-columns are intentionally **not** removed. Production rows already
-contain values in those columns from the v2 wizard rollout. A future
-consolidation PR may map the high-granularity columns into the binned
-ones and remove duplicates; that work is out of scope here. The
-duplication is recorded as a known follow-up.
+export function isFrequentTongueScraping(freq) {
+  return freq === "most_days" || freq === "every_morning"
+}
+```
+
+These mirror the bucketing pattern already in
+`caries-v3-runner.lifestyleFromRow` for `antibiotics_window` and
+`sugar_intake`. Each helper has a dedicated unit test exercising every
+input value of its source vocab plus `null`. The confounder branches
+in `calculateNRV1` call `isLowDietaryNitrate(...)` and
+`isFrequentTongueScraping(...)` instead of comparing against the new
+binned vocab.
+
+What this PR therefore does **not** do:
+
+- No new lifestyle columns. No migration ships from this PR.
+- No new wizard questions. `apps/web/lib/questionnaire/v2-questions.ts`
+  is unchanged.
+- No additions to the lifestyle-update API allowlist
+  (`apps/web/app/api/lifestyle/answer/route.ts`).
+
+The duplicated-columns concern is therefore retired in this slice
+rather than left as future debt.
 
 ## Validation cases (pilot fixtures)
 
@@ -195,10 +222,6 @@ remains green at 85 / 85.
 - **Future-future — PICRUSt2 functional gene scoring.** ORIGINS used a
   predicted NO:NH₃ functional ratio. Requires bioinformatics
   infrastructure beyond 16S OTU summing.
-- **Consolidation — habit columns vs binned columns.** Decide whether
-  `dietary_nitrate_frequency` / `tongue_scraping_freq` should derive
-  from `dietary_nitrate_intake` / `tongue_scraping` automatically (or
-  vice versa), and remove the duplicate.
 
 ## References
 

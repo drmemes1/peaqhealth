@@ -169,14 +169,34 @@ describe("NR-v1 — confounder adjustments (do not alter scores; populate guidan
     expect(r.confounderAdjustments.ppi).toMatch(/PPI/)
   })
 
-  test("dietary_nitrate_intake=low → dietary_nitrate adjustment", () => {
-    const r = calculateNRV1(baseline, lifestyle({ dietary_nitrate_intake: "low" }))
+  test("dietary_nitrate_frequency=rarely → dietary_nitrate adjustment", () => {
+    const r = calculateNRV1(baseline, lifestyle({ dietary_nitrate_frequency: "rarely" }))
     expect(r.confounderAdjustments.dietary_nitrate).toMatch(/Low dietary nitrate/i)
   })
 
-  test("tongue_scraping=daily → tongue_scraping adjustment", () => {
-    const r = calculateNRV1(baseline, lifestyle({ tongue_scraping: "daily" }))
+  test("dietary_nitrate_frequency=few_times_month → dietary_nitrate adjustment", () => {
+    const r = calculateNRV1(baseline, lifestyle({ dietary_nitrate_frequency: "few_times_month" }))
+    expect(r.confounderAdjustments.dietary_nitrate).toMatch(/Low dietary nitrate/i)
+  })
+
+  test("dietary_nitrate_frequency=several_weekly → no dietary_nitrate adjustment", () => {
+    const r = calculateNRV1(baseline, lifestyle({ dietary_nitrate_frequency: "several_weekly" }))
+    expect(r.confounderAdjustments.dietary_nitrate).toBeUndefined()
+  })
+
+  test("tongue_scraping_freq=every_morning → tongue_scraping adjustment", () => {
+    const r = calculateNRV1(baseline, lifestyle({ tongue_scraping_freq: "every_morning" }))
     expect(r.confounderAdjustments.tongue_scraping).toMatch(/tongue scraping/i)
+  })
+
+  test("tongue_scraping_freq=most_days → tongue_scraping adjustment", () => {
+    const r = calculateNRV1(baseline, lifestyle({ tongue_scraping_freq: "most_days" }))
+    expect(r.confounderAdjustments.tongue_scraping).toMatch(/tongue scraping/i)
+  })
+
+  test("tongue_scraping_freq=occasionally → no tongue_scraping adjustment", () => {
+    const r = calculateNRV1(baseline, lifestyle({ tongue_scraping_freq: "occasionally" }))
+    expect(r.confounderAdjustments.tongue_scraping).toBeUndefined()
   })
 
   test("confounders never alter the underlying scores", () => {
@@ -188,14 +208,37 @@ describe("NR-v1 — confounder adjustments (do not alter scores; populate guidan
         mouthwash_type: "antiseptic",
         smoking_status: "current",
         medication_ppi: true,
-        dietary_nitrate_intake: "low",
-        tongue_scraping: "daily",
+        dietary_nitrate_frequency: "rarely",
+        tongue_scraping_freq: "every_morning",
       }),
     )
     expect(heavy.nrCapacityIndex).toBeCloseTo(noLs.nrCapacityIndex, 6)
     expect(heavy.noSignature).toBeCloseTo(noLs.noSignature, 6)
     expect(heavy.nrCapacityCategory).toBe(noLs.nrCapacityCategory)
     expect(heavy.noSignatureCategory).toBe(noLs.noSignatureCategory)
+  })
+})
+
+// ── Helper bucketing ────────────────────────────────────────────────────────
+
+import { isFrequentTongueScraping, isLowDietaryNitrate } from "../nr-v1"
+
+describe("NR-v1 — value mapping helpers", () => {
+  test("isLowDietaryNitrate covers rarely + few_times_month only", () => {
+    expect(isLowDietaryNitrate("rarely")).toBe(true)
+    expect(isLowDietaryNitrate("few_times_month")).toBe(true)
+    expect(isLowDietaryNitrate("several_weekly")).toBe(false)
+    expect(isLowDietaryNitrate("daily")).toBe(false)
+    expect(isLowDietaryNitrate("multiple_daily")).toBe(false)
+    expect(isLowDietaryNitrate(null)).toBe(false)
+  })
+
+  test("isFrequentTongueScraping covers most_days + every_morning only", () => {
+    expect(isFrequentTongueScraping("most_days")).toBe(true)
+    expect(isFrequentTongueScraping("every_morning")).toBe(true)
+    expect(isFrequentTongueScraping("occasionally")).toBe(false)
+    expect(isFrequentTongueScraping("never")).toBe(false)
+    expect(isFrequentTongueScraping(null)).toBe(false)
   })
 })
 

@@ -16,8 +16,6 @@ const ALLOWED_FIELDS = new Set([
   "medication_ppi", "medication_ppi_detail",
   // Caries v3 confounders (ADR-0014).
   "chlorhexidine_use", "xerostomia_self_report",
-  // NR-α confounders (ADR-0019).
-  "dietary_nitrate_intake", "tongue_scraping",
 ])
 
 export async function POST(request: NextRequest) {
