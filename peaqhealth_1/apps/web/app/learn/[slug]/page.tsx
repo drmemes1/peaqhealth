@@ -35,25 +35,6 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
           ← Back to Learn
         </Link>
 
-        {(article.summary_box_md as string | null) && (
-          <div style={{
-            background: "linear-gradient(135deg, #EBF2FA 0%, #E0EBF7 100%)",
-            borderRadius: 16, padding: "28px 32px",
-            marginBottom: 32,
-          }}>
-            <span style={{
-              fontFamily: sans, fontSize: 10, letterSpacing: "1.5px", textTransform: "uppercase",
-              color: "#185FA5", fontWeight: 600,
-              display: "block", marginBottom: 12,
-            }}>
-              The short version
-            </span>
-            <div style={{ color: "#042C53" }}>
-              <ArticleBody markdown={article.summary_box_md as string} />
-            </div>
-          </div>
-        )}
-
         <h1 style={{
           fontFamily: serif, fontSize: 38, fontWeight: 400,
           color: "#141410", margin: "0 0 12px", lineHeight: 1.15,
@@ -89,6 +70,26 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
             }}
           />
         )}
+
+        {(article.summary_box_md as string | null) && (
+          <div style={{
+            background: "linear-gradient(135deg, #EBF2FA 0%, #E0EBF7 100%)",
+            borderRadius: 16, padding: "28px 32px",
+            marginBottom: 32,
+          }}>
+            <span style={{
+              fontFamily: sans, fontSize: 10, letterSpacing: "1.5px", textTransform: "uppercase",
+              color: "#185FA5", fontWeight: 600,
+              display: "block", marginBottom: 12,
+            }}>
+              The short version
+            </span>
+            <div style={{ color: "#042C53" }}>
+              <ArticleBody markdown={article.summary_box_md as string} />
+            </div>
+          </div>
+        )}
+
         <ArticleBody
           markdown={article.body_md as string}
           stripFirstImage={!!(article.image_url as string | null)}
