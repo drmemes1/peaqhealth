@@ -22,9 +22,9 @@ export default async function SleepMetricPage({ params }: { params: Promise<{ me
     { data: sleepNights },
     { data: articles },
   ] = await Promise.all([
-    supabase.from("lab_results").select("*")
+    supabase.from("blood_results").select("*")
       .eq("user_id", user.id).eq("parser_status", "complete")
-      .order("collection_date", { ascending: false }).limit(1).maybeSingle(),
+      .order("collected_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("score_snapshots").select("*")
       .eq("user_id", user.id).order("calculated_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("oral_kit_orders").select("*, raw_otu_table")

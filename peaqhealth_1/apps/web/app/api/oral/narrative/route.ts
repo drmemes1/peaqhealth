@@ -624,11 +624,11 @@ export async function GET(request: Request) {
 
   const [labRes, sleepRes, lifestyleRes, profileRes] = await Promise.all([
     supabase
-      .from("lab_results")
+      .from("blood_results")
       .select("collection_date, ldl_mgdl, hdl_mgdl, triglycerides_mgdl, total_cholesterol_mgdl, hba1c_pct, glucose_mgdl, hs_crp_mgl, wbc_kul, hematocrit_pct, tsh_uiuml, free_t4_ngdl, egfr_mlmin, vitamin_d_ngml, vitamin_b12_pgml, ferritin_ngml")
       .eq("user_id", userId)
       .eq("parser_status", "complete")
-      .order("collection_date", { ascending: false })
+      .order("collected_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
 

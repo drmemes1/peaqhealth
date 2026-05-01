@@ -25,10 +25,10 @@ export async function GET() {
       .select("shannon_diversity, neisseria_pct, haemophilus_pct, rothia_pct, actinomyces_pct, veillonella_pct, porphyromonas_pct, tannerella_pct, treponema_pct, fusobacterium_pct, aggregatibacter_pct, campylobacter_pct, prevotella_intermedia_pct, s_mutans_pct, s_sobrinus_pct, s_sanguinis_pct, s_gordonii_pct, s_salivarius_pct, lactobacillus_pct, streptococcus_total_pct, env_pattern, species_count, primary_pattern")
       .eq("user_id", user.id).not("shannon_diversity", "is", null)
       .order("ordered_at", { ascending: false }).limit(1).maybeSingle(),
-    supabase.from("lab_results")
+    supabase.from("blood_results")
       .select("ldl_mgdl, hdl_mgdl, triglycerides_mgdl, hba1c_pct, glucose_mgdl, hs_crp_mgl")
       .eq("user_id", user.id).eq("parser_status", "complete")
-      .order("collection_date", { ascending: false }).limit(1).maybeSingle(),
+      .order("collected_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("lifestyle_records")
       .select("mouth_breathing, snoring_reported, flossing_freq, mouthwash_type, biological_sex, age_range")
       .eq("user_id", user.id).order("updated_at", { ascending: false }).limit(1).maybeSingle(),

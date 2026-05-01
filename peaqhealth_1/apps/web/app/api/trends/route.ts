@@ -36,7 +36,7 @@ export async function GET() {
 
     // Event markers
     Promise.all([
-      supabase.from("lab_results").select("uploaded_at").eq("user_id", userId).order("uploaded_at"),
+      supabase.from("blood_results").select("uploaded_at").eq("user_id", userId).order("uploaded_at"),
       supabase.from("oral_kit_orders").select("results_date").eq("user_id", userId).not("results_date", "is", null).order("results_date", { ascending: false }),
       supabase.from("wearable_connections_v2").select("created_at, provider").eq("user_id", userId),
     ]),

@@ -9,11 +9,11 @@ export default async function LabsPage() {
 
   // Load most recent lab result for display
   const { data: existing } = await supabase
-    .from("lab_results")
+    .from("blood_results")
     .select("collection_date, lab_name, hs_crp_mgl, vitamin_d_ngml, apob_mgdl, ldl_mgdl, hdl_mgdl, lpa_mgdl, hba1c_pct")
     .eq("user_id", user.id)
     .eq("parser_status", "complete")
-    .order("collection_date", { ascending: false })
+    .order("collected_at", { ascending: false })
     .limit(1)
     .single()
 

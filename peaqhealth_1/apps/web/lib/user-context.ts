@@ -1,5 +1,6 @@
 import { cache } from "react"
 import { createClient as createServiceClient } from "@supabase/supabase-js"
+import { bloodPanelDataFromBloodResults } from "./blood/bloodPanelDataFromBloodResults"
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -212,7 +213,7 @@ async function buildContext(userId: string): Promise<UserPanelContext> {
   const [{ data: profile }, { data: oralRaw }, { data: labRaw }, { data: lifestyle }, { data: sleepNights }, { data: wearableConn }] = await Promise.all([
     supabase.from("profiles").select("first_name, date_of_birth, email").eq("id", userId).maybeSingle(),
     supabase.from("oral_kit_orders").select("*").eq("user_id", userId).not("shannon_diversity", "is", null).order("ordered_at", { ascending: false }).limit(1).maybeSingle(),
-    supabase.from("lab_results").select("*").eq("user_id", userId).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).maybeSingle(),
+    supabase.from("blood_results").select("*").eq("user_id", userId).order("collected_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("lifestyle_records").select("*").eq("user_id", userId).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("sleep_data").select("hrv_rmssd, spo2, resting_heart_rate, respiratory_rate, deep_sleep_minutes, total_sleep_minutes, sleep_efficiency").eq("user_id", userId).gt("sleep_efficiency", 0).gte("date", thirtyDaysAgo).order("date", { ascending: false }),
     supabase.from("wearable_connections_v2").select("provider, last_synced_at").eq("user_id", userId).order("connected_at", { ascending: false }).limit(1).maybeSingle(),
@@ -263,22 +264,15 @@ async function buildContext(userId: string): Promise<UserPanelContext> {
   }
 
   // ── Blood ──
-  let bloodPanel: BloodPanelData | null = null
+  // Reads the latest blood_results row (per-test, ordered by collected_at).
+  // Translation to BloodPanelData happens in the adapter, which also
+  // splats every registry id onto the result so the 25-field ceiling
+  // from the audit no longer applies. See ADR-0020.
+  const bloodPanel = bloodPanelDataFromBloodResults(
+    labRaw as Record<string, unknown> | null,
+  )
   const bloodMarkersPopulated: string[] = []
-  if (labRaw) {
-    const l = labRaw as Record<string, unknown>
-    bloodPanel = {
-      id: l.id as string, drawDate: s(l.collection_date), labName: s(l.lab_name),
-      ldl: n(l.ldl_mgdl), hdl: n(l.hdl_mgdl), triglycerides: n(l.triglycerides_mgdl), totalCholesterol: n(l.total_cholesterol_mgdl),
-      hsCrp: n(l.hs_crp_mgl), hba1c: n(l.hba1c_pct), glucose: n(l.glucose_mgdl),
-      wbc: n(l.wbc_kul), hemoglobin: n(l.hemoglobin_gdl), hematocrit: n(l.hematocrit_pct),
-      tsh: n(l.tsh_uiuml), freeT4: n(l.free_t4_ngdl),
-      egfr: n(l.egfr_mlmin), creatinine: n(l.creatinine_mgdl), bun: n(l.bun_mgdl),
-      alt: n(l.alt_ul), ast: n(l.ast_ul), albumin: n(l.albumin_gdl),
-      vitaminD: n(l.vitamin_d_ngml), ferritin: n(l.ferritin_ngml), vitaminB12: n(l.vitamin_b12_pgml),
-      sodium: n(l.sodium_mmoll), potassium: n(l.potassium_mmoll),
-      platelets: n(l.platelets_kul), rdw: n(l.rdw_pct),
-    }
+  if (bloodPanel) {
     for (const [k, v] of Object.entries(bloodPanel)) {
       if (v != null && typeof v === "number") bloodMarkersPopulated.push(k)
     }

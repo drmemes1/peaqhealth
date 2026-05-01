@@ -16,7 +16,7 @@ export async function GET() {
   if (cached?.content) return NextResponse.json(cached)
 
   const [{ data: lab }, { data: kit }, { count: sleepCount }] = await Promise.all([
-    supabase.from("lab_results").select("ldl_mgdl, hdl_mgdl, triglycerides_mgdl, hba1c_pct, glucose_mgdl, hs_crp_mgl, tsh_uiuml").eq("user_id", user.id).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).maybeSingle(),
+    supabase.from("blood_results").select("ldl_mgdl, hdl_mgdl, triglycerides_mgdl, hba1c_pct, glucose_mgdl, hs_crp_mgl, tsh_uiuml").eq("user_id", user.id).eq("parser_status", "complete").order("collected_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("oral_kit_orders").select("neisseria_pct, haemophilus_pct, porphyromonas_pct, fusobacterium_pct, env_pattern").eq("user_id", user.id).not("shannon_diversity", "is", null).order("ordered_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("sleep_data").select("id", { count: "exact", head: true }).eq("user_id", user.id).gt("sleep_efficiency", 0),
   ])

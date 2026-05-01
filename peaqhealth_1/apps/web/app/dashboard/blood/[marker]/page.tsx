@@ -28,9 +28,9 @@ export default async function MarkerPage({ params }: { params: Promise<{ marker:
     { data: articles },
     { data: labHistory },
   ] = await Promise.all([
-    supabase.from("lab_results").select("*")
+    supabase.from("blood_results").select("*")
       .eq("user_id", user.id).eq("parser_status", "complete")
-      .order("collection_date", { ascending: false }).limit(1).maybeSingle(),
+      .order("collected_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("score_snapshots").select("*")
       .eq("user_id", user.id).order("calculated_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("oral_kit_orders").select("*, raw_otu_table")
@@ -45,9 +45,9 @@ export default async function MarkerPage({ params }: { params: Promise<{ marker:
     supabase.from("articles").select("slug, title, summary, read_time_min")
       .eq("published", true)
       .in("slug", richDef?.related_articles?.length ? richDef.related_articles : ["__none__"]),
-    supabase.from("lab_results").select("*")
+    supabase.from("blood_results").select("*")
       .eq("user_id", user.id).eq("parser_status", "complete")
-      .order("collection_date", { ascending: true }).limit(5),
+      .order("collected_at", { ascending: true }).limit(5),
   ])
 
   const dobStr = profile?.date_of_birth as string | null

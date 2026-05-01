@@ -255,7 +255,7 @@ export async function POST(request: NextRequest) {
       )
       // Find the lab_results row by job_id to get the user
       const { data: labRow } = await supabaseAnon
-        .from("lab_results")
+        .from("blood_results")
         .select("id, user_id")
         .eq("junction_parser_job_id", jobId)
         .single()
@@ -268,7 +268,7 @@ export async function POST(request: NextRequest) {
         }
         const bloodInputs = mapParserResultToBloodInputs(parserResult)
 
-        await supabaseAnon.from("lab_results").update({
+        await supabaseAnon.from("blood_results").update({
           parser_status:      "complete",
           hs_crp_mgl:         bloodInputs.hsCRP_mgL ?? null,
           vitamin_d_ngml:     bloodInputs.vitaminD_ngmL ?? null,
@@ -631,14 +631,14 @@ export async function POST(request: NextRequest) {
       // Find pending lab_results row by junction_parser_job_id, or insert new
       if (jobId) {
         const { data: existingLab } = await supabase
-          .from("lab_results")
+          .from("blood_results")
           .select("id")
           .eq("user_id", userId)
           .eq("junction_parser_job_id", jobId)
           .single()
 
         if (existingLab) {
-          await supabase.from("lab_results").update({
+          await supabase.from("blood_results").update({
             parser_status:      "complete",
             hs_crp_mgl:         bloodInputs.hsCRP_mgL ?? null,
             vitamin_d_ngml:     bloodInputs.vitaminD_ngmL ?? null,
@@ -658,7 +658,7 @@ export async function POST(request: NextRequest) {
 
           console.log("[webhook] lab parser — updated existing lab_results row:", existingLab.id)
         } else {
-          await supabase.from("lab_results").insert({
+          await supabase.from("blood_results").insert({
             user_id:                  userId,
             junction_parser_job_id:   jobId,
             source:                   "webhook_parser",

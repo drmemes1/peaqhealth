@@ -18,7 +18,7 @@ export default async function GuidancePage() {
     { data: sleepNights },
   ] = await Promise.all([
     supabase.from("score_snapshots").select("*").eq("user_id", user.id).order("calculated_at", { ascending: false }).limit(1).maybeSingle(),
-    supabase.from("lab_results").select("*").eq("user_id", user.id).eq("parser_status", "complete").order("collection_date", { ascending: false }).limit(1).maybeSingle(),
+    supabase.from("blood_results").select("*").eq("user_id", user.id).eq("parser_status", "complete").order("collected_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("oral_kit_orders").select("*").eq("user_id", user.id).not("shannon_diversity", "is", null).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("lifestyle_records").select("age_range, biological_sex").eq("user_id", user.id).maybeSingle(),
     supabase.from("wearable_connections_v2").select("provider").eq("user_id", user.id).limit(1).maybeSingle(),

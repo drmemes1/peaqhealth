@@ -19,9 +19,9 @@ export default async function PlanPage() {
   ] = await Promise.all([
     supabase.from("score_snapshots").select("*")
       .eq("user_id", user.id).order("calculated_at", { ascending: false }).limit(1).maybeSingle(),
-    supabase.from("lab_results").select("*")
+    supabase.from("blood_results").select("*")
       .eq("user_id", user.id).eq("parser_status", "complete")
-      .order("collection_date", { ascending: false }).limit(1).maybeSingle(),
+      .order("collected_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("oral_kit_orders").select("*")
       .eq("user_id", user.id).eq("status", "results_ready")
       .order("results_date", { ascending: false }).limit(1).maybeSingle(),

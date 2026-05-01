@@ -25,7 +25,7 @@ export async function POST() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const { error } = await supabase.from("lab_results").insert({
+  const { error } = await supabase.from("blood_results").insert({
     user_id:         user.id,
     source:          "test_data",
     collection_date: new Date().toISOString().slice(0, 10),

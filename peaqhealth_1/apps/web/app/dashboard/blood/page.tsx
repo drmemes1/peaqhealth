@@ -28,9 +28,9 @@ export default async function BloodPage() {
 
   // Fetch raw lab row with DB column names — blood-panel-rebuild expects snake_case keys
   const { data: labRaw } = await supabase
-    .from("lab_results").select("*")
+    .from("blood_results").select("*")
     .eq("user_id", user.id).eq("parser_status", "complete")
-    .order("collection_date", { ascending: false }).limit(1).maybeSingle()
+    .order("collected_at", { ascending: false }).limit(1).maybeSingle()
 
   return (
     <div className="min-h-svh" style={{ background: "#F5F3EE" }}>
