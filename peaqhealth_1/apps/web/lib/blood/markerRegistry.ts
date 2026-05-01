@@ -52,6 +52,63 @@ export interface DerivedSpec {
   operands: string[]
 }
 
+// ── Marker-detail-page metadata (PART 1 of marker-detail rewrite) ──────────
+//
+// statusBands, favorableDirection, cluster, and descriptor are
+// application-level metadata, not schema columns. They drive the
+// /dashboard/blood/[marker] page only — no migration impact. The
+// schema-sync test still passes because it scans column names, not
+// type-level fields.
+
+export type MarkerStatus = "target" | "above" | "below"
+
+/** Voice-compliant range labels — never use "elevated/high/low/concerning". */
+export type RangeLabel =
+  | "Lower range"
+  | "Mid range"
+  | "Higher range"
+  | "Highest range"
+  | "Target range"
+  | "Above target"
+  | "Below target"
+
+export interface StatusBand {
+  /** Lower bound, inclusive. Use Number.NEGATIVE_INFINITY for the lowest band. */
+  min: number
+  /** Upper bound, exclusive. null = no upper bound (highest band). */
+  max: number | null
+  status: MarkerStatus
+  label: RangeLabel
+}
+
+export type FavorableDirection = "lower" | "higher" | "mid"
+
+export type MarkerCluster =
+  | "lipid_panel"
+  | "metabolic_panel"
+  | "thyroid_panel"
+  | "kidney_panel"
+  | "liver_panel"
+  | "cbc_panel"
+  | "inflammation_panel"
+  | null
+
+export interface MarkerDescriptor {
+  /**
+   * Short prose for the data-reflection section (1–2 paragraphs).
+   * `%VALUE%` is interpolated with the user's numeric value at render time.
+   */
+  reflection: string
+  /** Drawer: "What this measurement reflects." */
+  whatItIs: string
+  /** Drawer: "What research associates with changes." */
+  raisesAndLowers: { raises: string; lowers: string }
+  /** Drawer: "What this number alone does not capture." */
+  limitations?: string
+  /** Drawer: "References." Semicolon-separated formatted citations. */
+  references: string
+}
+
 export interface BloodMarker {
   /** Database column name. snake_case with unit suffix. */
   id: string
@@ -79,6 +136,16 @@ export interface BloodMarker {
   description?: string
   /** True for markers only present in advanced panels (NMR LipoProfile, omega index, etc.). */
   requiresAdvancedTest?: boolean
+
+  // ── Marker-detail-page metadata (optional; populated for high-priority markers in PART 3) ──
+  /** Ordered low → high. First band's min should be ≤ validRange.min; last band's max may be null. */
+  statusBands?: StatusBand[]
+  /** Drives status-pill color logic on the detail page. */
+  favorableDirection?: FavorableDirection
+  /** Which panel-context cluster this marker belongs to. null = no cluster (renders alone). */
+  cluster?: MarkerCluster
+  /** Per-marker content for the detail page. Optional — markers without this render with placeholder copy. */
+  descriptor?: MarkerDescriptor
 }
 
 // ── Registry ────────────────────────────────────────────────────────────────
@@ -341,6 +408,19 @@ export const BLOOD_MARKER_REGISTRY: BloodMarker[] = [
     tier: "standard",
     synonyms: ["Magnesium", "Mg"],
     validRange: { min: 0.5, max: 5 },
+    statusBands: [
+      { min: Number.NEGATIVE_INFINITY, max: 1.7, status: "below", label: "Lower range" },
+      { min: 1.7, max: 2.4,  status: "target", label: "Target range" },
+      { min: 2.4, max: null, status: "above",  label: "Higher range" },
+    ],
+    favorableDirection: "mid",
+    cluster: null,
+    descriptor: {
+      reflection: "Your magnesium reads %VALUE% mg/dL. Serum magnesium captures only a small fraction of total body magnesium — most of it lives inside cells and bone. [PLACEHOLDER — needs clinical review]",
+      whatItIs: "[PLACEHOLDER — needs clinical review]",
+      raisesAndLowers: { raises: "[PLACEHOLDER — needs clinical review]", lowers: "[PLACEHOLDER — needs clinical review]" },
+      references: "[PLACEHOLDER — needs clinical review]",
+    },
   },
 
   // ─── HORMONES ───────────────────────────────────────────────────────────
@@ -435,6 +515,20 @@ export const BLOOD_MARKER_REGISTRY: BloodMarker[] = [
     tier: "standard",
     synonyms: ["Total Cholesterol", "Cholesterol, Total", "Cholesterol"],
     validRange: { min: 50, max: 600 },
+    statusBands: [
+      { min: Number.NEGATIVE_INFINITY, max: 150, status: "target", label: "Lower range" },
+      { min: 150, max: 200, status: "target", label: "Mid range" },
+      { min: 200, max: 240, status: "above",  label: "Higher range" },
+      { min: 240, max: null, status: "above", label: "Highest range" },
+    ],
+    favorableDirection: "lower",
+    cluster: "lipid_panel",
+    descriptor: {
+      reflection: "Your total cholesterol reads %VALUE% mg/dL. The breakdown into LDL, HDL, and triglycerides shown in the lipid panel below carries more signal than the total alone. [PLACEHOLDER — needs clinical review]",
+      whatItIs: "[PLACEHOLDER — needs clinical review]",
+      raisesAndLowers: { raises: "[PLACEHOLDER — needs clinical review]", lowers: "[PLACEHOLDER — needs clinical review]" },
+      references: "[PLACEHOLDER — needs clinical review]",
+    },
   },
   {
     id: "ldl_mgdl",
@@ -445,6 +539,30 @@ export const BLOOD_MARKER_REGISTRY: BloodMarker[] = [
     tier: "standard",
     synonyms: ["LDL Cholesterol", "LDL", "LDL-C", "LDL Chol", "LDL, Calculated"],
     validRange: { min: 5, max: 500 },
+    statusBands: [
+      { min: Number.NEGATIVE_INFINITY, max: 70,  status: "target", label: "Lower range" },
+      { min: 70,  max: 100, status: "target", label: "Mid range" },
+      { min: 100, max: 160, status: "above",  label: "Higher range" },
+      { min: 160, max: null, status: "above", label: "Highest range" },
+    ],
+    favorableDirection: "lower",
+    cluster: "lipid_panel",
+    descriptor: {
+      reflection:
+        "Your LDL cholesterol reads %VALUE% mg/dL. LDL is one of several particle counts oravi tracks alongside ApoB, Lp(a), and HDL — together these give a fuller picture of cardiovascular risk than any single number. The lipid panel context below shows your other lipid markers side-by-side.",
+      whatItIs:
+        "LDL cholesterol is the cholesterol carried by low-density lipoprotein particles in your bloodstream. Population research has associated higher LDL with cardiovascular events, though the strength of that association depends on particle size, ApoB count, and the presence of other risk factors.",
+      raisesAndLowers: {
+        raises:
+          "Saturated fat intake, refined carbohydrate intake, low fiber intake, and sedentary behavior are associated with higher LDL in observational studies. Genetic variants (familial hypercholesterolemia) can also elevate LDL independently of diet. Some thyroid patterns are associated with LDL changes.",
+        lowers:
+          "Higher fiber intake, replacing saturated fat with unsaturated fat, regular aerobic exercise, and reaching a healthy body composition are associated with lower LDL in observational and intervention studies. Plant sterols and certain medications (statins) are associated with substantial LDL reduction in randomized trials.",
+      },
+      limitations:
+        "LDL alone does not capture particle number (ApoB) or particle size. Two people with the same LDL can have very different cardiovascular risk profiles depending on these other factors. Lp(a) is a separate, genetically determined particle that LDL does not include.",
+      references:
+        "Ference BA et al. Eur Heart J 2017 (LDL & cardiovascular disease consensus); Sniderman AD et al. JAMA Cardiol 2019 (ApoB vs LDL-C comparison); Mach F et al. Eur Heart J 2020 (ESC/EAS Guidelines)",
+    },
   },
   {
     id: "hdl_mgdl",
@@ -455,6 +573,20 @@ export const BLOOD_MARKER_REGISTRY: BloodMarker[] = [
     tier: "standard",
     synonyms: ["HDL Cholesterol", "HDL", "HDL-C", "HDL Chol"],
     validRange: { min: 5, max: 200 },
+    statusBands: [
+      { min: Number.NEGATIVE_INFINITY, max: 40, status: "below", label: "Lower range" },
+      { min: 40, max: 60,   status: "target", label: "Mid range" },
+      { min: 60, max: null, status: "target", label: "Higher range" },
+    ],
+    favorableDirection: "higher",
+    cluster: "lipid_panel",
+    descriptor: {
+      reflection:
+        "Your HDL cholesterol reads %VALUE% mg/dL. HDL is part of the lipid panel and is read in context with LDL, ApoB, and Lp(a) below. [PLACEHOLDER — needs clinical review]",
+      whatItIs: "[PLACEHOLDER — needs clinical review]",
+      raisesAndLowers: { raises: "[PLACEHOLDER — needs clinical review]", lowers: "[PLACEHOLDER — needs clinical review]" },
+      references: "[PLACEHOLDER — needs clinical review]",
+    },
   },
   {
     id: "triglycerides_mgdl",
@@ -465,6 +597,20 @@ export const BLOOD_MARKER_REGISTRY: BloodMarker[] = [
     tier: "standard",
     synonyms: ["Triglycerides", "Triglyceride", "TG"],
     validRange: { min: 10, max: 5000 },
+    statusBands: [
+      { min: Number.NEGATIVE_INFINITY, max: 100, status: "target", label: "Lower range" },
+      { min: 100, max: 150, status: "target", label: "Mid range" },
+      { min: 150, max: 200, status: "above",  label: "Higher range" },
+      { min: 200, max: null, status: "above", label: "Highest range" },
+    ],
+    favorableDirection: "lower",
+    cluster: "lipid_panel",
+    descriptor: {
+      reflection: "Your triglycerides read %VALUE% mg/dL. Triglycerides shift more day-to-day than other lipid markers and are sensitive to fasting state. [PLACEHOLDER — needs clinical review]",
+      whatItIs: "[PLACEHOLDER — needs clinical review]",
+      raisesAndLowers: { raises: "[PLACEHOLDER — needs clinical review]", lowers: "[PLACEHOLDER — needs clinical review]" },
+      references: "[PLACEHOLDER — needs clinical review]",
+    },
   },
   {
     id: "total_chol_hdl_ratio",
@@ -499,6 +645,19 @@ export const BLOOD_MARKER_REGISTRY: BloodMarker[] = [
       "Lp(a) Mass",
     ],
     validRange: { min: 0, max: 500 },
+    statusBands: [
+      { min: Number.NEGATIVE_INFINITY, max: 30, status: "target", label: "Lower range" },
+      { min: 30, max: 50,   status: "above",  label: "Mid range" },
+      { min: 50, max: null, status: "above",  label: "Higher range" },
+    ],
+    favorableDirection: "lower",
+    cluster: "lipid_panel",
+    descriptor: {
+      reflection: "Your Lp(a) reads %VALUE% mg/dL. Lp(a) is largely genetically determined and changes little with lifestyle. It carries cardiovascular risk independent of LDL. [PLACEHOLDER — needs clinical review]",
+      whatItIs: "[PLACEHOLDER — needs clinical review]",
+      raisesAndLowers: { raises: "[PLACEHOLDER — needs clinical review]", lowers: "[PLACEHOLDER — needs clinical review]" },
+      references: "[PLACEHOLDER — needs clinical review]",
+    },
   },
   {
     id: "apob_mgdl",
@@ -509,6 +668,20 @@ export const BLOOD_MARKER_REGISTRY: BloodMarker[] = [
     tier: "standard",
     synonyms: ["Apolipoprotein B", "ApoB", "Apo B"],
     validRange: { min: 5, max: 300 },
+    statusBands: [
+      { min: Number.NEGATIVE_INFINITY, max: 60,  status: "target", label: "Lower range" },
+      { min: 60,  max: 90,  status: "target", label: "Mid range" },
+      { min: 90,  max: 120, status: "above",  label: "Higher range" },
+      { min: 120, max: null, status: "above", label: "Highest range" },
+    ],
+    favorableDirection: "lower",
+    cluster: "lipid_panel",
+    descriptor: {
+      reflection: "Your ApoB reads %VALUE% mg/dL. ApoB counts the number of atherogenic particles directly, where LDL is a calculated estimate of their cholesterol cargo. [PLACEHOLDER — needs clinical review]",
+      whatItIs: "[PLACEHOLDER — needs clinical review]",
+      raisesAndLowers: { raises: "[PLACEHOLDER — needs clinical review]", lowers: "[PLACEHOLDER — needs clinical review]" },
+      references: "[PLACEHOLDER — needs clinical review]",
+    },
   },
   {
     id: "hs_crp_mgl",
@@ -519,6 +692,19 @@ export const BLOOD_MARKER_REGISTRY: BloodMarker[] = [
     tier: "standard",
     synonyms: ["hs-CRP", "hsCRP", "C-Reactive Protein, HS", "High-Sensitivity CRP", "CRP High Sensitivity"],
     validRange: { min: 0, max: 50 },
+    statusBands: [
+      { min: Number.NEGATIVE_INFINITY, max: 1, status: "target", label: "Lower range" },
+      { min: 1, max: 3,   status: "above",  label: "Mid range" },
+      { min: 3, max: null, status: "above", label: "Higher range" },
+    ],
+    favorableDirection: "lower",
+    cluster: "inflammation_panel",
+    descriptor: {
+      reflection: "Your hs-CRP reads %VALUE% mg/L. hs-CRP is a sensitive marker of systemic inflammation. Acute illness or recent injury can transiently raise it; the long-run trend is more informative than any single reading. [PLACEHOLDER — needs clinical review]",
+      whatItIs: "[PLACEHOLDER — needs clinical review]",
+      raisesAndLowers: { raises: "[PLACEHOLDER — needs clinical review]", lowers: "[PLACEHOLDER — needs clinical review]" },
+      references: "[PLACEHOLDER — needs clinical review]",
+    },
   },
   {
     id: "homocysteine_umoll",
@@ -672,6 +858,20 @@ export const BLOOD_MARKER_REGISTRY: BloodMarker[] = [
     tier: "standard",
     synonyms: ["Glucose", "Glucose, Fasting", "Glucose, Serum", "Glucose, Plasma", "Fasting Glucose"],
     validRange: { min: 20, max: 1000 },
+    statusBands: [
+      { min: Number.NEGATIVE_INFINITY, max: 85, status: "target", label: "Lower range" },
+      { min: 85, max: 100, status: "target", label: "Mid range" },
+      { min: 100, max: 126, status: "above",  label: "Higher range" },
+      { min: 126, max: null, status: "above", label: "Highest range" },
+    ],
+    favorableDirection: "lower",
+    cluster: "metabolic_panel",
+    descriptor: {
+      reflection: "Your fasting glucose reads %VALUE% mg/dL. A single fasting reading is a snapshot — HbA1c gives a 3-month average and insulin gives the demand-side picture. [PLACEHOLDER — needs clinical review]",
+      whatItIs: "[PLACEHOLDER — needs clinical review]",
+      raisesAndLowers: { raises: "[PLACEHOLDER — needs clinical review]", lowers: "[PLACEHOLDER — needs clinical review]" },
+      references: "[PLACEHOLDER — needs clinical review]",
+    },
   },
   {
     id: "hba1c_percent",
@@ -682,6 +882,20 @@ export const BLOOD_MARKER_REGISTRY: BloodMarker[] = [
     tier: "standard",
     synonyms: ["HbA1c", "Hemoglobin A1c", "A1c", "Glycohemoglobin", "GLYCOHEMOGLOBIN", "Glycated Hemoglobin"],
     validRange: { min: 3, max: 20 },
+    statusBands: [
+      { min: Number.NEGATIVE_INFINITY, max: 5.4, status: "target", label: "Lower range" },
+      { min: 5.4, max: 5.7,   status: "target", label: "Mid range" },
+      { min: 5.7, max: 6.0,   status: "above",  label: "Higher range" },
+      { min: 6.0, max: null,  status: "above",  label: "Highest range" },
+    ],
+    favorableDirection: "lower",
+    cluster: "metabolic_panel",
+    descriptor: {
+      reflection: "Your HbA1c reads %VALUE%%. HbA1c reflects the average blood sugar your red blood cells have seen over the prior 90 days. [PLACEHOLDER — needs clinical review]",
+      whatItIs: "[PLACEHOLDER — needs clinical review]",
+      raisesAndLowers: { raises: "[PLACEHOLDER — needs clinical review]", lowers: "[PLACEHOLDER — needs clinical review]" },
+      references: "[PLACEHOLDER — needs clinical review]",
+    },
   },
   {
     id: "insulin_uiuml",
@@ -691,6 +905,20 @@ export const BLOOD_MARKER_REGISTRY: BloodMarker[] = [
     tier: "standard",
     synonyms: ["Insulin", "Insulin, Fasting", "Fasting Insulin"],
     validRange: { min: 0, max: 1000 },
+    statusBands: [
+      { min: Number.NEGATIVE_INFINITY, max: 3, status: "below", label: "Lower range" },
+      { min: 3,  max: 7,   status: "target", label: "Mid range" },
+      { min: 7,  max: 12,  status: "above",  label: "Higher range" },
+      { min: 12, max: null, status: "above", label: "Highest range" },
+    ],
+    favorableDirection: "mid",
+    cluster: "metabolic_panel",
+    descriptor: {
+      reflection: "Your fasting insulin reads %VALUE% µIU/mL. Insulin pairs with glucose to show how much demand your pancreas is meeting at rest. [PLACEHOLDER — needs clinical review]",
+      whatItIs: "[PLACEHOLDER — needs clinical review]",
+      raisesAndLowers: { raises: "[PLACEHOLDER — needs clinical review]", lowers: "[PLACEHOLDER — needs clinical review]" },
+      references: "[PLACEHOLDER — needs clinical review]",
+    },
   },
   {
     id: "uric_acid_mgdl",
@@ -712,6 +940,20 @@ export const BLOOD_MARKER_REGISTRY: BloodMarker[] = [
     tier: "standard",
     synonyms: ["Vitamin D", "Vitamin D, 25-Hydroxy", "VITAMIN D,25-HYDROXY", "25-Hydroxyvitamin D", "25-OH Vit D", "Vitamin D 25-OH"],
     validRange: { min: 1, max: 200 },
+    statusBands: [
+      { min: Number.NEGATIVE_INFINITY, max: 30, status: "below", label: "Lower range" },
+      { min: 30, max: 50,  status: "target", label: "Mid range" },
+      { min: 50, max: 80,  status: "target", label: "Higher range" },
+      { min: 80, max: null, status: "above", label: "Highest range" },
+    ],
+    favorableDirection: "higher",
+    cluster: null,
+    descriptor: {
+      reflection: "Your 25-OH vitamin D reads %VALUE% ng/mL. Levels track sunlight exposure, season, supplementation, and skin type — they shift over weeks, not days. [PLACEHOLDER — needs clinical review]",
+      whatItIs: "[PLACEHOLDER — needs clinical review]",
+      raisesAndLowers: { raises: "[PLACEHOLDER — needs clinical review]", lowers: "[PLACEHOLDER — needs clinical review]" },
+      references: "[PLACEHOLDER — needs clinical review]",
+    },
   },
   {
     id: "ferritin_ngml",
