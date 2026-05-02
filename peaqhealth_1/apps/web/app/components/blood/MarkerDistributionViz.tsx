@@ -82,9 +82,12 @@ function scaleLabels(opt: Optimal): string[] {
 export function MarkerDistributionViz({
   markerId,
   value,
+  cardBg,
 }: {
   markerId: string
   value: number | null
+  /** Card background color so the tick's outline shadow blends into the card. */
+  cardBg?: string
 }) {
   const m = getMarkerById(markerId)
   if (!m || !m.statusBands || m.statusBands.length === 0) return null
@@ -126,7 +129,7 @@ export function MarkerDistributionViz({
               background: tickColor,
               borderRadius: 1,
               transform: "translateX(-1px)",
-              boxShadow: "0 0 0 2px var(--paper, #FAFAF8)",
+              boxShadow: `0 0 0 2px ${cardBg ?? "var(--paper, #FAFAF8)"}`,
             }}
             aria-label={`Your value: ${value} ${m.unit}`}
           />
