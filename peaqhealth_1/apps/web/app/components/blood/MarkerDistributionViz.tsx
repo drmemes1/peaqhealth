@@ -1,32 +1,82 @@
 /**
- * Segmented horizontal bar showing the marker's status bands with a dot
- * positioned at the user's value. Each band is colored by its derived
- * 3-state display severity (Optimal/Watch/Attention) so the band colors
- * match the status pill's color, matching the panel page's vocabulary.
+ * Range bar matching the panel page exactly. 4px gradient track with the
+ * five-zone soft palette (pink → amber → sage → amber → pink), a 2×10
+ * vertical tick in status color over the user's value, and five numeric
+ * scale labels underneath. Mirrors PopulatedCard in blood-panel-rebuild.tsx.
  */
 import { getMarkerById, type StatusBand } from "../../../lib/blood/markerRegistry"
+import { getMarkerStatus } from "../../../lib/blood/status"
 
-const GREEN   = "#7B9971" // Optimal — sage
-const AMBER   = "#C99A4A" // Watch
-const RED     = "#C0392B" // Attention
-const NEUTRAL = "rgba(20,20,16,0.18)"
+const TICK_COLOR = {
+  green: "#4A7A4A",
+  amber: "#C4992E",
+  red:   "#9B3838",
+  none:  "#A8A59B",
+} as const
 
-/**
- * Replicates the `deriveDisplayStatus` logic in lib/blood/status.ts so
- * the distribution viz can color each band consistently with the pill.
- * If no target band exists in the list, off-zone bands fall back to
- * Watch (amber) — same fallback the pill uses.
- */
-function bandColorByDisplay(bands: StatusBand[], idx: number): string {
-  const band = bands[idx]
-  if (band.status === "target") return GREEN
-  const targetIndices: number[] = []
-  for (let i = 0; i < bands.length; i++) {
-    if (bands[i].status === "target") targetIndices.push(i)
+const SANS = "var(--font-body), 'Instrument Sans', sans-serif"
+
+interface Optimal { min?: number; max?: number }
+
+function optimalFromBands(bands: StatusBand[]): Optimal | null {
+  const targets = bands.filter(b => b.status === "target")
+  if (targets.length === 0) return null
+  let min: number | undefined
+  let max: number | undefined
+  for (const b of targets) {
+    if (Number.isFinite(b.min)) {
+      min = min === undefined ? b.min : Math.min(min, b.min)
+    }
+    if (b.max != null) {
+      max = max === undefined ? b.max : Math.max(max, b.max)
+    }
   }
-  if (targetIndices.length === 0) return AMBER
-  const minDistance = Math.min(...targetIndices.map(i => Math.abs(i - idx)))
-  return minDistance <= 1 ? AMBER : RED
+  if (min === undefined && max === undefined) return null
+  return { min, max }
+}
+
+function computeTickPosition(value: number, opt: Optimal): number {
+  const { min, max } = opt
+  if (min != null && max != null) {
+    const scaleMin = Math.min(min * 0.5, value * 0.7)
+    const scaleMax = Math.max(max * 1.5, value * 1.3)
+    return Math.max(2, Math.min(98, ((value - scaleMin) / (scaleMax - scaleMin)) * 100))
+  }
+  if (max != null) {
+    const scaleMax = Math.max(max * 2, value * 1.3)
+    return Math.max(2, Math.min(98, (value / scaleMax) * 100))
+  }
+  if (min != null) {
+    const scaleMax = Math.max(min * 3, value * 1.5)
+    return Math.max(2, Math.min(98, (value / scaleMax) * 100))
+  }
+  return 50
+}
+
+function scaleLabels(opt: Optimal): string[] {
+  const { min, max } = opt
+  if (min != null && max != null) {
+    return [
+      String(Math.round(min * 0.5)),
+      String(min),
+      String(Math.round((min + max) / 2)),
+      String(max),
+      String(Math.round(max * 1.5)),
+    ]
+  }
+  if (max != null) {
+    return ["0", String(Math.round(max * 0.5)), String(max), String(Math.round(max * 1.3)), String(Math.round(max * 2))]
+  }
+  if (min != null) {
+    return [
+      String(Math.round(min * 0.5)),
+      String(min),
+      String(Math.round(min * 1.5)),
+      String(Math.round(min * 2)),
+      String(Math.round(min * 3)),
+    ]
+  }
+  return []
 }
 
 export function MarkerDistributionViz({
@@ -39,97 +89,67 @@ export function MarkerDistributionViz({
   const m = getMarkerById(markerId)
   if (!m || !m.statusBands || m.statusBands.length === 0) return null
 
-  // Compute the visualization range. Use the first band's min (or registry
-  // validRange.min if -inf) and the last band's max (or 1.5x the cap).
-  const first = m.statusBands[0]
-  const last  = m.statusBands[m.statusBands.length - 1]
-  const vizMin = Number.isFinite(first.min) ? first.min : m.validRange.min
-  const vizMax = last.max ?? Math.max(m.validRange.max, vizMin + 1)
-  const vizRange = vizMax - vizMin
+  const opt = optimalFromBands(m.statusBands)
+  if (!opt) return null
 
-  const dotPct =
-    value == null
-      ? null
-      : Math.max(0, Math.min(100, ((value - vizMin) / vizRange) * 100))
+  const status = value != null ? getMarkerStatus(value, markerId) : null
+  const tickColor = status
+    ? status.pillColor === "green" ? TICK_COLOR.green
+      : status.pillColor === "amber" ? TICK_COLOR.amber
+      : TICK_COLOR.red
+    : TICK_COLOR.none
+
+  const tickPos = value != null ? computeTickPosition(value, opt) : null
+  const labels = scaleLabels(opt)
 
   return (
-    <div style={{ marginTop: 16 }}>
-      {/* Segmented bar */}
+    <div style={{ marginTop: 20 }}>
+      {/* 4px gradient track — exact panel-page palette */}
       <div
         style={{
           position: "relative",
-          height: 10,
-          borderRadius: 6,
-          overflow: "hidden",
-          display: "flex",
-          background: NEUTRAL,
+          height: 4,
+          borderRadius: 2,
+          marginBottom: 6,
+          background:
+            "linear-gradient(90deg, rgba(229,196,196,0.3) 0% 18%, rgba(232,213,160,0.35) 18% 30%, #C8D8C0 30% 70%, rgba(232,213,160,0.35) 70% 82%, rgba(229,196,196,0.3) 82% 100%)",
         }}
       >
-        {m.statusBands.map((band, i) => {
-          const segMin = Number.isFinite(band.min) ? band.min : vizMin
-          const segMax = band.max ?? vizMax
-          const widthPct = ((segMax - segMin) / vizRange) * 100
-          return (
-            <div
-              key={i}
-              style={{
-                width: `${widthPct}%`,
-                background: bandColorByDisplay(m.statusBands!, i),
-                opacity: 0.85,
-              }}
-            />
-          )
-        })}
-        {/* User dot */}
-        {dotPct != null && (
+        {tickPos != null && (
           <div
             style={{
               position: "absolute",
-              top: "50%",
-              left: `${dotPct}%`,
-              transform: "translate(-50%, -50%)",
-              width: 14,
-              height: 14,
-              borderRadius: "50%",
-              background: "white",
-              border: "2px solid var(--ink, #141410)",
-              boxShadow: "0 1px 3px rgba(20,20,16,0.25)",
+              top: -3,
+              left: `${tickPos}%`,
+              width: 2,
+              height: 10,
+              background: tickColor,
+              borderRadius: 1,
+              transform: "translateX(-1px)",
+              boxShadow: "0 0 0 2px var(--paper, #FAFAF8)",
             }}
             aria-label={`Your value: ${value} ${m.unit}`}
           />
         )}
       </div>
 
-      {/* Range labels under each segment */}
-      <div
-        style={{
-          display: "flex",
-          marginTop: 6,
-          fontFamily: "var(--font-body), 'Instrument Sans', sans-serif",
-          fontSize: 9,
-          letterSpacing: "0.06em",
-          textTransform: "uppercase",
-          color: "var(--ink-40, rgba(20,20,16,0.4))",
-        }}
-      >
-        {m.statusBands.map((band, i) => {
-          const segMin = Number.isFinite(band.min) ? band.min : vizMin
-          const segMax = band.max ?? vizMax
-          const widthPct = ((segMax - segMin) / vizRange) * 100
-          return (
-            <div
+      {labels.length > 0 && (
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          {labels.map((l, i) => (
+            <span
               key={i}
               style={{
-                width: `${widthPct}%`,
-                textAlign: "center",
-                paddingTop: 2,
+                fontFamily: SANS,
+                fontSize: 9,
+                color: "rgba(20,20,16,0.4)",
+                fontVariantNumeric: "tabular-nums",
               }}
             >
-              {band.label}
-            </div>
-          )
-        })}
-      </div>
+              {l}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

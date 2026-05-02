@@ -96,30 +96,34 @@ export function MarkerHeroCard({
             <span style={{ fontFamily: sans, fontSize: 14, color: "var(--ink-50, rgba(20,20,16,0.5))" }}>{m.unit}</span>
           </div>
 
-          {/* Status pill — Optimal / Watch / Attention, mirrors the panel page. */}
-          {status && (
-            <span
-              style={{
-                fontFamily: sans,
-                fontSize: 11,
-                fontWeight: 600,
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                padding: "6px 12px",
-                borderRadius: 999,
-                color:
-                  status.pillColor === "green" ? "#3F5538"
-                  : status.pillColor === "amber" ? "#7A5715"
-                  : "#7A1F18",
-                background:
-                  status.pillColor === "green" ? "rgba(123,153,113,0.18)"
-                  : status.pillColor === "amber" ? "rgba(201,154,74,0.18)"
-                  : "rgba(192,57,43,0.16)",
-              }}
-            >
-              {status.displayLabel}
-            </span>
-          )}
+          {/* Status pill — dot + label, exact match to panel page (Strong / Watch / Attention). */}
+          {status && (() => {
+            const meta =
+              status.pillColor === "green" ? { dot: "#4A7A4A", bg: "rgba(74,122,74,0.1)",  fg: "#3A6A3A", label: "Strong" }
+              : status.pillColor === "amber" ? { dot: "#C4992E", bg: "rgba(196,153,46,0.12)", fg: "#946F1B", label: "Watch" }
+              :                                 { dot: "#9B3838", bg: "rgba(155,56,56,0.1)",  fg: "#9B3838", label: "Attention" }
+            return (
+              <span
+                style={{
+                  fontFamily: sans,
+                  fontSize: 9,
+                  fontWeight: 600,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  background: meta.bg,
+                  color: meta.fg,
+                  padding: "3px 9px",
+                  borderRadius: 20,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
+                }}
+              >
+                <span style={{ width: 5, height: 5, borderRadius: "50%", background: meta.dot }} />
+                {meta.label}
+              </span>
+            )
+          })()}
         </div>
 
         {/* Distribution viz */}
