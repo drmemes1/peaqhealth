@@ -103,10 +103,13 @@ export async function GenericPanelContext({
                     fontWeight: 600,
                     letterSpacing: "0.08em",
                     textTransform: "uppercase",
-                    color: status.pillColor === "sage" ? "#3F5538" : "#7A5715",
+                    color:
+                      status.pillColor === "green" ? "#3F5538"
+                      : status.pillColor === "amber" ? "#7A5715"
+                      : "#7A1F18",
                   }}
                 >
-                  {status.label}
+                  {status.displayLabel}
                 </div>
               )}
             </Link>

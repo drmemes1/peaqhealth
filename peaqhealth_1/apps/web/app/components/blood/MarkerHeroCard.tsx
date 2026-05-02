@@ -96,7 +96,7 @@ export function MarkerHeroCard({
             <span style={{ fontFamily: sans, fontSize: 14, color: "var(--ink-50, rgba(20,20,16,0.5))" }}>{m.unit}</span>
           </div>
 
-          {/* Status pill */}
+          {/* Status pill — Optimal / Watch / Attention, mirrors the panel page. */}
           {status && (
             <span
               style={{
@@ -107,11 +107,17 @@ export function MarkerHeroCard({
                 textTransform: "uppercase",
                 padding: "6px 12px",
                 borderRadius: 999,
-                color: status.pillColor === "sage" ? "#3F5538" : "#7A5715",
-                background: status.pillColor === "sage" ? "rgba(123,153,113,0.15)" : "rgba(201,154,74,0.18)",
+                color:
+                  status.pillColor === "green" ? "#3F5538"
+                  : status.pillColor === "amber" ? "#7A5715"
+                  : "#7A1F18",
+                background:
+                  status.pillColor === "green" ? "rgba(123,153,113,0.18)"
+                  : status.pillColor === "amber" ? "rgba(201,154,74,0.18)"
+                  : "rgba(192,57,43,0.16)",
               }}
             >
-              {status.label}
+              {status.displayLabel}
             </span>
           )}
         </div>

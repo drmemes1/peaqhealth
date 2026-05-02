@@ -1,20 +1,32 @@
 /**
  * Segmented horizontal bar showing the marker's status bands with a dot
- * positioned at the user's value. Each band's color is determined by the
- * band's status + the marker's favorableDirection.
+ * positioned at the user's value. Each band is colored by its derived
+ * 3-state display severity (Optimal/Watch/Attention) so the band colors
+ * match the status pill's color, matching the panel page's vocabulary.
  */
 import { getMarkerById, type StatusBand } from "../../../lib/blood/markerRegistry"
 
-const SAGE  = "#7B9971"
-const AMBER = "#C99A4A"
+const GREEN   = "#7B9971" // Optimal — sage
+const AMBER   = "#C99A4A" // Watch
+const RED     = "#C0392B" // Attention
 const NEUTRAL = "rgba(20,20,16,0.18)"
 
-function bandColor(band: StatusBand, favorable: "lower" | "higher" | "mid" | undefined): string {
-  if (!favorable) return NEUTRAL
-  if (band.status === "target") return SAGE
-  if (favorable === "lower")  return band.status === "above" ? AMBER : SAGE
-  if (favorable === "higher") return band.status === "below" ? AMBER : SAGE
-  return AMBER // mid-favorable, anything off-target is amber
+/**
+ * Replicates the `deriveDisplayStatus` logic in lib/blood/status.ts so
+ * the distribution viz can color each band consistently with the pill.
+ * If no target band exists in the list, off-zone bands fall back to
+ * Watch (amber) — same fallback the pill uses.
+ */
+function bandColorByDisplay(bands: StatusBand[], idx: number): string {
+  const band = bands[idx]
+  if (band.status === "target") return GREEN
+  const targetIndices: number[] = []
+  for (let i = 0; i < bands.length; i++) {
+    if (bands[i].status === "target") targetIndices.push(i)
+  }
+  if (targetIndices.length === 0) return AMBER
+  const minDistance = Math.min(...targetIndices.map(i => Math.abs(i - idx)))
+  return minDistance <= 1 ? AMBER : RED
 }
 
 export function MarkerDistributionViz({
@@ -62,7 +74,7 @@ export function MarkerDistributionViz({
               key={i}
               style={{
                 width: `${widthPct}%`,
-                background: bandColor(band, m.favorableDirection),
+                background: bandColorByDisplay(m.statusBands!, i),
                 opacity: 0.85,
               }}
             />
