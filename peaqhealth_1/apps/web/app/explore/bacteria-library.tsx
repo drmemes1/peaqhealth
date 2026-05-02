@@ -51,6 +51,17 @@ const FILTER_CHIPS = [
   { key: "context", label: "Context-dependent", keys: ["context_dependent"] },
 ]
 
+// Maps composition-bar categories from the oral page to filter-chip keys here.
+// Keeps the bar deep-linkable (?category=...) without inventing a parallel
+// taxonomy in the explore data model.
+const COMPOSITION_TO_FILTER: Record<string, string> = {
+  buffering: "health",
+  nr_favorable: "nitrate",
+  cariogenic: "caries",
+  context_dependent: "context",
+  unclassified: "all",
+}
+
 function CategoryBadge({ category }: { category: string }) {
   const colors = CATEGORY_COLORS[category] ?? CATEGORY_COLORS.context_dependent
   return (
@@ -115,8 +126,18 @@ function BacteriaCard({ row }: { row: BacteriaRow }) {
   )
 }
 
-export function BacteriaLibrary({ bacteria }: { bacteria: BacteriaRow[] }) {
-  const [filter, setFilter] = useState("all")
+export function BacteriaLibrary({
+  bacteria,
+  initialCategory,
+}: {
+  bacteria: BacteriaRow[]
+  initialCategory?: string | null
+}) {
+  // ?category=<composition-category> deep-link from the oral page composition bar.
+  const initialFilter = initialCategory && COMPOSITION_TO_FILTER[initialCategory]
+    ? COMPOSITION_TO_FILTER[initialCategory]
+    : "all"
+  const [filter, setFilter] = useState(initialFilter)
   const [search, setSearch] = useState("")
 
   const filtered = bacteria.filter(b => {
