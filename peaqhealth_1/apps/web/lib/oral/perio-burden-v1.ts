@@ -30,8 +30,8 @@ export type PerioBurdenCategory =
   | "severe"
 
 export type PerioDefenseCategory =
-  | "severely_depleted"
-  | "depleted"
+  | "depleted"     // formerly severely_depleted (< 10) — collapsed: same intervention path
+  | "borderline"   // formerly depleted (10–20) — same risk-taxonomy term as PBI's borderline
   | "adequate"
   | "robust"
 
@@ -181,9 +181,9 @@ const PBI_THRESHOLDS = {
 }
 
 const PDI_THRESHOLDS = {
-  severely_depleted: 10,
-  depleted: 20,
-  adequate: 35,
+  depleted: 8,    // < 8 → depleted (was severely_depleted < 10)
+  borderline: 15, // 8–15 → borderline (was depleted 10–20)
+  adequate: 28,   // 15–28 → adequate; > 28 → robust (was 20–35 / > 35)
 }
 
 const CDM_BASELINE_PDI = 30
@@ -297,8 +297,8 @@ export function calculatePerioBurdenV1(
     "severe"
 
   const perio_defense_category: PerioDefenseCategory =
-    perio_defense_index < PDI_THRESHOLDS.severely_depleted ? "severely_depleted" :
     perio_defense_index < PDI_THRESHOLDS.depleted ? "depleted" :
+    perio_defense_index < PDI_THRESHOLDS.borderline ? "borderline" :
     perio_defense_index < PDI_THRESHOLDS.adequate ? "adequate" :
     "robust"
 
@@ -311,8 +311,11 @@ export function calculatePerioBurdenV1(
   const burdenHigh = perio_burden_category === "high" || perio_burden_category === "severe"
   const defenseAdequate =
     perio_defense_category === "adequate" || perio_defense_category === "robust"
+  // The lower two PDI bands (depleted + borderline) both trigger
+  // compensated_dysbiosis pairing with low burden, and active_disease
+  // pairing with high burden — same intervention pathway.
   const defenseDepleted =
-    perio_defense_category === "depleted" || perio_defense_category === "severely_depleted"
+    perio_defense_category === "depleted" || perio_defense_category === "borderline"
 
   let perio_risk_category: PerioRiskCategory
   if (total_subp_pct === 0 && perio_defense_index === 0) {

@@ -43,7 +43,8 @@ describe("calculatePerioBurdenV1 — patient fixtures", () => {
     const r = calculatePerioBurdenV1(igor, NO_LIFESTYLE)
 
     expect(r.perio_defense_index).toBeCloseTo(17.81, 1)
-    expect(r.perio_defense_category).toBe("depleted")
+    // PDI 17.81 lands in 'adequate' under v1.3 thresholds (15–28).
+    expect(r.perio_defense_category).toBe("adequate")
     expect(r.commensal_depletion_factor).toBeGreaterThan(1.15)
     expect(r.commensal_depletion_factor).toBeLessThan(1.25)
 
@@ -92,7 +93,8 @@ describe("calculatePerioBurdenV1 — patient fixtures", () => {
     const r = calculatePerioBurdenV1(evelina, NO_LIFESTYLE)
 
     expect(r.perio_defense_index).toBeCloseTo(4.95, 1)
-    expect(r.perio_defense_category).toBe("severely_depleted")
+    // PDI 4.95 < 8 → depleted (formerly severely_depleted) under v1.3 thresholds.
+    expect(r.perio_defense_category).toBe("depleted")
     expect(r.commensal_depletion_factor).toBeCloseTo(1.42, 1)
     expect(r.perio_burden_index_adjusted).toBeCloseTo(0.99, 1)
     expect(r.perio_burden_category).toBe("low")
@@ -245,10 +247,11 @@ describe("PBI category boundaries", () => {
 })
 
 describe("composite risk classification", () => {
-  test("active disease — high burden + severely depleted defense", () => {
+  test("active disease — high burden + depleted defense", () => {
     const r = calculatePerioBurdenV1(species({ p_gingivalis: 4.0 }), NO_LIFESTYLE)
     expect(r.perio_burden_category).toBe("severe")
-    expect(r.perio_defense_category).toBe("severely_depleted")
+    // PDI = 0 → depleted (renamed from severely_depleted in v1.3)
+    expect(r.perio_defense_category).toBe("depleted")
     expect(r.perio_risk_category).toBe("active_disease_risk")
   })
 
@@ -265,11 +268,12 @@ describe("composite risk classification", () => {
     expect(r.perio_risk_category).toBe("compensated_active_burden")
   })
 
-  test("compensated dysbiosis — minimal burden + depleted defense", () => {
-    const r = calculatePerioBurdenV1(species({ rothia_total: 30 }), NO_LIFESTYLE)
-    // PDI = 15 (depleted)
+  test("compensated dysbiosis — minimal burden + borderline defense", () => {
+    // PDI = 30 × 0.5 = 15 — boundary value lands in 'adequate' under v1.3
+    // (15–28). Drop rothia to 26 → PDI = 13 → 'borderline'.
+    const r = calculatePerioBurdenV1(species({ rothia_total: 26 }), NO_LIFESTYLE)
     expect(r.perio_burden_category).toBe("minimal")
-    expect(r.perio_defense_category).toBe("depleted")
+    expect(r.perio_defense_category).toBe("borderline")
     expect(r.perio_risk_category).toBe("compensated_dysbiosis_risk")
   })
 

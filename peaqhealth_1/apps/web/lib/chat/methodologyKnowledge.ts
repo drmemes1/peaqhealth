@@ -262,7 +262,7 @@ export const METHODOLOGY: MethodologyEntry[] = [
       "Rothia (total) %", "Neisseria (total) %", "H. parainfluenzae %", "A. naeslundii %", "Lautropia %",
     ],
     thresholds:
-      "severely_depleted < 10, depleted 10–20, adequate 20–35, robust > 35. Calibrated against expected baseline of 25–40 in periodontally healthy adults.",
+      "depleted < 8, borderline 8–15, adequate 15–28, robust > 28. Calibrated against expected baseline of 20–35 in periodontally healthy adults. Updated in v1.3 to consolidate the prior 4-band shape — 'severely_depleted' and 'depleted' both pointed at the same intervention pathway, so they collapse to a single 'depleted' label, and the prior 'depleted' band becomes 'borderline' (matching the risk-taxonomy term used elsewhere).",
     limitations:
       "PDI thresholds are derived heuristics, not externally validated. C. matruchotii detection may vary by parser configuration. Streptococcus species-level resolution is V3-V4 limited.",
     citations: [

@@ -185,8 +185,8 @@ describe("runPerioBurdenV1 — Igor's kit (entries fallback)", () => {
     expect(out).not.toBeNull()
     if (!out) return
 
-    // Defense lands depleted (~17.8) → CDM ~1.20.
-    expect(out.result.perio_defense_category).toBe("depleted")
+    // PDI ~17.8 → 'adequate' under v1.3 thresholds (15–28). CDM ~1.20.
+    expect(out.result.perio_defense_category).toBe("adequate")
     expect(out.result.commensal_depletion_factor).toBeGreaterThan(1.15)
 
     // No Pg detected → no co-occurrence boosts, no bridging.

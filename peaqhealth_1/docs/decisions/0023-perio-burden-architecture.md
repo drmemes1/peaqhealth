@@ -149,10 +149,44 @@ amplifies PBI when PDI is depleted.
 
 | Patient | PBI adj | PDI | Defense | Risk | Clinical anchor |
 |---|---:|---:|---|---|---|
-| Igor (Pilot.Peaq.1) | ~1.73 | 17.81 | depleted | borderline | Past Arestin, recommendation for more frequent cleanings ✓ |
+| Igor (Pilot.Peaq.1) | ~1.73 | 17.81 | adequate | borderline | Past Arestin, recommendation for more frequent cleanings ✓ |
 | Pilot 3 (Pilot.Peaq.3) | ~0.31 | ~23.3 | adequate | stable_low_risk | "Cleanest mouth" per Igor's read ✓ |
-| Gabby (Pilot.Peaq.2) | ~3.27 | ~6.3 | severely_depleted | active_disease_risk | Mouth breathing, no documented disease — algorithm flags subclinical risk pattern; needs clinical correlation |
-| Evelina (Bristle data) | ~0.99 | 4.95 | severely_depleted | compensated_dysbiosis_risk | Bristle reported 6.7/10 "At Risk"; algorithm identifies the collapsed-defense mechanism Bristle's count-based scoring misses ✓ |
+| Gabby (Pilot.Peaq.2) | ~3.27 | ~6.3 | depleted | active_disease_risk | Mouth breathing, no documented disease — algorithm flags subclinical risk pattern; needs clinical correlation |
+| Evelina (Bristle data) | ~0.99 | 4.95 | depleted | compensated_dysbiosis_risk | Bristle reported 6.7/10 "At Risk"; algorithm identifies the collapsed-defense mechanism Bristle's count-based scoring misses ✓ |
+
+### v1.3 PDI threshold + label revision (2026-05-02)
+
+The original PDI bands (`severely_depleted < 10`, `depleted 10–20`,
+`adequate 20–35`, `robust > 35`) were tightened against early
+production data. Revised bands:
+
+| PDI | Category |
+|---|---|
+| < 8 | `depleted` (was `severely_depleted`) |
+| 8 – 15 | `borderline` (was `depleted`) |
+| 15 – 28 | `adequate` (was 20–35) |
+| > 28 | `robust` (was > 35) |
+
+**Why the rename:** "severely depleted" wasn't doing diagnostic work —
+both prior bands pointed at the same intervention pathway. Collapsing
+the lowest band's label to `depleted` and renaming the next band
+`borderline` aligns with the risk-taxonomy term used elsewhere and is
+more actionable for patients ("watch this; take steps to improve").
+
+**Why the threshold tightening:** the prior 25–40 healthy-adult anchor
+was too stringent for V3-V4 saliva sequencing. The new 20–35 anchor
+better matches PDI distributions observed across the pilot cohort.
+
+**Effect on Igor:** PDI 18.46 shifts from `depleted` (under v1.2) to
+`adequate` (under v1.3), which composites to `stable_low_risk`
+(low burden + adequate defense) — matching his actual clinical
+context (past Arestin treatment + minimal current pathogen pressure)
+better than the prior `compensated_dysbiosis_risk` did.
+
+The composite-risk function still treats both lower bands
+(`depleted` + `borderline`) as "defense depleted" — same intervention
+pathway, same composite triggers (compensated_dysbiosis_risk with low
+burden, active_disease_risk with high burden).
 
 ## Methodology audit notes
 
