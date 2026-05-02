@@ -7,8 +7,14 @@ import { BacteriaLibrary } from "./bacteria-library"
 const serif = "var(--font-manrope), system-ui, sans-serif"
 const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 
-export default async function ExplorePage() {
+export default async function ExplorePage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ category?: string }>
+}) {
   const supabase = await createClient()
+  const sp = (await searchParams) ?? {}
+  const initialCategory = typeof sp.category === "string" ? sp.category : null
 
   const svc = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -88,7 +94,7 @@ export default async function ExplorePage() {
           }}>
             The bacteria library
           </h2>
-          <BacteriaLibrary bacteria={bacteria} />
+          <BacteriaLibrary bacteria={bacteria} initialCategory={initialCategory} />
         </div>
 
         <WhereYouSit userBacteria={userBacteria} />

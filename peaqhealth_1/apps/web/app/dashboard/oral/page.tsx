@@ -1,55 +1,160 @@
+import Link from "next/link"
 import { redirect } from "next/navigation"
 import { createClient } from "../../../lib/supabase/server"
-import { createClient as createServiceClient } from "@supabase/supabase-js"
-import { getUserPanelContext } from "../../../lib/user-context"
 import { Nav } from "../../components/nav"
-import { OralPanelTreemap } from "./oral-panel-treemap"
-import Link from "next/link"
+import { loadOralPageData } from "../../../lib/oral/v3/page-data"
+import { OralPageHero } from "../../components/oral/v3/OralPageHero"
+import { SnapshotSection } from "../../components/oral/v3/SnapshotSection"
+import { CariesSection } from "../../components/oral/v3/CariesSection"
+import { NRSection } from "../../components/oral/v3/NRSection"
+import { ComingSoonPlaceholder } from "../../components/oral/v3/ComingSoonPlaceholder"
+import { TrajectorySection } from "../../components/oral/v3/TrajectorySection"
+import { ActionsSection } from "../../components/oral/v3/ActionsSection"
+import { CompositionDrawer } from "../../components/oral/v3/CompositionDrawer"
+import { MethodologyDrawer } from "../../components/oral/v3/MethodologyDrawer"
+import { ReferencesDrawer } from "../../components/oral/v3/ReferencesDrawer"
+import { Divider } from "../../components/oral/v3/Divider"
+
+const SANS = "var(--font-body)"
+const SERIF = "var(--font-display)"
 
 export default async function OralPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/login")
 
-  const ctx = await getUserPanelContext(user.id)
-
-  if (!ctx.hasOralKit) {
-    return (
-      <div className="min-h-svh" style={{ background: "#EDEAE1" }}>
-        <Nav />
-        <main style={{ maxWidth: 680, margin: "0 auto", padding: "32px 24px 80px" }}>
-          <h1 style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 36, fontWeight: 300, color: "var(--ink)", margin: "0 0 24px" }}>Oral Microbiome</h1>
-          <p style={{ fontFamily: "var(--font-body)", fontSize: 14, color: "var(--ink-60)" }}>No oral results on file.</p>
-          <Link href="/dashboard" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--gold)", display: "inline-block", marginTop: 12 }}>← Back to dashboard</Link>
-        </main>
-      </div>
-    )
-  }
-
-  const svc = createServiceClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-  const { data: oralRow } = await svc
-    .from("oral_kit_orders")
-    .select("raw_otu_table")
-    .eq("user_id", user.id)
-    .not("shannon_diversity", "is", null)
-    .order("ordered_at", { ascending: false })
-    .limit(1)
-    .maybeSingle()
-
-  const otu = (oralRow?.raw_otu_table ?? {}) as Record<string, unknown>
-  const genusCounts: Record<string, number> = {}
-  for (const [key, val] of Object.entries(otu)) {
-    if (key === "__meta") continue
-    const num = Number(val)
-    if (!Number.isFinite(num) || num <= 0) continue
-    const genus = key.split(" ")[0]
-    genusCounts[genus] = (genusCounts[genus] ?? 0) + num
-  }
+  const result = await loadOralPageData(user.id)
 
   return (
-    <div className="min-h-svh" style={{ background: "#EDEAE1" }}>
+    <div className="min-h-svh" style={{ background: "var(--off-white)" }}>
       <Nav />
-      <OralPanelTreemap ctx={ctx} genusCounts={genusCounts} />
+      <main
+        style={{
+          maxWidth: 920,
+          margin: "0 auto",
+          padding: "48px 28px 120px",
+        }}
+      >
+        {result.state === "no_kit" && (
+          <div>
+            <h1
+              style={{
+                fontFamily: SERIF,
+                fontSize: 48,
+                fontWeight: 700,
+                color: "var(--ink)",
+                margin: "0 0 16px",
+                letterSpacing: "-0.03em",
+              }}
+            >
+              A look at your mouth.
+            </h1>
+            <p
+              style={{
+                fontFamily: SANS,
+                fontSize: 16,
+                color: "var(--ink-80)",
+                margin: "0 0 16px",
+                lineHeight: 1.6,
+                maxWidth: 600,
+              }}
+            >
+              Your oral microbiome kit hasn&apos;t been processed yet. Once your sample is
+              sequenced (typically 10–14 days from receipt), this page will show your community
+              snapshot, caries balance, and nitric oxide pathway.
+            </p>
+            <Link
+              href="/dashboard"
+              style={{
+                fontFamily: SANS,
+                fontSize: 13,
+                color: "var(--gold)",
+                fontWeight: 600,
+                letterSpacing: "0.04em",
+                textDecoration: "none",
+              }}
+            >
+              ← Back to dashboard
+            </Link>
+          </div>
+        )}
+
+        {result.state === "processing" && (
+          <div>
+            <h1
+              style={{
+                fontFamily: SERIF,
+                fontSize: 48,
+                fontWeight: 700,
+                color: "var(--ink)",
+                margin: "0 0 16px",
+                letterSpacing: "-0.03em",
+              }}
+            >
+              Processing your sample
+            </h1>
+            <p
+              style={{
+                fontFamily: SANS,
+                fontSize: 16,
+                color: "var(--ink-80)",
+                lineHeight: 1.6,
+                maxWidth: 600,
+              }}
+            >
+              Your kit is in the lab. Results typically post 10–14 days from receipt. We&apos;ll
+              email you when this page is ready.
+            </p>
+          </div>
+        )}
+
+        {result.state === "ready" && (
+          <>
+            <OralPageHero data={result.data} />
+            <Divider />
+            <SnapshotSection data={result.data} />
+            <Divider />
+            <CariesSection data={result.data} />
+            <Divider />
+            <NRSection data={result.data} />
+            <Divider />
+            <ComingSoonPlaceholder
+              title="Gum stability"
+              description="Periodontal-associated bacteria scoring with red-complex, orange-complex, and Corynebacterium scaffold analysis."
+            />
+            <ComingSoonPlaceholder
+              title="Halitosis"
+              description="Volatile sulfur compound producing bacteria scoring with tongue dorsum analysis."
+            />
+            <ComingSoonPlaceholder
+              title="Biofilm maturity"
+              description="Early-colonizer vs late-colonizer ratio indicating biofilm developmental stage."
+            />
+            {!result.data.has_blood_data && (
+              <ComingSoonPlaceholder
+                title="Cross-panel synthesis"
+                description="Connections between your oral microbiome, blood biomarkers, and questionnaire responses."
+              />
+            )}
+            {!result.data.has_sleep_data && (
+              <ComingSoonPlaceholder
+                title="Sleep × oral signal chains"
+                description="How sleep architecture and breathing patterns shape your oral environment."
+              />
+            )}
+            <Divider />
+            <TrajectorySection data={result.data} />
+            <Divider />
+            <ActionsSection data={result.data} />
+            <Divider />
+            <div style={{ marginTop: 12 }}>
+              <CompositionDrawer topSpecies={result.data.top_species} />
+              <MethodologyDrawer />
+              <ReferencesDrawer />
+            </div>
+          </>
+        )}
+      </main>
     </div>
   )
 }

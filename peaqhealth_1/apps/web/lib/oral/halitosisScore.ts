@@ -147,36 +147,3 @@ function buildModifiers(q: ModifierInput | undefined): BreathFactor[] {
 
   return factors
 }
-
-// Legacy compat — used by oral-panel-v4
-export function computeHalitosisScore(species: {
-  solobacteriumPct?: number | null
-  prevotellaCommensalPct?: number | null
-  peptostreptococcusPct?: number | null
-  fusobacteriumPct?: number | null
-  porphyromonasPct?: number | null
-}, questionnaire?: ModifierInput): { breathScore: number; vscBurden: number; status: "strong" | "watch" | "attention"; label: string; factors: BreathFactor[] } {
-  const result = getBreathScore({
-    solobacteriumPct: species.solobacteriumPct,
-    prevotellaMelaninogenicaPct: species.prevotellaCommensalPct,
-    peptostreptococcusPct: species.peptostreptococcusPct,
-    fusobacteriumPeriodonticumPct: species.fusobacteriumPct,
-    porphyromonasPct: species.porphyromonasPct,
-  })
-
-  const factors = buildModifiers(questionnaire ? {
-    ...questionnaire,
-    fusobacteriumPctForCorroboration: species.fusobacteriumPct,
-  } : undefined)
-
-  const multiplier = factors.reduce((m, f) => m * f.multiplier, 1.0)
-  const adjustedScore = Math.max(0, Math.min(100, Math.round((result.score ?? 100) * multiplier)))
-
-  let status: "strong" | "watch" | "attention"
-  let label: string
-  if (adjustedScore >= 75) { status = "strong"; label = adjustedScore >= 90 ? "Fresh" : "Mild VSC load" }
-  else if (adjustedScore >= 50) { status = "watch"; label = "Moderate VSC signal" }
-  else { status = "attention"; label = "Elevated VSC producers" }
-
-  return { breathScore: adjustedScore, vscBurden: result.vscBurden, status, label, factors }
-}
