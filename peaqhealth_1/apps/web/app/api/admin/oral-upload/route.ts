@@ -10,6 +10,7 @@ import {
 import { computeCariesPanel } from "../../../../lib/oral/caries-panel"
 import { runCariesV3 } from "../../../../lib/oral/caries-v3-runner"
 import { runNRV1 } from "../../../../lib/oral/nr-v1-runner"
+import { runPerioBurdenV1 } from "../../../../lib/oral/perio-burden-v1-runner"
 import {
   GENUS_COLUMNS,
   SPECIES_COLUMNS,
@@ -247,6 +248,19 @@ export async function POST(request: NextRequest) {
         }
       } else {
         steps.push(`NR v1 runner returned null (see server logs)`)
+      }
+
+      // Step 3d: perio burden v1 (additive — runs alongside v2/v3/NR; soft-fails)
+      const perio = runPerioBurdenV1(kitRow, lifestyle)
+      if (perio) {
+        const { error: perioErr } = await supabase.from("oral_kit_orders").update(perio.update).eq("id", kitId)
+        if (perioErr) {
+          steps.push(`Perio v1 write failed (continuing): ${perioErr.message}`)
+        } else {
+          steps.push(`Perio v1: ${perio.result.perio_risk_category} (PBI=${perio.result.perio_burden_index_adjusted.toFixed(2)} ${perio.result.perio_burden_category}, PDI=${perio.result.perio_defense_index.toFixed(2)} ${perio.result.perio_defense_category}, redCx=${perio.result.red_complex_status.status_label}, conf=${perio.result.confidence})`)
+        }
+      } else {
+        steps.push(`Perio v1 runner returned null (see server logs)`)
       }
 
       // Step 4: interpretability tier
