@@ -416,10 +416,20 @@ export const BLOOD_MARKER_REGISTRY: BloodMarker[] = [
     favorableDirection: "mid",
     cluster: null,
     descriptor: {
-      reflection: "Your magnesium reads %VALUE% mg/dL. Serum magnesium captures only a small fraction of total body magnesium — most of it lives inside cells and bone. [PLACEHOLDER — needs clinical review]",
-      whatItIs: "[PLACEHOLDER — needs clinical review]",
-      raisesAndLowers: { raises: "[PLACEHOLDER — needs clinical review]", lowers: "[PLACEHOLDER — needs clinical review]" },
-      references: "[PLACEHOLDER — needs clinical review]",
+      reflection:
+        "Your magnesium reads %VALUE% mg/dL. Serum magnesium captures only a small fraction of total body magnesium — most of it lives inside cells and bone. Trends matter more than single values, and pairing with calcium, potassium, and vitamin D gives better context.",
+      whatItIs:
+        "Magnesium is a cofactor for hundreds of enzymes, including those that handle ATP, DNA repair, and vascular tone. Serum magnesium is only the tip of the iceberg because most magnesium is intracellular, but persistent low serum levels still associate with worse cardiometabolic outcomes in cohort studies.",
+      raisesAndLowers: {
+        raises:
+          "Diets rich in leafy greens, nuts, seeds, and whole grains are associated with higher serum magnesium. Hard tap water in some regions, and reduced gut transit time as in short-term constipation, are also associated with higher values.",
+        lowers:
+          "Diets low in plants and whole grains, heavy chronic alcohol intake, persistent diarrhea or gut inflammation, high caffeine intake combined with a poor diet, and sustained heavy sweating without dietary replacement are all associated with lower serum magnesium in observational studies.",
+      },
+      limitations:
+        "Serum magnesium can read normal even when intracellular stores are low. A single value cannot describe total-body magnesium status — pair with calcium, potassium, and vitamin D, and watch the trend over time.",
+      references:
+        "Rosique-Esteban N et al. Nutrients 2018 (dietary magnesium and CVD review); Del Gobbo LC et al. Am J Clin Nutr 2013 (circulating and dietary magnesium meta-analysis); Costello RB et al. Adv Nutr 2016 (dietary supplements and magnesium intakes)",
     },
   },
 
@@ -524,10 +534,20 @@ export const BLOOD_MARKER_REGISTRY: BloodMarker[] = [
     favorableDirection: "lower",
     cluster: "lipid_panel",
     descriptor: {
-      reflection: "Your total cholesterol reads %VALUE% mg/dL. The breakdown into LDL, HDL, and triglycerides shown in the lipid panel below carries more signal than the total alone. [PLACEHOLDER — needs clinical review]",
-      whatItIs: "[PLACEHOLDER — needs clinical review]",
-      raisesAndLowers: { raises: "[PLACEHOLDER — needs clinical review]", lowers: "[PLACEHOLDER — needs clinical review]" },
-      references: "[PLACEHOLDER — needs clinical review]",
+      reflection:
+        "Your total cholesterol reads %VALUE% mg/dL. The breakdown into LDL, HDL, and triglycerides shown in the lipid panel below carries more signal than the total alone. A given total can come from very different mixes of HDL, LDL, and Lp(a).",
+      whatItIs:
+        "Total cholesterol sums the cholesterol carried across all lipoprotein particles. As a single value it is a coarse cardiovascular signal because it lumps protective HDL with atherogenic ApoB-bearing particles. It is most useful as part of a full lipid panel.",
+      raisesAndLowers: {
+        raises:
+          "Diets high in saturated fat from processed sources, excess body fat (especially visceral), sedentary patterns, heavy chronic alcohol intake, and diets very low in fiber are associated with higher total cholesterol. Genetic patterns such as familial hypercholesterolemia can elevate it independently of diet.",
+        lowers:
+          "Diets high in soluble fiber from oats, legumes, fruit, and vegetables, replacing saturated fat with mono- and polyunsaturated fats, regular aerobic exercise, reducing visceral fat, and limiting heavy alcohol intake are associated with lower total cholesterol in observational and intervention studies.",
+      },
+      limitations:
+        "Total cholesterol does not show particle composition. ApoB and LDL-C with HDL-C give the actionable picture; a low total cholesterol with adequate HDL is preferred over the same total achieved with high LDL.",
+      references:
+        "Grundy SM et al. Circulation 2019 (AHA/ACC Multisociety Cholesterol Guideline); Ference BA et al. Eur Heart J 2017 (LDL causes ASCVD: Mendelian randomization)",
     },
   },
   {
@@ -582,10 +602,19 @@ export const BLOOD_MARKER_REGISTRY: BloodMarker[] = [
     cluster: "lipid_panel",
     descriptor: {
       reflection:
-        "Your HDL cholesterol reads %VALUE% mg/dL. HDL is part of the lipid panel and is read in context with LDL, ApoB, and Lp(a) below. [PLACEHOLDER — needs clinical review]",
-      whatItIs: "[PLACEHOLDER — needs clinical review]",
-      raisesAndLowers: { raises: "[PLACEHOLDER — needs clinical review]", lowers: "[PLACEHOLDER — needs clinical review]" },
-      references: "[PLACEHOLDER — needs clinical review]",
+        "Your HDL cholesterol reads %VALUE% mg/dL. HDL is part of the lipid panel and is read in context with LDL, ApoB, and Lp(a) below. Modern evidence is more nuanced than the old 'good cholesterol' framing — function matters more than mass.",
+      whatItIs:
+        "HDL-C is cholesterol carried by high-density lipoproteins, traditionally framed as the good cholesterol because higher HDL associates with lower cardiovascular risk in epidemiology. Modern research shows that HDL function — particularly cholesterol efflux capacity — matters more than total mass, and very high HDL is not protective.",
+      raisesAndLowers: {
+        raises:
+          "Regular aerobic exercise, reducing visceral fat, replacing trans and saturated fats with mono- and polyunsaturated fats, quitting smoking, and moderate intake of nuts, olive oil, and fatty fish are associated with higher HDL in observational and intervention studies.",
+        lowers:
+          "Sedentary patterns, excess visceral fat, smoking, diets high in refined carbohydrates and trans fats, and severe and prolonged calorie restriction in some patterns are associated with lower HDL.",
+      },
+      limitations:
+        "HDL-C does not measure HDL particle function or cholesterol efflux capacity. Genetic elevations of HDL-C do not protect against heart disease, and very high HDL is associated with worse outcomes in some cohorts.",
+      references:
+        "Madsen CM et al. Eur Heart J 2017 (extreme high HDL-C and mortality); Voight BF et al. Lancet 2012 (Mendelian randomization on HDL); Khera AV et al. NEJM 2014 (cholesterol efflux capacity); Rader DJ, Hovingh GK. Lancet 2014 (HDL and CV disease)",
     },
   },
   {
@@ -606,10 +635,20 @@ export const BLOOD_MARKER_REGISTRY: BloodMarker[] = [
     favorableDirection: "lower",
     cluster: "lipid_panel",
     descriptor: {
-      reflection: "Your triglycerides read %VALUE% mg/dL. Triglycerides shift more day-to-day than other lipid markers and are sensitive to fasting state. [PLACEHOLDER — needs clinical review]",
-      whatItIs: "[PLACEHOLDER — needs clinical review]",
-      raisesAndLowers: { raises: "[PLACEHOLDER — needs clinical review]", lowers: "[PLACEHOLDER — needs clinical review]" },
-      references: "[PLACEHOLDER — needs clinical review]",
+      reflection:
+        "Your triglycerides read %VALUE% mg/dL. Triglycerides shift more day-to-day than other lipid markers and are sensitive to fasting state. They are a strong, simple read on insulin sensitivity and metabolic flexibility.",
+      whatItIs:
+        "Triglycerides are the main fat-energy currency carried in VLDL particles. Fasting triglycerides are a strong, simple read on insulin sensitivity and metabolic flexibility. Persistent elevations track with the small-dense LDL pattern and with cardiovascular risk in cohort data.",
+      raisesAndLowers: {
+        raises:
+          "Diets high in refined carbohydrates and added sugars, heavy chronic alcohol intake, excess visceral fat, sedentary patterns, and eating shortly before the draw are associated with higher triglycerides.",
+        lowers:
+          "Reducing refined carbohydrate intake, reducing visceral fat, regular aerobic exercise, replacing saturated fat with monounsaturated fat, limiting heavy alcohol intake, and higher intake of omega-3-rich foods such as fatty fish are associated with lower triglycerides in trials and cohort studies.",
+      },
+      limitations:
+        "Triglycerides require a true 12-hour fast for clean interpretation. They have meaningful day-to-day variability, so a single reading should be confirmed before drawing a trend.",
+      references:
+        "Miller M et al. Circulation 2011 (AHA scientific statement); Nordestgaard BG, Varbo A. Lancet 2014 (triglycerides and CVD); Sarwar N et al. Circulation 2007 (collaborative analysis); Reiner Z. Nat Rev Cardiol 2017 (hypertriglyceridemia and CHD)",
     },
   },
   {
@@ -653,10 +692,20 @@ export const BLOOD_MARKER_REGISTRY: BloodMarker[] = [
     favorableDirection: "lower",
     cluster: "lipid_panel",
     descriptor: {
-      reflection: "Your Lp(a) reads %VALUE% mg/dL. Lp(a) is largely genetically determined and changes little with lifestyle. It carries cardiovascular risk independent of LDL. [PLACEHOLDER — needs clinical review]",
-      whatItIs: "[PLACEHOLDER — needs clinical review]",
-      raisesAndLowers: { raises: "[PLACEHOLDER — needs clinical review]", lowers: "[PLACEHOLDER — needs clinical review]" },
-      references: "[PLACEHOLDER — needs clinical review]",
+      reflection:
+        "Your Lp(a) reads %VALUE% mg/dL. Lp(a) is largely genetically determined and changes little with lifestyle. It carries cardiovascular risk independent of LDL, and a single lifetime test is usually sufficient because levels are stable across adulthood.",
+      whatItIs:
+        "Lp(a) is an LDL-like particle with an apolipoprotein(a) tail. It is genetically determined to a large degree and is independently causal for atherosclerotic and valvular heart disease at higher levels. Because it is largely fixed, Lp(a) is best thought of as a once-in-a-lifetime risk modifier that calibrates how aggressive other lifestyle and lipid targets should be.",
+      raisesAndLowers: {
+        raises:
+          "Genetic patterns at the LPA locus are the dominant determinant. Postmenopausal hormonal shifts in some women and untreated hypothyroid patterns are also associated with higher Lp(a).",
+        lowers:
+          "Lp(a) is generally not modifiable through lifestyle. Regular aerobic exercise has at most a modest effect, and diet improvements have minimal effect on Lp(a) values.",
+      },
+      limitations:
+        "Lp(a) is reported in mg/dL or nmol/L; the units are not interchangeable. Assays vary in their sensitivity to apolipoprotein(a) isoform size, so trend interpretation should use the same lab. A single test is usually sufficient because levels are stable across adulthood.",
+      references:
+        "Tsimikas S. JACC 2017 (test in context: Lp(a)); Kronenberg F et al. Eur Heart J 2022 (EAS consensus on Lp(a)); Clarke R et al. NEJM 2009 (Lp(a) genetic variants); Reyes-Soffer G et al. Arterioscler Thromb Vasc Biol 2022 (AHA scientific statement)",
     },
   },
   {
@@ -677,10 +726,20 @@ export const BLOOD_MARKER_REGISTRY: BloodMarker[] = [
     favorableDirection: "lower",
     cluster: "lipid_panel",
     descriptor: {
-      reflection: "Your ApoB reads %VALUE% mg/dL. ApoB counts the number of atherogenic particles directly, where LDL is a calculated estimate of their cholesterol cargo. [PLACEHOLDER — needs clinical review]",
-      whatItIs: "[PLACEHOLDER — needs clinical review]",
-      raisesAndLowers: { raises: "[PLACEHOLDER — needs clinical review]", lowers: "[PLACEHOLDER — needs clinical review]" },
-      references: "[PLACEHOLDER — needs clinical review]",
+      reflection:
+        "Your ApoB reads %VALUE% mg/dL. ApoB counts the number of atherogenic particles directly, where LDL is a calculated estimate of their cholesterol cargo. Mendelian randomization shows ApoB is the dominant cholesterol-related driver of atherosclerotic risk.",
+      whatItIs:
+        "ApoB counts the atherogenic particles in circulation: each VLDL, IDL, LDL, and Lp(a) carries one ApoB molecule, so a single ApoB measurement gives a direct read on particle burden. Mendelian randomization shows ApoB is the dominant cholesterol-related driver of atherosclerotic risk, and it is the lever where every additional decrease produces lower lifetime cardiovascular events.",
+      raisesAndLowers: {
+        raises:
+          "Diets high in saturated and trans fats, excess visceral fat and insulin resistance, sedentary patterns, heavy chronic alcohol intake, and genetic patterns such as familial hypercholesterolemia are associated with higher ApoB.",
+        lowers:
+          "Replacing saturated fat with mono- and polyunsaturated fats, diets high in soluble fiber from oats, legumes, and fruit, reducing visceral fat, regular aerobic and resistance exercise, and limiting heavy alcohol intake are associated with lower ApoB in observational and intervention studies.",
+      },
+      limitations:
+        "ApoB does not localize plaque or quantify existing burden — coronary calcium scoring or CT angiography do that. ApoB is the rate of new particle exposure, not the accumulated damage from past decades.",
+      references:
+        "Sniderman AD et al. Circ Cardiovasc Qual Outcomes 2019 (ApoB vs non-HDL-C vs LDL-C); Marston NA et al. JAMA Cardiol 2022 (ApoB-containing lipoproteins and ASCVD); Ference BA et al. JAMA 2019 (Mendelian randomization of ApoB); Behbodikhah J et al. Metabolites 2021 (ApoB in CVD)",
     },
   },
   {
@@ -700,10 +759,20 @@ export const BLOOD_MARKER_REGISTRY: BloodMarker[] = [
     favorableDirection: "lower",
     cluster: "inflammation_panel",
     descriptor: {
-      reflection: "Your hs-CRP reads %VALUE% mg/L. hs-CRP is a sensitive marker of systemic inflammation. Acute illness or recent injury can transiently raise it; the long-run trend is more informative than any single reading. [PLACEHOLDER — needs clinical review]",
-      whatItIs: "[PLACEHOLDER — needs clinical review]",
-      raisesAndLowers: { raises: "[PLACEHOLDER — needs clinical review]", lowers: "[PLACEHOLDER — needs clinical review]" },
-      references: "[PLACEHOLDER — needs clinical review]",
+      reflection:
+        "Your hs-CRP reads %VALUE% mg/L. hs-CRP is a sensitive marker of systemic inflammation. Acute illness or recent injury can transiently raise it; the long-run trend is more informative than any single reading. Two readings two weeks apart, both away from illness, give the real chronic-inflammation read.",
+      whatItIs:
+        "hs-CRP is the most widely validated read on systemic low-grade inflammation. It rises in response to interleukin-6 and tracks with cardiovascular events, metabolic disease, and all-cause mortality across many cohorts. As a longevity marker, it summarizes the background inflammatory tone the body lives with day to day.",
+      raisesAndLowers: {
+        raises:
+          "Excess visceral fat, recent acute infection or injury, smoking, diets high in ultra-processed foods, sustained sleep deprivation, and persistent gum disease or other chronic infections are associated with higher hs-CRP.",
+        lowers:
+          "Reducing visceral fat, Mediterranean-style eating patterns, regular aerobic exercise, stable and sufficient sleep, quitting smoking, and resolving chronic inflammatory burdens such as gum disease are associated with lower hs-CRP in trials and cohort studies.",
+      },
+      limitations:
+        "hs-CRP swings sharply with any acute infection or injury, so a single high reading without context is uninterpretable. Two readings two weeks apart, both away from illness, give the real chronic-inflammation read.",
+      references:
+        "Ridker PM. JACC 2016 (test in context: hs-CRP); Ridker PM et al. NEJM 2000 (CRP and inflammation in CVD prediction); Emerging Risk Factors Collaboration. NEJM 2012 (CRP, fibrinogen, and CVD prediction); Pearson TA et al. Circulation 2003 (AHA/CDC scientific statement)",
     },
   },
   {
@@ -867,10 +936,20 @@ export const BLOOD_MARKER_REGISTRY: BloodMarker[] = [
     favorableDirection: "lower",
     cluster: "metabolic_panel",
     descriptor: {
-      reflection: "Your fasting glucose reads %VALUE% mg/dL. A single fasting reading is a snapshot — HbA1c gives a 3-month average and insulin gives the demand-side picture. [PLACEHOLDER — needs clinical review]",
-      whatItIs: "[PLACEHOLDER — needs clinical review]",
-      raisesAndLowers: { raises: "[PLACEHOLDER — needs clinical review]", lowers: "[PLACEHOLDER — needs clinical review]" },
-      references: "[PLACEHOLDER — needs clinical review]",
+      reflection:
+        "Your fasting glucose reads %VALUE% mg/dL. A single fasting reading is a snapshot — HbA1c gives a 3-month average and insulin gives the demand-side picture. Even small persistent shifts within the normal range track with cardiovascular and cognitive aging risk.",
+      whatItIs:
+        "Fasting glucose is a single time-point read on baseline blood sugar. It is paired with HbA1c and insulin to map metabolic state. Even small persistent elevations within the normal range track with cardiovascular and cognitive aging risk in cohort data.",
+      raisesAndLowers: {
+        raises:
+          "Diets high in refined carbohydrates and added sugars, excess visceral fat, sedentary patterns, chronic sleep deprivation, sustained psychological stress, and a recent meal or beverage with calories before the draw are associated with higher fasting glucose.",
+        lowers:
+          "Reducing refined carbohydrate and added-sugar intake, reducing visceral fat, regular aerobic and resistance exercise, stable and sufficient sleep, and time-restricted eating patterns when sustainable are associated with lower fasting glucose in trials.",
+      },
+      limitations:
+        "Fasting glucose requires a true 12-hour fast and is sensitive to recent stress, sleep, and acute illness. A single reading should be confirmed; HbA1c shows the longer view.",
+      references:
+        "Tabak AG et al. Lancet 2009 (trajectories of glycaemia and insulin); Selvin E et al. NEJM 2010 (glycated hemoglobin and CV risk); ADA. Diabetes Care 2024 (Standards of Care); Bjornholt JV et al. Diabetes Care 1999 (fasting glucose and CV risk)",
     },
   },
   {
@@ -891,10 +970,20 @@ export const BLOOD_MARKER_REGISTRY: BloodMarker[] = [
     favorableDirection: "lower",
     cluster: "metabolic_panel",
     descriptor: {
-      reflection: "Your HbA1c reads %VALUE%%. HbA1c reflects the average blood sugar your red blood cells have seen over the prior 90 days. [PLACEHOLDER — needs clinical review]",
-      whatItIs: "[PLACEHOLDER — needs clinical review]",
-      raisesAndLowers: { raises: "[PLACEHOLDER — needs clinical review]", lowers: "[PLACEHOLDER — needs clinical review]" },
-      references: "[PLACEHOLDER — needs clinical review]",
+      reflection:
+        "Your HbA1c reads %VALUE%%. HbA1c reflects the average blood sugar your red blood cells have seen over the prior 90 days. It is one of the most established longevity markers because chronically higher glucose exposure damages vasculature, kidneys, and brain over decades.",
+      whatItIs:
+        "HbA1c is the share of hemoglobin that has been glycated by glucose over the lifespan of a red blood cell. It summarizes average blood sugar over the past 8 to 12 weeks. It is one of the most established longevity markers because chronically higher glucose exposure damages vasculature, kidneys, and brain over decades.",
+      raisesAndLowers: {
+        raises:
+          "Diets high in refined carbohydrates and added sugars, excess visceral fat and insulin resistance, sedentary patterns, chronic sleep deprivation, sustained psychological stress, and heavy alcohol intake are associated with higher HbA1c.",
+        lowers:
+          "Reducing refined carbohydrate and added-sugar intake, reducing visceral fat, regular aerobic and resistance exercise, stable and sufficient sleep, time-restricted eating patterns when sustainable, and Mediterranean-style eating are associated with lower HbA1c.",
+      },
+      limitations:
+        "HbA1c is biased by red-cell turnover; conditions that shorten or lengthen red-cell life (iron deficiency, hemolysis, recent blood loss) shift the value independent of glucose. Continuous glucose monitoring shows variability that HbA1c cannot.",
+      references:
+        "Selvin E et al. NEJM 2010 (HbA1c, diabetes, and CV risk); Khaw KT et al. BMJ 2001 (EPIC-Norfolk); Di Angelantonio E et al. NEJM 2014 (meta-analysis); ADA. Diabetes Care 2024 (Standards of Care)",
     },
   },
   {
@@ -914,10 +1003,20 @@ export const BLOOD_MARKER_REGISTRY: BloodMarker[] = [
     favorableDirection: "mid",
     cluster: "metabolic_panel",
     descriptor: {
-      reflection: "Your fasting insulin reads %VALUE% µIU/mL. Insulin pairs with glucose to show how much demand your pancreas is meeting at rest. [PLACEHOLDER — needs clinical review]",
-      whatItIs: "[PLACEHOLDER — needs clinical review]",
-      raisesAndLowers: { raises: "[PLACEHOLDER — needs clinical review]", lowers: "[PLACEHOLDER — needs clinical review]" },
-      references: "[PLACEHOLDER — needs clinical review]",
+      reflection:
+        "Your fasting insulin reads %VALUE% µIU/mL. Insulin pairs with glucose to show how much demand your pancreas is meeting at rest. Fasting insulin rises before glucose does in the development of insulin resistance, so it is one of the earliest and most actionable longevity markers.",
+      whatItIs:
+        "Fasting insulin tracks how hard the pancreas is working to keep glucose stable. It rises before glucose does in the development of insulin resistance, so it is one of the earliest and most actionable longevity markers. HOMA-IR (calculated from fasting insulin and glucose) extends the read on insulin resistance.",
+      raisesAndLowers: {
+        raises:
+          "Diets high in refined carbohydrates and added sugars, excess visceral fat, sedentary patterns, chronic sleep deprivation, sustained psychological stress, and heavy alcohol intake are associated with higher fasting insulin.",
+        lowers:
+          "Reducing refined carbohydrate and added-sugar intake, reducing visceral fat, regular aerobic and resistance exercise, stable and sufficient sleep, time-restricted eating when sustainable, and higher fiber from whole foods are associated with lower fasting insulin in trials.",
+      },
+      limitations:
+        "Fasting insulin requires a true 12-hour fast for clean interpretation. Assays differ in sensitivity, so trend interpretation should use the same lab. A confirmatory repeat is wise before acting on a borderline reading.",
+      references:
+        "Crofts CAP et al. Diabesity 2015 (hyperinsulinemia as unifying theory); Reaven GM. Diabetes 1988 (Banting Lecture: insulin resistance); Janssen JAMJL. Int J Mol Sci 2021 (hyperinsulinemia in aging and disease); Matthews DR et al. Diabetologia 1985 (HOMA assessment)",
     },
   },
   {
@@ -949,10 +1048,20 @@ export const BLOOD_MARKER_REGISTRY: BloodMarker[] = [
     favorableDirection: "higher",
     cluster: null,
     descriptor: {
-      reflection: "Your 25-OH vitamin D reads %VALUE% ng/mL. Levels track sunlight exposure, season, supplementation, and skin type — they shift over weeks, not days. [PLACEHOLDER — needs clinical review]",
-      whatItIs: "[PLACEHOLDER — needs clinical review]",
-      raisesAndLowers: { raises: "[PLACEHOLDER — needs clinical review]", lowers: "[PLACEHOLDER — needs clinical review]" },
-      references: "[PLACEHOLDER — needs clinical review]",
+      reflection:
+        "Your 25-OH vitamin D reads %VALUE% ng/mL. Levels track sunlight exposure, season, supplementation, and skin type — they shift over weeks, not days. Vitamin D acts on hundreds of genes involved in bone, immune, and metabolic function.",
+      whatItIs:
+        "Serum 25-hydroxy vitamin D is the standard read on vitamin D status. It integrates intake, sun exposure, and body fat distribution. Vitamin D acts on hundreds of genes involved in bone, immune, and metabolic function, so persistent insufficiency is a broad longevity flag.",
+      raisesAndLowers: {
+        raises:
+          "Regular safe sun exposure on uncovered skin, diets rich in fatty fish, egg yolks, and fortified foods, lower body fat percentage, and living at lower latitudes are associated with higher vitamin D.",
+        lowers:
+          "Sun avoidance and minimal outdoor time, living at high latitudes during winter, higher body fat percentage (sequestration), darker skin pigmentation with limited sun, and chronic gut malabsorption are associated with lower vitamin D.",
+      },
+      limitations:
+        "25-hydroxy vitamin D is the storage form; it does not measure the active 1,25-dihydroxy form. It varies seasonally — the same person can read very different values in summer and winter. Repeat testing after each season is informative.",
+      references:
+        "Holick MF. NEJM 2007 (vitamin D deficiency); Bouillon R et al. Endocr Rev 2019 (skeletal and extraskeletal actions); Manson JE et al. NEJM 2019 (VITAL trial); Holick MF et al. JCEM 2011 (Endocrine Society guideline); Pilz S et al. Anticancer Res 2016 (vitamin D and mortality)",
     },
   },
   {
