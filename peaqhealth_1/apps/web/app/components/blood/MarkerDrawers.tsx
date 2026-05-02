@@ -3,7 +3,6 @@
  *   • What this measurement reflects        (descriptor.whatItIs)
  *   • What raises and lowers it             (descriptor.raisesAndLowers)
  *   • What this number alone does not capture (descriptor.limitations)
- *   • How the ranges on this page were set
  *   • References                             (descriptor.references)
  *
  * Markers without a descriptor render placeholder copy — every section
@@ -63,10 +62,6 @@ export function MarkerDrawers({ markerId }: { markerId: string }) {
   const limitations = d?.limitations ?? PLACEHOLDER
   const references = d?.references ?? PLACEHOLDER
 
-  const rangesNote = m?.statusBands && m.statusBands.length > 0
-    ? "These ranges are oravi-specific. They are tuned for longevity goals and are not the same as the clinical reference ranges your lab uses. Lab reference ranges are calibrated to flag immediate medical concern; oravi's ranges are tuned to surface patterns researchers associate with healthier long-term outcomes. Both are useful — they answer different questions."
-    : "Reference ranges for this marker have not been added to oravi yet. Your lab's reference range, printed alongside the value on your report, is the relevant context until oravi-specific ranges are reviewed and published."
-
   return (
     <section>
       <Drawer title="What this measurement reflects" body={whatItIs} />
@@ -75,7 +70,6 @@ export function MarkerDrawers({ markerId }: { markerId: string }) {
         body={`What's associated with higher levels:\n${raises}\n\nWhat's associated with lower levels:\n${lowers}`}
       />
       <Drawer title="What this number alone does not capture" body={limitations} />
-      <Drawer title="How the ranges on this page were set" body={rangesNote} />
       <Drawer title="References" body={references} />
     </section>
   )
