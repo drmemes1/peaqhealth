@@ -43,6 +43,45 @@ export interface NRV1Outputs {
   confounder_adjustments: Record<string, string>
 }
 
+export interface PerioBurdenV1Outputs {
+  pbi: number | null                        // perio_burden_index_adjusted (after CDM)
+  pbi_pre_cdm: number | null                // raw PBI before CDM amplification
+  pbi_category: string | null               // minimal | low | moderate | high | severe
+  pdi: number | null                        // perio_defense_index
+  pdi_category: string | null               // depleted | borderline | adequate | robust (v1.3)
+  total_subp_pct: number | null
+  cdm_factor: number | null                 // commensal_depletion_factor
+  cdm_amplification_pct: number | null
+  risk_category: string                     // composite (stable_low_risk, borderline, etc.)
+  diagnostic_uncertainty_zone: boolean
+  red_complex: {
+    status_label: "not_detected" | "below_clinical_threshold" | "detected"
+    detected_species: string[]
+    any_above_clinical_threshold: boolean
+  }
+  cross_panel_hooks: {
+    cardiovascular_pattern_pending: boolean
+    neurodegenerative_pattern_pending: boolean
+  }
+  confidence: string | null
+  reliability_flags: string[]
+  confounder_adjustments: Record<string, string>
+  narrative_augmentations: string[]
+  breakdown: {
+    tier1_pathogen_sum: number
+    tier2_pathogen_sum: number
+    tier3_pathogen_sum: number
+    fa_pg_co_occurrence_active: boolean
+    pg_td_co_occurrence_active: boolean
+    fn_bridging_boost_active: boolean
+    stacked_boost_factor: number
+    pbi_pre_cdm: number
+    cdm_contribution: number
+    defense_tier1_sum: number
+    defense_tier2_sum: number
+  } | null
+}
+
 export interface OralPageData {
   user: {
     id: string
@@ -55,6 +94,7 @@ export interface OralPageData {
   }
   caries: CariesV3Outputs | null
   nr: NRV1Outputs | null
+  perio: PerioBurdenV1Outputs | null
   snapshot: {
     species_count: number | null
     named_species_count: number | null
@@ -224,6 +264,45 @@ export async function loadOralPageData(userId: string): Promise<OralPageResult> 
       }
     : null
 
+  // ── Perio burden v1 outputs ──
+  const perioRisk = str(k.perio_risk_category)
+  const redCxRaw = (k.red_complex_status ?? {}) as Record<string, unknown>
+  const perio: PerioBurdenV1Outputs | null = perioRisk
+    ? {
+        pbi: num(k.perio_burden_index_adjusted),
+        pbi_pre_cdm: num(k.perio_burden_index),
+        pbi_category: str(k.perio_burden_category),
+        pdi: num(k.perio_defense_index),
+        pdi_category: str(k.perio_defense_category),
+        total_subp_pct: num(k.total_subp_pct),
+        cdm_factor: num(k.commensal_depletion_factor),
+        cdm_amplification_pct: num(k.cdm_amplification_pct),
+        risk_category: perioRisk,
+        diagnostic_uncertainty_zone: bool(k.diagnostic_uncertainty_zone),
+        red_complex: {
+          status_label: (str(redCxRaw.status_label) ?? "not_detected") as
+            "not_detected" | "below_clinical_threshold" | "detected",
+          detected_species: Array.isArray(redCxRaw.detected_species)
+            ? (redCxRaw.detected_species as string[])
+            : [],
+          any_above_clinical_threshold: bool(redCxRaw.any_above_clinical_threshold),
+        },
+        cross_panel_hooks: (k.cross_panel_hooks ?? {
+          cardiovascular_pattern_pending: false,
+          neurodegenerative_pattern_pending: false,
+        }) as PerioBurdenV1Outputs["cross_panel_hooks"],
+        confidence: str(k.perio_v1_confidence),
+        reliability_flags: Array.isArray(k.perio_v1_reliability_flags)
+          ? (k.perio_v1_reliability_flags as string[])
+          : [],
+        confounder_adjustments: (k.perio_v1_confounder_adjustments ?? {}) as Record<string, string>,
+        narrative_augmentations: Array.isArray(k.perio_v1_narrative_augmentations)
+          ? (k.perio_v1_narrative_augmentations as string[])
+          : [],
+        breakdown: (k.perio_v1_breakdown ?? null) as PerioBurdenV1Outputs["breakdown"],
+      }
+    : null
+
   const lifestyleData = lifestyle
     ? {
         mouth_breathing: str((lifestyle as Record<string, unknown>).mouth_breathing),
@@ -243,6 +322,7 @@ export async function loadOralPageData(userId: string): Promise<OralPageResult> 
     },
     caries,
     nr,
+    perio,
     snapshot,
     top_species,
     composition: compositionTotals,

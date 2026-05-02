@@ -27,6 +27,7 @@ function makeData(opts: {
     user: { id: "u", first_name: null },
     kit: { id: "k", ordered_at: null, results_date: null },
     caries, nr,
+    perio: null, // lede-generator currently doesn't branch on perio
     snapshot: { species_count: 100, named_species_count: 90, genus_count: 30, phyla_count: 8, shannon_diversity: 4.5, total_abundance_captured: 100 },
     top_species: [],
     composition: { buffering: 0, nr_favorable: 0, cariogenic: 0, context_dependent: 0, unclassified: 0 },
