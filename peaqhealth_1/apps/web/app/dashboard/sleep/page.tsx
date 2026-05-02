@@ -52,7 +52,7 @@ export default async function SleepPage() {
   ])
 
   return (
-    <div className="min-h-svh bg-off-white">
+    <div className="min-h-svh" style={{ background: "#F5F3EE" }}>
       <Nav />
       <SleepPanelClient
         nights={(sleepNights ?? []) as Array<Record<string, unknown>>}

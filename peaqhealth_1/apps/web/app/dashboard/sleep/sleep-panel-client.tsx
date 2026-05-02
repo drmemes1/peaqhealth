@@ -1,19 +1,15 @@
-// PATTERN: Every marker section in this file uses evaluateConnection() + <ConnectionLineCard />.
-// See docs/CONNECTION_LINE_PATTERN.md for the standard.
+// ============================================================================
+// SLEEP PANEL — TILE GRID WITH STATUS SECTIONS (mirrors blood panel)
+// ============================================================================
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { Nav } from "../../components/nav"
-import { evaluateConnection } from "@peaq/score-engine"
-import { ConnectionLineCard } from "../../components/connection-line"
-import {
-  ResponsiveContainer, AreaChart, Area,
-  XAxis, YAxis, Tooltip, ReferenceLine,
-} from "recharts"
-import { markerInfo } from "../../../lib/markerInfo"
+import { SectionHeader } from "../../components/panels"
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+const serif = "var(--font-manrope), system-ui, sans-serif"
+const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 
 interface Props {
   nights: Array<Record<string, unknown>>
@@ -22,13 +18,9 @@ interface Props {
   connectionInput?: import("@peaq/score-engine").ConnectionInput
 }
 
-// ─── Provider priority for dedup ─────────────────────────────────────────────
+// ── Provider priority for dedup ─────────────────────────────────────────────
 
-const PROVIDER_PRIORITY: Record<string, number> = {
-  whoop: 0,
-  oura: 1,
-  garmin: 2,
-}
+const PROVIDER_PRIORITY: Record<string, number> = { whoop: 0, oura: 1, garmin: 2 }
 
 function bestNightPerDate(nights: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
   const byDate = new Map<string, Record<string, unknown>>()
@@ -36,14 +28,10 @@ function bestNightPerDate(nights: Array<Record<string, unknown>>): Array<Record<
     const date = night.date as string
     const src = (night.source as string | null) ?? "unknown"
     const existing = byDate.get(date)
-    if (!existing) {
-      byDate.set(date, night)
-    } else {
-      const existingSrc = (existing.source as string | null) ?? "unknown"
-      const existingPrio = PROVIDER_PRIORITY[existingSrc] ?? 99
-      const newPrio = PROVIDER_PRIORITY[src] ?? 99
-      if (newPrio < existingPrio) byDate.set(date, night)
-    }
+    if (!existing) { byDate.set(date, night); continue }
+    const existingPrio = PROVIDER_PRIORITY[(existing.source as string | null) ?? "unknown"] ?? 99
+    const newPrio = PROVIDER_PRIORITY[src] ?? 99
+    if (newPrio < existingPrio) byDate.set(date, night)
   }
   return Array.from(byDate.values()).sort((a, b) =>
     (b.date as string).localeCompare(a.date as string)
@@ -51,738 +39,380 @@ function bestNightPerDate(nights: Array<Record<string, unknown>>): Array<Record<
 }
 
 function avg(values: (number | null | undefined)[]): number | null {
-  const valid = values.filter((v): v is number => v != null && !isNaN(v))
+  const valid = values.filter((v): v is number => v != null && !isNaN(v) && v > 0)
   if (valid.length === 0) return null
-  return valid.reduce((sum, v) => sum + v, 0) / valid.length
+  return valid.reduce((s, v) => s + v, 0) / valid.length
 }
 
-// ─── Zone definitions ─────────────────────────────────────────────────────────
+// ── Status logic ────────────────────────────────────────────────────────────
 
-type Zone = { label: string; color: string; min: number; max: number }
+type Status = "attention" | "watch" | "strong" | "not_tested"
 
-const SLEEP_ZONES: Record<string, { zones: Zone[]; markerColor: string }> = {
-  deepSleep: {
-    markerColor: "#185FA5",
-    zones: [
-      { label: "Low",     color: "#FFCDD2", min: 0,  max: 10 },
-      { label: "Watch",   color: "#FFE0B2", min: 10, max: 15 },
-      { label: "Good",    color: "#FFF3CD", min: 15, max: 20 },
-      { label: "Optimal", color: "#D4EDDA", min: 20, max: 40 },
-    ],
-  },
-  hrv: {
-    markerColor: "#185FA5",
-    zones: [
-      { label: "Low",     color: "#FFCDD2", min: 0,  max: 25 },
-      { label: "Watch",   color: "#FFE0B2", min: 25, max: 35 },
-      { label: "Good",    color: "#FFF3CD", min: 35, max: 45 },
-      { label: "Optimal", color: "#D4EDDA", min: 45, max: 80 },
-    ],
-  },
-  spo2: {
-    markerColor: "#185FA5",
-    zones: [
-      { label: "Low",     color: "#FFCDD2", min: 88, max: 92 },
-      { label: "Watch",   color: "#FFE0B2", min: 92, max: 95 },
-      { label: "Good",    color: "#FFF3CD", min: 95, max: 96 },
-      { label: "Optimal", color: "#D4EDDA", min: 96, max: 100 },
-    ],
-  },
-  rem: {
-    markerColor: "#185FA5",
-    zones: [
-      { label: "Low",     color: "#FFCDD2", min: 0,  max: 12 },
-      { label: "Watch",   color: "#FFE0B2", min: 12, max: 16 },
-      { label: "Good",    color: "#FFF3CD", min: 16, max: 22 },
-      { label: "Optimal", color: "#D4EDDA", min: 22, max: 40 },
-    ],
-  },
-  efficiency: {
-    markerColor: "#185FA5",
-    zones: [
-      { label: "Low",     color: "#FFCDD2", min: 60, max: 75 },
-      { label: "Watch",   color: "#FFE0B2", min: 75, max: 82 },
-      { label: "Good",    color: "#FFF3CD", min: 82, max: 88 },
-      { label: "Optimal", color: "#D4EDDA", min: 88, max: 100 },
-    ],
-  },
+const STATUS_ORDER: Record<Status, number> = { attention: 0, watch: 1, strong: 2, not_tested: 3 }
+
+const STATUS_META: Record<Status, { dot: string; bg: string; border: string; bar: string; badgeBg: string; badgeText: string; label: string }> = {
+  attention: { dot: "#9B3838", bg: "#FDF8F6", border: "#E5C4C4", bar: "#9B3838", badgeBg: "rgba(155,56,56,0.1)", badgeText: "#9B3838", label: "Attention" },
+  watch:     { dot: "#C4992E", bg: "#FDFAF1", border: "#E8D5A0", bar: "#C4992E", badgeBg: "rgba(196,153,46,0.12)", badgeText: "#946F1B", label: "Watch" },
+  strong:    { dot: "#4A7A4A", bg: "#F7FAF4", border: "#C8D8C0", bar: "#4A7A4A", badgeBg: "rgba(74,122,74,0.1)", badgeText: "#3A6A3A", label: "Strong" },
+  not_tested:{ dot: "#A8A59B", bg: "transparent", border: "#C4C1B6", bar: "#C4C1B6", badgeBg: "rgba(168,165,155,0.1)", badgeText: "#8C897F", label: "Not tested" },
 }
 
-type Status = "optimal" | "good" | "watch" | "attention"
+const SECTION_META: Record<Status, { title: string; subtitle: string }> = {
+  attention:  { title: "Needs your attention", subtitle: "" },
+  watch:      { title: "Keep an eye on these", subtitle: "" },
+  strong:     { title: "In your strong zone", subtitle: "" },
+  not_tested: { title: "Not yet measured", subtitle: "Available with wearable sync" },
+}
 
-function getStatus(value: number | null, zoneKey: string): Status {
-  if (value == null) return "attention"
-  const config = SLEEP_ZONES[zoneKey]
-  if (!config) return "attention"
-  const zones = config.zones
-  // zones ordered: Low, Watch, Good, Optimal
-  const labels = ["Low", "Watch", "Good", "Optimal"]
-  for (const zone of zones) {
-    if (value >= zone.min && value < zone.max) {
-      const label = zone.label
-      if (label === "Optimal") return "optimal"
-      if (label === "Good") return "good"
-      if (label === "Watch") return "watch"
-      return "attention"
-    }
-  }
-  // Check if value equals max of last zone
-  const last = zones[zones.length - 1]
-  if (value >= last.min && value <= last.max) return "optimal"
-  // Below all zones
-  if (value < zones[0].min) return "attention"
+// ── Sleep metric definitions ────────────────────────────────────────────────
+
+interface SleepMetric {
+  key: string
+  href: string | null
+  displayName: string
+  unit: string
+  decimals: number
+  optimal: { min?: number; max?: number }       // strong band
+  good?: { min?: number; max?: number }         // wider strong
+  watch: { min: number; max: number }           // watch band
+  scaleMin: number
+  scaleMax: number
+}
+
+const SLEEP_METRICS: SleepMetric[] = [
+  { key: "deep_sleep", href: "/dashboard/sleep/deep_sleep",
+    displayName: "Deep sleep", unit: "%", decimals: 0,
+    optimal: { min: 20, max: 40 }, good: { min: 15, max: 20 }, watch: { min: 10, max: 15 },
+    scaleMin: 0, scaleMax: 40 },
+  { key: "hrv", href: "/dashboard/sleep/recovery_hrv",
+    displayName: "HRV", unit: "ms", decimals: 0,
+    optimal: { min: 45, max: 80 }, good: { min: 35, max: 45 }, watch: { min: 25, max: 35 },
+    scaleMin: 0, scaleMax: 80 },
+  { key: "spo2", href: null,
+    displayName: "SpO₂", unit: "%", decimals: 1,
+    optimal: { min: 96, max: 100 }, good: { min: 95, max: 96 }, watch: { min: 92, max: 95 },
+    scaleMin: 88, scaleMax: 100 },
+  { key: "rem", href: "/dashboard/sleep/rem",
+    displayName: "REM", unit: "%", decimals: 0,
+    optimal: { min: 22, max: 40 }, good: { min: 16, max: 22 }, watch: { min: 12, max: 16 },
+    scaleMin: 0, scaleMax: 40 },
+  { key: "efficiency", href: null,
+    displayName: "Sleep efficiency", unit: "%", decimals: 0,
+    optimal: { min: 88, max: 100 }, good: { min: 82, max: 88 }, watch: { min: 75, max: 82 },
+    scaleMin: 60, scaleMax: 100 },
+]
+
+function getStatus(value: number | null, m: SleepMetric): Status {
+  if (value == null) return "not_tested"
+  const o = m.optimal, g = m.good, w = m.watch
+  if (o.min != null && value >= o.min && (o.max == null || value <= o.max)) return "strong"
+  if (g && g.min != null && value >= g.min && (g.max == null || value <= g.max)) return "strong"
+  if (value >= w.min && value < w.max) return "watch"
   return "attention"
 }
 
-// ─── Range bar ───────────────────────────────────────────────────────────────
+function tickPosition(value: number, m: SleepMetric): number {
+  const range = m.scaleMax - m.scaleMin
+  const pct = ((value - m.scaleMin) / range) * 100
+  return Math.max(2, Math.min(98, pct))
+}
 
-function SleepRangeBar({ value, zoneKey }: { value: number; zoneKey: string }) {
-  const config = SLEEP_ZONES[zoneKey]
-  if (!config) return null
+function deltaLabel(value: number, m: SleepMetric): { text: string; color: string } | null {
+  const status = getStatus(value, m)
+  if (status === "strong") return { text: "optimal", color: "#4A7A4A" }
+  if (status === "watch") {
+    const target = m.optimal.min ?? m.watch.max
+    return value < target ? { text: "↓ below target", color: "#C4992E" } : { text: "↑ above target", color: "#C4992E" }
+  }
+  if (status === "attention") {
+    const target = m.optimal.min ?? m.watch.max
+    return value < target ? { text: "↓ below range", color: "#9B3838" } : { text: "↑ above range", color: "#9B3838" }
+  }
+  return null
+}
 
-  const zones = config.zones
-  const totalMin = zones[0].min
-  const totalMax = zones[zones.length - 1].max
-  const totalRange = totalMax - totalMin
-  const clampedValue = Math.max(totalMin, Math.min(totalMax, value))
-  const markerPct = ((clampedValue - totalMin) / totalRange) * 100
-  const zonePcts = zones.map(z => ((z.max - z.min) / totalRange) * 100)
+function scaleLabels(m: SleepMetric): string[] {
+  const lo = m.scaleMin
+  const hi = m.scaleMax
+  const mid = Math.round((lo + hi) / 2)
+  const q1 = Math.round((lo + mid) / 2)
+  const q3 = Math.round((mid + hi) / 2)
+  return [String(lo), String(q1), String(mid), String(q3), String(hi)]
+}
 
-  return (
-    <div style={{ marginTop: 6 }}>
-      <div style={{ position: "relative", height: "14px", display: "flex", alignItems: "center" }}>
-        <div style={{ position: "absolute", left: 0, right: 0, height: "6px", display: "flex", borderRadius: "3px", overflow: "hidden", gap: "1px" }}>
-          {zones.map((zone, i) => (
-            <div key={i} style={{
-              flex: `0 0 ${zonePcts[i]}%`,
-              background: zone.color,
-              borderRadius: i === 0 ? "3px 0 0 3px" : i === zones.length - 1 ? "0 3px 3px 0" : "0",
-            }} />
-          ))}
+// ── Populated tile ──────────────────────────────────────────────────────────
+
+function PopulatedCard({ metric, value, status }: { metric: SleepMetric; value: number; status: Status }) {
+  const meta = STATUS_META[status]
+  const tickPos = tickPosition(value, metric)
+  const delta = deltaLabel(value, metric)
+  const labels = scaleLabels(metric)
+  const formatted = metric.decimals === 0 ? Math.round(value).toString() : value.toFixed(metric.decimals)
+
+  const cardStyle: React.CSSProperties = {
+    display: "block", textDecoration: "none", position: "relative",
+    background: meta.bg, border: `1px solid ${meta.border}`,
+    borderRadius: 14, padding: "20px 22px",
+    transition: "transform 0.15s, box-shadow 0.15s",
+    cursor: metric.href ? "pointer" : "default", overflow: "hidden",
+  }
+
+  const inner = (
+    <>
+      {/* Left accent stripe */}
+      <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: meta.bar, opacity: 0.7, borderRadius: "14px 0 0 14px" }} />
+
+      {/* Category + status row */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+        <span style={{ fontFamily: serif, fontSize: 12, fontStyle: "italic", color: "#A8A59B" }}>Sleep</span>
+        <span style={{
+          fontFamily: sans, fontSize: 9, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase",
+          background: meta.badgeBg, color: meta.badgeText,
+          padding: "3px 9px", borderRadius: 20,
+          display: "inline-flex", alignItems: "center", gap: 4,
+        }}>
+          <span style={{ width: 5, height: 5, borderRadius: "50%", background: meta.dot }} />
+          {meta.label}
+        </span>
+      </div>
+
+      {/* Metric name */}
+      <h3 style={{ fontFamily: serif, fontSize: 22, fontWeight: 500, color: "#2C2A24", margin: "0 0 12px", lineHeight: 1.2 }}>
+        {metric.displayName}
+      </h3>
+
+      {/* Value + delta row */}
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12 }}>
+        <div>
+          <span style={{ fontFamily: serif, fontSize: 46, fontWeight: 500, color: "#2C2A24", lineHeight: 1, letterSpacing: "-0.02em" }}>
+            {formatted}
+          </span>
+          <span style={{ fontFamily: serif, fontSize: 18, fontStyle: "italic", color: "#8C897F", marginLeft: 4 }}>{metric.unit}</span>
         </div>
+        {delta && (
+          <span style={{ fontFamily: sans, fontSize: 11, fontWeight: 500, color: delta.color }}>{delta.text}</span>
+        )}
+      </div>
+
+      {/* Range bar */}
+      <div style={{ position: "relative", height: 4, borderRadius: 2, marginBottom: 6,
+        background: "linear-gradient(90deg, rgba(229,196,196,0.3) 0% 18%, rgba(232,213,160,0.35) 18% 30%, #C8D8C0 30% 70%, rgba(232,213,160,0.35) 70% 82%, rgba(229,196,196,0.3) 82% 100%)",
+      }}>
         <div style={{
-          position: "absolute", top: "50%", left: `${markerPct}%`,
-          transform: "translate(-50%, -50%)",
-          width: "10px", height: "10px", borderRadius: "50%",
-          background: config.markerColor,
-          border: "2px solid white",
-          boxShadow: "0 1px 2px rgba(0,0,0,0.15)",
-          zIndex: 2,
-          pointerEvents: "none",
+          position: "absolute", top: -3, left: `${tickPos}%`, width: 2, height: 10,
+          background: meta.dot, borderRadius: 1, transform: "translateX(-1px)",
+          boxShadow: "0 0 0 2px #F5F3EE",
         }} />
       </div>
-    </div>
-  )
-}
-
-// ─── Collapsible section ─────────────────────────────────────────────────────
-
-function Section({ title, defaultOpen, children }: {
-  title: string
-  defaultOpen: boolean
-  children: React.ReactNode
-}) {
-  const [open, setOpen] = useState(defaultOpen)
-  return (
-    <div style={{ marginBottom: 24 }}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        style={{
-          width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "0 0 8px", border: "none", background: "transparent", cursor: "pointer",
-          borderBottom: "0.5px solid var(--ink-12)",
-        }}
-      >
-        <span style={{ fontFamily: "var(--font-body)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--ink-30)", fontWeight: 600 }}>
-          {title}
-        </span>
-        <span style={{
-          fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 16, color: "var(--ink-30)",
-          width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center",
-          border: "0.5px solid var(--ink-12)", borderRadius: "50%",
-        }}>
-          {open ? "−" : "+"}
-        </span>
-      </button>
-      <div style={{ maxHeight: open ? 8000 : 0, opacity: open ? 1 : 0, overflow: "hidden", transition: "max-height 0.35s ease, opacity 0.3s ease" }}>
-        {children}
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
+        {labels.map((l, i) => (
+          <span key={i} style={{ fontFamily: sans, fontSize: 9, color: "#A8A59B", fontVariantNumeric: "tabular-nums" }}>{l}</span>
+        ))}
       </div>
-    </div>
+    </>
   )
+
+  if (metric.href) {
+    return (
+      <Link
+        href={metric.href}
+        style={cardStyle}
+        onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(44,42,36,0.08)" }}
+        onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "none" }}
+      >
+        {inner}
+      </Link>
+    )
+  }
+  return <div style={cardStyle}>{inner}</div>
 }
 
-// ─── Status badge styles ─────────────────────────────────────────────────────
+// ── Empty (not tested) tile ─────────────────────────────────────────────────
 
-const FLAG_STYLES: Record<Status, { bg: string; color: string; label: string }> = {
-  optimal:   { bg: "#EAF3DE", color: "#3B6D11", label: "Optimal" },
-  good:      { bg: "#EBF2FA", color: "#185FA5", label: "Good" },
-  watch:     { bg: "#FEF3C7", color: "#92400E", label: "Watch" },
-  attention: { bg: "#FEE2E2", color: "#991B1B", label: "Low" },
-}
-
-// ─── Sleep mini chart ────────────────────────────────────────────────────────
-
-function SleepMiniChart({
-  data, dataKey, color, refY, label, unit, domain,
-}: {
-  data: Array<{ label: string; value: number | null }>
-  dataKey: string
-  color: string
-  refY: number
-  label: string
-  unit: string
-  domain: [number, number]
-}) {
+function EmptyCard({ metric }: { metric: SleepMetric }) {
   return (
     <div style={{
-      background: "var(--peaq-bg-card, #fff)",
-      border: "0.5px solid var(--ink-08)",
-      borderRadius: 8,
-      padding: "14px 16px",
-      marginBottom: 12,
+      border: "1px dashed #C4C1B6", borderRadius: 10,
+      padding: "14px 16px", minHeight: 78,
+      display: "flex", justifyContent: "space-between", alignItems: "center",
     }}>
-      <p style={{
-        fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-        fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em",
-        color: "var(--ink-40)", margin: "0 0 12px",
-      }}>
-        {label} <span style={{ color: "var(--ink-20)" }}>· {unit}</span>
-      </p>
-      <ResponsiveContainer width="100%" height={120}>
-        <AreaChart data={data} margin={{ top: 4, right: 8, left: -24, bottom: 0 }}>
-          <XAxis
-            dataKey="label"
-            tick={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 11, fill: "var(--ink-30)" }}
-            axisLine={false} tickLine={false}
-            interval={Math.max(0, Math.floor(data.length / 8))}
-          />
-          <YAxis
-            domain={domain}
-            tick={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 11, fill: "var(--ink-30)" }}
-            axisLine={false} tickLine={false} tickCount={4}
-          />
-          <Tooltip
-            contentStyle={{
-              fontFamily: "var(--font-body)", fontSize: 12,
-              background: "var(--peaq-bg-card, #fff)",
-              border: "0.5px solid var(--ink-08)",
-              borderRadius: 6, padding: "6px 10px",
-            }}
-          />
-          <ReferenceLine y={refY} stroke="var(--ink-12)" strokeDasharray="4 4" />
-          <Area
-            type="monotone" dataKey={dataKey}
-            stroke={color} strokeWidth={1.5}
-            fill={color} fillOpacity={0.08}
-            dot={false} connectNulls={false}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
+      <div>
+        <span style={{ fontFamily: serif, fontSize: 11, fontStyle: "italic", color: "#A8A59B", display: "block", marginBottom: 2 }}>Sleep</span>
+        <span style={{ fontFamily: serif, fontSize: 15, fontWeight: 500, color: "#6B6860" }}>{metric.displayName}</span>
+      </div>
+      <span style={{ fontFamily: sans, fontSize: 8, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#A8A59B" }}>NOT TESTED</span>
     </div>
   )
 }
 
-// ─── Sleep metric row ────────────────────────────────────────────────────────
+// ── Section header ──────────────────────────────────────────────────────────
 
-function MetricRow({
-  name,
-  sublabel,
-  value,
-  unit,
-  status,
-  zoneKey,
-  numericValue,
-  infoContent,
-}: {
-  name: string
-  sublabel: string
-  value: string
-  unit: string
-  status: Status
-  zoneKey: string
-  numericValue: number | null
-  infoContent?: { why: string; target: string; citation: string; tip?: string }
-}) {
-  const [expanded, setExpanded] = useState(false)
-  const fs = FLAG_STYLES[status]
-  const dotColor = status === "optimal" ? "#3B6D11" : status === "good" ? "#185FA5" : status === "watch" ? "#C49A3C" : "#A32D2D"
-
+function StatusSection({ status, count, isFirst }: { status: Status; count: number; isFirst: boolean }) {
+  const meta = STATUS_META[status]
+  const section = SECTION_META[status]
   return (
-    <div style={{ borderBottom: "0.5px solid var(--ink-06)" }}>
-      <div style={{ padding: "12px 0" }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ width: 8, height: 8, borderRadius: "50%", background: dotColor, display: "inline-block", flexShrink: 0 }} />
-              <span style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 15, color: "var(--ink)" }}>{name}</span>
-              {infoContent && (
-                <button
-                  onClick={() => setExpanded(e => !e)}
-                  style={{
-                    background: "none", border: "0.5px solid var(--ink-20)", borderRadius: "50%",
-                    width: 16, height: 16, display: "flex", alignItems: "center", justifyContent: "center",
-                    cursor: "pointer", padding: 0, flexShrink: 0,
-                    fontFamily: "var(--font-body)", fontSize: 9, color: "var(--ink-40)",
-                  }}
-                  aria-label={expanded ? "Hide info" : "Show info"}
-                >
-                  ⓘ
-                </button>
-              )}
-            </div>
-            <p style={{ margin: "1px 0 0 14px", fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-60)" }}>{sublabel}</p>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-            <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink)" }}>
-              {value}
-              <span style={{ fontSize: 10, color: "var(--ink-30)", marginLeft: 2 }}>{unit}</span>
-            </span>
-            <span style={{ fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.05em", padding: "2px 7px", background: fs.bg, color: fs.color }}>
-              {fs.label}
-            </span>
-          </div>
-        </div>
-        {numericValue != null && (
-          <div style={{ marginLeft: 14 }}>
-            <SleepRangeBar value={numericValue} zoneKey={zoneKey} />
-          </div>
-        )}
-      </div>
-      <div style={{ maxHeight: expanded && infoContent ? 300 : 0, overflow: "hidden", transition: "max-height 0.35s ease, opacity 0.3s ease", opacity: expanded && infoContent ? 1 : 0 }}>
-        {infoContent && (
-          <div style={{
-            background: "var(--peaq-bg-secondary, #F0EFE8)",
-            borderRadius: "0 0 8px 8px",
-            padding: "12px 16px",
-            marginTop: 0,
-            marginBottom: 8,
-          }}>
-            <p style={{ fontFamily: "var(--font-body)", fontSize: 12, lineHeight: 1.6, color: "var(--ink-60)", margin: "0 0 8px" }}>
-              {infoContent.why}
-            </p>
-            <p style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", fontStyle: "italic", margin: "0 0 4px" }}>
-              Target: {infoContent.target}
-            </p>
-            <p style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", fontStyle: "italic", margin: 0 }}>
-              {infoContent.citation}
-            </p>
-            {infoContent.tip && (
-              <p style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "var(--color-accent-gold, #C49A3C)", margin: "8px 0 0" }}>
-                · {infoContent.tip}
-              </p>
-            )}
-          </div>
-        )}
-      </div>
+    <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: isFirst ? 0 : 32, marginBottom: 16 }}>
+      <span style={{ width: 6, height: 6, borderRadius: "50%", background: meta.dot, flexShrink: 0 }} />
+      <span style={{ fontFamily: serif, fontSize: 18, fontStyle: "italic", color: "#6B6860", whiteSpace: "nowrap" }}>
+        {section.title}
+      </span>
+      <div style={{ flex: 1, height: 1, background: "#E8E4D8" }} />
+      <span style={{ fontFamily: sans, fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "#A8A59B", whiteSpace: "nowrap" }}>
+        {status === "not_tested" ? section.subtitle : `${count} metric${count === 1 ? "" : "s"}`}
+      </span>
     </div>
   )
 }
 
-// ─── Main component ──────────────────────────────────────────────────────────
+// ── Main ────────────────────────────────────────────────────────────────────
 
-export function SleepPanelClient({ nights, snapshot, wearable, connectionInput }: Props) {
-  const sleepSub = snapshot?.sleep_sub as number | undefined
-
+export function SleepPanelClient({ nights, wearable }: Props) {
   const [narrative, setNarrative] = useState<{
     headline: string | null
     narrative: string | null
-    positive_signal: string | null
-    watch_signal: string | null
-    nights_analyzed: number | null
-    avg_hrv: number | null
-    avg_efficiency: number | null
-    avg_deep_pct: number | null
-    avg_rem_pct: number | null
-    raw_response: { trend_summary?: string } | null
   } | null>(null)
 
   useEffect(() => {
     fetch("/api/trends/sleep-narrative")
       .then(r => r.json())
-      .then((d: { narrative: typeof narrative }) => setNarrative(d.narrative))
+      .then((d: { narrative: { headline: string | null; narrative: string | null } | null }) => setNarrative(d.narrative))
       .catch(() => {})
   }, [])
 
   const provider = wearable?.provider as string | null | undefined
   const lastSynced = wearable?.last_synced_at as string | null | undefined
-
   const deduped = bestNightPerDate(nights)
+
+  // ── Compute averages ──────────────────────────────────────────────────────
+
+  const values = useMemo(() => {
+    const deepPcts = deduped.map(n => {
+      const total = n.total_sleep_minutes as number | null
+      const deep = n.deep_sleep_minutes as number | null
+      return total && deep && total > 0 ? (deep / total) * 100 : null
+    })
+    const remPcts = deduped.map(n => {
+      const total = n.total_sleep_minutes as number | null
+      const rem = n.rem_sleep_minutes as number | null
+      return total && rem && total > 0 ? (rem / total) * 100 : null
+    })
+    return {
+      deep_sleep: avg(deepPcts),
+      hrv: avg(deduped.map(n => n.hrv_rmssd as number | null)),
+      spo2: avg(deduped.map(n => n.spo2 as number | null)),
+      rem: avg(remPcts),
+      efficiency: avg(deduped.map(n => n.sleep_efficiency as number | null)),
+    } as Record<string, number | null>
+  }, [deduped])
+
+  const allMetrics = useMemo(() =>
+    SLEEP_METRICS.map(m => {
+      const v = values[m.key]
+      return { metric: m, value: v, status: getStatus(v, m) }
+    }),
+  [values])
+
+  const populatedCount = allMetrics.filter(m => m.status !== "not_tested").length
+  const attentionCount = allMetrics.filter(m => m.status === "attention" || m.status === "watch").length
+
+  const statusGroups = useMemo(() => {
+    const groups: Record<Status, typeof allMetrics> = { attention: [], watch: [], strong: [], not_tested: [] }
+    for (const m of allMetrics) groups[m.status].push(m)
+    for (const k of Object.keys(groups) as Status[]) {
+      groups[k].sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status])
+    }
+    return groups
+  }, [allMetrics])
+
+  // ── Empty state ───────────────────────────────────────────────────────────
 
   if (deduped.length === 0) {
     return (
-      <div className="min-h-svh bg-off-white">
+      <div className="min-h-svh" style={{ background: "#F5F3EE" }}>
         <Nav />
-        <main style={{ maxWidth: 680, margin: "0 auto", padding: "32px 24px 80px" }}>
-          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
-            <h1 style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 36, fontWeight: 300, color: "var(--ink)", margin: 0 }}>Sleep</h1>
-            <Link
-              href="/dashboard"
-              style={{ fontFamily: "var(--font-body)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--ink-30)", textDecoration: "none" }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = "#C49A3C" }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = "var(--ink-30)" }}
-            >
-              ← Dashboard
-            </Link>
+        <div style={{ maxWidth: 960, margin: "0 auto", padding: "32px 24px 80px" }}>
+          <SectionHeader title="Sleep panel" subtitle="No sleep data on file." />
+          <div style={{ background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 10, padding: 24 }}>
+            <p style={{ fontFamily: serif, fontSize: 22, fontWeight: 500, color: "#2C2A24", margin: "0 0 8px" }}>Connect a wearable to see your sleep metrics</p>
+            <p style={{ fontFamily: sans, fontSize: 13, color: "#92400E", margin: "0 0 16px" }}>Your nightly data will appear here as a tile grid with deep sleep, HRV, REM, SpO₂, and efficiency.</p>
+            <Link href="/settings" style={{ fontFamily: sans, fontSize: 12, fontWeight: 500, color: "#B8860B", textDecoration: "none" }}>Connect wearable →</Link>
           </div>
-          <p style={{ fontFamily: "var(--font-body)", fontSize: 14, color: "var(--ink-60)", marginTop: 24 }}>
-            No sleep data available. Connect your wearable to begin.
-          </p>
-          <Link href="/dashboard" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--gold)", display: "inline-block", marginTop: 12 }}>
-            ← Back to dashboard
-          </Link>
-        </main>
+        </div>
       </div>
     )
   }
 
-  // ── Compute 30-day averages ───────────────────────────────────────────────
-
-  const deepPcts = deduped.map(n => {
-    const total = n.total_sleep_minutes as number | null
-    const deep = n.deep_sleep_minutes as number | null
-    if (!total || !deep || total === 0) return null
-    return (deep / total) * 100
-  })
-
-  const remPcts = deduped.map(n => {
-    const total = n.total_sleep_minutes as number | null
-    const rem = n.rem_sleep_minutes as number | null
-    if (!total || !rem || total === 0) return null
-    return (rem / total) * 100
-  })
-
-  const hrvValues = deduped.map(n => n.hrv_rmssd as number | null)
-  const spo2Values = deduped.map(n => n.spo2 as number | null)
-  const effValues = deduped.map(n => n.sleep_efficiency as number | null)
-
-  const avgDeep = avg(deepPcts)
-  const avgRem = avg(remPcts)
-  const avgHrv = avg(hrvValues)
-  const avgSpo2 = avg(spo2Values)
-  const avgEff = avg(effValues)
-
-  // ── Last 7 nights ────────────────────────────────────────────────────────
-
-  const last7 = deduped.slice(0, 7)
-
-  // ── 30-night trend data (oldest → newest for left-to-right charts) ───────
-
-  const bestNights = deduped.slice(0, 30).reverse()
-
-  // ── Status computations ──────────────────────────────────────────────────
-
-  const deepStatus = getStatus(avgDeep, "deepSleep")
-  const hrvStatus = getStatus(avgHrv, "hrv")
-  const spo2Status = getStatus(avgSpo2, "spo2")
-  const remStatus = getStatus(avgRem, "rem")
-  const effStatus = getStatus(avgEff, "efficiency")
-
-  const fmt = (v: number | null, decimals = 0) => v == null ? "—" : v.toFixed(decimals)
-
-  const providerLabel = provider
-    ? provider.charAt(0).toUpperCase() + provider.slice(1)
-    : null
-
-  const syncLabel = lastSynced
-    ? new Date(lastSynced).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-    : null
+  const providerLabel = provider ? provider.charAt(0).toUpperCase() + provider.slice(1) : null
+  const syncLabel = lastSynced ? new Date(lastSynced).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null
 
   return (
-    <div className="min-h-svh bg-off-white">
-      <Nav />
-      <main style={{ maxWidth: 680, margin: "0 auto", padding: "32px 24px 80px" }}>
+    <div style={{ maxWidth: 1040, margin: "0 auto", padding: "32px 24px 80px", background: "#F5F3EE" }}>
+      <SectionHeader
+        title="What your sleep data is showing"
+        subtitle={`${populatedCount} metric${populatedCount === 1 ? "" : "s"} measured${attentionCount > 0 ? ` · ${attentionCount} need attention` : ""}`}
+      />
 
-        {/* Header */}
-        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8 }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
-            <h1 style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 36, fontWeight: 300, color: "var(--ink)", margin: 0 }}>Sleep</h1>
-            {sleepSub !== undefined && (
-              <span style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink-30)" }}>Sleep panel</span>
-            )}
-          </div>
-          <Link
-            href="/dashboard"
-            style={{ fontFamily: "var(--font-body)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--ink-30)", textDecoration: "none" }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = "#C49A3C" }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = "var(--ink-30)" }}
-          >
-            ← Dashboard
-          </Link>
-        </div>
+      {/* Source pill */}
+      {(providerLabel || syncLabel) && (
+        <p style={{ fontFamily: sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: "#8C897F", margin: "0 0 24px" }}>
+          {[providerLabel, syncLabel ? `Synced ${syncLabel}` : null].filter(Boolean).join(" · ")} · {deduped.length} night{deduped.length === 1 ? "" : "s"}
+        </p>
+      )}
 
-        {/* Source line */}
-        {(providerLabel || syncLabel) && (
-          <p style={{ fontFamily: "var(--font-body)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--ink-30)", margin: "0 0 24px" }}>
-            {[providerLabel, syncLabel ? `Synced ${syncLabel}` : null].filter(Boolean).join(" · ")}
+      {/* Optional narrative card */}
+      {narrative?.headline && (
+        <div style={{
+          background: "#FFFFFF", border: "1px solid #E8E4D8", borderLeft: "3px solid #4A7FB5",
+          borderRadius: 10, padding: "18px 22px", marginBottom: 28,
+        }}>
+          <p style={{ fontFamily: serif, fontSize: 18, fontWeight: 400, color: "#2C2A24", margin: "0 0 6px", lineHeight: 1.35 }}>
+            {narrative.headline}
           </p>
-        )}
-
-        {/* Summary metrics — 3-column grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 32 }}>
-          {/* Deep Sleep */}
-          <div style={{ border: "0.5px solid var(--ink-12)", padding: "14px", background: "#fff" }}>
-            <p style={{ margin: "0 0 2px", fontFamily: "var(--font-body)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em", color: "#185FA5" }}>
-              Deep Sleep
-            </p>
-            <p style={{ margin: "0 0 4px", fontFamily: "var(--font-body)", fontSize: 10, color: "var(--ink-30)" }}>30-day avg</p>
-            <span style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 48, fontWeight: 300, color: "var(--ink)", lineHeight: 1 }}>
-              {avgDeep != null ? Math.round(avgDeep) : "—"}
-            </span>
-            <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "var(--ink-30)", marginLeft: 4 }}>%</span>
-          </div>
-
-          {/* HRV */}
-          <div style={{ border: "0.5px solid var(--ink-12)", padding: "14px", background: "#fff" }}>
-            <p style={{ margin: "0 0 2px", fontFamily: "var(--font-body)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em", color: "#185FA5" }}>
-              HRV
-            </p>
-            <p style={{ margin: "0 0 4px", fontFamily: "var(--font-body)", fontSize: 10, color: "var(--ink-30)" }}>30-day avg</p>
-            <span style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 48, fontWeight: 300, color: "var(--ink)", lineHeight: 1 }}>
-              {avgHrv != null ? Math.round(avgHrv) : "—"}
-            </span>
-            <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "var(--ink-30)", marginLeft: 4 }}>ms</span>
-          </div>
-
-          {/* Sleep Efficiency */}
-          <div style={{ border: "0.5px solid var(--ink-12)", padding: "14px", background: "#fff" }}>
-            <p style={{ margin: "0 0 2px", fontFamily: "var(--font-body)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em", color: "#185FA5" }}>
-              Efficiency
-            </p>
-            <p style={{ margin: "0 0 4px", fontFamily: "var(--font-body)", fontSize: 10, color: "var(--ink-30)" }}>30-day avg</p>
-            <span style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 48, fontWeight: 300, color: "var(--ink)", lineHeight: 1 }}>
-              {avgEff != null ? Math.round(avgEff) : "—"}
-            </span>
-            <span style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "var(--ink-30)", marginLeft: 4 }}>%</span>
-          </div>
-        </div>
-
-        {/* Sleep Insight */}
-        {narrative && (
-          <div style={{
-            borderLeft: "3px solid var(--sleep-c, #185FA5)",
-            background: "var(--peaq-bg-card, #fff)",
-            border: "0.5px solid var(--ink-08)",
-            borderLeftWidth: 3,
-            borderLeftColor: "var(--sleep-c, #185FA5)",
-            borderRadius: 10,
-            padding: "20px 24px",
-            marginBottom: 24,
-          }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <span style={{ fontFamily: "var(--font-body)", fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--ink-40)" }}>
-                Sleep · last {narrative.nights_analyzed ?? "—"} nights
-              </span>
-              {narrative.raw_response?.trend_summary && (
-                <span style={{
-                  fontFamily: "var(--font-body)", fontSize: 11, fontWeight: 500,
-                  color: narrative.raw_response.trend_summary === "improving" ? "#1D9E75"
-                    : narrative.raw_response.trend_summary === "declining" ? "#A32D2D" : "#C49A3C",
-                }}>
-                  {narrative.raw_response.trend_summary === "improving" ? "↑ Improving"
-                    : narrative.raw_response.trend_summary === "declining" ? "↓ Worth watching" : "→ Holding steady"}
-                </span>
-              )}
-            </div>
-
-            {narrative.headline && (
-              <p style={{ fontFamily: "var(--font-manrope), system-ui, sans-serif", fontSize: 20, fontWeight: 300, color: "var(--ink)", lineHeight: 1.3, margin: "0 0 10px" }}>
-                {narrative.headline}
-              </p>
-            )}
-
-            {narrative.narrative && (
-              <p style={{ fontFamily: "var(--font-body)", fontSize: 14, color: "var(--ink-60)", lineHeight: 1.65, margin: "0 0 14px" }}>
-                {narrative.narrative}
-              </p>
-            )}
-
-            {narrative.positive_signal && (
-              <div style={{ padding: "10px 14px", background: "rgba(29,158,117,0.07)", borderRadius: 6, borderLeft: "3px solid #1D9E75", fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink-60)", lineHeight: 1.5, marginBottom: 8 }}>
-                {narrative.positive_signal}
-              </div>
-            )}
-
-            {narrative.watch_signal && (
-              <div style={{ padding: "10px 14px", background: "rgba(184,134,11,0.07)", borderRadius: 6, borderLeft: "3px solid #C49A3C", fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink-60)", lineHeight: 1.5 }}>
-                {narrative.watch_signal}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Sleep Metrics section */}
-        <Section title="Sleep Metrics" defaultOpen={true}>
-          <MetricRow
-            name="Deep Sleep"
-            sublabel="Slow-wave · target ≥17%"
-            value={fmt(avgDeep)}
-            unit="%"
-            status={deepStatus}
-            zoneKey="deepSleep"
-            numericValue={avgDeep}
-            infoContent={markerInfo["deep-sleep"]}
-          />
-          {connectionInput && <ConnectionLineCard connection={evaluateConnection("deep_sleep", connectionInput)} />}
-          <MetricRow
-            name="HRV"
-            sublabel="RMSSD · age-adjusted target"
-            value={fmt(avgHrv)}
-            unit="ms"
-            status={hrvStatus}
-            zoneKey="hrv"
-            numericValue={avgHrv}
-            infoContent={markerInfo["hrv"]}
-          />
-          {connectionInput && <ConnectionLineCard connection={evaluateConnection("recovery_hrv", connectionInput)} />}
-          <MetricRow
-            name="SpO₂"
-            sublabel="Avg saturation · target ≥96%"
-            value={fmt(avgSpo2, 1)}
-            unit="%"
-            status={spo2Status}
-            zoneKey="spo2"
-            numericValue={avgSpo2}
-            infoContent={markerInfo["spo2"]}
-          />
-          <MetricRow
-            name="REM"
-            sublabel="Target ≥18%"
-            value={fmt(avgRem)}
-            unit="%"
-            status={remStatus}
-            zoneKey="rem"
-            numericValue={avgRem}
-            infoContent={markerInfo["rem"]}
-          />
-          {connectionInput && <ConnectionLineCard connection={evaluateConnection("rem", connectionInput)} />}
-          <MetricRow
-            name="Sleep Efficiency"
-            sublabel="Target ≥85%"
-            value={fmt(avgEff)}
-            unit="%"
-            status={effStatus}
-            zoneKey="efficiency"
-            numericValue={avgEff}
-            infoContent={markerInfo["sleep-efficiency"]}
-          />
-          {connectionInput && <ConnectionLineCard connection={evaluateConnection("duration", connectionInput)} />}
-        </Section>
-
-        {/* Last 7 Nights section */}
-        <Section title="Last 7 Nights" defaultOpen={true}>
-          {/* Header row */}
-          <div style={{ display: "flex", alignItems: "center", padding: "6px 0 4px", borderBottom: "0.5px solid var(--ink-12)" }}>
-            <span style={{ flex: "0 0 90px", fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--ink-30)" }}>Date</span>
-            <span style={{ flex: 1, fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--ink-30)", textAlign: "center" }}>Deep</span>
-            <span style={{ flex: 1, fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--ink-30)", textAlign: "center" }}>HRV</span>
-            <span style={{ flex: 1, fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--ink-30)", textAlign: "center" }}>Eff</span>
-            <span style={{ flex: "0 0 50px", fontFamily: "var(--font-body)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--ink-30)", textAlign: "right" }}>Source</span>
-          </div>
-          {last7.map((night, i) => {
-            const date = night.date as string
-            const total = night.total_sleep_minutes as number | null
-            const deep = night.deep_sleep_minutes as number | null
-            const hrv = night.hrv_rmssd as number | null
-            const eff = night.sleep_efficiency as number | null
-            const src = (night.source as string | null) ?? "—"
-
-            const deepPct = total && deep && total > 0 ? (deep / total) * 100 : null
-
-            const dateLabel = new Date(date + "T12:00:00").toLocaleDateString("en-US", {
-              weekday: "short",
-              month: "short",
-              day: "numeric",
-            })
-
-            return (
-              <div key={i} style={{ display: "flex", alignItems: "center", padding: "7px 0", borderBottom: "0.5px solid var(--ink-06)" }}>
-                <span style={{ flex: "0 0 90px", fontFamily: "var(--font-body)", fontSize: 12, color: "var(--ink)" }}>{dateLabel}</span>
-                <span style={{ flex: 1, fontFamily: "var(--font-body)", fontSize: 12, color: "var(--ink-60)", textAlign: "center" }}>
-                  {deepPct != null ? `${Math.round(deepPct)}%` : "—"}
-                </span>
-                <span style={{ flex: 1, fontFamily: "var(--font-body)", fontSize: 12, color: "var(--ink-60)", textAlign: "center" }}>
-                  {hrv != null ? `${Math.round(hrv)} ms` : "—"}
-                </span>
-                <span style={{ flex: 1, fontFamily: "var(--font-body)", fontSize: 12, color: "var(--ink-60)", textAlign: "center" }}>
-                  {eff != null ? `${Math.round(eff)}%` : "—"}
-                </span>
-                <span style={{ flex: "0 0 50px", fontFamily: "var(--font-body)", fontSize: 11, color: "var(--ink-30)", textAlign: "right", textTransform: "capitalize" }}>
-                  {src}
-                </span>
-              </div>
-            )
-          })}
-        </Section>
-
-        {/* Sleep Trends */}
-        <Section title="Sleep trends · 30 nights" defaultOpen={false}>
-          {bestNights.length >= 3 ? (
-            <>
-              <SleepMiniChart
-                data={bestNights.map(n => ({
-                  label: new Date((n.date as string) + "T00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-                  value: n.deep_sleep_minutes && n.total_sleep_minutes
-                    ? ((n.deep_sleep_minutes as number) / (n.total_sleep_minutes as number)) * 100
-                    : null,
-                }))}
-                dataKey="value"
-                color="#185FA5"
-                refY={17}
-                label="Deep sleep"
-                unit="% of TST"
-                domain={[0, 45]}
-              />
-              <SleepMiniChart
-                data={bestNights.map(n => ({
-                  label: new Date((n.date as string) + "T00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-                  value: n.hrv_rmssd as number | null,
-                }))}
-                dataKey="value"
-                color="#185FA5"
-                refY={40}
-                label="HRV"
-                unit="ms RMSSD"
-                domain={[0, 80]}
-              />
-              <SleepMiniChart
-                data={bestNights.map(n => ({
-                  label: new Date((n.date as string) + "T00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-                  value: n.sleep_efficiency as number | null,
-                }))}
-                dataKey="value"
-                color="#185FA5"
-                refY={85}
-                label="Sleep efficiency"
-                unit="%"
-                domain={[60, 100]}
-              />
-              <SleepMiniChart
-                data={bestNights.map(n => ({
-                  label: new Date((n.date as string) + "T00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-                  value: n.spo2 as number | null,
-                }))}
-                dataKey="value"
-                color="#185FA5"
-                refY={96}
-                label="SpO₂"
-                unit="% avg"
-                domain={[88, 100]}
-              />
-            </>
-          ) : (
-            <p style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--ink-40)", padding: "12px 0" }}>
-              Need at least 3 nights of data to show trends.
+          {narrative.narrative && (
+            <p style={{ fontFamily: sans, fontSize: 13, color: "#6B6860", lineHeight: 1.6, margin: 0 }}>
+              {narrative.narrative}
             </p>
           )}
-        </Section>
-
-        <div style={{ textAlign: "center", marginTop: 16, marginBottom: 16 }}>
-          <a href="/dashboard/converge" style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "#B8860B", textDecoration: "none", fontWeight: 500 }}>
-            See how this connects to your other panels →
-          </a>
         </div>
+      )}
 
-      </main>
+      {/* Status-grouped tile sections */}
+      {(["attention", "watch", "strong", "not_tested"] as Status[]).map((s, si) => {
+        const group = statusGroups[s]
+        if (group.length === 0) return null
+        const isFirst = si === 0 || (["attention", "watch", "strong", "not_tested"] as Status[]).slice(0, si).every(ps => statusGroups[ps].length === 0)
+        return (
+          <div key={s}>
+            <StatusSection status={s} count={group.length} isFirst={isFirst} />
+            {s === "not_tested" ? (
+              <div className="sleep-empty-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+                {group.map(m => <EmptyCard key={m.metric.key} metric={m.metric} />)}
+              </div>
+            ) : (
+              <div className="sleep-tile-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+                {group.map(m => <PopulatedCard key={m.metric.key} metric={m.metric} value={m.value!} status={m.status} />)}
+              </div>
+            )}
+          </div>
+        )
+      })}
+
+      <div style={{ textAlign: "center", marginTop: 28 }}>
+        <Link href="/dashboard/converge" style={{ fontFamily: sans, fontSize: 13, color: "#B8860B", textDecoration: "none", fontWeight: 500 }}>
+          See how this connects to your other panels →
+        </Link>
+      </div>
+
+      <style>{`
+        @media (max-width: 960px) {
+          .sleep-tile-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          .sleep-empty-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+        @media (max-width: 640px) {
+          .sleep-tile-grid { grid-template-columns: 1fr !important; gap: 10px !important; }
+          .sleep-empty-grid { grid-template-columns: 1fr !important; gap: 6px !important; }
+        }
+      `}</style>
     </div>
   )
 }
