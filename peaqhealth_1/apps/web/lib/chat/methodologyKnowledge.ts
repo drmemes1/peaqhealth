@@ -218,6 +218,87 @@ export const METHODOLOGY: MethodologyEntry[] = [
       "The composition_constrained category is a novel framing not directly validated against clinical outcomes in adults. Mechanistically supported by Vanhatalo 2018 — Veillonella decreases with nitrate supplementation despite being a dominant NR species. Not a diagnostic for cardiovascular disease; surfaces a microbial pattern, not an outcome.",
     citations: ["All NR Capacity and NO Signature citations"],
   },
+  {
+    scoreName: "Periodontal Burden Index (PBI)",
+    whatItMeasures:
+      "Subgingival plaque-specific bacterial burden detectable in saliva — the 16S signal that tracks gum inflammation and periodontal disease.",
+    howComputed:
+      "Tiered weighted sum of periodontal pathogens. Tier 1 (P. gingivalis 1.0×, T. forsythia 0.9×, Treponema complex 0.8×, F. alocis 0.7×) carries highest weight based on salivary detection evidence and SMDI Gini importance rankings. Tier 2 (F. nucleatum 0.5×/0.8× contextual, P. intermedia 0.5×, S. constellatus 0.4×, P. micra 0.4×) provides secondary signal. Tier 3 includes emerging biomarkers (Mycoplasma faucium, Fretibacterium HMT-362, Treponema HMT-237) at 0.3× — Gini importance is higher than F. alocis but V3-V4 detection is unreliable, so weights are detection-limit aware. Conditional modifiers: F. alocis × P. gingivalis co-occurrence boost (1.2×, Aruni 2011 + Wang 2015); P. gingivalis × Treponema co-occurrence boost (1.2×, Hajishengallis PSD framework); F. nucleatum bridging weight increases 0.5 → 0.8 when P. gingivalis ≥ 0.5%. Stacked co-occurrence boosts capped at 1.3×. PBI is then amplified by the Commensal Depletion Modifier when defense is reduced; the modifier contribution is surfaced as a separate breakdown line item.",
+    inputs: [
+      "P. gingivalis %", "T. forsythia %", "Treponema (genus) %", "F. alocis %",
+      "F. nucleatum %", "P. intermedia %", "S. constellatus %", "P. micra %",
+      "Optional Tier 3: M. faucium, Fretibacterium, Treponema HMT-237",
+    ],
+    thresholds:
+      "minimal < 0.5, low 0.5–1.5 (diagnostic uncertainty zone, Lee 2026 AUC 0.736 healthy-vs-Stage-I), moderate 1.5–3.0, high 3.0–6.0, severe > 6.0. Anchored to Kageyama 2017 mean periodontitis cohort SUBP 1.6 ± 1.2%, Ma 2021 cohort range 0–15.4%, Gizaw 2026 P. gingivalis gradient (4% Stage I → 17% Stage IV).",
+    limitations:
+      "PBI category cutoffs are derived heuristics, not externally validated. V3-V4 sequencing detects Treponema at genus level only (~20–40% relative abundance underestimation vs V1-V3 per Wade & Prosdocimi 2020). Saliva underestimates subgingival pathogen levels in absolute terms. Stage I detection accuracy is the lowest of any disease stage. F. alocis is primarily a severity marker (Stages III–IV). Versioning rule: when sequencing platform supports V1-V3 amplicon or shotgun metagenomics, Tier 3 species (Fretibacterium, Mogibacterium) shift to Tier 2.",
+    citations: [
+      "Kageyama 2017 (PLoS One)",
+      "Ma 2021 (PLoS One)",
+      "Lee 2026 (mSystems, AUC 0.924)",
+      "Kageyama 2025 (Front Cell Infect Microbiol, n=2,050)",
+      "Kim 2018 (PLoS One — PPI grading framework)",
+      "Belstrøm 2018",
+      "Ji 2023",
+      "Yamaguchi 2018 — IHC tissue density",
+      "Aruni 2011 — Pg-Fa coculture biology",
+      "Wang 2015 — co-occurrence ecology",
+      "Vashishta 2025 — F. alocis pathogenicity via TLR2",
+      "Wade & Prosdocimi 2020 — V3-V4 vs V1-V3 detection",
+      "He 2025",
+      "Abdulkareem 2026 systematic review",
+      "Hajishengallis 2014 — PSD framework",
+    ],
+  },
+  {
+    scoreName: "Periodontal Defense Index (PDI)",
+    whatItMeasures:
+      "Health-associated commensal bacterial scaffold integrity — the species protecting your gums.",
+    howComputed:
+      "Tier 1 (C. matruchotii 2.0×, S. mitis group 1.0×, S. sanguinis 1.0×, S. gordonii 1.0×) scores direct periodontal protection via biofilm architecture and ADS-mediated pH buffering. Tier 2 (Rothia 0.5×, Neisseria 0.5×, H. parainfluenzae 0.5×, A. naeslundii 0.5×, Lautropia 0.3×) covers health-associated genera that decline with periodontal severity. Many Tier 2 species are also computed in NR Capacity (NR-α) and Caries CSI (caries v3) — they are shared health markers across multiple oral health dimensions. S. mitis group computation includes cleanly-named S. mitis, S. oralis, AND any hyphenated calls containing 'mitis', 'pneumoniae', or 'oralis' identifiers (V3-V4 cannot reliably distinguish; Mark Welch 2016 functional grouping convention).",
+    inputs: [
+      "C. matruchotii %", "S. mitis group % (incl. hyphenated calls)", "S. sanguinis %", "S. gordonii %",
+      "Rothia (total) %", "Neisseria (total) %", "H. parainfluenzae %", "A. naeslundii %", "Lautropia %",
+    ],
+    thresholds:
+      "severely_depleted < 10, depleted 10–20, adequate 20–35, robust > 35. Calibrated against expected baseline of 25–40 in periodontally healthy adults.",
+    limitations:
+      "PDI thresholds are derived heuristics, not externally validated. C. matruchotii detection may vary by parser configuration. Streptococcus species-level resolution is V3-V4 limited.",
+    citations: [
+      "Mark Welch 2016 (PNAS) — C. matruchotii corncob biofilm architecture",
+      "Kageyama 2017 — health-associated taxa",
+      "He 2025 — commensal absolute vs relative dynamics",
+    ],
+  },
+  {
+    scoreName: "Commensal Depletion Modifier (CDM)",
+    whatItMeasures:
+      "Multiplicative amplification factor applied to PBI when periodontal defense is depleted.",
+    howComputed:
+      "CDM_factor = MAX(1.0, MIN(1.5, 1 + ((30 − PDI) / 30) × 0.5)). Capped at 1.5 for severe depletion. The modifier contribution is surfaced as a separate breakdown line item — UI displays 'Pathogen burden 1.61 + commensal modifier ×1.20 = adjusted burden 1.94' rather than folding the modifier into a single opaque score.",
+    inputs: ["PDI"],
+    thresholds:
+      "PDI = 30 → factor 1.0 (no amplification); PDI = 15 → factor 1.25; PDI = 0 → factor 1.5 (cap).",
+    limitations:
+      "The 0.5 amplification slope is a derived heuristic, not externally validated. The 30 baseline PDI is calibrated against expected healthy-adult range. Future work: validate CDM against longitudinal periodontal outcomes in the user cohort.",
+    citations: [
+      "He 2025 — quantitative + relative profiling rationale",
+      "Hajishengallis 2014 — PSD framework establishing commensal context as disease modifier",
+    ],
+  },
+  {
+    scoreName: "Periodontal Risk Category + Red Complex Status",
+    whatItMeasures:
+      "4-quadrant composite classification synthesizing burden and defense, plus separate red complex detection status surfaced as a UI flag.",
+    howComputed:
+      "low burden + adequate/robust defense → stable_low_risk. high/severe + adequate/robust → compensated_active_burden. low + depleted → compensated_dysbiosis_risk. high/severe + depleted → active_disease_risk. moderate burden → borderline (with diagnostic uncertainty caveat). All zero inputs → insufficient_data. Red complex status is reported separately with three states: not_detected (all <0.01%), below_clinical_threshold (any 0.01–0.5%), detected (any ≥ 0.5%).",
+    inputs: ["PBI category", "PDI category", "Pg %", "T. forsythia %", "Treponema %"],
+    thresholds: "See PBI / PDI thresholds above. Red complex detection floor 0.01%; clinical threshold 0.5%.",
+    limitations:
+      "Compensated patterns (active burden with intact defense; depleted defense with low burden) are novel framings not directly validated against clinical outcomes — mechanistically supported by SUBP literature and commensal scaffold literature. Red complex presence is not added to the score because trace-level 16S calls aren't clinically reliable; patients with concerning periodontal symptoms and trace red complex signals should consider species-specific qPCR for definitive detection.",
+    citations: ["Synthesizes PBI and PDI methodology citations."],
+  },
 ]
 
 export function getMethodologyPrompt(): string {

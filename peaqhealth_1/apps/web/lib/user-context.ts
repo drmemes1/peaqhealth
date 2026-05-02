@@ -109,6 +109,26 @@ export interface OralKitData {
   nrConfidence?: string | null
   nrReliabilityFlags?: string[] | null
   nrConfounderAdjustments?: Record<string, string> | null
+
+  // Periodontal burden v1 fields. Optional because PR-Δ-α ships only the
+  // algorithm module + tests; pipeline integration (PR-Δ-β1) populates these
+  // on oral_kit_orders. See ADR-0023 and lib/oral/perio-burden-v1.ts.
+  perioBurdenIndex?: number | null
+  perioBurdenIndexAdjusted?: number | null
+  perioBurdenCategory?: string | null
+  perioDefenseIndex?: number | null
+  perioDefenseCategory?: string | null
+  totalSubpPct?: number | null
+  commensalDepletionFactor?: number | null
+  perioRiskCategory?: string | null
+  diagnosticUncertaintyZone?: boolean | null
+  redComplexStatusLabel?: string | null
+  redComplexDetectedSpecies?: string[] | null
+  perioConfidence?: string | null
+  perioReliabilityFlags?: string[] | null
+  perioConfounderAdjustments?: Record<string, string> | null
+  cardiovascularPatternPending?: boolean | null
+  neurodegenerativePatternPending?: boolean | null
 }
 
 export interface BloodPanelData {
