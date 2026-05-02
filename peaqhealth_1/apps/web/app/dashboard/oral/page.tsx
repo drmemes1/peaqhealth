@@ -7,6 +7,7 @@ import { OralPageHero } from "../../components/oral/v3/OralPageHero"
 import { SnapshotSection } from "../../components/oral/v3/SnapshotSection"
 import { CariesSection } from "../../components/oral/v3/CariesSection"
 import { NRSection } from "../../components/oral/v3/NRSection"
+import { PerioBurdenSection } from "../../components/oral/v3/PerioBurdenSection"
 import { ComingSoonPlaceholder } from "../../components/oral/v3/ComingSoonPlaceholder"
 import { TrajectorySection } from "../../components/oral/v3/TrajectorySection"
 import { ActionsSection } from "../../components/oral/v3/ActionsSection"
@@ -118,10 +119,8 @@ export default async function OralPage() {
             <Divider />
             <NRSection data={result.data} />
             <Divider />
-            <ComingSoonPlaceholder
-              title="Gum stability"
-              description="Periodontal-associated bacteria scoring with red-complex, orange-complex, and Corynebacterium scaffold analysis."
-            />
+            <PerioBurdenSection data={result.data} />
+            <Divider />
             <ComingSoonPlaceholder
               title="Halitosis"
               description="Volatile sulfur compound producing bacteria scoring with tongue dorsum analysis."
