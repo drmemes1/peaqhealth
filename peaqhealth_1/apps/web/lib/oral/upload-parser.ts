@@ -65,9 +65,38 @@ export const SPECIES_COLUMNS: Record<string, string> = {
   "leptotrichia wadei": "leptotrichia_wadei_pct",
   "leptotrichia shahii": "leptotrichia_shahii_pct",
   "prevotella denticola": "p_denticola_pct",
+
+  // ── Periodontal burden v1 additions (ADR-0023, PR-Δ-α-parser). ──
+  // Existing rows above already cover Tf (→ tannerella_pct), Pi (→
+  // prevotella_intermedia_pct), and An (→ a_naeslundii_pct). The runner
+  // that bridges the algorithm to DB columns is responsible for mapping
+  // those legacy column names onto the algorithm's species-level inputs.
+  // Below are species the parser had no column for at all.
+  "porphyromonas gingivalis":    "p_gingivalis_pct",
+  "filifactor alocis":           "f_alocis_pct",
+  "fusobacterium nucleatum":     "f_nucleatum_pct",
+  "streptococcus constellatus":  "s_constellatus_pct",
+  "parvimonas micra":            "p_micra_pct",
+  "corynebacterium matruchotii": "c_matruchotii_pct",
 }
 
 export const S_SALIVARIUS_SPECIES = ["streptococcus salivarius", "streptococcus vestibularis"]
+
+/**
+ * Identifiers a Streptococcus species call must contain (in clean OR
+ * hyphenated form) to be summed into the s_mitis_group_pct accumulator.
+ *
+ * Per ADR-0023: V3-V4 sequencing cannot reliably distinguish S. mitis,
+ * S. oralis, and S. pneumoniae (>99% 16S identity in some regions).
+ * Mark Welch 2016 PNAS treats them as a single functional entity, and
+ * all three function as protective oral commensals (H₂O₂ producers,
+ * biofilm scaffold contributors).
+ *
+ * This rule is more inclusive than the Neisseria handling (genus-only
+ * for hyphenated calls), because for Neisseria the species-specific
+ * weighting matters for NR — for the mitis group it doesn't.
+ */
+export const S_MITIS_GROUP_IDENTIFIERS = ["mitis", "oralis", "pneumoniae"]
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -229,6 +258,7 @@ export function parseL7Input(raw: string): ParseResult {
   const speciesSums: Record<string, number> = {}
   const parserUnresolvedSpecies: string[] = []
   let sSalivariusTotal = 0
+  let sMitisGroupTotal = 0
   let strepTotal = 0
   let prevotellaCommensalTotal = 0
   const generaSet = new Set<string>()
@@ -294,7 +324,17 @@ export function parseL7Input(raw: string): ParseResult {
         }
       }
 
-      if (genusLower === "streptococcus") strepTotal += pct
+      if (genusLower === "streptococcus") {
+        strepTotal += pct
+        // S. mitis group accumulator — fires regardless of how the species
+        // call resolved column-wise. Tracks the functional grouping so the
+        // perio defense Tier 1 input can read a single column without
+        // re-deriving the rule downstream.
+        const speciesL = (taxo.species ?? "").toLowerCase()
+        if (speciesL && S_MITIS_GROUP_IDENTIFIERS.some(id => speciesL.includes(id))) {
+          sMitisGroupTotal += pct
+        }
+      }
     } else if (taxo.is_placeholder && taxo.genus && taxo.genus !== "NA") {
       // Placeholder species (sp\d+ — Zymo's unresolved-OTU naming) get
       // aggregated into the parent genus column. Mirrors v2 behavior from
@@ -327,13 +367,15 @@ export function parseL7Input(raw: string): ParseResult {
   const ALL_TRACKED_COLUMNS = [
     ...Object.values(GENUS_COLUMNS),
     ...Object.values(SPECIES_COLUMNS),
-    "s_salivarius_pct", "streptococcus_total_pct", "prevotella_commensal_pct",
+    "s_salivarius_pct", "s_mitis_group_pct",
+    "streptococcus_total_pct", "prevotella_commensal_pct",
   ]
   const columnValues: Record<string, number> = {}
   for (const col of ALL_TRACKED_COLUMNS) columnValues[col] = 0
   for (const [col, val] of Object.entries(genusSums)) columnValues[col] = parseFloat(val.toFixed(4))
   for (const [col, val] of Object.entries(speciesSums)) columnValues[col] = parseFloat(val.toFixed(4))
   columnValues["s_salivarius_pct"] = parseFloat(sSalivariusTotal.toFixed(4))
+  columnValues["s_mitis_group_pct"] = parseFloat(sMitisGroupTotal.toFixed(4))
   columnValues["streptococcus_total_pct"] = parseFloat(strepTotal.toFixed(4))
   columnValues["prevotella_commensal_pct"] = parseFloat(prevotellaCommensalTotal.toFixed(4))
 

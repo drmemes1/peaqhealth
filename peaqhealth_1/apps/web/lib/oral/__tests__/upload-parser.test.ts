@@ -52,6 +52,20 @@ describe("upload-parser — exposed mapping tables", () => {
     }
   })
 
+  test("perio v1 species columns are all present in SPECIES_COLUMNS", () => {
+    const expected: Array<[string, string]> = [
+      ["porphyromonas gingivalis", "p_gingivalis_pct"],
+      ["filifactor alocis", "f_alocis_pct"],
+      ["fusobacterium nucleatum", "f_nucleatum_pct"],
+      ["streptococcus constellatus", "s_constellatus_pct"],
+      ["parvimonas micra", "p_micra_pct"],
+      ["corynebacterium matruchotii", "c_matruchotii_pct"],
+    ]
+    for (const [key, col] of expected) {
+      expect(SPECIES_COLUMNS[key]).toBe(col)
+    }
+  })
+
   test("rothia genus column kept alongside species-level columns", () => {
     expect(GENUS_COLUMNS["rothia"]).toBe("rothia_pct")
     expect(SPECIES_COLUMNS["rothia dentocariosa"]).toBe("rothia_dentocariosa_pct")
@@ -189,6 +203,124 @@ describe("parseL7Input — column mapping", () => {
     ])
     const result = parseL7Input(raw)
     expect(result.columnValues["prevotella_commensal_pct"]).toBeCloseTo(1.0, 4)
+  })
+})
+
+// ── Periodontal burden v1 species + S. mitis group rule (PR-Δ-α-parser) ────
+
+describe("parseL7Input — perio v1 species coverage", () => {
+  test("P. gingivalis writes p_gingivalis_pct exactly", () => {
+    const raw = buildL7([
+      { taxon: "k__Bacteria;p__Bacteroidetes;c__Bacteroidia;o__Bacteroidales;f__Porphyromonadaceae;g__Porphyromonas;s__gingivalis", abundance: 0.012 },
+    ])
+    const result = parseL7Input(raw)
+    expect(result.columnValues["p_gingivalis_pct"]).toBeCloseTo(1.2, 4)
+  })
+
+  test("F. alocis writes f_alocis_pct (was previously unmatched)", () => {
+    const raw = buildL7([
+      { taxon: "k__Bacteria;p__Firmicutes;c__Clostridia;o__Clostridiales;f__Peptostreptococcaceae;g__Filifactor;s__alocis", abundance: 0.000134 },
+    ])
+    const result = parseL7Input(raw)
+    expect(result.columnValues["f_alocis_pct"]).toBeCloseTo(0.0134, 4)
+  })
+
+  test("F. nucleatum writes f_nucleatum_pct (distinct from genus fusobacterium_pct)", () => {
+    const raw = buildL7([
+      { taxon: "k__Bacteria;p__Fusobacteria;c__Fusobacteriia;o__Fusobacteriales;f__Fusobacteriaceae;g__Fusobacterium;s__nucleatum", abundance: 0.0085 },
+      { taxon: "k__Bacteria;p__Fusobacteria;c__Fusobacteriia;o__Fusobacteriales;f__Fusobacteriaceae;g__Fusobacterium;s__periodonticum", abundance: 0.015 },
+    ])
+    const result = parseL7Input(raw)
+    expect(result.columnValues["f_nucleatum_pct"]).toBeCloseTo(0.85, 3)
+    // Genus accumulator covers both species:
+    expect(result.columnValues["fusobacterium_pct"]).toBeCloseTo(1.5, 3)
+  })
+
+  test("S. constellatus is reachable via hyphenated 'anginosus-constellatus-intermedius'", () => {
+    const raw = buildL7([
+      { taxon: `${TAX_PREFIX};g__Streptococcus;s__anginosus-constellatus-intermedius`, abundance: 0.000621 },
+    ])
+    const result = parseL7Input(raw)
+    expect(result.columnValues["s_constellatus_pct"]).toBeCloseTo(0.0621, 4)
+  })
+
+  test("P. micra writes p_micra_pct (species-level, not just parvimonas_pct genus)", () => {
+    const raw = buildL7([
+      { taxon: "k__Bacteria;p__Firmicutes;c__Clostridia;o__Clostridiales;f__Peptoniphilaceae;g__Parvimonas;s__micra", abundance: 0.001838 },
+    ])
+    const result = parseL7Input(raw)
+    expect(result.columnValues["p_micra_pct"]).toBeCloseTo(0.1838, 4)
+  })
+
+  test("C. matruchotii writes c_matruchotii_pct (defense Tier 1, weight 2.0×)", () => {
+    const raw = buildL7([
+      { taxon: "k__Bacteria;p__Actinobacteria;c__Actinobacteria;o__Corynebacteriales;f__Corynebacteriaceae;g__Corynebacterium;s__matruchotii", abundance: 0.006304 },
+    ])
+    const result = parseL7Input(raw)
+    expect(result.columnValues["c_matruchotii_pct"]).toBeCloseTo(0.6304, 4)
+  })
+})
+
+describe("parseL7Input — S. mitis group accumulator", () => {
+  test("clean S. mitis sums into s_mitis_group_pct (and s_mitis_pct)", () => {
+    const raw = buildL7([
+      { taxon: `${TAX_PREFIX};g__Streptococcus;s__mitis`, abundance: 0.01 },
+    ])
+    const result = parseL7Input(raw)
+    expect(result.columnValues["s_mitis_pct"]).toBeCloseTo(1.0, 4)
+    expect(result.columnValues["s_mitis_group_pct"]).toBeCloseTo(1.0, 4)
+  })
+
+  test("hyphenated 'oralis-parasanguinis' sums into s_mitis_group_pct (per Mark Welch 2016)", () => {
+    // Real Igor case: 0.4661% on Pilot.Peaq.1. Resolves column-wise to
+    // s_parasanguinis_pct, but also feeds the mitis group accumulator
+    // because the species call contains 'oralis'.
+    const raw = buildL7([
+      { taxon: `${TAX_PREFIX};g__Streptococcus;s__oralis-parasanguinis`, abundance: 0.004661 },
+    ])
+    const result = parseL7Input(raw)
+    expect(result.columnValues["s_mitis_group_pct"]).toBeCloseTo(0.4661, 4)
+    // Hyphen resolver still attributes column-wise to s_parasanguinis_pct.
+    expect(result.columnValues["s_parasanguinis_pct"]).toBeCloseTo(0.4661, 4)
+  })
+
+  test("hyphenated 'mitis-pneumoniae' sums into s_mitis_group_pct", () => {
+    const raw = buildL7([
+      { taxon: `${TAX_PREFIX};g__Streptococcus;s__mitis-pneumoniae`, abundance: 0.005 },
+    ])
+    const result = parseL7Input(raw)
+    expect(result.columnValues["s_mitis_group_pct"]).toBeCloseTo(0.5, 4)
+  })
+
+  test("S. salivarius-vestibularis does NOT contribute to s_mitis_group_pct", () => {
+    // Igor's 15.28% Streptococcus salivarius-vestibularis blob is not part
+    // of the mitis group functional unit — must stay out of the accumulator.
+    const raw = buildL7([
+      { taxon: `${TAX_PREFIX};g__Streptococcus;s__salivarius-vestibularis`, abundance: 0.15 },
+    ])
+    const result = parseL7Input(raw)
+    expect(result.columnValues["s_mitis_group_pct"]).toBe(0)
+    // Salivarius family still routed correctly to its own accumulator.
+    expect(result.columnValues["s_salivarius_pct"]).toBeCloseTo(15, 3)
+  })
+
+  test("S. parasanguinis (no mitis/oralis/pneumoniae token) does NOT enter s_mitis_group_pct", () => {
+    const raw = buildL7([
+      { taxon: `${TAX_PREFIX};g__Streptococcus;s__parasanguinis`, abundance: 0.018 },
+    ])
+    const result = parseL7Input(raw)
+    expect(result.columnValues["s_parasanguinis_pct"]).toBeCloseTo(1.8, 3)
+    expect(result.columnValues["s_mitis_group_pct"]).toBe(0)
+  })
+
+  test("multiple mitis-group calls aggregate", () => {
+    const raw = buildL7([
+      { taxon: `${TAX_PREFIX};g__Streptococcus;s__mitis`, abundance: 0.005 },
+      { taxon: `${TAX_PREFIX};g__Streptococcus;s__oralis`, abundance: 0.002 },
+      { taxon: `${TAX_PREFIX};g__Streptococcus;s__mitis-pneumoniae-infantis`, abundance: 0.003 },
+    ])
+    const result = parseL7Input(raw)
+    expect(result.columnValues["s_mitis_group_pct"]).toBeCloseTo(1.0, 3)
   })
 })
 
