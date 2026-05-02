@@ -1,21 +1,27 @@
 // ============================================================================
-// SLEEP PANEL — TILE GRID WITH STATUS SECTIONS (mirrors blood panel)
+// SLEEP PANEL — UNIFIED TILE GRID (wearable + questionnaire signals)
+// Mirrors the blood panel: single view, status-grouped tiles, graceful empty state.
 // ============================================================================
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { Nav } from "../../components/nav"
 import { SectionHeader } from "../../components/panels"
+import type { UserPanelContext } from "../../../lib/user-context"
+import { getBreathingSignal } from "../../../lib/signals/breathing"
+import { getSleepQualitySignal } from "../../../lib/signals/sleep-quality"
+import { getAirwaySignal } from "../../../lib/signals/airway"
+import { getCognitiveSignal } from "../../../lib/signals/cognitive"
+import { getSleepDurationSignal } from "../../../lib/signals/sleep-duration"
 
 const serif = "var(--font-manrope), system-ui, sans-serif"
 const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
 
 interface Props {
+  ctx: UserPanelContext
   nights: Array<Record<string, unknown>>
   snapshot: Record<string, unknown> | null
   wearable: Record<string, unknown> | null
-  connectionInput?: import("@peaq/score-engine").ConnectionInput
 }
 
 // ── Provider priority for dedup ─────────────────────────────────────────────
@@ -61,127 +67,161 @@ const SECTION_META: Record<Status, { title: string; subtitle: string }> = {
   attention:  { title: "Needs your attention", subtitle: "" },
   watch:      { title: "Keep an eye on these", subtitle: "" },
   strong:     { title: "In your strong zone", subtitle: "" },
-  not_tested: { title: "Not yet measured", subtitle: "Available with wearable sync" },
+  not_tested: { title: "Not yet measured", subtitle: "Connect a wearable to unlock" },
 }
 
-// ── Sleep metric definitions ────────────────────────────────────────────────
+function verdictToStatus(v: string | null | undefined): Status {
+  if (v === "strong" || v === "good") return "strong"
+  if (v === "watch") return "watch"
+  if (v === "watch_closely" || v === "concern") return "attention"
+  return "not_tested"
+}
 
-interface SleepMetric {
+// ── Wearable metric definitions ─────────────────────────────────────────────
+
+interface NumericMetric {
+  kind: "numeric"
   key: string
   href: string | null
+  category: string
   displayName: string
   unit: string
   decimals: number
-  optimal: { min?: number; max?: number }       // strong band
-  good?: { min?: number; max?: number }         // wider strong
-  watch: { min: number; max: number }           // watch band
+  optimal: { min?: number; max?: number }
+  good?: { min?: number; max?: number }
+  watch: { min: number; max: number }
   scaleMin: number
   scaleMax: number
+  value: number | null
+  status: Status
 }
 
-const SLEEP_METRICS: SleepMetric[] = [
-  { key: "deep_sleep", href: "/dashboard/sleep/deep_sleep",
+interface TextMetric {
+  kind: "text"
+  key: string
+  href: string | null
+  category: string
+  displayName: string
+  textValue: string
+  caption?: string
+  status: Status
+}
+
+type Metric = NumericMetric | TextMetric
+
+const WEARABLE_DEFS: Omit<NumericMetric, "value" | "status" | "kind">[] = [
+  { key: "deep_sleep", href: "/dashboard/sleep/deep_sleep", category: "Wearable",
     displayName: "Deep sleep", unit: "%", decimals: 0,
     optimal: { min: 20, max: 40 }, good: { min: 15, max: 20 }, watch: { min: 10, max: 15 },
     scaleMin: 0, scaleMax: 40 },
-  { key: "hrv", href: "/dashboard/sleep/recovery_hrv",
+  { key: "hrv", href: "/dashboard/sleep/recovery_hrv", category: "Wearable",
     displayName: "HRV", unit: "ms", decimals: 0,
     optimal: { min: 45, max: 80 }, good: { min: 35, max: 45 }, watch: { min: 25, max: 35 },
     scaleMin: 0, scaleMax: 80 },
-  { key: "spo2", href: null,
+  { key: "spo2", href: null, category: "Wearable",
     displayName: "SpO₂", unit: "%", decimals: 1,
     optimal: { min: 96, max: 100 }, good: { min: 95, max: 96 }, watch: { min: 92, max: 95 },
     scaleMin: 88, scaleMax: 100 },
-  { key: "rem", href: "/dashboard/sleep/rem",
+  { key: "rem", href: "/dashboard/sleep/rem", category: "Wearable",
     displayName: "REM", unit: "%", decimals: 0,
     optimal: { min: 22, max: 40 }, good: { min: 16, max: 22 }, watch: { min: 12, max: 16 },
     scaleMin: 0, scaleMax: 40 },
-  { key: "efficiency", href: null,
+  { key: "efficiency", href: null, category: "Wearable",
     displayName: "Sleep efficiency", unit: "%", decimals: 0,
     optimal: { min: 88, max: 100 }, good: { min: 82, max: 88 }, watch: { min: 75, max: 82 },
     scaleMin: 60, scaleMax: 100 },
 ]
 
-function getStatus(value: number | null, m: SleepMetric): Status {
+function getNumericStatus(value: number | null, def: typeof WEARABLE_DEFS[number]): Status {
   if (value == null) return "not_tested"
-  const o = m.optimal, g = m.good, w = m.watch
+  const o = def.optimal, g = def.good, w = def.watch
   if (o.min != null && value >= o.min && (o.max == null || value <= o.max)) return "strong"
   if (g && g.min != null && value >= g.min && (g.max == null || value <= g.max)) return "strong"
   if (value >= w.min && value < w.max) return "watch"
   return "attention"
 }
 
-function tickPosition(value: number, m: SleepMetric): number {
+function tickPosition(value: number, m: NumericMetric): number {
   const range = m.scaleMax - m.scaleMin
-  const pct = ((value - m.scaleMin) / range) * 100
-  return Math.max(2, Math.min(98, pct))
+  return Math.max(2, Math.min(98, ((value - m.scaleMin) / range) * 100))
 }
 
-function deltaLabel(value: number, m: SleepMetric): { text: string; color: string } | null {
-  const status = getStatus(value, m)
-  if (status === "strong") return { text: "optimal", color: "#4A7A4A" }
-  if (status === "watch") {
-    const target = m.optimal.min ?? m.watch.max
-    return value < target ? { text: "↓ below target", color: "#C4992E" } : { text: "↑ above target", color: "#C4992E" }
-  }
-  if (status === "attention") {
-    const target = m.optimal.min ?? m.watch.max
-    return value < target ? { text: "↓ below range", color: "#9B3838" } : { text: "↑ above range", color: "#9B3838" }
-  }
+function deltaLabel(value: number, m: NumericMetric): { text: string; color: string } | null {
+  if (m.status === "strong") return { text: "optimal", color: "#4A7A4A" }
+  const target = m.optimal.min ?? m.watch.max
+  if (m.status === "watch") return { text: value < target ? "↓ below target" : "↑ above target", color: "#C4992E" }
+  if (m.status === "attention") return { text: value < target ? "↓ below range" : "↑ above range", color: "#9B3838" }
   return null
 }
 
-function scaleLabels(m: SleepMetric): string[] {
-  const lo = m.scaleMin
-  const hi = m.scaleMax
-  const mid = Math.round((lo + hi) / 2)
-  const q1 = Math.round((lo + mid) / 2)
-  const q3 = Math.round((mid + hi) / 2)
+function scaleLabels(m: NumericMetric): string[] {
+  const lo = m.scaleMin, hi = m.scaleMax, mid = Math.round((lo + hi) / 2)
+  const q1 = Math.round((lo + mid) / 2), q3 = Math.round((mid + hi) / 2)
   return [String(lo), String(q1), String(mid), String(q3), String(hi)]
 }
 
-// ── Populated tile ──────────────────────────────────────────────────────────
+// ── Card chrome shared by both variants ────────────────────────────────────
 
-function PopulatedCard({ metric, value, status }: { metric: SleepMetric; value: number; status: Status }) {
+function CardOuter({ status, href, children }: { status: Status; href: string | null; children: React.ReactNode }) {
   const meta = STATUS_META[status]
-  const tickPos = tickPosition(value, metric)
-  const delta = deltaLabel(value, metric)
-  const labels = scaleLabels(metric)
-  const formatted = metric.decimals === 0 ? Math.round(value).toString() : value.toFixed(metric.decimals)
-
   const cardStyle: React.CSSProperties = {
     display: "block", textDecoration: "none", position: "relative",
     background: meta.bg, border: `1px solid ${meta.border}`,
     borderRadius: 14, padding: "20px 22px",
     transition: "transform 0.15s, box-shadow 0.15s",
-    cursor: metric.href ? "pointer" : "default", overflow: "hidden",
+    cursor: href ? "pointer" : "default", overflow: "hidden",
   }
+  const accent = (
+    <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: meta.bar, opacity: 0.7, borderRadius: "14px 0 0 14px" }} />
+  )
+  if (href) {
+    return (
+      <Link href={href} style={cardStyle}
+        onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(44,42,36,0.08)" }}
+        onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "none" }}
+      >
+        {accent}
+        {children}
+      </Link>
+    )
+  }
+  return <div style={cardStyle}>{accent}{children}</div>
+}
 
-  const inner = (
-    <>
-      {/* Left accent stripe */}
-      <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: meta.bar, opacity: 0.7, borderRadius: "14px 0 0 14px" }} />
+function HeaderRow({ category, status }: { category: string; status: Status }) {
+  const meta = STATUS_META[status]
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+      <span style={{ fontFamily: serif, fontSize: 12, fontStyle: "italic", color: "#A8A59B" }}>{category}</span>
+      <span style={{
+        fontFamily: sans, fontSize: 9, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase",
+        background: meta.badgeBg, color: meta.badgeText,
+        padding: "3px 9px", borderRadius: 20,
+        display: "inline-flex", alignItems: "center", gap: 4,
+      }}>
+        <span style={{ width: 5, height: 5, borderRadius: "50%", background: meta.dot }} />
+        {meta.label}
+      </span>
+    </div>
+  )
+}
 
-      {/* Category + status row */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-        <span style={{ fontFamily: serif, fontSize: 12, fontStyle: "italic", color: "#A8A59B" }}>Sleep</span>
-        <span style={{
-          fontFamily: sans, fontSize: 9, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase",
-          background: meta.badgeBg, color: meta.badgeText,
-          padding: "3px 9px", borderRadius: 20,
-          display: "inline-flex", alignItems: "center", gap: 4,
-        }}>
-          <span style={{ width: 5, height: 5, borderRadius: "50%", background: meta.dot }} />
-          {meta.label}
-        </span>
-      </div>
+function NumericCard({ metric }: { metric: NumericMetric }) {
+  const value = metric.value!
+  const tickPos = tickPosition(value, metric)
+  const delta = deltaLabel(value, metric)
+  const labels = scaleLabels(metric)
+  const formatted = metric.decimals === 0 ? Math.round(value).toString() : value.toFixed(metric.decimals)
+  const dotColor = STATUS_META[metric.status].dot
 
-      {/* Metric name */}
+  return (
+    <CardOuter status={metric.status} href={metric.href}>
+      <HeaderRow category={metric.category} status={metric.status} />
+
       <h3 style={{ fontFamily: serif, fontSize: 22, fontWeight: 500, color: "#2C2A24", margin: "0 0 12px", lineHeight: 1.2 }}>
         {metric.displayName}
       </h3>
 
-      {/* Value + delta row */}
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12 }}>
         <div>
           <span style={{ fontFamily: serif, fontSize: 46, fontWeight: 500, color: "#2C2A24", lineHeight: 1, letterSpacing: "-0.02em" }}>
@@ -194,13 +234,12 @@ function PopulatedCard({ metric, value, status }: { metric: SleepMetric; value: 
         )}
       </div>
 
-      {/* Range bar */}
       <div style={{ position: "relative", height: 4, borderRadius: 2, marginBottom: 6,
         background: "linear-gradient(90deg, rgba(229,196,196,0.3) 0% 18%, rgba(232,213,160,0.35) 18% 30%, #C8D8C0 30% 70%, rgba(232,213,160,0.35) 70% 82%, rgba(229,196,196,0.3) 82% 100%)",
       }}>
         <div style={{
           position: "absolute", top: -3, left: `${tickPos}%`, width: 2, height: 10,
-          background: meta.dot, borderRadius: 1, transform: "translateX(-1px)",
+          background: dotColor, borderRadius: 1, transform: "translateX(-1px)",
           boxShadow: "0 0 0 2px #F5F3EE",
         }} />
       </div>
@@ -209,27 +248,38 @@ function PopulatedCard({ metric, value, status }: { metric: SleepMetric; value: 
           <span key={i} style={{ fontFamily: sans, fontSize: 9, color: "#A8A59B", fontVariantNumeric: "tabular-nums" }}>{l}</span>
         ))}
       </div>
-    </>
+    </CardOuter>
   )
+}
 
-  if (metric.href) {
-    return (
-      <Link
-        href={metric.href}
-        style={cardStyle}
-        onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(44,42,36,0.08)" }}
-        onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "none" }}
-      >
-        {inner}
-      </Link>
-    )
-  }
-  return <div style={cardStyle}>{inner}</div>
+function TextCard({ metric }: { metric: TextMetric }) {
+  return (
+    <CardOuter status={metric.status} href={metric.href}>
+      <HeaderRow category={metric.category} status={metric.status} />
+
+      <h3 style={{ fontFamily: serif, fontSize: 22, fontWeight: 500, color: "#2C2A24", margin: "0 0 12px", lineHeight: 1.2 }}>
+        {metric.displayName}
+      </h3>
+
+      <div style={{ marginBottom: metric.caption ? 8 : 12 }}>
+        <span style={{ fontFamily: serif, fontSize: 28, fontWeight: 500, color: "#2C2A24", lineHeight: 1.15, letterSpacing: "-0.01em" }}>
+          {metric.textValue}
+        </span>
+      </div>
+      {metric.caption && (
+        <p style={{ fontFamily: sans, fontSize: 12, color: "#6B6860", lineHeight: 1.5, margin: 0 }}>{metric.caption}</p>
+      )}
+    </CardOuter>
+  )
+}
+
+function MetricCard({ metric }: { metric: Metric }) {
+  return metric.kind === "numeric" ? <NumericCard metric={metric} /> : <TextCard metric={metric} />
 }
 
 // ── Empty (not tested) tile ─────────────────────────────────────────────────
 
-function EmptyCard({ metric }: { metric: SleepMetric }) {
+function EmptyCard({ category, displayName }: { category: string; displayName: string }) {
   return (
     <div style={{
       border: "1px dashed #C4C1B6", borderRadius: 10,
@@ -237,8 +287,8 @@ function EmptyCard({ metric }: { metric: SleepMetric }) {
       display: "flex", justifyContent: "space-between", alignItems: "center",
     }}>
       <div>
-        <span style={{ fontFamily: serif, fontSize: 11, fontStyle: "italic", color: "#A8A59B", display: "block", marginBottom: 2 }}>Sleep</span>
-        <span style={{ fontFamily: serif, fontSize: 15, fontWeight: 500, color: "#6B6860" }}>{metric.displayName}</span>
+        <span style={{ fontFamily: serif, fontSize: 11, fontStyle: "italic", color: "#A8A59B", display: "block", marginBottom: 2 }}>{category}</span>
+        <span style={{ fontFamily: serif, fontSize: 15, fontWeight: 500, color: "#6B6860" }}>{displayName}</span>
       </div>
       <span style={{ fontFamily: sans, fontSize: 8, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#A8A59B" }}>NOT TESTED</span>
     </div>
@@ -258,7 +308,7 @@ function StatusSection({ status, count, isFirst }: { status: Status; count: numb
       </span>
       <div style={{ flex: 1, height: 1, background: "#E8E4D8" }} />
       <span style={{ fontFamily: sans, fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "#A8A59B", whiteSpace: "nowrap" }}>
-        {status === "not_tested" ? section.subtitle : `${count} metric${count === 1 ? "" : "s"}`}
+        {status === "not_tested" ? section.subtitle : `${count} signal${count === 1 ? "" : "s"}`}
       </span>
     </div>
   )
@@ -266,11 +316,8 @@ function StatusSection({ status, count, isFirst }: { status: Status; count: numb
 
 // ── Main ────────────────────────────────────────────────────────────────────
 
-export function SleepPanelClient({ nights, wearable }: Props) {
-  const [narrative, setNarrative] = useState<{
-    headline: string | null
-    narrative: string | null
-  } | null>(null)
+export function SleepPanelClient({ ctx, nights, wearable }: Props) {
+  const [narrative, setNarrative] = useState<{ headline: string | null; narrative: string | null } | null>(null)
 
   useEffect(() => {
     fetch("/api/trends/sleep-narrative")
@@ -281,11 +328,11 @@ export function SleepPanelClient({ nights, wearable }: Props) {
 
   const provider = wearable?.provider as string | null | undefined
   const lastSynced = wearable?.last_synced_at as string | null | undefined
-  const deduped = bestNightPerDate(nights)
+  const deduped = useMemo(() => bestNightPerDate(nights), [nights])
 
-  // ── Compute averages ──────────────────────────────────────────────────────
+  // ── Wearable values (averages over recent nights) ─────────────────────────
 
-  const values = useMemo(() => {
+  const wearableValues = useMemo(() => {
     const deepPcts = deduped.map(n => {
       const total = n.total_sleep_minutes as number | null
       const deep = n.deep_sleep_minutes as number | null
@@ -305,18 +352,77 @@ export function SleepPanelClient({ nights, wearable }: Props) {
     } as Record<string, number | null>
   }, [deduped])
 
-  const allMetrics = useMemo(() =>
-    SLEEP_METRICS.map(m => {
-      const v = values[m.key]
-      return { metric: m, value: v, status: getStatus(v, m) }
-    }),
-  [values])
+  // ── Build unified metric list ─────────────────────────────────────────────
+
+  const allMetrics = useMemo<Metric[]>(() => {
+    const list: Metric[] = []
+
+    // Wearable-derived numeric tiles
+    for (const def of WEARABLE_DEFS) {
+      const value = wearableValues[def.key]
+      const status = getNumericStatus(value, def)
+      list.push({ kind: "numeric", ...def, value, status })
+    }
+
+    // Questionnaire-derived text tiles
+    if (ctx.hasQuestionnaire) {
+      const breathing = getBreathingSignal(ctx)
+      const duration = getSleepDurationSignal(ctx)
+      const quality = getSleepQualitySignal(ctx)
+      const airway = getAirwaySignal(ctx)
+      const cognitive = getCognitiveSignal(ctx)
+      const q = ctx.questionnaire
+
+      const mbConfirmed = q?.mouthBreathing === "confirmed" || q?.mouthBreathing === "often"
+      list.push({
+        kind: "text", key: "breathing", href: null, category: "Self-reported",
+        displayName: "Breathing pattern",
+        textValue: mbConfirmed ? "Mouth breathing" : "Nasal",
+        caption: breathing.headline || (mbConfirmed ? "Reported during sleep or daytime" : "No mouth breathing reported"),
+        status: mbConfirmed ? "watch" : breathing.confidence === "pending" ? "not_tested" : "strong",
+      })
+
+      list.push({
+        kind: "text", key: "duration", href: null, category: "Self-reported",
+        displayName: "Sleep duration",
+        textValue: duration.hoursLabel || "—",
+        caption: duration.verdict === "strong" ? "Within the 7–9 hour target window" : duration.verdict === "watch" ? "Slightly below target" : duration.verdict === "watch_closely" ? "Short sleep — worth tracking" : undefined,
+        status: verdictToStatus(duration.verdict),
+      })
+
+      list.push({
+        kind: "text", key: "quality", href: null, category: "Self-reported",
+        displayName: "Sleep quality",
+        textValue: quality.qualityVerdict === "good" ? "Good" : quality.qualityVerdict === "watch" ? "Mixed" : quality.qualityVerdict === "concern" ? "Disrupted" : "—",
+        caption: quality.headline || undefined,
+        status: verdictToStatus(quality.qualityVerdict),
+      })
+
+      list.push({
+        kind: "text", key: "airway", href: null, category: "Self-reported",
+        displayName: "Airway signals",
+        textValue: airway.flagCount > 0 ? `${airway.flagCount} flag${airway.flagCount === 1 ? "" : "s"}` : "All clear",
+        caption: airway.flags.length > 0 ? airway.flags.slice(0, 2).join(" · ") : "Snoring, nasal obstruction not reported",
+        status: verdictToStatus(airway.verdict),
+      })
+
+      list.push({
+        kind: "text", key: "cognitive", href: null, category: "Self-reported",
+        displayName: "Morning signals",
+        textValue: cognitive.flagCount > 0 ? `${cognitive.flagCount} signal${cognitive.flagCount === 1 ? "" : "s"}` : "All clear",
+        caption: cognitive.flags.length > 0 ? cognitive.flags.slice(0, 2).join(" · ") : "Fog, headaches not reported",
+        status: verdictToStatus(cognitive.verdict),
+      })
+    }
+
+    return list
+  }, [wearableValues, ctx])
 
   const populatedCount = allMetrics.filter(m => m.status !== "not_tested").length
   const attentionCount = allMetrics.filter(m => m.status === "attention" || m.status === "watch").length
 
   const statusGroups = useMemo(() => {
-    const groups: Record<Status, typeof allMetrics> = { attention: [], watch: [], strong: [], not_tested: [] }
+    const groups: Record<Status, Metric[]> = { attention: [], watch: [], strong: [], not_tested: [] }
     for (const m of allMetrics) groups[m.status].push(m)
     for (const k of Object.keys(groups) as Status[]) {
       groups[k].sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status])
@@ -324,43 +430,49 @@ export function SleepPanelClient({ nights, wearable }: Props) {
     return groups
   }, [allMetrics])
 
-  // ── Empty state ───────────────────────────────────────────────────────────
-
-  if (deduped.length === 0) {
-    return (
-      <div className="min-h-svh" style={{ background: "#F5F3EE" }}>
-        <Nav />
-        <div style={{ maxWidth: 960, margin: "0 auto", padding: "32px 24px 80px" }}>
-          <SectionHeader title="Sleep panel" subtitle="No sleep data on file." />
-          <div style={{ background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 10, padding: 24 }}>
-            <p style={{ fontFamily: serif, fontSize: 22, fontWeight: 500, color: "#2C2A24", margin: "0 0 8px" }}>Connect a wearable to see your sleep metrics</p>
-            <p style={{ fontFamily: sans, fontSize: 13, color: "#92400E", margin: "0 0 16px" }}>Your nightly data will appear here as a tile grid with deep sleep, HRV, REM, SpO₂, and efficiency.</p>
-            <Link href="/settings" style={{ fontFamily: sans, fontSize: 12, fontWeight: 500, color: "#B8860B", textDecoration: "none" }}>Connect wearable →</Link>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   const providerLabel = provider ? provider.charAt(0).toUpperCase() + provider.slice(1) : null
   const syncLabel = lastSynced ? new Date(lastSynced).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null
+  const wearableConnected = !!provider || deduped.length > 0
+  const wearableHasNights = deduped.length > 0
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div style={{ maxWidth: 1040, margin: "0 auto", padding: "32px 24px 80px", background: "#F5F3EE" }}>
       <SectionHeader
         title="What your sleep data is showing"
-        subtitle={`${populatedCount} metric${populatedCount === 1 ? "" : "s"} measured${attentionCount > 0 ? ` · ${attentionCount} need attention` : ""}`}
+        subtitle={`${populatedCount} signal${populatedCount === 1 ? "" : "s"} measured${attentionCount > 0 ? ` · ${attentionCount} need attention` : ""}`}
       />
 
-      {/* Source pill */}
-      {(providerLabel || syncLabel) && (
-        <p style={{ fontFamily: sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: "#8C897F", margin: "0 0 24px" }}>
-          {[providerLabel, syncLabel ? `Synced ${syncLabel}` : null].filter(Boolean).join(" · ")} · {deduped.length} night{deduped.length === 1 ? "" : "s"}
-        </p>
+      {/* Source line */}
+      <p style={{ fontFamily: sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: "#8C897F", margin: "0 0 24px" }}>
+        {[
+          ctx.hasQuestionnaire ? "Questionnaire" : null,
+          providerLabel,
+          syncLabel ? `Synced ${syncLabel}` : null,
+          wearableHasNights ? `${deduped.length} night${deduped.length === 1 ? "" : "s"}` : null,
+        ].filter(Boolean).join(" · ") || "No signals yet"}
+      </p>
+
+      {/* Connect-wearable strip when no wearable */}
+      {!wearableConnected && (
+        <Link href="/settings" style={{
+          textDecoration: "none", display: "block", marginBottom: 28,
+          padding: "16px 20px", borderRadius: 12,
+          background: "#FFFBEB", border: "1px solid #FDE68A",
+          color: "inherit",
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+            <span style={{ fontFamily: sans, fontSize: 13, color: "#6B6860" }}>
+              <span style={{ fontWeight: 600, color: "#2C2A24" }}>Add a wearable</span> — Apple Watch, Oura, WHOOP, or Garmin — to unlock HRV, deep sleep, REM, and SpO₂.
+            </span>
+            <span style={{ fontFamily: sans, fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "#B8860B", fontWeight: 600, flexShrink: 0 }}>Connect →</span>
+          </div>
+        </Link>
       )}
 
-      {/* Optional narrative card */}
-      {narrative?.headline && (
+      {/* Optional narrative card (wearable-only) */}
+      {narrative?.headline && wearableHasNights && (
         <div style={{
           background: "#FFFFFF", border: "1px solid #E8E4D8", borderLeft: "3px solid #4A7FB5",
           borderRadius: 10, padding: "18px 22px", marginBottom: 28,
@@ -386,11 +498,11 @@ export function SleepPanelClient({ nights, wearable }: Props) {
             <StatusSection status={s} count={group.length} isFirst={isFirst} />
             {s === "not_tested" ? (
               <div className="sleep-empty-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-                {group.map(m => <EmptyCard key={m.metric.key} metric={m.metric} />)}
+                {group.map(m => <EmptyCard key={m.key} category={m.category} displayName={m.displayName} />)}
               </div>
             ) : (
               <div className="sleep-tile-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
-                {group.map(m => <PopulatedCard key={m.metric.key} metric={m.metric} value={m.value!} status={m.status} />)}
+                {group.map(m => <MetricCard key={m.key} metric={m} />)}
               </div>
             )}
           </div>

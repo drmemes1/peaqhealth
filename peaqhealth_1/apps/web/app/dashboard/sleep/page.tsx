@@ -2,7 +2,6 @@ import { redirect } from "next/navigation"
 import { createClient } from "../../../lib/supabase/server"
 import { getUserPanelContext } from "../../../lib/user-context"
 import { Nav } from "../../components/nav"
-import SleepQuestionnaireView from "./sleep-questionnaire-view"
 import { SleepPanelClient } from "./sleep-panel-client"
 import { SleepTileSection } from "./SleepTileSection"
 import Link from "next/link"
@@ -14,18 +13,7 @@ export default async function SleepPage() {
 
   const ctx = await getUserPanelContext(user.id)
 
-  // State 3: Questionnaire only (no wearable) — new view
-  if (!ctx.hasWearable && ctx.hasQuestionnaire) {
-    return (
-      <div className="min-h-svh" style={{ background: "#F5F3EE" }}>
-        <Nav />
-        <SleepQuestionnaireView ctx={ctx} />
-        <SleepTileSection ctx={ctx} />
-      </div>
-    )
-  }
-
-  // State 4: Neither — empty state
+  // No questionnaire AND no wearable → onboarding nudge
   if (!ctx.hasWearable && !ctx.hasQuestionnaire) {
     return (
       <div className="min-h-svh" style={{ background: "#F5F3EE" }}>
@@ -44,7 +32,7 @@ export default async function SleepPage() {
     )
   }
 
-  // State 1 & 2: Has wearable — use existing sleep panel client
+  // Always render the unified tile grid for users who have either questionnaire or wearable.
   const [{ data: sleepNights }, { data: snapshot }, { data: wearableConn }] = await Promise.all([
     supabase.from("sleep_data").select("date,source,total_sleep_minutes,deep_sleep_minutes,rem_sleep_minutes,sleep_efficiency,hrv_rmssd,spo2,resting_heart_rate").eq("user_id", user.id).order("date", { ascending: false }).limit(30),
     supabase.from("score_snapshots").select("*").eq("user_id", user.id).order("calculated_at", { ascending: false }).limit(1).maybeSingle(),
@@ -55,6 +43,7 @@ export default async function SleepPage() {
     <div className="min-h-svh" style={{ background: "#F5F3EE" }}>
       <Nav />
       <SleepPanelClient
+        ctx={ctx}
         nights={(sleepNights ?? []) as Array<Record<string, unknown>>}
         snapshot={snapshot as Record<string, unknown> | null}
         wearable={wearableConn as Record<string, unknown> | null}
