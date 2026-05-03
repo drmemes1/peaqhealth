@@ -78,6 +78,15 @@ export const SPECIES_COLUMNS: Record<string, string> = {
   "streptococcus constellatus":  "s_constellatus_pct",
   "parvimonas micra":            "p_micra_pct",
   "corynebacterium matruchotii": "c_matruchotii_pct",
+
+  // ── Halitosis v2 + Upper airway v1 additions (ADR-0025, PR-Ε). ──
+  "solobacterium moorei":          "s_moorei_pct",
+  "atopobium parvulum":            "atopobium_parvulum_pct",
+  "prevotella nigrescens":         "prevotella_nigrescens_pct",
+  "prevotella melaninogenica":     "prevotella_melaninogenica_pct",
+  "eikenella corrodens":           "eikenella_corrodens_pct",
+  "dialister invisus":             "dialister_invisus_pct",
+  "eubacterium sulci":             "eubacterium_sulci_pct",
 }
 
 export const S_SALIVARIUS_SPECIES = ["streptococcus salivarius", "streptococcus vestibularis"]
@@ -261,6 +270,8 @@ export function parseL7Input(raw: string): ParseResult {
   let sMitisGroupTotal = 0
   let strepTotal = 0
   let prevotellaCommensalTotal = 0
+  let selenomonasTotal = 0
+  let alloprevotellaTotal = 0
   const generaSet = new Set<string>()
   const phylaSet = new Set<string>()
   let namedCount = 0
@@ -335,6 +346,13 @@ export function parseL7Input(raw: string): ParseResult {
           sMitisGroupTotal += pct
         }
       }
+
+      // Halitosis genus accumulators — magnitude-aware Selenomonas weight
+      // and the Prevotella+Alloprevotella combined feature for the upper
+      // airway depleted-Prevotella OSA marker. Fire regardless of column
+      // attribution.
+      if (genusLower === "selenomonas") selenomonasTotal += pct
+      if (genusLower === "alloprevotella") alloprevotellaTotal += pct
     } else if (taxo.is_placeholder && taxo.genus && taxo.genus !== "NA") {
       // Placeholder species (sp\d+ — Zymo's unresolved-OTU naming) get
       // aggregated into the parent genus column. Mirrors v2 behavior from
@@ -352,6 +370,9 @@ export function parseL7Input(raw: string): ParseResult {
       // Prevotella placeholder rows feed prevotella_commensal_pct (matching
       // v2 — non-intermedia Prevotella is treated as commensal).
       if (genusLower === "prevotella") prevotellaCommensalTotal += pct
+      // Halitosis accumulators include placeholder rows too.
+      if (genusLower === "selenomonas") selenomonasTotal += pct
+      if (genusLower === "alloprevotella") alloprevotellaTotal += pct
     }
 
     allEntries.push({
@@ -369,12 +390,15 @@ export function parseL7Input(raw: string): ParseResult {
     ...Object.values(SPECIES_COLUMNS),
     "s_salivarius_pct", "s_mitis_group_pct",
     "streptococcus_total_pct", "prevotella_commensal_pct",
+    "selenomonas_total_pct", "alloprevotella_total_pct",
   ]
   const columnValues: Record<string, number> = {}
   for (const col of ALL_TRACKED_COLUMNS) columnValues[col] = 0
   for (const [col, val] of Object.entries(genusSums)) columnValues[col] = parseFloat(val.toFixed(4))
   for (const [col, val] of Object.entries(speciesSums)) columnValues[col] = parseFloat(val.toFixed(4))
   columnValues["s_salivarius_pct"] = parseFloat(sSalivariusTotal.toFixed(4))
+  columnValues["selenomonas_total_pct"] = parseFloat(selenomonasTotal.toFixed(4))
+  columnValues["alloprevotella_total_pct"] = parseFloat(alloprevotellaTotal.toFixed(4))
   columnValues["s_mitis_group_pct"] = parseFloat(sMitisGroupTotal.toFixed(4))
   columnValues["streptococcus_total_pct"] = parseFloat(strepTotal.toFixed(4))
   columnValues["prevotella_commensal_pct"] = parseFloat(prevotellaCommensalTotal.toFixed(4))

@@ -306,6 +306,19 @@ export const V2_QUESTIONS: QuestionDef[] = [
     ],
     explanation: { label: "Why we ask", body: "Prior ENT evaluation — especially imaging or surgery — tells us whether your nasal airway has a structural component. This changes whether we suggest nasal strips vs. an ENT referral." },
   },
+  {
+    id: "q21b", section: "§3 · Airway", sectionLabel: "Airway",
+    type: "choice", dbCol: "tonsil_stones_history", tag: "new",
+    question: "Have you ever had tonsil stones?",
+    helper: "Small white or yellow lumps in the tonsil pockets — often felt as a foreign body, sometimes coughed up, with a strong sulfur smell.",
+    options: [
+      { value: "never", label: "Never" },
+      { value: "occasional", label: "Occasionally" },
+      { value: "frequent", label: "Frequently" },
+      { value: "tonsillectomy", label: "Tonsils removed" },
+    ],
+    explanation: { label: "Why we ask", body: "Tonsil stones produce dramatic VSCs — but they aren't visible to salivary 16S sequencing. If your halitosis reading is low yet you experience malodor, tonsil stones are a non-bacterial driver we want to flag explicitly rather than miss." },
+  },
 
   // ═══ §4 ORAL HYGIENE (8) ═══
   {
@@ -364,6 +377,19 @@ export const V2_QUESTIONS: QuestionDef[] = [
       { value: "water_flosser_only", label: "Water flosser only" },
     ],
     explanation: { label: "What this means", body: "Electric sonic brushes reduce plaque by 21% more than manual in meta-analyses. If your gum bacteria are elevated despite good habits, upgrading your brush is a low-friction lever." },
+  },
+  {
+    id: "q25b", section: "§4 · Oral hygiene", sectionLabel: "Oral hygiene",
+    type: "choice", dbCol: "last_dental_cleaning", tag: "new",
+    question: "When was your last professional dental cleaning?",
+    helper: "Hygienist visit with scaling — not a routine exam without cleaning.",
+    options: [
+      { value: "within_6_months", label: "Within the last 6 months" },
+      { value: "6_to_12_months", label: "6–12 months ago" },
+      { value: "over_12_months", label: "Over 12 months ago" },
+      { value: "never", label: "I don't remember / never" },
+    ],
+    explanation: { label: "Why we ask", body: "Plaque maturation accelerates after about 6 months without scaling. Overdue cleanings amplify volatile-sulfur-compound producers and shift pH, which feeds into your halitosis interpretation." },
   },
   {
     id: "q26", section: "§4 · Oral hygiene", sectionLabel: "Oral hygiene",
@@ -531,17 +557,18 @@ export const V2_QUESTIONS: QuestionDef[] = [
     explanation: { label: "What this means", body: "Xylitol at 6+ grams/day (about 5 pieces of gum) consistently reduces S. mutans in controlled trials. If your cavity bacteria are elevated and you're not using xylitol, it's one of the easiest interventions." },
   },
   {
-    id: "q38_placeholder", section: "§6 · Diet", sectionLabel: "Diet",
-    type: "choice", dbCol: "gerd_nocturnal", tag: "keep",
-    question: "Do you experience acid reflux or heartburn, especially at night?",
-    helper: "Nocturnal reflux changes oral pH and can shift acid-producing bacteria.",
+    id: "q38", section: "§6 · Diet", sectionLabel: "Diet",
+    type: "choice", dbCol: "gerd_frequency", tag: "rewrite",
+    question: "How often do you experience acid reflux or heartburn?",
+    helper: "Includes daytime reflux, nighttime reflux, and sour-taste-on-waking. Also pick 'diagnosed/treated' if a clinician has diagnosed GERD even if your symptoms are controlled today.",
     options: [
       { value: "never", label: "Never" },
-      { value: "occasionally", label: "Occasionally" },
-      { value: "frequently", label: "Frequently" },
-      { value: "nightly", label: "Most nights" },
+      { value: "occasional", label: "Occasionally", sub: "a few times a month or less" },
+      { value: "frequent", label: "Frequently", sub: "weekly" },
+      { value: "daily", label: "Daily" },
+      { value: "diagnosed_treated", label: "Diagnosed (treated)", sub: "GERD diagnosis on file, on PPI / H2 blocker" },
     ],
-    explanation: { label: "What this means", body: "Nocturnal acid reflux bathes your oral cavity in stomach acid, shifting pH and potentially elevating acid-tolerant bacteria like Lactobacillus. We'll cross-reference with your pH balance." },
+    explanation: { label: "What this means", body: "Reflux bathes your oral cavity in stomach acid — shifts pH, elevates acid-tolerant bacteria, and is one of the non-bacterial drivers of halitosis we cannot detect via 16S sequencing alone. Frequency and a clinical diagnosis carry different methodological weight." },
   },
 
   // ═══ §7 MEDICATIONS (2) ═══

@@ -299,6 +299,60 @@ export const METHODOLOGY: MethodologyEntry[] = [
       "Compensated patterns (active burden with intact defense; depleted defense with low burden) are novel framings not directly validated against clinical outcomes — mechanistically supported by SUBP literature and commensal scaffold literature. Red complex presence is not added to the score because trace-level 16S calls aren't clinically reliable; patients with concerning periodontal symptoms and trace red complex signals should consider species-specific qPCR for definitive detection.",
     citations: ["Synthesizes PBI and PDI methodology citations."],
   },
+
+  // ── Upper Airway v1 + Halitosis v2 (ADR-0025, PR-Ε). ──
+  {
+    scoreName: "Upper Airway Cluster (OSA screening)",
+    whatItMeasures:
+      "Composite upper-airway phenotype combining bacterial OSA signature (≥3/4 conjunctive), STOP-only symptom questionnaire, and nasal/sinus obstruction. SCREENING TOOL — NOT A DIAGNOSTIC.",
+    howComputed:
+      "Three lines of evidence run in parallel and synthesize into one of 8 tiers. Bacterial OSA features: Actinobacteria enriched (Rothia >23% OR Actinomyces >10.8%), Prevotella+Alloprevotella combined depleted (<5%), aerobic shift (Neisseria >8%), Shannon reduced (<4.0). Thresholds anchored to NHANES 2025 population means (Chaturvedi 2025, n=8,237). STOP questionnaire: 4 self-reported items (snoring, tiredness, observed apnea, hypertension) + age (≥50) + sex (male) modifiers; ≥2 indicates elevated risk per Patel 2022 (sensitivity 89%). Nasal score: combines self-reported obstruction, dry-mouth-on-waking, and sinus history. Tier classification runs peroxide gating first (acute high-dose returns tier_confounded_peroxide; chronic low-dose adds caveat). Tier 4a routes to ENT/allergy first when symptoms are present without OSA-typical bacteria.",
+    inputs: [
+      "Rothia (total) %", "Actinomyces (total) %", "Neisseria %",
+      "Prevotella + Alloprevotella combined %", "Shannon diversity",
+      "snoring_reported", "non_restorative_sleep", "osa_witnessed", "hypertension_dx",
+      "age (DOB or age_range)", "biological_sex",
+      "nasal_obstruction", "mouth_breathing_confirm", "sinus_history",
+      "whitening_tray_last_48h / strips / professional_<7d / toothpaste_daily / peroxide_mouthwash_daily",
+    ],
+    thresholds:
+      "Bacterial: Rothia 23.0% / Actinomyces 10.8% / Neisseria 8.0% / Prevotella combined 5.0% / Shannon 4.0. STOP score ≥2 + total score ≥4 = OSA-likely with bacterial signature. Nasal: <2 none, 2–3 mild, 4–6 moderate, ≥7 severe.",
+    limitations:
+      "USPSTF DISCLAIMER (always surface): This assessment is a screening tool only and does not diagnose obstructive sleep apnea (OSA) or any other medical condition. The oral microbiome analysis and questionnaire components identify patterns associated with increased OSA risk based on published research, but these associations have not been validated as a combined diagnostic tool. A diagnosis of OSA requires objective overnight sleep testing (polysomnography or home sleep apnea test) ordered and interpreted by a qualified healthcare provider. If this assessment indicates elevated risk, consultation with a physician or board-certified sleep medicine specialist is recommended. The U.S. Preventive Services Task Force has found insufficient evidence to assess the balance of benefits and harms of screening for OSA in asymptomatic adults. The ≥3/4 conjunctive bacterial logic was chosen over 2/4 to reduce false positives observed in the cohort (Pilot 3 case study). Self-reported BMI and neck circumference were excluded from the questionnaire by design — STOP-only outperforms STOP-BANG in self-administered settings (Patel 2022). Peroxide products produce reactive oxygen species that mimic the OSA bacterial signature and cannot be distinguished by composition alone; acute high-dose use returns tier_confounded_peroxide with a hard re-test deferral.",
+    citations: [
+      "Guo 2025 (Front Microbiol) — OSA bacterial signature meta-analysis n=2,073",
+      "Li 2025 (Front Cell Infect Microbiol) — Rothia ROC analysis",
+      "Chaturvedi 2025 (JAMA Network Open) — NHANES n=8,237 baseline anchors",
+      "Patel 2022 (J Clin Sleep Med) — STOP 4-item validation n=14,268",
+      "Mashaqi 2020 (Sleep Medicine) — biological adjunct improves AUC",
+      "USPSTF — sleep apnea screening recommendation statement",
+    ],
+  },
+  {
+    scoreName: "Halitosis Mass Index (HMI v2)",
+    whatItMeasures:
+      "Two-pathway VSC (volatile sulfur compound) production estimate from your oral bacterial composition and lifestyle context.",
+    howComputed:
+      "HMI = (H2S drivers + CH3SH drivers) × protective modifier × LHM (Lifestyle Halitosis Modifier). H2S pathway weights F. nucleatum (1.0×), S. moorei (1.5×), Veillonella (0.10×, capped at absolute contribution 1.0; weight rises to 0.15× when caries dysbiosis is flagged with elevated S. mutans), Leptotrichia wadei (0.5×), Atopobium parvulum (0.5× H2S + 0.6× CH3SH dual-pathway), Selenomonas (magnitude-aware: 0.2× / 0.4× / 0.5× depending on genus total), Eubacterium sulci (0.4×, often null due to V3-V4 limit), Dialister invisus (0.3×). CH3SH pathway weights P. gingivalis (1.0×), Prevotella intermedia / nigrescens (0.8× each), Prevotella denticola (0.6×), Prevotella melaninogenica (0.2× — common commensal, lowered from earlier weights), Treponema genus (0.7×), T. forsythia (0.5×), conditional S. moorei × Pg/Td synergy (0.5× when both elevated), Eikenella corrodens (0.3×). Protective modifier (parity with perio CDM): protective_score = S. salivarius × 1.0 + Rothia × 0.5 + Haemophilus × 0.3, capped at 15. Modifier ranges 0.40 (full protection) to 1.25 (collapsed). LHM compounds lifestyle factors (mouth breathing, snoring, dry mouth on waking, smoking, GERD frequency, last dental cleaning, tongue scraping, age) capped at 1.60×. Phenotype: low_malodor when HMI < 1.0; tongue_dominant or periodontal_dominant when one pathway is 1.5× the other; otherwise borderline / mixed by HMI band.",
+    inputs: [
+      "8 H2S driver species + Veillonella + Selenomonas (genus)",
+      "8 CH3SH driver species + Treponema (genus)",
+      "Protective: S. salivarius, Rothia (total), Haemophilus",
+      "Caries v3 cross-signal: compensated_dysbiosis flag + S. mutans %",
+      "Lifestyle: mouth_breathing(_when), snoring_reported, smoking_status, gerd_frequency, tongue_scraping_freq, last_dental_cleaning, age, xerostomic medications",
+      "Peroxide confounder: env_peroxide_flag, whitening_tray/strips/professional_<7d",
+    ],
+    thresholds:
+      "minimal < 1.0, low 1.0–2.5, moderate 2.5–5.0, high ≥ 5.0. Phenotype dominance ratio 1.5×.",
+    limitations:
+      "DETECTION PANEL LIMITATIONS: We measure 9 of the 12 primary halitosis-driver species at species level. Three secondary species (E. brachy, Centipeda periodontii, Eikenella corrodens in some panels) aren't in our current detection panel. Validation against external test data shows the cumulative contribution of these missing species is typically less than 0.05 HMI points. Candida species require ITS sequencing and are out of scope for this 16S-based test. BLIND SPOTS: Your halitosis score reflects bacterial drivers detectable in saliva. It does not capture postnasal drip, GERD/reflux, tonsil stones, dietary contributors, or non-salivary sources of oral odor. If your halitosis reading is low but you experience halitosis symptoms, the cause may be one of these other factors. PEROXIDE CAVEAT: peroxide product use can artificially inflate the protective community values; the protective modifier may overstate true protective capacity until 7–14 days after the last exposure. The HMI category bands are derived heuristics anchored to NHANES population means; until N=200 internal cohort validation is complete, treat the absolute number as a research estimate and the phenotype + drivers as the primary clinical signal.",
+    citations: [
+      "Takeshita 2012 (Sci Rep) — H2S/CH3SH bacterial discrimination",
+      "Tamahara 2025 — saliva vs tongue coating functional divergence",
+      "He 2025 — quantitative + relative profiling rationale",
+      "Hajishengallis 2014 — PSD framework",
+    ],
+  },
 ]
 
 export function getMethodologyPrompt(): string {

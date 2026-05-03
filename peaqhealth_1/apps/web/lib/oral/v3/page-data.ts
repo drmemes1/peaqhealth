@@ -43,6 +43,56 @@ export interface NRV1Outputs {
   confounder_adjustments: Record<string, string>
 }
 
+export interface UpperAirwayV1Outputs {
+  tier: string                                 // UpperAirwayTier
+  bacterial_features_count: number             // 0–4
+  bacterial_features: {
+    actinobacteria_enriched: boolean
+    prevotella_depleted: boolean
+    aerobic_shift: boolean
+    shannon_reduced: boolean | null
+    raw_values: {
+      rothia_pct: number
+      actinomyces_pct: number
+      neisseria_pct: number
+      prevotella_combined_pct: number
+      shannon: number | null
+    }
+  }
+  stop_score: number
+  stop_total_score: number
+  nasal_obstruction: { score: number; category: string }
+  routing: {
+    primary_recommendation: string
+    specialist_first: string
+    sleep_study_indicated: boolean
+    timeline: string
+  }
+  peroxide_severity: string  // 'none' | 'chronic_low' | 'acute_high'
+  peroxide_caveat_required: boolean
+  reliability_flags: string[]
+}
+
+export interface HalitosisV2Outputs {
+  hmi: number | null
+  hmi_category: string | null
+  phenotype: string | null
+  h2s_adjusted: number | null
+  ch3sh_adjusted: number | null
+  protective_modifier: number | null
+  lhm: number | null
+  peroxide_caveat: boolean
+  drivers: Array<{
+    species: string
+    abundance_pct: number
+    pathway: "h2s" | "ch3sh" | "both"
+    contribution: number
+  }>
+  protective: Array<{ species: string; abundance_pct: number; contribution: number }>
+  lhm_factors: Array<{ factor: string; multiplier: number }>
+  reliability_flags: string[]
+}
+
 export interface PerioBurdenV1Outputs {
   pbi: number | null                        // perio_burden_index_adjusted (after CDM)
   pbi_pre_cdm: number | null                // raw PBI before CDM amplification
@@ -95,6 +145,8 @@ export interface OralPageData {
   caries: CariesV3Outputs | null
   nr: NRV1Outputs | null
   perio: PerioBurdenV1Outputs | null
+  upper_airway: UpperAirwayV1Outputs | null
+  halitosis: HalitosisV2Outputs | null
   snapshot: {
     species_count: number | null
     named_species_count: number | null
@@ -264,6 +316,67 @@ export async function loadOralPageData(userId: string): Promise<OralPageResult> 
       }
     : null
 
+  // ── Upper airway v1 outputs ──
+  const uaTier = str(k.upper_airway_tier)
+  const upper_airway: UpperAirwayV1Outputs | null = uaTier
+    ? {
+        tier: uaTier,
+        bacterial_features_count: num(k.bacterial_osa_features_count) ?? 0,
+        bacterial_features: (k.bacterial_osa_features ?? {
+          actinobacteria_enriched: false, prevotella_depleted: false, aerobic_shift: false,
+          shannon_reduced: null, raw_values: {
+            rothia_pct: 0, actinomyces_pct: 0, neisseria_pct: 0,
+            prevotella_combined_pct: 0, shannon: null,
+          },
+        }) as UpperAirwayV1Outputs["bacterial_features"],
+        stop_score: num(k.stop_score) ?? 0,
+        stop_total_score: num(k.stop_total_score) ?? 0,
+        nasal_obstruction: {
+          score: num(k.nasal_obstruction_score) ?? 0,
+          category: str(k.nasal_obstruction_category) ?? "none",
+        },
+        routing: (k.upper_airway_routing ?? {
+          primary_recommendation: "", specialist_first: "none",
+          sleep_study_indicated: false, timeline: "no_action",
+        }) as UpperAirwayV1Outputs["routing"],
+        peroxide_severity: str(k.upper_airway_peroxide_severity) ?? "none",
+        peroxide_caveat_required: str(k.upper_airway_peroxide_severity) !== null
+          && str(k.upper_airway_peroxide_severity) !== "none",
+        reliability_flags: Array.isArray(
+          (k.upper_airway_v1_breakdown as Record<string, unknown> | null)?.reliability_flags,
+        )
+          ? ((k.upper_airway_v1_breakdown as Record<string, unknown>).reliability_flags as string[])
+          : [],
+      }
+    : null
+
+  // ── Halitosis v2 outputs ──
+  const halCategory = str(k.halitosis_hmi_category)
+  const halitosis: HalitosisV2Outputs | null = halCategory
+    ? {
+        hmi: num(k.halitosis_hmi),
+        hmi_category: halCategory,
+        phenotype: str(k.halitosis_phenotype),
+        h2s_adjusted: num(k.halitosis_h2s_adjusted),
+        ch3sh_adjusted: num(k.halitosis_ch3sh_adjusted),
+        protective_modifier: num(k.halitosis_protective_modifier),
+        lhm: num(k.halitosis_lhm),
+        peroxide_caveat: bool(k.halitosis_peroxide_caveat),
+        drivers: Array.isArray(k.halitosis_v2_drivers)
+          ? (k.halitosis_v2_drivers as HalitosisV2Outputs["drivers"])
+          : [],
+        protective: Array.isArray(k.halitosis_v2_protective)
+          ? (k.halitosis_v2_protective as HalitosisV2Outputs["protective"])
+          : [],
+        lhm_factors: Array.isArray(k.halitosis_v2_lhm_factors)
+          ? (k.halitosis_v2_lhm_factors as HalitosisV2Outputs["lhm_factors"])
+          : [],
+        reliability_flags: Array.isArray(k.halitosis_v2_reliability_flags)
+          ? (k.halitosis_v2_reliability_flags as string[])
+          : [],
+      }
+    : null
+
   // ── Perio burden v1 outputs ──
   const perioRisk = str(k.perio_risk_category)
   const redCxRaw = (k.red_complex_status ?? {}) as Record<string, unknown>
@@ -323,6 +436,8 @@ export async function loadOralPageData(userId: string): Promise<OralPageResult> 
     caries,
     nr,
     perio,
+    upper_airway,
+    halitosis,
     snapshot,
     top_species,
     composition: compositionTotals,
