@@ -11,6 +11,8 @@ import { computeCariesPanel } from "../../../../lib/oral/caries-panel"
 import { runCariesV3 } from "../../../../lib/oral/caries-v3-runner"
 import { runNRV1 } from "../../../../lib/oral/nr-v1-runner"
 import { runPerioBurdenV1 } from "../../../../lib/oral/perio-burden-v1-runner"
+import { runUpperAirway } from "../../../../lib/oral/upper-airway-v1-runner"
+import { runHalitosisV2 } from "../../../../lib/oral/halitosis-v2-runner"
 import {
   GENUS_COLUMNS,
   SPECIES_COLUMNS,
@@ -261,6 +263,38 @@ export async function POST(request: NextRequest) {
         }
       } else {
         steps.push(`Perio v1 runner returned null (see server logs)`)
+      }
+
+      // Step 3e: upper airway v1 (additive — runs alongside v2/v3/NR/perio; soft-fails)
+      const { data: profileRow } = await supabase
+        .from("profiles")
+        .select("date_of_birth, first_name")
+        .eq("id", targetUserId)
+        .maybeSingle()
+
+      const ua = runUpperAirway(kitRow, lifestyle, profileRow)
+      if (ua) {
+        const { error: uaErr } = await supabase.from("oral_kit_orders").update(ua.update).eq("id", kitId)
+        if (uaErr) {
+          steps.push(`Upper airway v1 write failed (continuing): ${uaErr.message}`)
+        } else {
+          steps.push(`Upper airway v1: ${ua.result.tier} (bacterial=${ua.result.bacterial.features_present}/4, STOP=${ua.result.stop_questionnaire.stop_score} total=${ua.result.stop_questionnaire.total_score}, nasal=${ua.result.nasal_obstruction.category}, peroxide=${ua.result.peroxide_confounder.severity})`)
+        }
+      } else {
+        steps.push(`Upper airway v1 runner returned null (see server logs)`)
+      }
+
+      // Step 3f: halitosis v2 (additive — runs alongside everything; soft-fails)
+      const hal = runHalitosisV2(kitRow, lifestyle, profileRow)
+      if (hal) {
+        const { error: halErr } = await supabase.from("oral_kit_orders").update(hal.update).eq("id", kitId)
+        if (halErr) {
+          steps.push(`Halitosis v2 write failed (continuing): ${halErr.message}`)
+        } else {
+          steps.push(`Halitosis v2: ${hal.result.pathway} (HMI=${hal.result.hmi.toFixed(2)} ${hal.result.hmi_category}, H2S=${hal.result.h2s_adjusted.toFixed(2)}, CH3SH=${hal.result.ch3sh_adjusted.toFixed(2)}, mod=${hal.result.protective_modifier.toFixed(2)}×, LHM=${hal.result.lhm.toFixed(2)}×, subjective=${hal.result.subjective_halitosis_routing}, peroxide=${hal.result.peroxide_confounder_caveat ? "caveat" : "none"})`)
+        }
+      } else {
+        steps.push(`Halitosis v2 runner returned null (see server logs)`)
       }
 
       // Step 4: interpretability tier
