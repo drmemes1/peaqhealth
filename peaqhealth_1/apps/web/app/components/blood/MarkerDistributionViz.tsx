@@ -1,8 +1,7 @@
 /**
- * Range bar matching the panel page exactly. 4px gradient track with the
- * five-zone soft palette (pink → amber → sage → amber → pink), a 2×10
- * vertical tick in status color over the user's value, and five numeric
- * scale labels underneath. Mirrors PopulatedCard in blood-panel-rebuild.tsx.
+ * Range bar — pixel-exact clone of the panel-tile bar in
+ * blood-panel-rebuild.tsx. 4px gradient track, 2x10 status-color tick
+ * with #FAFAF8 outline shadow, five 9px numeric scale labels in #A8A59B.
  */
 import { getMarkerById, type StatusBand } from "../../../lib/blood/markerRegistry"
 import { getMarkerStatus } from "../../../lib/blood/status"
@@ -82,12 +81,9 @@ function scaleLabels(opt: Optimal): string[] {
 export function MarkerDistributionViz({
   markerId,
   value,
-  cardBg,
 }: {
   markerId: string
   value: number | null
-  /** Card background color so the tick's outline shadow blends into the card. */
-  cardBg?: string
 }) {
   const m = getMarkerById(markerId)
   if (!m || !m.statusBands || m.statusBands.length === 0) return null
@@ -106,8 +102,8 @@ export function MarkerDistributionViz({
   const labels = scaleLabels(opt)
 
   return (
-    <div style={{ marginTop: 20 }}>
-      {/* 4px gradient track — exact panel-page palette */}
+    <>
+      {/* 4px gradient track — exact panel-tile palette */}
       <div
         style={{
           position: "relative",
@@ -129,7 +125,7 @@ export function MarkerDistributionViz({
               background: tickColor,
               borderRadius: 1,
               transform: "translateX(-1px)",
-              boxShadow: `0 0 0 2px ${cardBg ?? "var(--paper, #FAFAF8)"}`,
+              boxShadow: "0 0 0 2px #FAFAF8",
             }}
             aria-label={`Your value: ${value} ${m.unit}`}
           />
@@ -144,7 +140,7 @@ export function MarkerDistributionViz({
               style={{
                 fontFamily: SANS,
                 fontSize: 9,
-                color: "rgba(20,20,16,0.4)",
+                color: "#A8A59B",
                 fontVariantNumeric: "tabular-nums",
               }}
             >
@@ -153,6 +149,6 @@ export function MarkerDistributionViz({
           ))}
         </div>
       )}
-    </div>
+    </>
   )
 }
