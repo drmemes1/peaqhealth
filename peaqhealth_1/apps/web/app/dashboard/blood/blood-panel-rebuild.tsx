@@ -9,6 +9,8 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { SectionHeader } from "../../components/panels"
 import { BLOOD_CATEGORIES } from "../../../lib/blood/categories"
 import { MARKERS } from "../../../lib/blood/marker-content"
+import { getMarkerById } from "../../../lib/blood/markerRegistry"
+import { MarkerPanelCard, getMarkerCardStatus } from "../../components/blood/MarkerPanelCard"
 
 const serif = "var(--font-manrope), system-ui, sans-serif"
 const sans = "'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif"
@@ -36,20 +38,9 @@ const CATEGORY_LABELS: Record<string, string> = {
   cbc: "Blood cells", immune: "Immune", nutrients: "Nutrients", thyroid: "Thyroid",
 }
 
+/** Delegates to MarkerPanelCard so status grouping uses the same derivation as the tile. */
 function getMarkerStatus(key: string, value: number | null): Status {
-  if (value == null) return "not_tested"
-  const m = MARKERS[key]
-  if (!m?.optimal) return "strong"
-  const { min, max } = m.optimal
-  if (min != null && max != null) {
-    if (value >= min && value <= max) return "strong"
-    const range = max - min
-    if (value < min - range * 0.3 || value > max + range * 0.3) return "attention"
-    return "watch"
-  }
-  if (max != null) return value <= max ? "strong" : value <= max * 1.3 ? "watch" : "attention"
-  if (min != null) return value >= min ? "strong" : value >= min * 0.7 ? "watch" : "attention"
-  return "strong"
+  return getMarkerCardStatus(key, value)
 }
 
 function computeTickPosition(value: number, marker: typeof MARKERS[string]): number {
@@ -279,13 +270,14 @@ export default function BloodPanelClient({ lab }: {
   const data = lab as Record<string, number | null>
 
   const allMarkers = useMemo(() => {
-    const result: { key: string; marker: typeof MARKERS[string]; value: number | null; status: Status; catKey: string; catIdx: number }[] = []
+    const result: { key: string; marker: { displayName: string; category: string }; value: number | null; status: Status; catKey: string; catIdx: number }[] = []
     BLOOD_CATEGORIES.forEach((cat, catIdx) => {
       cat.markerKeys.forEach(k => {
-        const m = MARKERS[k]
-        if (!m) return
+        const reg = getMarkerById(k)
+        if (!reg) return
         const v = data[k] != null ? Number(data[k]) : null
-        result.push({ key: k, marker: m, value: v, status: getMarkerStatus(k, v), catKey: cat.key, catIdx })
+        const marker = { displayName: reg.displayName, category: cat.key }
+        result.push({ key: k, marker, value: v, status: getMarkerStatus(k, v), catKey: cat.key, catIdx })
       })
     })
     return result
@@ -356,11 +348,11 @@ export default function BloodPanelClient({ lab }: {
                 <StatusSection status={s} count={group.length} isFirst={isFirst} />
                 {s === "not_tested" ? (
                   <div className="blood-empty-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
-                    {group.map(m => <EmptyCard key={m.key} marker={m.marker} />)}
+                    {group.map(m => <MarkerPanelCard key={m.key} markerId={m.key} value={null} href={`/dashboard/blood/${m.key}`} />)}
                   </div>
                 ) : (
                   <div className="blood-tile-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
-                    {group.map(m => <PopulatedCard key={m.key} markerKey={m.key} marker={m.marker} value={m.value!} status={m.status} />)}
+                    {group.map(m => <MarkerPanelCard key={m.key} markerId={m.key} value={m.value} href={`/dashboard/blood/${m.key}`} />)}
                   </div>
                 )}
               </div>
@@ -383,8 +375,8 @@ export default function BloodPanelClient({ lab }: {
               </div>
               <div className="blood-tile-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
                 {catMarkers.map(m => m.value != null
-                  ? <PopulatedCard key={m.key} markerKey={m.key} marker={m.marker} value={m.value} status={m.status} />
-                  : <div key={m.key} style={{ gridColumn: "span 1" }}><EmptyCard marker={m.marker} /></div>
+                  ? <MarkerPanelCard key={m.key} markerId={m.key} value={m.value} href={`/dashboard/blood/${m.key}`} />
+                  : <div key={m.key} style={{ gridColumn: "span 1" }}><MarkerPanelCard markerId={m.key} value={null} href={`/dashboard/blood/${m.key}`} /></div>
                 )}
               </div>
             </div>
@@ -393,8 +385,8 @@ export default function BloodPanelClient({ lab }: {
       ) : (
         <div className="blood-tile-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
           {sorted.map(m => m.value != null
-            ? <PopulatedCard key={m.key} markerKey={m.key} marker={m.marker} value={m.value} status={m.status} />
-            : <div key={m.key}><EmptyCard marker={m.marker} /></div>
+            ? <MarkerPanelCard key={m.key} markerId={m.key} value={m.value} href={`/dashboard/blood/${m.key}`} />
+            : <div key={m.key}><MarkerPanelCard markerId={m.key} value={null} href={`/dashboard/blood/${m.key}`} /></div>
           )}
         </div>
       )}
