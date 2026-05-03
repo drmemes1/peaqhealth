@@ -75,8 +75,9 @@ export interface UpperAirwayV1Outputs {
 
 export interface HalitosisV2Outputs {
   hmi: number | null
-  hmi_category: string | null
-  phenotype: string | null
+  hmi_category: string | null            // 'low' | 'moderate' | 'high' (v2.5)
+  pathway: string | null                 // 'tongue_dominant' | 'gum_dominant' | 'mixed' | 'minimal_pressure'
+  subjective_routing: boolean            // category=low + LHM > 1.30
   h2s_adjusted: number | null
   ch3sh_adjusted: number | null
   protective_modifier: number | null
@@ -356,7 +357,8 @@ export async function loadOralPageData(userId: string): Promise<OralPageResult> 
     ? {
         hmi: num(k.halitosis_hmi),
         hmi_category: halCategory,
-        phenotype: str(k.halitosis_phenotype),
+        pathway: str(k.halitosis_pathway),
+        subjective_routing: bool(k.halitosis_subjective_routing),
         h2s_adjusted: num(k.halitosis_h2s_adjusted),
         ch3sh_adjusted: num(k.halitosis_ch3sh_adjusted),
         protective_modifier: num(k.halitosis_protective_modifier),

@@ -19,14 +19,21 @@
  * See methodology entry + ADR-0025 for derivation.
  */
 
-export type HalitosisCategory = "minimal" | "low" | "moderate" | "high"
+// v2.5 calibration: 3-category system (no minimal). The previous boundary
+// at HMI 1.0 between minimal/low produced categorically meaningless
+// distinctions — patients at HMI 0.7 vs 1.1 receive identical clinical
+// guidance. New boundaries focus on actionable thresholds.
+export type HalitosisCategory = "low" | "moderate" | "high"
 
-export type HalitosisPhenotype =
-  | "low_malodor"
-  | "borderline"
-  | "tongue_dominant"
-  | "periodontal_dominant"
-  | "mixed"
+// Pathway attribution is the primary diagnostic content (per OE
+// consultation May 2026): pathway-specific intervention evidence is the
+// strongest part of the algorithm (Iatropoulos 2016 — perio therapy
+// reduces CH3SH; Tsai 2008 — tongue scraping reduces H2S >50%).
+export type HalitosisPathway =
+  | "tongue_dominant"     // H2S > CH3SH × 1.3
+  | "gum_dominant"        // CH3SH > H2S × 1.3
+  | "mixed"               // both pathways within 1.3× of each other
+  | "minimal_pressure"    // category === "low" — pathway not actionable
 
 export interface HalitosisInput {
   // ── H2S drivers (tongue dorsum) ───────────────────────────────────
@@ -104,7 +111,14 @@ export interface HalitosisResult {
   ch3sh_adjusted: number
   hmi: number
   hmi_category: HalitosisCategory
-  phenotype: HalitosisPhenotype
+  pathway: HalitosisPathway
+  /**
+   * True when category === "low" AND LHM > 1.30. Triggers narrative
+   * routing to non-bacterial cause investigation (postnasal drip,
+   * tonsil stones, GERD, dietary, tongue coating mass) rather than
+   * producing a falsely reassuring "minimal" read.
+   */
+  subjective_halitosis_routing: boolean
   driver_contributions: HalitosisDriverContribution[]
   protective_contributions: HalitosisProtectiveContribution[]
   lhm_factors: HalitosisLHMFactor[]
@@ -119,17 +133,27 @@ export interface HalitosisResult {
 // score domination — Veillonella is secondary in the literature).
 const VEILLONELLA_CAP = 1.0
 
+// v2.5: Veillonella scaling becomes a continuous interaction term with
+// S. mutans (lactate substrate proxy). Washio 2014 demonstrated lactate
+// enhances Veillonella H2S production from L-cysteine 4.5–23.7×. Replaces
+// the previous boolean caries_dysbiosis × s_mutans threshold check.
+const VEILLONELLA_BASE_WEIGHT = 0.10
+const VEILLONELLA_LACTATE_CAP = 2.0
+const S_MUTANS_BASELINE_PCT = 0.5
+
+function veillonellaLactateEnhancement(input: HalitosisInput): number {
+  // Returns 1.0 when s_mutans matches baseline; scales up linearly with
+  // s_mutans abundance, capped at 2.0×. Falls back to 1.0 when
+  // s_mutans is unavailable (input is 0).
+  if (input.s_mutans_pct <= 0) return 1.0
+  return Math.min(VEILLONELLA_LACTATE_CAP, 1 + input.s_mutans_pct / S_MUTANS_BASELINE_PCT)
+}
+
 // Selenomonas magnitude-aware genus weighting bands.
 function selenomonasWeight(pct: number): number {
   if (pct < 0.3) return 0.2
   if (pct < 1.0) return 0.4
   return 0.5
-}
-
-// Veillonella magnitude-aware weight conditional on caries dysbiosis.
-function veillonellaWeight(input: HalitosisInput): number {
-  if (input.caries_compensated_dysbiosis && input.s_mutans_pct >= 0.05) return 0.15
-  return 0.10
 }
 
 // Protective modifier — multiplicative (1.25× collapse → 0.40× full)
@@ -141,11 +165,24 @@ const PROTECTIVE_RANGE = PROTECTIVE_MAX_MULTIPLIER - PROTECTIVE_MIN_MULTIPLIER
 // LHM cap (prevents runaway compounding).
 const LHM_CAP = 1.60
 
-// Phenotype cutoff: one pathway dominates if 1.5× the other.
-const PHENOTYPE_DOMINANCE_RATIO = 1.5
+// HMI category boundaries (v2.5):
+//   low <2.0 / moderate 2.0–4.5 / high ≥4.5
+// Replaces the previous 4-tier {1.0, 2.5, 5.0} that produced a
+// categorically meaningless boundary at 1.0. The new bands focus on
+// actionable thresholds — moderate triggers pathway-specific
+// intervention, high triggers comprehensive workup. No published
+// validated thresholds exist for any halitosis algorithm.
+const HMI_THRESHOLDS = { moderate: 2.0, high: 4.5 }
 
-// HMI category boundaries.
-const HMI_THRESHOLDS = { low: 1.0, moderate: 2.5, high: 5.0 }
+// LHM threshold above which subjective halitosis routing fires for
+// low-category patients. Significant environmental amplification
+// suggests symptoms may be present despite low bacterial reading.
+const SUBJECTIVE_HALITOSIS_LHM_THRESHOLD = 1.30
+
+// Pathway dominance ratio — one pathway must exceed the other by 1.3×
+// (lowered from v2.4's 1.5× since it now drives the primary diagnostic
+// label rather than a tie-breaker for phenotype).
+const PATHWAY_DOMINANCE_RATIO = 1.3
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
@@ -166,9 +203,13 @@ function computeH2S(input: HalitosisInput): {
   add("F. nucleatum", input.f_nucleatum_pct, 1.0)
   add("S. moorei", input.s_moorei_pct, 1.5)
 
-  // Secondary — Veillonella with absolute cap
-  const veiW = veillonellaWeight(input)
-  const veiContribution = Math.min(VEILLONELLA_CAP, input.veillonella_pct * veiW)
+  // Secondary — Veillonella with continuous lactate-interaction term
+  // (Washio 2014) and absolute cap to prevent single-species dominance.
+  const lactateEnhancement = veillonellaLactateEnhancement(input)
+  const veiContribution = Math.min(
+    VEILLONELLA_CAP,
+    input.veillonella_pct * VEILLONELLA_BASE_WEIGHT * lactateEnhancement,
+  )
   contributions.push({
     species: "Veillonella (genus)",
     abundance_pct: input.veillonella_pct,
@@ -215,7 +256,13 @@ function computeCH3SH(input: HalitosisInput): {
   add("Prevotella intermedia", input.prevotella_intermedia_pct, 0.8)
   add("Prevotella nigrescens", input.prevotella_nigrescens_pct, 0.8)
   add("Prevotella denticola", input.prevotella_denticola_pct, 0.6)
-  add("Prevotella melaninogenica", input.prevotella_melaninogenica_pct, 0.2)
+  // v2.5: P. melaninogenica weight reduced from 0.2× to 0.10× per OE
+  // consultation. P. melaninogenica is a universal core commensal
+  // (Govender 2026, NHANES 2025 n=8,237) with no in vitro VSC production
+  // data demonstrating it as a primary driver. Its inclusion in halitosis-
+  // associated communities reflects co-occurrence in dysbiotic
+  // environments, not direct VSC production.
+  add("Prevotella melaninogenica", input.prevotella_melaninogenica_pct, 0.10)
 
   // Secondary
   add("Treponema (genus)", input.treponema_total_pct, 0.7)
@@ -351,25 +398,21 @@ function computeLHM(input: HalitosisInput): {
 }
 
 function categorizeHmi(hmi: number): HalitosisCategory {
-  if (hmi < HMI_THRESHOLDS.low) return "minimal"
   if (hmi < HMI_THRESHOLDS.moderate) return "low"
   if (hmi < HMI_THRESHOLDS.high) return "moderate"
   return "high"
 }
 
-function determinePhenotype(
+function determinePathway(
+  category: HalitosisCategory,
   h2s_adj: number,
   ch3sh_adj: number,
-  hmi: number,
-): HalitosisPhenotype {
-  // Phenotype assignment runs HMI-first so a "minimal" HMI is always
-  // labeled low_malodor regardless of which pathway dominates the
-  // small-but-present signal — clinically, a HMI < 1.0 is below the
-  // odor threshold whether it skews tongue or periodontal.
-  if (hmi < HMI_THRESHOLDS.low) return "low_malodor"
-  if (h2s_adj > ch3sh_adj * PHENOTYPE_DOMINANCE_RATIO) return "tongue_dominant"
-  if (ch3sh_adj > h2s_adj * PHENOTYPE_DOMINANCE_RATIO) return "periodontal_dominant"
-  if (hmi < HMI_THRESHOLDS.moderate) return "borderline"
+): HalitosisPathway {
+  // Low category: pathway attribution isn't actionable — bacterial
+  // intervention isn't indicated regardless of which pathway leads.
+  if (category === "low") return "minimal_pressure"
+  if (h2s_adj > ch3sh_adj * PATHWAY_DOMINANCE_RATIO) return "tongue_dominant"
+  if (ch3sh_adj > h2s_adj * PATHWAY_DOMINANCE_RATIO) return "gum_dominant"
   return "mixed"
 }
 
@@ -393,7 +436,9 @@ export function calculateHalitosis(input: HalitosisInput): HalitosisResult {
   const hmi = h2s_adjusted + ch3sh_adjusted
 
   const hmi_category = categorizeHmi(hmi)
-  const phenotype = determinePhenotype(h2s_adjusted, ch3sh_adjusted, hmi)
+  const pathway = determinePathway(hmi_category, h2s_adjusted, ch3sh_adjusted)
+  const subjective_halitosis_routing =
+    hmi_category === "low" && lhm > SUBJECTIVE_HALITOSIS_LHM_THRESHOLD
 
   const peroxide_acute =
     input.whitening_tray_last_48h ||
@@ -418,7 +463,8 @@ export function calculateHalitosis(input: HalitosisInput): HalitosisResult {
     ch3sh_adjusted: parseFloat(ch3sh_adjusted.toFixed(4)),
     hmi: parseFloat(hmi.toFixed(4)),
     hmi_category,
-    phenotype,
+    pathway,
+    subjective_halitosis_routing,
     driver_contributions: [...h2s.contributions, atoH2s, ...ch3sh.contributions]
       .filter(c => c.abundance_pct > 0 || c.contribution > 0)
       .sort((a, b) => b.contribution - a.contribution),

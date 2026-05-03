@@ -291,7 +291,7 @@ export async function POST(request: NextRequest) {
         if (halErr) {
           steps.push(`Halitosis v2 write failed (continuing): ${halErr.message}`)
         } else {
-          steps.push(`Halitosis v2: ${hal.result.phenotype} (HMI=${hal.result.hmi.toFixed(2)} ${hal.result.hmi_category}, H2S=${hal.result.h2s_adjusted.toFixed(2)}, CH3SH=${hal.result.ch3sh_adjusted.toFixed(2)}, mod=${hal.result.protective_modifier.toFixed(2)}×, LHM=${hal.result.lhm.toFixed(2)}×, peroxide=${hal.result.peroxide_confounder_caveat ? "caveat" : "none"})`)
+          steps.push(`Halitosis v2: ${hal.result.pathway} (HMI=${hal.result.hmi.toFixed(2)} ${hal.result.hmi_category}, H2S=${hal.result.h2s_adjusted.toFixed(2)}, CH3SH=${hal.result.ch3sh_adjusted.toFixed(2)}, mod=${hal.result.protective_modifier.toFixed(2)}×, LHM=${hal.result.lhm.toFixed(2)}×, subjective=${hal.result.subjective_halitosis_routing}, peroxide=${hal.result.peroxide_confounder_caveat ? "caveat" : "none"})`)
         }
       } else {
         steps.push(`Halitosis v2 runner returned null (see server logs)`)

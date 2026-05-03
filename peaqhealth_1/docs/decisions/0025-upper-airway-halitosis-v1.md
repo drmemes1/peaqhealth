@@ -161,6 +161,76 @@ gating fires correctly.
 - Halitosis algorithm doesn't measure tonsil stones, GERD, postnasal
   drip, or Candida — these are blind spots disclosed in methodology
 
+## v2.5 Calibration Update (Open Evidence May 2026)
+
+Six additional architectural decisions, layered on top of the original
+PR-Ε halitosis-v2 implementation:
+
+### 9. P. melaninogenica weight reduced from 0.2× to 0.10×
+
+P. melaninogenica is a universal core commensal present in the
+majority of healthy individuals (Govender 2026 PacBio study, NHANES
+2025 n=8,237). No in vitro data demonstrates it as a primary VSC
+producer comparable to P. intermedia or P. nigrescens. Its inclusion
+in halitosis-associated communities reflects co-occurrence in
+dysbiotic environments rather than direct VSC production. OE
+consultation explicitly recommended 0.05–0.10×; we chose the
+conservative end (0.10×) to preserve some signal while preventing
+single-species dominance.
+
+### 10. Veillonella scaling becomes continuous interaction term
+
+Washio 2014 demonstrated lactate enhances Veillonella H2S production
+from L-cysteine 4.5–23.7-fold. The previous boolean caries_dysbiosis
+× s_mutans threshold check is replaced with a continuous interaction
+term: `lactate_enhancement = min(2.0, 1 + s_mutans_pct / 0.5)`,
+applied to a base weight of 0.10×. Cap at min(1.0, ...) preserved.
+More biologically accurate than a boolean threshold; degrades
+gracefully when s_mutans is unavailable (enhancement = 1.0).
+
+### 11. Category system simplified from 4 categories to 3
+
+The previous boundary at HMI 1.0 between minimal and low produced
+categorically meaningless distinctions — patients at HMI 0.7 vs 1.1
+receive identical clinical guidance. New boundaries focus on
+actionable thresholds: low < 2.0 (no intervention indicated),
+moderate 2.0–4.5 (pathway-specific intervention), high ≥ 4.5
+(comprehensive workup). No published validated thresholds exist for
+any halitosis algorithm — this is acknowledged honest categorization,
+not evidence-based precision.
+
+### 12. Pathway attribution becomes primary diagnostic content
+
+Pathway-specific intervention has the strongest evidence base in the
+algorithm: Iatropoulos 2016 showed periodontal therapy specifically
+reduces CH3SH; Tsai 2008 showed tongue scraping reduces H2S >50%.
+The pathway field (tongue_dominant / gum_dominant / mixed /
+minimal_pressure) becomes the actionable clinical output;
+category is supporting context. Dominance ratio lowered from 1.5×
+(phenotype tie-breaker) to 1.3× (primary diagnostic label).
+
+### 13. `phenotype` field deprecated
+
+Made redundant by category + pathway combination. Removed from
+`HalitosisResult`, runner update payload, DB schema
+(`halitosis_phenotype` column dropped), `HalitosisV2Outputs` interface
+in page-data, and UI section. Replaced by `pathway` everywhere.
+
+### 14. Subjective halitosis routing added
+
+When `category === "low"` but `LHM > 1.30` (significant environmental
+amplification), narrative explicitly routes to non-bacterial cause
+investigation: postnasal drip (especially common in mouth breathers),
+tonsil stones, GERD, dietary contributors, tongue coating physical
+mass. Addresses the clinical case where the bacterial reading is low
+but the patient has real symptoms — honest about algorithmic blind
+spots rather than producing a falsely reassuring "minimal" read.
+
+The existing `tonsil_stones_history` and `gerd_frequency` lifestyle
+fields support this routing today; a future `subjective_halitosis`
+questionnaire item could refine the trigger from LHM-based proxy to
+direct user report.
+
 ## Future PRs
 
 - N=200 cohort validation → re-anchor HMI category bands

@@ -106,7 +106,9 @@ export function inputFromRows(
 export interface HalitosisV2Update {
   halitosis_hmi: number
   halitosis_hmi_category: string
-  halitosis_phenotype: string
+  // v2.5: phenotype deprecated; pathway is the primary diagnostic field.
+  halitosis_pathway: string
+  halitosis_subjective_routing: boolean
   halitosis_h2s_adjusted: number
   halitosis_ch3sh_adjusted: number
   halitosis_protective_modifier: number
@@ -123,7 +125,8 @@ export function v2UpdateFromResult(result: HalitosisResult): HalitosisV2Update {
   return {
     halitosis_hmi: result.hmi,
     halitosis_hmi_category: result.hmi_category,
-    halitosis_phenotype: result.phenotype,
+    halitosis_pathway: result.pathway,
+    halitosis_subjective_routing: result.subjective_halitosis_routing,
     halitosis_h2s_adjusted: result.h2s_adjusted,
     halitosis_ch3sh_adjusted: result.ch3sh_adjusted,
     halitosis_protective_modifier: result.protective_modifier,

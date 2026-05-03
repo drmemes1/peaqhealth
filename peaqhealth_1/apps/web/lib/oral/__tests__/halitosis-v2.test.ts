@@ -8,12 +8,13 @@ function makeInput(overrides: Partial<HalitosisInput> = {}): HalitosisInput {
 // Empty + sanity
 // ─────────────────────────────────────────────────────────────────────
 
-describe("calculateHalitosis — empty + sanity", () => {
-  test("all zeros → HMI 0, minimal, low_malodor", () => {
+describe("calculateHalitosis — empty + sanity (v2.5)", () => {
+  test("all zeros → HMI 0, low category, minimal_pressure pathway", () => {
     const r = calculateHalitosis(EMPTY_HALITOSIS_INPUT)
     expect(r.hmi).toBe(0)
-    expect(r.hmi_category).toBe("minimal")
-    expect(r.phenotype).toBe("low_malodor")
+    expect(r.hmi_category).toBe("low")
+    expect(r.pathway).toBe("minimal_pressure")
+    expect(r.subjective_halitosis_routing).toBe(false)
     expect(r.peroxide_confounder_caveat).toBe(false)
   })
 
@@ -31,8 +32,8 @@ describe("calculateHalitosis — empty + sanity", () => {
 // Cohort fixtures (per ADR-0025 validation table)
 // ─────────────────────────────────────────────────────────────────────
 
-describe("Cohort fixtures", () => {
-  test("Igor (Pilot.Peaq.1) — HMI in 'low' band, low_malodor / borderline phenotype", () => {
+describe("Cohort fixtures (v2.5)", () => {
+  test("Igor (Pilot.Peaq.1) — HMI in 'low' band, minimal_pressure pathway", () => {
     const r = calculateHalitosis(makeInput({
       // H2S drivers
       f_nucleatum_pct: 0.85,
@@ -59,11 +60,12 @@ describe("Cohort fixtures", () => {
     expect(r.protective_modifier).toBeLessThan(0.55) // strong protection
     expect(r.lhm).toBeGreaterThan(1.10)
     expect(r.lhm).toBeLessThan(1.20)
-    expect(["minimal", "low"]).toContain(r.hmi_category)
-    expect(["low_malodor", "borderline", "tongue_dominant"]).toContain(r.phenotype)
+    expect(r.hmi_category).toBe("low")
+    expect(r.pathway).toBe("minimal_pressure")
+    expect(r.subjective_halitosis_routing).toBe(false) // LHM < 1.30
   })
 
-  test("Pilot 3 — HMI 'minimal', low_malodor", () => {
+  test("Pilot 3 — clean baseline → low / minimal_pressure", () => {
     const r = calculateHalitosis(makeInput({
       f_nucleatum_pct: 0.1,
       veillonella_pct: 0.5,
@@ -73,11 +75,11 @@ describe("Cohort fixtures", () => {
       rothia_total_pct: 8,
       haemophilus_pct: 1,
     }))
-    expect(r.hmi_category).toBe("minimal")
-    expect(r.phenotype).toBe("low_malodor")
+    expect(r.hmi_category).toBe("low")
+    expect(r.pathway).toBe("minimal_pressure")
   })
 
-  test("Gabby — HMI 'low', borderline phenotype with elevated LHM", () => {
+  test("Gabby — low category, subjective routing fires (LHM > 1.30)", () => {
     const r = calculateHalitosis(makeInput({
       f_nucleatum_pct: 0.7,
       s_moorei_pct: 0.41,
@@ -97,9 +99,13 @@ describe("Cohort fixtures", () => {
     expect(r.lhm).toBeGreaterThan(1.4)
     expect(r.lhm).toBeLessThanOrEqual(1.6)
     expect(["low", "moderate"]).toContain(r.hmi_category)
+    if (r.hmi_category === "low") {
+      // Subjective routing fires for low-category + LHM > 1.30
+      expect(r.subjective_halitosis_routing).toBe(true)
+    }
   })
 
-  test("Evelina — HMI 'moderate' or 'low', mixed/periodontal phenotype", () => {
+  test("Evelina — moderate category; pathway shifts toward H2S after P. mel reduction (CH3SH side dropped)", () => {
     const r = calculateHalitosis(makeInput({
       f_nucleatum_pct: 1.2,
       s_moorei_pct: 0.1,
@@ -116,7 +122,141 @@ describe("Cohort fixtures", () => {
       haemophilus_pct: 2.20,
     }))
     expect(["low", "moderate"]).toContain(r.hmi_category)
-    expect(["mixed", "periodontal_dominant", "borderline"]).toContain(r.phenotype)
+    // Post P. mel calibration the CH3SH side drops, so any of these
+    // are clinically defensible depending on protective community.
+    expect(["mixed", "gum_dominant", "tongue_dominant", "minimal_pressure"]).toContain(r.pathway)
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────
+// v2.5 calibration changes
+// ─────────────────────────────────────────────────────────────────────
+
+describe("v2.5 — P. melaninogenica weight reduction (0.2 → 0.10)", () => {
+  test("P. melaninogenica 5% contributes 0.50 (not 1.00 from old 0.2 weight)", () => {
+    const r = calculateHalitosis(makeInput({ prevotella_melaninogenica_pct: 5 }))
+    const c = r.driver_contributions.find(d => d.species === "Prevotella melaninogenica")!
+    expect(c.contribution).toBeCloseTo(0.50, 3)
+  })
+})
+
+describe("v2.5 — Veillonella continuous lactate interaction term", () => {
+  test("S. mutans = 0.5 (baseline) → no enhancement, weight × 1.0 = 0.10", () => {
+    const r = calculateHalitosis(makeInput({
+      veillonella_pct: 5, s_mutans_pct: 0.5,
+    }))
+    const c = r.driver_contributions.find(d => d.species === "Veillonella (genus)")!
+    // 5 × 0.10 × (1 + 0.5/0.5) = 5 × 0.10 × 2.0 = 1.0 (capped)
+    expect(c.contribution).toBe(1.0)
+  })
+
+  test("S. mutans = 0.0 → no lactate enhancement, weight × 1.0", () => {
+    const r = calculateHalitosis(makeInput({ veillonella_pct: 5, s_mutans_pct: 0 }))
+    const c = r.driver_contributions.find(d => d.species === "Veillonella (genus)")!
+    expect(c.contribution).toBeCloseTo(0.50, 3) // 5 × 0.10 × 1.0
+  })
+
+  test("S. mutans = 1.0 → enhancement 3.0× → cap at 2.0×", () => {
+    const r = calculateHalitosis(makeInput({ veillonella_pct: 3, s_mutans_pct: 1.0 }))
+    const c = r.driver_contributions.find(d => d.species === "Veillonella (genus)")!
+    // 3 × 0.10 × min(2.0, 1+1.0/0.5) = 3 × 0.10 × 2.0 = 0.60
+    expect(c.contribution).toBeCloseTo(0.60, 3)
+  })
+})
+
+describe("v2.5 — pathway attribution", () => {
+  test("category=low always returns minimal_pressure regardless of pathway split", () => {
+    const r = calculateHalitosis(makeInput({
+      f_nucleatum_pct: 0.5, // small H2S; CH3SH = 0
+    }))
+    expect(r.hmi_category).toBe("low")
+    expect(r.pathway).toBe("minimal_pressure")
+  })
+
+  test("moderate + H2S > CH3SH × 1.3 → tongue_dominant", () => {
+    // Tune inputs so HMI lands in [2.0, 4.5) — tighter than the previous
+    // fixture which floated above 4.5 under v2.5 thresholds.
+    const r = calculateHalitosis(makeInput({
+      f_nucleatum_pct: 1.6, s_moorei_pct: 0.3,
+    }))
+    expect(r.hmi_category).toBe("moderate")
+    expect(r.pathway).toBe("tongue_dominant")
+  })
+
+  test("moderate + CH3SH > H2S × 1.3 → gum_dominant", () => {
+    const r = calculateHalitosis(makeInput({
+      p_gingivalis_pct: 1, prevotella_intermedia_pct: 1,
+      prevotella_nigrescens_pct: 0.5,
+    }))
+    expect(r.hmi_category).toBe("moderate")
+    expect(r.pathway).toBe("gum_dominant")
+  })
+
+  test("moderate + balanced pathways within 1.3× → mixed", () => {
+    const r = calculateHalitosis(makeInput({
+      f_nucleatum_pct: 1, s_moorei_pct: 0.1,
+      p_gingivalis_pct: 0.7, prevotella_intermedia_pct: 0.6,
+    }))
+    expect(r.hmi_category).toBe("moderate")
+    expect(r.pathway).toBe("mixed")
+  })
+})
+
+describe("v2.5 — category boundaries (low / moderate / high at 2.0 / 4.5)", () => {
+  test("HMI just below 2.0 → low", () => {
+    const r = calculateHalitosis(makeInput({ f_nucleatum_pct: 1.5 }))
+    expect(r.hmi).toBeLessThan(2.0)
+    expect(r.hmi_category).toBe("low")
+  })
+
+  test("HMI at 2.0–4.5 band → moderate", () => {
+    const r = calculateHalitosis(makeInput({
+      f_nucleatum_pct: 2, s_moorei_pct: 0.3,
+    }))
+    expect(r.hmi).toBeGreaterThanOrEqual(2.0)
+    expect(r.hmi).toBeLessThan(4.5)
+    expect(r.hmi_category).toBe("moderate")
+  })
+
+  test("HMI ≥ 4.5 → high", () => {
+    const r = calculateHalitosis(makeInput({
+      f_nucleatum_pct: 5, s_moorei_pct: 1,
+    }))
+    expect(r.hmi).toBeGreaterThanOrEqual(4.5)
+    expect(r.hmi_category).toBe("high")
+  })
+})
+
+describe("v2.5 — subjective halitosis routing", () => {
+  test("category=low + LHM ≤ 1.30 → no routing", () => {
+    const r = calculateHalitosis(makeInput({
+      f_nucleatum_pct: 0.5,
+      mouth_breathing: "occasionally", // ×1.15
+    }))
+    expect(r.hmi_category).toBe("low")
+    expect(r.lhm).toBeCloseTo(1.15, 2)
+    expect(r.subjective_halitosis_routing).toBe(false)
+  })
+
+  test("category=low + LHM > 1.30 → routing fires", () => {
+    const r = calculateHalitosis(makeInput({
+      f_nucleatum_pct: 0.5,
+      mouth_breathing: "often",        // ×1.25
+      snoring_reported: "frequent",    // ×1.20 → 1.50
+    }))
+    expect(r.hmi_category).toBe("low")
+    expect(r.lhm).toBeGreaterThan(1.30)
+    expect(r.subjective_halitosis_routing).toBe(true)
+  })
+
+  test("category=moderate ignores LHM trigger (routing only fires for low)", () => {
+    const r = calculateHalitosis(makeInput({
+      f_nucleatum_pct: 3,
+      mouth_breathing: "often",
+      snoring_reported: "frequent",
+    }))
+    expect(r.hmi_category).not.toBe("low")
+    expect(r.subjective_halitosis_routing).toBe(false)
   })
 })
 
@@ -132,18 +272,16 @@ describe("Veillonella absolute cap", () => {
     expect(veiContribution).toBe(1.0)
   })
 
-  test("Veillonella with caries dysbiosis + S. mutans: weight 0.15 instead of 0.10", () => {
-    const r1 = calculateHalitosis(makeInput({
-      veillonella_pct: 5,
-      caries_compensated_dysbiosis: true,
-      s_mutans_pct: 0.1,
-    }))
+  test("v2.5 — Veillonella weight scales continuously with S. mutans (replaces boolean caries flag)", () => {
+    // S. mutans 0.1 → enhancement = 1 + 0.1/0.5 = 1.2 → 5 × 0.10 × 1.2 = 0.60
+    const r1 = calculateHalitosis(makeInput({ veillonella_pct: 5, s_mutans_pct: 0.1 }))
     const v1 = r1.driver_contributions.find(c => c.species === "Veillonella (genus)")!.contribution
-    expect(v1).toBeCloseTo(0.75, 3) // 5 × 0.15
+    expect(v1).toBeCloseTo(0.60, 3)
 
+    // No s_mutans → enhancement = 1.0 → 5 × 0.10 × 1.0 = 0.50
     const r2 = calculateHalitosis(makeInput({ veillonella_pct: 5 }))
     const v2 = r2.driver_contributions.find(c => c.species === "Veillonella (genus)")!.contribution
-    expect(v2).toBeCloseTo(0.50, 3) // 5 × 0.10
+    expect(v2).toBeCloseTo(0.50, 3)
   })
 })
 
@@ -243,30 +381,30 @@ describe("LHM (Lifestyle Halitosis Modifier)", () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────
-// Phenotype assignment
+// Pathway assignment (replaces deprecated phenotype field in v2.5)
 // ─────────────────────────────────────────────────────────────────────
 
-describe("Phenotype assignment", () => {
-  test("H2S >> CH3SH → tongue_dominant", () => {
+describe("Pathway assignment (v2.5)", () => {
+  test("H2S >> CH3SH at moderate+ category → tongue_dominant", () => {
     const r = calculateHalitosis(makeInput({
       f_nucleatum_pct: 5, s_moorei_pct: 2, veillonella_pct: 5,
     }))
-    expect(r.phenotype).toBe("tongue_dominant")
+    expect(r.pathway).toBe("tongue_dominant")
   })
 
-  test("CH3SH >> H2S → periodontal_dominant", () => {
+  test("CH3SH >> H2S at moderate+ category → gum_dominant", () => {
     const r = calculateHalitosis(makeInput({
       p_gingivalis_pct: 5, prevotella_intermedia_pct: 5, prevotella_nigrescens_pct: 3,
     }))
-    expect(r.phenotype).toBe("periodontal_dominant")
+    expect(r.pathway).toBe("gum_dominant")
   })
 
-  test("balanced and HMI moderate → mixed", () => {
+  test("balanced + moderate HMI → mixed", () => {
     const r = calculateHalitosis(makeInput({
       f_nucleatum_pct: 2, s_moorei_pct: 1,
       p_gingivalis_pct: 2, prevotella_intermedia_pct: 2,
     }))
-    expect(r.phenotype).toBe("mixed")
+    expect(r.pathway).toBe("mixed")
   })
 })
 

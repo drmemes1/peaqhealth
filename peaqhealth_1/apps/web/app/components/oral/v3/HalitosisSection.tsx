@@ -12,19 +12,66 @@ import type { OralPageData, HalitosisV2Outputs } from "../../../../lib/oral/v3/p
 const SANS = "var(--font-body)"
 const SERIF = "var(--font-display)"
 
-const PHENOTYPE_LABEL: Record<string, string> = {
-  low_malodor: "Low malodor",
-  borderline: "Borderline",
-  tongue_dominant: "Tongue-dominant",
-  periodontal_dominant: "Periodontal-dominant",
-  mixed: "Mixed",
+const PATHWAY_LABEL: Record<string, string> = {
+  tongue_dominant: "Tongue-pathway dominant",
+  gum_dominant: "Gum-pathway dominant",
+  mixed: "Both pathways involved",
+  minimal_pressure: "Minimal pressure",
 }
 
 const HMI_LABEL: Record<string, string> = {
-  minimal: "Minimal",
   low: "Low",
   moderate: "Moderate",
   high: "High",
+}
+
+interface CategoryCopy {
+  headline: string
+  body: string
+}
+
+function categoryCopy(
+  category: string | null,
+  pathway: string | null,
+): CategoryCopy {
+  if (category === "low") {
+    return {
+      headline: "Bacterial halitosis pressure: low",
+      body:
+        "Your bacterial drivers are contained. Your protective bacterial community keeps your oral environment in balance. Bacterial intervention is not indicated.",
+    }
+  }
+  if (category === "moderate") {
+    if (pathway === "tongue_dominant") {
+      return {
+        headline: "Bacterial halitosis pressure: moderate, tongue-pathway dominant",
+        body:
+          "Your H2S (tongue-pathway) drivers are elevated. The bacteria producing volatile sulfur compounds on your tongue dorsum are outpacing your protective community's ability to suppress them. Highest-yield interventions: daily tongue scraping (single most effective intervention for tongue-pathway halitosis per Tsai 2008); address mouth breathing if present (causes tongue desiccation); consider S. salivarius K12 probiotic (BLIS K12, validated antimicrobial activity against tongue-pathway VSC producers).",
+      }
+    }
+    if (pathway === "gum_dominant") {
+      return {
+        headline: "Bacterial halitosis pressure: moderate, gum-pathway dominant",
+        body:
+          "Your CH3SH (gum-pathway) drivers are elevated. Periodontal-associated bacteria producing methyl mercaptan are present at levels above what your protective community can suppress. Highest-yield interventions: periodontal evaluation by your dentist (Iatropoulos 2016 — periodontal therapy specifically reduces CH3SH); daily interdental cleaning (floss or interdental brushes); consider professional cleaning if last visit > 6 months.",
+      }
+    }
+    return {
+      headline: "Bacterial halitosis pressure: moderate, both pathways involved",
+      body:
+        "Both your tongue (H2S) and gum (CH3SH) pathways show elevated drivers. Your protective bacterial community is reduced relative to driver pressure across both pathways. Address both: daily tongue scraping for tongue-pathway; periodontal evaluation and interdental cleaning for gum-pathway; consider S. salivarius K12 probiotic for protective community restoration.",
+    }
+  }
+  // high
+  const pathwayBlurb =
+    pathway === "tongue_dominant" ? "tongue-pathway dominant"
+    : pathway === "gum_dominant" ? "gum-pathway dominant"
+    : "both pathways involved"
+  return {
+    headline: `Bacterial halitosis pressure: high, ${pathwayBlurb}`,
+    body:
+      "Substantial bacterial halitosis pressure detected. This pattern warrants comprehensive evaluation. Discuss with your dentist or periodontist. If your protective community has collapsed (S. salivarius below typical levels), this represents a compensated dysbiosis pattern that may benefit from probiotic intervention. Consider whether systemic factors — medications causing xerostomia, recent antibiotics, GERD — may be contributing.",
+  }
 }
 
 interface ToneInfo { bg: string; border: string; ink: string }
@@ -37,10 +84,12 @@ const TONE: Record<string, ToneInfo> = {
 }
 
 function categoryTone(cat: string | null): keyof typeof TONE {
+  // v2.5: 3-category system. 'low' is now the floor and reads as
+  // healthy (good tone) since it represents minimal bacterial
+  // pressure — not a "watch" zone.
   switch (cat) {
-    case "minimal": return "good"
-    case "low": return "watch"
-    case "moderate": return "concern"
+    case "low": return "good"
+    case "moderate": return "watch"
     case "high": return "attention"
     default: return "neutral"
   }
@@ -106,6 +155,7 @@ function ScoreCard({
 
 function HMIBanner({ hal }: { hal: HalitosisV2Outputs }) {
   const tone = TONE[categoryTone(hal.hmi_category)]
+  const copy = categoryCopy(hal.hmi_category, hal.pathway)
   return (
     <div style={{
       background: tone.bg, border: `1px solid ${tone.border}`,
@@ -130,13 +180,39 @@ function HMIBanner({ hal }: { hal: HalitosisV2Outputs }) {
           padding: "5px 12px", borderRadius: 999,
           background: "rgba(255,255,255,0.55)",
         }}>
-          {hal.phenotype ? PHENOTYPE_LABEL[hal.phenotype] ?? hal.phenotype : "—"}
+          {hal.pathway ? PATHWAY_LABEL[hal.pathway] ?? hal.pathway : "—"}
         </span>
       </div>
-      <p style={{ fontFamily: SANS, fontSize: 14, color: tone.ink, margin: 0, lineHeight: 1.55 }}>
-        HMI = (H2S drivers + CH3SH drivers) × protective modifier × lifestyle modifier.
-        Lower scores reflect a community + lifestyle pattern less likely to produce volatile
-        sulfur compounds.
+      <h3 style={{
+        fontFamily: SERIF, fontSize: 22, fontWeight: 700, color: tone.ink,
+        margin: "0 0 12px", letterSpacing: "-0.018em", lineHeight: 1.2,
+      }}>
+        {copy.headline}
+      </h3>
+      <p style={{ fontFamily: SANS, fontSize: 14, color: tone.ink, margin: 0, lineHeight: 1.65 }}>
+        {copy.body}
+      </p>
+    </div>
+  )
+}
+
+function SubjectiveRoutingNotice({ hal }: { hal: HalitosisV2Outputs }) {
+  if (!hal.subjective_routing) return null
+  return (
+    <div style={{
+      background: "rgba(184,137,58,0.10)",
+      border: "0.5px solid var(--status-watch)",
+      borderRadius: 12, padding: "18px 22px", marginBottom: 18,
+    }}>
+      <div style={{
+        fontFamily: SANS, fontSize: 10, letterSpacing: "0.16em",
+        textTransform: "uppercase", fontWeight: 700, color: "var(--status-watch)",
+        marginBottom: 10,
+      }}>
+        If you experience halitosis symptoms despite a low reading
+      </div>
+      <p style={{ fontFamily: SANS, fontSize: 14, color: "var(--ink-80)", margin: 0, lineHeight: 1.6 }}>
+        The salivary bacterial test cannot detect: <strong>postnasal drip</strong> (especially common in mouth breathers), <strong>tonsil stones</strong>, <strong>GERD or silent reflux</strong>, <strong>dietary contributors</strong>, or <strong>tongue coating physical accumulation</strong>. Consider evaluation by ENT (postnasal drip, tonsil stones), gastroenterology (GERD), or dietary review. Tongue scraping and addressing mouth breathing remain useful interventions regardless of bacterial reading.
       </p>
     </div>
   )
@@ -332,6 +408,7 @@ export function HalitosisSection({ data }: { data: OralPageData }) {
       </p>
 
       <HMIBanner hal={hal} />
+      <SubjectiveRoutingNotice hal={hal} />
 
       <div style={{
         display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",

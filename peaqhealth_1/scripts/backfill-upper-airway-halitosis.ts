@@ -98,8 +98,8 @@ async function main() {
         console.error(`[fail] ${id}: halitosis runner returned null`)
         errored++
       } else {
-        halCategories[hal.result.phenotype] = (halCategories[hal.result.phenotype] ?? 0) + 1
-        const summary = `HAL=${hal.result.phenotype} (HMI=${hal.result.hmi.toFixed(2)} ${hal.result.hmi_category}, mod=${hal.result.protective_modifier.toFixed(2)}, LHM=${hal.result.lhm.toFixed(2)})`
+        halCategories[hal.result.pathway] = (halCategories[hal.result.pathway] ?? 0) + 1
+        const summary = `HAL=${hal.result.pathway} (HMI=${hal.result.hmi.toFixed(2)} ${hal.result.hmi_category}, mod=${hal.result.protective_modifier.toFixed(2)}, LHM=${hal.result.lhm.toFixed(2)})`
         if (DRY_RUN) {
           console.log(`[dry] ${id}: ${summary}`)
         } else {
