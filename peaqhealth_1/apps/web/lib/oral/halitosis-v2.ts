@@ -19,11 +19,13 @@
  * See methodology entry + ADR-0025 for derivation.
  */
 
-// v2.5 calibration: 3-category system (no minimal). The previous boundary
-// at HMI 1.0 between minimal/low produced categorically meaningless
-// distinctions — patients at HMI 0.7 vs 1.1 receive identical clinical
-// guidance. New boundaries focus on actionable thresholds.
-export type HalitosisCategory = "low" | "moderate" | "high"
+// v2.5 iter2 calibration: 4-category system. HMI is now max() of the
+// pathway-adjusted values (not sum), and LHM is part of categorical
+// determination per Kikuchi 2025 evidence (mouth breathing OR 4.68 — the
+// strongest single halitosis predictor). Severe band added to capture
+// compensated dysbiosis pattern (collapsed protective community + elevated
+// drivers + lifestyle amplification).
+export type HalitosisCategory = "low" | "moderate" | "high" | "severe"
 
 // Pathway attribution is the primary diagnostic content (per OE
 // consultation May 2026): pathway-specific intervention evidence is the
@@ -165,14 +167,15 @@ const PROTECTIVE_RANGE = PROTECTIVE_MAX_MULTIPLIER - PROTECTIVE_MIN_MULTIPLIER
 // LHM cap (prevents runaway compounding).
 const LHM_CAP = 1.60
 
-// HMI category boundaries (v2.5):
-//   low <2.0 / moderate 2.0–4.5 / high ≥4.5
-// Replaces the previous 4-tier {1.0, 2.5, 5.0} that produced a
-// categorically meaningless boundary at 1.0. The new bands focus on
-// actionable thresholds — moderate triggers pathway-specific
-// intervention, high triggers comprehensive workup. No published
-// validated thresholds exist for any halitosis algorithm.
-const HMI_THRESHOLDS = { moderate: 2.0, high: 4.5 }
+// HMI category boundaries (v2.5 iter2):
+//   low <0.6 / moderate 0.6–1.4 / high 1.4–3.2 / severe ≥3.2
+// HMI is computed as max(h2s_adjusted, ch3sh_adjusted) — the pathway
+// with the higher pressure drives categorization. Sum-based HMI from
+// the prior implementation conflated additive bacterial pressure with
+// pathway-specific intervention guidance. The max() form keeps category
+// aligned with which pathway needs treatment. No published validated
+// thresholds exist for any halitosis algorithm; these are heuristic.
+const HMI_THRESHOLDS = { moderate: 0.6, high: 1.4, severe: 3.2 }
 
 // LHM threshold above which subjective halitosis routing fires for
 // low-category patients. Significant environmental amplification
@@ -400,7 +403,8 @@ function computeLHM(input: HalitosisInput): {
 function categorizeHmi(hmi: number): HalitosisCategory {
   if (hmi < HMI_THRESHOLDS.moderate) return "low"
   if (hmi < HMI_THRESHOLDS.high) return "moderate"
-  return "high"
+  if (hmi < HMI_THRESHOLDS.severe) return "high"
+  return "severe"
 }
 
 function determinePathway(
@@ -433,7 +437,11 @@ export function calculateHalitosis(input: HalitosisInput): HalitosisResult {
 
   const h2s_adjusted = h2s_drivers_raw * protective.modifier * lhm
   const ch3sh_adjusted = ch3sh.raw * protective.modifier * lhm
-  const hmi = h2s_adjusted + ch3sh_adjusted
+  // v2.5 iter2: HMI is the maximum of the pathway-adjusted values, not
+  // their sum. The category reflects how much pressure the dominant
+  // pathway is putting on the system, which aligns categorization with
+  // the pathway-specific intervention evidence (Iatropoulos / Tsai).
+  const hmi = Math.max(h2s_adjusted, ch3sh_adjusted)
 
   const hmi_category = categorizeHmi(hmi)
   const pathway = determinePathway(hmi_category, h2s_adjusted, ch3sh_adjusted)

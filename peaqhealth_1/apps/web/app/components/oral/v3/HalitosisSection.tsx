@@ -34,6 +34,17 @@ function categoryCopy(
   category: string | null,
   pathway: string | null,
 ): CategoryCopy {
+  if (category === "severe") {
+    const pathwayBlurb =
+      pathway === "tongue_dominant" ? "tongue-pathway dominant"
+      : pathway === "gum_dominant" ? "gum-pathway dominant"
+      : "both pathways involved"
+    return {
+      headline: `Bacterial halitosis pressure: severe, ${pathwayBlurb}`,
+      body:
+        "Your halitosis bacterial pattern shows substantial pressure with what may be a compensated dysbiosis pattern (collapsed protective community + elevated drivers). This pattern often appears alongside other oral health concerns and warrants comprehensive evaluation: periodontal evaluation by your dentist or periodontist; check whether other oral scores (cavity, gum, nitrate reduction) show similar patterns; probiotic supplementation (S. salivarius K12) may help restore protective community function; consider systemic factors that may be contributing — xerostomic medications, recent antibiotics, chronic GERD.",
+    }
+  }
   if (category === "low") {
     return {
       headline: "Bacterial halitosis pressure: low",
@@ -84,15 +95,43 @@ const TONE: Record<string, ToneInfo> = {
 }
 
 function categoryTone(cat: string | null): keyof typeof TONE {
-  // v2.5: 3-category system. 'low' is now the floor and reads as
-  // healthy (good tone) since it represents minimal bacterial
-  // pressure — not a "watch" zone.
+  // v2.5 iter2: 4-category system with severe added at the high end.
   switch (cat) {
     case "low": return "good"
     case "moderate": return "watch"
-    case "high": return "attention"
+    case "high": return "concern"
+    case "severe": return "attention"
     default: return "neutral"
   }
+}
+
+function lhmContributionPct(lhm: number | null): number | null {
+  if (lhm == null || lhm <= 1.0) return null
+  return Math.round((lhm - 1.0) * 100)
+}
+
+function LHMDisclosure({ lhm }: { lhm: number | null }) {
+  // Show only when LHM exceeds 1.10 (negligible below that).
+  if (lhm == null || lhm <= 1.10) return null
+  const pct = lhmContributionPct(lhm)
+  return (
+    <div style={{
+      background: "rgba(184,137,58,0.08)",
+      border: "0.5px solid var(--ink-12)",
+      borderRadius: 12, padding: "14px 18px", marginBottom: 16,
+    }}>
+      <div style={{
+        fontFamily: SANS, fontSize: 10, letterSpacing: "0.16em",
+        textTransform: "uppercase", fontWeight: 700, color: "var(--gold)",
+        marginBottom: 8,
+      }}>
+        Lifestyle contribution
+      </div>
+      <p style={{ fontFamily: SANS, fontSize: 13, color: "var(--ink-80)", margin: 0, lineHeight: 1.55 }}>
+        Your bacterial halitosis pressure is amplified by lifestyle factors. Mouth breathing, snoring, dry mouth on waking, infrequent dental cleaning, and missing tongue scraping each contribute to your final reading. <strong>Your lifestyle factors increased your reading by {pct}%.</strong>
+      </p>
+    </div>
+  )
 }
 
 const titleStyle: React.CSSProperties = {
@@ -408,6 +447,7 @@ export function HalitosisSection({ data }: { data: OralPageData }) {
       </p>
 
       <HMIBanner hal={hal} />
+      <LHMDisclosure lhm={hal.lhm} />
       <SubjectiveRoutingNotice hal={hal} />
 
       <div style={{
