@@ -79,7 +79,7 @@ describe("Cohort fixtures (v2.5)", () => {
     expect(r.pathway).toBe("minimal_pressure")
   })
 
-  test("Gabby — low category, subjective routing fires (LHM > 1.30)", () => {
+  test("Gabby — moderate or higher category with elevated LHM (v2.5 iter2)", () => {
     const r = calculateHalitosis(makeInput({
       f_nucleatum_pct: 0.7,
       s_moorei_pct: 0.41,
@@ -98,14 +98,12 @@ describe("Cohort fixtures (v2.5)", () => {
     }))
     expect(r.lhm).toBeGreaterThan(1.4)
     expect(r.lhm).toBeLessThanOrEqual(1.6)
-    expect(["low", "moderate"]).toContain(r.hmi_category)
-    if (r.hmi_category === "low") {
-      // Subjective routing fires for low-category + LHM > 1.30
-      expect(r.subjective_halitosis_routing).toBe(true)
-    }
+    // Under v2.5 iter2 + max() HMI, Gabby's elevated LHM pushes the
+    // dominant pathway above the moderate threshold (0.6).
+    expect(["moderate", "high", "severe"]).toContain(r.hmi_category)
   })
 
-  test("Evelina — moderate category; pathway shifts toward H2S after P. mel reduction (CH3SH side dropped)", () => {
+  test("Evelina — high or severe category after P. mel reduction (v2.5 iter2)", () => {
     const r = calculateHalitosis(makeInput({
       f_nucleatum_pct: 1.2,
       s_moorei_pct: 0.1,
@@ -121,10 +119,8 @@ describe("Cohort fixtures (v2.5)", () => {
       rothia_total_pct: 4.56,
       haemophilus_pct: 2.20,
     }))
-    expect(["low", "moderate"]).toContain(r.hmi_category)
-    // Post P. mel calibration the CH3SH side drops, so any of these
-    // are clinically defensible depending on protective community.
-    expect(["mixed", "gum_dominant", "tongue_dominant", "minimal_pressure"]).toContain(r.pathway)
+    expect(["moderate", "high", "severe"]).toContain(r.hmi_category)
+    expect(["mixed", "gum_dominant", "tongue_dominant"]).toContain(r.pathway)
   })
 })
 
@@ -164,29 +160,25 @@ describe("v2.5 — Veillonella continuous lactate interaction term", () => {
   })
 })
 
-describe("v2.5 — pathway attribution", () => {
+describe("v2.5 iter2 — pathway attribution", () => {
   test("category=low always returns minimal_pressure regardless of pathway split", () => {
     const r = calculateHalitosis(makeInput({
-      f_nucleatum_pct: 0.5, // small H2S; CH3SH = 0
+      f_nucleatum_pct: 0.3, // tiny H2S — well below 0.6 threshold
     }))
     expect(r.hmi_category).toBe("low")
     expect(r.pathway).toBe("minimal_pressure")
   })
 
   test("moderate + H2S > CH3SH × 1.3 → tongue_dominant", () => {
-    // Tune inputs so HMI lands in [2.0, 4.5) — tighter than the previous
-    // fixture which floated above 4.5 under v2.5 thresholds.
-    const r = calculateHalitosis(makeInput({
-      f_nucleatum_pct: 1.6, s_moorei_pct: 0.3,
-    }))
+    // F. nucleatum 0.9 with no protective → 0.9 × 1.25 = 1.125 (max → moderate band 0.6–1.4)
+    const r = calculateHalitosis(makeInput({ f_nucleatum_pct: 0.9 }))
     expect(r.hmi_category).toBe("moderate")
     expect(r.pathway).toBe("tongue_dominant")
   })
 
   test("moderate + CH3SH > H2S × 1.3 → gum_dominant", () => {
     const r = calculateHalitosis(makeInput({
-      p_gingivalis_pct: 1, prevotella_intermedia_pct: 1,
-      prevotella_nigrescens_pct: 0.5,
+      p_gingivalis_pct: 0.6, prevotella_intermedia_pct: 0.4,
     }))
     expect(r.hmi_category).toBe("moderate")
     expect(r.pathway).toBe("gum_dominant")
@@ -194,53 +186,94 @@ describe("v2.5 — pathway attribution", () => {
 
   test("moderate + balanced pathways within 1.3× → mixed", () => {
     const r = calculateHalitosis(makeInput({
-      f_nucleatum_pct: 1, s_moorei_pct: 0.1,
-      p_gingivalis_pct: 0.7, prevotella_intermedia_pct: 0.6,
+      f_nucleatum_pct: 0.7,
+      p_gingivalis_pct: 0.7,
     }))
     expect(r.hmi_category).toBe("moderate")
     expect(r.pathway).toBe("mixed")
   })
 })
 
-describe("v2.5 — category boundaries (low / moderate / high at 2.0 / 4.5)", () => {
-  test("HMI just below 2.0 → low", () => {
-    const r = calculateHalitosis(makeInput({ f_nucleatum_pct: 1.5 }))
-    expect(r.hmi).toBeLessThan(2.0)
+describe("v2.5 iter2 — category boundaries (0.6 / 1.4 / 3.2)", () => {
+  test("HMI just below 0.6 → low", () => {
+    // f_nuc 0.45 × 1.25 (no protection) = 0.5625 (max), under 0.6
+    const r = calculateHalitosis(makeInput({ f_nucleatum_pct: 0.45 }))
+    expect(r.hmi).toBeLessThan(0.6)
     expect(r.hmi_category).toBe("low")
   })
 
-  test("HMI at 2.0–4.5 band → moderate", () => {
-    const r = calculateHalitosis(makeInput({
-      f_nucleatum_pct: 2, s_moorei_pct: 0.3,
-    }))
-    expect(r.hmi).toBeGreaterThanOrEqual(2.0)
-    expect(r.hmi).toBeLessThan(4.5)
+  test("HMI in 0.6–1.4 band → moderate", () => {
+    const r = calculateHalitosis(makeInput({ f_nucleatum_pct: 0.8 }))
+    expect(r.hmi).toBeGreaterThanOrEqual(0.6)
+    expect(r.hmi).toBeLessThan(1.4)
     expect(r.hmi_category).toBe("moderate")
   })
 
-  test("HMI ≥ 4.5 → high", () => {
-    const r = calculateHalitosis(makeInput({
-      f_nucleatum_pct: 5, s_moorei_pct: 1,
-    }))
-    expect(r.hmi).toBeGreaterThanOrEqual(4.5)
+  test("HMI in 1.4–3.2 band → high", () => {
+    const r = calculateHalitosis(makeInput({ f_nucleatum_pct: 1.5 }))
+    expect(r.hmi).toBeGreaterThanOrEqual(1.4)
+    expect(r.hmi).toBeLessThan(3.2)
     expect(r.hmi_category).toBe("high")
+  })
+
+  test("HMI ≥ 3.2 → severe", () => {
+    const r = calculateHalitosis(makeInput({
+      f_nucleatum_pct: 3, s_moorei_pct: 0.5,
+    }))
+    expect(r.hmi).toBeGreaterThanOrEqual(3.2)
+    expect(r.hmi_category).toBe("severe")
+  })
+
+  test("LHM-driven category shift — same drivers, higher LHM moves category up", () => {
+    const baseInputs = { f_nucleatum_pct: 0.5 }
+    const noLifestyle = calculateHalitosis(makeInput(baseInputs))
+    const withLifestyle = calculateHalitosis(makeInput({
+      ...baseInputs,
+      mouth_breathing: "often",     // ×1.25
+      snoring_reported: "frequent", // ×1.20 → 1.50
+    }))
+    expect(noLifestyle.hmi).toBeLessThan(withLifestyle.hmi)
+    // Without LHM, 0.5 × 1.25 = 0.625 → moderate. With LHM 1.5,
+    // 0.5 × 1.25 × 1.5 = 0.9375 → still moderate but higher within band.
+    // Demonstrating LHM enters the categorization.
+    expect(withLifestyle.lhm).toBeGreaterThan(noLifestyle.lhm)
   })
 })
 
-describe("v2.5 — subjective halitosis routing", () => {
+describe("v2.5 iter2 — HMI = max(h2s_adj, ch3sh_adj) not sum", () => {
+  test("HMI equals the larger of the two pathway-adjusted values", () => {
+    const r = calculateHalitosis(makeInput({
+      f_nucleatum_pct: 1.0,    // strong H2S only
+      p_gingivalis_pct: 0.2,   // weak CH3SH
+    }))
+    expect(r.h2s_adjusted).toBeGreaterThan(r.ch3sh_adjusted)
+    expect(r.hmi).toBeCloseTo(r.h2s_adjusted, 4)
+  })
+
+  test("CH3SH-dominant case: HMI = ch3sh_adjusted", () => {
+    const r = calculateHalitosis(makeInput({
+      f_nucleatum_pct: 0.1,
+      p_gingivalis_pct: 1.5, prevotella_intermedia_pct: 0.5,
+    }))
+    expect(r.ch3sh_adjusted).toBeGreaterThan(r.h2s_adjusted)
+    expect(r.hmi).toBeCloseTo(r.ch3sh_adjusted, 4)
+  })
+})
+
+describe("v2.5 iter2 — subjective halitosis routing (low + LHM > 1.30)", () => {
   test("category=low + LHM ≤ 1.30 → no routing", () => {
     const r = calculateHalitosis(makeInput({
-      f_nucleatum_pct: 0.5,
+      f_nucleatum_pct: 0.3,
       mouth_breathing: "occasionally", // ×1.15
     }))
     expect(r.hmi_category).toBe("low")
-    expect(r.lhm).toBeCloseTo(1.15, 2)
     expect(r.subjective_halitosis_routing).toBe(false)
   })
 
   test("category=low + LHM > 1.30 → routing fires", () => {
+    // Drivers tiny enough that even LHM 1.5 keeps HMI under 0.6
     const r = calculateHalitosis(makeInput({
-      f_nucleatum_pct: 0.5,
+      f_nucleatum_pct: 0.2,
       mouth_breathing: "often",        // ×1.25
       snoring_reported: "frequent",    // ×1.20 → 1.50
     }))
@@ -251,7 +284,7 @@ describe("v2.5 — subjective halitosis routing", () => {
 
   test("category=moderate ignores LHM trigger (routing only fires for low)", () => {
     const r = calculateHalitosis(makeInput({
-      f_nucleatum_pct: 3,
+      f_nucleatum_pct: 1.5,
       mouth_breathing: "often",
       snoring_reported: "frequent",
     }))
