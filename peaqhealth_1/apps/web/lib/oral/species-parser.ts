@@ -76,6 +76,48 @@ export interface SpeciesProfile {
   prevotella_alloprevotella_combined_pct: number
   shannon_diversity: number | null
 
+  // ── Caries v3 cariogenic species ────────────────────────────────
+  s_sobrinus_pct: number
+  scardovia_wiggsiae_pct: number
+  lactobacillus_total_pct: number
+  b_dentium_pct: number
+  s_sputigena_pct: number
+  p_acidifaciens_pct: number
+  leptotrichia_shahii_pct: number
+
+  // ── Caries v3 / perio defense — Streptococcus protective scaffold ──
+  s_sanguinis_pct: number
+  s_gordonii_pct: number
+  s_cristatus_pct: number
+  s_parasanguinis_pct: number
+  s_australis_pct: number
+  s_mitis_group_pct: number
+  c_matruchotii_pct: number
+
+  // ── Actinomyces species (caries + NR + perio) ───────────────────
+  a_naeslundii_pct: number
+  a_odontolyticus_pct: number
+  actinomyces_other_pct: number   // genus minus naeslundii minus odontolyticus
+
+  // ── NR-α species-level lookups ──────────────────────────────────
+  neisseria_mucosa_pct: number
+  neisseria_flavescens_pct: number
+  neisseria_subflava_pct: number
+  rothia_mucilaginosa_pct: number
+  rothia_dentocariosa_pct: number
+  rothia_aeria_pct: number
+  h_parainfluenzae_pct: number    // species-level when available; falls back to genus
+  prevotella_total_pct: number    // includes intermedia + commensal + denticola + nigrescens + melaninogenica
+
+  // ── Perio v1 species ────────────────────────────────────────────
+  f_alocis_pct: number
+  s_constellatus_pct: number
+  parvimonas_micra_pct: number
+  m_faucium_pct: number
+  fretibacterium_total_pct: number
+  treponema_hmt_237_pct: number
+  lautropia_total_pct: number
+
   // ── Lifestyle peroxide flags read straight off the kit row, since
   //    they aren't species data and don't violate the species-parser
   //    contract. Surfaced here for callsite convenience.
@@ -196,9 +238,56 @@ export function parseSpeciesFromKitRow(kitRow: Record<string, unknown>): Species
   // ── Upper airway features ──
   const actinomyces_total_pct = genusTotal("actinomyces")
   const neisseria_pct = genusTotal("neisseria")
+  const prevotella_total_pct = genusTotal("prevotella")
   const prevotella_alloprevotella_combined_pct =
-    genusTotal("prevotella") + genusTotal("alloprevotella")
+    prevotella_total_pct + genusTotal("alloprevotella")
   const shannon_diversity = numOrNull(kitRow.shannon_diversity)
+
+  // ── Caries v3 cariogenic species ──
+  const s_sobrinus_pct = speciesExact("streptococcus", "sobrinus")
+  const scardovia_wiggsiae_pct = speciesExact("scardovia", "wiggsiae")
+  const lactobacillus_total_pct = genusTotal("lactobacillus")
+  const b_dentium_pct = speciesExact("bifidobacterium", "dentium")
+  const s_sputigena_pct = speciesExact("selenomonas", "sputigena")
+  const p_acidifaciens_pct = speciesExact("propionibacterium", "acidifaciens")
+  const leptotrichia_shahii_pct = speciesExact("leptotrichia", "shahii")
+
+  // ── Streptococcus protective scaffold ──
+  const s_sanguinis_pct = speciesExact("streptococcus", "sanguinis")
+  const s_gordonii_pct = speciesExact("streptococcus", "gordonii")
+  const s_cristatus_pct = speciesExact("streptococcus", "cristatus")
+  const s_parasanguinis_pct = speciesExact("streptococcus", "parasanguinis")
+  const s_australis_pct = speciesExact("streptococcus", "australis")
+  // S. mitis group: clean s_mitis + clean s_oralis + any hyphenated call
+  // containing mitis/oralis/pneumoniae identifiers (Mark Welch 2016).
+  const s_mitis_group_pct = streptococcusContaining("mitis", "oralis", "pneumoniae")
+  const c_matruchotii_pct = speciesExact("corynebacterium", "matruchotii")
+
+  // ── Actinomyces species + residual genus ──
+  const a_naeslundii_pct = speciesExact("actinomyces", "naeslundii")
+  const a_odontolyticus_pct = speciesExact("actinomyces", "odontolyticus")
+  const actinomyces_other_pct = Math.max(
+    0,
+    actinomyces_total_pct - a_naeslundii_pct - a_odontolyticus_pct,
+  )
+
+  // ── NR-α species-level lookups ──
+  const neisseria_mucosa_pct = speciesExact("neisseria", "mucosa")
+  const neisseria_flavescens_pct = speciesExact("neisseria", "flavescens")
+  const neisseria_subflava_pct = speciesExact("neisseria", "subflava")
+  const rothia_mucilaginosa_pct = speciesExact("rothia", "mucilaginosa")
+  const rothia_dentocariosa_pct = speciesExact("rothia", "dentocariosa")
+  const rothia_aeria_pct = speciesExact("rothia", "aeria")
+  const h_parainfluenzae_pct = speciesExact("haemophilus", "parainfluenzae")
+
+  // ── Perio v1 species ──
+  const f_alocis_pct = speciesExact("filifactor", "alocis")
+  const s_constellatus_pct = speciesExact("streptococcus", "constellatus")
+  const parvimonas_micra_pct = speciesExact("parvimonas", "micra")
+  const m_faucium_pct = speciesExact("mycoplasma", "faucium")
+  const fretibacterium_total_pct = genusTotal("fretibacterium")
+  const treponema_hmt_237_pct = speciesExact("treponema", "hmt-237")
+  const lautropia_total_pct = genusTotal("lautropia")
 
   return {
     f_nucleatum_pct,
@@ -226,6 +315,38 @@ export function parseSpeciesFromKitRow(kitRow: Record<string, unknown>): Species
     neisseria_pct,
     prevotella_alloprevotella_combined_pct,
     shannon_diversity,
+    s_sobrinus_pct,
+    scardovia_wiggsiae_pct,
+    lactobacillus_total_pct,
+    b_dentium_pct,
+    s_sputigena_pct,
+    p_acidifaciens_pct,
+    leptotrichia_shahii_pct,
+    s_sanguinis_pct,
+    s_gordonii_pct,
+    s_cristatus_pct,
+    s_parasanguinis_pct,
+    s_australis_pct,
+    s_mitis_group_pct,
+    c_matruchotii_pct,
+    a_naeslundii_pct,
+    a_odontolyticus_pct,
+    actinomyces_other_pct,
+    neisseria_mucosa_pct,
+    neisseria_flavescens_pct,
+    neisseria_subflava_pct,
+    rothia_mucilaginosa_pct,
+    rothia_dentocariosa_pct,
+    rothia_aeria_pct,
+    h_parainfluenzae_pct,
+    prevotella_total_pct,
+    f_alocis_pct,
+    s_constellatus_pct,
+    parvimonas_micra_pct,
+    m_faucium_pct,
+    fretibacterium_total_pct,
+    treponema_hmt_237_pct,
+    lautropia_total_pct,
     env_peroxide_flag: bool(kitRow.env_peroxide_flag),
     whitening_tray_last_48h: bool(kitRow.whitening_tray_last_48h),
     whitening_strips_last_48h: bool(kitRow.whitening_strips_last_48h),
@@ -263,6 +384,38 @@ export const EMPTY_SPECIES_PROFILE: SpeciesProfile = {
   neisseria_pct: 0,
   prevotella_alloprevotella_combined_pct: 0,
   shannon_diversity: null,
+  s_sobrinus_pct: 0,
+  scardovia_wiggsiae_pct: 0,
+  lactobacillus_total_pct: 0,
+  b_dentium_pct: 0,
+  s_sputigena_pct: 0,
+  p_acidifaciens_pct: 0,
+  leptotrichia_shahii_pct: 0,
+  s_sanguinis_pct: 0,
+  s_gordonii_pct: 0,
+  s_cristatus_pct: 0,
+  s_parasanguinis_pct: 0,
+  s_australis_pct: 0,
+  s_mitis_group_pct: 0,
+  c_matruchotii_pct: 0,
+  a_naeslundii_pct: 0,
+  a_odontolyticus_pct: 0,
+  actinomyces_other_pct: 0,
+  neisseria_mucosa_pct: 0,
+  neisseria_flavescens_pct: 0,
+  neisseria_subflava_pct: 0,
+  rothia_mucilaginosa_pct: 0,
+  rothia_dentocariosa_pct: 0,
+  rothia_aeria_pct: 0,
+  h_parainfluenzae_pct: 0,
+  prevotella_total_pct: 0,
+  f_alocis_pct: 0,
+  s_constellatus_pct: 0,
+  parvimonas_micra_pct: 0,
+  m_faucium_pct: 0,
+  fretibacterium_total_pct: 0,
+  treponema_hmt_237_pct: 0,
+  lautropia_total_pct: 0,
   env_peroxide_flag: false,
   whitening_tray_last_48h: false,
   whitening_strips_last_48h: false,

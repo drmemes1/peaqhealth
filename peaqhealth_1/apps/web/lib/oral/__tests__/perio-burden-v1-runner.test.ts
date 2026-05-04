@@ -5,20 +5,21 @@ import {
   v1UpdateFromResult,
 } from "../perio-burden-v1-runner"
 import { calculatePerioBurdenV1, EMPTY_PERIO_SPECIES } from "../perio-burden-v1"
+import { kitRowFromColumns } from "../__test-fixtures/kit-row-from-columns"
 
 // ─────────────────────────────────────────────────────────────────────
 // speciesFromKitRow — column-first path (post-PR-Δ-α-parser kits)
 // ─────────────────────────────────────────────────────────────────────
 
-describe("speciesFromKitRow — column path", () => {
-  test("reads new species columns directly when populated", () => {
-    const row: Record<string, unknown> = {
+describe("speciesFromKitRow — column-shape inputs flow through entries", () => {
+  test("column-shape test fixture wraps to entries; species-parser reads them all", () => {
+    const row = kitRowFromColumns({
       p_gingivalis_pct: 1.5,
       t_forsythia_pct: 0.5,
       treponema_pct: 0.2,
       f_alocis_pct: 0.3,
       f_nucleatum_pct: 0.8,
-      p_intermedia_pct: 0.4,
+      prevotella_intermedia_pct: 0.4,
       s_constellatus_pct: 0.1,
       p_micra_pct: 0.2,
       c_matruchotii_pct: 1.0,
@@ -29,7 +30,7 @@ describe("speciesFromKitRow — column path", () => {
       neisseria_pct: 14.0,
       haemophilus_pct: 2.5,
       a_naeslundii_pct: 0.7,
-    }
+    })
     const s = speciesFromKitRow(row)
     expect(s.p_gingivalis).toBe(1.5)
     expect(s.t_forsythia).toBe(0.5)
@@ -40,6 +41,8 @@ describe("speciesFromKitRow — column path", () => {
     expect(s.p_micra).toBe(0.2)
     expect(s.c_matruchotii).toBe(1.0)
     expect(s.s_mitis_group).toBe(2.0)
+    // rothia_pct genus rollup + a_naeslundii placeholder genus rollup land
+    // in their respective totals via the species-parser's genus aggregator.
     expect(s.rothia_total).toBe(8.0)
     expect(s.neisseria_total).toBe(14.0)
   })
@@ -72,23 +75,19 @@ describe("speciesFromKitRow — entries fallback for legacy kits", () => {
           { genus: "Lautropia", species: "mirabilis", pct: 1.9983 },
           { genus: "Fretibacterium", species: "fastidiosum", pct: 0.0134 },
           { genus: "Fretibacterium", species: "sp67092", pct: 0.017 },
+          // Rothia / Neisseria / Haemophilus / Actinomyces / Prevotella —
+          // mirroring Igor's production __meta.entries so the species-parser
+          // reads the same totals the algorithm tests assume.
+          { genus: "Rothia", species: "mucilaginosa", pct: 7.3846 },
+          { genus: "Rothia", species: "dentocariosa", pct: 0.8373 },
+          { genus: "Rothia", species: "aeria", pct: 0.1448 },
+          { genus: "Neisseria", species: "mucosa-perflava-subflava", pct: 14.80 },
+          { genus: "Haemophilus", species: "parainfluenzae", pct: 2.79 },
+          { genus: "Actinomyces", species: "naeslundii", pct: 0.5367 },
+          { genus: "Prevotella", species: "intermedia", pct: 0.2008 },
         ],
       },
     },
-    // Legacy genus columns (no species columns yet on this kit):
-    s_sanguinis_pct: 1.9009,
-    s_gordonii_pct: 0.4126,
-    treponema_pct: 0.0864, // genus accumulator
-    // Per the post-PR-α parser convention, rothia_pct is the residual
-    // (genus minus species-level columns). Total = residual + species cols.
-    rothia_pct: 7.3846,
-    rothia_dentocariosa_pct: 0.8373,
-    rothia_aeria_pct: 0.1448,
-    neisseria_pct: 14.80,
-    haemophilus_pct: 2.79,
-    a_naeslundii_pct: 0.5367,
-    parvimonas_pct: 0.1838,
-    prevotella_intermedia_pct: 0.2008,
   }
 
   test("S. mitis group sums oralis-parasanguinis + nothing else from Igor's data", () => {
@@ -167,18 +166,17 @@ describe("runPerioBurdenV1 — Igor's kit (entries fallback)", () => {
             { genus: "Streptococcus", species: "sanguinis", pct: 1.9009 },
             { genus: "Streptococcus", species: "gordonii", pct: 0.4126 },
             { genus: "Lautropia", species: "mirabilis", pct: 1.9983 },
+          // Rothia + Neisseria + Hp + An: provide entries so the
+          // species-parser builds the genus totals (no more legacy column reads).
+          { genus: "Rothia", species: "mucilaginosa", pct: 7.32 },
+          { genus: "Rothia", species: "dentocariosa", pct: 0.84 },
+          { genus: "Rothia", species: "aeria", pct: 0.15 },
+          { genus: "Neisseria", species: "mucosa-perflava-subflava", pct: 14.80 },
+          { genus: "Haemophilus", species: "parainfluenzae", pct: 2.79 },
+          { genus: "Actinomyces", species: "naeslundii", pct: 0.74 },
           ],
         },
       },
-      s_sanguinis_pct: 1.9009,
-      s_gordonii_pct: 0.4126,
-      treponema_pct: 0.0864,
-      rothia_pct: 8.31,
-      neisseria_pct: 14.80,
-      haemophilus_pct: 2.79,
-      a_naeslundii_pct: 0.74,
-      parvimonas_pct: 0.1838,
-      prevotella_intermedia_pct: 0,
     }
 
     const out = runPerioBurdenV1(igorRow, null)

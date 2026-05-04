@@ -49,6 +49,7 @@ import {
   type NRSpeciesAbundances,
   type NRV1Result,
 } from "./nr-v1"
+import { parseSpeciesFromKitRow } from "./species-parser"
 
 // Coerce raw column values (numeric or null) to a usable percentage.
 const num = (v: unknown): number => {
@@ -63,48 +64,55 @@ const num = (v: unknown): number => {
  * outputs. See the approximation contract in the file header.
  */
 export function speciesFromKitRow(row: Record<string, unknown>): NRSpeciesAbundances {
-  const rothiaPctResidual = num(row.rothia_pct) // post-PR-α: excludes dentocariosa + aeria
-  const rothiaDentocariosa = num(row.rothia_dentocariosa_pct)
-  const rothiaAeria = num(row.rothia_aeria_pct)
-  const rothiaTotal = rothiaPctResidual + rothiaDentocariosa + rothiaAeria
+  // Reads from raw_otu_table.__meta.entries via the shared species-parser.
+  // No more direct column reads; ESLint blocks regression.
+  const sp = parseSpeciesFromKitRow(row)
 
-  const neisseriaTotal = num(row.neisseria_pct) // no species-level Neisseria columns exist
+  // Species-level Neisseria when entries provide it; otherwise allocate the
+  // full genus to mucosa as a conservative upper bound (ADR-0019).
+  const neisseriaSpeciesSum =
+    sp.neisseria_mucosa_pct + sp.neisseria_flavescens_pct + sp.neisseria_subflava_pct
+  const neisseriaMucosa =
+    neisseriaSpeciesSum > 0 ? sp.neisseria_mucosa_pct : sp.neisseria_pct
+  const neisseriaOther = Math.max(
+    0,
+    sp.neisseria_pct - neisseriaMucosa - sp.neisseria_flavescens_pct - sp.neisseria_subflava_pct,
+  )
 
-  // prevotella_pct does not exist as a single column; the parser splits
-  // Prevotella into three buckets per ADR-0015 (PR-α): intermedia, commensal,
-  // and denticola.
-  const prevotellaTotal =
-    num(row.prevotella_intermedia_pct) +
-    num(row.prevotella_commensal_pct) +
-    num(row.p_denticola_pct)
+  // Rothia mucilaginosa: when species-level isn't in entries, allocate the
+  // residual (genus total minus dentocariosa + aeria) to mucilaginosa per
+  // ADR-0019's typical-distribution heuristic.
+  const rothiaMucilaginosa =
+    sp.rothia_mucilaginosa_pct > 0
+      ? sp.rothia_mucilaginosa_pct
+      : Math.max(0, sp.rothia_total_pct - sp.rothia_dentocariosa_pct - sp.rothia_aeria_pct)
 
   return {
     ...ZERO_NR_SPECIES,
     // ── Tier 1 — primary nitrite producers ────────────────────────────────
-    // Conservative upper-bound: allocate the full Neisseria genus to mucosa
-    // since species-level columns aren't parsed. Documented in ADR-0019.
-    neisseria_mucosa: neisseriaTotal,
-    // flavescens / subflava stay at 0 (covered by mucosa allocation).
-    rothia_mucilaginosa: rothiaPctResidual,
-    rothia_dentocariosa: rothiaDentocariosa,
-    rothia_aeria: rothiaAeria,
-    // actinomyces_odontolyticus stays at 0 (no species column; not parsed).
+    neisseria_mucosa: neisseriaMucosa,
+    neisseria_flavescens: sp.neisseria_flavescens_pct,
+    neisseria_subflava: sp.neisseria_subflava_pct,
+    rothia_mucilaginosa: rothiaMucilaginosa,
+    rothia_dentocariosa: sp.rothia_dentocariosa_pct,
+    rothia_aeria: sp.rothia_aeria_pct,
+    actinomyces_odontolyticus: sp.a_odontolyticus_pct,
 
     // ── Tier 2 — secondary NR ─────────────────────────────────────────────
-    h_parainfluenzae: num(row.haemophilus_pct), // genus-proxy
-    // neisseria_other stays at 0 — covered by mucosa allocation above.
-    a_naeslundii: num(row.a_naeslundii_pct),
+    // Species-level H. parainfluenzae when entries provide it; else genus proxy.
+    h_parainfluenzae:
+      sp.h_parainfluenzae_pct > 0 ? sp.h_parainfluenzae_pct : sp.haemophilus_total_pct,
+    neisseria_other: neisseriaOther,
+    a_naeslundii: sp.a_naeslundii_pct,
 
     // ── Tier 3 — NR-capable, lower per-cell efficiency ────────────────────
-    veillonella_total: num(row.veillonella_pct),
-    // The parser already excludes a_naeslundii from actinomyces_pct, so this
-    // column IS the "other Actinomyces" bucket.
-    actinomyces_other: num(row.actinomyces_pct),
+    veillonella_total: sp.veillonella_total_pct,
+    actinomyces_other: sp.actinomyces_other_pct,
 
     // ── Vanhatalo signature (genus totals) ────────────────────────────────
-    rothia_total: rothiaTotal,
-    neisseria_total: neisseriaTotal,
-    prevotella_total: prevotellaTotal,
+    rothia_total: sp.rothia_total_pct,
+    neisseria_total: sp.neisseria_pct,
+    prevotella_total: sp.prevotella_total_pct,
   }
 }
 

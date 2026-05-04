@@ -25,6 +25,7 @@ import {
   type LifestyleConfounders,
   type CariesV3Result,
 } from "./caries-v3"
+import { parseSpeciesFromKitRow } from "./species-parser"
 
 // Coerce raw column values (numeric or null) to a usable percentage.
 const num = (v: unknown): number => {
@@ -43,36 +44,43 @@ const num = (v: unknown): number => {
  * in apps/web/lib/oral/__tests__/upload-parser.test.ts.
  */
 export function speciesFromKitRow(row: Record<string, unknown>): SpeciesAbundances {
+  // Read species data from the shared species-parser, which pulls from
+  // raw_otu_table.__meta.entries (the authoritative source) rather than
+  // denormalized per-species columns. See species-parser.ts for the
+  // contract; ESLint blocks regression to direct kitRow.x_pct reads.
+  const sp = parseSpeciesFromKitRow(row)
   return {
     ...ZERO_SPECIES,
-    s_mutans: num(row.s_mutans_pct),
-    s_sobrinus: num(row.s_sobrinus_pct),
-    scardovia_wiggsiae: num(row.scardovia_pct),
-    lactobacillus: num(row.lactobacillus_pct),
+    s_mutans: sp.s_mutans_pct,
+    s_sobrinus: sp.s_sobrinus_pct,
+    scardovia_wiggsiae: sp.scardovia_wiggsiae_pct,
+    lactobacillus: sp.lactobacillus_total_pct,
 
-    b_dentium: num(row.b_dentium_pct),
-    s_sputigena: num(row.s_sputigena_pct),
-    p_acidifaciens: num(row.p_acidifaciens_pct),
-    leptotrichia_wadei: num(row.leptotrichia_wadei_pct),
-    leptotrichia_shahii: num(row.leptotrichia_shahii_pct),
-    p_denticola: num(row.p_denticola_pct),
+    b_dentium: sp.b_dentium_pct,
+    s_sputigena: sp.s_sputigena_pct,
+    p_acidifaciens: sp.p_acidifaciens_pct,
+    leptotrichia_wadei: sp.leptotrichia_wadei_pct,
+    leptotrichia_shahii: sp.leptotrichia_shahii_pct,
+    p_denticola: sp.prevotella_denticola_pct,
 
-    s_sanguinis: num(row.s_sanguinis_pct),
-    s_gordonii: num(row.s_gordonii_pct),
-    s_cristatus: num(row.s_cristatus_pct),
-    s_parasanguinis: num(row.s_parasanguinis_pct),
-    s_australis: num(row.s_australis_pct),
-    a_naeslundii: num(row.a_naeslundii_pct),
+    s_sanguinis: sp.s_sanguinis_pct,
+    s_gordonii: sp.s_gordonii_pct,
+    s_cristatus: sp.s_cristatus_pct,
+    s_parasanguinis: sp.s_parasanguinis_pct,
+    s_australis: sp.s_australis_pct,
+    a_naeslundii: sp.a_naeslundii_pct,
 
-    s_salivarius: num(row.s_salivarius_pct),
-    h_parainfluenzae: num(row.haemophilus_pct),
+    s_salivarius: sp.s_salivarius_pct,
+    // Use species-level H. parainfluenzae when entries provide it; fall
+    // back to genus-total to preserve the prior contract.
+    h_parainfluenzae: sp.h_parainfluenzae_pct > 0 ? sp.h_parainfluenzae_pct : sp.haemophilus_total_pct,
 
-    neisseria_total: num(row.neisseria_pct),
-    rothia_dentocariosa: num(row.rothia_dentocariosa_pct),
-    rothia_aeria: num(row.rothia_aeria_pct),
+    neisseria_total: sp.neisseria_pct,
+    rothia_dentocariosa: sp.rothia_dentocariosa_pct,
+    rothia_aeria: sp.rothia_aeria_pct,
 
-    veillonella_total: num(row.veillonella_pct),
-    s_mitis: num(row.s_mitis_pct),
+    veillonella_total: sp.veillonella_total_pct,
+    s_mitis: sp.s_mitis_group_pct,
   }
 }
 

@@ -13,26 +13,28 @@ import {
   runCariesV3,
 } from "../caries-v3-runner"
 import { calculateCariesV3 } from "../caries-v3"
+import { kitRowFromColumns } from "../__test-fixtures/kit-row-from-columns"
 
-// ── Pilot rows we'll reuse across tests. Numbers match
-//    apps/web/lib/oral/__tests__/caries-v3.test.ts. ──
+// ── Pilot rows we'll reuse across tests. Wrapped via kitRowFromColumns()
+//    so the species-parser sees raw_otu_table.__meta.entries (the
+//    authoritative path) instead of legacy column reads. ──
 
-const IGOR_ROW = {
+const IGOR_ROW = kitRowFromColumns({
   id: "TEST-1",
   s_mutans_pct: 0.27, s_sobrinus_pct: 0.24,
   s_sanguinis_pct: 4.49, s_gordonii_pct: 0.41,
-}
+})
 
-const GABBY_ROW = {
+const GABBY_ROW = kitRowFromColumns({
   id: "TEST-2",
   s_mutans_pct: 0.035, s_sanguinis_pct: 5.46, s_gordonii_pct: 0.028,
-}
+})
 
-const EVELINA_ROW = {
+const EVELINA_ROW = kitRowFromColumns({
   id: "TEST-3",
   s_mutans_pct: 0.02, s_sanguinis_pct: 0.02, s_gordonii_pct: 0.03,
   veillonella_pct: 16.4,
-}
+})
 
 // ── speciesFromKitRow ──
 
@@ -45,8 +47,8 @@ describe("speciesFromKitRow", () => {
     expect(sp.veillonella_total).toBe(0)
   })
 
-  test("all v3 species columns are read", () => {
-    const sp = speciesFromKitRow({
+  test("all v3 species columns are read (via entries)", () => {
+    const sp = speciesFromKitRow(kitRowFromColumns({
       s_mutans_pct: 1, s_sobrinus_pct: 2, scardovia_pct: 3, lactobacillus_pct: 4,
       b_dentium_pct: 5, s_sputigena_pct: 6, p_acidifaciens_pct: 7,
       leptotrichia_wadei_pct: 8, leptotrichia_shahii_pct: 9, p_denticola_pct: 10,
@@ -55,25 +57,21 @@ describe("speciesFromKitRow", () => {
       s_salivarius_pct: 17, haemophilus_pct: 18,
       neisseria_pct: 19, rothia_dentocariosa_pct: 20, rothia_aeria_pct: 21,
       veillonella_pct: 22, s_mitis_pct: 23,
-    })
+    }))
     expect(sp.s_mutans).toBe(1)
     expect(sp.scardovia_wiggsiae).toBe(3)
     expect(sp.b_dentium).toBe(5)
     expect(sp.s_sputigena).toBe(6)
     expect(sp.s_cristatus).toBe(13)
-    expect(sp.h_parainfluenzae).toBe(18) // proxy for haemophilus_pct
+    expect(sp.h_parainfluenzae).toBe(18) // genus-proxy via species-parser
     expect(sp.neisseria_total).toBe(19)
     expect(sp.veillonella_total).toBe(22)
-    expect(sp.s_mitis).toBe(23)
+    expect(sp.s_mitis).toBe(23) // s_mitis_pct → entries → s_mitis_group_pct
   })
 
-  test("non-numeric / null values coerce to 0 without throwing", () => {
-    const sp = speciesFromKitRow({
-      s_mutans_pct: null,
-      s_sobrinus_pct: undefined,
-      s_sanguinis_pct: "not a number",
-      s_gordonii_pct: NaN,
-    })
+  test("missing entries default to 0 without throwing", () => {
+    // Empty kit row (no raw_otu_table) — every species reads as 0.
+    const sp = speciesFromKitRow({ id: "x" })
     expect(sp.s_mutans).toBe(0)
     expect(sp.s_sobrinus).toBe(0)
     expect(sp.s_sanguinis).toBe(0)

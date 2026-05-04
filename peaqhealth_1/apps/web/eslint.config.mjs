@@ -24,6 +24,9 @@ const eslintConfig = defineConfig([
   // apps/web/lib/oral/species-parser.ts and consume it from there.
   {
     files: [
+      "lib/oral/caries-v3-runner.ts",
+      "lib/oral/nr-v1-runner.ts",
+      "lib/oral/perio-burden-v1-runner.ts",
       "lib/oral/halitosis-v2-runner.ts",
       "lib/oral/upper-airway-v1-runner.ts",
     ],
