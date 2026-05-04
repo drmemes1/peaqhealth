@@ -58,16 +58,32 @@ interface Optimal { min?: number; max?: number }
 function optimalFromBands(bands: StatusBand[]): Optimal | null {
   const targets = bands.filter(b => b.status === "target")
   if (targets.length === 0) return null
+
+  // Open-ended above (any target band with max === null) → higher-is-better,
+  // no upper bound; values above the highest finite target should still read
+  // as Strong. Open-ended below (min === -Infinity) → lower-is-better,
+  // no lower bound; very low values should still read as Strong.
+  const openAbove = targets.some(b => b.max == null)
+  const openBelow = targets.some(b => !Number.isFinite(b.min))
+
   let min: number | undefined
   let max: number | undefined
-  for (const b of targets) {
-    if (Number.isFinite(b.min)) {
-      min = min === undefined ? b.min : Math.min(min, b.min)
-    }
-    if (b.max != null) {
-      max = max === undefined ? b.max : Math.max(max, b.max)
+
+  if (!openBelow) {
+    for (const b of targets) {
+      if (Number.isFinite(b.min)) {
+        min = min === undefined ? b.min : Math.min(min, b.min)
+      }
     }
   }
+  if (!openAbove) {
+    for (const b of targets) {
+      if (b.max != null) {
+        max = max === undefined ? b.max : Math.max(max, b.max)
+      }
+    }
+  }
+
   if (min === undefined && max === undefined) return null
   return { min, max }
 }
