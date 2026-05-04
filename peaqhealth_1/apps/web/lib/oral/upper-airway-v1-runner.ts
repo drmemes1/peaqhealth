@@ -1,28 +1,21 @@
 /**
  * Upper Airway v1 pipeline runner.
  *
- * Glues a persisted oral_kit_orders row + lifestyle_records row + user
- * profile to the pure algorithm at lib/oral/upper-airway-v1.ts.
+ * Reads species data via the shared species-parser
+ * (`raw_otu_table.__meta.entries` is the authoritative source); reads
+ * STOP questionnaire from lifestyle row + age/sex from profile.
+ * Translates the algorithm result into a column update payload.
  *
- *   1. Build UpperAirwayInput from kit + lifestyle + profile rows.
- *   2. Translate UpperAirwayResult into the column update payload.
- *
- * Soft-fail: on error, log and return null so the pipeline continues.
+ * Direct species-column reads are forbidden in this file via ESLint
+ * `no-restricted-syntax` rule. Add new species to SpeciesProfile in
+ * species-parser.ts; never read kitRow.x_pct here.
  */
-
-import { calculateUpperAirway, type UpperAirwayInput, type UpperAirwayResult } from "./upper-airway-v1"
-
-const num = (v: unknown): number => {
-  if (v == null) return 0
-  const n = Number(v)
-  return Number.isFinite(n) ? n : 0
-}
-
-const numOrNull = (v: unknown): number | null => {
-  if (v == null) return null
-  const n = Number(v)
-  return Number.isFinite(n) ? n : null
-}
+import {
+  calculateUpperAirway,
+  type UpperAirwayInput,
+  type UpperAirwayResult,
+} from "./upper-airway-v1"
+import { parseSpeciesFromKitRow, type SpeciesProfile } from "./species-parser"
 
 function strOrNull(v: unknown): string | null {
   return typeof v === "string" && v.length > 0 ? v : null
@@ -37,39 +30,14 @@ function ageFromDob(dob: unknown): number | null {
   if (typeof dob !== "string") return null
   const d = new Date(dob)
   if (Number.isNaN(d.valueOf())) return null
-  const ms = Date.now() - d.valueOf()
-  const years = ms / (365.25 * 86400000)
-  return Math.floor(years)
+  return Math.floor((Date.now() - d.valueOf()) / (365.25 * 86400000))
 }
 
-export function inputFromRows(
-  kitRow: Record<string, unknown>,
+export function inputFromProfile(
+  species: SpeciesProfile,
   lifestyle: Record<string, unknown> | null,
   profile: Record<string, unknown> | null,
 ): UpperAirwayInput {
-  // Rothia + Actinomyces totals: parser writes residual rothia_pct +
-  // species columns (rothia_dentocariosa_pct, rothia_aeria_pct). For
-  // Actinomyces, parser writes only the genus column (which already
-  // includes naeslundii placeholders / non-mapped Actinomyces species).
-  // Per nr-v1-runner convention, sum residuals for the total.
-  const rothiaTotal =
-    num(kitRow.rothia_pct) +
-    num(kitRow.rothia_dentocariosa_pct) +
-    num(kitRow.rothia_aeria_pct)
-  const actinomycesTotal =
-    num(kitRow.actinomyces_pct) +
-    num(kitRow.a_naeslundii_pct)
-
-  // Prevotella + Alloprevotella combined for the OSA "depleted" feature.
-  // Sum genus-level Prevotella + species-level + alloprevotella_total.
-  const prevotellaCombined =
-    num(kitRow.prevotella_intermedia_pct) +
-    num(kitRow.prevotella_commensal_pct) +
-    num(kitRow.p_denticola_pct) +
-    num(kitRow.prevotella_nigrescens_pct) +
-    num(kitRow.prevotella_melaninogenica_pct) +
-    num(kitRow.alloprevotella_total_pct)
-
   const ageYears =
     ageFromDob(profile?.date_of_birth) ??
     (typeof lifestyle?.age_range === "string"
@@ -83,12 +51,14 @@ export function inputFromRows(
     sex === "male" || sex === "female" || sex === "other" ? sex : null
 
   return {
-    rothia_total_pct: rothiaTotal,
-    actinomyces_total_pct: actinomycesTotal,
-    neisseria_pct: num(kitRow.neisseria_pct),
-    prevotella_combined_pct: prevotellaCombined,
-    shannon_diversity: numOrNull(kitRow.shannon_diversity),
+    // ── Bacterial inputs — all from species-parser ──
+    rothia_total_pct: species.rothia_total_pct,
+    actinomyces_total_pct: species.actinomyces_total_pct,
+    neisseria_pct: species.neisseria_pct,
+    prevotella_combined_pct: species.prevotella_alloprevotella_combined_pct,
+    shannon_diversity: species.shannon_diversity,
 
+    // ── Questionnaire ──
     snoring_reported: strOrNull(lifestyle?.snoring_reported),
     non_restorative_sleep: strOrNull(lifestyle?.non_restorative_sleep),
     osa_witnessed: strOrNull(lifestyle?.osa_witnessed),
@@ -96,16 +66,18 @@ export function inputFromRows(
     age_years: ageYears,
     biological_sex,
 
+    // ── Nasal / sinus ──
     nasal_obstruction: strOrNull(lifestyle?.nasal_obstruction),
     mouth_breathing_confirm: strOrNull(lifestyle?.mouth_breathing_confirm),
     sinus_history: strOrNull(lifestyle?.sinus_history),
 
-    whitening_tray_last_48h: boolOrNull(kitRow.whitening_tray_last_48h),
-    whitening_strips_last_48h: boolOrNull(kitRow.whitening_strips_last_48h),
-    professional_whitening_last_7d: boolOrNull(kitRow.professional_whitening_last_7d),
-    whitening_toothpaste_daily: boolOrNull(kitRow.whitening_toothpaste_daily),
-    peroxide_mouthwash_daily: boolOrNull(kitRow.peroxide_mouthwash_daily),
-    env_peroxide_flag: boolOrNull(kitRow.env_peroxide_flag),
+    // ── Peroxide confounder ──
+    whitening_tray_last_48h: species.whitening_tray_last_48h || null,
+    whitening_strips_last_48h: species.whitening_strips_last_48h || null,
+    professional_whitening_last_7d: species.professional_whitening_last_7d || null,
+    whitening_toothpaste_daily: species.whitening_toothpaste_daily || null,
+    peroxide_mouthwash_daily: species.peroxide_mouthwash_daily || null,
+    env_peroxide_flag: species.env_peroxide_flag || null,
   }
 }
 
@@ -155,7 +127,8 @@ export function runUpperAirway(
   profileRow: Record<string, unknown> | null,
 ): { update: UpperAirwayV1Update; result: UpperAirwayResult } | null {
   try {
-    const input = inputFromRows(kitRow, lifestyleRow, profileRow)
+    const species = parseSpeciesFromKitRow(kitRow)
+    const input = inputFromProfile(species, lifestyleRow, profileRow)
     const result = calculateUpperAirway(input)
     return { update: v1UpdateFromResult(result), result }
   } catch (err) {

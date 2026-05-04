@@ -14,11 +14,12 @@ import {
   runNRV1,
 } from "../nr-v1-runner"
 import { calculateNRV1 } from "../nr-v1"
+import { kitRowFromColumns } from "../__test-fixtures/kit-row-from-columns"
 
-// ── Pilot-style rows. Numbers match the persisted post-PR-247/248 state for
-//    Pilot.Peaq.1 (Igor, kit c033fbae) where applicable. ──
+// ── Pilot-style rows. Wrapped via kitRowFromColumns() so the species-parser
+//    sees raw_otu_table.__meta.entries instead of legacy column reads. ──
 
-const IGOR_ROW = {
+const IGOR_ROW = kitRowFromColumns({
   id: "TEST-IGOR",
   rothia_pct: 7.3846,
   rothia_dentocariosa_pct: 0.8373,
@@ -26,30 +27,26 @@ const IGOR_ROW = {
   neisseria_pct: 14.8035,
   haemophilus_pct: 2.9001,
   a_naeslundii_pct: 0.8969,
-  actinomyces_pct: 6.4816, // already excludes a_naeslundii after PR-α
+  actinomyces_pct: 6.4816,
   veillonella_pct: 4.2863,
   prevotella_intermedia_pct: 0.2008,
   prevotella_commensal_pct: 6.848,
   p_denticola_pct: 0.0341,
-}
+})
 
-// Veillonella + Prevotella-dominant signature with limited Tier 1 biomass.
-// Tuned to land in the composition_constrained quadrant (paradox).
-const PARADOX_ROW = {
+const PARADOX_ROW = kitRowFromColumns({
   id: "TEST-PARADOX",
   rothia_pct: 1.5,
   neisseria_pct: 5.8,
   veillonella_pct: 7.9,
   prevotella_commensal_pct: 18.4,
-}
+})
 
-// Reducer mass present, no depleting taxa → strongly_favorable via sentinel.
-const NO_DEPLETERS_ROW = {
+const NO_DEPLETERS_ROW = kitRowFromColumns({
   id: "TEST-NO-DEPLETERS",
   rothia_pct: 5,
   neisseria_pct: 5,
-  // veillonella_pct omitted (default 0); no prevotella columns
-}
+})
 
 // ── speciesFromKitRow ───────────────────────────────────────────────────────
 
@@ -65,11 +62,11 @@ describe("speciesFromKitRow", () => {
   })
 
   test("rothia_total sums genus residual + dentocariosa + aeria (post-PR-α split)", () => {
-    const sp = speciesFromKitRow({
+    const sp = speciesFromKitRow(kitRowFromColumns({
       rothia_pct: 7.3846,
       rothia_dentocariosa_pct: 0.8373,
       rothia_aeria_pct: 0.1448,
-    })
+    }))
     expect(sp.rothia_mucilaginosa).toBeCloseTo(7.3846, 4)
     expect(sp.rothia_dentocariosa).toBeCloseTo(0.8373, 4)
     expect(sp.rothia_aeria).toBeCloseTo(0.1448, 4)
@@ -77,16 +74,16 @@ describe("speciesFromKitRow", () => {
   })
 
   test("prevotella_total sums intermedia + commensal + p_denticola (no genus column)", () => {
-    const sp = speciesFromKitRow({
+    const sp = speciesFromKitRow(kitRowFromColumns({
       prevotella_intermedia_pct: 0.2008,
       prevotella_commensal_pct: 6.848,
       p_denticola_pct: 0.0341,
-    })
+    }))
     expect(sp.prevotella_total).toBeCloseTo(7.0829, 4)
   })
 
   test("neisseria genus total fully allocated to neisseria_mucosa (ADR-0019 conservative upper-bound)", () => {
-    const sp = speciesFromKitRow({ neisseria_pct: 14.8 })
+    const sp = speciesFromKitRow(kitRowFromColumns({ neisseria_pct: 14.8 }))
     expect(sp.neisseria_mucosa).toBeCloseTo(14.8, 4)
     expect(sp.neisseria_flavescens).toBe(0)
     expect(sp.neisseria_subflava).toBe(0)
@@ -95,15 +92,15 @@ describe("speciesFromKitRow", () => {
   })
 
   test("h_parainfluenzae proxied from haemophilus_pct (genus-level)", () => {
-    const sp = speciesFromKitRow({ haemophilus_pct: 2.9 })
+    const sp = speciesFromKitRow(kitRowFromColumns({ haemophilus_pct: 2.9 }))
     expect(sp.h_parainfluenzae).toBeCloseTo(2.9, 4)
   })
 
   test("actinomyces_other reads actinomyces_pct directly (parser already excludes a_naeslundii)", () => {
-    const sp = speciesFromKitRow({
+    const sp = speciesFromKitRow(kitRowFromColumns({
       actinomyces_pct: 6.4816,
       a_naeslundii_pct: 0.8969,
-    })
+    }))
     expect(sp.actinomyces_other).toBeCloseTo(6.4816, 4)
     expect(sp.a_naeslundii).toBeCloseTo(0.8969, 4)
     // actinomyces_odontolyticus stays at 0 — no species column.
@@ -111,12 +108,12 @@ describe("speciesFromKitRow", () => {
   })
 
   test("non-numeric / null values coerce to 0 without throwing", () => {
-    const sp = speciesFromKitRow({
+    const sp = speciesFromKitRow(kitRowFromColumns({
       rothia_pct: null,
       neisseria_pct: undefined,
       veillonella_pct: "not a number",
       prevotella_commensal_pct: NaN,
-    })
+    }))
     expect(sp.rothia_total).toBe(0)
     expect(sp.neisseria_total).toBe(0)
     expect(sp.veillonella_total).toBe(0)

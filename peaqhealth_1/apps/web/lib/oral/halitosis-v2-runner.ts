@@ -1,8 +1,14 @@
 /**
  * Halitosis v2 pipeline runner.
  *
- * Glues kit + lifestyle + profile + caries-v3 outputs to the pure
- * algorithm at lib/oral/halitosis-v2.ts. Mirrors the perio / NR runners.
+ * Reads species data via the shared species-parser
+ * (`raw_otu_table.__meta.entries` is the authoritative source); reads
+ * lifestyle from a row + age from profile DOB. Translates the
+ * algorithm result into a column update payload.
+ *
+ * Direct species-column reads are forbidden in this file via ESLint
+ * `no-restricted-syntax` rule. If you need a new species, add it to
+ * SpeciesProfile in species-parser.ts — never read kitRow.x_pct here.
  */
 import {
   calculateHalitosis,
@@ -10,12 +16,7 @@ import {
   type HalitosisInput,
   type HalitosisResult,
 } from "./halitosis-v2"
-
-const num = (v: unknown): number => {
-  if (v == null) return 0
-  const n = Number(v)
-  return Number.isFinite(n) ? n : 0
-}
+import { parseSpeciesFromKitRow, type SpeciesProfile } from "./species-parser"
 
 function strOrNull(v: unknown): string | null {
   return typeof v === "string" && v.length > 0 ? v : null
@@ -30,61 +31,23 @@ function ageFromDob(dob: unknown): number | null {
 
 const XEROSTOMIC_MED_KEYS = ["antihistamine_daily", "ssri_snri", "anticholinergic"]
 
-export function inputFromRows(
-  kitRow: Record<string, unknown>,
+function lifestyleFromRow(
   lifestyle: Record<string, unknown> | null,
   profile: Record<string, unknown> | null,
-): HalitosisInput {
-  // Rothia + Haemophilus genus totals: parser writes residual rothia_pct
-  // alongside species columns; haemophilus_pct already aggregates everything.
-  const rothiaTotal =
-    num(kitRow.rothia_pct) +
-    num(kitRow.rothia_dentocariosa_pct) +
-    num(kitRow.rothia_aeria_pct)
-
-  // Treponema is genus-level by design (V3-V4 limit on T. denticola).
-  const treponemaTotal = num(kitRow.treponema_pct)
-
-  // Caries v3 cross-module signal — used for Veillonella weight.
-  const cariesCompensatedDysbiosis = kitRow.compensated_dysbiosis_flag === true
-  const sMutans = num(kitRow.s_mutans_pct)
-
+): Pick<
+  HalitosisInput,
+  | "mouth_breathing"
+  | "mouth_breathing_when"
+  | "snoring_reported"
+  | "smoking_status"
+  | "age_years"
+  | "gerd_frequency"
+  | "tongue_scraping_freq"
+  | "last_dental_cleaning"
+  | "has_xerostomic_meds"
+> {
   const meds = Array.isArray(lifestyle?.medications_v2) ? (lifestyle?.medications_v2 as string[]) : []
-  const hasXerostomicMeds = meds.some(m => XEROSTOMIC_MED_KEYS.includes(m))
-
   return {
-    ...EMPTY_HALITOSIS_INPUT,
-
-    // H2S drivers
-    f_nucleatum_pct: num(kitRow.f_nucleatum_pct),
-    s_moorei_pct: num(kitRow.s_moorei_pct),
-    veillonella_pct: num(kitRow.veillonella_pct),
-    leptotrichia_wadei_pct: num(kitRow.leptotrichia_wadei_pct),
-    atopobium_parvulum_pct: num(kitRow.atopobium_parvulum_pct),
-    selenomonas_total_pct: num(kitRow.selenomonas_total_pct),
-    eubacterium_sulci_pct: num(kitRow.eubacterium_sulci_pct),
-    dialister_invisus_pct: num(kitRow.dialister_invisus_pct),
-
-    // CH3SH drivers
-    p_gingivalis_pct: num(kitRow.p_gingivalis_pct),
-    prevotella_intermedia_pct: num(kitRow.prevotella_intermedia_pct),
-    prevotella_nigrescens_pct: num(kitRow.prevotella_nigrescens_pct),
-    prevotella_denticola_pct: num(kitRow.p_denticola_pct),
-    prevotella_melaninogenica_pct: num(kitRow.prevotella_melaninogenica_pct),
-    treponema_total_pct: treponemaTotal,
-    t_forsythia_pct: num(kitRow.tannerella_pct),
-    eikenella_corrodens_pct: num(kitRow.eikenella_corrodens_pct),
-
-    // Protective
-    s_salivarius_pct: num(kitRow.s_salivarius_pct),
-    rothia_total_pct: rothiaTotal,
-    haemophilus_pct: num(kitRow.haemophilus_pct),
-
-    // Cross-module
-    caries_compensated_dysbiosis: cariesCompensatedDysbiosis,
-    s_mutans_pct: sMutans,
-
-    // Lifestyle
     mouth_breathing: strOrNull(lifestyle?.mouth_breathing),
     mouth_breathing_when: strOrNull(lifestyle?.mouth_breathing_when),
     snoring_reported: strOrNull(lifestyle?.snoring_reported),
@@ -93,20 +56,57 @@ export function inputFromRows(
     gerd_frequency: strOrNull(lifestyle?.gerd_frequency),
     tongue_scraping_freq: strOrNull(lifestyle?.tongue_scraping_freq),
     last_dental_cleaning: strOrNull(lifestyle?.last_dental_cleaning),
-    has_xerostomic_meds: hasXerostomicMeds,
+    has_xerostomic_meds: meds.some(m => XEROSTOMIC_MED_KEYS.includes(m)),
+  }
+}
 
-    // Peroxide confounder
-    env_peroxide_flag: kitRow.env_peroxide_flag === true,
-    whitening_tray_last_48h: kitRow.whitening_tray_last_48h === true,
-    whitening_strips_last_48h: kitRow.whitening_strips_last_48h === true,
-    professional_whitening_last_7d: kitRow.professional_whitening_last_7d === true,
+export function inputFromProfile(
+  species: SpeciesProfile,
+  lifestyle: Record<string, unknown> | null,
+  profile: Record<string, unknown> | null,
+): HalitosisInput {
+  return {
+    ...EMPTY_HALITOSIS_INPUT,
+
+    // Halitosis driver species — all from the shared species-parser,
+    // never from kit-row columns.
+    f_nucleatum_pct: species.f_nucleatum_pct,
+    s_moorei_pct: species.s_moorei_pct,
+    veillonella_pct: species.veillonella_total_pct,
+    leptotrichia_wadei_pct: species.leptotrichia_wadei_pct,
+    atopobium_parvulum_pct: species.atopobium_parvulum_pct,
+    selenomonas_total_pct: species.selenomonas_total_pct,
+    eubacterium_sulci_pct: species.eubacterium_sulci_pct,
+    dialister_invisus_pct: species.dialister_invisus_pct,
+
+    p_gingivalis_pct: species.p_gingivalis_pct,
+    prevotella_intermedia_pct: species.prevotella_intermedia_pct,
+    prevotella_nigrescens_pct: species.prevotella_nigrescens_pct,
+    prevotella_denticola_pct: species.prevotella_denticola_pct,
+    prevotella_melaninogenica_pct: species.prevotella_melaninogenica_pct,
+    treponema_total_pct: species.treponema_total_pct,
+    t_forsythia_pct: species.t_forsythia_pct,
+    eikenella_corrodens_pct: species.eikenella_corrodens_pct,
+
+    s_salivarius_pct: species.s_salivarius_pct,
+    rothia_total_pct: species.rothia_total_pct,
+    haemophilus_pct: species.haemophilus_total_pct,
+
+    caries_compensated_dysbiosis: species.caries_compensated_dysbiosis,
+    s_mutans_pct: species.s_mutans_pct,
+
+    ...lifestyleFromRow(lifestyle, profile),
+
+    env_peroxide_flag: species.env_peroxide_flag,
+    whitening_tray_last_48h: species.whitening_tray_last_48h,
+    whitening_strips_last_48h: species.whitening_strips_last_48h,
+    professional_whitening_last_7d: species.professional_whitening_last_7d,
   }
 }
 
 export interface HalitosisV2Update {
   halitosis_hmi: number
   halitosis_hmi_category: string
-  // v2.5: phenotype deprecated; pathway is the primary diagnostic field.
   halitosis_pathway: string
   halitosis_subjective_routing: boolean
   halitosis_h2s_adjusted: number
@@ -147,7 +147,8 @@ export function runHalitosisV2(
   profileRow: Record<string, unknown> | null,
 ): { update: HalitosisV2Update; result: HalitosisResult } | null {
   try {
-    const input = inputFromRows(kitRow, lifestyleRow, profileRow)
+    const species = parseSpeciesFromKitRow(kitRow)
+    const input = inputFromProfile(species, lifestyleRow, profileRow)
     const result = calculateHalitosis(input)
     return { update: v2UpdateFromResult(result), result }
   } catch (err) {

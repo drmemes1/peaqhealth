@@ -27,17 +27,7 @@ import {
   type PerioBurdenSpeciesAbundances,
   type PerioBurdenV1Result,
 } from "./perio-burden-v1"
-
-/**
- * S. mitis group identifiers (per ADR-0023). V3-V4 cannot reliably
- * distinguish S. mitis / S. oralis / S. pneumoniae; all three function
- * as protective oral commensals (Mark Welch 2016 PNAS).
- *
- * Mirrors the rule the parser will eventually export from PR-Δ-α-parser
- * (#256). Defined inline here so this PR can land independently — when
- * the parser PR merges, this constant becomes a re-export.
- */
-const S_MITIS_GROUP_IDENTIFIERS = ["mitis", "oralis", "pneumoniae"] as const
+import { parseSpeciesFromKitRow } from "./species-parser"
 
 /** Coerce raw column values to a usable percentage. */
 const num = (v: unknown): number => {
@@ -78,111 +68,39 @@ function speciesMatches(species: string, target: string): boolean {
 
 /**
  * Build PerioBurdenSpeciesAbundances from a kit row. Reads
- * raw_otu_table.__meta.entries as the authoritative source and falls
- * back to direct columns (post-PR-Δ-α-parser) when entries are absent.
+ * raw_otu_table.__meta.entries via the shared species-parser. No more
+ * hybrid column-fallback dance — entries are the single source of truth.
  *
  * Defaults every field to 0 (via EMPTY_PERIO_SPECIES spread) so partial
  * rows produce well-defined outputs.
  */
 export function speciesFromKitRow(row: Record<string, unknown>): PerioBurdenSpeciesAbundances {
-  const otu = (row.raw_otu_table ?? {}) as Record<string, unknown>
-  const meta = (otu.__meta ?? {}) as Record<string, unknown>
-  const entries = (meta.entries ?? []) as ParsedEntry[]
-
-  // ── If post-PR-Δ-α-parser columns are populated, prefer them directly ──
-  // Otherwise compute from entries. This makes the runner correct on both
-  // legacy kits and newly-parsed ones.
-  const fromCol = (col: string, fallback: number): number => {
-    const v = num(row[col])
-    return v > 0 ? v : fallback
-  }
-
-  // Tier 1 pathogens
-  const pGingivalis = fromCol(
-    "p_gingivalis_pct",
-    sumEntries(entries, (g, s) => g === "porphyromonas" && speciesMatches(s, "gingivalis")),
-  )
-  const tForsythia = fromCol(
-    "t_forsythia_pct",
-    sumEntries(entries, (g, s) => g === "tannerella" && speciesMatches(s, "forsythia")),
-  )
-  const treponemaTotal = num(row.treponema_pct) // genus-level by design (V3-V4 limit)
-  const fAlocis = fromCol(
-    "f_alocis_pct",
-    sumEntries(entries, (g, s) => g === "filifactor" && speciesMatches(s, "alocis")),
-  )
-
-  // Tier 2 pathogens — F. nucleatum at species level (genus column covers
-  // related species like periodonticum which we don't want in perio burden).
-  const fNucleatum = fromCol(
-    "f_nucleatum_pct",
-    sumEntries(entries, (g, s) => g === "fusobacterium" && speciesMatches(s, "nucleatum")),
-  )
-  const pIntermedia = fromCol(
-    "p_intermedia_pct",
-    num(row.prevotella_intermedia_pct),
-  )
-  const sConstellatus = fromCol(
-    "s_constellatus_pct",
-    sumEntries(entries, (g, s) => g === "streptococcus" && speciesMatches(s, "constellatus")),
-  )
-  const pMicra = fromCol(
-    "p_micra_pct",
-    // Genus-level fallback: parvimonas_pct is dominantly micra anyway.
-    num(row.parvimonas_pct),
-  )
-
-  // Tier 3 emerging — typically 0 with V3-V4. Sum from entries when
-  // present; no dedicated columns yet.
-  const mFaucium = sumEntries(entries, (g, s) => g === "mycoplasma" && speciesMatches(s, "faucium"))
-  const fretibacterium = sumEntries(entries, g => g === "fretibacterium")
-  const treponemaHmt237 = sumEntries(entries, (g, s) => g === "treponema" && speciesMatches(s, "hmt-237"))
-
-  // Defense Tier 1
-  const cMatruchotii = fromCol(
-    "c_matruchotii_pct",
-    sumEntries(entries, (g, s) => g === "corynebacterium" && speciesMatches(s, "matruchotii")),
-  )
-  const sMitisGroup = fromCol(
-    "s_mitis_group_pct",
-    // Replicate the parser's accumulator rule for legacy kits.
-    sumEntries(entries, (g, s) =>
-      g === "streptococcus" && S_MITIS_GROUP_IDENTIFIERS.some(id => s.includes(id)),
-    ),
-  )
-  const sSanguinis = num(row.s_sanguinis_pct)
-  const sGordonii = num(row.s_gordonii_pct)
-
-  // Defense Tier 2
-  const rothiaTotal =
-    num(row.rothia_pct) + num(row.rothia_dentocariosa_pct) + num(row.rothia_aeria_pct)
-  const neisseriaTotal = num(row.neisseria_pct)
-  const hParainfluenzae = num(row.haemophilus_pct) // genus-proxy (matches NR runner)
-  const aNaeslundii = num(row.a_naeslundii_pct)
-  const lautropia = sumEntries(entries, g => g === "lautropia")
+  const sp = parseSpeciesFromKitRow(row)
 
   return {
     ...EMPTY_PERIO_SPECIES,
-    p_gingivalis: pGingivalis,
-    t_forsythia: tForsythia,
-    treponema_total: treponemaTotal,
-    f_alocis: fAlocis,
-    f_nucleatum: fNucleatum,
-    p_intermedia: pIntermedia,
-    s_constellatus: sConstellatus,
-    p_micra: pMicra,
-    m_faucium: mFaucium,
-    fretibacterium: fretibacterium,
-    treponema_hmt_237: treponemaHmt237,
-    c_matruchotii: cMatruchotii,
-    s_mitis_group: sMitisGroup,
-    s_sanguinis: sSanguinis,
-    s_gordonii: sGordonii,
-    rothia_total: rothiaTotal,
-    neisseria_total: neisseriaTotal,
-    h_parainfluenzae: hParainfluenzae,
-    a_naeslundii: aNaeslundii,
-    lautropia: lautropia,
+    p_gingivalis: sp.p_gingivalis_pct,
+    t_forsythia: sp.t_forsythia_pct,
+    treponema_total: sp.treponema_total_pct,
+    f_alocis: sp.f_alocis_pct,
+    f_nucleatum: sp.f_nucleatum_pct,
+    p_intermedia: sp.prevotella_intermedia_pct,
+    s_constellatus: sp.s_constellatus_pct,
+    p_micra: sp.parvimonas_micra_pct,
+    m_faucium: sp.m_faucium_pct,
+    fretibacterium: sp.fretibacterium_total_pct,
+    treponema_hmt_237: sp.treponema_hmt_237_pct,
+    c_matruchotii: sp.c_matruchotii_pct,
+    s_mitis_group: sp.s_mitis_group_pct,
+    s_sanguinis: sp.s_sanguinis_pct,
+    s_gordonii: sp.s_gordonii_pct,
+    rothia_total: sp.rothia_total_pct,
+    neisseria_total: sp.neisseria_pct,
+    // Genus-proxy when species-level absent — same fallback as NR runner.
+    h_parainfluenzae:
+      sp.h_parainfluenzae_pct > 0 ? sp.h_parainfluenzae_pct : sp.haemophilus_total_pct,
+    a_naeslundii: sp.a_naeslundii_pct,
+    lautropia: sp.lautropia_total_pct,
   }
 }
 
